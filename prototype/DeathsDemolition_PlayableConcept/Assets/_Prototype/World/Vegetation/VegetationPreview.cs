@@ -46,6 +46,8 @@ namespace DD.Prototype.World.Vegetation
             public VegetationRecipe AppliedRecipe;
             public VegetationLayout AppliedLayout;
             public int AppliedTier, AppliedSeed;
+            public VegetationDrawSet AppliedDrawSet;
+            public int LastDrawCameraId;
         }
 
         public static DiagnosticSnapshot LastDiagnostics { get; private set; }
@@ -84,7 +86,15 @@ namespace DD.Prototype.World.Vegetation
             {
                 _draw = draw;
                 if (draw == null) return;
-                _hook = (ctx, cam) => { if (DiagnosticDrawEnabled && _draw != null && cam != null) _draw.Render(cam, 0); };
+                _hook = (ctx, cam) =>
+                {
+                    if (DiagnosticDrawEnabled && _draw != null && cam != null)
+                    {
+                        _draw.Render(cam, 0);
+                        if (s_diagnosticsRequested && LastDiagnostics != null && ReferenceEquals(LastDiagnostics.AppliedDrawSet, _draw))
+                            LastDiagnostics.LastDrawCameraId = cam.GetInstanceID();
+                    }
+                };
                 RenderPipelineManager.beginCameraRendering += _hook;
             }
 
@@ -126,6 +136,7 @@ namespace DD.Prototype.World.Vegetation
             {
                 LastDiagnostics.AppliedRecipe = recipe;
                 LastDiagnostics.AppliedLayout = draw.Layout;
+                LastDiagnostics.AppliedDrawSet = draw;
                 LastDiagnostics.AppliedTier = tier;
                 LastDiagnostics.AppliedSeed = VegetationSystem.Seed;
             }

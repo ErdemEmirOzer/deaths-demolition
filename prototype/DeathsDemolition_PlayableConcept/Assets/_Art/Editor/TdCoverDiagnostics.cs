@@ -22,6 +22,12 @@ namespace DD.Art.Pipeline.EditorTools
         private readonly string _dir;
         private bool _dumped;
         private Color32[] _lastRgb;
+        private Collider _groundCollider;
+        private ColliderRecord _groundColliderRecord;
+        private ScreenRayTarget _screenRayTarget;
+        private ScreenRayRecord[] _screenRays;
+        private PhysicalInventory _physicalInventory;
+
 
         public TdCoverDiagnostics(string dir)
         {
@@ -480,6 +486,249 @@ namespace DD.Art.Pipeline.EditorTools
             return result;
         }
 
+        [Serializable] private sealed class ColliderRecord
+        {
+            public string status, path, type;
+            public int instanceId, layer;
+            public bool enabled, isTrigger;
+            public Matrix4x4 localToWorld;
+            public Vector3 boundsCenter, boundsSize, boxCenter, boxSize;
+            public bool isBox;
+        }
+        [Serializable] private sealed class ScreenRayTarget
+        {
+            public string label;
+            public int width, height;
+            public float aspect, near, far;
+            public float[] pixelRect;
+            public bool renderIntoTexture;
+            public Matrix4x4 view, projection, gpuProjection, inverseGpuViewProjection;
+        }
+        [Serializable] private sealed class ScreenRayRecord
+        {
+            public int[] pixelLowerLeft;
+            public Vector3 origin, direction, point, normal;
+            public bool hit;
+            public int colliderInstanceId;
+            public string colliderPath;
+            public float distance;
+        }
+        private void SelectGroundCollider(Vector2 feet, Vector3 chosen)
+        {
+            _groundCollider = null; _screenRays = null; _screenRayTarget = null; _physicalInventory = null;
+            // Exactly the legacy Ground query; exact hit-point equality, never a 2cm identity tolerance.
+            if (Physics.Raycast(new Vector3(feet.x, 30f, feet.y), Vector3.down, out RaycastHit hit,
+                60f, ~0, QueryTriggerInteraction.Ignore) && hit.point.Equals(chosen)) _groundCollider = hit.collider;
+            if (_groundCollider == null)
+            {
+                _groundColliderRecord = new ColliderRecord { status = "NOTRECORDED: legacy chosen ground has no matching physics collider" };
+                return;
+            }
+            Collider c = _groundCollider;
+            _groundColliderRecord = new ColliderRecord { status = "ACTUAL_LEGACY_GROUND_HIT; independent registration only, not occlusion proof",
+                instanceId = c.GetInstanceID(), path = Hierarchy(c.transform), type = c.GetType().FullName,
+                enabled = c.enabled, isTrigger = c.isTrigger, layer = c.gameObject.layer,
+                localToWorld = c.transform.localToWorldMatrix, boundsCenter = c.bounds.center, boundsSize = c.bounds.size };
+            if (c is BoxCollider box)
+            { _groundColliderRecord.isBox = true; _groundColliderRecord.boxCenter = box.center; _groundColliderRecord.boxSize = box.size; }
+        }
+        private void CaptureScreenRays(Camera camera, string label)
+        {
+            Rect rect = camera.pixelRect;
+            Matrix4x4 gpu = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
+            _screenRayTarget = new ScreenRayTarget { label = label, width = camera.pixelWidth, height = camera.pixelHeight,
+                aspect = camera.aspect, near = camera.nearClipPlane, far = camera.farClipPlane,
+                pixelRect = new[] { rect.x, rect.y, rect.width, rect.height }, renderIntoTexture = camera.targetTexture != null,
+                view = camera.worldToCameraMatrix, projection = camera.projectionMatrix, gpuProjection = gpu,
+                inverseGpuViewProjection = (gpu * camera.worldToCameraMatrix).inverse };
+            var rows = new List<ScreenRayRecord>();
+            foreach (int y in new[] { 45, 135, 225 }) foreach (int x in new[] { 80, 240, 400 })
+            {
+                Ray ray = camera.ScreenPointToRay(new Vector3(x + 0.5f, y + 0.5f, 0f));
+                var row = new ScreenRayRecord { pixelLowerLeft = new[] { x, y }, origin = ray.origin, direction = ray.direction,
+                    colliderInstanceId = _groundCollider != null ? _groundCollider.GetInstanceID() : 0,
+                    colliderPath = _groundCollider != null ? Hierarchy(_groundCollider.transform) : "NOTRECORDED" };
+                if (_groundCollider != null && _groundCollider.Raycast(ray, out RaycastHit hit, camera.farClipPlane))
+                { row.hit = true; row.point = hit.point; row.normal = hit.normal; row.distance = hit.distance; }
+                rows.Add(row); // Keep misses, including absent chosen collider.
+            }
+            _screenRays = rows.ToArray();
+        }
+
+        [Serializable] private sealed class MaterialState
+        {
+            public string name, shader, depthPolicy;
+            public int instanceId, shaderInstanceId, renderQueue;
+            public bool hasZWrite, hasSurface;
+            public float zWrite, surface;
+        }
+        [Serializable] private sealed class WorldBoundsRecord { public Vector3 center, size; }
+        [Serializable] private sealed class CoverageRow
+        {
+            public int instanceId, drawIndex, instanceCount, meshInstanceId, materialInstanceId;
+            public string path, shader, projectionStatus, boundsEnvelope;
+            public WorldBoundsRecord worldBounds;
+            public int[] projectedConservativeRectLowerLeft;
+            public MaterialState[] materialStates;
+        }
+        [Serializable] private sealed class InstancedInventory
+        {
+            public bool complete, drawEnabled;
+            public string status, knownVegetationShaderSha256;
+            public int actualDrawCount, actualSubmittedInstances, cameraInstanceId;
+            public Vector4 actualWave, actualPush, actualShape;
+            public CoverageRow[] draws = new CoverageRow[0];
+        }
+        [Serializable] private sealed class PhysicalInventory
+        {
+            public string schema = "DD_PHYSICAL_COVERAGE_V1", producerPin, sourceSha256, status;
+            public bool complete;
+            public CoverageRow[] renderers;
+            public InstancedInventory instanced;
+            public string limits = "Conservative projected bounds only; material names alone do not prove screen pixels. Instanced counts are actual submitted LOD pages, not unique roots or visible fragments.";
+        }
+        private static readonly HashSet<string> GroundAir = new HashSet<string> {
+            "DD/GroundTerrain", "DD/GroundTiles", "DD/GroundMoss", "DD/GroundBlend", "DD/FogSheet", "DD/SunDisc", "DD/Water v2", "DD/Water v1", "DD/ShaftCard" };
+        private static string ProjectFileHash(string assetPath) => FileHash(Path.Combine(Application.dataPath, "..", assetPath));
+        private static CoverageRow CoverageBounds(Camera camera, Bounds bounds)
+        {
+            var row = new CoverageRow { worldBounds = new WorldBoundsRecord { center = bounds.center, size = bounds.size } };
+            Matrix4x4 vp = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true) * camera.worldToCameraMatrix;
+            float minX = W, minY = H, maxX = 0, maxY = 0;
+            bool nearCrossing = false;
+            foreach (int x in new[] { -1, 1 }) foreach (int y in new[] { -1, 1 }) foreach (int z in new[] { -1, 1 })
+            {
+                Vector3 point = bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z));
+                Vector4 clip = vp * new Vector4(point.x, point.y, point.z, 1);
+                if (float.IsNaN(clip.x) || float.IsNaN(clip.y) || float.IsNaN(clip.z) || float.IsNaN(clip.w)
+                    || float.IsInfinity(clip.x) || float.IsInfinity(clip.y) || float.IsInfinity(clip.z) || float.IsInfinity(clip.w))
+                    throw new InvalidOperationException("nonfinite actual bounds projection");
+                // This inventory supports the actual Metal/D3D 0..1 clip depth convention only.
+                if (clip.w <= 0f || clip.z < 0f || clip.z > clip.w) nearCrossing = true;
+                if (clip.w > 0f)
+                {
+                    float px = (clip.x / clip.w + 1f) * W * 0.5f;
+                    float py = (SystemInfo.graphicsUVStartsAtTop ? 1f - clip.y / clip.w : clip.y / clip.w + 1f) * H * 0.5f;
+                    minX = Mathf.Min(minX, px); maxX = Mathf.Max(maxX, px); minY = Mathf.Min(minY, py); maxY = Mathf.Max(maxY, py);
+                }
+            }
+            row.projectionStatus = nearCrossing ? "FULL_VIEWPORT" : "CONSERVATIVE_BOUNDS_RECT";
+            row.projectedConservativeRectLowerLeft = nearCrossing ? new[] { 0, 0, W, H } : new[] {
+                Mathf.Clamp(Mathf.FloorToInt(minX), 0, W), Mathf.Clamp(Mathf.FloorToInt(minY), 0, H),
+                Mathf.Clamp(Mathf.CeilToInt(maxX), 0, W), Mathf.Clamp(Mathf.CeilToInt(maxY), 0, H) };
+            return row;
+        }
+        private PhysicalInventory CapturePhysicalInventory(Camera camera)
+        {
+            var inventory = new PhysicalInventory { producerPin = Environment.GetEnvironmentVariable("DD_TD_SOURCE_PIN"),
+                instanced = new InstancedInventory { drawEnabled = (bool)_draw.GetValue(null), cameraInstanceId = camera.GetInstanceID() } };
+            try
+            {
+                inventory.sourceSha256 = ProjectFileHash("Assets/_Art/Editor/TdCoverDiagnostics.cs");
+                if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Metal && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D11
+                    && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D12) throw new NotSupportedException("physical inventory clip-depth convention");
+                var rows = new List<CoverageRow>();
+                foreach (Renderer renderer in Object.FindObjectsOfType<Renderer>())
+                {
+                    if (!renderer.enabled || renderer.forceRenderingOff) continue;
+                    Material[] materials = renderer.sharedMaterials;
+                    bool allGroundAir = materials.Length > 0;
+                    foreach (Material material in materials) allGroundAir &= material != null && material.shader != null && GroundAir.Contains(material.shader.name);
+                    if (allGroundAir) continue;
+                    CoverageRow row = CoverageBounds(camera, renderer.bounds);
+                    row.instanceId = renderer.GetInstanceID(); row.path = Hierarchy(renderer.transform);
+                    row.materialStates = new MaterialState[materials.Length];
+                    bool envelopeKnown = true;
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        Material material = materials[i];
+                        var state = new MaterialState { name = material != null ? material.name : "<null>",
+                            shader = material != null && material.shader != null ? material.shader.name : "<null>", depthPolicy = "UNKNOWN" };
+                        if (material != null)
+                        {
+                            state.instanceId = material.GetInstanceID(); state.shaderInstanceId = material.shader != null ? material.shader.GetInstanceID() : 0;
+                            state.renderQueue = material.renderQueue; state.hasZWrite = material.HasProperty("_ZWrite"); state.hasSurface = material.HasProperty("_Surface");
+                            if (state.hasZWrite) state.zWrite = material.GetFloat("_ZWrite");
+                            if (state.hasSurface) state.surface = material.GetFloat("_Surface");
+                            // UnderstorySkirt relies on ShaderLab default ZWrite On; consumer may conservatively keep it ambiguous.
+                            if (state.shader == "DD/UnderstorySkirt") state.depthPolicy = "SHADER_DEFAULT_ON";
+                        }
+                        envelopeKnown &= GroundAir.Contains(state.shader) || state.shader == "Universal Render Pipeline/Lit" || state.shader == "DD/UnderstorySkirt"
+                            || (state.shader == "DD/Foliage Wind" && Shader.GetGlobalVector("_DD_WindVector").z == 0f);
+                        row.materialStates[i] = state;
+                    }
+                    row.boundsEnvelope = envelopeKnown ? "ACTUAL_RENDERER_BOUNDS; audited rigid shader or actual calm foliage" : "UNKNOWN_VERTEX_ENVELOPE";
+                    if (!envelopeKnown) { row.projectionStatus = "FULL_VIEWPORT"; row.projectedConservativeRectLowerLeft = new[] { 0, 0, W, H }; }
+                    rows.Add(row);
+                }
+                inventory.renderers = rows.ToArray();
+                CaptureInstancedInventory(camera, inventory.instanced);
+                inventory.complete = inventory.instanced.complete;
+                inventory.status = inventory.complete ? "ACTUAL_BOUNDS_AND_MATERIALS_RECORDED" : "UNKNOWN: instanced inventory incomplete";
+            }
+            catch (Exception error) { inventory.complete = false; inventory.status = "NOTRECORDED: " + error.GetType().Name + ": " + error.Message; }
+            return inventory;
+        }
+        private void CaptureInstancedInventory(Camera camera, InstancedInventory record)
+        {
+            record.actualWave = Shader.GetGlobalVector("_DD_VegWaveW"); record.actualPush = Shader.GetGlobalVector("_DD_VegPushOn");
+            record.actualShape = Shader.GetGlobalVector("_DD_VegShape");
+            if (!record.drawEnabled) { record.complete = true; record.status = "DRAW_DISABLED"; return; }
+            if (record.actualWave.w != 0f || record.actualPush.x != 0f || float.IsNaN(record.actualShape.z) || float.IsInfinity(record.actualShape.z) || record.actualShape.z < 0f)
+                throw new NotSupportedException("actual preview deformation is not calm/push-off with nonnegative arcK");
+            object snapshot = _snapshot.GetValue(null), draw = Field(snapshot, "AppliedDrawSet");
+            if (draw == null || (int)Field(snapshot, "LastDrawCameraId") != camera.GetInstanceID())
+                throw new NotSupportedException("actual submitted preview camera/draw-set missing");
+            Type type = draw.GetType();
+            object Private(string name) => type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(draw)
+                ?? throw new NotSupportedException("pinned draw state missing: " + name);
+            var counts = Private("_scratchCount") as int[][];
+            var pages = Private("_pages") as Matrix4x4[][][][];
+            var meshes = Private("_meshes") as Mesh[][][];
+            var materials = Private("_materials") as Material[];
+            var lods = Private("_lodCount") as int[];
+            object layout = type.GetProperty("Layout").GetValue(draw);
+            Array groups = (Array)Field(layout, "Groups");
+            if (counts == null || pages == null || meshes == null || materials == null || lods == null)
+                throw new NotSupportedException("actual draw state type mismatch");
+            var rows = new List<CoverageRow>(); int submitted = 0;
+            for (int g = 0; g < groups.Length; g++)
+            {
+                object group = groups.GetValue(g); int species = Convert.ToInt32(Field(group, "Type")), variant = (int)Field(group, "Variant");
+                for (int lod = 0; lod < lods[g]; lod++) for (int page = 0, done = 0; done < counts[g][lod]; page++, done += 1023)
+                {
+                    int n = Mathf.Min(1023, counts[g][lod] - done); Mesh mesh = meshes[species][variant][lod]; Material material = materials[species];
+                    if (mesh == null || material == null || material.shader == null || material.shader.name != "DD/World Vegetation")
+                        throw new NotSupportedException("actual draw material/mesh is not the audited vegetation source");
+                    Bounds local = mesh.bounds;
+                    // Grow contracts towards root. With zero wind and push, deform Y is abs(base Y); union both root and reflected Y.
+                    Vector3 lo = local.min, hi = local.max; lo = Vector3.Min(lo, Vector3.zero); hi = Vector3.Max(hi, Vector3.zero);
+                    hi.y = Mathf.Max(hi.y, Mathf.Abs(lo.y)); lo.y = 0f;
+                    Bounds bounds = new Bounds(); bool first = true;
+                    for (int i = 0; i < n; i++)
+                    {
+                        Matrix4x4 matrix = pages[g][lod][page][i];
+                        // Placer uses positive diagonal scales and yaw only; fail closed if that changes.
+                        if (matrix.m11 <= 0f || matrix.m01 != 0f || matrix.m21 != 0f || matrix.m10 != 0f || matrix.m12 != 0f)
+                            throw new NotSupportedException("actual preview transform no longer yaw/positive scale");
+                        foreach (int x in new[] { 0, 1 }) foreach (int y in new[] { 0, 1 }) foreach (int z in new[] { 0, 1 })
+                        {
+                            Vector3 point = matrix.MultiplyPoint3x4(new Vector3(x == 0 ? lo.x : hi.x, y == 0 ? lo.y : hi.y, z == 0 ? lo.z : hi.z));
+                            if (first) { bounds = new Bounds(point, Vector3.zero); first = false; } else bounds.Encapsulate(point);
+                        }
+                    }
+                    CoverageRow row = CoverageBounds(camera, bounds); row.drawIndex = rows.Count; row.instanceCount = n;
+                    row.meshInstanceId = mesh.GetInstanceID(); row.materialInstanceId = material.GetInstanceID(); row.shader = material.shader.name;
+                    row.boundsEnvelope = "CALM_PUSH_OFF_GROW_ROOT_AND_ABS_Y_UNION";
+                    rows.Add(row); submitted += n;
+                }
+            }
+            record.actualDrawCount = (int)type.GetProperty("DrawCalls").GetValue(draw); record.actualSubmittedInstances = (int)type.GetProperty("VisibleInstances").GetValue(draw);
+            if (record.actualDrawCount != rows.Count || record.actualSubmittedInstances != submitted) throw new NotSupportedException("actual draw counters/state mismatch");
+            record.knownVegetationShaderSha256 = ProjectFileHash("Assets/_Prototype/World/Vegetation/Shaders/DD_Vegetation.shader");
+            record.draws = rows.ToArray(); record.complete = true; record.status = "ACTUAL_LAST_FULL_RENDER_SUBMITTED_PAGES; calm source-derived conservative bounds";
+        }
+
         [Serializable] private sealed class PoseRecord
         {
             public string status = "UNKNOWN until two-pose depth/MSAA/alpha/occlusion/pixel-registration checks";
@@ -499,18 +748,23 @@ namespace DD.Art.Pipeline.EditorTools
             public string bareVisibilityApi = "Renderer.enabled=false; legacy !enabled/null sharedMaterial skip and exact six ground/air shaders; hidden enabled states restored before category isolates";
             public string priorBareVisibilitySourcePin = "83400db52a68260bd69af67064018fd9b2f776a8";
             public string priorBareVisibilityApi = "forceRenderingOff for bare/bare-repeat; historical v004 raw remains immutable";
-            public string currentSourcePinEvidence = "Fresh run pin-start.json + companion-source-v006 manifest; visibility revision legacy-enabled-v006; full/category isolation API unchanged";
+            public string currentSourcePinEvidence = "Fresh run pin-start.json + machine-release.json; producerPin DD_TD_SOURCE_PIN; legacy-enabled-v006 preserved; full/category isolation API unchanged";
             public int fullRgbChanged, bareRgbChanged, bareMaskMembershipChanged;
             public bool runtimeEntropyReplayed;
             public string entropyRestoreEvidence = "Typed CPU index/offset/array identity/full RNG state restored+verified; GPU material property readback NOT_SUPPORTED. Material setters are RECONSTRUCTED_WRITE from actual END target dimensions. diagnostic-frames.json records all renders.";
             public ProbeRecord feetGridProbe;
             public RendererRecord[] renderers;
             public HitRecord[] groundRayHits;
+            public ColliderRecord actualGroundCollider;
+            public ScreenRayTarget cpuScreenRayTarget;
+            public ScreenRayRecord[] cpuScreenRays;
+            public PhysicalInventory physicalCoverageInventory;
         }
 
         public void Capture(Camera cam, string name, Vector2 feet, Vector3 ground)
         {
             DumpGrid();
+            SelectGroundCollider(feet, ground);
             if (_entropyBinding == null || _bareEntropy == null)
                 throw new InvalidOperationException("UNKNOWN: original bare entropy snapshot missing");
             SsaoEntropy entryEntropy = _entropyBinding.Snapshot();
@@ -637,9 +891,11 @@ namespace DD.Art.Pipeline.EditorTools
                     reversedZ = SystemInfo.usesReversedZBuffer, uvStartsAtTop = SystemInfo.graphicsUVStartsAtTop,
                     fullRepeatChanged = fullChanged, bareRepeatChanged = bareChanged, fullCategoryPixels = counts,
                     renderers = records, groundRayHits = hitRows, copiedFrames = feature.CopiedFrames,
+                    actualGroundCollider = _groundColliderRecord, cpuScreenRayTarget = _screenRayTarget, cpuScreenRays = _screenRays, physicalCoverageInventory = _physicalInventory,
                     sourceDepth = feature.SourceDescription, featureListRestored = restored,
                     fullRgbChanged = fullRgbChanged, bareRgbChanged = bareRgbChanged, feetGridProbe = Probe(feet),
                     bareMaskMembershipChanged = bareMembershipChanged, runtimeEntropyReplayed = true });
+                feature.WriteSamples(_dir, name);
                 if (!restored) throw new InvalidOperationException("Diagnostic renderer feature-list restoration failed");
             }
             finally
@@ -715,6 +971,8 @@ namespace DD.Art.Pipeline.EditorTools
                     throw new InvalidOperationException("UNKNOWN: color/depth output allocation failed");
                 cam.targetTexture = rt;
                 cam.aspect = (float)W / H;
+                if (name.EndsWith("-depth-full", StringComparison.Ordinal)) CaptureScreenRays(cam, name);
+                feature.PrepareSamples(name, _frames.Count);
                 cam.Render();
                 if (!rt.IsCreated() || !feature.Output.IsCreated())
                     throw new InvalidOperationException("UNKNOWN: color/depth output lost during render");
@@ -732,6 +990,8 @@ namespace DD.Art.Pipeline.EditorTools
                 foreach (float value in values)
                     if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f || value > 1f)
                         throw new InvalidOperationException("UNKNOWN: invalid raw depth readback");
+                feature.ReadSamples(_dir, values);
+                if (name.EndsWith("-depth-full", StringComparison.Ordinal)) _physicalInventory = CapturePhysicalInventory(cam);
                 using (var writer = new BinaryWriter(File.Create(Path.Combine(_dir, name + ".rfloat"))))
                     foreach (float value in values) writer.Write(value);
                 return values;
@@ -853,6 +1113,161 @@ namespace DD.Art.Pipeline.EditorTools
         public int CopiedFrames;
         public string SourceDescription;
 
+        private const string ComputeAsset = "Assets/_Art/Editor/TdCoverMsaaReadback.compute";
+        private ComputeShader _compute;
+        private ComputeBuffer _samples;
+        private int _kernel, _ordinal;
+        private string _sampleLabel, _unsupported, _computeSha;
+        private bool _requested, _dispatched;
+        private SampleRecord _pendingSample;
+        private readonly List<SampleRecord> _sampleRecords = new List<SampleRecord>();
+        private MappingRecord _mapping;
+        [Serializable] private sealed class MappingRecord
+        {
+            public string derivation = "URP14.CopyDepthPass.scaleBias";
+            public float[] viewportScale;
+            public bool yFlip, normalizedToReadPixelsLowerLeft = true;
+            public float[] scaleBias;
+            public string lowerLeftToBlitUv = "pixel center / output size; invert UV.y iff graphicsUVStartsAtTop, as Common.hlsl GetFullScreenTriangleTexCoord; then actual CopyDepth scaleBias";
+        }
+        [Serializable] private sealed class SampleRecord
+        {
+            public string label, file, sha256, sourceDepthFormat;
+            public int frameOrdinal, byteCount, writtenCount, sentinelFailures, sourceInstanceId, sourceWidth, sourceHeight, sourceMsaa;
+            public int farthestBitwiseMismatchCount;
+            public bool sameRenderDepthAttachment, sourceCreated, sourceBindMs, cameraRenderReturned, readbackCompleted;
+            public string commandBufferSubmitPath = "URP14 ScriptableRenderer.ExecuteRenderPass: Execute->context.ExecuteCommandBuffer(same cmd)->Clear; camera context.Submit before Camera.Render returns";
+            public string readbackMethod = "ComputeBuffer.GetData(Vector4[129600]) returned, then all-pixel sentinel/finite checks";
+            public MappingRecord mapping;
+        }
+        [Serializable] private sealed class SampleSidecar
+        {
+            public string schema = "DD_MSAA4_SAMPLES_V1", status, reason, producerPin, pose;
+            public int width = 480, height = 270, sampleCount = 4;
+            public string byteOrder = "little", layout = "lower-left-y-x-float4";
+            public string computeSourcePath = "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Editor/TdCoverMsaaReadback.compute", computeSourceSha256;
+            public bool supportsComputeShaders;
+            public int supportsMultisampledTextures;
+            public MappingRecord mapping;
+            public SampleRecord[] records;
+            public string limits = "Four actual depth samples only; mismatched reduction pixels UNKNOWN. ZWriteOff/transparent/mixed exclusion NOTRECORDED; no new physical bare claim.";
+        }
+        private void Unsupported(Exception error) => _unsupported = "NOT_SUPPORTED: " + error.GetType().Name + ": " + error.Message;
+        public void PrepareSamples(string label, int ordinal)
+        {
+            _requested = label.EndsWith("-depth-full", StringComparison.Ordinal) || label.EndsWith("-depth-bare", StringComparison.Ordinal)
+                || label.EndsWith("-depth-category-1", StringComparison.Ordinal) || label.EndsWith("-depth-full-repeat", StringComparison.Ordinal)
+                || label.EndsWith("-depth-bare-repeat", StringComparison.Ordinal);
+            _dispatched = false; _pendingSample = null; _sampleLabel = label; _ordinal = ordinal;
+            if (!_requested || _unsupported != null) return;
+            try
+            {
+                if (!BitConverter.IsLittleEndian || !SystemInfo.supportsComputeShaders || SystemInfo.supportsMultisampledTextures <= 0)
+                    throw new NotSupportedException("actual compute/MS texture capability unavailable");
+                if (_compute == null)
+                {
+                    ComputeShader asset = UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(ComputeAsset);
+                    if (asset == null) throw new NotSupportedException("pinned compute asset missing or import failed");
+                    _compute = Object.Instantiate(asset); _compute.hideFlags = HideFlags.HideAndDontSave;
+                    _kernel = _compute.FindKernel("ReadMsaa4");
+                    string path = Path.Combine(Application.dataPath, "..", ComputeAsset);
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        _computeSha = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-", "").ToLowerInvariant();
+                    _samples = new ComputeBuffer(480 * 270, 16, ComputeBufferType.Structured);
+                }
+                var sentinel = new Vector4[480 * 270];
+                for (int i = 0; i < sentinel.Length; i++) sentinel[i] = new Vector4(-1f, -1f, -1f, -1f);
+                _samples.SetData(sentinel);
+            }
+            catch (Exception error) { Unsupported(error); }
+        }
+        private void DispatchSamples(RTHandle source, ref RenderingData data)
+        {
+            if (!_requested || _unsupported != null) return;
+            try
+            {
+                RenderTexture rt = source.rt;
+                if (!rt.IsCreated() || rt.width != 480 || rt.height != 270 || rt.antiAliasing != 4 || !rt.bindTextureMS
+                    || rt.depthStencilFormat != GraphicsFormat.D32_SFloat_S8_UInt)
+                    throw new NotSupportedException("actual source is not created 480x270 bindMS D32S8 MSAA4");
+                FieldInfo nativeField = typeof(ScriptableRenderer).GetField("useRenderPassEnabled", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (nativeField == null || nativeField.FieldType != typeof(bool) || (bool)nativeField.GetValue(data.cameraData.renderer))
+                    throw new NotSupportedException("actual renderer native render-pass mode unsupported for this compute append");
+                // RenderingData.commandBuffer is internal in pinned URP14. Read the exact existing object, never substitute or execute/clear it.
+                FieldInfo field = typeof(RenderingData).GetField("commandBuffer", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field == null || field.FieldType != typeof(CommandBuffer)) throw new NotSupportedException("pinned URP14 commandBuffer field differs");
+                CommandBuffer cmd = field.GetValue(data) as CommandBuffer;
+                if (cmd == null) throw new NotSupportedException("actual URP commandBuffer missing");
+                Vector2 scale = source.useScaling ? new Vector2(source.rtHandleProperties.rtHandleScale.x, source.rtHandleProperties.rtHandleScale.y) : Vector2.one;
+                bool flip = data.cameraData.IsHandleYFlipped(source) != data.cameraData.IsHandleYFlipped(_output);
+                Vector4 bias = flip ? new Vector4(scale.x, -scale.y, 0, scale.y) : new Vector4(scale.x, scale.y, 0, 0);
+                if (float.IsNaN(scale.x) || float.IsNaN(scale.y) || float.IsInfinity(scale.x) || float.IsInfinity(scale.y)
+                    || scale.x <= 0f || scale.y <= 0f || scale.x > 1f || scale.y > 1f) throw new NotSupportedException("invalid actual viewport scale");
+                _mapping = new MappingRecord { viewportScale = new[] { scale.x, scale.y }, yFlip = flip, scaleBias = new[] { bias.x, bias.y, bias.z, bias.w } };
+                _pendingSample = new SampleRecord { label = _sampleLabel, frameOrdinal = _ordinal,
+                    sourceInstanceId = rt.GetInstanceID(), sourceCreated = rt.IsCreated(), sourceWidth = rt.width, sourceHeight = rt.height,
+                    sourceMsaa = rt.antiAliasing, sourceBindMs = rt.bindTextureMS, sourceDepthFormat = rt.depthStencilFormat.ToString(),
+                    sameRenderDepthAttachment = true, mapping = _mapping };
+                cmd.SetComputeVectorParam(_compute, "_ScaleBias", bias);
+                cmd.SetComputeIntParam(_compute, "_UvStartsAtTop", SystemInfo.graphicsUVStartsAtTop ? 1 : 0);
+                cmd.SetComputeTextureParam(_compute, _kernel, "_SourceDepth", source.nameID, 0, RenderTextureSubElement.Depth);
+                cmd.SetComputeBufferParam(_compute, _kernel, "_Samples", _samples);
+                // Appended after CopyDepth to its SAME actual command buffer; ScriptableRenderer executes it after this pass.
+                cmd.DispatchCompute(_compute, _kernel, 60, 34, 1);
+                _dispatched = true;
+            }
+            catch (Exception error) { Unsupported(error); }
+        }
+        public void ReadSamples(string directory, float[] resolved)
+        {
+            if (!_requested || _unsupported != null) return;
+            try
+            {
+                if (!_dispatched || _pendingSample == null) throw new NotSupportedException("same-render sample dispatch missing");
+                _pendingSample.cameraRenderReturned = true;
+                var samples = new Vector4[480 * 270]; _samples.GetData(samples);
+                _pendingSample.readbackCompleted = true;
+                int written = 0, failures = 0, mismatch = 0;
+                for (int i = 0; i < samples.Length; i++)
+                {
+                    bool valid = true;
+                    float farthest = SystemInfo.usesReversedZBuffer ? 1f : 0f;
+                    for (int j = 0; j < 4; j++)
+                    {
+                        float value = samples[i][j];
+                        if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f || value > 1f) valid = false;
+                        farthest = SystemInfo.usesReversedZBuffer ? Mathf.Min(farthest, value) : Mathf.Max(farthest, value);
+                    }
+                    if (valid) written++; else failures++;
+                    // Strict raw bit comparison; no epsilon, fit, flip retry or resolved-value sample fabrication.
+                    if (!valid || BitConverter.ToInt32(BitConverter.GetBytes(farthest), 0) != BitConverter.ToInt32(BitConverter.GetBytes(resolved[i]), 0)) mismatch++;
+                }
+                _pendingSample.writtenCount = written; _pendingSample.sentinelFailures = failures;
+                _pendingSample.farthestBitwiseMismatchCount = mismatch;
+                if (failures != 0 || written != 480 * 270) throw new NotSupportedException("sentinel/finite/sample-count proof failed");
+                string file = _sampleLabel + ".msaa4-float4", path = Path.Combine(directory, file);
+                using (var writer = new BinaryWriter(File.Create(path)))
+                    foreach (Vector4 sample in samples) for (int j = 0; j < 4; j++) writer.Write(sample[j]);
+                _pendingSample.file = file; _pendingSample.byteCount = checked((int)new FileInfo(path).Length);
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                using (var input = File.OpenRead(path)) _pendingSample.sha256 = BitConverter.ToString(sha.ComputeHash(input)).Replace("-", "").ToLowerInvariant();
+                if (_pendingSample.byteCount != 2073600) throw new NotSupportedException("actual sample byte count differs");
+                _sampleRecords.Add(_pendingSample);
+            }
+            catch (Exception error) { Unsupported(error); }
+        }
+        public void WriteSamples(string directory, string pose)
+        {
+            string pin = Environment.GetEnvironmentVariable("DD_TD_SOURCE_PIN");
+            bool pinValid = pin != null && System.Text.RegularExpressions.Regex.IsMatch(pin, "^[0-9a-f]{40}$");
+            bool recorded = _unsupported == null && _sampleRecords.Count == 5 && pinValid;
+            var sidecar = new SampleSidecar { status = recorded ? "RECORDED" : "NOT_SUPPORTED", reason = recorded ? "" : (_unsupported ?? "missing required records or DD_TD_SOURCE_PIN"),
+                pose = pose, producerPin = pin, computeSourceSha256 = _computeSha,
+                supportsComputeShaders = SystemInfo.supportsComputeShaders, supportsMultisampledTextures = SystemInfo.supportsMultisampledTextures,
+                mapping = _mapping, records = _sampleRecords.ToArray() };
+            File.WriteAllText(Path.Combine(directory, pose + "-msaa-samples.json"), JsonUtility.ToJson(sidecar, true));
+        }
+
         public void Initialize(Camera camera, int width, int height)
         {
             _camera = camera;
@@ -887,6 +1302,8 @@ namespace DD.Art.Pipeline.EditorTools
                 _output.Release();
                 _output = null;
             }
+            if (_samples != null) { _samples.Dispose(); _samples = null; }
+            CoreUtils.Destroy(_compute); _compute = null;
             CoreUtils.Destroy(_material);
             _material = null;
         }
@@ -894,6 +1311,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             private readonly TdCoverDepthFeature _owner;
             private CopyDepthPass _copy;
+            private RTHandle _source;
             public DepthPass(TdCoverDepthFeature owner) => _owner = owner;
             public void Setup(RTHandle source, RenderTextureDescriptor cameraDescriptor)
             {
@@ -912,12 +1330,14 @@ namespace DD.Art.Pipeline.EditorTools
                 // Public URP14 CopyDepthPass resolves actual bound MSAA when bindMS=true, resolved texture otherwise.
                 _copy = new CopyDepthPass(renderPassEvent, _owner._material, false, false, !rt.bindTextureMS);
                 _copy.Setup(source, _owner._output);
+                _source = source;
             }
             public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData data) => ConfigureTarget(_owner._output);
             public override void Execute(ScriptableRenderContext context, ref RenderingData data)
             {
                 if (_copy == null) throw new InvalidOperationException("UNKNOWN: depth copy setup missing");
                 _copy.Execute(context, ref data);
+                _owner.DispatchSamples(_source, ref data);
                 _owner.CopiedFrames++;
             }
         }
