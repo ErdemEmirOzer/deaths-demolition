@@ -276,6 +276,11 @@ namespace DD.Art.Tests.EditMode
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
             Assert.AreEqual(232, klip, "232 = 222 + AP-022 player locomotion 10 (MUST-3/4); 222 = 217 + AP-022 zombie locomotion 5 (MUST-I1); 217 = 205 + FP Special 12; 205 = 203 + lmg_2 tray reloads 2; 203 = 194 + smg_2 FP 9 (WP-071 r2); 194 = 182 + TP Special family 12; 182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
+            // WP-082 R3 · AP-026 v002 locomotion (AP026-loco-manifest.json): idle_03 + 24 loops + 48 starts + 48 stops = 121.
+            int loco = 0;
+            var locoManifest = ArtAnimationClipContract.LocoManifest();
+            if (locoManifest != null) foreach (var spec in locoManifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) loco++;
+            Assert.AreEqual(121, loco, "AP-026 R3 yürüyüş: idle_03 + 24 döngü + 48 start + 48 stop");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);

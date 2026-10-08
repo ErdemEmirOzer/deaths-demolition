@@ -1,0 +1,490 @@
+{
+ "start_lead_default": {
+  "rule": "yan/çapraz: hareket tarafındaki ayak (açık adım; karşı ayak = çapraz adım, daha uzun klip); fwd: l; back: r",
+  "flag": "öneri; L3/L1t ile sınanacak",
+  "table": {
+   "walk_fwd": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_fwd_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_right": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_back_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_back": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_back_l": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_left": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "walk_fwd_l": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_fwd": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_fwd_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_right": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 31,
+    "is_shortest_or_tie": true
+   },
+   "run_back_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_back": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_back_l": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 37,
+    "is_shortest_or_tie": true
+   },
+   "run_left": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "run_fwd_l": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "sprint_fwd": {
+    "lead": "l",
+    "samples": 24,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "sprint_fwd_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "sprint_right": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   },
+   "sprint_back_r": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 31,
+    "is_shortest_or_tie": true
+   },
+   "sprint_back": {
+    "lead": "r",
+    "samples": 25,
+    "other_samples": 31,
+    "is_shortest_or_tie": true
+   },
+   "sprint_back_l": {
+    "lead": "l",
+    "samples": 31,
+    "other_samples": 31,
+    "is_shortest_or_tie": true
+   },
+   "sprint_left": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 31,
+    "is_shortest_or_tie": true
+   },
+   "sprint_fwd_l": {
+    "lead": "l",
+    "samples": 25,
+    "other_samples": 25,
+    "is_shortest_or_tie": true
+   }
+  }
+ },
+ "schema": "WP082R3.loco-constants.v1",
+ "hero_stride_scale": {
+  "default": 1.06452,
+  "k_hips_height": 1.06452,
+  "k_leg_length": 1.04806,
+  "hero_hips_m": 0.9900000095367432,
+  "template_hips_m": 0.9300000071525574,
+  "hero_leg_m": 0.85527,
+  "template_leg_m": 0.81604,
+  "flag": "hesap (kemik dosyaları); kahramanda StrideCalibrator ile ölçülüp yerine konacak: k = v_hero(sprint_fwd) / natural_speed_mps_template(sprint_fwd)"
+ },
+ "tree": {
+  "root": {
+   "type": "Simple1D",
+   "parameter": "LocoSpeed",
+   "useAutomaticThresholds": false
+  },
+  "children": [
+   {
+    "slot": 0,
+    "motion": "DD_Player_StandStill (idle_03 kare 0)",
+    "threshold_mps_template": 0.0,
+    "time_scale": 1.225806,
+    "length_frames": 38,
+    "note": "uzunluk walk_fwd ile aynı, timeScale walk_fwd'ninki -> döngü süresi walk ile eşit (bugünkü kural)"
+   },
+   {
+    "slot": 1,
+    "motion": "BlendTree Walk8 (SimpleDirectional2D, MoveX/MoveY)",
+    "threshold_mps_template": 1.7161,
+    "threshold_mps_hero_est": 1.8268,
+    "children": [
+     {
+      "clip": "AP026_tp_walk_fwd",
+      "position": [
+       -0.0,
+       1.0
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_fwd_r",
+      "position": [
+       0.707114,
+       0.7071
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_right",
+      "position": [
+       1.0,
+       5e-06
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_back_r",
+      "position": [
+       0.707107,
+       -0.707107
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_back",
+      "position": [
+       0.000287,
+       -1.0
+      ],
+      "time_scale": 1.233333
+     },
+     {
+      "clip": "AP026_tp_walk_back_l",
+      "position": [
+       -0.707107,
+       -0.707106
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_left",
+      "position": [
+       -1.0,
+       -5e-06
+      ],
+      "time_scale": 1.225806
+     },
+     {
+      "clip": "AP026_tp_walk_fwd_l",
+      "position": [
+       -0.707107,
+       0.707107
+      ],
+      "time_scale": 1.225806
+     }
+    ]
+   },
+   {
+    "slot": 2,
+    "motion": "BlendTree Run8 (SimpleDirectional2D, MoveX/MoveY)",
+    "threshold_mps_template": 4.025,
+    "threshold_mps_hero_est": 4.2847,
+    "children": [
+     {
+      "clip": "AP026_tp_run_fwd",
+      "position": [
+       -0.0,
+       1.0
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_fwd_r",
+      "position": [
+       0.707107,
+       0.707107
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_right",
+      "position": [
+       1.0,
+       0.0
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_back_r",
+      "position": [
+       0.707107,
+       -0.707107
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_back",
+      "position": [
+       0.0,
+       -1.0
+      ],
+      "time_scale": 1.0625
+     },
+     {
+      "clip": "AP026_tp_run_back_l",
+      "position": [
+       -0.707107,
+       -0.707107
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_left",
+      "position": [
+       -1.0,
+       0.0
+      ],
+      "time_scale": 0.875
+     },
+     {
+      "clip": "AP026_tp_run_fwd_l",
+      "position": [
+       -0.707107,
+       0.707107
+      ],
+      "time_scale": 0.875
+     }
+    ]
+   },
+   {
+    "slot": 3,
+    "motion": "BlendTree Sprint8 (SimpleDirectional2D, MoveX/MoveY)",
+    "threshold_mps_template": 6.2,
+    "threshold_mps_hero_est": 6.6,
+    "children": [
+     {
+      "clip": "AP026_tp_sprint_fwd",
+      "position": [
+       0.0,
+       1.0
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_fwd_r",
+      "position": [
+       0.707107,
+       0.707106
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_right",
+      "position": [
+       1.0,
+       -1e-06
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_back_r",
+      "position": [
+       0.7071,
+       -0.707113
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_back",
+      "position": [
+       0.0,
+       -1.0
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_back_l",
+      "position": [
+       -0.707107,
+       -0.707106
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_left",
+      "position": [
+       -1.0,
+       0.0
+      ],
+      "time_scale": 1.0
+     },
+     {
+      "clip": "AP026_tp_sprint_fwd_l",
+      "position": [
+       -0.707107,
+       0.707107
+      ],
+      "time_scale": 1.0
+     }
+    ]
+   }
+  ]
+ },
+ "loco_rate": {
+  "min": 0.75,
+  "max": 1.2,
+  "source": "CadenceBand.Min/Max (main CadenceBand.cs:11-12)",
+  "formula": "LocoRate = clamp(v / v_honest, 0.75, 1.20); v_honest = Σ w_i·S_i / Σ w_i·T_i (S = stride_cycle_m_template·k, T = cycle_seconds_natural; stand: S=0, T=walk_fwd)"
+ },
+ "v4_gait_speeds_mps_template": {
+  "walk": 1.4,
+  "jog": "Infinity (R3'te kapalı)",
+  "run": 4.5288,
+  "sprint": 6.2,
+  "source": "start kliplerinin son kare hızı (virtual_motor) ortalaması; stop giriş hızları: {\"walk\": 1.3954, \"jog\": 2.6912, \"run\": 4.5135, \"sprint\": 6.1784}"
+ },
+ "motor": {
+  "MoveSpeed": 6.2,
+  "Acceleration": 45.0,
+  "Deceleration": 60.0,
+  "BackwardSpeedMultiplier": 0.85,
+  "source": "PlayerConfigSection.cs (main d738d0cb) :17,:23,:45,:59",
+  "start_full_speed_s": 0.1378,
+  "start_full_speed_m": 0.4271,
+  "stop_s": 0.1033,
+  "stop_m": 0.3203
+ },
+ "hip_hysteresis": {
+  "center_deg": 90.0,
+  "dead_band_deg": 10.0,
+  "hold_seconds": 0.15,
+  "flag": "öneri (PLAN §4.3), ölçümle ayarlanır"
+ },
+ "direction_smoothing_deg_per_s": {
+  "value": 750.0,
+  "derivation": "MoveSmoothing 0,12 s / 90° (PlayerSkinnedVisual.cs:110)",
+  "flag": "öneri"
+ },
+ "v4": {
+  "start_entry_seconds": 0.3,
+  "stop_entry_seconds": 0.1,
+  "start_exit_seconds": 0.1,
+  "stop_exit_seconds": 0.15,
+  "rate_cap": 3.0,
+  "flag": "öneri; 0,30 s AP-026 giriş sözleşmesi, diğerleri ölçülmedi"
+ },
+ "generator": "K/wp-082/data/gen_loco_tables.py",
+ "date": "2026-10-07",
+ "units": "metre (şablon), 30 fps",
+ "provenance": {
+  "canonical_index": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/hero-canonical-index-v002c.json",
+   "sha256": "cb4d98cdd991bdc42dce8b7e63c4e464f7dc295c194766f46d73c873847bd550"
+  },
+  "transition_events": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/anim-events-transition-v002c.json",
+   "sha256": "6d32650ddceb58326b1d0ee87faa85d361c5dbedc03c73eca50980a6874546fb"
+  },
+  "entry_blend": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/entry-blend-contract-v002c.json",
+   "sha256": "936a96c947f25b96d9948f446214361ee18379416fe4ef1214e9ff7d6c254598"
+  },
+  "transition_quality": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/hero-quality-metrics-v002c.csv",
+   "sha256": "587125b145bcbff4ccdc0d355972314aac1df675bbe8604e88d19066d515f4bd"
+  },
+  "loop_events": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/anim-events.json",
+   "sha256": "bac9d5128f6b4eaff93f05d926b4bc630437da5dc8c47b52cbe1858e81c532ab"
+  },
+  "loop_index": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/mixamo_hero_clip_index_v002.json",
+   "sha256": "1585498ec6c57c8d04b1d6151f2af6ac528199cdca4cfb03c06e91080c70f8b7"
+  },
+  "loop_quality": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/mixamo_hero_quality_v002.csv",
+   "sha256": "92182b421fe014d5037bf3eb0b872c3571df363b8ced02f5ff71454ad76cdc8a"
+  },
+  "mixamo_sources": {
+   "path": "K/asset-production/AP-026/validation/mixamo_sources_v002.json",
+   "sha256": "0d77a8805b55b1d234365ad76872d0e103b8e730bece3c57927f786a672e68c8"
+  },
+  "v4_contract_csv": {
+   "path": "K/asset-production/AP-026/exports/v002/AP026-locomotion-v4-contract.csv",
+   "sha256": "d29d151f936009966ccc94cffbac55a151556508f3da60a757e49ffad0bfd2e8"
+  },
+  "hero_bones": {
+   "path": "K/asset-production/AP-024/validation/hero_rig_final_clean_bones.json",
+   "sha256": "00c2decd0e0bbad8a4f052b627927433df7ffaeeb36621b9b5178a1c81de747d"
+  },
+  "template_bones": {
+   "path": "K/asset-production/AP-026/exports/v002/rig-template/AP026-rig-bones-v002.json",
+   "sha256": "e0faadcda08eb8f6e3478979a57b8c7e8db1460721e33d67c76259f91a247786"
+  }
+ },
+ "main_commit_code_refs": "d738d0cb (kod satırları; 77f46216 ile aynı dosyalar)",
+ "measured_in_unity": false
+}
