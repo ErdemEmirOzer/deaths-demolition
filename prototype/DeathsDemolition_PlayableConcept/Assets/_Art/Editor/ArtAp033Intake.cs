@@ -160,9 +160,9 @@ namespace DD.Art.Pipeline.EditorTools
         // BEGIN WP096 RESTDUMP READONLY — isolated opt-in; never calls the production intake path.
         [Serializable] private sealed class RestDumpPacket
         {
-            public string schema = "wp096-avatar-rest-readonly-v1", sourceCommit, unityVersion;
+            public string schema = "wp096-avatar-rest-root-reference-readonly-v2", sourceCommit, unityVersion;
             public string basis = "Unity HumanDescription T-pose local metres; quaternion xyzw; parent availability explicit";
-            public string scope = "Existing importer and loaded Avatar records only; no evaluated pose or bind/frame0 parity claim";
+            public string scope = "Existing importer and actual model-root Animator.avatar reference only; no all-subasset Avatar uniqueness or evaluated-pose/bind/frame0 parity claim";
             public bool complete;
             public string[] reasons;
             public int omittedReasons, requestedStreams = 4;
@@ -172,8 +172,11 @@ namespace DD.Art.Pipeline.EditorTools
         {
             public string role, assetPath, expectedGuid, actualAssetGuid, fbxSha256, metaSha256;
             public string avatarName, avatarGuid, avatarLocalFileIdR;
-            public bool avatarIdentityAvailable, avatarHuman, avatarValid;
-            public int loadedSubAssetCount, avatarCount, avatarInstanceId;
+            public string rootName, rootGuid, rootLocalFileIdR;
+            public string avatarSelection = "actual model-root Animator.avatar reference; no all-subasset uniqueness claim";
+            public bool rootObjectAvailable, rootIdentityAvailable, rootAnimatorCountMeasured, rootAnimatorReferenceAvailable;
+            public bool avatarReferenceAvailable, avatarStatusMeasured, avatarIdentityAvailable, avatarHuman, avatarValid;
+            public int rootInstanceId, rootAnimatorCount, rootAnimatorInstanceId, avatarInstanceId;
             public RestDumpDescription importer, loadedAvatar;
             public RestDumpDependency[] dependencies;
         }
@@ -247,9 +250,9 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>Separate readonly dump. SOURCE candidate only until ROOT intake and engine grant.</summary>
-        public static void DumpRunnerBodyAvatarRestReadonly()
+        public static void DumpRunnerBodyAvatarRestReadonlyV002()
         {
-            const string output = "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/wp-096/evidence/runner-avatar-rest-readonly-0810-v001-raw";
+            const string output = "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/wp-096/evidence/runner-avatar-root-reference-readonly-0910-v002-raw";
             string directory = Environment.GetEnvironmentVariable("DD_WP096_AVATAR_REST_DUMP_DIR");
             string source = Environment.GetEnvironmentVariable("DD_R2_COMMIT");
             if (Environment.GetEnvironmentVariable("DD_WP096_AVATAR_REST_DUMP") != "1"
@@ -292,21 +295,8 @@ namespace DD.Art.Pipeline.EditorTools
             var importer = AssetImporter.GetAtPath(target.assetPath) as ModelImporter;
             if (importer == null) { ctx.Fail(target.role + ":importer-unavailable"); return; }
             target.importer = RestDumpReadDescription(importer.humanDescription, target.role + "Importer", ctx);
-            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(target.assetPath);
-            target.loadedSubAssetCount = assets == null ? 0 : assets.Length;
-            if (assets == null || assets.Length > 32) { ctx.Fail(target.role + ":loaded-subasset-unavailable-or-cap32"); return; }
-            Avatar avatar = null;
-            foreach (UnityEngine.Object asset in assets)
-                if (asset is Avatar found) { target.avatarCount++; avatar = found; }
-            if (target.avatarCount != 1 || avatar == null) { ctx.Fail(target.role + ":expected-exactly-one-loaded-avatar"); return; }
-            ctx.Check();
-            target.avatarName = RestDumpText(avatar.name, ctx);
-            target.avatarHuman = avatar.isHuman; target.avatarValid = avatar.isValid; target.avatarInstanceId = avatar.GetInstanceID();
-            target.avatarIdentityAvailable = AssetDatabase.TryGetGUIDAndLocalFileIdentifier(avatar, out string guid, out long localId);
-            target.avatarGuid = guid; target.avatarLocalFileIdR = localId.ToString(CultureInfo.InvariantCulture);
-            if (!target.avatarIdentityAvailable || guid != target.expectedGuid) ctx.Fail(target.role + ":loaded-avatar-identity-unavailable");
-            if (target.role == "Body" && localId != 9000000) ctx.Fail("Body:avatar-reference-localId-mismatch");
-            if (!target.avatarHuman || !target.avatarValid) { ctx.Fail(target.role + ":invalid-or-nonhuman-avatar"); return; }
+            Avatar avatar = RestDumpReadRootAvatar(target, ctx);
+            if (avatar == null) return;
             target.loadedAvatar = RestDumpReadDescription(avatar.humanDescription, target.role + "LoadedAvatar", ctx);
             string[] paths = AssetDatabase.GetDependencies(target.assetPath, false);
             if (paths == null) { ctx.Fail(target.role + ":direct-dependencies-unavailable"); return; }
@@ -332,6 +322,42 @@ namespace DD.Art.Pipeline.EditorTools
                 dependencies.Add(dep);
             }
             target.dependencies = dependencies.ToArray();
+        }
+        private static Avatar RestDumpReadRootAvatar(RestDumpTarget target, RestDumpContext ctx)
+        {
+            ctx.Check();
+            GameObject root = AssetDatabase.LoadAssetAtPath<GameObject>(target.assetPath);
+            target.rootObjectAvailable = root != null;
+            if (root == null) { ctx.Fail(target.role + ":model-root-unavailable"); return null; }
+            target.rootName = RestDumpText(root.name, ctx); target.rootInstanceId = root.GetInstanceID();
+            target.rootIdentityAvailable = AssetDatabase.TryGetGUIDAndLocalFileIdentifier(root, out string rootGuid, out long rootLocalId);
+            target.rootGuid = rootGuid; target.rootLocalFileIdR = rootLocalId.ToString(CultureInfo.InvariantCulture);
+            if (!target.rootIdentityAvailable || rootGuid != target.expectedGuid)
+                { ctx.Fail(target.role + ":model-root-identity-unavailable-or-mismatch"); return null; }
+            ctx.Check();
+            Animator[] animators = root.GetComponents<Animator>();
+            target.rootAnimatorCountMeasured = animators != null;
+            target.rootAnimatorCount = animators == null ? 0 : animators.Length;
+            if (animators == null || animators.Length != 1)
+                { ctx.Fail(target.role + ":expected-exactly-one-root-animator"); return null; }
+            Animator animator = animators[0]; target.rootAnimatorReferenceAvailable = animator != null;
+            if (animator == null) { ctx.Fail(target.role + ":root-animator-reference-unavailable"); return null; }
+            target.rootAnimatorInstanceId = animator.GetInstanceID();
+            Avatar avatar = animator.avatar; target.avatarReferenceAvailable = avatar != null;
+            if (avatar == null) { ctx.Fail(target.role + ":root-animator-avatar-unavailable"); return null; }
+            ctx.Check();
+            target.avatarName = RestDumpText(avatar.name, ctx);
+            target.avatarHuman = avatar.isHuman; target.avatarValid = avatar.isValid; target.avatarStatusMeasured = true;
+            target.avatarInstanceId = avatar.GetInstanceID();
+            target.avatarIdentityAvailable = AssetDatabase.TryGetGUIDAndLocalFileIdentifier(avatar, out string guid, out long localId);
+            target.avatarGuid = guid; target.avatarLocalFileIdR = localId.ToString(CultureInfo.InvariantCulture);
+            if (!target.avatarIdentityAvailable || guid != target.expectedGuid)
+                { ctx.Fail(target.role + ":root-animator-avatar-identity-unavailable-or-mismatch"); return null; }
+            if (target.role == "Body" && localId != 9000000)
+                { ctx.Fail("Body:avatar-reference-localId-mismatch"); return null; }
+            if (!target.avatarHuman || !target.avatarValid)
+                { ctx.Fail(target.role + ":invalid-or-nonhuman-root-animator-avatar"); return null; }
+            return avatar;
         }
         private static RestDumpDescription RestDumpReadDescription(HumanDescription hd, string source, RestDumpContext ctx)
         {
