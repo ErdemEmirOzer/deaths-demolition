@@ -403,78 +403,13 @@ namespace DD.Prototype.Characters
             _traceForceAtEntry = Force;
             _traceBeforePair = _traceAfterPair = default;
             _traceGoalAfterPair = default;
-            if (TraceFootIkGoals) _traceGoalEntry = ReadGoalTraceReadback(_animator.GetIKPosition(AvatarIKGoal.LeftFoot), _animator.GetIKPosition(AvatarIKGoal.RightFoot));
+            if (TraceFootIkGoals) _traceGoalEntry = ReadGoalTraceReadback(AnimatedGoalLeft, AnimatedGoalRight);
         }
 
         private TraceLockState ReadTraceLockState(int foot) =>
             new TraceLockState(_locked[foot], _lockPos[foot], _lockWeight[foot], _releasePending[foot],
                 _plantPending, _zombiePlantPending, _lockThisFrame, _traceGateEvaluated, _servedThisFrame, _weight, true,
                 new TraceReleaseCounters(ReleasedByStretch, ReleasedByGate, ReleasedByLift, ReleasedByPlant, ReleasedByOffset));
-
-        private PairTraceState ReadTracePairState() =>
-            new PairTraceState(ReadTraceLockState(0), ReadTraceLockState(1), _pelvisOffset, _commonDelta);
-
-        private GoalTraceReadback ReadGoalTraceReadback(Vector3 left, Vector3 right) =>
-            new GoalTraceReadback(_animator.transform.rotation, left, right,
-                _animator.GetIKRotation(AvatarIKGoal.LeftFoot), _animator.GetIKRotation(AvatarIKGoal.RightFoot),
-                _animator.GetIKPositionWeight(AvatarIKGoal.LeftFoot), _animator.GetIKPositionWeight(AvatarIKGoal.RightFoot),
-                _animator.GetIKRotationWeight(AvatarIKGoal.LeftFoot), _animator.GetIKRotationWeight(AvatarIKGoal.RightFoot));
-
-        private void TracePairBefore()
-        {
-            if (TraceFootIkGoals) _traceBeforePair = ReadTracePairState();
-        }
-
-        private void TracePairAfter()
-        {
-            if (!TraceFootIkGoals) return;
-            _traceAfterPair = ReadTracePairState();
-            _traceGoalAfterPair = ReadGoalTraceReadback(_animator.GetIKPosition(AvatarIKGoal.LeftFoot), _animator.GetIKPosition(AvatarIKGoal.RightFoot));
-            _tracePairCaptured = true;
-        }
-
-        private void PublishGoalTrace(bool allowed, bool budget, GoalTraceOutcome outcome)
-        {
-            if (!TraceFootIkGoals) return;
-            _traceGoals = new GoalPassTraceSnapshot(_traceStamp, _traceForceAtEntry, allowed, budget, outcome, _traceGoalEntry,
-                _tracePairCaptured, _traceBeforePair, _traceAfterPair, _traceGoalAfterPair, ReadTracePairState());
-        }
-
-        private void PublishLockTrace(int foot, Vector3 animated, Vector3 target, TraceLockState before,
-            bool offEvaluated, Vector3 off, float offSquared, Vector3 returned, TraceLockBranches branches)
-        {
-            var snapshot = new LockTraceSnapshot(_traceStamp, foot, animated, target, before, ReadTraceLockState(foot),
-                offEvaluated, off, offSquared, returned, branches);
-            if (foot == 0) _traceLockLeft = snapshot;
-            else _traceLockRight = snapshot;
-        }
-
-
-        private void ClearTraceSnapshots()
-        {
-            _traceLockLeft = _traceLockRight = default;
-            _traceGoals = default;
-            _traceStamp = default;
-        }
-
-        private void BeginTracePass(int layerIndex)
-        {
-            if (!TraceZombieLock && !TraceFootIkGoals) return;
-            unchecked { _tracePassSequence++; }
-            _traceStamp = new TracePassStamp(Time.frameCount, layerIndex, _tracePassSequence);
-            _traceLockLeft = _traceLockRight = default;
-            _traceGoals = default;
-            _traceGateEvaluated = _tracePairCaptured = false;
-            _traceForceAtEntry = Force;
-            _traceBeforePair = _traceAfterPair = default;
-            _traceGoalAfterPair = default;
-            if (TraceFootIkGoals) _traceGoalEntry = ReadGoalTraceReadback(AnimatedGoalLeft, AnimatedGoalRight);
-        }
-
-        private TraceLockState ReadTraceLockState(int foot) =>
-            new TraceLockState(_locked[foot], _lockPos[foot], _lockWeight[foot], _releasePending[foot],
-                _plantPending, 0, _lockThisFrame, _traceGateEvaluated, _servedThisFrame, _weight, false,
-                new TraceReleaseCounters(ReleasedByStretch, ReleasedByGate, ReleasedByLift, ReleasedByPlant, 0));
 
         private PairTraceState ReadTracePairState() =>
             new PairTraceState(ReadTraceLockState(0), ReadTraceLockState(1), _pelvisOffset, _commonDelta);
