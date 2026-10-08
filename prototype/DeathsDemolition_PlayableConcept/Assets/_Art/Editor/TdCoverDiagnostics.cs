@@ -39,7 +39,189 @@ namespace DD.Art.Pipeline.EditorTools
                 throw new InvalidOperationException("Diagnostic preview contract missing");
         }
 
-        public void Dispose() => _previewScope.Dispose();
+        public void Dispose()
+        {
+            RenderPipelineManager.beginCameraRendering -= BeforeCamera;
+            RenderPipelineManager.endCameraRendering -= AfterCamera;
+            try { WriteJson("diagnostic-frames.json", new FrameRecords { frames = _frames.ToArray(), verifiedReplayRestores = _replayRestores, verifiedPoseRestores = _poseRestores }); }
+            finally { _previewScope.Dispose(); }
+        }
+
+        private Camera _observedCamera;
+        private SsaoEntropyBinding _entropyBinding;
+        private SsaoEntropy _bareEntropy;
+        private string _renderLabel;
+        private readonly List<FrameRecord> _frames = new List<FrameRecord>();
+        private FrameRecord _pendingFrame;
+        private int _replayRestores, _poseRestores;
+
+        // Called only by the opt-in entry point; baseline capture methods have no entropy hook.
+        public void Observe(Camera camera)
+        {
+            if (_observedCamera != null) throw new InvalidOperationException("UNKNOWN: diagnostic observer already bound");
+            _entropyBinding = new SsaoEntropyBinding(camera.GetUniversalAdditionalCameraData().scriptableRenderer);
+            _observedCamera = camera;
+            RenderPipelineManager.beginCameraRendering += BeforeCamera;
+            RenderPipelineManager.endCameraRendering += AfterCamera;
+        }
+
+        public void Label(string label) => _renderLabel = label;
+        public void MarkBareEntropy() => _bareEntropy = _entropyBinding.Snapshot();
+
+        [Serializable] private sealed class FrameState
+        {
+            public int frame, randomStateHash, noiseIndex;
+            public float realtime, noiseOffsetX, noiseOffsetY;
+            public Vector4 shaderTime, shaderTimeParameters, wind, vegWave;
+            public bool materialInitialized, materialPersistent;
+            public int materialInstanceId;
+        }
+        [Serializable] private sealed class FrameRecord
+        {
+            public string label;
+            public FrameState before, after;
+        }
+        [Serializable] private sealed class FrameRecords
+        {
+            public string randomHashLimit = "Opaque Random.State GetHashCode is a diagnostic fingerprint; restoration uses full State.Equals.";
+            public FrameRecord[] frames;
+            public int verifiedReplayRestores, verifiedPoseRestores;
+        }
+
+        private FrameState FrameStateNow() => new FrameState
+        {
+            frame = Time.frameCount, realtime = Time.realtimeSinceStartup,
+            randomStateHash = UnityEngine.Random.state.GetHashCode(),
+            noiseIndex = _entropyBinding.Index, noiseOffsetX = _entropyBinding.OffsetX,
+            noiseOffsetY = _entropyBinding.OffsetY, materialInitialized = _entropyBinding.MaterialReady,
+            materialPersistent = _entropyBinding.MaterialPersistent, materialInstanceId = _entropyBinding.MaterialInstanceId,
+            shaderTime = Shader.GetGlobalVector("_Time"), shaderTimeParameters = Shader.GetGlobalVector("_TimeParameters"),
+            wind = Shader.GetGlobalVector("_DD_WindVector"), vegWave = Shader.GetGlobalVector("_DD_VegWaveW"),
+        };
+        private void BeforeCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera == _observedCamera)
+                _pendingFrame = new FrameRecord { label = _renderLabel, before = FrameStateNow() };
+        }
+        private void AfterCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera != _observedCamera || _pendingFrame == null) return;
+            _pendingFrame.after = FrameStateNow();
+            _frames.Add(_pendingFrame);
+            _pendingFrame = null;
+        }
+
+        // Pinned URP14.0.10 exact types. No Create/Dispose, settings, asset, cache or feature-list mutation here.
+        private sealed class SsaoEntropyBinding
+        {
+            private readonly ScriptableRendererFeature _feature;
+            private readonly object _pass;
+            private readonly FieldInfo _index, _x, _y, _passMaterial, _featureMaterial;
+            public int Index => (int)_index.GetValue(_pass);
+            public float OffsetX => (float)_x.GetValue(_pass);
+            public float OffsetY => (float)_y.GetValue(_pass);
+            public bool MaterialReady => _passMaterial.GetValue(_pass) is Material;
+            public bool MaterialPersistent => _passMaterial.GetValue(_pass) is Material material && UnityEditor.AssetDatabase.Contains(material);
+            public int MaterialInstanceId => (_passMaterial.GetValue(_pass) as Material)?.GetInstanceID() ?? 0;
+
+            public SsaoEntropyBinding(ScriptableRenderer renderer)
+            {
+                Assembly assembly = typeof(UniversalRenderPipelineAsset).Assembly;
+                Type featureType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion", true);
+                Type passType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion+ScreenSpaceAmbientOcclusionPass", true);
+                Type settingsType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusionSettings", true);
+                Type methodType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusionSettings+AOMethodOptions", true);
+                PropertyInfo list = typeof(ScriptableRenderer).GetProperty("rendererFeatures", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (list == null || list.PropertyType != typeof(List<ScriptableRendererFeature>))
+                    throw new InvalidOperationException("UNKNOWN: URP14 live rendererFeatures API differs");
+                foreach (ScriptableRendererFeature feature in (List<ScriptableRendererFeature>)list.GetValue(renderer))
+                {
+                    if (feature == null || !feature.isActive || feature.GetType() != featureType) continue;
+                    if (_feature != null) throw new InvalidOperationException("UNKNOWN: multiple active SSAO features");
+                    _feature = feature;
+                }
+                if (_feature == null) throw new InvalidOperationException("UNKNOWN: exact active URP14 SSAO feature missing");
+                object settings = ExactField(featureType, "m_Settings", settingsType).GetValue(_feature);
+                object method = ExactField(settingsType, "AOMethod", methodType).GetValue(settings);
+                if (!methodType.IsEnum || Convert.ToInt32(method) != 0)
+                    throw new InvalidOperationException("UNKNOWN: runtime SSAO is not pinned BlueNoise method");
+                _pass = ExactField(featureType, "m_SSAOPass", passType).GetValue(_feature);
+                if (_pass == null || _pass.GetType() != passType) throw new InvalidOperationException("UNKNOWN: SSAO runtime pass missing");
+                _index = ExactField(passType, "m_BlueNoiseTextureIndex", typeof(int));
+                _x = ExactField(passType, "m_BlurRandomOffsetX", typeof(float));
+                _y = ExactField(passType, "m_BlurRandomOffsetY", typeof(float));
+                _passMaterial = ExactField(passType, "m_Material", typeof(Material));
+                _featureMaterial = ExactField(featureType, "m_Material", typeof(Material));
+            }
+
+            private static FieldInfo ExactField(Type type, string name, Type expected)
+            {
+                FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (field == null || field.FieldType != expected)
+                    throw new InvalidOperationException("UNKNOWN: pinned SSAO field differs: " + type.FullName + "." + name);
+                return field;
+            }
+
+            private Material RuntimeMaterial()
+            {
+                Material material = _passMaterial.GetValue(_pass) as Material;
+                if (material == null || material != (_featureMaterial.GetValue(_feature) as Material) ||
+                    UnityEditor.AssetDatabase.Contains(material) || material.shader == null ||
+                    material.shader.name != "Hidden/Universal Render Pipeline/ScreenSpaceAmbientOcclusion")
+                    throw new InvalidOperationException("UNKNOWN: SSAO material is missing, changed, persistent or unsupported");
+                return material;
+            }
+
+            public SsaoEntropy Snapshot()
+            {
+                Material material = RuntimeMaterial();
+                Texture noise = material.GetTexture("_BlueNoiseTexture");
+                if (!(noise is Texture2D))
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO BlueNoise property is not Texture2D");
+                return new SsaoEntropy(this, UnityEngine.Random.state, Index, OffsetX, OffsetY, material,
+                    noise, material.GetVector("_SSAOBlueNoiseParams"));
+            }
+
+            public void Restore(SsaoEntropy state)
+            {
+                Material material = RuntimeMaterial();
+                if (material != state.Material) throw new InvalidOperationException("UNKNOWN: SSAO runtime material identity changed");
+                _index.SetValue(_pass, state.Index);
+                _x.SetValue(_pass, state.X);
+                _y.SetValue(_pass, state.Y);
+                material.SetTexture("_BlueNoiseTexture", state.Noise);
+                material.SetVector("_SSAOBlueNoiseParams", state.Parameters);
+                UnityEngine.Random.state = state.Random;
+                if (Index != state.Index || OffsetX != state.X || OffsetY != state.Y ||
+                    material.GetTexture("_BlueNoiseTexture") != state.Noise ||
+                    !material.GetVector("_SSAOBlueNoiseParams").Equals(state.Parameters) ||
+                    !UnityEngine.Random.state.Equals(state.Random) || UnityEditor.AssetDatabase.Contains(material))
+                    throw new InvalidOperationException("UNKNOWN: SSAO/RNG entropy restoration failed");
+            }
+        }
+
+        private sealed class SsaoEntropy
+        {
+            private readonly SsaoEntropyBinding _binding;
+            public readonly UnityEngine.Random.State Random;
+            public readonly int Index;
+            public readonly float X, Y;
+            public readonly Material Material;
+            public readonly Texture Noise;
+            public readonly Vector4 Parameters;
+            public SsaoEntropy(SsaoEntropyBinding binding, UnityEngine.Random.State random, int index,
+                float x, float y, Material material, Texture noise, Vector4 parameters)
+            { _binding = binding; Random = random; Index = index; X = x; Y = y; Material = material; Noise = noise; Parameters = parameters; }
+            public void Restore() => _binding.Restore(this);
+        }
+
+        private float[] ReplayDepth(SsaoEntropy replay, Camera camera, TdCoverDepthFeature feature, string label, bool rgb = false)
+        {
+            SsaoEntropy before = _entropyBinding.Snapshot();
+            try { replay.Restore(); Label(label); return ReadDepth(camera, feature, label, rgb); }
+            finally { before.Restore(); _replayRestores++; }
+        }
+
 
         [Serializable] private sealed class ArrayRecord
         {
@@ -172,7 +354,9 @@ namespace DD.Art.Pipeline.EditorTools
             public string registration = "PNG and RFloat readback use ReadPixels lower-left origin. GPU projection is renderIntoTexture=true. Verify point registration before interpreting pixels.";
             public string limits = "Raw non-linear depth; CopyDepth resolves MSAA to farthest sample. ZWriteOff/transparent color, shadows and subpixel coverage cannot be identified from depth alone. No ForceLOD, material override, wind freeze or replacement draw.";
             public string sourceDepth;
-            public int fullRgbChanged, bareRgbChanged;
+            public int fullRgbChanged, bareRgbChanged, bareMaskMembershipChanged;
+            public bool runtimeEntropyReplayed;
+            public string entropyRestoreEvidence = "Per-render finally restore is verified; outer restore failure throws UNKNOWN. diagnostic-frames.json records all requested camera renders.";
             public ProbeRecord feetGridProbe;
             public RendererRecord[] renderers;
             public HitRecord[] groundRayHits;
@@ -181,6 +365,9 @@ namespace DD.Art.Pipeline.EditorTools
         public void Capture(Camera cam, string name, Vector2 feet, Vector3 ground)
         {
             DumpGrid();
+            if (_entropyBinding == null || _bareEntropy == null)
+                throw new InvalidOperationException("UNKNOWN: original bare entropy snapshot missing");
+            SsaoEntropy entryEntropy = _entropyBinding.Snapshot();
             Renderer[] renderers = Object.FindObjectsOfType<Renderer>();
             var records = new RendererRecord[renderers.Length];
             var off = new bool[renderers.Length];
@@ -237,31 +424,34 @@ namespace DD.Art.Pipeline.EditorTools
                 cam.clearFlags = CameraClearFlags.SolidColor;
                 cam.backgroundColor = Color.black;
                 data.renderPostProcessing = false;
+                SsaoEntropy fullEntropy = _entropyBinding.Snapshot();
+                Label(name + "-full-original-source");
                 Color32[] originalFull = ReadOriginalRgb(cam);
                 SaveIds(originalFull, Path.Combine(_dir, name + "-full-original-source.png"));
                 live.Add(feature);
-                float[] full = ReadDepth(cam, feature, name + "-depth-full", true);
+                float[] full = ReplayDepth(fullEntropy, cam, feature, name + "-depth-full", true);
                 Color32[] fullRgb = _lastRgb;
                 int fullRgbChanged = Changed(originalFull, fullRgb);
                 for (int i = 0; i < renderers.Length; i++)
                     renderers[i].forceRenderingOff = off[i] || MetricHidden(renderers[i].sharedMaterial);
-                float[] bare = ReadDepth(cam, feature, name + "-depth-bare", true);
+                float[] bare = ReplayDepth(_bareEntropy, cam, feature, name + "-depth-bare", true);
                 Color32[] originalBare = LoadRgb(Path.Combine(_dir, name + "-bare-source.png"));
                 int bareRgbChanged = Changed(originalBare, _lastRgb);
+                int bareMembershipChanged = ChangedMembership(originalBare, _lastRgb);
                 var isolated = new float[6][];
                 for (int category = 1; category <= 6; category++)
                 {
                     for (int i = 0; i < renderers.Length; i++)
                         renderers[i].forceRenderingOff = off[i] || records[i].category != category;
                     _draw.SetValue(null, draw && category == 4);
-                    isolated[category - 1] = ReadDepth(cam, feature, name + "-depth-category-" + category);
+                    isolated[category - 1] = ReplayDepth(fullEntropy, cam, feature, name + "-depth-category-" + category);
                 }
                 for (int i = 0; i < renderers.Length; i++) renderers[i].forceRenderingOff = off[i];
                 _draw.SetValue(null, draw);
-                float[] fullAgain = ReadDepth(cam, feature, name + "-depth-full-repeat");
+                float[] fullAgain = ReplayDepth(fullEntropy, cam, feature, name + "-depth-full-repeat");
                 for (int i = 0; i < renderers.Length; i++)
                     renderers[i].forceRenderingOff = off[i] || MetricHidden(renderers[i].sharedMaterial);
-                float[] bareAgain = ReadDepth(cam, feature, name + "-depth-bare-repeat");
+                float[] bareAgain = ReplayDepth(_bareEntropy, cam, feature, name + "-depth-bare-repeat");
                 var ids = new Color32[W * H];
                 var counts = new int[256];
                 int fullChanged = 0, bareChanged = 0;
@@ -306,7 +496,8 @@ namespace DD.Art.Pipeline.EditorTools
                     fullRepeatChanged = fullChanged, bareRepeatChanged = bareChanged, fullCategoryPixels = counts,
                     renderers = records, groundRayHits = hitRows, copiedFrames = feature.CopiedFrames,
                     sourceDepth = feature.SourceDescription, featureListRestored = restored,
-                    fullRgbChanged = fullRgbChanged, bareRgbChanged = bareRgbChanged, feetGridProbe = Probe(feet) });
+                    fullRgbChanged = fullRgbChanged, bareRgbChanged = bareRgbChanged, feetGridProbe = Probe(feet),
+                    bareMaskMembershipChanged = bareMembershipChanged, runtimeEntropyReplayed = true });
                 if (!restored) throw new InvalidOperationException("Diagnostic renderer feature-list restoration failed");
             }
             finally
@@ -322,6 +513,9 @@ namespace DD.Art.Pipeline.EditorTools
                     if (keywordStates[i]) Shader.EnableKeyword(depthKeywords[i]); else Shader.DisableKeyword(depthKeywords[i]);
                 feature.Dispose();
                 Object.DestroyImmediate(feature);
+                entryEntropy.Restore();
+                _poseRestores++;
+                _bareEntropy = null;
                 if (!SameList(live, original)) throw new InvalidOperationException("Diagnostic feature-list drift");
             }
         }
@@ -419,6 +613,14 @@ namespace DD.Art.Pipeline.EditorTools
             finally { Object.DestroyImmediate(texture); }
         }
         private static bool SameRgb(Color32 a, Color32 b) => a.r == b.r && a.g == b.g && a.b == b.b;
+        private static int ChangedMembership(Color32[] a, Color32[] b)
+        {
+            if (a.Length != b.Length) throw new InvalidOperationException("UNKNOWN: metric registration sizes differ");
+            int changed = 0;
+            for (int i = 0; i < a.Length; i++)
+                if ((a[i].r + a[i].g + a[i].b <= 6) != (b[i].r + b[i].g + b[i].b <= 6)) changed++;
+            return changed;
+        }
         private static int Changed(Color32[] a, Color32[] b)
         {
             if (a.Length != b.Length) throw new InvalidOperationException("RGB registration sizes differ");

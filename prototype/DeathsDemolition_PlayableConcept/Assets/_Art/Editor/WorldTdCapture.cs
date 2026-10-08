@@ -60,6 +60,7 @@ namespace DD.Art.Pipeline.EditorTools
             using (var diagnostics = new TdCoverDiagnostics(dir))
                 WithLook(cam =>
                 {
+                    diagnostics.Observe(cam);
                     foreach ((string name, Vector2 feet) in Poses)
                     {
                         if (name != "td2-palace" && name != "td7-corner-sw") continue;
@@ -68,7 +69,10 @@ namespace DD.Art.Pipeline.EditorTools
                         cam.orthographic = false;
                         cam.fieldOfView = RigFov;
                         cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
+                        diagnostics.Label(name + "-beauty-original");
                         Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
+                        diagnostics.MarkBareEntropy();
+                        diagnostics.Label(name + "-bare-original");
                         float bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
                         File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare) + "}");
                         diagnostics.Capture(cam, name, feet, ground);
