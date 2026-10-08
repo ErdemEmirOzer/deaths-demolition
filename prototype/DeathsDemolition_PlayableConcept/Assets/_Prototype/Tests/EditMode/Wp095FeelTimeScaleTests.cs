@@ -591,6 +591,43 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(project, Time.fixedDeltaTime, 0f, "the project's Fixed Timestep is never written outside play mode");
         }
 
+        /// <summary>gt-f2 MUST-1: in first / third person the death beat still drives the clock, the physics step stays at the base.</summary>
+        [Test]
+        public void FizikAdimi_IlkUcuncuSahis_OlumVurusundaDegismez()
+        {
+            const float baseFixed = 0.02f;
+            float project = Time.fixedDeltaTime;
+            FeelTimeScale.TestFixedSink = true;
+            FeelTimeScale.TestFixedValue = baseFixed;
+            try
+            {
+                foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson })
+                {
+                    CameraModeService.Request(mode, instant: true);
+                    Assert.AreEqual(mode, CameraModeService.Current);
+                    Assert.IsTrue(DeathSequence.Begin(0.5f, 0.1f, 0.3f, 0.1f), mode + " beat");
+                    float smallest = baseFixed;
+                    for (int i = 0; i < 120 && DeathSequence.IsActive; i++)
+                    {
+                        DeathSequence.Tick(Dt);
+                        FeelTimeScale.Advance(Dt);
+                        smallest = Mathf.Min(smallest, FeelTimeScale.TestFixedValue);
+                    }
+
+                    Assert.Less(Time.timeScale, 1.01f);
+                    Assert.AreEqual(baseFixed, smallest, 0f, mode + ": the step never moved during the beat (user: top-down only)");
+                    Assert.AreEqual(baseFixed, FeelTimeScale.TestFixedValue, 0f, mode + ": the step after the beat");
+                }
+            }
+            finally
+            {
+                FeelTimeScale.TestFixedSink = false;
+                CameraModeService.ResetForTests();
+            }
+
+            Assert.AreEqual(project, Time.fixedDeltaTime, 0f, "the project's Fixed Timestep untouched");
+        }
+
         [Test]
         public void Olum_Kazanir_TopDownSlotlariBiter_YeniIstekReddedilir()
         {

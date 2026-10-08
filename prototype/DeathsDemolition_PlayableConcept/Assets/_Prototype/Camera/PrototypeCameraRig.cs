@@ -1488,7 +1488,8 @@ namespace DD.Prototype.CameraSystem
             {
                 Vector3 toKill = FeelTimeScale.LastZombiePosition - _focus;
                 toKill.y = 0f;
-                toKill = Vector3.ClampMagnitude(toKill * (profile.lastZombieFocusBlend * FeelTimeScale.LastZombieBlend01), profile.lookAheadTotalCapMeters);
+                // gt-f2 S4: ≤ lastZombieFocusMaxMeters (1 m ≈ 71 px) — the picture under the cursor and the aim point stay close
+                toKill = Vector3.ClampMagnitude(toKill * (profile.lastZombieFocusBlend * FeelTimeScale.LastZombieBlend01), profile.lastZombieFocusMaxMeters);
                 focusShift = Quaternion.Inverse(_fixedRotation) * toKill;
             }
 
