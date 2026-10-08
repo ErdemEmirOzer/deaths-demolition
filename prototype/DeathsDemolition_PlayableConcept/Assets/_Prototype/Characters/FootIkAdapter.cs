@@ -63,8 +63,6 @@ namespace DD.Prototype.Characters
         public float LegLength => _legLength;
         public float LastReleaseRatio { get; private set; }
         private readonly bool[] _releasePending = new bool[2];
-        private readonly float[] _gapThisFrame = new float[2];
-        private readonly Vector3[] _targetThisFrame = new Vector3[2];
         private float _legLength;
         private bool _lockThisFrame;
         private static int s_locked;
@@ -220,16 +218,7 @@ namespace DD.Prototype.Characters
             }
 
             float footHeight = _animator.leftFeetBottomHeight;
-            float leftDelta, rightDelta;
-            if (PreserveSwingLift)
-            {
-                SolvePair(footHeight, k, out leftDelta, out rightDelta);
-            }
-            else
-            {
-                Solve(AvatarIKGoal.LeftFoot, footHeight, out leftDelta);
-                Solve(AvatarIKGoal.RightFoot, footHeight, out rightDelta);
-            }
+            SolvePair(footHeight, k, out float leftDelta, out float rightDelta);
             _leftLift = leftDelta;
             _rightLift = rightDelta;
 
@@ -254,26 +243,6 @@ namespace DD.Prototype.Characters
         {
             float gap = animated.y - groundFootY;
             if (foot == 0) LastHeightGap = gap;
-            // event-driven stance: a plant event locks the LOWER foot at its landing point and frees the other (the stance
-            // window "own contact → the other foot's contact", as the AP-009 slip gates define it); foot_*_off frees one foot.
-            if (_plantPending == 1 && foot == 1)
-            {
-                // both feet solved this frame: decide which one landed
-                int lower = _gapThisFrame[0] <= gap ? 0 : 1;
-                if (_lockThisFrame)
-                {
-                    _locked[lower] = true;
-                    _lockPos[lower] = lower == 1 ? target : _targetThisFrame[0];
-                    Transform lockHip = _animator.GetBoneTransform(lower == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
-                    _lockReach[lower] = lockHip != null ? Vector3.Distance(lockHip.position, _lockPos[lower]) : 0f;   // same metric as the release
-                }
-
-                if (_locked[1 - lower]) ReleasedByPlant++;
-                _locked[1 - lower] = false;
-                _plantPending = 0;
-            }
-
-            if (foot == 0) { _gapThisFrame[0] = gap; _targetThisFrame[0] = target; }
             if (_releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
             if (!_lockThisFrame) { if (_locked[foot]) ReleasedByGate++; _locked[foot] = false; }
             if (_locked[foot] && _legLength > 0f)
@@ -307,9 +276,31 @@ namespace DD.Prototype.Characters
         public void NotifyLift(int foot) => _releasePending[foot] = true;
 
         /// <summary>
-        /// WP-096 PreserveSwingLift solve: both feet raycast first, the correction that grounds the lower sole is shared by both
-        /// (eased with the weight response) plus each foot's ground height over the lower foot's ground, so the swing foot keeps
-        /// its animated lift, a step still lifts the foot above it, and a flight phase is left alone.
+        /// Resolve a plant only after BOTH ground targets are ready, before either foot's IK target is written.
+        /// The previous per-foot solve applied the left target before the right solve selected the landing foot,
+        /// so a left plant / release took effect one frame later than a right plant / release.
+        /// </summary>
+        private void ApplyPendingPlant(float gapL, float gapR, Vector3 targetL, Vector3 targetR)
+        {
+            if (_plantPending != 1) return;
+            int lower = gapL <= gapR ? 0 : 1;
+            // A blend's delayed duplicate must not move an already held foot to a fresh world point at full lock weight.
+            if (_lockThisFrame && !_locked[lower])
+            {
+                _locked[lower] = true;
+                _lockPos[lower] = lower == 0 ? targetL : targetR;
+                Transform lockHip = _animator.GetBoneTransform(lower == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
+                _lockReach[lower] = lockHip != null ? Vector3.Distance(lockHip.position, _lockPos[lower]) : 0f;
+            }
+
+            if (_locked[1 - lower]) ReleasedByPlant++;
+            _locked[1 - lower] = false;
+            _plantPending = 0;
+        }
+
+        /// <summary>
+        /// Both feet raycast and prepare their targets before a plant is resolved. PreserveSwingLift keeps the existing
+        /// common eased correction plus each foot's terrain offset; the other path keeps its independent ground drop.
         /// </summary>
         private void SolvePair(float footHeight, float k, out float leftDelta, out float rightDelta)
         {
@@ -320,62 +311,44 @@ namespace DD.Prototype.Characters
             bool hitR = Physics.Raycast(animatedR + Vector3.up * RayUp, Vector3.down, out RaycastHit groundR, RayUp + RayDown, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore);
             float gapL = hitL ? animatedL.y - (groundL.point.y + footHeight) : float.MaxValue;
             float gapR = hitR ? animatedR.y - (groundR.point.y + footHeight) : float.MaxValue;
-            float lower = Mathf.Min(gapL, gapR);
-            float want = !hitL && !hitR || lower > SwingFlightGap ? 0f : Mathf.Clamp(-lower, -MaxCorrection, MaxCorrection);
-            _commonDelta = Mathf.Lerp(_commonDelta, want, k);
-            // each foot also follows its own ground relative to the lower foot's (a step under one foot lifts that foot by the
-            // step, on the flat the term is 0 and the swing keeps its animated lift)
-            float reference = gapL <= gapR ? groundL.point.y : groundR.point.y;
-            ApplyFoot(AvatarIKGoal.LeftFoot, 0, animatedL, hitL, groundL, footHeight, hitL ? groundL.point.y - reference : 0f, out leftDelta);
-            ApplyFoot(AvatarIKGoal.RightFoot, 1, animatedR, hitR, groundR, footHeight, hitR ? groundR.point.y - reference : 0f, out rightDelta);
+            if (PreserveSwingLift)
+            {
+                float lower = Mathf.Min(gapL, gapR);
+                float want = !hitL && !hitR || lower > SwingFlightGap ? 0f : Mathf.Clamp(-lower, -MaxCorrection, MaxCorrection);
+                _commonDelta = Mathf.Lerp(_commonDelta, want, k);
+                // Preserve the animated swing lift and the existing per-foot terrain offset.
+                float reference = gapL <= gapR ? groundL.point.y : groundR.point.y;
+                leftDelta = hitL ? Mathf.Clamp(_commonDelta + (groundL.point.y - reference), -MaxCorrection, MaxCorrection) : 0f;
+                rightDelta = hitR ? Mathf.Clamp(_commonDelta + (groundR.point.y - reference), -MaxCorrection, MaxCorrection) : 0f;
+            }
+            else
+            {
+                leftDelta = hitL ? Mathf.Clamp(-gapL, -MaxCorrection, MaxCorrection) : 0f;
+                rightDelta = hitR ? Mathf.Clamp(-gapR, -MaxCorrection, MaxCorrection) : 0f;
+            }
+
+            Vector3 targetL = animatedL + Vector3.up * leftDelta;
+            Vector3 targetR = animatedR + Vector3.up * rightDelta;
+            if (hitL || hitR) ApplyPendingPlant(gapL, gapR, targetL, targetR);
+            ApplyFoot(AvatarIKGoal.LeftFoot, 0, animatedL, targetL, hitL, groundL, footHeight);
+            ApplyFoot(AvatarIKGoal.RightFoot, 1, animatedR, targetR, hitR, groundR, footHeight);
         }
 
-        private void ApplyFoot(AvatarIKGoal goal, int foot, Vector3 animated, bool hit, in RaycastHit ground, float footHeight, float terrain, out float delta)
+        private void ApplyFoot(AvatarIKGoal goal, int foot, Vector3 animated, Vector3 target, bool hit, in RaycastHit ground, float footHeight)
         {
             if (!hit)
             {
-                delta = 0f;
                 _animator.SetIKPositionWeight(goal, 0f);
                 _animator.SetIKRotationWeight(goal, 0f);
                 return;
             }
 
-            delta = Mathf.Clamp(_commonDelta + terrain, -MaxCorrection, MaxCorrection);
-            Vector3 target = animated;
-            target.y = animated.y + delta;
             target = Lock(foot, animated, target, ground.point.y + footHeight);
             _animator.SetIKPositionWeight(goal, _weight);
             _animator.SetIKPosition(goal, target);
             Quaternion tilt = Quaternion.FromToRotation(Vector3.up, ground.normal);
             _animator.SetIKRotationWeight(goal, _weight * _rotationWeight);
             _animator.SetIKRotation(goal, tilt * _animator.GetIKRotation(goal));
-        }
-
-        private void Solve(AvatarIKGoal goal, float footHeight, out float delta)
-        {
-            Vector3 animated = _animator.GetIKPosition(goal);
-            Vector3 origin = animated + Vector3.up * RayUp;
-            delta = 0f;
-            s_raycasts++;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, RayUp + RayDown, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore))
-            {
-                float targetY = hit.point.y + footHeight;
-                delta = Mathf.Clamp(targetY - animated.y, -MaxCorrection, MaxCorrection);
-                Vector3 target = animated;
-                target.y = animated.y + delta;
-                target = Lock(goal == AvatarIKGoal.LeftFoot ? 0 : 1, animated, target, targetY);
-                _animator.SetIKPositionWeight(goal, _weight);
-                _animator.SetIKPosition(goal, target);
-                Quaternion animatedRot = _animator.GetIKRotation(goal);
-                Quaternion tilt = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                _animator.SetIKRotationWeight(goal, _weight * _rotationWeight);
-                _animator.SetIKRotation(goal, tilt * animatedRot);
-            }
-            else
-            {
-                _animator.SetIKPositionWeight(goal, 0f);
-                _animator.SetIKRotationWeight(goal, 0f);
-            }
         }
     }
 }
