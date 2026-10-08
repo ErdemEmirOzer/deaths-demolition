@@ -419,6 +419,8 @@ namespace DD.Art.Tests.EditMode
             foreach (Component c in t.GetComponents<Component>())
             {
                 if (c == null || c is Transform) continue;
+                // the split's own bookkeeping: a committed (split) world opens merged with its loader on, the test's merge takes it off — not content
+                if (c is WorldFptpOnlyLoader) continue;
                 sb.Append(" [").Append(c.GetType().Name);
                 if (c is Collider col) sb.Append(col.enabled ? "+" : "-");
                 if (c is MeshRenderer mr)
@@ -428,7 +430,6 @@ namespace DD.Art.Tests.EditMode
                 }
 
                 if (c is MeshFilter mf) sb.Append(' ').Append(mf.sharedMesh != null ? mf.sharedMesh.name : "-");
-                if (c is WorldFptpOnlyLoader l) sb.Append(' ').Append(l.SceneName).Append(' ').Append(l.MovedUnits);
                 sb.Append(']');
             }
 

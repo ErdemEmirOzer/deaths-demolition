@@ -471,7 +471,8 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void Terrain_Sahne_ParcalarVeKutu()
         {
-            EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
+            // WP-092 A: the TD visibility split moves the never-seen outer chunks to World_FPTPOnly — the ground is whole in the merged world
+            WorldFptpSplit.OpenMerged();
             Transform box = GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform.Find("Ground");
             Assert.IsNotNull(box, "greybox Ground");
             Assert.IsNotNull(box.GetComponent<BoxCollider>(), "yürünen yüzey ve NavMesh kaynağı kutunun çarpıştırıcısı kalır");

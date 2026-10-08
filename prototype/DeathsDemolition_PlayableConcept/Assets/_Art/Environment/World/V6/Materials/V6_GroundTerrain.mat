@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: V6_GroundTerrain
+  m_Shader: {fileID: 4800000, guid: dc9db5224316345b2806f4167f2ed090, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _DirtMap:
+        m_Texture: {fileID: 2800000, guid: 02718924f07894ccc8f45b487909f1fa, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GravelMap:
+        m_Texture: {fileID: 2800000, guid: 9609163456c7b4ad69809016a8bb3508, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GravelNormal:
+        m_Texture: {fileID: 2800000, guid: 4cd74cf4b72834208bd6ffd860964774, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskA:
+        m_Texture: {fileID: 2800000, guid: d89a9d61dab914edba7acb322703b9bb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskB:
+        m_Texture: {fileID: 2800000, guid: 1e834a79aed1944b2aede0cdb7fcb64a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Moss2Map:
+        m_Texture: {fileID: 2800000, guid: b68508071f1c64f42b040d116c839975, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MossMap:
+        m_Texture: {fileID: 2800000, guid: e49e3d9a69fd64bfabacef6ed92e63a8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MossNormal:
+        m_Texture: {fileID: 2800000, guid: 2e5ebf25d02f9476585274028b39c765, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PebbleMap:
+        m_Texture: {fileID: 2800000, guid: 9609163456c7b4ad69809016a8bb3508, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PebbleNormal:
+        m_Texture: {fileID: 2800000, guid: 4cd74cf4b72834208bd6ffd860964774, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SoilMap:
+        m_Texture: {fileID: 2800000, guid: 2803111b7ea7a44f2af3e2782c59c7dd, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SoilNormal:
+        m_Texture: {fileID: 2800000, guid: f094d1a47e6db48ec9cb77a453de9bd1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BankDepth: 0.07
+    - _Cavity: 0.55
+    - _ClodScale: 0.22
+    - _ClodSlope: 0.45
+    - _Cull: 2
+    - _DebugView: 0
+    - _DirectSmoothnessCap: 0.85
+    - _DirectSpecMax: 0.25
+    - _DirtTile: 3.7
+    - _DirtValue: 0.66
+    - _EnvSpecMax: 1.2
+    - _GravelSaturation: 0.35
+    - _GravelTile: 0.42
+    - _GravelValue: 0.5
+    - _HeightBlend: 0.9
+    - _HollowAO: 0.18
+    - _LeafCover: 0.55
+    - _LeafMute: 0.3
+    - _LeafScale: 0.09
+    - _MaskTexel: 0.08300781
+    - _Moss2Tile: 4.3
+    - _Moss2Value: 1.9
+    - _MossCover: 0.12
+    - _MossSaturation: 0.82
+    - _MossTile: 3.4
+    - _MossValue: 4
+    - _NormalStrength: 1.25
+    - _PatchScale: 4.6
+    - _PebbleTile: 1.1
+    - _PebbleValue: 0.42
+    - _PuddleAlbedo: 0.3
+    - _PuddleDip: 0.55
+    - _PuddleRamp: 0.1
+    - _PuddleScale: 2.4
+    - _PuddleSky: 0.22
+    - _PuddleSmoothness: 0.92
+    - _PuddleThreshold: 0.58
+    - _SoilTile: 3.1
+    - _SoilValue: 0.5
+    - _ToneScale: 11
+    - _ToneValue: 0.12
+    - _TussockScale: 0.45
+    - _TussockSlope: 0.7
+    - _WetGravel: 0.72
+    - _WetMoss: 0.86
+    - _WetSoil: 0.62
+    - _Wetness: 0.3
+    m_Colors:
+    - _DirtTint: {r: 1, g: 0.95, b: 0.88, a: 1}
+    - _GravelTint: {r: 0.95, g: 1, b: 1.06, a: 1}
+    - _LitterBamboo: {r: 0.2, g: 0.17, b: 0.1, a: 1}
+    - _LitterDry: {r: 0.238, g: 0.117, b: 0.048, a: 1}
+    - _LitterFresh: {r: 0.155, g: 0.061, b: 0.031, a: 1}
+    - _LitterOld: {r: 0.144, g: 0.102, b: 0.058, a: 1}
+    - _MaskBounds: {r: -85, g: -85, b: 170, a: 170}
+    - _MossTintShade: {r: 0.9, g: 1, b: 0.95, a: 1}
+    - _MossTintSun: {r: 1.1, g: 1.05, b: 0.7, a: 1}
+    - _MudTint: {r: 0.026, g: 0.021, b: 0.016, a: 1}
+    - _PavedUnder: {r: 0.42, g: 0.42, b: 0.42, a: 1}
+    - _SmoothGravel: {r: 0.2, g: 0.58, b: 0, a: 0}
+    - _SmoothMoss: {r: 0.1, g: 0.3, b: 0, a: 0}
+    - _SmoothSoil: {r: 0.14, g: 0.52, b: 0, a: 0}
+    - _SoilTint: {r: 1, g: 0.93, b: 0.86, a: 1}
+  m_BuildTextureStacks: []
