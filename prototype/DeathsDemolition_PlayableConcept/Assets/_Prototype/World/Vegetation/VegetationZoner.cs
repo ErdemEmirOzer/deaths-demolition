@@ -321,6 +321,7 @@ namespace DD.Prototype.World.Vegetation
             }
 
             Accents(grid, recipe, field, dist, zoneOf, corridorOf, clear, shadowDir);
+            Zone7CorridorMoss.Apply(grid, recipe, field, zoneOf, corridorOf, clear);
 #if UNITY_EDITOR
             VegetationPreview.RecordDiagnostics(grid, field, zoneOf, corridorOf, clear);
 #endif
