@@ -198,6 +198,9 @@ namespace DD.Prototype.Feedback.Vfx
             _renderer.SetPropertyBlock(_block);
         }
 
+        /// <summary>The alpha cap in effect (WP-093: the lantern flicker test reads the card against its light).</summary>
+        public float AlphaCap => _alphaCap;
+
         public void SetAlphaCap(float alphaCap)
         {
             _alphaCap = Mathf.Clamp01(alphaCap);
