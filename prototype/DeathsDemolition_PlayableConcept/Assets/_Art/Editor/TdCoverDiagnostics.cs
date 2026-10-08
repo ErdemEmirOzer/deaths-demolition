@@ -342,9 +342,13 @@ namespace DD.Art.Pipeline.EditorTools
             int before = feature.CopiedFrames;
             try
             {
+                if (!rt.Create() || !rt.IsCreated() || feature.Output == null || !feature.Output.IsCreated())
+                    throw new InvalidOperationException("UNKNOWN: color/depth output allocation failed");
                 cam.targetTexture = rt;
                 cam.aspect = (float)W / H;
                 cam.Render();
+                if (!rt.IsCreated() || !feature.Output.IsCreated())
+                    throw new InvalidOperationException("UNKNOWN: color/depth output lost during render");
                 if (feature.CopiedFrames != before + 1) throw new InvalidOperationException("Actual camera depth copy did not execute");
                 if (rgb)
                 {
@@ -355,6 +359,10 @@ namespace DD.Art.Pipeline.EditorTools
                 read.ReadPixels(new Rect(0, 0, W, H), 0, 0, false);
                 read.Apply(false);
                 var values = read.GetRawTextureData<float>().ToArray();
+                if (values.Length != W * H) throw new InvalidOperationException("UNKNOWN: depth pixel count differs");
+                foreach (float value in values)
+                    if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f || value > 1f)
+                        throw new InvalidOperationException("UNKNOWN: invalid raw depth readback");
                 using (var writer = new BinaryWriter(File.Create(Path.Combine(_dir, name + ".rfloat"))))
                     foreach (float value in values) writer.Write(value);
                 return values;
@@ -375,11 +383,17 @@ namespace DD.Art.Pipeline.EditorTools
             var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
             RenderTexture target = cam.targetTexture, active = RenderTexture.active;
             float aspect = cam.aspect;
-            try { cam.targetTexture = rt; cam.aspect = (float)W / H; cam.Render(); return ReadRgb(rt); }
+            try
+            {
+                if (!rt.Create() || !rt.IsCreated()) throw new InvalidOperationException("UNKNOWN: original RGB allocation failed");
+                cam.targetTexture = rt; cam.aspect = (float)W / H; cam.Render(); return ReadRgb(rt);
+            }
             finally { cam.targetTexture = target; cam.aspect = aspect; RenderTexture.active = active; rt.Release(); Object.DestroyImmediate(rt); }
         }
         private static Color32[] ReadRgb(RenderTexture rt)
         {
+            if (rt == null || !rt.IsCreated() || rt.width != W || rt.height != H)
+                throw new InvalidOperationException("UNKNOWN: RGB attachment unavailable or wrong size");
             var texture = new Texture2D(W, H, TextureFormat.RGBA32, false);
             RenderTexture active = RenderTexture.active;
             try
@@ -387,7 +401,9 @@ namespace DD.Art.Pipeline.EditorTools
                 RenderTexture.active = rt;
                 texture.ReadPixels(new Rect(0, 0, W, H), 0, 0, false);
                 texture.Apply(false);
-                return texture.GetPixels32();
+                Color32[] pixels = texture.GetPixels32();
+                if (pixels.Length != W * H) throw new InvalidOperationException("UNKNOWN: RGB pixel count differs");
+                return pixels;
             }
             finally { RenderTexture.active = active; Object.DestroyImmediate(texture); }
         }
@@ -472,8 +488,10 @@ namespace DD.Art.Pipeline.EditorTools
                 graphicsFormat = GraphicsFormat.R32_SFloat, depthBufferBits = 0,
                 depthStencilFormat = GraphicsFormat.None, msaaSamples = 1, sRGB = false
             }) { hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            rt.Create();
+            // Take ownership first so Initialize's caller can dispose even a failed allocation.
             _output = RTHandles.Alloc(rt);
+            if (!rt.Create() || !rt.IsCreated())
+                throw new InvalidOperationException("UNKNOWN: R32 depth output allocation failed");
             _pass = new DepthPass(this) { renderPassEvent = RenderPassEvent.AfterRenderingTransparents };
         }
         public override void Create() { }
@@ -505,6 +523,8 @@ namespace DD.Art.Pipeline.EditorTools
                 if (source == null || source.rt == null)
                     throw new InvalidOperationException("UNKNOWN: actual depth attachment is not a texture");
                 RenderTexture rt = source.rt;
+                if (!rt.IsCreated() || _owner.Output == null || !_owner.Output.IsCreated())
+                    throw new InvalidOperationException("UNKNOWN: actual source/output attachment is not created");
                 if (rt.depthStencilFormat == GraphicsFormat.None && rt.depth == 0)
                     throw new InvalidOperationException("UNKNOWN: actual attachment has no depth");
                 if (rt.width != _owner.Output.width || rt.height != _owner.Output.height ||
