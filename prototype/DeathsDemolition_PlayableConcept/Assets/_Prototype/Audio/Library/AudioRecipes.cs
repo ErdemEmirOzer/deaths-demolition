@@ -342,6 +342,9 @@ namespace DD.Prototype.Audio
 
                 default:
                     if (id >= AudioSoundId.WeaponTailArOpen && id <= AudioSoundId.WeaponTailRlHall) return BuildWindBed(ref rng);
+                    // WP-097 K1: the echo / release / room class tails (900 block) share the class-tail fallback family (test /
+                    // no-catalog only: WeaponFireAudio plays them only when the catalog produces them, so in the game they stay silent until K2).
+                    if (id >= AudioSoundId.WeaponTailArEcho && id <= AudioSoundId.WeaponTailRlRoom) return BuildWindBed(ref rng);
 
                     return BuildImpactDefault(ref rng);
             }

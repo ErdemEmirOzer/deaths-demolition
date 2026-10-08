@@ -247,6 +247,27 @@ namespace DD.Prototype.Audio
             return entry.Clips[variation];
         }
 
+        /// <summary>
+        /// WP-097 K1 (03 §1): the variation <see cref="Next"/> dealt last for this sound (the only clip of a one-clip sound), null
+        /// before the first deal. The top-down slapback replays the dry shot's own clip — same timbre, no extra memory. Never deals
+        /// or shuffles; allocation-free once the sound's entry exists (it does after the shot that dealt it).
+        /// </summary>
+        public AudioClip LastDealt(AudioSoundId id)
+        {
+            Entry entry = EnsureBaked(id);
+            if (entry == null || entry.Clips.Length == 0)
+            {
+                return null;
+            }
+
+            if (entry.Clips.Length == 1)
+            {
+                return entry.Clips[0];
+            }
+
+            return entry.LastDealt >= 0 && entry.LastDealt < entry.Clips.Length ? entry.Clips[entry.LastDealt] : null;
+        }
+
         /// <summary>The single clip of a sound that has no variations - loops, mostly.</summary>
         public AudioClip First(AudioSoundId id)
         {

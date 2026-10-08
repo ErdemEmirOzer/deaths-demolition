@@ -14,6 +14,11 @@ r2-measure-contract.md, S3):
   listening  the listening-kit takes of AudioSliceTests.DinlemePaketi_AB_Uret: <no>_<mode>_take.wav, <no>_<mode>_blocks.csv
              (block start frame, variant A B C W R) and the take's sidecars; 1_ustten = top-down, 2_birinci-sahis = FP (R1/R2;
              R3 records the top-down take only). --listening repeats: one folder per AB run, their takes pooled per mode.
+             The SMG1 bursts fire at 8 shots/s (R1's kit): since WP-097 (C-00 07.10) a report, weaponMarginLu.
+  listening-real  the same test run with DD_AB_RPM=real (folder wp072-listening-real): the SMG1 bursts at the weapon's own
+             string RPM (WeaponAudioIdentity SMG1 StringRpm, 60/RPM s apart, the same 1.2 s burst + 0.8 s gap), plus
+             <no>_<mode>_rpm.json (rpm "real", stringRpm, intervalS, minGapMs, attempts) that the test writes after its pile-up
+             check passed. Top-down only, whatever --modes says. --listening-real repeats like --listening (pooled).
 
 Values (the worst over the takes; checks in r2-gates.json S3, judged by r2_gates.evaluate_gate):
   truePeakDbtp      the whole Dense-40 recording, max over channels: the higher of a 4x polyphase FIR interpolation (scipy
@@ -28,6 +33,10 @@ Values (the worst over the takes; checks in r2-gates.json S3, judged by r2_gates
                     (C-00 06.10, decided before the next measurement — SD K1): the takes of a mode are POOLED block-weighted
                     over every AB run given (the W and R powers averaged over all W and R blocks); the worse mode counts
                     (topdown only by default). Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" directly.
+                    WP-097 (C-00 07.10 decision 1): a REPORT key now — the 8 shots/s rig, kept for continuity with R1 / R2.
+  weaponMarginRealRpmLu  the gate's margin (>= +1.2 LU): the --listening-real takes, the same W/R K-weighted burst-window
+                    formula and the same R3 block-weighted pooling over every real-RPM AB run given, top-down. Each take's own
+                    margin, interval and pile-up record stay in the artifact's takes.listeningReal.
 
 The source must be in the recording (contract, S-08 05.10): every take is checked first — capture dropped 0, telemetry ring
 overflow 0, the driver's own dense window (R3, C-00 06.10: player.log "target=" >= 40, "dense checkpoint reached" =
@@ -53,7 +62,8 @@ a criterion either — in the 06.10 window (pencere-p4) the Dense-40 captures ra
 dropped samples, so a floor above 0.4 % marks valid captures dirty and one below it marks nothing. Both stay in the
 artifact's takes.host for the reader; the captures' own quality checks above decide validity.
 
-usage: r2_s3.py --dense topdown=DIR [--dense topdown=DIR2 …] --a9 WAV --listening DIR [--listening DIR2 …] --xml PM.xml
+usage: r2_s3.py --dense topdown=DIR [--dense topdown=DIR2 …] --a9 WAV --listening DIR [--listening DIR2 …]
+                --listening-real DIR [--listening-real DIR2 …] --xml PM.xml [--xml PM-real.xml …]
                 --host FILE [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
                 [--modes topdown | tp,fp]
 --modes: the cameras the gate hears. Default topdown (kullanıcı 06.10: "testler de top down için çalışacak sadece"): only
@@ -90,10 +100,10 @@ import audio_capture_report as acr  # noqa: E402  (the BS.1770 K-weighting, wind
 import r2_gates  # noqa: E402  (the contract and its judge: one copy of the thresholds)
 
 GATE = "S3"
-KEYS = ("truePeakDbtp", "momentaryMaxLufs", "preLimiterGrDb", "weaponMarginLu")
+KEYS = ("truePeakDbtp", "momentaryMaxLufs", "preLimiterGrDb", "weaponMarginLu", "weaponMarginRealRpmLu")
 SHA = re.compile(r"[0-9a-f]{40}")
 SOURCE = ("tools/qa/r2_s3.py (Dense-40 Player captures + AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum "
-          "+ AudioSliceTests.DinlemePaketi_AB_Uret W/R stems)")
+          "+ AudioSliceTests.DinlemePaketi_AB_Uret W/R stems, 8 shots/s and DD_AB_RPM=real)")
 
 # dense: -ddCameraMode value → QaRunBot bot-summary cameraMode
 CAMERA = {"topdown": "TopDown", "tp": "ThirdPerson", "fp": "FirstPerson"}
@@ -137,6 +147,16 @@ BURST_S = (0.15, 1.2)                    # inside a cycle: the 1.2 s burst after
 STEM_MIN_BLOCKS = 2                      # of each of A, W, R (R1: 3)
 ADDITIVITY_DB = 1.0                      # 10 log10(A / (W + R)) within this: the stems split the mix (R1: -0.58 / -0.37)
 MIN_TAKE_SHOTS = 20
+# listening-real (WP-097, C-00 07.10 decision 1): the take is SMG1 at its own string RPM, proven three ways — the test's
+# <no>_<mode>_rpm.json (written only after its pile-up check), the interval it states = 60 / stringRpm, and the take's own
+# telemetry: the median gap between consecutive weapon Fire voice starts inside a burst (World pool; the Reflection pool's
+# slapback copies left out) within REAL_GAP_TOLERANCE of that interval. An 8 shots/s take (125 ms) never passes at 900 RPM.
+REAL_MODE = "topdown"                    # top-down only (kullanıcı 06.10), whatever --modes says
+REAL_TAKE = "1_ustten"
+REAL_MIN_GAP_SHARE = 0.60                # the test's pile-up floor: consecutive shot frames >= 60 % of the interval
+REAL_GAP_TOLERANCE = 0.30                # telemetry median in-burst gap vs intervalS
+REAL_BURST_GAP_S = 0.5                   # a gap longer than this is between bursts (0.8 s off), not inside one
+REAL_MIN_GAPS = 20                       # in-burst gaps the telemetry must show
 
 # KİRLİ = a foreign heavy process sampled during the window (C-00 06.10); load average and CPU idle are reported only.
 HOST_IDLE = re.compile(r"([0-9]+(?:\.[0-9]+)?)% idle")
@@ -145,6 +165,8 @@ HOST_TIME = re.compile(r"^\s*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]
 HOST_GAP_S = 30.0                        # pencere.sh samples every 5–6 s (pencere-p4: 284 samples, max gap 6.0 s)
 TESTS = {"a9": "DD.Prototype.Tests.PlayMode.AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum",
          "listening": "DD.Prototype.Tests.PlayMode.AudioSliceTests.DinlemePaketi_AB_Uret"}
+# the real-RPM run is the same test under DD_AB_RPM=real: its NUnit XML goes in with --xml too (a failed run in any XML given
+# is kept, xml_results), and its pile-up check is re-read from the rpm.json it writes only after that check passed.
 
 # R1 closing, R1 method (Catmull-Rom true peak, 100 ms momentary grid): K/wp-072/evidence/b7s/dense40-r3/{tp,fp}/report.json,
 # b7s/a9.json, b7-r7/kit-splice.txt (the mix B margin = the pre-B take's W/R margin + 4 dB, exact while GR = 0).
@@ -213,6 +235,7 @@ def read_telemetry(path):
         elif section == "sequence" and len(f) >= 7 and f[4] == "Started":
             try:
                 out["starts"].append((float(f[3]), f[6]))
+                out.setdefault("pools", []).append(f[5])
             except ValueError:
                 continue
     return out
@@ -294,7 +317,7 @@ def take_span(detail):
     """(first take's start, last take's end) in epoch s — a take's span is its WAV's mtime less its length, the mtime at
     or after its capture's end (pencere.sh copies the A9 and listening takes when their step ends) — or None when no take
     file can be read. A plain copy of the evidence moves the mtimes: run on the original or a cp -p / cp -c copy."""
-    heard = [x for t in detail["listening"].values() for x in t.get("takes", [t])]
+    heard = [x for part in ("listening", "listeningReal") for t in detail.get(part, {}).values() for x in t.get("takes", [t])]
     takes = list(detail["dense"].values()) + ([detail["a9"]] if detail["a9"] else []) + heard
     spans = []
     for take in takes:
@@ -627,6 +650,78 @@ def measure_take(mode, wav):
     return detail, findings
 
 
+def real_rpm_check(wav):
+    """listening-real: (record, findings) of one take — the test's rpm.json and the take's own fire-voice gaps."""
+    wav = Path(wav)
+    rpm_path = wav.with_name(wav.name.replace("_take.wav", "_rpm.json"))
+    telemetry_path = Path(str(wav) + ".telemetry.tsv")
+    findings = []
+    rec = read_json(rpm_path) if rpm_path.is_file() else None
+    if rec is None:
+        return None, [f"listening-real: {rpm_path.name} missing or unreadable next to {wav.name} (DinlemePaketi_AB_Uret with "
+                      "DD_AB_RPM=real writes it after its pile-up check)"]
+    interval, rpm = rec.get("intervalS"), rec.get("stringRpm")
+    if rec.get("rpm") != "real":
+        findings.append(f"listening-real: {rpm_path.name} says rpm {rec.get('rpm')!r}, not 'real'")
+    if not (isinstance(interval, (int, float)) and isinstance(rpm, (int, float)) and rpm > 0 and interval > 0
+            and abs(interval - 60.0 / rpm) <= 1e-3):
+        findings.append(f"listening-real: {rpm_path.name} intervalS {interval!r} is not 60 / stringRpm {rpm!r}")
+        interval = None
+    min_gap = rec.get("minGapMs")
+    if interval and not (isinstance(min_gap, (int, float)) and min_gap >= REAL_MIN_GAP_SHARE * interval * 1000.0 - 0.01):   # rpm.json rounds intervalS to 1 µs
+        findings.append(f"listening-real: {rpm_path.name} minGapMs {min_gap!r} < {REAL_MIN_GAP_SHARE:.0%} of the "
+                        f"{interval * 1000.0:.1f} ms interval (piled-up shots: the take is not a real-RPM measurement)")
+    gaps = []
+    if telemetry_path.is_file():
+        tel = read_telemetry(telemetry_path)
+        fires = sorted(t for (t, sound), pool in zip(tel["starts"], tel.get("pools", []))
+                       if FIRE_SOUND.fullmatch(sound) and pool != "Reflection")
+        gaps = [b - a for a, b in zip(fires, fires[1:]) if 0.0 < b - a < REAL_BURST_GAP_S]
+    median_gap = statistics.median(gaps) if gaps else None
+    if len(gaps) < REAL_MIN_GAPS:
+        findings.append(f"listening-real: {wav.name} telemetry shows {len(gaps)} in-burst Fire gaps < {REAL_MIN_GAPS}")
+    elif interval and abs(median_gap - interval) > REAL_GAP_TOLERANCE * interval:
+        findings.append(f"listening-real: {wav.name} telemetry in-burst Fire gap median {median_gap * 1000.0:.1f} ms is not "
+                        f"the {interval * 1000.0:.1f} ms interval ±{REAL_GAP_TOLERANCE:.0%} (an 8 shots/s take is 125 ms)")
+    out = {"rpmJson": str(rpm_path), "rpmJsonSha256": sha256(rpm_path), "weapon": rec.get("weapon"), "stringRpm": rpm,
+           "intervalS": rec.get("intervalS"), "minGapMs": min_gap, "attempts": rec.get("attempts"), "shots": rec.get("shots"),
+           "fireGapMedianMs": round(median_gap * 1000.0, 2) if median_gap is not None else None, "fireGaps": len(gaps)}
+    return out, findings
+
+
+def is_real_folder(folder):
+    """a folder holding an rpm.json that says rpm "real" (the DD_AB_RPM=real run)."""
+    for path in Path(folder).glob("*_rpm.json"):
+        if (read_json(path) or {}).get("rpm") == "real":
+            return True
+    return False
+
+
+def measure_real(folders, eight):
+    """listening-real: (pooled detail or None, findings) over every --listening-real folder (top-down take, pooled)."""
+    findings, per = [], []
+    if not folders:
+        return None, [f"listening-real {REAL_MODE}: no take given (--listening-real DIR: DinlemePaketi_AB_Uret with "
+                      "DD_AB_RPM=real) — weaponMarginRealRpmLu, the gate's margin, is unmeasured"]
+    same = {str(Path(f).resolve()) for f in folders} & {str(Path(f).resolve()) for f in eight}
+    for folder in sorted(same):
+        findings.append(f"listening-real: {folder} is given as both --listening and --listening-real (8 shots/s and real RPM "
+                        "never share a folder)")
+    for folder in folders:
+        wav = Path(folder) / f"{REAL_TAKE}_take.wav"
+        if not wav.is_file():
+            findings.append(f"listening-real {REAL_MODE}: no take in {folder} ({wav.name}; each --listening-real run must hold it)")
+            continue
+        d, f = measure_take(REAL_MODE, wav)
+        findings += [x.replace(f"listening {REAL_MODE}", f"listening-real {REAL_MODE}", 1) for x in f]
+        rec, f = real_rpm_check(wav)
+        findings += f
+        if d:
+            d["real"] = rec
+            per.append(d)
+    return (pooled_take(REAL_MODE, per) if per else None), findings
+
+
 # ---------------------------------------------------------------------------------------------------- the artifact
 
 
@@ -650,9 +745,9 @@ def pooled_take(mode, per):
             "weaponFireDelivered": sum(t.get("weaponFireDelivered") or 0 for t in per), "takes": per}
 
 
-def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MODES):
-    """(values, detail, findings, samples) over every take of the given camera modes."""
-    findings, detail = [], {"dense": {}, "a9": None, "listening": {}, "modes": list(modes)}
+def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MODES, listening_real=None):
+    """(values, detail, findings, samples) over every take of the given camera modes (listening-real: top-down always)."""
+    findings, detail = [], {"dense": {}, "a9": None, "listening": {}, "listeningReal": {}, "modes": list(modes)}
     topdown_only = tuple(modes) == ("topdown",)
     if topdown_only:
         detail["scope"] = "top-down only (kullanıcı 06.10: testler yalnız top down) — tp / fp out of scope"
@@ -693,6 +788,9 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MOD
         for mode in wanted:
             if mode in takes and mode not in have:
                 findings.append(f"listening {mode}: no take in {folder} (each --listening run must hold it)")
+    for folder in folders:   # WP-097: an 8 shots/s run holds no real-RPM take (the gate value never leaks into the report)
+        if is_real_folder(folder):
+            findings.append(f"listening: {folder} holds a real-RPM take (rpm.json rpm 'real') — give it as --listening-real")
     for mode, wavs in sorted(takes.items()):
         per = []
         for wav in wavs:
@@ -702,6 +800,11 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MOD
                 per.append(d)
         if per:
             detail["listening"][mode] = pooled_take(mode, per)
+    real_folders = [listening_real] if isinstance(listening_real, (str, Path)) else list(listening_real or [])
+    real, f = measure_real(real_folders, folders)
+    findings += f
+    if real:
+        detail["listeningReal"][REAL_MODE] = real
     results = xml_results(xmls)
     for kind, name in TESTS.items():
         if results.get(name) != "Passed":
@@ -714,7 +817,10 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MOD
         values["preLimiterGrDb"] = detail["a9"]["preLimiterGrDb"]
     if detail["listening"]:
         values["weaponMarginLu"] = min(d["weaponMarginLu"] for d in detail["listening"].values())
-    samples = len(detail["dense"]) + (1 if detail["a9"] else 0) + sum(t["pooledOver"] for t in detail["listening"].values())
+    if detail["listeningReal"]:
+        values["weaponMarginRealRpmLu"] = detail["listeningReal"][REAL_MODE]["weaponMarginLu"]
+    samples = (len(detail["dense"]) + (1 if detail["a9"] else 0) + sum(t["pooledOver"] for t in detail["listening"].values())
+               + sum(t["pooledOver"] for t in detail["listeningReal"].values()))
     return values, detail, findings, samples
 
 
@@ -779,6 +885,15 @@ def summary_lines(values, detail):
         lines.append(f"listening {tag:7} W/R margin {t['weaponMarginLu']:+.2f} LU (R1 mix B "
                      f"{R1_CLOSING['listening'][mode]['weaponMarginLu']:+.2f}) · additivity {t['additivityDb']:+.2f} dB · "
                      f"blocks {t['blocks']} · W peak med {t['wBurstPeakMedianDbfs']} dBFS")
+    for mode, t in sorted(detail.get("listeningReal", {}).items()):
+        for k, one in enumerate(t.get("takes", [t])):
+            r = one.get("real") or {}
+            lines.append(f"listening-real {mode} take {k + 1} W/R margin {one['weaponMarginLu']:+.2f} LU · interval "
+                         f"{r.get('intervalS')} s · Fire gap median {r.get('fireGapMedianMs')} ms · min gap {r.get('minGapMs')} ms "
+                         f"· attempts {r.get('attempts')}")
+        tag = f"{mode} pooled×{t['pooledOver']}" if t.get("pooledOver", 1) > 1 else mode
+        lines.append(f"listening-real {tag} W/R margin {t['weaponMarginLu']:+.2f} LU (the gate, >= +1.2) · additivity "
+                     f"{t['additivityDb']:+.2f} dB · blocks {t['blocks']}")
     lines.append("S3 values " + " · ".join(f"{k} {values[k]:.3f}" if k in values else f"{k} -" for k in KEYS))
     return lines
 
@@ -790,7 +905,11 @@ def main(argv=None):
     parser.add_argument("--a9", help="the A9 stack render WAV (sidecars next to it)")
     parser.add_argument("--listening", action="append", default=[], help="a DinlemePaketi_AB_Uret folder (*_take.wav + *_blocks.csv + "
                         "sidecars); repeat it for several AB runs — their takes are pooled per mode (R3)")
-    parser.add_argument("--xml", action="append", default=[], help="NUnit XML of the A9 / listening PlayMode runs")
+    parser.add_argument("--listening-real", action="append", default=[], help="a DinlemePaketi_AB_Uret folder recorded with "
+                        "DD_AB_RPM=real (wp072-listening-real: SMG1 at its own RPM, + *_rpm.json); repeat it for several AB "
+                        "runs — pooled like --listening. weaponMarginRealRpmLu, the gate's margin (WP-097, C-00 07.10)")
+    parser.add_argument("--xml", action="append", default=[], help="NUnit XML of the A9 / listening PlayMode runs (the "
+                        "real-RPM run's XML too)")
     parser.add_argument("--host", action="append", default=[], help="host samples of the run window (CPU idle + foreign "
                         "heavy processes per line): the KİRLİ criterion (C-00 06.10)")
     parser.add_argument("--load", action="append", default=[], help="load log of the run window (sysctl vm.loadavg lines): "
@@ -823,7 +942,8 @@ def main(argv=None):
     if modes not in (REQUIRED_DENSE, DEFAULT_MODES):
         print(f"--modes wants topdown or tp,fp: {args.modes!r}", file=sys.stderr)
         return 64
-    values, detail, findings, samples = measure(dense, args.a9, args.listening, args.xml, commit, args.dense_seconds, modes)
+    values, detail, findings, samples = measure(dense, args.a9, args.listening, args.xml, commit, args.dense_seconds, modes,
+                                                args.listening_real)
     for line in summary_lines(values, detail):
         print(line)
     for finding in findings:

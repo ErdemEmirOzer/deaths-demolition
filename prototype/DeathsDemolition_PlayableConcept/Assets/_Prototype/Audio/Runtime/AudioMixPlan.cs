@@ -51,6 +51,12 @@ namespace DD.Prototype.Audio
         /// <summary>WP-057: gain floor for the Music bus while this plays (1 = no duck). HudLowHealth / threat chips / stingers use it.</summary>
         public float DuckMusic;
 
+        /// <summary>
+        /// WP-097 K1: a fixed low-pass cutoff (Hz) for this voice — the pool opens the voice's filter at it and never moves it with
+        /// distance (slapback air / material loss, echo darkening). 0 = the pool's own rule (world buses darken with distance).
+        /// </summary>
+        public float LowPassHz;
+
         public bool IsValid => Sound != AudioSoundId.None;
     }
 
@@ -732,6 +738,29 @@ namespace DD.Prototype.Audio
         {
             AudioPlacement p = Weapon(sound, 0.85f, 30f, 2, 0.05f);
             p.PitchJitter = 0f;
+            return p;
+        }
+
+        /// <summary>
+        /// WP-097 K1 (03 §3): one top-down slapback tap — a copy of the dry shot (the clip is passed explicitly; the label id keeps it
+        /// apart from Fire). Played on the Reflect pool: no retrigger window (a single shot's three taps start in one frame), six
+        /// copies before the oldest recycles, priority under the tail's so a crowded pool cuts reflections first. Level, delay,
+        /// pitch, cutoff and position are set per tap by <see cref="WeaponFireAudio"/>.
+        /// </summary>
+        public static AudioPlacement PlayerWeaponSlap()
+        {
+            AudioPlacement p = Weapon(AudioSoundId.WeaponSlap, 0.85f, 28f, 6, 0f);
+            p.PitchJitter = 0f;
+            p.Spatial = WeaponReflections.SlapSpatial;
+            return p;
+        }
+
+        /// <summary>WP-097 K1 (03 §2): the open-air far echo of a shot / string release (Reflect pool, never piles past two).</summary>
+        public static AudioPlacement PlayerWeaponEcho(AudioSoundId sound)
+        {
+            AudioPlacement p = Weapon(sound, 0.85f, 26f, 2, 0f);
+            p.PitchJitter = 0f;
+            p.Spatial = WeaponReflections.EchoSpatial;
             return p;
         }
 

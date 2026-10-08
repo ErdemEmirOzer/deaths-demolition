@@ -114,6 +114,37 @@ def listening_take(folder, name, w_sigma=0.1, r_sigma=0.05, shots=300, order="AB
     return wav
 
 
+REAL_INTERVAL = 60.0 / 900.0   # SMG1's string RPM (WeaponAudioIdentity)
+
+
+def real_take(folder, name="1_ustten", w_sigma=0.1, r_sigma=0.05, order="ABCWRABCWR", interval=REAL_INTERVAL, rpm=900.0,
+              min_gap_ms=None, rpm_json=True, rpm_word="real", slaps=True):
+    """a DD_AB_RPM=real take (WP-097): the listening take, its telemetry's SMG1 Fire starts `interval` apart in the 1.2 s bursts
+    of each 2 s cycle (World pool) with a slapback copy 23 ms after each (Reflection pool — must not count), and rpm.json."""
+    wav = listening_take(folder, name, w_sigma=w_sigma, r_sigma=r_sigma, order=order)
+    starts = []
+    for cycle in range(int(len(order) * 4.0 / 2.0)):
+        k = 0
+        while k * interval < 1.2 - 1e-9:
+            starts.append(cycle * 2.0 + k * interval)
+            k += 1
+    lines = ["# wp-065 audio playback telemetry v1", "# fixed_ring_capacity\t65536", "# ring_overflow\t0",
+             "# combat_event\tdelivered\tsuppressed", f"ClassicWeaponFire\t{len(starts)}\t0",
+             "# sequence\tframe\trealtime\tdsp_time\toutcome\tpool\tsound\tvictim\tcombat_event\tactive\tcapacity"]
+    seq = 0
+    for i, s in enumerate(starts):
+        rows = [(s, "World")] + ([(s + 0.023, "Reflection")] if slaps else [])
+        for at, pool in rows:
+            lines.append(f"{seq}\t{i}\t{at:.5f}\t{at + OFFSET:.6f}\tStarted\t{pool}\tWeaponSmg1Fire\tNone\t-\t4\t16")
+            seq += 1
+    Path(str(wav) + ".telemetry.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if rpm_json:
+        rec = {"rpm": rpm_word, "weapon": "SMG1", "stringRpm": rpm, "intervalS": round(60.0 / rpm, 6),
+               "shots": len(starts), "minGapMs": round(interval * 1000.0, 2) if min_gap_ms is None else min_gap_ms, "attempts": 1}
+        Path(folder, f"{name}_rpm.json").write_text(json.dumps(rec), encoding="utf-8")
+    return wav
+
+
 def nunit(path, a9="Passed", listening="Passed"):
     cases = "".join(f'<test-case fullname="{name}" result="{result}"/>'
                     for name, result in ((r2_s3.TESTS["a9"], a9), (r2_s3.TESTS["listening"], listening)) if result)
@@ -131,6 +162,9 @@ class Rig:
         self.listen = self.root / "listening"
         listening_take(self.listen, "1_ustten")
         listening_take(self.listen, "2_birinci-sahis")
+        self.listen_real = self.root / "listening-real"   # WP-097: DinlemePaketi_AB_Uret under DD_AB_RPM=real
+        real_take(self.listen_real)
+        self.real = [self.listen_real]
         self.xml = nunit(self.root / "pm.xml")
         self.load = self.root / "load.txt"
         self.load.write_text("2026-10-06T01:00:00Z { 2.10 2.40 2.30 }\n2026-10-06T01:00:05Z { 3.05 2.50 2.30 }\n",
@@ -153,7 +187,8 @@ class Rig:
 
     def stamp(self):
         for wav in self.root.rglob("*.wav"):   # takes a test rewrote too: the window's time, not the test's
-            end = self.listening_end if self.listening_end is not None and self.listen in wav.parents else self.takes_end
+            heard = self.listen in wav.parents or any(r in wav.parents for r in self.real)
+            end = self.listening_end if self.listening_end is not None and heard else self.takes_end
             os.utime(wav, (end, end))
         for folder, epoch in self.late:
             for wav in Path(folder).rglob("*.wav"):
@@ -164,6 +199,8 @@ class Rig:
         args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")] + (["--modes", modes] if modes else [])
         args += ["--a9", str(self.a9), "--listening", str(self.listen), "--xml", str(self.xml), "--dense-seconds", "10",
                  "--commit", COMMIT, "--out", str(self.out)]
+        for folder in self.real:
+            args += ["--listening-real", str(folder)]
         if load:
             args += ["--load", str(self.load)]
         if host:
@@ -200,19 +237,20 @@ class WritesTests(RigTestCase):
         self.assertEqual(("dd-r2-measure-v1", "S3", COMMIT), (data["schema"], data["gate"], data["commit"]))
         self.assertEqual(set(r2_s3.KEYS), set(data["values"]))
         self.assertTrue(all(isinstance(v, float) and math.isfinite(v) for v in data["values"].values()))
-        self.assertEqual(5, data["samples"])          # tp + fp + A9 + two listening takes
+        self.assertEqual(6, data["samples"])          # tp + fp + A9 + two listening takes + the real-RPM take
         self.assertNotIn("note", data)
         gate = next(g for g in r2_gates.load_contract((Path(r2_s3.__file__).parent / "r2-gates.json").read_text(
             encoding="utf-8"))["gates"] if g["id"] == "S3")
         self.assertEqual("PASS", r2_gates.evaluate_gate(gate, COMMIT, measure=data)["status"])
 
     def test_a_value_outside_its_check_is_still_written_and_the_exit_says_fail(self):
-        listening_take(self.rig.listen, "2_birinci-sahis", w_sigma=0.05, r_sigma=0.1)   # W 6 dB under R
+        real_take(self.rig.listen_real, w_sigma=0.05, r_sigma=0.1)   # the gate's margin: W 6 dB under R at real RPM
         rc, out = self.rig.run()
         self.assertEqual(2, rc, out)
         data = json.loads(self.rig.out.read_text(encoding="utf-8"))
-        self.assertAlmostEqual(-6.02, data["values"]["weaponMarginLu"], delta=0.3)
+        self.assertAlmostEqual(-6.02, data["values"]["weaponMarginRealRpmLu"], delta=0.3)
         self.assertIn("S3 FAIL", out)
+        self.assertIn("weaponMarginRealRpmLu", out)
 
     def test_a_repeated_camera_run_counts_and_the_worst_wins(self):
         rc, _ = self.rig.run()
@@ -221,7 +259,7 @@ class WritesTests(RigTestCase):
         rc, out = self.rig.run("--dense", f"tp={louder}")
         self.assertEqual(0, rc, out)
         data = json.loads(self.rig.out.read_text(encoding="utf-8"))
-        self.assertEqual(6, data["samples"])
+        self.assertEqual(7, data["samples"])
         self.assertIn("tp#2", data["takes"]["dense"])
         self.assertAlmostEqual(20 * math.log10(0.6), data["values"]["truePeakDbtp"], delta=0.1)
         self.assertGreater(data["values"]["truePeakDbtp"], quiet + 6)
@@ -286,16 +324,24 @@ class ThresholdTests(unittest.TestCase):
     """the artifact is judged by r2_gates with the contract's numbers: the limits themselves pass."""
 
     def judge(self, **changes):
-        values = {"truePeakDbtp": -3.0, "momentaryMaxLufs": -15.0, "preLimiterGrDb": 0.0, "weaponMarginLu": 2.0}
+        values = {"truePeakDbtp": -3.0, "momentaryMaxLufs": -15.0, "preLimiterGrDb": 0.0, "weaponMarginLu": 2.0,
+                  "weaponMarginRealRpmLu": 2.0}
         values.update(changes)
         return r2_s3.judge(r2_s3.artifact(values, {}, 5, COMMIT, []))["status"]
 
     def test_every_limit_is_inclusive(self):
         self.assertEqual("PASS", self.judge())
         for key, at, past in (("truePeakDbtp", -1.0, -0.999), ("momentaryMaxLufs", -13.0, -12.999),
-                              ("preLimiterGrDb", 1.0, 1.001), ("weaponMarginLu", 1.0, 0.999)):
+                              ("preLimiterGrDb", 1.0, 1.001), ("weaponMarginRealRpmLu", 1.2, 1.199)):
             self.assertEqual("PASS", self.judge(**{key: at}), key)
             self.assertEqual("FAIL", self.judge(**{key: past}), key)
+
+    def test_the_8_per_second_margin_is_reported_never_judged_wp097(self):
+        # C-00 07.10 decision 1: the gate is the real-RPM margin; the 8/s rig's margin stays in the artifact for continuity
+        self.assertEqual("PASS", self.judge(weaponMarginLu=-5.0))
+        row = r2_s3.judge(r2_s3.artifact({"truePeakDbtp": -3.0, "momentaryMaxLufs": -15.0, "preLimiterGrDb": 0.0,
+                                          "weaponMarginLu": 0.3, "weaponMarginRealRpmLu": 1.5}, {}, 5, COMMIT, []))
+        self.assertEqual(0.3, row["values"]["weaponMarginLu"])
 
 
 class SourceTests(RigTestCase):
@@ -463,7 +509,7 @@ class PooledListeningTests(RigTestCase):
         t = data["takes"]["listening"]["topdown"]
         self.assertEqual({"A": 5, "W": 5, "R": 5}, t["blocks"])
         self.assertAlmostEqual(3.42, t["weaponMarginLu"], delta=0.25)
-        self.assertEqual(4, data["samples"], "1 Dense-40 + A9 + 2 pooled takes")
+        self.assertEqual(5, data["samples"], "1 Dense-40 + A9 + 2 pooled takes + the real-RPM take")
 
     def test_a_failed_ab_run_is_not_hidden_by_a_passing_one(self):
         td = dense_take(self.rig.root / "topdown", "topdown")
@@ -501,6 +547,108 @@ class PooledListeningTests(RigTestCase):
         self.assertEqual(1, t["pooledOver"])
         self.assertNotIn("takes", t)
         self.assertAlmostEqual(6.02, t["weaponMarginLu"], delta=0.3)
+
+
+class RealRpmTests(RigTestCase):
+    """WP-097 (C-00 07.10 decision 1): weaponMarginRealRpmLu >= +1.2 LU from DinlemePaketi_AB_Uret under DD_AB_RPM=real —
+    the same W/R K-weighted burst-window formula and pooling, top-down; the 8 shots/s margin is a report."""
+
+    def run_td(self, *extra):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        return self.rig.run("--dense", f"topdown={td}", *extra, modes="topdown")
+
+    def test_the_real_rpm_margin_is_its_own_take_not_the_8_per_second_one(self):
+        listening_take(self.rig.listen, "1_ustten", w_sigma=0.05, r_sigma=0.05)   # 8/s: W = R, 0 LU (under the old 1.0)
+        real_take(self.rig.listen_real, w_sigma=0.1, r_sigma=0.05)                # real RPM: +6 LU
+        rc, out = self.run_td()
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        self.assertAlmostEqual(0.0, data["values"]["weaponMarginLu"], delta=0.3)
+        self.assertAlmostEqual(6.02, data["values"]["weaponMarginRealRpmLu"], delta=0.3)
+        real = data["takes"]["listeningReal"]["topdown"]
+        self.assertEqual(real["weaponMarginLu"], data["values"]["weaponMarginRealRpmLu"])
+        self.assertEqual(1, real["pooledOver"])
+        self.assertEqual(("SMG1", 900.0, 1), (real["real"]["weapon"], real["real"]["stringRpm"], real["real"]["attempts"]))
+        self.assertAlmostEqual(66.67, real["real"]["fireGapMedianMs"], delta=0.5)   # the Reflection slap copies left out
+        self.assertIn("listening-real topdown W/R margin +6.0", out)
+
+    def test_two_real_runs_are_pooled_block_weighted_with_each_take_in_the_detail(self):
+        second = self.rig.root / "listening-real-2"
+        real_take(second, w_sigma=0.05, r_sigma=0.05)
+        self.rig.real.append(second)
+        rc, out = self.run_td()
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        real = data["takes"]["listeningReal"]["topdown"]
+        self.assertEqual(2, real["pooledOver"])
+        one, two = (x["weaponMarginLu"] for x in real["takes"])   # each take's own margin stays in the detail
+        self.assertAlmostEqual(6.02, one, delta=0.3)
+        self.assertAlmostEqual(0.0, two, delta=0.3)
+        self.assertAlmostEqual(3.98, data["values"]["weaponMarginRealRpmLu"], delta=0.3)
+        self.assertTrue(all(x["real"]["rpmJsonSha256"] for x in real["takes"]))
+
+    def test_no_real_rpm_folder_is_a_source_finding_and_nothing_is_written(self):
+        self.rig.real = []
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("listening-real topdown: no take given (--listening-real DIR", out)
+        self.assertFalse(self.rig.out.exists())
+
+    def test_a_real_rpm_folder_without_its_take(self):
+        empty = self.rig.root / "listening-real-empty"
+        empty.mkdir()
+        self.rig.real = [empty]
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn(f"listening-real topdown: no take in {empty}", out)
+
+    def test_an_8_per_second_take_given_as_real_rpm_is_refused(self):
+        # no rpm.json (the 8/s test writes none) and its Fire starts 125 ms apart
+        real_take(self.rig.listen_real, interval=0.125, rpm_json=False)
+        (self.rig.listen_real / "1_ustten_rpm.json").unlink()   # the temp rig's own file from setUp
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("1_ustten_rpm.json missing or unreadable", out)
+        self.assertFalse(self.rig.out.exists())
+
+    def test_an_rpm_json_over_8_per_second_starts_is_refused(self):
+        real_take(self.rig.listen_real, interval=0.125)   # a hand-made rpm.json cannot dress up an 8/s take
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("Fire gap median 125.0 ms is not the 66.7 ms interval", out)
+
+    def test_a_piled_up_take_is_not_a_measurement(self):
+        real_take(self.rig.listen_real, min_gap_ms=21.3)   # two shots one DSP buffer apart: under 60 % of 66.7 ms
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("minGapMs 21.3 < 60% of the 66.7 ms interval", out)
+
+    def test_an_interval_that_is_not_the_rpm_or_a_word_that_is_not_real(self):
+        real_take(self.rig.listen_real, rpm=600.0, interval=REAL_INTERVAL)
+        Path(self.rig.listen_real, "1_ustten_rpm.json").write_text(json.dumps(
+            {"rpm": "8ps", "weapon": "SMG1", "stringRpm": 900.0, "intervalS": 0.125, "minGapMs": 66.7, "attempts": 1}))
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("says rpm '8ps', not 'real'", out)
+        self.assertIn("intervalS 0.125 is not 60 / stringRpm 900.0", out)
+
+    def test_8_per_second_and_real_rpm_never_share_a_folder(self):
+        self.rig.real = [self.rig.listen]
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("is given as both --listening and --listening-real", out)
+        self.rig.real = [self.rig.listen_real]
+        real_take(self.rig.listen, name="1_ustten")   # a real take dropped into the 8/s folder
+        rc, out = self.run_td()
+        self.assertEqual(1, rc, out)
+        self.assertIn("holds a real-RPM take (rpm.json rpm 'real') — give it as --listening-real", out)
+
+    def test_the_real_rpm_take_is_top_down_even_for_the_tp_fp_pair(self):
+        rc, out = self.rig.run()   # --modes tp,fp: the gate's margin still comes from the top-down real-RPM take
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        self.assertEqual({"topdown"}, set(data["takes"]["listeningReal"]))
+        self.assertEqual({"topdown", "fp"}, set(data["takes"]["listening"]))
 
 
 class KirliTests(RigTestCase):

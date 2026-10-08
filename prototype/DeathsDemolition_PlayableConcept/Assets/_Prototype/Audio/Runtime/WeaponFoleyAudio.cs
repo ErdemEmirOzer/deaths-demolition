@@ -1,6 +1,7 @@
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
 using DD.Prototype.Weapons;
@@ -183,8 +184,18 @@ namespace DD.Prototype.Audio
             }
         }
 
-        /// <summary>WP-085 B5: the AP-027 v4 casing surfaces (CasingAr1StoneSlate …); Gravel has no SurfaceKind.</summary>
-        public static readonly string[] V4Surfaces = { "StoneSlate", "WetStone", "Wood", "Dirt", "Puddle" };
+        /// <summary>
+        /// WP-085 B5: the AP-027 v4 casing surfaces (CasingAr1StoneSlate …); Gravel has no SurfaceKind. WP-097 K2: + the AP-029 v001
+        /// surfaces Metal 5, Mat 6, Grass 7 (<see cref="V5Surface"/>; ids 700 / 800 + weapon·10 + surface, still ≤ 9 per weapon).
+        /// </summary>
+        public static readonly string[] V4Surfaces = { "StoneSlate", "WetStone", "Wood", "Dirt", "Puddle", "Metal", "Mat", "Grass" };
+
+        /// <summary>WP-097 K2: index of the first AP-029 surface in <see cref="V4Surfaces"/>.</summary>
+        public const int FirstV5Surface = 5;
+
+        /// <summary>WP-097 K2 (S-08 07.10): runtime pitch scatter of the AP-029 casings / links / magazine drops (± semitones) — their
+        /// RR sets are small (2–4); the AP-027 surfaces keep pitch 1.</summary>
+        public const float V5JitterSemitones = 0.4f;
 
         private static readonly AudioSoundId[] s_v4Casing = BuildV4("Casing");
         private static readonly AudioSoundId[] s_v4Link = BuildV4("Link");
@@ -207,6 +218,8 @@ namespace DD.Prototype.Audio
             }
 
             CasingV4(WeaponAudioIdentity.All[0].AudioId, SurfaceKind.Stone, false);
+            CasingV5(WeaponAudioIdentity.All[0].AudioId, SurfaceKind.Metal);   // WP-097 K2: JIT here, not in the first landing
+            MagazineDropAudio.Warm();
             return delivered;
         }
 
@@ -250,6 +263,42 @@ namespace DD.Prototype.Audio
             int w = WeaponAudioIdentity.IndexOf(audioId), s = V4Surface(surface, wet);
             if (w < 0 || s < 0) return AudioSoundId.None;
             return (link ? s_v4Link : s_v4Casing)[w * V4Surfaces.Length + s];
+        }
+
+        /// <summary>
+        /// WP-097 K2 (S-08 07.10): the AP-029 surface a casing / link lands on — metal as Metal, paper (tatami) as Mat, foliage as
+        /// Grass; −1 for every other surface (its AP-027 voice stays). The caller plays this voice only when the catalog produces
+        /// it and otherwise falls back to <see cref="V4Surface"/> (Metal → StoneSlate / WetStone, Paper → Wood, Foliage → silent):
+        /// with no AP-029 file the behaviour is the AP-027 one, unchanged.
+        /// </summary>
+        public static int V5Surface(SurfaceKind surface)
+        {
+            switch (surface)
+            {
+                case SurfaceKind.Metal: return FirstV5Surface;
+                case SurfaceKind.Paper: return FirstV5Surface + 1;
+                case SurfaceKind.Foliage: return FirstV5Surface + 2;
+                default: return -1;
+            }
+        }
+
+        /// <summary>WP-097 K2: the weapon's AP-029 casing (or LMG belt link) id for a Metal / Paper / Foliage surface; None elsewhere
+        /// (and for a weapon without one). Whether it plays is the catalog's call (<see cref="AudioClipLibrary.IsProduced"/>).</summary>
+        public static AudioSoundId CasingV5(string audioId, SurfaceKind surface, bool link = false)
+        {
+            int w = WeaponAudioIdentity.IndexOf(audioId), s = V5Surface(surface);
+            if (w < 0 || s < 0) return AudioSoundId.None;
+            return (link ? s_v4Link : s_v4Casing)[w * V4Surfaces.Length + s];
+        }
+
+        /// <summary>
+        /// WP-097 K2: does the game add its own bounce tick after this landing? The AP-029 files (<paramref name="v5Voice"/>) carry
+        /// their own skips — Metal 1–2 inside the file (S-08 07.10: no third hit), Mat / Grass at most one soft contact — so none is
+        /// added; every other voice keeps <see cref="CasingBounces(SurfaceKind)"/> (the AP-027 / v017 rule, Metal included).
+        /// </summary>
+        public static bool CasingBounces(SurfaceKind surface, bool v5Voice)
+        {
+            return !v5Voice && CasingBounces(surface);
         }
 
         /// <summary>A surface a casing skips off (WP-085 B2: one softer bounce follows the landing).</summary>
@@ -536,32 +585,51 @@ namespace DD.Prototype.Audio
 
             // WP-085 B5: the weapon's own AP-027 casing for this surface when produced (files −24 LUFS: +6 dB to the fire
             // reference), else the v017 calibre-family set (−22 LUFS: +4 dB).
-            AudioSoundId v4 = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook);
-            bool isV4 = v4 != AudioSoundId.None && _library.IsProduced(v4);
+            // WP-097 K2: on metal / tatami / grass the AP-029 casing (−24 LUFS like AP-027: the same +6) when produced, with a
+            // ±0.4 st pitch scatter (small RR sets); otherwise the AP-027 / v017 path below, unchanged.
+            AudioSoundId v5 = WeaponFoleyV3.CasingV5(audioId, surface);
+            bool isV5 = v5 != AudioSoundId.None && _library.IsProduced(v5);
+            AudioSoundId v4 = isV5 ? v5 : WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook);
+            bool isV4 = isV5 || (v4 != AudioSoundId.None && _library.IsProduced(v4));
             AudioSoundId sound = isV4 ? v4 : WeaponFoleyV3.CasingOn(family, surface);
             if (isV4) pitch = 1f;   // the v4 set carries each weapon's own calibre; no family pitch on top
+            if (isV5) pitch = V5Pitch();
             db += isV4 ? V4FileCompDb : V3FileCompDb;
             if (!Enqueue(sound, land, ejectedAt, fall, pitch, db, false))
             {
                 return false;
             }
 
+            if (isV5) FromV5++;
             float skipped = tRest - t1;
-            if (skipped > 0.001f && WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
+            if (skipped > 0.001f && WeaponFoleyV3.CasingBounces(surface, isV5) && _count < Capacity - BounceReserve)
             {
                 Enqueue(sound, rest, ejectedAt, fall + skipped, pitch * 1.06f, db - 9f, true);
             }
 
-            if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Foliage)
+            if (audioId.StartsWith("LMG", System.StringComparison.Ordinal))
             {
-                // AP-027 links sit 6 dB under their casing in the file (−30 LUFS): no runtime delta; the v017 link keeps −6 dB.
-                AudioSoundId link = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook, true);
-                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, land, ejectedAt, fall + 0.03f, 1f, db, false);
-                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, land, ejectedAt, fall + 0.03f, pitch, db - 6f, false);
+                // WP-097 K2: the AP-029 link on metal / tatami / grass when produced (−30 LUFS like AP-027: no runtime delta).
+                AudioSoundId link5 = WeaponFoleyV3.CasingV5(audioId, surface, true);
+                if (link5 != AudioSoundId.None && _library.IsProduced(link5)) Enqueue(link5, land, ejectedAt, fall + 0.03f, V5Pitch(), db, false);
+                else if (surface != SurfaceKind.Foliage)
+                {
+                    // AP-027 links sit 6 dB under their casing in the file (−30 LUFS): no runtime delta; the v017 link keeps −6 dB.
+                    AudioSoundId link = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook, true);
+                    if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, land, ejectedAt, fall + 0.03f, 1f, db, false);
+                    else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, land, ejectedAt, fall + 0.03f, pitch, db - 6f, false);
+                }
             }
 
             return true;
         }
+
+        /// <summary>WP-097 K2: landings that took an AP-029 surface voice (Metal / Mat / Grass; test / F1).</summary>
+        public int FromV5 { get; private set; }
+
+        /// <summary>WP-097 K2: a ±<see cref="WeaponFoleyV3.V5JitterSemitones"/> pitch drawn for an AP-029 voice (the AP-027 ones never draw,
+        /// so their same-frame stagger sequence is the one it was).</summary>
+        private float V5Pitch() => WeaponFoleyV3.Pitch((_rng.Next01() * 2f - 1f) * WeaponFoleyV3.V5JitterSemitones);
 
         /// <summary>Where the last landing was placed (test / WP-087 marker-align readout).</summary>
         public Vector3 LastLandingPoint { get; private set; }
@@ -663,6 +731,269 @@ namespace DD.Prototype.Audio
                     if (p.Fall < FallMinHeard) FallMinHeard = p.Fall;
                     if (p.Fall > FallMaxHeard) FallMaxHeard = p.Fall;
                     if (unscaledNow - p.DueSeen > HeldMaxSeconds) HeldMaxSeconds = unscaledNow - p.DueSeen;
+                }
+            }
+        }
+    }
+
+    /// <summary>WP-097 K2: the magazine kind a weapon drops (AP-029 MagDrop sets; S-08 classMap).</summary>
+    public enum MagazineDropFamily
+    {
+        None = -1,
+        Rifle = 0,
+        Pistol = 1
+    }
+
+    /// <summary>
+    /// WP-097 K2 (S-08, C-00 07.10): the spent magazine hits the floor. <see cref="WeaponMechanismKind.MagazineDropped"/> (WP-082: the
+    /// reload's mag_hand_attach beat, at the hand) becomes a drop under that point, heard after its fall time on the surface below
+    /// (the visible casing's floor rule, <see cref="CasingEffect.FloorMask"/>). Which weapons drop one is WeaponController's call:
+    /// a magazine timeline weapon (<see cref="WeaponMechanismTimeline.Magazine"/>) except rl_1 — sg_1 (shells) and sg_2 (break-open:
+    /// its reload ejects casings instead) raise none; the family table below is silent for them anyway.
+    /// The pattern is <see cref="CasingAudio"/>'s: a fixed queue, the PlayerCasing placement, the casing's perspective level
+    /// (<see cref="CasingAudio.PerspectiveDb"/>) and a file compensation against the −18 LUFS fire files. Silent until the catalog
+    /// produces a MagDrop row (no AP-029 foley: the game sounds as before). No allocation after construction.
+    /// </summary>
+    public sealed class MagazineDropAudio
+    {
+        /// <summary>AP-029 MagDrop surfaces in id order (MagDrop&lt;Family&gt;&lt;Surface&gt; = 970 / 980 + index).</summary>
+        public static readonly string[] Surfaces = { "StoneSlate", "Wood", "Dirt", "Metal", "WetStone" };
+
+        public const int SurfaceStoneSlate = 0;
+        public const int SurfaceWood = 1;
+        public const int SurfaceDirt = 2;
+        public const int SurfaceMetal = 3;
+        public const int SurfaceWetStone = 4;
+
+        public const int Capacity = 4;
+
+        /// <summary>The magazine files' design level (AP-029 foley standard) and its distance to the −18 LUFS fire files: +4 dB.</summary>
+        public const float TargetLufs = -22f;
+        public const float FileCompDb = 4f;
+
+        /// <summary>
+        /// S-08 07.10: a MagDrop row left under its −22 target by the −1 dBTP ceiling (up to 6.6 LU) is lifted back by its catalog stamp,
+        /// at most this much: compensation = <see cref="FileCompDb"/> + clamp(−22 − LUFS, 0, 6).
+        /// </summary>
+        public const float MaxDeficitCompDb = 6f;
+
+        /// <summary>Fall band (s): a hand at ~0.6–1.2 m above the floor, √(2h/g) 0.35–0.5 s.</summary>
+        public const float MinFall = 0.35f;
+        public const float MaxFall = 0.5f;
+
+        private const float Gravity = 9.81f;
+        private const float FloorRay = 4f;
+
+        private struct Pending
+        {
+            public float At;
+            public Vector3 Point;
+            public AudioSoundId Sound;
+            public float Pitch;
+            public float GainDb;
+            public float Fall;
+        }
+
+        private readonly Pending[] _queue = new Pending[Capacity];
+        private readonly AudioClipLibrary _library;
+        private readonly WeaponFireAudio.PlayFunc _play;
+        private readonly RaycastHit[] _hits = new RaycastHit[4];
+        private SynthRandom _rng = new SynthRandom(0x3A6D0);
+        private int _count;
+        private bool _subscribed;
+
+        public MagazineDropAudio(AudioClipLibrary library, WeaponFireAudio.PlayFunc play)
+        {
+            _library = library;
+            _play = play;
+        }
+
+        /// <summary>Drops heard; drops placed; drops with no floor under them / no produced voice / a full queue (test / F1).</summary>
+        public int Landed { get; private set; }
+        public int Scheduled { get; private set; }
+        public int NoFloor { get; private set; }
+        public int Unvoiced { get; private set; }
+        public int Dropped { get; private set; }
+
+        public AudioSoundId LastSound { get; private set; }
+        public float LastFallSeconds { get; private set; }
+        public float LastGainDb { get; private set; }
+        public float LastPitch { get; private set; }
+        public SurfaceKind LastSurface { get; private set; }
+        public int InAir => _count;
+
+        /// <summary>JIT the static path at boot (WeaponFoleyV3.Warm, from PrototypeAudioDirector.Awake).</summary>
+        public static void Warm()
+        {
+            Family(ClassicWeaponId.AssaultRifle);
+            Surface(SurfaceKind.Stone, false);
+            Id(MagazineDropFamily.Rifle, SurfaceStoneSlate);
+            FallSeconds(1f);
+            FileCompensationDb(float.NaN);
+        }
+
+        /// <summary>The magazine a weapon drops: SMGs a pistol-calibre stick, the rifles / LMGs / sr_1 a rifle box; shotguns and rl_1 none.</summary>
+        public static MagazineDropFamily Family(ClassicWeaponId weapon)
+        {
+            switch (weapon)
+            {
+                case ClassicWeaponId.AutoSmg:
+                case ClassicWeaponId.Smg2: return MagazineDropFamily.Pistol;
+                case ClassicWeaponId.AssaultRifle:
+                case ClassicWeaponId.Ar2:
+                case ClassicWeaponId.Lmg1:
+                case ClassicWeaponId.Lmg2:
+                case ClassicWeaponId.Sr1: return MagazineDropFamily.Rifle;
+                default: return MagazineDropFamily.None;   // CombatShotgun (sg_1), Sg2, Rl1
+            }
+        }
+
+        /// <summary>
+        /// The AP-029 surface a magazine lands on: wood and tatami Wood, dirt and grass Dirt (a thud, no grass set), metal Metal,
+        /// water WetStone (no puddle set); stone, armour and the default StoneSlate — WetStone while the world wears its wet look.
+        /// </summary>
+        public static int Surface(SurfaceKind surface, bool wet)
+        {
+            switch (surface)
+            {
+                case SurfaceKind.Wood:
+                case SurfaceKind.Paper: return SurfaceWood;
+                case SurfaceKind.Dirt:
+                case SurfaceKind.Foliage:
+                case SurfaceKind.Flesh: return SurfaceDirt;
+                case SurfaceKind.Metal: return SurfaceMetal;
+                case SurfaceKind.Water: return SurfaceWetStone;
+                default: return wet ? SurfaceWetStone : SurfaceStoneSlate;
+            }
+        }
+
+        public static AudioSoundId Id(MagazineDropFamily family, int surface)
+        {
+            if (family == MagazineDropFamily.None || surface < 0 || surface >= Surfaces.Length) return AudioSoundId.None;
+            return (AudioSoundId)((family == MagazineDropFamily.Rifle ? (int)AudioSoundId.MagDropRifleStoneSlate : (int)AudioSoundId.MagDropPistolStoneSlate) + surface);
+        }
+
+        /// <summary>
+        /// The produced voice for a family on a surface (S-08 07.10): its own set; else the other family's on the same surface (the
+        /// surface is what is heard — Rifle on dirt plays Pistol_Dirt, AP-029 has no Rifle_Dirt); else the family's StoneSlate; else
+        /// the other family's StoneSlate. None when nothing of it is produced.
+        /// </summary>
+        public static AudioSoundId Resolve(AudioClipLibrary library, MagazineDropFamily family, int surface)
+        {
+            if (library == null || family == MagazineDropFamily.None) return AudioSoundId.None;
+            MagazineDropFamily other = family == MagazineDropFamily.Rifle ? MagazineDropFamily.Pistol : MagazineDropFamily.Rifle;
+            AudioSoundId id = Id(family, surface);
+            if (id != AudioSoundId.None && library.IsProduced(id)) return id;
+            id = Id(other, surface);
+            if (id != AudioSoundId.None && library.IsProduced(id)) return id;
+            id = Id(family, SurfaceStoneSlate);
+            if (library.IsProduced(id)) return id;
+            id = Id(other, SurfaceStoneSlate);
+            return library.IsProduced(id) ? id : AudioSoundId.None;
+        }
+
+        /// <summary>√(2h/g) clamped to <see cref="MinFall"/>–<see cref="MaxFall"/>.</summary>
+        public static float FallSeconds(float height)
+        {
+            return Mathf.Clamp(Mathf.Sqrt(2f * Mathf.Max(0f, height) / Gravity), MinFall, MaxFall);
+        }
+
+        /// <summary>+4 dB to the fire reference, plus the row's deficit under −22 LUFS (≤ 6 dB) when its catalog stamp is known
+        /// (NaN / 0 = no stamp: +4 alone).</summary>
+        public static float FileCompensationDb(float lufs)
+        {
+            if (float.IsNaN(lufs) || lufs >= 0f) return FileCompDb;
+            return FileCompDb + Mathf.Clamp(TargetLufs - lufs, 0f, MaxDeficitCompDb);
+        }
+
+        public void Enable()
+        {
+            if (_subscribed) return;
+            WeaponEvents.Mechanism += OnMechanism;
+            _subscribed = true;
+        }
+
+        public void Disable()
+        {
+            if (!_subscribed) return;
+            WeaponEvents.Mechanism -= OnMechanism;
+            _subscribed = false;
+            _count = 0;
+        }
+
+        public void Clear()
+        {
+            _count = 0;
+        }
+
+        private void OnMechanism(WeaponMechanismEvent m)
+        {
+            if (m.Kind != WeaponMechanismKind.MagazineDropped) return;
+            Drop(m.Weapon, m.Position, Time.time);
+        }
+
+        /// <summary>One magazine leaves the hand at <paramref name="from"/> at game time <paramref name="now"/>; false = not heard.</summary>
+        public bool Drop(ClassicWeaponId weapon, Vector3 from, float now)
+        {
+            MagazineDropFamily family = Family(weapon);
+            if (family == MagazineDropFamily.None) return false;
+            int n = Physics.RaycastNonAlloc(from + Vector3.up * 0.1f, Vector3.down, _hits, FloorRay, CasingEffect.FloorMask, QueryTriggerInteraction.Ignore);
+            if (n == 0)
+            {
+                NoFloor++;
+                return false;
+            }
+
+            int best = 0;
+            for (int i = 1; i < n; i++) if (_hits[i].distance < _hits[best].distance) best = i;
+            RaycastHit hit = _hits[best];
+            SurfaceKind surface = AudioSurfaceHints.Resolve(hit.collider, hit.point);
+            AudioSoundId sound = Resolve(_library, family, Surface(surface, AmbienceDirector.WetLook));
+            if (sound == AudioSoundId.None)
+            {
+                Unvoiced++;
+                return false;
+            }
+
+            if (_count >= Capacity)
+            {
+                Dropped++;
+                return false;
+            }
+
+            float fall = FallSeconds(from.y - hit.point.y);
+            float pitch = WeaponFoleyV3.Pitch((_rng.Next01() * 2f - 1f) * WeaponFoleyV3.V5JitterSemitones);
+            float db = CasingAudio.PerspectiveDb(CameraModeService.Current) + FileCompensationDb(_library.LufsOf(sound));
+            _queue[_count++] = new Pending { At = now + fall, Point = hit.point, Sound = sound, Pitch = pitch, GainDb = db, Fall = fall };
+            LastSurface = surface;
+            Scheduled++;
+            return true;
+        }
+
+        public void Tick()
+        {
+            Tick(Time.time);
+        }
+
+        /// <summary>Plays the drops due at game time <paramref name="now"/>.</summary>
+        public void Tick(float now)
+        {
+            for (int i = _count - 1; i >= 0; i--)
+            {
+                if (_queue[i].At > now) continue;
+                Pending p = _queue[i];
+                _queue[i] = _queue[--_count];
+                AudioPlacement placement = AudioMixPlan.PlayerCasing(p.Sound);
+                placement.Pitch = p.Pitch;
+                placement.Spatial = CameraModeService.Current == CameraMode.FirstPerson ? 0f : 0.9f;
+                // Level against the fire voice (gain 0.85, −18 LUFS files) as CasingAudio: GainDb carries perspective + file compensation.
+                if (_play(placement, p.Point, Mathf.Pow(10f, p.GainDb / 20f) * (0.85f / 0.5f), 8))
+                {
+                    Landed++;
+                    LastSound = p.Sound;
+                    LastFallSeconds = p.Fall;
+                    LastGainDb = p.GainDb;
+                    LastPitch = p.Pitch;
                 }
             }
         }

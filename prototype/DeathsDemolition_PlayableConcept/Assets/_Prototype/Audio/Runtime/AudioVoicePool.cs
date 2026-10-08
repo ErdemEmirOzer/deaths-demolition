@@ -47,6 +47,9 @@ namespace DD.Prototype.Audio
             public bool Active;
             public bool Routed;
             public AudioLowPassFilter LowPass;
+
+            /// <summary>WP-097 K1: the placement fixed this voice's cutoff (<see cref="AudioPlacement.LowPassHz"/>); Tick leaves it.</summary>
+            public bool FixedCutoff;
         }
 
         private readonly Voice[] _voices;
@@ -146,13 +149,30 @@ namespace DD.Prototype.Audio
         {
         }
 
+        /// <summary>WP-097 K1: the name of the director's slapback / echo pool (evidence pool <c>Reflection</c>).</summary>
+        public const string ReflectName = "Reflect";
+
+        /// <summary>
+        /// WP-097 K1 (03 §3): Unity's own voice priority for every source of this pool (0 = most important, 256 = least; default
+        /// 128). The Reflect pool sets 160: past RealVoiceCount (48) Unity virtualises the reflections before the dry shots.
+        /// </summary>
+        public void SetSourcePriority(int priority)
+        {
+            int p = Mathf.Clamp(priority, 0, 256);
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                _voices[i].Source.priority = p;
+            }
+        }
+
         public AudioVoicePool(string name, Transform parent, int hardCapacity, AudioBusMixer mixer, AudioMixerBridge bridge)
         {
             Name = name;
             _mixer = mixer;
             _bridge = bridge;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
-            _evidencePool = name == "Signal" ? AudioPlaybackPool.Signal : AudioPlaybackPool.World;
+            // WP-097 K1: the "Reflect" pool (slapback / echo) is its own evidence pool, so S2 and the world counts never see it.
+            _evidencePool = name == "Signal" ? AudioPlaybackPool.Signal : name == ReflectName ? AudioPlaybackPool.Reflection : AudioPlaybackPool.World;
 #endif
             _voices = new Voice[Mathf.Max(1, hardCapacity)];
             _softCapacity = _voices.Length;
@@ -265,10 +285,17 @@ namespace DD.Prototype.Audio
             // distance; the player's own hands (Weapon) and the interface stay dry and open.
             bool world = placement.Spatial > 0.01f && (placement.Bus == AudioBus.Impact || placement.Bus == AudioBus.Target || placement.Bus == AudioBus.Ambience);
             source.bypassReverbZones = !world;
+            // WP-097 K1: a placement may fix the cutoff (slapback / echo darkening); 0 keeps the rule above exactly as it was.
+            bool fixedCutoff = placement.LowPassHz > 0f;
+            voice.FixedCutoff = fixedCutoff;
             if (voice.LowPass != null)
             {
-                voice.LowPass.enabled = world && _listener != null;
-                if (voice.LowPass.enabled)
+                voice.LowPass.enabled = fixedCutoff || (world && _listener != null);
+                if (fixedCutoff)
+                {
+                    voice.LowPass.cutoffFrequency = Mathf.Clamp(placement.LowPassHz, 10f, LowPassOpen);
+                }
+                else if (voice.LowPass.enabled)
                 {
                     voice.LowPass.cutoffFrequency = CutoffFor(Vector3.Distance(position, _listener()));
                 }
@@ -350,7 +377,7 @@ namespace DD.Prototype.Audio
 
                 // v003: the listener moves (it rides the player); a ringing tail must keep
                 // darkening/opening with it. Static sources, so only the listener side moves.
-                if (v.LowPass != null && v.LowPass.enabled && _listener != null)
+                if (v.LowPass != null && v.LowPass.enabled && !v.FixedCutoff && _listener != null)
                 {
                     v.LowPass.cutoffFrequency = CutoffFor(Vector3.Distance(v.Source.transform.position, _listener()));
                 }

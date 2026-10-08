@@ -48,10 +48,59 @@ class ContractTests(unittest.TestCase):
                   ("H1b", "palmToWeaponMaxDeg"): 35.0, ("H1b", "fingertipGapMaxCm"): 1.5,   # palm: C-00 06.10, 35 PROVISIONAL
                   ("H1b", "palmGapMaxCm"): 1.5,   # C-00 06.10 H1b record (a)
                   ("H1c", "elbowMaxDeg"): 165.0, ("H1c", "reachMarginMinCm"): 1.0,   # C-00 06.10 (S-06 t-b2f4-off)
-                  ("H6", "visibleShareMin"): 0.25, ("H6", "muzzleInsideSilhouetteFrames"): 0}
+                  ("H6", "visibleShareMin"): 0.25, ("H6", "muzzleInsideSilhouetteFrames"): 0,
+                  # WP-097 (C-00 07.10): decision 1 — the S3 margin is gated at real RPM; K3 — the top-down small Room tail
+                  ("S3", "weaponMarginRealRpmLu"): 1.2,
+                  ("S4", "roomRt60MinS"): 0.35, ("S4", "roomRt60MaxS"): 0.65,
+                  # decision 2 — S7: slapback (2 ms + the 21.3 ms DSP buffer), echo present / absent, tail bed, GC
+                  ("S7a", "slapDelayErrMs"): 23.3, ("S7a", "slapLevelErrDb"): 2.0, ("S7a", "slapRightMinusLeftDb"): 3.0,
+                  ("S7b", "echoPresentOpen"): 1, ("S7b", "echoPresentInterior"): 0,
+                  ("S7c", "reflectDropped"): 0, ("S7c", "bedVoicesMax"): 2, ("S7d", "gcBytes"): 0}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
+
+    def test_wp097_s3_gates_the_real_rpm_margin_and_reports_the_8_per_second_one(self):
+        # C-00 07.10 decision 1: the 8/s AB rig reads ~0.8 dB optimistic (SE) — it stays only as a continuity report
+        self.assertEqual(["weaponMarginLu"], gate("S3")["report"])
+        self.assertNotIn("weaponMarginLu", [c["key"] for c in gate("S3")["checks"]])
+        self.assertEqual((">=", 1.2), next((c["op"], c["limit"]) for c in gate("S3")["checks"] if c["key"] == "weaponMarginRealRpmLu"))
+        values = dict(truePeakDbtp=-3.0, momentaryMaxLufs=-15.0, preLimiterGrDb=0.0, weaponMarginLu=0.4)
+        self.assertEqual("PASS", r2.evaluate_gate(gate("S3"), FINAL, measure=measure("S3", weaponMarginRealRpmLu=1.2, **values))["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("S3"), FINAL, measure=measure("S3", weaponMarginRealRpmLu=1.19, **values))["status"])
+
+    def test_wp097_s4_room_is_ranged_but_outside_the_order(self):
+        # C-00 K3 (S-10 acceptance matrix): Room 0.35-0.65 s; orderViolations stays open < corridor < hall
+        checks = {c["key"]: (c["op"], c["limit"]) for c in gate("S4")["checks"]}
+        self.assertEqual(((">=", 0.35), ("<=", 0.65)), (checks["roomRt60MinS"], checks["roomRt60MaxS"]))
+        base = dict(openRt60MinS=0.6, openRt60MaxS=1.0, corridorRt60MinS=0.9, corridorRt60MaxS=1.6, hallRt60MinS=1.3,
+                    hallRt60MaxS=2.2, orderViolations=0, openEdc30MsMin=1.0, corridorEdc30MsMin=1.0, hallEdc30MsMin=1.0)
+        self.assertEqual("PASS", r2.evaluate_gate(gate("S4"), FINAL, measure=measure("S4", roomRt60MinS=0.35, roomRt60MaxS=0.65, **base))["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("S4"), FINAL, measure=measure("S4", roomRt60MinS=0.34, roomRt60MaxS=0.5, **base))["status"])
+        # the Room file not produced yet: the test writes null with a note — BLOCKED by name, never PASS
+        row = r2.evaluate_gate(gate("S4"), FINAL, measure=dict(measure("S4", roomRt60MinS=None, roomRt60MaxS=None, **base), note="Room dosyası yok"))
+        self.assertEqual("BLOCKED", row["status"])
+        self.assertIn("roomRt60MinS", row["reason"])
+
+    def test_wp097_s7_gates_are_s08s_and_run_their_own_full_name_sessions(self):
+        steps = {s["id"]: s for s in r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)}
+        for gid, name, report in (("S7a", "Yansima_Slap_Duvar8m_Olcum", ["slapDelayMs", "slapLevelDb", "negativeControlDb"]),
+                                  ("S7b", "Echo_AcikAlan_Olcum", ["echoOnsetMs", "echoEdcS"]),
+                                  ("S7c", "OtoAtes_KuyrukYatagi_Olcum", ["reflectPeakActive", "releaseTailAboveMinus50S"]),
+                                  ("S7d", "Yansima_TdSeriAtesVeYuruyus_SifirAyirma", [])):
+            g = gate(gid)
+            self.assertEqual(("S-08", "gate", "sound"), (g["owner"], g["kind"], g["area"]), gid)
+            self.assertEqual(report, g.get("report", []), gid)
+            self.assertEqual("DD.Prototype.Tests.PlayMode.AudioSliceTests." + name, steps["r2-" + gid]["filter"])
+            self.assertEqual(([gid], "playmode", False), (steps["r2-" + gid]["gates"], steps["r2-" + gid]["suite"],
+                                                          steps["r2-" + gid]["quiet"]))
+        ok = measure("S7a", slapDelayErrMs=23.3, slapLevelErrDb=2.0, slapRightMinusLeftDb=3.0, slapDelayMs=46.6, slapLevelDb=-15.0,
+                     negativeControlDb=-48.0)
+        self.assertEqual("PASS", r2.evaluate_gate(gate("S7a"), FINAL, measure=ok)["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("S7a"), FINAL, measure=dict(ok, values=dict(ok["values"], slapDelayErrMs=23.4)))["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("S7b"), FINAL, measure=measure("S7b", echoPresentOpen=1, echoPresentInterior=1,
+                                                                                       echoOnsetMs=180.0, echoEdcS=2.0))["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("S7d"), FINAL, measure=measure("S7d", gcBytes=16))["status"])
 
     def test_invalid_contracts_are_refused(self):
         base = json.loads(CONTRACT)
@@ -233,7 +282,7 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("/k/asset-production/AP-027/exports/v001-prototip",
                          r2.expand_env(kit[0]["env"], "/k")["DD_AP027_DIR"])
         self.assertEqual(["below400ShareMinV4", "weaponsMeasured", "rosterEnabled"], gate("S1")["report"])
-        self.assertEqual(["weaponsMeasured", "rosterEnabled"], gate("S2")["report"])   # C-00 07.10: coverage, reported
+        self.assertEqual(["weaponsMeasured", "rosterEnabled", "fireVoiceExcess"], gate("S2")["report"])   # C-00 07.10: coverage, reported; gt S-2: extra voices
         normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
         self.assertEqual("editmode", normal["r2-U3"]["suite"])
         self.assertEqual("DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
@@ -312,6 +361,7 @@ class EvaluateTests(unittest.TestCase):
         # S-10 06.10 (§15): an S4 run that measured no weapon wrote min = float.MaxValue, max = 0 — inside every check
         empty = dict(measure("S4", openRt60MinS=3.4028234663852886e38, openRt60MaxS=0.0, corridorRt60MinS=3.4028234663852886e38,
                              corridorRt60MaxS=0.0, hallRt60MinS=3.4028234663852886e38, hallRt60MaxS=0.0, orderViolations=0,
+                             roomRt60MinS=3.4028234663852886e38, roomRt60MaxS=0.0,   # WP-097 K3: the Room keys, same placeholders
                              openEdc30MsMin=0.0, corridorEdc30MsMin=0.0, hallEdc30MsMin=0.0), samples=0)
         self.assertEqual("PASS", r2.evaluate_gate(gate("S4"), FINAL, measure=dict(empty, samples=24))["status"])   # what the judge saw before
         for samples in (0, -1, None, "24", float("nan"), True, "absent"):

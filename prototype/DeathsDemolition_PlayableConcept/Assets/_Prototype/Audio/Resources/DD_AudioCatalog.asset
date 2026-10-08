@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6197efd5c396b65db9d821240019456c6
+  _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6197efd5c396b65db9d821240019456c66c867dde95efc144078d10cf940165be
   _entries:
   - Sound: 10
     Clips:
@@ -2714,26 +2714,22 @@ MonoBehaviour:
       + ui_bell_rin_suzu.wav@40ms -4dB -5st + ui_bell_rin_suzu.wav@120ms -8dB'
   - Sound: 400
     Clips:
-    - {fileID: 8300000, guid: fe8edb060fd2647d4914bdfa4064b852, type: 3}
-    - {fileID: 8300000, guid: 192f56e463e0d400a886e9b59306a69b, type: 3}
-    - {fileID: 8300000, guid: 33b7a748c3efa420b890cd50e8aae922, type: 3}
-    - {fileID: 8300000, guid: 777b3564105dc4dcdab58ff3f626c4e3, type: 3}
-    - {fileID: 8300000, guid: 79cdc9d53336e468db66d4855a32530b, type: 3}
-    - {fileID: 8300000, guid: f45f87a5d9b6c4961962afededaeaf6b, type: 3}
+    - {fileID: 8300000, guid: e08d0c2cb2bbe4afcb7cb5f43654fb64, type: 3}
+    - {fileID: 8300000, guid: 15765c60bdbb44e95a4c5c711ff72348, type: 3}
+    - {fileID: 8300000, guid: cf3c99084809f47e7ac8cc9ef9dfb075, type: 3}
+    - {fileID: 8300000, guid: 57cf226476c664e338036759305555e8, type: 3}
+    - {fileID: 8300000, guid: 4c301be52b7d54cea9d3c4e75db4bed8, type: 3}
+    - {fileID: 8300000, guid: 62ce56fa3c781471296f931835ad0425, type: 3}
     Loop: 0
-    Lufs: -18
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
-      recording) \xB7 SHA d76e743eb2e9\u2026 \xB7 AP-027 v003-recut on 4 file(s)
-      \xB7 AP-027 v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import true-peak shave
-      \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved
-      file's house stamp) on 6 file(s)"
-    NoiseFloorDb: -41.2
-    DcDb: -68.2
+    Lufs: -18.08
+    TruePeakDb: -2.2
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 21cb2ea02fc2\u2026) \xB7 supersedes
+      AP-027 WeaponAr1Fire"
+    NoiseFloorDb: -240
+    DcDb: -62.8
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_ar1_Fire
+    Layers: WeaponAr1Fire
   - Sound: 401
     Clips:
     - {fileID: 8300000, guid: 990c01f70964f409bb872abd936c933c, type: 3}
@@ -2769,50 +2765,40 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 403
     Clips:
-    - {fileID: 8300000, guid: d32a3a739e3bd4e9991322b42a2b6cb8, type: 3}
-    - {fileID: 8300000, guid: 6b70af64c0c024b7a818284bb45762d6, type: 3}
-    - {fileID: 8300000, guid: acedbb556a5cd4cfbaa92122ddbc6937, type: 3}
-    - {fileID: 8300000, guid: 4aa8d2859d0ac462aa2024190ee55c11, type: 3}
-    - {fileID: 8300000, guid: c72fb061c001a43119a3b1acd19bcb48, type: 3}
-    - {fileID: 8300000, guid: 1fdf1a6b8934f4992a78703b6c6ae54c, type: 3}
+    - {fileID: 8300000, guid: af221c76b3ea048d9b5531999f5f945a, type: 3}
+    - {fileID: 8300000, guid: 7e6c0a310ec1a4483b68a4136fe157d1, type: 3}
+    - {fileID: 8300000, guid: 464fb1985eb0b40d6a674a2e25a05cb3, type: 3}
+    - {fileID: 8300000, guid: afb49cfafa3db4b23b352135af89e20c, type: 3}
+    - {fileID: 8300000, guid: aa2c0506c48ef458783b7bef36f5fd7d, type: 3}
+    - {fileID: 8300000, guid: d8c05681efcf14bcc87f56021577d05c, type: 3}
     Loop: 0
-    Lufs: -19.28
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source
-      recording) \xB7 SHA 021c8c4f226a\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
-      + DC out on Weapon_ar2_Fire_01.wav, Weapon_ar2_Fire_02.wav, Weapon_ar2_Fire_03.wav,
-      Weapon_ar2_Fire_04.wav, Weapon_ar2_Fire_05.wav, Weapon_ar2_Fire_06.wav \xB7
-      import true-peak shave \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no
-      make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+    Lufs: -19.7
+    TruePeakDb: -2.04
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 6c005097e655\u2026) \xB7 supersedes
+      AP-027 WeaponAr2Fire"
     NoiseFloorDb: -240
-    DcDb: -82.1
+    DcDb: -60.4
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_ar2_Fire
+    Layers: WeaponAr2Fire
   - Sound: 404
     Clips:
-    - {fileID: 8300000, guid: da2af5308493f472daa4750868001198, type: 3}
-    - {fileID: 8300000, guid: fc2f8e76532004a58828457b49981df5, type: 3}
-    - {fileID: 8300000, guid: dbc0ed1fc75144d239c81c8b3406c0e2, type: 3}
-    - {fileID: 8300000, guid: c414d44b7ef734ca195e7640f2716b7e, type: 3}
-    - {fileID: 8300000, guid: 49a1d6258133a4b70b1aee6a85b47728, type: 3}
-    - {fileID: 8300000, guid: c73a85b95f678486f942b85650de7e10, type: 3}
+    - {fileID: 8300000, guid: e9a9143ada30f43878c8a4a50302d956, type: 3}
+    - {fileID: 8300000, guid: ce507cbc897c147d7953baadfe97c576, type: 3}
+    - {fileID: 8300000, guid: 8561edbc0ec864092bee863958dbdccc, type: 3}
+    - {fileID: 8300000, guid: 8325b7a81190d44988d96be06bf19940, type: 3}
+    - {fileID: 8300000, guid: a50790235b6e141bdb91b813b42ee792, type: 3}
+    - {fileID: 8300000, guid: f2da53f85c7d141549dd942c62c322e0, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
-      source recording) \xB7 SHA 05b64bd6dd3c\u2026 \xB7 AP-027 v003-recut on 5 file(s)
-      \xB7 AP-027 v003-recut on 5 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
-      + DC out on Weapon_smg1_Fire_06.wav \xB7 import true-peak shave \u2264 -2.0
-      dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's
-      house stamp) on 1 file(s)"
-    NoiseFloorDb: -57.1
-    DcDb: -64.2
+    TruePeakDb: -2.04
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 4fc94e751fad\u2026) \xB7 supersedes
+      AP-027 WeaponSmg1Fire"
+    NoiseFloorDb: -240
+    DcDb: -64.9
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_smg1_Fire
+    Layers: WeaponSmg1Fire
   - Sound: 405
     Clips:
     - {fileID: 8300000, guid: 107d49bf19e0c476a8deafdd2680220e, type: 3}
@@ -2848,91 +2834,76 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 407
     Clips:
-    - {fileID: 8300000, guid: 5feb63285fef94ead8307068df56a1fd, type: 3}
-    - {fileID: 8300000, guid: d568376ebe4364bcd8a124b0ad00cee6, type: 3}
-    - {fileID: 8300000, guid: ba37b8d5f15d342008785a212bb59a2b, type: 3}
-    - {fileID: 8300000, guid: 99f3996ff7fbe4a5f97d101496cd1b30, type: 3}
-    - {fileID: 8300000, guid: 5bbd2420cbb3f431dbc934a1f67b90c7, type: 3}
-    - {fileID: 8300000, guid: 28543cbf583464b318aa0caa67118807, type: 3}
+    - {fileID: 8300000, guid: ae97fc60ac7b94d558709d96c549b981, type: 3}
+    - {fileID: 8300000, guid: 9a08b82f0cf83460aa98141cde56d746, type: 3}
+    - {fileID: 8300000, guid: 9da324be814934be382bf91cad02c019, type: 3}
+    - {fileID: 8300000, guid: 8c58d2079fb41431981521588d0c21ff, type: 3}
+    - {fileID: 8300000, guid: a4145f269b95b4d279bf47bdc4d0b99c, type: 3}
+    - {fileID: 8300000, guid: 5551e4ad6049547bd818ab05c8f01b5b, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.83
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source
-      recording) \xB7 SHA 09b4ed8e6ac6\u2026 \xB7 AP-027 v003-recut on 3 file(s)
-      \xB7 AP-027 v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
-      + DC out on Weapon_smg2_Fire_01.wav, Weapon_smg2_Fire_05.wav"
-    NoiseFloorDb: -53.3
-    DcDb: -62.3
+    TruePeakDb: -3.02
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 6f581cdc57d5\u2026) \xB7 supersedes
+      AP-027 WeaponSmg2Fire"
+    NoiseFloorDb: -53.4
+    DcDb: -67.6
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_smg2_Fire
+    Layers: WeaponSmg2Fire
   - Sound: 408
     Clips:
-    - {fileID: 8300000, guid: f81a0bbac19b046b7ad40782747c3e95, type: 3}
-    - {fileID: 8300000, guid: 0a7ac6afa1ee54104947af60a970e186, type: 3}
-    - {fileID: 8300000, guid: cc713c70e8c5a4ab796ddb19d6992b95, type: 3}
-    - {fileID: 8300000, guid: 0976c19b648e5440783f511119c276ff, type: 3}
-    - {fileID: 8300000, guid: aec11ca1263554d0aaa22b30b4323324, type: 3}
-    - {fileID: 8300000, guid: ee6a4ca89f1fc48a8a57c0ae44c4963b, type: 3}
+    - {fileID: 8300000, guid: 50dfaaa06153f400aa2f660a1e540874, type: 3}
+    - {fileID: 8300000, guid: c470293da600442a4a49ee8e43d422fa, type: 3}
+    - {fileID: 8300000, guid: a8c1eb9dca63b4cca86f2ac895ca9d29, type: 3}
+    - {fileID: 8300000, guid: 17aea3cf5a88f4ccbbfd1fc3769cf16d, type: 3}
+    - {fileID: 8300000, guid: c2c71fd3c7ff747e48ed11e134c7a048, type: 3}
+    - {fileID: 8300000, guid: 91c67b04416684f5e9aad89a76439262, type: 3}
     Loop: 0
-    Lufs: -19.09
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
-      recording) \xB7 SHA 5d01ff8627b3\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate) \xB7 import true-peak shave
-      \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved
-      file's house stamp) on 6 file(s)"
-    NoiseFloorDb: -85.1
-    DcDb: -68.8
+    Lufs: -19.42
+    TruePeakDb: -2.19
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 081013b45093\u2026) \xB7 supersedes
+      AP-027 WeaponSg1Fire"
+    NoiseFloorDb: -240
+    DcDb: -71.7
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_sg1_Fire
+    Layers: WeaponSg1Fire
   - Sound: 409
     Clips:
-    - {fileID: 8300000, guid: 7179b53ed44f74d39826f355102cf8b4, type: 3}
-    - {fileID: 8300000, guid: 8e362ec6b6ceb474c9e601c0593af9e5, type: 3}
-    - {fileID: 8300000, guid: 6b6bb4f83a1cd4042bbe6783cb655f1e, type: 3}
-    - {fileID: 8300000, guid: aa3fd53914b2642b1a27657b9f17ef24, type: 3}
-    - {fileID: 8300000, guid: 38b70fc46a94a470ea4b9bc662684e5d, type: 3}
-    - {fileID: 8300000, guid: 4a99cf7ff187243e8adc0356320673ca, type: 3}
+    - {fileID: 8300000, guid: b3e6511f622ad4ca891a65e50e5bf5e0, type: 3}
+    - {fileID: 8300000, guid: 456b622a93bea477dbadd854c077dea6, type: 3}
+    - {fileID: 8300000, guid: 697570329aa5a4eae874e61813759090, type: 3}
+    - {fileID: 8300000, guid: ff97a4c511d5440d6a2f288dc32a5d00, type: 3}
+    - {fileID: 8300000, guid: 31792b4812218434f856638fbd629649, type: 3}
+    - {fileID: 8300000, guid: 745998083d9fc4a46b5a6b99d0eab299, type: 3}
     Loop: 0
-    Lufs: -18.67
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006, SRC007,
-      SRC013; source recording) \xB7 SHA 578929cc37b2\u2026 \xB7 AP-027 v003-recut
-      on 2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20
-      ms silence on 5 file(s) (end within 40 dB of peak / end gate) \xB7 import true-peak
-      shave \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs =
-      the unshaved file's house stamp) on 6 file(s)"
-    NoiseFloorDb: -82.1
-    DcDb: -69.3
+    Lufs: -18.94
+    TruePeakDb: -2.13
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 3b9d60b5fd05\u2026) \xB7 supersedes
+      AP-027 WeaponSg2Fire"
+    NoiseFloorDb: -240
+    DcDb: -72
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_sg2_Fire
+    Layers: WeaponSg2Fire
   - Sound: 410
     Clips:
-    - {fileID: 8300000, guid: fa9ba7ed7aa92416abff6a69c7ef76d4, type: 3}
-    - {fileID: 8300000, guid: d9ca5a0a9cce64482bc96d3c7abcd780, type: 3}
-    - {fileID: 8300000, guid: ad7ac598e9fb24458a08bd708414715f, type: 3}
-    - {fileID: 8300000, guid: 71da43ac47210403ba288e9e2e1f6b15, type: 3}
-    - {fileID: 8300000, guid: 3577c3abc3d0b41c0971e30328a3502c, type: 3}
-    - {fileID: 8300000, guid: 3990aae33f83340fe99f35f3866e84c5, type: 3}
+    - {fileID: 8300000, guid: 671e3b5d9c1834219b3df4b27567c78c, type: 3}
+    - {fileID: 8300000, guid: 34fa4a1dd87aa426b8918c9e43c8e346, type: 3}
+    - {fileID: 8300000, guid: 4c5d5fa49de98401aa9d60f5b067fff4, type: 3}
+    - {fileID: 8300000, guid: b2de496373883452fb4003b8aaeec323, type: 3}
+    - {fileID: 8300000, guid: 9e270f4b103e045da9d89e0831e7f411, type: 3}
+    - {fileID: 8300000, guid: 2d6d6ca52bae3498eb3c55bf9746c352, type: 3}
     Loop: 0
-    Lufs: -18.58
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC109; source
-      recording) \xB7 SHA 33f2a99f4071\u2026 \xB7 AP-027 v003-recut on 4 file(s)
-      \xB7 AP-027 v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import true-peak shave
-      \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved
-      file's house stamp) on 4 file(s)"
-    NoiseFloorDb: -117.3
-    DcDb: -69.6
+    Lufs: -18.8
+    TruePeakDb: -2.18
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 9f0df80aaf70\u2026) \xB7 supersedes
+      AP-027 WeaponLmg1Fire"
+    NoiseFloorDb: -240
+    DcDb: -66.2
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_lmg1_Fire
+    Layers: WeaponLmg1Fire
   - Sound: 411
     Clips:
     - {fileID: 8300000, guid: d01cd3cc0d9b84902a5e44bd11cf889a, type: 3}
@@ -2968,70 +2939,57 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 413
     Clips:
-    - {fileID: 8300000, guid: ccb895a9c384d41e898d7998fa76221d, type: 3}
-    - {fileID: 8300000, guid: 8a4ab9c901fc942a0a9d35bbcd1ec8a6, type: 3}
-    - {fileID: 8300000, guid: 99d32db97655441f39066a93ee1caa3b, type: 3}
-    - {fileID: 8300000, guid: 9343295c8b7914164bc293d3e1815d16, type: 3}
-    - {fileID: 8300000, guid: 81222ec34dbc64ecfafcef4f06f44299, type: 3}
+    - {fileID: 8300000, guid: cbcc6605fa6984a57bcb328834729648, type: 3}
+    - {fileID: 8300000, guid: 664d06ba173314752bbce35d8909498e, type: 3}
+    - {fileID: 8300000, guid: a7c6c66017c8e4febb9c5d66eec61f70, type: 3}
+    - {fileID: 8300000, guid: 0e1ddd8b69df04c93a0b825d6b58044e, type: 3}
+    - {fileID: 8300000, guid: fb37c7eb1ae334720b613dd673af3bb1, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source
-      recording) \xB7 SHA e8387d450706\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003b-recut on 1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7
-      AP-027 v003b-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 5
-      file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass +
-      DC out on Weapon_lmg2_Fire_02.wav, Weapon_lmg2_Fire_06.wav \xB7 import true-peak
-      shave \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs =
-      the unshaved file's house stamp) on 2 file(s)"
-    NoiseFloorDb: -65.8
-    DcDb: -65.9
+    TruePeakDb: -2.04
+    Provenance: "AP-029 v001 fire (v001-fire, SHA fe342f65ec2a\u2026) \xB7 supersedes
+      AP-027 WeaponLmg2Fire"
+    NoiseFloorDb: -240
+    DcDb: -60.4
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_lmg2_Fire
+    Layers: WeaponLmg2Fire
   - Sound: 414
     Clips:
-    - {fileID: 8300000, guid: 83d4c8bec65274f3dabb46ee73e45f27, type: 3}
-    - {fileID: 8300000, guid: 1d1122abaf6c64aec8944c4775d6dad3, type: 3}
-    - {fileID: 8300000, guid: a95035a1783e741429afedb3c992d882, type: 3}
-    - {fileID: 8300000, guid: 690dd44fdd8654d309cb1eb8b3cb53e8, type: 3}
-    - {fileID: 8300000, guid: 716071e0768ee4bae91abf21e4ef4b7c, type: 3}
-    - {fileID: 8300000, guid: dc4cd01997ff1455f85f3052b39e993e, type: 3}
+    - {fileID: 8300000, guid: 97488da7bc175461082502a840c7d11b, type: 3}
+    - {fileID: 8300000, guid: b0b19d6115a1743afbedf036729abeea, type: 3}
+    - {fileID: 8300000, guid: e4e7a4698900142bea1eca0695924f6e, type: 3}
+    - {fileID: 8300000, guid: 1c4d6da9066eb4c1ab3163eef2f2277e, type: 3}
+    - {fileID: 8300000, guid: 3cf4329342256412baf4e8d6800065a0, type: 3}
+    - {fileID: 8300000, guid: 541d2103f7ca84911ab109cdec65bd8a, type: 3}
     Loop: 0
     Lufs: -18.91
-    TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source
-      recording) \xB7 SHA f964aaf5ba46\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 3 file(s) (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -65.4
-    DcDb: -67
+    TruePeakDb: -1.23
+    Provenance: "AP-029 v001 fire (v001-fire, SHA faba3e16499e\u2026) \xB7 supersedes
+      AP-027 WeaponSr1Fire"
+    NoiseFloorDb: -240
+    DcDb: -67.4
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_sr1_Fire
+    Layers: WeaponSr1Fire
   - Sound: 415
     Clips:
-    - {fileID: 8300000, guid: 6ac8dc8f4ac3d4e76b451ed67529e523, type: 3}
-    - {fileID: 8300000, guid: d825c9cb682b44fdf81ce65b411379ec, type: 3}
-    - {fileID: 8300000, guid: e4249aea2829248d6ad7138baa2abf6f, type: 3}
-    - {fileID: 8300000, guid: 129a580545d814a1c9bf64409c1f1eee, type: 3}
-    - {fileID: 8300000, guid: bf217088046d147248e169dff268f229, type: 3}
-    - {fileID: 8300000, guid: 35bc142e15c6548fab9aea2993583de9, type: 3}
+    - {fileID: 8300000, guid: d783a6815d59f44939ed2068cd80da36, type: 3}
+    - {fileID: 8300000, guid: 69be0581a97294ce0bcd3d97a2adb562, type: 3}
+    - {fileID: 8300000, guid: edf5be08f205840a2a86bdb1f82aa9ba, type: 3}
+    - {fileID: 8300000, guid: 4baa65cc1369e4c08a51a69d015d21fd, type: 3}
+    - {fileID: 8300000, guid: bf18b290ef68448449a2f8ffca03a1e8, type: 3}
+    - {fileID: 8300000, guid: 10175f573a0984c05b0fcbbdc53b0267, type: 3}
     Loop: 0
-    Lufs: -19.37
-    TruePeakDb: -2.01
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
-      recording) \xB7 SHA c66fb9815b0d\u2026 \xB7 AP-027 v003-recut on 6 file(s)
-      \xB7 AP-027 v003-recut on 6 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
-      + DC out on Weapon_rl1_Fire_01.wav, Weapon_rl1_Fire_02.wav, Weapon_rl1_Fire_03.wav,
-      Weapon_rl1_Fire_04.wav, Weapon_rl1_Fire_05.wav, Weapon_rl1_Fire_06.wav \xB7
-      import true-peak shave \u2264 -2.0 dBTP (1.5 ms lookahead, 10 ms release, no
-      make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
-    NoiseFloorDb: -38.4
-    DcDb: -60.6
+    Lufs: -19.59
+    TruePeakDb: -2.04
+    Provenance: "AP-029 v001 fire (v001-fire, SHA 12496cc55c43\u2026) \xB7 supersedes
+      AP-027 WeaponRl1Fire"
+    NoiseFloorDb: -240
+    DcDb: -66.9
     Clipped: 0
     BitDepth: 24
-    Layers: Weapon_rl1_Fire
+    Layers: WeaponRl1Fire
   - Sound: 420
     Clips:
     - {fileID: 8300000, guid: 3cf25152f9bd84aef80d5634758f0eb3, type: 3}
@@ -4595,84 +4553,76 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 530
     Clips:
-    - {fileID: 8300000, guid: 1283bf96e7f1b4a0fbffbbc394659edd, type: 3}
-    - {fileID: 8300000, guid: cafbe3c6c764b4f3c89cbf8e7852b2a2, type: 3}
+    - {fileID: 8300000, guid: babcf06623c554c5d8dfa8b92ec37e56, type: 3}
+    - {fileID: 8300000, guid: 1d81e90b190524c7fb70ab2e8d1583b1, type: 3}
     Loop: 0
-    Lufs: -20
-    TruePeakDb: -7.47
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 coil whine just before the discharge (1.95\u20132.45 s) HP
-      90 + 110 Hz hum \u221210 dB + glass 2.4 k \u221216 dB, fade-in 60 ms"
-    NoiseFloorDb: -120
-    DcDb: -83.6
+    Lufs: -20.02
+    TruePeakDb: -3.2
+    Provenance: "AP-029 v001 special (v001-special, SHA 9c86a8f4873b\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -46.4
+    DcDb: -80.7
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcCharge
   - Sound: 531
     Clips:
-    - {fileID: 8300000, guid: 447f1a57f89f24c828a24e61c08dfc43, type: 3}
-    - {fileID: 8300000, guid: b4749a2557ae7401d984315bb457bdc7, type: 3}
-    - {fileID: 8300000, guid: b3825c8e840a74ea1aeef1022d3295fe, type: 3}
-    - {fileID: 8300000, guid: 387de52c573b947f1ac020ceec9c4b4b, type: 3}
+    - {fileID: 8300000, guid: 2980c0fb7216243f082a380d265bc67f, type: 3}
+    - {fileID: 8300000, guid: 6598fd68c41514a57883fdeee110de9c, type: 3}
+    - {fileID: 8300000, guid: a4cb95ca72a7e40838a7daca05378fbe, type: 3}
+    - {fileID: 8300000, guid: a2d1726ddf2df4520a2f92d44b8e7b52, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 discharge crack + glass \"v\u0131nn\" \u221210 dB + air release
-      (pink HP 1 k) \u221214 dB"
-    NoiseFloorDb: -120
-    DcDb: -89.2
+    TruePeakDb: -1.25
+    Provenance: "AP-029 v001 special (v001-special, SHA ffa01214a28b\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -111
+    DcDb: -91.6
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcFire
   - Sound: 532
     Clips:
-    - {fileID: 8300000, guid: 8c9f057119ede415e84597dcbddc93e4, type: 3}
+    - {fileID: 8300000, guid: aaabd9257e1c641b58ee99a739dbc76a, type: 3}
     Loop: 1
     Lufs: -22
-    TruePeakDb: -9.98
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 arc buzz 3.0\u20134.1 s HP 90 + 110 Hz hum \u22128 + trembling
-      glass 2.4 k \u221212"
-    NoiseFloorDb: -120
-    DcDb: -198.6
+    TruePeakDb: -1.22
+    Provenance: "AP-029 v002 special (v002-special, SHA 8d13bf3942e2\u2026) \xB7
+      supersedes AP-029 v001-special"
+    NoiseFloorDb: -29.1
+    DcDb: -120.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcSphereLoop
   - Sound: 533
     Clips:
-    - {fileID: 8300000, guid: 35bdd465f3c1d470cb313434dfb5e124, type: 3}
-    - {fileID: 8300000, guid: eecdc98905ef94837a57bbe599ade7e9, type: 3}
-    - {fileID: 8300000, guid: 1260d643bd74a4ec097ee1f6b93149e2, type: 3}
-    - {fileID: 8300000, guid: 2bc08079611444f13b0ea6024a0096f5, type: 3}
+    - {fileID: 8300000, guid: aad23a466f05f445cb1bfd560898762d, type: 3}
+    - {fileID: 8300000, guid: d584d7a404357498fb12568bbb12d7f5, type: 3}
+    - {fileID: 8300000, guid: 46a0f220c4da744738542eabd73f86ce, type: 3}
+    - {fileID: 8300000, guid: f88049fde226b450f8f9db1d7ebcc8e0, type: 3}
     Loop: 0
-    Lufs: -20
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 post-discharge sizzle snaps HP 300 (short \"\xE7\u0131t-\xC7ZT\")"
-    NoiseFloorDb: -120
-    DcDb: -96.2
+    Lufs: -20.04
+    TruePeakDb: -1.04
+    Provenance: "AP-029 v001 special (v001-special, SHA e591af79cafd\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -240
+    DcDb: -75.7
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcChainJump
   - Sound: 534
     Clips:
-    - {fileID: 8300000, guid: 45b47164f73534ac1bc6c734e7881429, type: 3}
+    - {fileID: 8300000, guid: b3f95c440e9714f74a66e62b455cc3fa, type: 3}
     Loop: 1
     Lufs: -22.51
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 crackling arc 4.3\u20135.1 s HP 250 (body crackle)"
-    NoiseFloorDb: -120
-    DcDb: -214.3
+    TruePeakDb: -2.81
+    Provenance: "AP-029 v002 special (v002-special, SHA 7295fa4b3cae\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -25.5
+    DcDb: -113.8
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcShockLoop
   - Sound: 535
     Clips:
     - {fileID: 8300000, guid: bce7f47ed41a14ca2a8af0fb94ef25bf, type: 3}
@@ -4690,189 +4640,171 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 536
     Clips:
-    - {fileID: 8300000, guid: 5a23b978caf3d418196f09caf0aa125a, type: 3}
-    - {fileID: 8300000, guid: e27320de6f2ee49ed9329fbe1faa28a4, type: 3}
+    - {fileID: 8300000, guid: 80be7b38cac17469a814eba81872e048, type: 3}
+    - {fileID: 8300000, guid: 56a760bb4a29c4b8197894cd34c06a3c, type: 3}
     Loop: 0
     Lufs: -20
-    TruePeakDb: -5.08
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 glass/brass \"t\u0131n\" (rin bell +7 st, short) + contact spark
-      (R7 snap \u22126 dB)"
-    NoiseFloorDb: -120
-    DcDb: -121.2
+    TruePeakDb: -5.7
+    Provenance: "AP-029 v002 special (v002-special, SHA 271eaaa2db49\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -122.2
+    DcDb: -108
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcCellOut
   - Sound: 537
     Clips:
-    - {fileID: 8300000, guid: 8cb377281f8a64fbf81998e2ddc6b133, type: 3}
-    - {fileID: 8300000, guid: 7b1239f6d2d934883b981014a42c7e8c, type: 3}
+    - {fileID: 8300000, guid: 3186bb52120e14f28ae454bb8c6cd1e5, type: 3}
+    - {fileID: 8300000, guid: 48b1dc58f933e45ecb355a6fbde44006, type: 3}
     Loop: 0
     Lufs: -23.71
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R4 lock clack + coil re-hum (R7 whine swell) \u22126 dB"
-    NoiseFloorDb: -120
-    DcDb: -72.2
+    TruePeakDb: -4.12
+    Provenance: "AP-029 v002 special (v002-special, SHA b9f2f1df0155\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -147.4
+    DcDb: -94.8
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcCellIn
   - Sound: 538
     Clips:
-    - {fileID: 8300000, guid: e2902ada1e36346bf9d038a61930fd71, type: 3}
+    - {fileID: 8300000, guid: 55bc064f01c324fdcbd699255deb8ceb, type: 3}
     Loop: 0
     Lufs: -20
-    TruePeakDb: -5.68
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 coil fills (R7 1.4\u20132.3 s) + rin bell (brass, Specials only)
-      at the top"
-    NoiseFloorDb: -120
-    DcDb: -155.8
+    TruePeakDb: -3.24
+    Provenance: "AP-029 v002 special (v002-special, SHA 2e1131d17249\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -240
+    DcDb: -136.3
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwArcReady
   - Sound: 539
     Clips:
-    - {fileID: 8300000, guid: e875832b407a54d35bda9563d3e68329, type: 3}
-    - {fileID: 8300000, guid: de23b7c2b0ce14205bd3523d2afb49a7, type: 3}
-    - {fileID: 8300000, guid: 45487f208b91b46b09cb50f80394c058, type: 3}
-    - {fileID: 8300000, guid: 0d80bb5b0d1c744518dc796c7e816527, type: 3}
+    - {fileID: 8300000, guid: 7506822e5f0234f7285e41b470670304, type: 3}
+    - {fileID: 8300000, guid: fa51f1d5e1509452f8e9b4f8f4942fb9, type: 3}
+    - {fileID: 8300000, guid: aec76bb742a774fd4b8bf4042172555e, type: 3}
+    - {fileID: 8300000, guid: 5b0656dde2bc04fdb8bf2a2b50738990, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 copper chamber \"P\u015E\u015ET\" (pink hiss) + R8 pressurised
-      squirt 0.4\u20131.0 s \"PLOP\""
-    NoiseFloorDb: -120
-    DcDb: -84.4
+    TruePeakDb: -1.45
+    Provenance: "AP-029 v001 special (v001-special, SHA d8ba434c1ca6\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -134.9
+    DcDb: -90.1
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelFire
   - Sound: 540
     Clips:
-    - {fileID: 8300000, guid: 6799cb915bfa1415d850dcc24d92906c, type: 3}
+    - {fileID: 8300000, guid: 1284a1f3c48a14f4f8286924acc0f8fa, type: 3}
     Loop: 1
     Lufs: -27.96
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R8 thick bubbling 1.4\u20132.3 s HP 150 (wet \"v\u0131c\u0131k-flap\")"
-    NoiseFloorDb: -120
-    DcDb: -222
+    TruePeakDb: -11.21
+    Provenance: "AP-029 v002 special (v002-special, SHA 8b806f2ddf61\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -35.5
+    DcDb: -138.5
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelFlightLoop
   - Sound: 541
     Clips:
-    - {fileID: 8300000, guid: de0fca5e8541143c9b930d37577ee693, type: 3}
-    - {fileID: 8300000, guid: c173620a543c34eada1d83c3a39a26c6, type: 3}
-    - {fileID: 8300000, guid: cfaa7d576bc4a45298520d0bb0a2c96b, type: 3}
+    - {fileID: 8300000, guid: 94a92f62b2b2142838602f58c361e834, type: 3}
+    - {fileID: 8300000, guid: f6a6e7f88ba6a489fa0bce5075fe2fd3, type: 3}
+    - {fileID: 8300000, guid: 41175a297d0714d8bb85538410bc67d4, type: 3}
     Loop: 0
-    Lufs: -22.03
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R8 heavy wet splat 0.98\u20131.4 s + pops"
-    NoiseFloorDb: -120
-    DcDb: -81.1
+    Lufs: -22.54
+    TruePeakDb: -1.14
+    Provenance: "AP-029 v001 special (v001-special, SHA e29778615d50\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -240
+    DcDb: -74.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelHit
   - Sound: 542
     Clips:
-    - {fileID: 8300000, guid: 59b9008a4e5b34a7c913b3eeb57071c7, type: 3}
-    - {fileID: 8300000, guid: 337b9712458df4b5d9088e0c58294803, type: 3}
+    - {fileID: 8300000, guid: 9b06d49206c3841a08f9e09452823667, type: 3}
+    - {fileID: 8300000, guid: 4a5192e36ca57455194f4524cbb541af, type: 3}
     Loop: 0
     Lufs: -22.8
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 splat LP 1.5 k (muffled on a body)"
-    NoiseFloorDb: -120
-    DcDb: -82.7
+    TruePeakDb: -2.4
+    Provenance: "AP-029 v001 special (v001-special, SHA 515d8aa68549\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -240
+    DcDb: -103
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelHitFlesh
   - Sound: 543
     Clips:
-    - {fileID: 8300000, guid: 1026c8032a00b4d78a276a87a4e70c19, type: 3}
-    - {fileID: 8300000, guid: 59880bb6f973949c3aa21736941a0b76, type: 3}
+    - {fileID: 8300000, guid: 73f42fe640b3d4a98be29151fa8795bd, type: 3}
+    - {fileID: 8300000, guid: 6d1c4ff889c1a483598255d105fe7b18, type: 3}
     Loop: 0
     Lufs: -24.32
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 splat + spreading squelch (R8 0.98\u20131.9 s)"
-    NoiseFloorDb: -120
-    DcDb: -108.6
+    TruePeakDb: -1.2
+    Provenance: "AP-029 v001 special (v001-special, SHA b1c687a2f2d1\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -151.4
+    DcDb: -106.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelPuddleCreate
   - Sound: 544
     Clips:
-    - {fileID: 8300000, guid: 6c7b198c96213413db6169e5c0583b89, type: 3}
+    - {fileID: 8300000, guid: f52b7b388a8b64be18a021ea55579785, type: 3}
     Loop: 1
-    Lufs: -28.19
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R8 slow bubbling with small pops 2.35\u20134.35 s"
-    NoiseFloorDb: -120
-    DcDb: -236.7
+    Lufs: -28.64
+    TruePeakDb: -2.04
+    Provenance: "AP-029 v002 special (v002-special, SHA 542437418bca\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -55.9
+    DcDb: -107.3
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelPuddleLoop
   - Sound: 545
     Clips:
-    - {fileID: 8300000, guid: e533c81b72a294ad08cf3309af10964e, type: 3}
+    - {fileID: 8300000, guid: 8146ac0c710f64a4b9ae68cfc1d3bee4, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -1.98
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 drying \"\xE7\u0131t-\xE7\u0131t\" (R8 pops 4.55\u20135.25 s LP
-      3 k) + air hiss \u221214 dB"
-    NoiseFloorDb: -120
-    DcDb: -124.1
+    TruePeakDb: -1.93
+    Provenance: "AP-029 v002 special (v002-special, SHA 396e70cf2b91\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -142.9
+    DcDb: -149.8
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelPuddleExpire
   - Sound: 546
     Clips:
-    - {fileID: 8300000, guid: a033a2f66f1ac4d9aaab9a7470f3181e, type: 3}
-    - {fileID: 8300000, guid: dc1a784987a0f480b9f1a1f249a5f6f8, type: 3}
+    - {fileID: 8300000, guid: cf6cee4eef293425a849d25e47be1a11, type: 3}
+    - {fileID: 8300000, guid: 8a65136b484ca4af491622a2a46b8cb3, type: 3}
     Loop: 0
-    Lufs: -22
-    TruePeakDb: -6.86
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 slide squelch \"v\u0131jjj\" (R8 5.3\u20136.2 s) + body fall (attack_impact_body
-      \u22124 dB at the end)"
-    NoiseFloorDb: -120
-    DcDb: -78.5
+    Lufs: -22.55
+    TruePeakDb: -1.08
+    Provenance: "AP-029 v001 special (v001-special, SHA af2493e4ed58\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -240
+    DcDb: -96.3
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelSlideEnemy
   - Sound: 547
     Clips:
-    - {fileID: 8300000, guid: 9b610a9e41548443e8202abb5fe3b4d3, type: 3}
-    - {fileID: 8300000, guid: 38142de9aea554f779107de5738b6c81, type: 3}
+    - {fileID: 8300000, guid: bc7f6dbbea03a45daafa89ca5e19a667, type: 3}
+    - {fileID: 8300000, guid: 4a76b8759493f4064b9c2f21af1858f8, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -7.55
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 slide squelch +2 st, short + cloth rub (pink HP 2 k) \u221210
-      dB"
-    NoiseFloorDb: -120
-    DcDb: -85
+    TruePeakDb: -1.22
+    Provenance: "AP-029 v001 special (v001-special, SHA 96d948a5ac8f\u2026) \xB7
+      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+    NoiseFloorDb: -240
+    DcDb: -100.7
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelSlidePlayer
   - Sound: 548
     Clips:
     - {fileID: 8300000, guid: 85c83c71d1a8647f2a34a7aeac5a100c, type: 3}
@@ -4906,18 +4838,17 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 550
     Clips:
-    - {fileID: 8300000, guid: 67229be32e27a4fa6b271d2bba3c8bc0, type: 3}
+    - {fileID: 8300000, guid: c2ad70d41e6014510acab4b9c50dadad, type: 3}
     Loop: 0
     Lufs: -20
-    TruePeakDb: -7.08
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 chamber pressurises (rising hiss) + rin bell (brass) at the top"
-    NoiseFloorDb: -120
-    DcDb: -150.2
+    TruePeakDb: -3.83
+    Provenance: "AP-029 v002 special (v002-special, SHA 83f9eb98cb3e\u2026) \xB7
+      supersedes AP-011 v019"
+    NoiseFloorDb: -240
+    DcDb: -141.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: SwGelReady
   - Sound: 560
     Clips:
     - {fileID: 8300000, guid: a14f596d9889e449791ddf7018e9f7c8, type: 3}
@@ -6396,6 +6327,49 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_ar1_Puddle
+  - Sound: 705
+    Clips:
+    - {fileID: 8300000, guid: a8c06161eea704166965b029833fe769, type: 3}
+    - {fileID: 8300000, guid: 259dcc1fa5a4a4480bbc7e4c9a082fa0, type: 3}
+    - {fileID: 8300000, guid: f4bebbe325c6f46708e3e545708a8c74, type: 3}
+    - {fileID: 8300000, guid: 8e5049e76d66b4b87815b8ef5c6de60f, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA b0d3d54051b0\u2026)"
+    NoiseFloorDb: -51.8
+    DcDb: -78.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr1Metal
+  - Sound: 706
+    Clips:
+    - {fileID: 8300000, guid: d71fae214894c4514805a1c31a3266f6, type: 3}
+    - {fileID: 8300000, guid: c2927786fd05142e78b5894d15c4e6bd, type: 3}
+    - {fileID: 8300000, guid: 4ebb1b814812a4a2db4d39e714373828, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 9502d29d42e9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -75.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr1Mat
+  - Sound: 707
+    Clips:
+    - {fileID: 8300000, guid: c977a883ec1744028ace00140873a794, type: 3}
+    - {fileID: 8300000, guid: 8f533587bc0bb4003a42a81c870661ac, type: 3}
+    - {fileID: 8300000, guid: 60615ce62361445cabf77ee48d23aeb5, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5ecc2a2b92d5\u2026)"
+    NoiseFloorDb: -83
+    DcDb: -90
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr1Grass
   - Sound: 710
     Clips:
     - {fileID: 8300000, guid: fb2bdbbfe84c044b09e22bced671e659, type: 3}
@@ -6494,6 +6468,49 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_ar2_Puddle
+  - Sound: 715
+    Clips:
+    - {fileID: 8300000, guid: 20c0e9585c3a44bee9fc4bee9320fd59, type: 3}
+    - {fileID: 8300000, guid: 7d1581da48f4a48c58503ad0904643a8, type: 3}
+    - {fileID: 8300000, guid: a2849fd8c3a4a4358846d150cbaf8007, type: 3}
+    - {fileID: 8300000, guid: 5b13fda9ce64e4281a43cd50d3cdd78d, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA b0d3d54051b0\u2026)"
+    NoiseFloorDb: -51.8
+    DcDb: -78.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr2Metal
+  - Sound: 716
+    Clips:
+    - {fileID: 8300000, guid: c4d8d028b93b14ad48656400678c3cec, type: 3}
+    - {fileID: 8300000, guid: 481270e00983e45a0a4dd022dc845c74, type: 3}
+    - {fileID: 8300000, guid: 79c3cb722365c4e54932bf66ba2e1ea2, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 9502d29d42e9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -75.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr2Mat
+  - Sound: 717
+    Clips:
+    - {fileID: 8300000, guid: a50f3186666f348b0889b93958b60ab9, type: 3}
+    - {fileID: 8300000, guid: 64b725ba3befc4ae59e2e33f3bb9e7c3, type: 3}
+    - {fileID: 8300000, guid: 437ae83ffaf5841e59bdb3de092433fb, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5ecc2a2b92d5\u2026)"
+    NoiseFloorDb: -83
+    DcDb: -90
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingAr2Grass
   - Sound: 720
     Clips:
     - {fileID: 8300000, guid: 60a78731ec9074a209194846e783950e, type: 3}
@@ -6592,6 +6609,50 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_smg1_Puddle
+  - Sound: 725
+    Clips:
+    - {fileID: 8300000, guid: 21fd99240eb2e482bb4307ea4f4cebc6, type: 3}
+    - {fileID: 8300000, guid: 5f657068b148f452bb121d9f769d3a23, type: 3}
+    - {fileID: 8300000, guid: 1baf3eaca3e8a47dc8a6b395117991bd, type: 3}
+    - {fileID: 8300000, guid: fd7fb429963c7404891cb5cef09b955e, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5993fd5e4464\u2026)"
+    NoiseFloorDb: -71.3
+    DcDb: -87.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg1Metal
+  - Sound: 726
+    Clips:
+    - {fileID: 8300000, guid: e99f32b00a6be4f528eab4e33f06100c, type: 3}
+    - {fileID: 8300000, guid: 949c7fb1d5cbc4de9b6e1c7f3726596b, type: 3}
+    - {fileID: 8300000, guid: d1db884a8a2464f73ac7ef3e31b7c8e8, type: 3}
+    Loop: 0
+    Lufs: -28.64
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 35c6fd7c0786\u2026)"
+    NoiseFloorDb: -67.7
+    DcDb: -86.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg1Mat
+  - Sound: 727
+    Clips:
+    - {fileID: 8300000, guid: 2a2bc59c5b9e8481293f099ac1e2630b, type: 3}
+    - {fileID: 8300000, guid: ad8f9d89d8b83406aa148262ae42619a, type: 3}
+    - {fileID: 8300000, guid: cffe965d68e6140cdb8024c9edbed1ef, type: 3}
+    - {fileID: 8300000, guid: 7d56b3337d52a41a3bb5824e16d3c2e8, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA d4e51a380f02\u2026)"
+    NoiseFloorDb: -66.1
+    DcDb: -84.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg1Grass
   - Sound: 730
     Clips:
     - {fileID: 8300000, guid: 35f7633aa4ba24866a507a26cf1fa2df, type: 3}
@@ -6690,6 +6751,50 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_smg2_Puddle
+  - Sound: 735
+    Clips:
+    - {fileID: 8300000, guid: cfc6d5eb2b23c443abd26e4a774d8e1b, type: 3}
+    - {fileID: 8300000, guid: 049145529edb84db584d7eef4303a901, type: 3}
+    - {fileID: 8300000, guid: bc6f38f046ceb467d9354b2c891a756b, type: 3}
+    - {fileID: 8300000, guid: 5834f7b2efb804001b5e78878f0ed0a0, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5993fd5e4464\u2026)"
+    NoiseFloorDb: -71.3
+    DcDb: -87.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg2Metal
+  - Sound: 736
+    Clips:
+    - {fileID: 8300000, guid: f41809addbbf3477096c507d02c3da6a, type: 3}
+    - {fileID: 8300000, guid: d4a4d1ba6e3a2420fb90970a0c169bd0, type: 3}
+    - {fileID: 8300000, guid: d0f91e3078e22495da72c8a713d3c575, type: 3}
+    Loop: 0
+    Lufs: -28.64
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 35c6fd7c0786\u2026)"
+    NoiseFloorDb: -67.7
+    DcDb: -86.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg2Mat
+  - Sound: 737
+    Clips:
+    - {fileID: 8300000, guid: c6d340c10d2ba4cbd8a6474962c60eeb, type: 3}
+    - {fileID: 8300000, guid: 2bb887694ed874480b60297a14e26a00, type: 3}
+    - {fileID: 8300000, guid: 727f5d00871574fa09ccb00d4d0a9f6c, type: 3}
+    - {fileID: 8300000, guid: 38f551a101f7d4b4697c5124a5de6a88, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA d4e51a380f02\u2026)"
+    NoiseFloorDb: -66.1
+    DcDb: -84.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSmg2Grass
   - Sound: 740
     Clips:
     - {fileID: 8300000, guid: d445786a05e294cbc90208b28d65811d, type: 3}
@@ -6787,6 +6892,50 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_sg1_Puddle
+  - Sound: 745
+    Clips:
+    - {fileID: 8300000, guid: 3f5cb6e388b4f40faa7408ee26a35926, type: 3}
+    - {fileID: 8300000, guid: 9583489fa6e30407ba7afd6ff67d7f14, type: 3}
+    - {fileID: 8300000, guid: 644a932fe52eb4e208f42c6bff9ad6be, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5bc25932ee17\u2026)"
+    NoiseFloorDb: -61.8
+    DcDb: -86.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg1Metal
+  - Sound: 746
+    Clips:
+    - {fileID: 8300000, guid: d85bac9b3317f43c7847e3db66761c92, type: 3}
+    - {fileID: 8300000, guid: 77d8eb5333dda44bba04298731fef198, type: 3}
+    - {fileID: 8300000, guid: 817760f96ee5043e597c74b4c8f69f0b, type: 3}
+    Loop: 0
+    Lufs: -27.58
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA eafcf799a5cd\u2026)"
+    NoiseFloorDb: -83.7
+    DcDb: -85.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg1Mat
+  - Sound: 747
+    Clips:
+    - {fileID: 8300000, guid: bb5b089c5afa54882b208051cec452c5, type: 3}
+    - {fileID: 8300000, guid: c7bef0e40991f4032b25ae7cc1bd603d, type: 3}
+    - {fileID: 8300000, guid: 228aec50df7df49e8a779df970311f83, type: 3}
+    - {fileID: 8300000, guid: 24a3abcc88bbe4e9d936decd3c4d8dad, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA abd4e08424f1\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -71.1
+    DcDb: -80.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg1Grass
   - Sound: 750
     Clips:
     - {fileID: 8300000, guid: a11e524477e8f4e7e852851335b9ed27, type: 3}
@@ -6884,6 +7033,50 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_sg2_Puddle
+  - Sound: 755
+    Clips:
+    - {fileID: 8300000, guid: 1450a6c4b874b43568912113353106ed, type: 3}
+    - {fileID: 8300000, guid: 14d11b4f99b184b719081d2db452dcec, type: 3}
+    - {fileID: 8300000, guid: eebda0f7f0ac546bfbd83afd74cbc132, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5bc25932ee17\u2026)"
+    NoiseFloorDb: -61.8
+    DcDb: -86.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg2Metal
+  - Sound: 756
+    Clips:
+    - {fileID: 8300000, guid: 35fe71524b7d64751bfbe2b51eff6cd8, type: 3}
+    - {fileID: 8300000, guid: 666d97225881040cdab2959287c982dc, type: 3}
+    - {fileID: 8300000, guid: 1b11ffefd30c54473b1de932991fedfe, type: 3}
+    Loop: 0
+    Lufs: -27.58
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA eafcf799a5cd\u2026)"
+    NoiseFloorDb: -83.7
+    DcDb: -85.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg2Mat
+  - Sound: 757
+    Clips:
+    - {fileID: 8300000, guid: 7f06873770e5b42bb8f634f354ad113b, type: 3}
+    - {fileID: 8300000, guid: d6359e121fdfe475eb6281724da35a76, type: 3}
+    - {fileID: 8300000, guid: 4a939f7a08b9a471fbb42f9351c50a37, type: 3}
+    - {fileID: 8300000, guid: 9a20a678bc6be460d82f4347c0b3d452, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA abd4e08424f1\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -71.1
+    DcDb: -80.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSg2Grass
   - Sound: 760
     Clips:
     - {fileID: 8300000, guid: 8ffcafe04432340d8a5cfe4816bac273, type: 3}
@@ -6982,6 +7175,49 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_lmg1_Puddle
+  - Sound: 765
+    Clips:
+    - {fileID: 8300000, guid: 399ddeac3945d44a5bfcbf3dcd53d6ef, type: 3}
+    - {fileID: 8300000, guid: 6a76c65fbf32240c09d554a0017635b3, type: 3}
+    - {fileID: 8300000, guid: efa3f12594ce7436d9f75bc038c791b6, type: 3}
+    - {fileID: 8300000, guid: ddbeef17eac3e42b8b57960af10945fe, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA b0d3d54051b0\u2026)"
+    NoiseFloorDb: -51.8
+    DcDb: -78.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg1Metal
+  - Sound: 766
+    Clips:
+    - {fileID: 8300000, guid: b06f32bd4527042348a3bcf250d8a272, type: 3}
+    - {fileID: 8300000, guid: d3dbb62094cde4a6ea851116f76d0198, type: 3}
+    - {fileID: 8300000, guid: 4f0e937876a394fa0b32c16133b497ae, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 9502d29d42e9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -75.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg1Mat
+  - Sound: 767
+    Clips:
+    - {fileID: 8300000, guid: aaf3535117b5a44dca5a2af290b14ca6, type: 3}
+    - {fileID: 8300000, guid: 0215c4905a7fa4dfeb5849e948967a32, type: 3}
+    - {fileID: 8300000, guid: fe96bd67243fe41ac9d8bfb8426f3067, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5ecc2a2b92d5\u2026)"
+    NoiseFloorDb: -83
+    DcDb: -90
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg1Grass
   - Sound: 770
     Clips:
     - {fileID: 8300000, guid: 5afd8a8affc5444789f90d52ded8e572, type: 3}
@@ -7080,6 +7316,49 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_lmg2_Puddle
+  - Sound: 775
+    Clips:
+    - {fileID: 8300000, guid: 011e8a7784dda4e27920c7ebff25b920, type: 3}
+    - {fileID: 8300000, guid: c0cb73458c7cd4cdba6c6a997d87fc71, type: 3}
+    - {fileID: 8300000, guid: 83bd22b44347048ada9a62ee80a9fd06, type: 3}
+    - {fileID: 8300000, guid: c5464213699594d93a08eb7b793c672d, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA b0d3d54051b0\u2026)"
+    NoiseFloorDb: -51.8
+    DcDb: -78.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg2Metal
+  - Sound: 776
+    Clips:
+    - {fileID: 8300000, guid: 0aa175e7af2a344e3a4e4d79a9a31325, type: 3}
+    - {fileID: 8300000, guid: 78b451d3f03c3482e8e8478d49e848d6, type: 3}
+    - {fileID: 8300000, guid: 37cef19d965cf41a28d4fbe2464503a9, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 9502d29d42e9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -75.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg2Mat
+  - Sound: 777
+    Clips:
+    - {fileID: 8300000, guid: 243c4ffa0a6ad4abd85c9c7cc68363b0, type: 3}
+    - {fileID: 8300000, guid: c9634e4b2799248d4be1b87040134674, type: 3}
+    - {fileID: 8300000, guid: 0e6ec1e3908f24f9795261a4f2e86c60, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5ecc2a2b92d5\u2026)"
+    NoiseFloorDb: -83
+    DcDb: -90
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingLmg2Grass
   - Sound: 780
     Clips:
     - {fileID: 8300000, guid: bb63612dc2275462095f199201651aac, type: 3}
@@ -7177,6 +7456,49 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Casing_sr1_Puddle
+  - Sound: 785
+    Clips:
+    - {fileID: 8300000, guid: 8fd04e8f12b964f79a96d80f023a54df, type: 3}
+    - {fileID: 8300000, guid: 73108a9e070fa4e8c8830a49d977cf1e, type: 3}
+    - {fileID: 8300000, guid: cc6357ede5bce49de920ce95e4913258, type: 3}
+    - {fileID: 8300000, guid: a8b8af71afad345bf967fcf6a0b2af02, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA b0d3d54051b0\u2026)"
+    NoiseFloorDb: -51.8
+    DcDb: -78.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSr1Metal
+  - Sound: 786
+    Clips:
+    - {fileID: 8300000, guid: 34a0caf008a9547009d1970a6ac2b87f, type: 3}
+    - {fileID: 8300000, guid: f8e2e9146713248a2b7743d39cbe023a, type: 3}
+    - {fileID: 8300000, guid: cd99aee79fba94be0a6d162c7b49ad8d, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 9502d29d42e9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -75.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSr1Mat
+  - Sound: 787
+    Clips:
+    - {fileID: 8300000, guid: 2c7bdbad3e61641f6b4b080492f150af, type: 3}
+    - {fileID: 8300000, guid: f64e18c80b51c4fd7a24909df87be5ef, type: 3}
+    - {fileID: 8300000, guid: 65dae3a5d57e0466d95e2c9027878edc, type: 3}
+    Loop: 0
+    Lufs: -24.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5ecc2a2b92d5\u2026)"
+    NoiseFloorDb: -83
+    DcDb: -90
+    Clipped: 0
+    BitDepth: 24
+    Layers: CasingSr1Grass
   - Sound: 860
     Clips:
     - {fileID: 8300000, guid: 6367ed241bc214a8cb65cea3a74d7659, type: 3}
@@ -7272,6 +7594,51 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Link_lmg1_Puddle
+  - Sound: 865
+    Clips:
+    - {fileID: 8300000, guid: eb709d10d53864f2eb3193cc52aae2ca, type: 3}
+    - {fileID: 8300000, guid: 7a5a3991ead48458ba3551bbe5868a90, type: 3}
+    - {fileID: 8300000, guid: 6c58980ff306a4f9ab2aa1d058468d51, type: 3}
+    - {fileID: 8300000, guid: aaaeca5ca1f2f4c259134dea4bbea1fe, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA d8f2703b2413\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -67
+    DcDb: -95
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg1Metal
+  - Sound: 866
+    Clips:
+    - {fileID: 8300000, guid: 23406189287c24216aa513f565829369, type: 3}
+    - {fileID: 8300000, guid: 9ee15e7152ca84ceabcaeb34be7171b6, type: 3}
+    - {fileID: 8300000, guid: 21fac062a40134f23954b38ad4e8cd17, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -3.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 7e1512af8110\u2026)"
+    NoiseFloorDb: -79.1
+    DcDb: -85.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg1Mat
+  - Sound: 867
+    Clips:
+    - {fileID: 8300000, guid: e1b421065f0364fddb6e3ff84b8d96e5, type: 3}
+    - {fileID: 8300000, guid: 73394f3da98b14f06ac922ec621bd082, type: 3}
+    - {fileID: 8300000, guid: dbd1ab649a35242d9a3923a6d2637dc9, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA 1fb04c76ded8\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -80.8
+    DcDb: -114.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg1Grass
   - Sound: 870
     Clips:
     - {fileID: 8300000, guid: eadaadca4e6524293977c45fbc8a6bec, type: 3}
@@ -7367,3 +7734,443 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: Link_lmg2_Puddle
+  - Sound: 875
+    Clips:
+    - {fileID: 8300000, guid: c182f3a3e365c4e52a2b54296e65f128, type: 3}
+    - {fileID: 8300000, guid: 1b51a8fa620694ef0b6dc4106691fbe2, type: 3}
+    - {fileID: 8300000, guid: 746a50f17f0a8413f8d965e3d9b7a2de, type: 3}
+    - {fileID: 8300000, guid: c0f2bce6d71ec430b8d2ad5ce9c8cfa9, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA d8f2703b2413\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -67
+    DcDb: -95
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg2Metal
+  - Sound: 876
+    Clips:
+    - {fileID: 8300000, guid: 758348f170a9342f8828647410faf33b, type: 3}
+    - {fileID: 8300000, guid: 35dcccfbc15ff4844a389ebd07a95ee9, type: 3}
+    - {fileID: 8300000, guid: b1e45551279c64383a121cf76dc5260f, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -3.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 7e1512af8110\u2026)"
+    NoiseFloorDb: -79.1
+    DcDb: -85.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg2Mat
+  - Sound: 877
+    Clips:
+    - {fileID: 8300000, guid: 15e09acd9c38942bc9a6df17aec1797a, type: 3}
+    - {fileID: 8300000, guid: 8d6f06c67f8e6495b97474b8244e70be, type: 3}
+    - {fileID: 8300000, guid: 2a98fe58efbca4777905674cd6ab17a4, type: 3}
+    Loop: 0
+    Lufs: -30
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA 1fb04c76ded8\u2026) \xB7
+      supersedes v001"
+    NoiseFloorDb: -80.8
+    DcDb: -114.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: LinkLmg2Grass
+  - Sound: 900
+    Clips:
+    - {fileID: 8300000, guid: 03ee61aedb87d4f138e7b0b5acfdd59c, type: 3}
+    - {fileID: 8300000, guid: 2717933b29f37463088412e764f6972d, type: 3}
+    - {fileID: 8300000, guid: ab4672dc3db1848b6a99fda3fb6b3136, type: 3}
+    - {fileID: 8300000, guid: 665b19c629fe3427abc18bfb4bf6188e, type: 3}
+    Loop: 0
+    Lufs: -25.41
+    TruePeakDb: -4.15
+    Provenance: "AP-029 v001 space (v001-space, SHA 2992f8871bd9\u2026)"
+    NoiseFloorDb: -129.8
+    DcDb: -122.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailArEcho \xB7 stereo"
+  - Sound: 901
+    Clips:
+    - {fileID: 8300000, guid: bb1d587779c594d9c9cd06b544efe509, type: 3}
+    - {fileID: 8300000, guid: 8438b4b5bc8654d6bb4bd5c72a60b762, type: 3}
+    - {fileID: 8300000, guid: 0eebc37c6fc7247c992a8f8b31a35cc7, type: 3}
+    - {fileID: 8300000, guid: 80be4ae21a9b946be9a9b08c567eaee7, type: 3}
+    Loop: 0
+    Lufs: -25.34
+    TruePeakDb: -3.07
+    Provenance: "AP-029 v001 space (v001-space, SHA 6c2572011792\u2026)"
+    NoiseFloorDb: -131.7
+    DcDb: -108.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailArRelease \xB7 stereo"
+  - Sound: 902
+    Clips:
+    - {fileID: 8300000, guid: 60647c485d191460bac03706f4b0d88c, type: 3}
+    - {fileID: 8300000, guid: 3fc67423fecb9418aa0503febe70504d, type: 3}
+    - {fileID: 8300000, guid: e3cb09c3313324f97bdbf506bbe867b9, type: 3}
+    - {fileID: 8300000, guid: d052adfdc0cf044b1b9704be3072636d, type: 3}
+    Loop: 0
+    Lufs: -24.76
+    TruePeakDb: -3.03
+    Provenance: "AP-029 v001 space (v001-space, SHA 05ec590dd14a\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -99.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailArRoom \xB7 stereo"
+  - Sound: 910
+    Clips:
+    - {fileID: 8300000, guid: 91aa8c06d968e4a139b0facb5c5e097e, type: 3}
+    - {fileID: 8300000, guid: dcc756bfdc57742ed8ddbccf732bb792, type: 3}
+    - {fileID: 8300000, guid: f6b87691f4fd24846b3b87b7aeac24cf, type: 3}
+    - {fileID: 8300000, guid: 4e0df8c30ac8d429cb7bf54b56e200d1, type: 3}
+    Loop: 0
+    Lufs: -26
+    TruePeakDb: -3.21
+    Provenance: "AP-029 v001 space (v001-space, SHA 5fe6e5d22469\u2026)"
+    NoiseFloorDb: -99.8
+    DcDb: -121.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSmgEcho \xB7 stereo"
+  - Sound: 911
+    Clips:
+    - {fileID: 8300000, guid: 3467afd5e5d6f4069a94dea020d74ac6, type: 3}
+    - {fileID: 8300000, guid: 53041ddab83cf4a209c5497cbd78f945, type: 3}
+    - {fileID: 8300000, guid: b69ce42c32e68484d971bb7f3f52ed20, type: 3}
+    - {fileID: 8300000, guid: 8d9dbf301b8ac43d4bb1f29437e8cb11, type: 3}
+    Loop: 0
+    Lufs: -25.38
+    TruePeakDb: -3.06
+    Provenance: "AP-029 v001 space (v001-space, SHA cc34557652ce\u2026)"
+    NoiseFloorDb: -130
+    DcDb: -139.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSmgRelease \xB7 stereo"
+  - Sound: 912
+    Clips:
+    - {fileID: 8300000, guid: baa4f72e83f42413aa656804183df896, type: 3}
+    - {fileID: 8300000, guid: 8b20881c6d2a242fe87cf0f9e14850d8, type: 3}
+    - {fileID: 8300000, guid: 4172fd2c2f4ef4f69b7fa87ed1559e39, type: 3}
+    - {fileID: 8300000, guid: bd4ce0828f8da4a969343d62835dede6, type: 3}
+    Loop: 0
+    Lufs: -24.87
+    TruePeakDb: -3.04
+    Provenance: "AP-029 v001 space (v001-space, SHA 862446021706\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -104.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSmgRoom \xB7 stereo"
+  - Sound: 920
+    Clips:
+    - {fileID: 8300000, guid: 6c6706356f0314355b0f0cddcce79da8, type: 3}
+    - {fileID: 8300000, guid: 019b54d1267714962bca94404783d361, type: 3}
+    - {fileID: 8300000, guid: d8d9bd576b4b8454ea355c055e8167a7, type: 3}
+    - {fileID: 8300000, guid: 9d0f29394b41b4335baf4051955a0d5c, type: 3}
+    Loop: 0
+    Lufs: -25.46
+    TruePeakDb: -3.19
+    Provenance: "AP-029 v001 space (v001-space, SHA 145386b9f69a\u2026)"
+    NoiseFloorDb: -126.9
+    DcDb: -125.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSgEcho \xB7 stereo"
+  - Sound: 921
+    Clips:
+    - {fileID: 8300000, guid: af69491f554a94d47b0affe89d0b9293, type: 3}
+    - {fileID: 8300000, guid: 1874a18c4009e4e65acf47bd7eea5726, type: 3}
+    - {fileID: 8300000, guid: 040acf0736e074494bc144d02324937e, type: 3}
+    - {fileID: 8300000, guid: f000f238dddba48f4ba2a0d557c6c324, type: 3}
+    Loop: 0
+    Lufs: -25.06
+    TruePeakDb: -5.67
+    Provenance: "AP-029 v001 space (v001-space, SHA e0c4cb7c95d9\u2026)"
+    NoiseFloorDb: -126.2
+    DcDb: -201.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSgRelease \xB7 stereo"
+  - Sound: 922
+    Clips:
+    - {fileID: 8300000, guid: 2fc10b12c24264c4ab70999a0af4ec05, type: 3}
+    - {fileID: 8300000, guid: 09f493b65e385411f9b426244bd5bec6, type: 3}
+    - {fileID: 8300000, guid: a65bedba4ed484b8fb8a877c5d8e7172, type: 3}
+    - {fileID: 8300000, guid: f357fed71c23c46a89ad067200bfcc11, type: 3}
+    Loop: 0
+    Lufs: -24.75
+    TruePeakDb: -3.08
+    Provenance: "AP-029 v001 space (v001-space, SHA 78d70a8bfc9e\u2026)"
+    NoiseFloorDb: -158.3
+    DcDb: -104.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSgRoom \xB7 stereo"
+  - Sound: 930
+    Clips:
+    - {fileID: 8300000, guid: 8dd519f82918241a68c66dc9c6c2835a, type: 3}
+    - {fileID: 8300000, guid: 8f17098ff75d2407d8e539440f3c16d9, type: 3}
+    - {fileID: 8300000, guid: ff230c4d0032e4e09860c6b45eb0cb9f, type: 3}
+    - {fileID: 8300000, guid: 48e94df580d3e4c0a9ecd22579ff03a7, type: 3}
+    Loop: 0
+    Lufs: -25.73
+    TruePeakDb: -3.14
+    Provenance: "AP-029 v001 space (v001-space, SHA bdcdc1ef0f88\u2026)"
+    NoiseFloorDb: -130.2
+    DcDb: -106.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailLmgEcho \xB7 stereo"
+  - Sound: 931
+    Clips:
+    - {fileID: 8300000, guid: 2c3f1459773e646adb9b9670052e400f, type: 3}
+    - {fileID: 8300000, guid: 784ed6874f500435492b7730a762a446, type: 3}
+    - {fileID: 8300000, guid: 0225fe8ec4c784c29849ebc879d14f2f, type: 3}
+    - {fileID: 8300000, guid: fbce0b27e70f44cb795156f9bfecc13a, type: 3}
+    Loop: 0
+    Lufs: -25.23
+    TruePeakDb: -4.18
+    Provenance: "AP-029 v001 space (v001-space, SHA f1461fd1b594\u2026)"
+    NoiseFloorDb: -129.9
+    DcDb: -202
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailLmgRelease \xB7 stereo"
+  - Sound: 932
+    Clips:
+    - {fileID: 8300000, guid: 5dba4f3129b314dd7aa0b8bc824266a2, type: 3}
+    - {fileID: 8300000, guid: 59d9558dca1674923a4b34f95900892b, type: 3}
+    - {fileID: 8300000, guid: f175650d2877c4e2fa0b03f63dfd0d3c, type: 3}
+    - {fileID: 8300000, guid: dec16a7c1de064a0696f5e1b55474f1a, type: 3}
+    Loop: 0
+    Lufs: -24.89
+    TruePeakDb: -3.04
+    Provenance: "AP-029 v001 space (v001-space, SHA ff412a1e344c\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -91.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailLmgRoom \xB7 stereo"
+  - Sound: 940
+    Clips:
+    - {fileID: 8300000, guid: a2f4c0301c06644da9a14dd9d6c4e52f, type: 3}
+    - {fileID: 8300000, guid: 58193b9257292426d9a3f1f741ce8d2d, type: 3}
+    - {fileID: 8300000, guid: e0f3244524af740a3bda575760632ea9, type: 3}
+    - {fileID: 8300000, guid: 8139c74c060724808a706e584c2b7f66, type: 3}
+    Loop: 0
+    Lufs: -26.28
+    TruePeakDb: -3.32
+    Provenance: "AP-029 v001 space (v001-space, SHA 524f84a8d685\u2026)"
+    NoiseFloorDb: -127.2
+    DcDb: -107.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSrEcho \xB7 stereo"
+  - Sound: 941
+    Clips:
+    - {fileID: 8300000, guid: c855d5277ca7945569ff5ff96d1ac06a, type: 3}
+    - {fileID: 8300000, guid: c68538bf5205c45d38b0527f0f37d1d7, type: 3}
+    - {fileID: 8300000, guid: 2dc42741ec5e64fe6b7fd5610a4ce9eb, type: 3}
+    - {fileID: 8300000, guid: d4e4f628cbe054077a4e23f50d10bca4, type: 3}
+    Loop: 0
+    Lufs: -25.69
+    TruePeakDb: -3.04
+    Provenance: "AP-029 v001 space (v001-space, SHA 209394e2180b\u2026)"
+    NoiseFloorDb: -134.3
+    DcDb: -115.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSrRelease \xB7 stereo"
+  - Sound: 942
+    Clips:
+    - {fileID: 8300000, guid: 01804202e99b74489abe55862f6d926c, type: 3}
+    - {fileID: 8300000, guid: c33c051240c0d4b83b7dfebda714097c, type: 3}
+    - {fileID: 8300000, guid: a1f06db81e18f44b6bdf0d26f0b3c6c0, type: 3}
+    - {fileID: 8300000, guid: e12f898b3925a4e18bd76b2581fd861d, type: 3}
+    Loop: 0
+    Lufs: -25.54
+    TruePeakDb: -3.04
+    Provenance: "AP-029 v001 space (v001-space, SHA bd5a3be87a50\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -99.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailSrRoom \xB7 stereo"
+  - Sound: 950
+    Clips:
+    - {fileID: 8300000, guid: 5c2f1607fbb3d473d9983321f3d8007a, type: 3}
+    - {fileID: 8300000, guid: 5ae16b2c4bce744d28ecb636ce6c3c9d, type: 3}
+    - {fileID: 8300000, guid: 59d88d74522f243809f9a1c6e77610eb, type: 3}
+    - {fileID: 8300000, guid: ef0aa2b9a37114601b233b83538258eb, type: 3}
+    Loop: 0
+    Lufs: -25.11
+    TruePeakDb: -3.29
+    Provenance: "AP-029 v001 space (v001-space, SHA a4e800f1c39d\u2026)"
+    NoiseFloorDb: -127.1
+    DcDb: -114.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailRlEcho \xB7 stereo"
+  - Sound: 951
+    Clips:
+    - {fileID: 8300000, guid: 9923bc366a4af4a8fb4bc9e9303b55dc, type: 3}
+    - {fileID: 8300000, guid: fbc9b61832ec3414488270bfe7d0a30a, type: 3}
+    - {fileID: 8300000, guid: 27882509e9a554b379b8489c051e4bc9, type: 3}
+    - {fileID: 8300000, guid: a3034abcbaebe4a9eba8e904090b7d41, type: 3}
+    Loop: 0
+    Lufs: -24.5
+    TruePeakDb: -5.99
+    Provenance: "AP-029 v001 space (v001-space, SHA 79fea9f2a2e5\u2026)"
+    NoiseFloorDb: -133.4
+    DcDb: -201.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailRlRelease \xB7 stereo"
+  - Sound: 952
+    Clips:
+    - {fileID: 8300000, guid: d7ca93349dc984f7d9502a8fb9284185, type: 3}
+    - {fileID: 8300000, guid: 35c31460eebea446799208f6c8c21b96, type: 3}
+    - {fileID: 8300000, guid: 9961572c954f14d2493e52dbe5e9983d, type: 3}
+    - {fileID: 8300000, guid: 388e974d387a24c0a83570f0e2211f21, type: 3}
+    Loop: 0
+    Lufs: -25.74
+    TruePeakDb: -3.05
+    Provenance: "AP-029 v001 space (v001-space, SHA 6ebeb969818c\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -99.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: "WeaponTailRlRoom \xB7 stereo"
+  - Sound: 970
+    Clips:
+    - {fileID: 8300000, guid: cc403ac23907e400b8f683702118ee10, type: 3}
+    - {fileID: 8300000, guid: 731c391ae662a4bb4a872a78c9c03dcc, type: 3}
+    - {fileID: 8300000, guid: 86944d728375f4f59b555c08c9258436, type: 3}
+    - {fileID: 8300000, guid: 48a121ce4b711472da3a276f814951d3, type: 3}
+    Loop: 0
+    Lufs: -22.35
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 5301c8c2d5a4\u2026)
+      \xB7 stamp file = median-loudness RR MagDrop_Rifle_StoneSlate_02.wav (listed
+      first)"
+    NoiseFloorDb: -64.8
+    DcDb: -82.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropRifleStoneSlate
+  - Sound: 971
+    Clips:
+    - {fileID: 8300000, guid: d3c999ccfa6334000b38648dde625b01, type: 3}
+    - {fileID: 8300000, guid: 8ba3d82f83f2543c5858f26343df365c, type: 3}
+    - {fileID: 8300000, guid: 5f458698eaed24508ad822bd89668e6d, type: 3}
+    - {fileID: 8300000, guid: dbbc2c9b9e5ae49e7859ca844d9d4399, type: 3}
+    Loop: 0
+    Lufs: -22.01
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA f2c724681d7e\u2026)
+      \xB7 stamp file = median-loudness RR MagDrop_Rifle_Wood_04.wav (listed first)"
+    NoiseFloorDb: -71.3
+    DcDb: -88.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropRifleWood
+  - Sound: 972
+    Clips:
+    - {fileID: 8300000, guid: f0741efad19594056865f42857cf8bf1, type: 3}
+    - {fileID: 8300000, guid: 4ab74eae8e2ba4836b52c3652b93f91b, type: 3}
+    - {fileID: 8300000, guid: bafe59ec4b1e5438cb7edfff5c09e821, type: 3}
+    - {fileID: 8300000, guid: 20843c1f66acd4251a99d72cfa26d055, type: 3}
+    Loop: 0
+    Lufs: -24.93
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA 9e38a37e693c\u2026) \xB7
+      stamp file = median-loudness RR MagDrop_Rifle_Dirt_02.wav (listed first)"
+    NoiseFloorDb: -71.5
+    DcDb: -84
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropRifleDirt
+  - Sound: 973
+    Clips:
+    - {fileID: 8300000, guid: 7ed88fc3a033c4d0298bbcc0d5bb13d8, type: 3}
+    - {fileID: 8300000, guid: a5ae5914d7ffc4864a58b12a64d3c86c, type: 3}
+    - {fileID: 8300000, guid: a03c7653a364e41eeb7bb58a80e5edc4, type: 3}
+    Loop: 0
+    Lufs: -24.42
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA bb73f9c91033\u2026)"
+    NoiseFloorDb: -61.6
+    DcDb: -91.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropRifleMetal
+  - Sound: 974
+    Clips:
+    - {fileID: 8300000, guid: 3d140ae7d4abe499392a62f08171fbc6, type: 3}
+    - {fileID: 8300000, guid: a90cd40a47e304f4286abafdc3efef76, type: 3}
+    - {fileID: 8300000, guid: 79e57c1c205d542498ab16352d665322, type: 3}
+    Loop: 0
+    Lufs: -27.64
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 22b7da69f7f9\u2026)"
+    NoiseFloorDb: -240
+    DcDb: -96.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropRifleWetStone
+  - Sound: 980
+    Clips:
+    - {fileID: 8300000, guid: 9c0d7b3bf1ee04a4ca9c0e87d4a83f30, type: 3}
+    - {fileID: 8300000, guid: 44e9647a1cf6d41b5ad3d9d67d04e9cb, type: 3}
+    - {fileID: 8300000, guid: bac33c635d4744cb28fc94b5ce13e917, type: 3}
+    Loop: 0
+    Lufs: -26.43
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA 18ab87c2e9cc\u2026)
+      \xB7 stamp file = median-loudness RR MagDrop_Pistol_StoneSlate_03.wav (listed
+      first)"
+    NoiseFloorDb: -240
+    DcDb: -87.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropPistolStoneSlate
+  - Sound: 981
+    Clips:
+    - {fileID: 8300000, guid: eb76d8e9f39134a43b04cccc46c43960, type: 3}
+    - {fileID: 8300000, guid: 412c87470413341b5a8fd31fc27632cf, type: 3}
+    - {fileID: 8300000, guid: dfe44cc1808c54056a9cb39b48dc8318, type: 3}
+    Loop: 0
+    Lufs: -22.37
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v001 foley (ap029-v001-foley-tp1, SHA e0a3502fa43a\u2026)
+      \xB7 stamp file = median-loudness RR MagDrop_Pistol_Wood_03.wav (listed first)"
+    NoiseFloorDb: -73.4
+    DcDb: -84.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropPistolWood
+  - Sound: 982
+    Clips:
+    - {fileID: 8300000, guid: f65c41bb9ec594865a82d069cf1f7411, type: 3}
+    - {fileID: 8300000, guid: fcc0c0c174af548fdbba082aad15be90, type: 3}
+    - {fileID: 8300000, guid: 0682cf38cd6594e00bc10b757d968bfb, type: 3}
+    - {fileID: 8300000, guid: be11eb485c94446afa389224aedb6d68, type: 3}
+    Loop: 0
+    Lufs: -26.43
+    TruePeakDb: -1.26
+    Provenance: "AP-029 v002 foley (ap029-v002-foley, SHA 1ebd25e456bb\u2026) \xB7
+      supersedes v001 \xB7 stamp file = median-loudness RR MagDrop_Pistol_Dirt_02.wav
+      (listed first)"
+    NoiseFloorDb: -56
+    DcDb: -91.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: MagDropPistolDirt

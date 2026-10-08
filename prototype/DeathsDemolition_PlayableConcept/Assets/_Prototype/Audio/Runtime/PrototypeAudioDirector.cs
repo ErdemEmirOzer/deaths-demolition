@@ -69,6 +69,19 @@ namespace DD.Prototype.Audio
         /// <summary>Simultaneous looping sounds. There are two in the game; four is slack.</summary>
         private const int LoopCapacity = 4;
 
+        /// <summary>
+        /// WP-097 K1 (03 §3): the Reflect pool — top-down slapback copies and open-air echoes, apart from the world budget so a
+        /// reflection never takes a zombie's voice and a slap copy never counts against the dry shot's four (StringVoices). 900 RPM
+        /// with slap sets every ≥ 0.12 s × 2 taps × ~0.3 s ≈ 5 voices; 8 leaves the echo room.
+        /// </summary>
+        private const int ReflectCapacity = 8;
+
+        /// <summary>WP-097 K1: Unity source priority of the Reflect pool (default 128): over RealVoiceCount, reflections go virtual first.</summary>
+        private const int ReflectSourcePriority = 160;
+
+        /// <summary>WP-097 K1: the resolver this director type installed (a later director replaces its own, never a test's).</summary>
+        private static System.Func<Vector3, AcousticSpace> s_installedResolver;
+
         private static PrototypeAudioDirector s_instance;
 
         private readonly AudioBusMixer _mixer = new AudioBusMixer();
@@ -82,6 +95,11 @@ namespace DD.Prototype.Audio
         private AudioVoicePool _signal;
         private AmbienceDirector _ambience;
 
+        // WP-097 K1
+        private AudioVoicePool _reflect;
+        private AcousticProbe _probe;
+        private WeaponTailBed _tailBed;
+
         // WP-021
         private AudioMixerBridge _bridge;
         private MusicDirector _music;
@@ -89,6 +107,7 @@ namespace DD.Prototype.Audio
         private AudioListenerAnchor _listener;
         private WeaponFireAudio _weaponFire;
         private CasingAudio _casings;
+        private MagazineDropAudio _magDrops;   // WP-097 K2
         private SpecialAudio _special;
         private ImpactAudio _impacts;
         private RocketBlastAudio _rocketBlasts;
@@ -136,6 +155,11 @@ namespace DD.Prototype.Audio
         public AudioBusMixer Mixer => _mixer;
         public AudioVoicePool WorldPool => _world;
         public AudioVoicePool SignalPool => _signal;
+
+        /// <summary>WP-097 K1 test / F1 surface: the Reflect pool (slapback / echo), the acoustic probe, the string tail bed.</summary>
+        public AudioVoicePool ReflectPool => _reflect;
+        public AcousticProbe Probe => _probe;
+        public WeaponTailBed TailBed => _tailBed;
         public bool IsPaused => _paused;
         public int LoopCount => _loops.Count;
         public Vector3 LoopPosition(CombatAudioEvent evt) =>
@@ -162,6 +186,9 @@ namespace DD.Prototype.Audio
 
         /// <summary>WP-072 B2 test / F1 surface: the player's casing landings.</summary>
         public CasingAudio Casings => _casings;
+
+        /// <summary>WP-097 K2 test / F1 surface: the spent magazine's floor hit (AP-029 MagDrop).</summary>
+        public MagazineDropAudio MagazineDrops => _magDrops;
 
         /// <summary>WP-072 B3 test / F1 surface: the projectile impact voice.</summary>
         public ImpactAudio Impacts => _impacts;
@@ -212,22 +239,32 @@ namespace DD.Prototype.Audio
             _library = new AudioClipLibrary(AudioCatalog.Load());
 
             // WP-072 · WP-074: S-05's acoustic spaces choose the recorded tail (answers only while the V6 world is loaded).
+            // WP-097 K1 (03 §4): one resolver in front of it — AcousticVolume → the JSON map → (top-down) the probe's enclosure
+            // guess → Open. A resolver a test forced is left alone; one an earlier director installed is replaced (its probe is dead).
             AcousticSpaceMap acoustic = AcousticSpaceMap.Load();
-            if (acoustic != null && AcousticSpaces.Resolver == null)
+            _probe = new AcousticProbe();
+            System.Func<Vector3, AcousticSpace> current = AcousticSpaces.Resolver;
+            if (current == null || current == s_installedResolver)
             {
-                AcousticSpaces.Resolver = acoustic.Resolve;
+                s_installedResolver = new AcousticSpaceResolver(acoustic, _probe).Resolve;
+                AcousticSpaces.Resolver = s_installedResolver;
             }
             _bridge = new AudioMixerBridge();
 
             _world = new AudioVoicePool("World", transform, WorldHardCapacity, _mixer, _bridge);
             _signal = new AudioVoicePool("Signal", transform, SignalCapacity, _mixer, _bridge);
+            _reflect = new AudioVoicePool(AudioVoicePool.ReflectName, transform, ReflectCapacity, _mixer, _bridge);   // WP-097 K1
+            _reflect.SetSourcePriority(ReflectSourcePriority);
+            _tailBed = new WeaponTailBed(transform, _mixer, _bridge);                                                // WP-097 K1
             _ambience = new AmbienceDirector(transform, _library, _mixer, _world, _bridge, AudioRegionMap.Load());
             _music = new MusicDirector(transform, _library, _mixer, _bridge);
             _router = new AudioEventRouter(PlayResolved);
             _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
             _weaponFire = new WeaponFireAudio(_library, PlayResolved);   // WP-072 B1 / WP-085 B1: every round the full shot
+            _weaponFire.SetReflections(_probe, _tailBed, PlayReflection, _mixer);   // WP-097 K1: top-down slapback / bed / echo / duck
             _casings = new CasingAudio(_library, PlayResolved);                                        // WP-072 B2
+            _magDrops = new MagazineDropAudio(_library, PlayResolved);                                 // WP-097 K2
             _special = new SpecialAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);           // WP-072 B4
             _router.SetSpecialVoice(_special);
             _impacts = new ImpactAudio(_library, PlayResolved);                                        // WP-072 B3
@@ -242,6 +279,7 @@ namespace DD.Prototype.Audio
             System.Func<Vector3> listenerPosition = () => _listener.Transform.position;
             _flight = new ProjectileFlightAudio(_library, _mixer, _bridge, _loopRoot, listenerPosition);   // WP-072 B5
             _world.SetListener(listenerPosition);
+            _reflect.SetListener(listenerPosition);    // WP-097 K1 (a fixed-cutoff voice ignores it)
             _ambience.SetListener(listenerPosition);   // WP-072 · DEC-102
             _router.SetListener(listenerPosition);
             _weaponFire.SetListener(listenerPosition);   // WP-085 B3: distance band
@@ -269,6 +307,10 @@ namespace DD.Prototype.Audio
             // only on the enum, so only the timing moves. Not in FeedbackPoolWarmer: nothing outside Audio references Audio.
             WeaponAudioIdentity.Warm();
             WeaponFoleyV3.Warm();
+
+            // WP-097 K1: the resolver's volume registry (a 64-slot array, its type initializer) is built here, not inside the first
+            // top-down shot's AcousticSpaces.At (DEC-088 GC 0).
+            AcousticVolumes.TryResolve(Vector3.zero, out AcousticSpace _);
         }
 
         private IEnumerator Start()
@@ -297,6 +339,7 @@ namespace DD.Prototype.Audio
             AudioEvents.Cue += OnCombatCue;
             UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;   // re-arm cleared static buses
             _casings?.Enable();   // WP-072 B2
+            _magDrops?.Enable();  // WP-097 K2
             _impacts?.Enable();   // WP-072 B3
             _rocketBlasts?.Enable();
             _flight?.Enable();    // WP-072 B5
@@ -328,6 +371,7 @@ namespace DD.Prototype.Audio
             AudioEvents.Cue -= OnCombatCue;
             UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             _casings?.Disable();   // WP-072 B2
+            _magDrops?.Disable();  // WP-097 K2
             _impacts?.Disable();   // WP-072 B3
             _rocketBlasts?.Disable();
             _flight?.Disable();    // WP-072 B5
@@ -395,6 +439,7 @@ namespace DD.Prototype.Audio
 
             _mixer.Tick(dt);
             _world.Tick(dt, _paused);
+            _reflect.Tick(dt, _paused);   // WP-097 K1
             _signal.Tick(dt, false);   // WP-068 s11: interface voices ignore the listener pause, so they age through it
             _ambience.Tick(dt, _paused);
             _music.Tick(dt, _paused);
@@ -406,7 +451,10 @@ namespace DD.Prototype.Audio
 
             TickLoops(dt);
             if (!_paused) _weaponFire.Tick(dt);   // WP-085 B1: a string's trigger release → space tail
+            if (!_paused) RefreshProbe();         // WP-097 K1: top-down walls / roof around the player (cached 1 m / 0.5 s)
+            _tailBed.Tick(dt, _paused, Time.unscaledTime);   // WP-097 K1: the string bed's ramps follow the Weapon bus
             if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
+            if (!_paused) _magDrops.Tick();        // WP-097 K2: the spent magazine lands after its fall
             if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
             if (!_paused) _rocketBlasts.Tick();    // WP-072 · rl_1: staggered bomblet pops
             if (!_paused) _special.Tick(dt);   // WP-072 B4: chain hops, shock / puddle loops
@@ -834,6 +882,32 @@ namespace DD.Prototype.Audio
         }
 
         /// <summary>
+        /// WP-097 K1 (03 §3): a top-down reflection (slapback copy / open-air echo) with its clip given — the Reflect pool, never the
+        /// world budget. Not counted in <see cref="PlayedCount"/> / <see cref="LastPlayed"/> (the dry shot is the event) and it
+        /// ducks nothing.
+        /// </summary>
+        private bool PlayReflection(in AudioPlacement placement, AudioClip clip, Vector3 position, float gainScale, int cuePriority)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Requested, AudioPlaybackPool.Reflection, placement.Sound,
+                active: _reflect.ActiveCount, capacity: _reflect.Capacity);
+#endif
+            return _reflect.Play(placement, clip, position, gainScale, AudioMixPlan.EffectivePriority(placement, cuePriority));
+        }
+
+        /// <summary>WP-097 K1: in top-down with reflections on, the probe follows the player-anchored listener (no player: nothing).</summary>
+        private void RefreshProbe()
+        {
+            if (!WeaponReflections.Enabled || DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.TopDown
+                || !_listener.Anchored)
+            {
+                return;
+            }
+
+            _probe.Refresh(_listener.Transform.position, Time.unscaledTime, false);
+        }
+
+        /// <summary>
         /// The sidechain. A landmark event makes room for itself by pulling the buses
         /// underneath it down for a moment; nothing here ever raises a level.
         /// </summary>
@@ -1252,6 +1326,7 @@ namespace DD.Prototype.Audio
         {
             _weaponFire?.StopAll();   // WP-072 B1
             _casings?.Clear();        // WP-072 B2
+            _magDrops?.Clear();       // WP-097 K2
             _flight?.StopAll();       // WP-072 B5
             if (_loops.Count == 0)
             {
@@ -1371,7 +1446,9 @@ namespace DD.Prototype.Audio
 
         private string DescribeVoices()
         {
-            return _world.Describe() + "\n" + _signal.Describe() + "\n"
+            return _world.Describe() + "\n" + _signal.Describe() + "\n" + _reflect.Describe()
+                   + " · bed " + _tailBed.Sounding + " (starts " + _tailBed.Starts + ", peak " + _tailBed.PeakSounding + ")"
+                   + " · probe " + _probe.ValidCount + " walls, " + _probe.Guess + (WeaponReflections.Enabled ? "" : " (reflections off)") + "\n"
                    + string.Format("Loops: {0}/{1} · beds 6 · music 4 · {2}", _loops.Count, LoopCapacity,
                        _paused ? "PAUSED" : "running");
         }

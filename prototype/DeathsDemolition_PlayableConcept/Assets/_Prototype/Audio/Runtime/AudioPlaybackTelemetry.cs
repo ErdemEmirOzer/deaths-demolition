@@ -32,6 +32,9 @@ namespace DD.Prototype.Audio
         Signal = 2,
         Loop = 3,
         Field = 4,
+        /// <summary>WP-097 K1: the Reflect pool (top-down slapback copies and open-air echoes) — apart from World, so the R2 S2
+        /// fire-voice counts and the world budget never see them.</summary>
+        Reflection = 5,
     }
 
     /// <summary>

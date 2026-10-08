@@ -865,7 +865,8 @@ class R2RoundTests(Fixture):
         # KADRO game-test-engineer SHOULD-6 / S-08 06.10: KİRLİ is a note; the owner's quality gates decide the value
         self.m['round'] = 'R2'
         values = {'openRt60MinS': 0.6, 'openRt60MaxS': 1.0, 'corridorRt60MinS': 0.9, 'corridorRt60MaxS': 1.6,
-                  'hallRt60MinS': 1.3, 'hallRt60MaxS': 2.2, 'orderViolations': 0}
+                  'hallRt60MinS': 1.3, 'hallRt60MaxS': 2.2, 'roomRt60MinS': 0.4, 'roomRt60MaxS': 0.6,   # WP-097 K3 Room
+                  'orderViolations': 0}
         s4 = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'S4', 'commit': FINAL, 'values': values}, 'r2-S4.json')
         dirty = self.f.put_json({'schema': 'dd-r2-host-v1', 'quietAtStart': False, 'samples': 9, 'load1Max': 12.0,
                                  'foreignPlayerMax': 0, 'dirty': True, 'dirtyWhy': ['start not quiet after 1800 s: load1 12.00']},

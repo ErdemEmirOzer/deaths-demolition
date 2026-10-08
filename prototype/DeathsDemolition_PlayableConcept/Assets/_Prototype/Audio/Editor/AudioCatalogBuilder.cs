@@ -30,6 +30,14 @@ namespace DD.Prototype.Audio.EditorTools
         /// <summary>WP-085 B5 (G4 = AP-027, C-00 05.10): the v4 weapon set — its entries replace the AP-011 rows of the same sound.</summary>
         public const string Ap027ManifestPath = "Assets/_Art/Audio/AP027-audio-manifest.json";
         public const string Ap027AudioRoot = "Assets/_Art/Audio/AP027/";
+
+        /// <summary>
+        /// WP-097 K2 (S-08 07.10): the AP-029 v001 set (tools/audio/ap029_import.py) — Fire v5 under the AP-027 Fire names, the 900-block
+        /// class tails (Echo / Release / Room), the special-weapon rows under their AP-011 names, the AP-029 foley (Metal / Mat / Grass
+        /// casings and links, MagDrop). Priority per sound: AP-029 &gt; AP-027 &gt; AP-011.
+        /// </summary>
+        public const string Ap029ManifestPath = "Assets/_Art/Audio/AP029-audio-manifest.json";
+        public const string Ap029AudioRoot = "Assets/_Art/Audio/AP029/";
         public const string CatalogPath = "Assets/_Prototype/Audio/Resources/DD_AudioCatalog.asset";
         public const string RegionMapPath = "Assets/_Prototype/Audio/Resources/DD_AudioRegionMap.asset";
         public const string PlacementPath = "Assets/_Art/Environment/World/AP005_Placement.asset";
@@ -219,7 +227,10 @@ namespace DD.Prototype.Audio.EditorTools
             {
                 var s = (Dictionary<string, object>)o;
                 string id = (string)s["id"];
-                if (!Enum.TryParse((string)s["enclosure"], out AcousticSpace enclosure))
+                // WP-097 K1 (C-00 K3): "Open" / "Corridor" / "Hall" / "Room" — the enum's names, case-sensitive; a number is refused.
+                string enclosureText = s["enclosure"] as string;
+                if (string.IsNullOrEmpty(enclosureText) || char.IsDigit(enclosureText[0]) || enclosureText[0] == '-'
+                    || !Enum.TryParse(enclosureText, false, out AcousticSpace enclosure) || !Enum.IsDefined(typeof(AcousticSpace), enclosure))
                 {
                     throw new InvalidOperationException("acoustic space '" + id + "': enclosure '" + s["enclosure"] + "' invalid");
                 }
@@ -286,10 +297,16 @@ namespace DD.Prototype.Audio.EditorTools
 
             // WP-085 B5: the AP-027 manifest rides on top — its rows win for the same sound, the rest of AP-011 stays.
             Manifest v4 = File.Exists(Ap027ManifestPath) ? JsonUtility.FromJson<Manifest>(File.ReadAllText(Ap027ManifestPath)) : null;
-            List<(ManifestEntry entry, string root)> rows = MergeRows(manifest, v4);
+            // WP-097 K2: the AP-029 manifest rides on top of both — its rows win for the same sound.
+            Manifest v5 = File.Exists(Ap029ManifestPath) ? JsonUtility.FromJson<Manifest>(File.ReadAllText(Ap029ManifestPath)) : null;
+            List<(ManifestEntry entry, string root)> rows = MergeRows(manifest, v4, v5);
 
+            // The source hash names every manifest that fed the catalog (a changed AP-029 import rebuilds it); without AP-029 it is
+            // the value it was before K2, so an unchanged tree stays a no-op.
             string hash = v4 != null ? HashOf(ManifestPath).Substring(0, 32) + HashOf(Ap027ManifestPath).Substring(0, 32) : HashOf(ManifestPath);
+            if (v5 != null) hash = hash.Substring(0, 32) + (v4 != null ? HashOf(Ap027ManifestPath).Substring(0, 32) : string.Empty) + HashOf(Ap029ManifestPath).Substring(0, 32);
             string version = v4 != null ? manifest.version + "+" + v4.version : manifest.version;
+            if (v5 != null) version += "+" + v5.version;
             var existing = AssetDatabase.LoadAssetAtPath<AudioCatalog>(CatalogPath);
             if (existing != null && existing.SourceHash == hash && existing.Entries.Count == rows.Count)
             {
@@ -370,15 +387,34 @@ namespace DD.Prototype.Audio.EditorTools
         /// </summary>
         public static List<(ManifestEntry entry, string root)> MergeRows(Manifest ap011, Manifest ap027)
         {
+            return MergeRows(ap011, ap027, null);
+        }
+
+        /// <summary>
+        /// WP-097 K2: the three-layer overlay — AP-029 rows win over AP-027 and AP-011 for the same sound, AP-027 over AP-011 (either
+        /// newer manifest may be null). A sound listed twice inside one manifest still throws (WP-085 G2).
+        /// </summary>
+        public static List<(ManifestEntry entry, string root)> MergeRows(Manifest ap011, Manifest ap027, Manifest ap029)
+        {
             var rows = new List<(ManifestEntry entry, string root)>();
             var duplicates = new List<string>();
+            var v5Sounds = new HashSet<string>();
+            if (ap029 != null && ap029.entries != null)
+            {
+                foreach (ManifestEntry e in ap029.entries)
+                {
+                    if (v5Sounds.Add(e.sound)) rows.Add((e, Ap029AudioRoot));
+                    else duplicates.Add("AP-029 " + e.sound);
+                }
+            }
+
             var v4Sounds = new HashSet<string>();
             if (ap027 != null && ap027.entries != null)
             {
                 foreach (ManifestEntry e in ap027.entries)
                 {
-                    if (v4Sounds.Add(e.sound)) rows.Add((e, Ap027AudioRoot));
-                    else duplicates.Add("AP-027 " + e.sound);
+                    if (!v4Sounds.Add(e.sound)) duplicates.Add("AP-027 " + e.sound);
+                    else if (!v5Sounds.Contains(e.sound)) rows.Add((e, Ap027AudioRoot));
                 }
             }
 
@@ -388,7 +424,7 @@ namespace DD.Prototype.Audio.EditorTools
                 foreach (ManifestEntry e in ap011.entries)
                 {
                     if (!v1Sounds.Add(e.sound)) duplicates.Add("AP-011 " + e.sound);
-                    else if (!v4Sounds.Contains(e.sound)) rows.Add((e, AudioRoot));
+                    else if (!v4Sounds.Contains(e.sound) && !v5Sounds.Contains(e.sound)) rows.Add((e, AudioRoot));
                 }
             }
 
@@ -410,8 +446,27 @@ namespace DD.Prototype.Audio.EditorTools
                        || sound.EndsWith("Mechanical", StringComparison.Ordinal) || sound.Contains("Tail") || sound.Contains("Distance"));
         }
 
-        /// <summary>Stereo files: every space tail (v016 class tails, AP-027 per-weapon tails).</summary>
+        /// <summary>Stereo files: every space tail (v016 class tails, AP-027 per-weapon tails; WP-097 K2: the AP-029 900-block Echo /
+        /// Release / Room class tails — their "WeaponTail" prefix makes them weapon v3 (q9) and stereo).</summary>
         public static bool IsStereoTail(string sound) => IsWeaponV3(sound) && sound.Contains("Tail");
+
+        /// <summary>
+        /// WP-097 K1 (03 §2): the open-air echo / release class tails (WeaponTail*Echo / WeaponTail*Release, 900 block) stay Vorbis in
+        /// memory (CompressedInMemory): 6 classes × 4 variations × ~2.5 s stereo would be ~11.5 MB as PCM, ~1.5 MB as q9 Vorbis, and at
+        /// most two of them sound at once, so the decode cost is negligible. Every other sound keeps its load type.
+        /// </summary>
+        public static bool IsEchoOrRelease(string sound)
+        {
+            return sound != null && sound.StartsWith("WeaponTail", StringComparison.Ordinal)
+                   && (sound.EndsWith("Echo", StringComparison.Ordinal) || sound.EndsWith("Release", StringComparison.Ordinal));
+        }
+
+        /// <summary>The load type an entry's files are pinned to: streaming for ≥ 8 s, WP-097 echo / release in memory compressed, else decompressed.</summary>
+        public static AudioClipLoadType WantedLoadType(string sound, bool longClip)
+        {
+            if (longClip) return AudioClipLoadType.Streaming;
+            return IsEchoOrRelease(sound) ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+        }
 
         /// <summary>The codec and Vorbis quality an entry's files are pinned to (the quality test reads the same rule).</summary>
         public static AudioCompressionFormat WantedFormat(string sound, bool loop, bool longClip, out float quality)
@@ -447,7 +502,7 @@ namespace DD.Prototype.Audio.EditorTools
             {
                 compressionFormat = WantedFormat(sound, loop, longClip, out float quality),
                 quality = quality,
-                loadType = longClip ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad,
+                loadType = WantedLoadType(sound, longClip),   // WP-097 K1: echo / release CompressedInMemory
                 sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate,
                 preloadAudioData = !longClip
             };

@@ -239,6 +239,8 @@ variant-A top-down stem take. Next to their sound keys, S1 and S2 carry the kit'
 S2 carries the same three keys. `samples` stays the shot count, and its floor is the coverage floor above (minSamples
 S1 66 / S2 151). That floor is written for today's roster; `weaponsMissing` checks the roster itself, so a weapon left out
 of the kit fails even when a changed roster or fire data still lands the shot count over the floor.
+S2 also reports the extra voices (key fireVoiceExcess, gt S-2 07.10): Σ max(0, voices − planned) per take. The deficit check
+counts only the missing voices per take, so the extra ones stay visible in this report key (no check).
 
 ## S2 fire voices (S-08 · S-10 07.10)
 
@@ -258,11 +260,37 @@ FINAL commit into `<E>/r2/` (its commit is DD_R2_COMMIT). Each key is the worst 
   miss up to ~0.4 LU of a peak, is kept next to it).
 - `preLimiterGrDb`: the A9 stack render of `AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum` (master limiter
   opened to 0 dB): max(0, envelope max + 8) with the -8 dBFS limiter's detector (10 ms attack, 90 ms release, linked stereo).
-- `weaponMarginLu`: the W (SFX-Player alone) and R (every other bus) blocks of `AudioSliceTests.DinlemePaketi_AB_Uret`
-  (the top-down take; R2 also first-person): 10 log10 of their K-weighted mean power in the burst windows (0.15-1.2 s of
-  each 2 s fire cycle). R3 (C-00 06.10, decided before the next measurement — SD K1, a single take is ±0.2 LU noise): every
-  AB run given (`--listening` repeats) is POOLED block-weighted per mode, the W and R powers averaged over all their blocks;
-  the worse mode counts. Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" (+1.57 / +3.18) measured directly.
+- `weaponMarginRealRpmLu >= 1.2` (WP-097, C-00 07.10 decision 1 — the acceptance margin is the one at the weapon's real
+  rate): the same test, `AudioSliceTests.DinlemePaketi_AB_Uret`, run with `DD_AB_RPM=real`. The SMG1 bursts then fire at
+  SMG1's own string RPM (`WeaponAudioIdentity` SMG1 StringRpm, 900: 60 / 900 s apart, on a fixed grid that catches up), with
+  the 8 shots/s rig's timing kept: a 1.2 s burst and a 0.8 s gap per 2 s cycle, 4 s blocks A B C W R. The takes go to
+  `wp072-listening-real` and are given to the writer as `--listening-real DIR` (repeatable). The formula is the one below:
+  W over R, K-weighted, burst windows, R3 block-weighted pooling over every real-RPM run given. Top-down only, whatever
+  `--modes` says. Each take's own margin, interval and pile-up record stay in the artifact's takes detail
+  (`takes.listeningReal`).
+  - Validity (pile-up): the test records each shot's capture frame (FramesCaptured). Consecutive shots must sit at least
+    60 % of the interval apart. If they do not, the take is re-recorded, at most twice; after that the test FAILS ("yığılma")
+    and the measurement is invalid. Only a take that passed writes `<no>_<mode>_rpm.json` (rpm "real", stringRpm, intervalS,
+    minGapMs, attempts).
+  - The writer re-checks each take and writes nothing (S3 BLOCKED) when any check fails:
+    - that rpm.json is present, says "real", and gives intervalS = 60 / stringRpm;
+    - minGapMs is at least 60 % of the interval;
+    - the take's own telemetry has at least 20 in-burst gaps between consecutive weapon Fire voice starts (World pool; the
+      Reflection pool's slapback copies are left out), and their median is the interval ±30 %. An 8 shots/s take reads
+      125 ms.
+  - The two rates never mix:
+    - a folder given both as `--listening` and as `--listening-real` is a finding;
+    - a `--listening` folder that holds a real rpm.json is a finding;
+    - no `--listening-real` at all is a finding (the gate's key is unmeasured).
+  - The real-RPM run's NUnit XML goes in with `--xml` too. A failed run in any XML given counts.
+- `weaponMarginLu` (report since WP-097; the R2 check `>= 1.0` was retired by C-00 07.10 decision 1): the 8 shots/s rig,
+  kept for continuity with R1 / R2. SE: the 8/s margin reads about 0.8 dB optimistic. It is computed from the W
+  (SFX-Player alone) and R (every other bus) blocks of `AudioSliceTests.DinlemePaketi_AB_Uret` without `DD_AB_RPM`
+  (`wp072-listening`, the top-down take; R2 also first-person): 10 log10 of their K-weighted mean power in the burst
+  windows (0.15-1.2 s of each 2 s fire cycle). R3 (C-00 06.10, decided before the next measurement — SD K1, a single take
+  is ±0.2 LU noise): every AB run given (`--listening` repeats) is POOLED block-weighted per mode, the W and R powers
+  averaged over all their blocks; the worse mode counts. Today's Run snapshot is R1's mix B, so this is R1's "mix B margin"
+  (+1.57 / +3.18) measured directly.
 
 The source checks run before anything is written; one fails and nothing is written (S3 BLOCKED): capture dropped 0 and
 telemetry overflow 0 in every take, the driver's own dense window (R3, C-00 06.10: player.log `target=` >= 40, "dense
@@ -290,6 +318,67 @@ peak ≥ −30 dBFS, and the old `edc30` kept as a report), and tail only (the w
 tail peak ≥ −50 dBFS or it fails). Tail take: 500–1000 Hz band, Schroeder EDC from the tail onset, T20 (−5 … −25 dB) × 3,
 median of four cues. Thresholds = the spec RT60 ±20 %: open 0.56–1.08 s, corridor 0.88–1.68 s, hall 1.28–2.28 s, and open <
 corridor < hall for every weapon (`orderViolations` 0). Report: `openEdc30MsMin`, `corridorEdc30MsMin`, `hallEdc30MsMin`.
+
+**Room (WP-097, C-00 K3, 07.10):** `roomRt60MinS >= 0.35`, `roomRt60MaxS <= 0.65`. This is the top-down small-room class
+tail (`WeaponAudioIdentity.Room(class)`, 902 + class·10).
+- The same test measures it the same way, with Room forced through `AcousticSpaces.Resolver` in the top-down camera.
+- It is outside the order: `orderViolations` counts open < corridor < hall only (the S-10 acceptance matrix). The room sits
+  beside that order, not inside it.
+- The test runs after the Room files are produced. Before that, a weapon whose class has no produced Room file is not
+  measured as a room: its fallback is the corridor tail, which would read as a room. The test then writes `roomRt60MinS` /
+  `roomRt60MaxS` as null with the note "Room dosyası yok", so the judge returns BLOCKED by name. The three other spaces'
+  values are still written. The test then FAILS on "Room dosyası yok"; it is neither Inconclusive nor a source-check
+  failure.
+
+## S7a (top-down slapback — WP-097, C-00 07.10 decision 2)
+
+`AudioSliceTests.Yansima_Slap_Duvar8m_Olcum`, in the top-down camera with Open forced:
+- Setup: an 8 m Environment wall on the probe ray nearest the listener's right. SR1 fires four single shots. Its dry voice is
+  an 8 ms 1 kHz burst; the mechanism, tails, echo and release are silenced.
+- Source check first: dry peak >= -30 dBFS, and a slap was played. Then the test writes:
+  - `slapDelayErrMs <= 23.3`: |measured slap onset - dry onset - 2d/343|, ms. The limit is 2 ms + the 21.3 ms DSP buffer
+    (1024 at 48 kHz; PlayDelayed starts on a buffer edge). The test asserts the smaller of this and its own buffer + 2 ms.
+  - `slapLevelErrDb <= 2.0`: |slap 10 ms power (L² + R²) over the dry one - `WeaponReflections.SlapDb(d)`|, dB.
+  - `slapRightMinusLeftDb >= 3.0`: the slap's right-channel power over its left. The wall is on the right.
+  - Report: `slapDelayMs`, `slapLevelDb`, and `negativeControlDb`. The last is the power in the expected slap window with
+    the wall removed, over the dry power. The test still asserts it is <= -40 dB.
+- `samples` = the shots measured. Medians over the four shots.
+
+## S7b (open-air echo — WP-097, C-00 07.10 decision 2)
+
+`AudioSliceTests.Echo_AcikAlan_Olcum`, top-down, SR1:
+- `echoPresentOpen == 1`: with Open forced, the class echo was played and is in the echo-only take (peak >= -50 dBFS).
+- `echoPresentInterior == 0`: with Corridor forced, two shots play no echo.
+- Report:
+  - `echoOnsetMs`: echo-only take, from the cue frame to 10 % of the window peak.
+  - `echoEdcS`: echo-only take, the decay length. This is the time from the echo onset to the last 50 ms RMS window
+    within 40 dB of the envelope peak. The test asserts 1.5–3 s and a spectral centroid under half the dry one.
+- Source check first: dry peak >= -30 dBFS in the dry-reference take.
+- The echo files arrive with K2 (offline convolution). Until then the test is Inconclusive and writes nothing (BLOCKED).
+
+## S7c (automatic-fire tail bed — WP-097, C-00 07.10 decision 2)
+
+`AudioSliceTests.OtoAtes_KuyrukYatagi_Olcum`, top-down, Open, weapon bus solo: SMG1 at its real string RPM (900) for 2 s.
+- Source check first: dry peak >= -30 dBFS.
+- `reflectDropped == 0`: the Reflect pool's dropped count.
+- `bedVoicesMax <= 2`: the string bed's peak concurrent voices.
+- Report:
+  - `reflectPeakActive`: the Reflect pool's peak voices. The test asserts <= 8.
+  - `releaseTailAboveMinus50S`: from the release (last shot + 1.6 intervals) to the first 50 ms RMS window under -50 dBFS.
+    The test asserts >= 0.6 s.
+- `samples` = the shots fired.
+
+## S7d (top-down reflection path GC — WP-097, C-00 07.10 decision 2)
+
+`AudioSliceTests.Yansima_TdSeriAtesVeYuruyus_SifirAyirma`: 10 s of a top-down SMG1 900 RPM string through
+`WeaponFireAudio.TryHandle` (slapback, bed, duck) beside an 8 m wall, with the probe refreshed from an origin walking
+0.1 m a frame, plus the Reflect pool and bed ticks.
+- `gcBytes == 0` is a lower bound. Each frame's calls are wrapped in the test thread's `GC.Alloc` Recorder (positive
+  control first), and `gcBytes` = 16 × the `GC.Alloc` samples. 16 bytes is the smallest managed object on 64-bit Mono,
+  so 0 means no allocation at all, and any allocation reads >= 16.
+- The Recorder gives no byte size. `GC.GetAllocatedBytesForCurrentThread` always reads 0 in Unity's Mono (this repo's
+  own tests say so), so it is not used.
+- `samples` = the frames measured.
 
 ## Z1 (DEC-077 readability, C-00 06.10)
 

@@ -562,6 +562,86 @@ namespace DD.Prototype.Audio
         LinkLmg2WetStone = 871,
         LinkLmg2Wood = 872,
         LinkLmg2Dirt = 873,
-        LinkLmg2Puddle = 874
+        LinkLmg2Puddle = 874,
+
+        // ---- WP-097 K2 (S-08, 07.10) · AP-029 v001 foley: three more casing / link surfaces on the AP-027 arithmetic — casing
+        // 700 + weapon·10 + surface, link 800 + weapon·10 + surface, Metal 5 (SurfaceKind.Metal), Mat 6 (Paper = tatami), Grass 7
+        // (Foliage). Resolved by name (WeaponFoleyV3.V4Surfaces); each plays only when the catalog produces it, else the AP-027
+        // surface it replaced (Metal → StoneSlate / WetStone, Mat → Wood, Grass → silent) plays as before.
+        CasingAr1Metal = 705,
+        CasingAr1Mat = 706,
+        CasingAr1Grass = 707,
+        CasingAr2Metal = 715,
+        CasingAr2Mat = 716,
+        CasingAr2Grass = 717,
+        CasingSmg1Metal = 725,
+        CasingSmg1Mat = 726,
+        CasingSmg1Grass = 727,
+        CasingSmg2Metal = 735,
+        CasingSmg2Mat = 736,
+        CasingSmg2Grass = 737,
+        CasingSg1Metal = 745,
+        CasingSg1Mat = 746,
+        CasingSg1Grass = 747,
+        CasingSg2Metal = 755,
+        CasingSg2Mat = 756,
+        CasingSg2Grass = 757,
+        CasingLmg1Metal = 765,
+        CasingLmg1Mat = 766,
+        CasingLmg1Grass = 767,
+        CasingLmg2Metal = 775,
+        CasingLmg2Mat = 776,
+        CasingLmg2Grass = 777,
+        CasingSr1Metal = 785,
+        CasingSr1Mat = 786,
+        CasingSr1Grass = 787,
+        LinkLmg1Metal = 865,
+        LinkLmg1Mat = 866,
+        LinkLmg1Grass = 867,
+        LinkLmg2Metal = 875,
+        LinkLmg2Mat = 876,
+        LinkLmg2Grass = 877,
+
+        // ---- WP-097 K2 · AP-029 v001 magazine drops: the spent magazine hits the floor (WeaponMechanismKind.MagazineDropped, MagazineDropAudio).
+        // Rifle 970 + surface, Pistol 980 + surface (StoneSlate 0, Wood 1, Dirt 2, Metal 3, WetStone 4; MagazineDropAudio.Surfaces order).
+        // A combination not delivered falls back (MagazineDropAudio.Resolve); silent until the catalog produces one.
+        MagDropRifleStoneSlate = 970,
+        MagDropRifleWood = 971,
+        MagDropRifleDirt = 972,
+        MagDropRifleMetal = 973,
+        MagDropRifleWetStone = 974,
+        MagDropPistolStoneSlate = 980,
+        MagDropPistolWood = 981,
+        MagDropPistolDirt = 982,
+        MagDropPistolMetal = 983,
+        MagDropPistolWetStone = 984,
+
+        // ---- WP-097 K1 (S-08, 07.10) · top-down class tails, 900 + class·10 + k (WeaponTailClass order Ar 0 … Rl 5;
+        // Echo 0 = the open-air far echo 1.5–3 s, Release 1 = the long last-shot tail of a string, Room 2 = the small-room tail
+        // (C-00 K3: AcousticSpace.Room, 20–90 m², ceiling ≤ 4 m). Resolved by WeaponAudioIdentity.Echo / ReleaseTail / Room;
+        // silent until a catalog row produces them (K2: offline convolution). The "WeaponTail" prefix gives them the stereo q9
+        // import (AudioCatalogBuilder.IsStereoTail); Echo / Release are CompressedInMemory (AudioCatalogBuilder.IsEchoOrRelease).
+        WeaponTailArEcho = 900,
+        WeaponTailArRelease = 901,
+        WeaponTailArRoom = 902,
+        WeaponTailSmgEcho = 910,
+        WeaponTailSmgRelease = 911,
+        WeaponTailSmgRoom = 912,
+        WeaponTailSgEcho = 920,
+        WeaponTailSgRelease = 921,
+        WeaponTailSgRoom = 922,
+        WeaponTailLmgEcho = 930,
+        WeaponTailLmgRelease = 931,
+        WeaponTailLmgRoom = 932,
+        WeaponTailSrEcho = 940,
+        WeaponTailSrRelease = 941,
+        WeaponTailSrRoom = 942,
+        WeaponTailRlEcho = 950,
+        WeaponTailRlRelease = 951,
+        WeaponTailRlRoom = 952,
+
+        /// <summary>WP-097 K1: label only — a slapback copy of the dry Fire clip (the clip is passed explicitly, no catalog row);
+        /// keeps the Reflect pool's instance count and the telemetry apart from Fire.</summary>
+        WeaponSlap = 990
     }
 }

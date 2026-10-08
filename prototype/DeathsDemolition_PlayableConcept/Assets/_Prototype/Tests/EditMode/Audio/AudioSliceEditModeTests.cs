@@ -592,6 +592,18 @@ namespace DD.Prototype.Tests.EditMode.Audio
                     v4.Add(m.sound);
                 }
             }
+
+            // WP-097 K2: AP-029 rows win over both (the catalog's priority); they follow AP-029's own per-part standard (−1 dBTP
+            // ceiling; tails −20 LUFS stereo sum, foley −24 / −30 / −22) checked by Wp097K2Tests.AP029_Manifest_… — here the same
+            // shipped-clip re-measurement and peak gates as AP-027.
+            if (File.Exists(AudioCatalogBuilder.Ap029ManifestPath))
+            {
+                foreach (AudioCatalogBuilder.ManifestEntry m in JsonUtility.FromJson<AudioCatalogBuilder.Manifest>(File.ReadAllText(AudioCatalogBuilder.Ap029ManifestPath)).entries)
+                {
+                    girdi[m.sound] = m;
+                    v4.Add(m.sound);
+                }
+            }
             foreach (AudioCatalog.Entry e in katalog.Entries)
             {
                 // v003: girdinin kendi hedefi (tasarım seviyesi: -18 SFX, -20 ambiyans/ayak/idle, -16 müzik)
@@ -621,9 +633,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 }
 
                 // Yeniden ölçüm: sevk edilen (Vorbis) klip manifest damgasını ± 2 LU içinde tutmalı.
-                // Streaming klipler GetData vermez; onlar atlanır (loop bed'ler).
+                // Streaming klipler GetData vermez; onlar atlanır (loop bed'ler). WP-097: CompressedInMemory de vermez (AP-029 Echo /
+                // Release sınıf kuyrukları, bellek için) — onların damgası içe alıcıda sevk dosyasından ölçülür (Wp097K2Tests manifest kapısı).
                 AudioClip clip = e.Clips[0];
-                if (clip.loadType == AudioClipLoadType.Streaming || clip.length > 12f)
+                if (clip.loadType != AudioClipLoadType.DecompressOnLoad || clip.length > 12f)
                 {
                     continue;
                 }
@@ -700,6 +713,9 @@ namespace DD.Prototype.Tests.EditMode.Audio
             if (File.Exists(AudioCatalogBuilder.Ap027ManifestPath))
                 foreach (AudioCatalogBuilder.ManifestEntry m in JsonUtility.FromJson<AudioCatalogBuilder.Manifest>(File.ReadAllText(AudioCatalogBuilder.Ap027ManifestPath)).entries)
                     satirlar.Add((m, AudioCatalogBuilder.Ap027AudioRoot));   // WP-085 B5: the same gate on the AP-027 import (its stamps from ap027_import.py)
+            if (File.Exists(AudioCatalogBuilder.Ap029ManifestPath))
+                foreach (AudioCatalogBuilder.ManifestEntry m in JsonUtility.FromJson<AudioCatalogBuilder.Manifest>(File.ReadAllText(AudioCatalogBuilder.Ap029ManifestPath)).entries)
+                    satirlar.Add((m, AudioCatalogBuilder.Ap029AudioRoot));   // WP-097 K2: the same gate on the AP-029 import (stamps from ap029_import.py)
             foreach (var (m, kok) in satirlar)
             {
                 if (m.bitDepth != manifest.standard.bitDepth) hatalar.Add($"{m.sound}: kaynak {m.bitDepth}-bit ≠ {manifest.standard.bitDepth}");
@@ -734,7 +750,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             foreach (AudioCatalog.Entry e in katalog.Entries)
             {
                 AudioClip clip = e.Clips[0];
-                if (e.Loop || clip.loadType == AudioClipLoadType.Streaming || clip.length > 12f) continue;
+                if (e.Loop || clip.loadType != AudioClipLoadType.DecompressOnLoad || clip.length > 12f) continue;   // WP-097: CompressedInMemory has no GetData either
                 clip.LoadAudioData();
                 float[] data = new float[clip.samples * clip.channels];
                 clip.GetData(data, 0);
@@ -924,7 +940,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual("SMG1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg));
             Assert.AreEqual("SG1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun));
 
-            // 6 sınıf × 3 mekân = 18 ayrı kuyruk, adı sınıf+mekânla eşleşir.
+            // 6 sınıf × 3 mekân = 18 ayrı v016 kuyruğu, adı sınıf+mekânla eşleşir. WP-097 K1 (C-00 K3): + Room = 6 × 4 = 24 —
+            // Room'un sınıf kuyruğu 900 bloğunda (WeaponTail<sınıf>Room, 902 + sınıf·10), aynı ad kuralı.
             var kuyruk = new HashSet<AudioSoundId>();
             foreach (WeaponTailClass c in Enum.GetValues(typeof(WeaponTailClass)))
             {
@@ -936,7 +953,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 }
             }
 
-            Assert.AreEqual(18, kuyruk.Count);
+            Assert.AreEqual(Enum.GetValues(typeof(WeaponTailClass)).Length * Enum.GetValues(typeof(AcousticSpace)).Length, kuyruk.Count);
+            Assert.AreEqual(24, kuyruk.Count, "6 sınıf × (Open, Corridor, Hall, Room)");
             Assert.AreEqual(AcousticSpace.Open, AcousticSpaces.At(Vector3.zero), "Çözücü yokken Open.");
             Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Open), WeaponFireAudio.WetDb(AcousticSpace.Corridor));
             Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Corridor), WeaponFireAudio.WetDb(AcousticSpace.Hall));
@@ -1154,6 +1172,12 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.IsNotNull(katalog);
             var kayit = new Dictionary<AudioSoundId, AudioCatalog.Entry>();
             foreach (AudioCatalog.Entry e in katalog.Entries) kayit[e.Sound] = e;
+            // WP-097 K2 (S-08 07.10): AP-029 v001 re-renders the ten Fire rows under the same sound names and RR counts (Fire v5) and
+            // the catalog takes AP-029 over AP-027 per sound (AudioCatalogBuilder.MergeRows). A row the AP-029 manifest lists therefore
+            // comes from /AP029/ — for Fire that is the expected source once ap029_import.py ran; every other layer here stays AP-027.
+            var v5 = new HashSet<string>();
+            if (File.Exists(AudioCatalogBuilder.Ap029ManifestPath))
+                foreach (AudioCatalogBuilder.ManifestEntry m in JsonUtility.FromJson<AudioCatalogBuilder.Manifest>(File.ReadAllText(AudioCatalogBuilder.Ap029ManifestPath)).entries) v5.Add(m.sound);
             foreach (string id in new[] { "AR1", "AR2", "SMG1", "SMG2", "SG1", "SG2", "LMG1", "LMG2", "SR1", "RL1" })
             {
                 Assert.IsTrue(WeaponAudioIdentity.TryGet(id, out WeaponVoiceSet set));
@@ -1166,8 +1190,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 }
 
                 string pascal = id[0] + id.Substring(1).ToLowerInvariant();
-                foreach (string yuzey in WeaponFoleyV3.V4Surfaces)
+                // AP-027's five surfaces; the AP-029 Metal / Mat / Grass ones (V4Surfaces 5–7) are Wp097K2Tests' (they ship 2–4 RR, not 6).
+                for (int y = 0; y < WeaponFoleyV3.FirstV5Surface; y++)
                 {
+                    string yuzey = WeaponFoleyV3.V4Surfaces[y];
                     bool kovanVar = Enum.TryParse("Casing" + pascal + yuzey, out AudioSoundId kovan);
                     Assert.AreEqual(id != "RL1", kovanVar, id + " " + yuzey + " kovanı");
                     if (kovanVar) sesler.Add(kovan);
@@ -1183,7 +1209,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 {
                     Assert.IsTrue(kayit.TryGetValue(k, out AudioCatalog.Entry e), k + " katalogda yok");
                     Assert.AreEqual(k == AudioSoundId.WeaponLmg2Fire ? 5 : 6, e.Clips.Length, k + ": varyant sayısı");
-                    StringAssert.Contains("/AP027/", AssetDatabase.GetAssetPath(e.Clips[0]), k + " AP-027'den gelmeli");
+                    bool ap029 = v5.Contains(k.ToString());
+                    StringAssert.Contains(ap029 ? "/AP029/" : "/AP027/", AssetDatabase.GetAssetPath(e.Clips[0]), k + (ap029 ? " AP-029'dan gelmeli (WP-097 K2 önceliği)" : " AP-027'den gelmeli"));
                 }
             }
 

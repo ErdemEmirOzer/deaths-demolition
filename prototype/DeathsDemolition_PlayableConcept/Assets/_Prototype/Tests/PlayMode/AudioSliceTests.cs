@@ -1641,6 +1641,11 @@ namespace DD.Prototype.Tests.PlayMode
         /// tail rings through any "gap" window); block starts (capture frames) go to a CSV and wp-072/tools/kit_splice.py splices,
         /// level-matches and measures them. 3 the calm after-rain
         /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
+        /// WP-097 (C-00 07.10 decision 1, R2 S3 weaponMarginRealRpmLu): with DD_AB_RPM=real the SMG1 bursts fire at SMG1's own string RPM
+        /// (60 / StringRpm s apart on a fixed grid that catches up; the 1.2 s burst + 0.8 s gap kept), the folder is wp072-listening-real,
+        /// every shot's capture frame is kept and consecutive shots must sit ≥ 60 % of the interval apart (pile-up) — else the take is
+        /// re-recorded at most twice, then Assert.Fail("yığılma"): the measurement is invalid. A clean take writes &lt;no&gt;_&lt;mode&gt;_rpm.json
+        /// (tools/qa/r2_s3.py --listening-real re-checks it). Without the variable the test is byte-for-byte the 8 shots/s rig.
         /// </summary>
         [Category("WP021")]
         [UnityTest]
@@ -1672,7 +1677,21 @@ namespace DD.Prototype.Tests.PlayMode
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             MusicDirector m = _d.Music;
             AfterRainAmbience ar = _d.Ambience.AfterRain;
-            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-listening");
+            // WP-097 (C-00 07.10 decision 1): DD_AB_RPM=real → SMG1 at its own string RPM, own folder; unset → the 8 shots/s rig unchanged.
+            string rpmIstek = Environment.GetEnvironmentVariable("DD_AB_RPM");
+            bool gercekRpm = string.Equals(rpmIstek, "real", StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrEmpty(rpmIstek)) Assert.IsTrue(gercekRpm, "DD_AB_RPM yalnız 'real' olabilir: '" + rpmIstek + "'");
+            float gercekRpmDegeri = 0f, periyot = 0.125f;
+            if (gercekRpm)
+            {
+                Assert.IsTrue(WeaponAudioIdentity.TryGet("SMG1", out WeaponVoiceSet smg1), "SMG1 ses kimliği yok");
+                Assert.Greater(smg1.StringRpm, 0f, "SMG1 seri ateş hızı (StringRpm) yok");
+                gercekRpmDegeri = smg1.StringRpm;
+                periyot = 60f / gercekRpmDegeri;
+            }
+
+            int patlamaAtis = gercekRpm ? Mathf.CeilToInt(1.2f / periyot - 1e-4f) : 0;   // shots per 1.2 s burst on the real grid
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, gercekRpm ? "wp072-listening-real" : "wp072-listening");
             System.IO.Directory.CreateDirectory(dir);
             string playerParam = AudioMixerBridge.VolumeParams[4];
             float oncekiKus = AfterRainAmbience.BirdLevel;
@@ -1698,8 +1717,24 @@ namespace DD.Prototype.Tests.PlayMode
 
             float sonraki = 0f;
             int atis = 0;
+            int gridSira = 0;                       // real RPM: the next grid shot (cycle = gridSira / patlamaAtis)
+            var atisKareleri = new List<long>();    // real RPM: each shot's capture frame (the pile-up check)
             void Ates(float t)
             {
+                if (gercekRpm)
+                {
+                    // WP-097: SMG1 at its real RPM — shot k of 2 s cycle c at 2c + k·60/RPM (k·period < 1.2 s), every due shot fired
+                    // (a long frame fires its catch-up shots together: the pile-up check below sees it and the take is re-recorded).
+                    while (2f * (gridSira / patlamaAtis) + (gridSira % patlamaAtis) * periyot <= t)
+                    {
+                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * (0.1f * (atis++ % 2)), 0.75f, 50);
+                        atisKareleri.Add(aktifCap != null ? aktifCap.FramesCaptured : 0);
+                        gridSira++;
+                    }
+
+                    return;
+                }
+
                 // 1,2 s burst (SMG1 ~8 shots/s), 0,8 s off.
                 if (t >= sonraki && t % 2f < 1.2f)
                 {
@@ -1759,13 +1794,23 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
                     yield return new WaitForSecondsRealtime(3f);
+                    int blok = -1;
+                    System.Text.StringBuilder bloklar = null;
+                    string yigilma = null;
+                    int deneme = 0;
+                    // WP-097: the real-RPM take is re-recorded on a pile-up, at most twice (3 attempts); the 8 shots/s take is recorded once, as before.
+                    for (deneme = 1; deneme <= (gercekRpm ? 3 : 1); deneme++)
+                    {
                     // The fire clock restarts per take (the FP take once inherited the top-down clock and barely fired). Blocks switch at a
                     // burst onset (t = 4k s); C's World duck: −3 dB, 30 ms down, held 150 ms after the last shot, 350 ms back.
                     sonraki = 0f;
                     atis = 0;
-                    int blok = -1, sonAtis = 0;
+                    gridSira = 0;
+                    atisKareleri.Clear();
+                    blok = -1;
+                    int sonAtis = 0;
                     float duck = 0f, sonAtisT = -10f, onceki = 0f;
-                    var bloklar = new System.Text.StringBuilder("frame,variant\n");
+                    bloklar = new System.Text.StringBuilder("frame,variant\n");
                     yield return Kaydet(no + "_" + ad + "_take", 60f, t =>
                     {
                         int b = Mathf.Min(14, (int)(t / 4f));
@@ -1789,8 +1834,26 @@ namespace DD.Prototype.Tests.PlayMode
                         mixer.SetFloat(AudioMixerBridge.VolumeParams[1], v == 'W' ? -80f : tabanMusicDb);   // music
                         mixer.SetFloat(AudioMixerBridge.VolumeParams[2], v == 'W' ? -80f : tabanAmbDb);     // ambience
                     });
+                    if (!gercekRpm) break;
+                    yigilma = AtisAraligiYigilma(atisKareleri, periyot, AudioSettings.outputSampleRate, out float enKisaMs);
+                    if (yigilma == null)
+                    {
+                        // Only a take that passed the pile-up check says it is a real-RPM measurement (r2_s3.py --listening-real reads it).
+                        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, no + "_" + ad + "_rpm.json"),
+                            "{\"rpm\": \"real\", \"weapon\": \"SMG1\", \"stringRpm\": " + Wp097J(gercekRpmDegeri) + ", \"intervalS\": "
+                            + Math.Round(periyot, 6).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ", \"shots\": " + atisKareleri.Count
+                            + ", \"minGapMs\": " + Wp097J(enKisaMs) + ", \"attempts\": " + deneme + ", \"sampleRate\": " + AudioSettings.outputSampleRate + "}");
+                        break;
+                    }
+
+                    Debug.Log("[DD-TEST] wp072.real retake " + no + "_" + ad + " #" + deneme + ": " + yigilma);
+                    yield return new WaitForSecondsRealtime(1f);
+                    }
+
+                    if (gercekRpm && yigilma != null) Assert.Fail("yığılma: " + no + "_" + ad + " gerçek RPM çekimi 3 denemede de yığıldı — ölçüm geçersiz (" + yigilma + ")");
                     System.IO.File.WriteAllText(System.IO.Path.Combine(dir, no + "_" + ad + "_blocks.csv"), bloklar.ToString());
-                    Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " shots=" + atis + " blocks=" + (blok + 1) + " last=" + _d.WeaponFire.LastVoice);
+                    Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " shots=" + atis + " blocks=" + (blok + 1) + " last=" + _d.WeaponFire.LastVoice
+                              + (gercekRpm ? " rpm=" + gercekRpmDegeri.ToString("0") + " attempts=" + deneme : ""));
                 }
 
                 mixer.SetFloat(playerParam, tabanDb);
@@ -1887,12 +1950,14 @@ namespace DD.Prototype.Tests.PlayMode
             var csv = new System.Text.StringBuilder("take,weapon,mode,variant,stem,kind,shot,frame,sampleRate\n");
             var ozet = new System.Text.StringBuilder("[");
             float s1Min = 1f, s1MinC = 1f;
-            int s1Shots = 0, s2Deficit = 0, s2Transients = 0, s2Loops = 0, s2Refused = 0, s2Shots = 0;
+            int s1Shots = 0, s2Deficit = 0, s2Excess = 0, s2Transients = 0, s2Loops = 0, s2Refused = 0, s2Shots = 0;
             // C-00 07.10 (S-10 proposal): S1 / S2 coverage — the weapons with a variant-A top-down stem against the enabled roster.
             var olculenSilahlar = new HashSet<string>();
             var s1Detay = new List<string>();
 
             AudioOutputCapture cap = null;
+            // WP-097 K1 decision 7: the R2 kit (S1 / S2) records the R2 weapon path — no top-down slapback / bed / echo; true again in finally.
+            WeaponReflections.Enabled = false;
             try
             {
                 foreach (var (cid, wd) in silahlar)
@@ -2049,6 +2114,7 @@ namespace DD.Prototype.Tests.PlayMode
                                     if (camMode == DD.Prototype.CameraSystem.CameraMode.TopDown) olculenSilahlar.Add(wd.weaponId);
                                     s2Shots += plan.Count;
                                     s2Deficit += Mathf.Max(0, plan.Count - voices);   // per take (S-10 07.10): a take's extra voices never cancel another's missing ones
+                                    s2Excess += Mathf.Max(0, voices - plan.Count);    // gt S-2 07.10: the extra voices stay visible (report)
                                     s2Transients += gecici;
                                     s2Loops += dongu;
                                     s2Refused += refused;
@@ -2073,6 +2139,7 @@ namespace DD.Prototype.Tests.PlayMode
                 DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon = oncekiSecim;
                 if (_s.Controller != null) _s.Controller.EquipClassic(oncekiSecim, _s.Config);
                 WeaponFireAudio.LegacyVoicesForKit = false;
+                WeaponReflections.Enabled = true;   // WP-097 K1
                 _d.Library.ClearKitOverrides();
                 foreach (AudioClip k in kitKliplar) if (k != null) UnityEngine.Object.Destroy(k);
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
@@ -2101,7 +2168,7 @@ namespace DD.Prototype.Tests.PlayMode
                 R2Olcum.Yaz("S2", kaynak, new Dictionary<string, double>
                 {
                     { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused },
-                    { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }
+                    { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }, { "fireVoiceExcess", s2Excess }
                 }, s2Shots);
                 Assert.AreEqual(0, s2Deficit + s2Transients + s2Loops + s2Refused, "R2 S2: her atış tam katman, hafif katman / döngü / havuz reddi yok.");
                 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR")))   // a gate run measures the whole roster
@@ -2122,6 +2189,10 @@ namespace DD.Prototype.Tests.PlayMode
         ///    tail peak ≥ −50 dBFS or the take fails (source in the recording).
         /// Median of four per weapon × space. r2-S4: open / corridor / hall RT60 min and max (s) — spec ±20 %: 0.56–1.08,
         /// 0.88–1.68, 1.28–2.28 — orderViolations (open < corridor < hall per weapon), report open / corridor / hall edc30 minima.
+        /// WP-097 (C-00 K3, 07.10): + the top-down small Room (Room forced, top-down camera; tail-only take, same RT60 method):
+        /// roomRt60MinS / roomRt60MaxS 0.35–0.65 s, outside the order (S-10 acceptance matrix). A weapon whose class Room tail
+        /// (WeaponAudioIdentity.Room) is not produced is not measured as a room (its fallback is the corridor tail): the room keys
+        /// are written null with the note "Room dosyası yok" (BLOCKED by name) and the test FAILS — the gate runs once the files land.
         /// Needs a quiet machine. Written under temporaryCachePath/wp085-edc.
         /// </summary>
         [Category("WP021")]
@@ -2152,10 +2223,15 @@ namespace DD.Prototype.Tests.PlayMode
             var mekanlar = new[] { AcousticSpace.Open, AcousticSpace.Corridor, AcousticSpace.Hall };
             var rt60 = new Dictionary<string, float[]>();
             var edc30 = new Dictionary<string, float[]>();
+            var odaRt60 = new Dictionary<string, float>();   // WP-097 K3: Room, per weapon whose class Room tail is produced
+            var odaYok = new List<string>();                  // weapons whose class Room tail is not produced
             var csv = new System.Text.StringBuilder("weapon,space,shot,edc30Ms,rt60S\n");
             System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
             AudioClip sessiz = AudioClip.Create("wp085_s4_silence", 480, 1, 48000, false);
             AudioOutputCapture cap = null;
+            // WP-097 K1 decision 7: S4's definition does not move — the room tails are measured without the top-down slapback, string
+            // bed and echo (WeaponReflections.Enabled = false; true again in finally). Yansima_* tests report the reflected case.
+            WeaponReflections.Enabled = false;
 
             // Cue spacing: the tail-only take leaves 3.5 s per cue — the hall tails run 2.62 s past a release that can come 0.2 s
             // after the cue, and the EDC window (3.0 s) must hold all of it (a 2.3 s window cut the hall RT60 to ~1.21 s).
@@ -2228,10 +2304,40 @@ namespace DD.Prototype.Tests.PlayMode
 
                     rt60[id] = r;
                     edc30[id] = e;
+
+                    // WP-097 K3 · Room: top-down only (ResolveTail plays the class Room tail only there, once produced); tail only, as above.
+                    if (!_d.Library.IsProduced(WeaponAudioIdentity.Room(set.TailClass)))
+                    {
+                        odaYok.Add(id + ":" + set.TailClass);
+                        continue;
+                    }
+
+                    DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+                    AcousticSpaces.Resolver = _ => AcousticSpace.Room;
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    string adO = "Tail_" + id + "_" + AcousticSpace.Room;
+                    var kareO = new List<long>();
+                    _d.Library.OverrideForKit(set.Fire, new[] { sessiz });
+                    _d.Library.OverrideForKit(WeaponAudioIdentity.Layer(id, WeaponLayer.Mechanical), new[] { sessiz });
+                    try
+                    {
+                        yield return Kaydet(adO, id, kareO, 3.5f);
+                    }
+                    finally
+                    {
+                        _d.Library.ClearKitOverrides();
+                    }
+
+                    float[] t60O = KuyrukRt60(System.IO.Path.Combine(dir, adO + ".wav"), kareO, out float odaTepe);
+                    Assert.GreaterOrEqual(odaTepe, -50f, adO + ": oda kuyruğu kayıtta yok (" + odaTepe.ToString("0.0") + " dBFS)");
+                    for (int k = 0; k < t60O.Length; k++)
+                        csv.Append(id).Append(',').Append(AcousticSpace.Room).Append(',').Append(k).Append(",,").Append(t60O[k].ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                    odaRt60[id] = Medyan(t60O);
                 }
             }
             finally
             {
+                WeaponReflections.Enabled = true;   // WP-097 K1
                 AcousticSpaces.Resolver = onceki;
                 _d.Library.ClearKitOverrides();
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
@@ -2258,23 +2364,34 @@ namespace DD.Prototype.Tests.PlayMode
                 detay.Add(kv.Key + " " + kv.Value[0].ToString("0.00") + "/" + kv.Value[1].ToString("0.00") + "/" + kv.Value[2].ToString("0.00") + " s");
             }
 
+            // WP-097 K3: Room is ranged, never in the order (orderViolations stays open < corridor < hall).
+            float odaMin = float.MaxValue, odaMax = 0f;
+            foreach (var kv in odaRt60) { odaMin = Mathf.Min(odaMin, kv.Value); odaMax = Mathf.Max(odaMax, kv.Value); }
+            bool odaTam = odaYok.Count == 0 && odaRt60.Count == rt60.Count && odaRt60.Count > 0;
+            string odaOzet = "room " + (odaTam ? odaMin.ToString("0.00") + "–" + odaMax.ToString("0.00") + " s" : "Room dosyası yok: " + string.Join(",", odaYok));
             Debug.Log("[DD-TEST] wp085.s4 RT60 open/corridor/hall (median of 4, 500–1000 Hz T20): " + string.Join(" · ", detay) + " · orderViolations " + sira
-                      + " · edc30 min ms " + e30[0].ToString("0") + "/" + e30[1].ToString("0") + "/" + e30[2].ToString("0"));
+                      + " · edc30 min ms " + e30[0].ToString("0") + "/" + e30[1].ToString("0") + "/" + e30[2].ToString("0") + " · " + odaOzet);
             Assert.IsNotEmpty(rt60, "Ölçülen silah yok.");
             Assert.AreEqual(silahlar.Count, rt60.Count, "İstenen her silah ölçülmedi.");
-            R2Olcum.Yaz("S4", "DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", new Dictionary<string, double>
+            // A missing Room file: the room keys are null with the note — the judge BLOCKS S4 by name; the three spaces still land.
+            var s4Degerler = new Dictionary<string, double?>
             {
                 { "openRt60MinS", Math.Round(min[0], 3) }, { "openRt60MaxS", Math.Round(max[0], 3) },
                 { "corridorRt60MinS", Math.Round(min[1], 3) }, { "corridorRt60MaxS", Math.Round(max[1], 3) },
                 { "hallRt60MinS", Math.Round(min[2], 3) }, { "hallRt60MaxS", Math.Round(max[2], 3) },
+                { "roomRt60MinS", odaTam ? Math.Round(odaMin, 3) : (double?)null }, { "roomRt60MaxS", odaTam ? Math.Round(odaMax, 3) : (double?)null },
                 { "orderViolations", sira },
                 { "openEdc30MsMin", Math.Round(e30[0], 1) }, { "corridorEdc30MsMin", Math.Round(e30[1], 1) }, { "hallEdc30MsMin", Math.Round(e30[2], 1) }
-            }, rt60.Count * 24);
-            string ozet = string.Join(" · ", detay);
+            };
+            R2Olcum.Yaz("S4", "DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", s4Degerler, rt60.Count * 24 + odaRt60.Count * 4,
+                odaTam ? null : "Room dosyası yok (WeaponAudioIdentity.Room üretilmedi): " + string.Join(",", odaYok) + " — roomRt60 ölçülmedi");
+            Assert.IsTrue(odaTam, "Room dosyası yok: " + string.Join(",", odaYok) + " — S4 oda ölçümü varlık geldikten sonra koşar");
+            string ozet = string.Join(" · ", detay) + " · " + odaOzet;
             Assert.That(min[0] >= 0.56f && max[0] <= 1.08f, "R2 S4 açık RT60 0,56–1,08 s (" + ozet + ")");
             Assert.That(min[1] >= 0.88f && max[1] <= 1.68f, "R2 S4 koridor RT60 0,88–1,68 s (" + ozet + ")");
             Assert.That(min[2] >= 1.28f && max[2] <= 2.28f, "R2 S4 salon RT60 1,28–2,28 s (" + ozet + ")");
             Assert.AreEqual(0, sira, "R2 S4 sıra açık < koridor < salon");
+            Assert.That(odaMin >= 0.35f && odaMax <= 0.65f, "R3 S4 oda RT60 0,35–0,65 s, sıraya girmez (" + ozet + ")");
         }
 
         private static float Medyan(float[] v)
@@ -2351,6 +2468,28 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// WP-097 (DinlemePaketi_AB_Uret, DD_AB_RPM=real): consecutive shot capture frames closer than 60 % of the shot interval — a
+        /// long game frame fired the catch-up shots together (kit pile-up pattern, <see cref="Yigilma"/>). Null when the take is clean;
+        /// <paramref name="enKisaMs"/> = the shortest gap (ms). Fewer than two shots is a pile-up too (nothing was measured).
+        /// </summary>
+        private static string AtisAraligiYigilma(List<long> frames, float interval, int rate, out float enKisaMs)
+        {
+            enKisaMs = 0f;
+            if (frames.Count < 2) return "atış kaydı yok (" + frames.Count + ")";
+            long enKisa = long.MaxValue;
+            int sira = 0;
+            for (int i = 1; i < frames.Count; i++)
+            {
+                long d = frames[i] - frames[i - 1];
+                if (d < enKisa) { enKisa = d; sira = i; }
+            }
+
+            enKisaMs = (float)(1000.0 * enKisa / rate);
+            long esik = (long)Math.Ceiling(0.6 * interval * rate);
+            return enKisa < esik ? "atış " + (sira + 1) + " öncekinden " + enKisaMs.ToString("0.0") + " ms sonra (en az " + (1000.0 * esik / rate).ToString("0.0") + " ms)" : null;
         }
 
         /// <summary>Weapon transient / loop voices started in a take (the capture's telemetry table, column "started").</summary>
@@ -3274,6 +3413,739 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "Ses yolu 600 cue'da ayırdı (bu iş parçacığında GC.Alloc örneği; pencere 0 hedef).");
             Debug.Log("[DD-TEST] wp021.gc threadAlloc=none over 600 cues + 200 router ticks");
+        }
+
+        // ================================================================== WP-097 K1 · top-down yansımalar (ölçüm, CI dışı)
+        // 03 §6 PlayMode. Weapon bus solo (S4 kalıbı), kaynak kayıtta kapısı (kuru tepe ≥ −30 dBFS) her ölçümden önce. Sonuçlar
+        // temporaryCachePath/wp097-reflect altına JSON + [DD-TEST] satırı. C-00 07.10 kararı 2: R2 S7a/S7b/S7c/S7d — her test kendi r2-S7x.json'unu
+        // R2Olcum.Yaz ile, yalnız kaynak kayıtta kapısı geçtikten sonra ve kendi assert'lerinden önce yazar (S4/S5 kalıbı; tools/qa/r2-gates.json).
+
+        /// <summary>
+        /// WP-097 K1 decision 1 · slapback, 8 m duvar: Open zorlanır; dinleyicinin sağına en yakın prob ışınına dik 10 × 4 × 0,5 m
+        /// Environment duvarı (8 m). SR1 dört tek atış; kuru ses 8 ms 1 kHz Hann darbesiyle, mekanizma / kuyruk / echo / release
+        /// sessiz klip ile ezilir (S4 tail-only yöntemi) — slap kuru darbenin gecikmiş kopyası olarak ayrık ölçülür.
+        /// Gecikme 2d/343 ± (DSP tamponu + 2 ms), seviye SlapDb(d) ± 2 dB (L²+R² güç), sağ − sol ≥ +3 dB.
+        /// Olumsuz kontrol: duvar kalkınca beklenen slap penceresinde enerji ≤ kuru −40 dB.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-097 K1 slapback ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator Yansima_Slap_Duvar8m_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp097-reflect");
+            System.IO.Directory.CreateDirectory(dir);
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            Assert.IsTrue(WeaponReflections.Enabled, "öncül: WeaponReflections.Enabled açık");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Assert.IsTrue(_d.Listener.Anchored, "öncül: dinleyici oyuncuya bağlı değil");
+
+            Transform kulak = _d.Listener.Transform;
+            int isin = Wp097SagIsin(kulak);
+            Vector3 yon = AcousticProbe.Direction(isin);
+            const float D = 8f;
+            GameObject duvar = Wp097Duvar(kulak.position, _s.Rig.transform.position.y, yon, D);
+            Assert.IsTrue(WeaponAudioIdentity.TryGet("SR1", out WeaponVoiceSet set));
+            AudioClip darbe = Wp097Darbe();
+            AudioClip sessiz = AudioClip.Create("wp097_silence", 480, 1, 48000, false);
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            AudioSettings.GetDSPBufferSize(out int tampon, out int _);
+            float tamponSn = tampon / (float)AudioSettings.outputSampleRate;
+            try
+            {
+                AcousticSpaces.Resolver = _ => AcousticSpace.Open;
+                Wp097Solo(mixer, true);
+                _d.Library.OverrideForKit(set.Fire, new[] { darbe });
+                Wp097Sustur(set, sessiz, true);
+                Physics.SyncTransforms();
+                _d.Probe.Refresh(kulak.position, Time.unscaledTime, true);
+                float d = _d.Probe.Distances[isin];
+                Assert.IsTrue(_d.Probe.Valid[isin], "kurulum: duvar yansıtıcı sayılmadı (ışın " + isin + ", d " + d + ")");
+                Assert.AreEqual(D, d, 0.2f, "kurulum: duvar mesafesi");
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                var kareler = new List<long>();
+                string wav = System.IO.Path.Combine(dir, "Slap_SR1_8m.wav");
+                int slap0 = _d.WeaponFire.SlapsPlayed;
+                yield return Wp097Kaydet(wav, "SR1", kareler, 4, 1.2f);
+                float kaynak = SilahTepesiDb(wav, kareler);
+                Assert.GreaterOrEqual(kaynak, -30f, "kaynak kayıtta değil: kuru tepe " + kaynak.ToString("0.0") + " dBFS");
+                Assert.Greater(_d.WeaponFire.SlapsPlayed, slap0, "slap çalınmadı (LastSlapCount " + _d.WeaponFire.LastSlapCount + ")");
+
+                float beklenenSn = WeaponReflections.DelaySeconds(d);
+                Wp097SlapOlc(wav, kareler, beklenenSn, out float gecikmeSn, out float seviyeDb, out float sagSolDb, out float _);
+                float gecikmeHataMs = 1000f * Mathf.Abs(gecikmeSn - beklenenSn);
+                float seviyeHataDb = Mathf.Abs(seviyeDb - WeaponReflections.SlapDb(d));
+
+                // Olumsuz kontrol: duvar yok.
+                UnityEngine.Object.DestroyImmediate(duvar);
+                duvar = null;
+                Physics.SyncTransforms();
+                _d.Probe.Refresh(kulak.position, Time.unscaledTime, true);
+                yield return new WaitForSecondsRealtime(0.5f);
+                var kareN = new List<long>();
+                string wavN = System.IO.Path.Combine(dir, "Slap_SR1_duvarsiz.wav");
+                yield return Wp097Kaydet(wavN, "SR1", kareN, 4, 1.2f);
+                Wp097SlapOlc(wavN, kareN, beklenenSn, out float _, out float _, out float _, out float pencereDb);
+
+                string ozet = "d=" + d.ToString("0.00") + " m · gecikme " + (1000f * gecikmeSn).ToString("0.0") + " ms (beklenen " + (1000f * beklenenSn).ToString("0.0")
+                              + ", tampon " + (1000f * tamponSn).ToString("0.0") + ") · seviye " + seviyeDb.ToString("0.0") + " dB (beklenen " + WeaponReflections.SlapDb(d).ToString("0.0")
+                              + ") · sağ−sol " + sagSolDb.ToString("0.0") + " dB · duvarsız pencere " + pencereDb.ToString("0.0") + " dB · kaynak " + kaynak.ToString("0.0") + " dBFS";
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "slap.json"), "{\"slapDelayMs\": " + Wp097J(1000f * gecikmeSn) + ", \"expectedDelayMs\": " + Wp097J(1000f * beklenenSn)
+                    + ", \"slapDelayErrMs\": " + Wp097J(gecikmeHataMs) + ", \"dspBufferMs\": " + Wp097J(1000f * tamponSn) + ", \"slapLevelDb\": " + Wp097J(seviyeDb)
+                    + ", \"slapLevelErrDb\": " + Wp097J(seviyeHataDb) + ", \"rightMinusLeftDb\": " + Wp097J(sagSolDb) + ", \"noWallWindowDb\": " + Wp097J(pencereDb)
+                    + ", \"sourcePeakDbfs\": " + Wp097J(kaynak) + ", \"wallMeters\": " + Wp097J(d) + "}");
+                Debug.Log("[DD-TEST] wp097.slap " + ozet);
+                // R2 S7a (C-00 07.10 kararı 2): kaynak kayıtta (kuru tepe, slap çaldı) — ölçüm yazılır, sonra eşikler.
+                R2Olcum.Yaz("S7a", "DD.Prototype.Tests.PlayMode.AudioSliceTests.Yansima_Slap_Duvar8m_Olcum", new Dictionary<string, double>
+                {
+                    { "slapDelayErrMs", Math.Round(gecikmeHataMs, 2) }, { "slapLevelErrDb", Math.Round(seviyeHataDb, 2) },
+                    { "slapRightMinusLeftDb", Math.Round(sagSolDb, 2) }, { "slapDelayMs", Math.Round(1000f * gecikmeSn, 2) },
+                    { "slapLevelDb", Math.Round(seviyeDb, 2) }, { "negativeControlDb", Math.Round(pencereDb, 2) }
+                }, kareler.Count);
+                Assert.LessOrEqual(gecikmeHataMs, Mathf.Min(1000f * tamponSn + 2f, 23.3f), "slap gecikmesi (S7a ≤ 23,3 ms = 2 ms + 21,3 ms tampon; ölçülen tampon " + (1000f * tamponSn).ToString("0.0") + " ms): " + ozet);
+                Assert.LessOrEqual(seviyeHataDb, 2f, "slap seviyesi: " + ozet);
+                Assert.GreaterOrEqual(sagSolDb, 3f, "slap duvarın tarafından gelmeli: " + ozet);
+                Assert.LessOrEqual(pencereDb, -40f, "olumsuz kontrol (duvar yok): " + ozet);
+            }
+            finally
+            {
+                if (duvar != null) UnityEngine.Object.DestroyImmediate(duvar);
+                AcousticSpaces.Resolver = onceki;
+                _d.Library.ClearKitOverrides();
+                Wp097Solo(mixer, false);
+                UnityEngine.Object.Destroy(darbe);
+                UnityEngine.Object.Destroy(sessiz);
+            }
+        }
+
+        /// <summary>
+        /// WP-097 K1 decision 6 · açık alan echo (03 §6): Open'da echo başlangıcı 0,08–0,35 s (+ tampon), −40 dB'e süre 1,5–3 s,
+        /// spektral ağırlık merkezi &lt; kuru × 0,5; Corridor zorlanınca echo çalmaz (olumsuz kontrol). Echo dosyaları K2'de
+        /// üretilir — üretilmediyse Inconclusive.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-097 K1 echo ölçümü — kanıt, CI dışı (K2 dosyalarını bekler)")]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator Echo_AcikAlan_Olcum()
+        {
+            AudioSoundId echo = WeaponAudioIdentity.Echo(WeaponTailClass.Sr);
+            if (!_d.Library.IsProduced(echo))
+            {
+                Assert.Inconclusive("WeaponTailSrEcho üretilmedi — echo dosyaları K2 (çevrimdışı convolution) ile gelir; ölçüm K2 sonrası.");
+            }
+
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp097-reflect");
+            System.IO.Directory.CreateDirectory(dir);
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            Assert.IsTrue(WeaponAudioIdentity.TryGet("SR1", out WeaponVoiceSet set));
+            AudioClip sessiz = AudioClip.Create("wp097_silence", 480, 1, 48000, false);
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            AudioSettings.GetDSPBufferSize(out int tampon, out int _);
+            float tamponSn = tampon / (float)AudioSettings.outputSampleRate;
+            WeaponFireAudio f = _d.WeaponFire;
+            try
+            {
+                AcousticSpaces.Resolver = _ => AcousticSpace.Open;
+                Wp097Solo(mixer, true);
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                // A · kuru referans (echo ve kuyruklar sessiz).
+                Wp097Sustur(set, sessiz, true);
+                var kareA = new List<long>();
+                string wavA = System.IO.Path.Combine(dir, "Echo_SR1_kuru.wav");
+                yield return Wp097Kaydet(wavA, "SR1", kareA, 2, 1.5f);
+                float kaynak = SilahTepesiDb(wavA, kareA);
+                Assert.GreaterOrEqual(kaynak, -30f, "kaynak kayıtta değil: kuru tepe " + kaynak.ToString("0.0") + " dBFS");
+                float kuruMerkez = Wp097Merkez(wavA, kareA, 0f);
+                _d.Library.ClearKitOverrides();
+
+                // B · yalnız echo (kuru da sessiz → slap kopyaları da sessiz; echo kendi klibi).
+                _d.Library.OverrideForKit(set.Fire, new[] { sessiz });
+                Wp097Sustur(set, sessiz, false);
+                var kareB = new List<long>();
+                string wavB = System.IO.Path.Combine(dir, "Echo_SR1_yalniz.wav");
+                int echo0 = f.EchoesPlayed;
+                yield return Wp097Kaydet(wavB, "SR1", kareB, 4, 4f);
+                Wp097EchoOlc(wavB, kareB, out float baslangicSn, out float sureSn, out float tepe);
+                // S7b echoPresentOpen: played in the open AND heard in the echo-only take (the asserts below name which one failed).
+                int echoAcik = f.EchoesPlayed > echo0 && tepe >= -50f ? 1 : 0;
+                float echoMerkez = Wp097Merkez(wavB, kareB, baslangicSn);
+
+                // Olumsuz kontrol: koridorda echo yok.
+                AcousticSpaces.Resolver = _ => AcousticSpace.Corridor;
+                int echo1 = f.EchoesPlayed;
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SR1", _s.Rig.transform.position + Vector3.up * 1.3f, 1f, 50);
+                yield return new WaitForSecondsRealtime(1.5f);
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SR1", _s.Rig.transform.position + Vector3.up * 1.3f + Vector3.right * 2f, 1f, 50);
+                yield return new WaitForSecondsRealtime(0.5f);   // S7b: the second cue is handled by the router before it is counted
+                int koridorEcho = f.EchoesPlayed - echo1;
+
+                string ozet = "başlangıç " + (1000f * baslangicSn).ToString("0") + " ms (gecikme " + (1000f * f.LastEchoDelay).ToString("0") + ") · −40 dB süre " + sureSn.ToString("0.00")
+                              + " s · merkez echo " + echoMerkez.ToString("0") + " / kuru " + kuruMerkez.ToString("0") + " Hz · koridor echo " + koridorEcho;
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "echo.json"), "{\"echoOnsetMs\": " + Wp097J(1000f * baslangicSn) + ", \"echoDecay40S\": " + Wp097J(sureSn)
+                    + ", \"echoCentroidHz\": " + Wp097J(echoMerkez) + ", \"dryCentroidHz\": " + Wp097J(kuruMerkez) + ", \"echoPresentOpen\": " + echoAcik + ", \"echoPresentInterior\": " + (koridorEcho > 0 ? 1 : 0) + "}");
+                Debug.Log("[DD-TEST] wp097.echo " + ozet);
+                // R2 S7b (C-00 07.10 kararı 2): kaynak kayıtta (kuru referans tepe ≥ −30 dBFS) — var/yok yazılır, sonra eşikler.
+                R2Olcum.Yaz("S7b", "DD.Prototype.Tests.PlayMode.AudioSliceTests.Echo_AcikAlan_Olcum", new Dictionary<string, double>
+                {
+                    { "echoPresentOpen", echoAcik }, { "echoPresentInterior", koridorEcho > 0 ? 1 : 0 },
+                    { "echoOnsetMs", Math.Round(1000f * baslangicSn, 1) }, { "echoEdcS", Math.Round(sureSn, 3) }
+                }, kareB.Count + 2);
+                Assert.Greater(f.EchoesPlayed, echo0, "echo çalınmadı");
+                Assert.GreaterOrEqual(tepe, -50f, "echo kayıtta yok (" + tepe.ToString("0.0") + " dBFS)");
+                Assert.That(baslangicSn, NUnit.Framework.Is.InRange(WeaponReflections.EchoDelayMinSeconds - 0.005f, WeaponReflections.EchoDelayMaxSeconds + tamponSn + 0.005f), "echo başlangıcı: " + ozet);
+                Assert.That(sureSn, NUnit.Framework.Is.InRange(1.5f, 3f), "echo süresi: " + ozet);
+                Assert.Less(echoMerkez, kuruMerkez * 0.5f, "echo kurudan koyu: " + ozet);
+                Assert.AreEqual(0, koridorEcho, "koridorda echo çalmaz: " + ozet);
+            }
+            finally
+            {
+                AcousticSpaces.Resolver = onceki;
+                _d.Library.ClearKitOverrides();
+                Wp097Solo(mixer, false);
+                UnityEngine.Object.Destroy(sessiz);
+            }
+        }
+
+        /// <summary>
+        /// WP-097 K1 decision 2 · oto ateş kuyruk yatağı (03 §6): SMG1 gerçek 900 RPM'de 2 s string, Open, Weapon bus solo, gerçek
+        /// kuyruklar. Reflect havuzu PeakActive ≤ 8 ve düşen 0; yatak sesleri ≤ 2; basılıyken yatak ≤ WetDb − 6 + 1 dB; bırakış
+        /// yatağı rampalar ve kuyruk bırakıştan sonra ≥ 0,6 s −50 dBFS üstünde kalır. C50 (son atış) yalnız raporlanır.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-097 K1 oto ateş kuyruk yatağı ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator OtoAtes_KuyrukYatagi_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp097-reflect");
+            System.IO.Directory.CreateDirectory(dir);
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            Assert.IsTrue(WeaponReflections.Enabled, "öncül: WeaponReflections.Enabled açık");
+            Assert.IsTrue(WeaponAudioIdentity.TryGet("SMG1", out WeaponVoiceSet set));
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            WeaponFireAudio f = _d.WeaponFire;
+            AudioOutputCapture cap = null;
+            try
+            {
+                AcousticSpaces.Resolver = _ => AcousticSpace.Open;
+                Wp097Solo(mixer, true);
+                yield return new WaitForSecondsRealtime(1f);
+                _d.ReflectPool.ResetCounters();
+                _d.TailBed.ResetCounters();
+                int rel0 = f.Releases;
+
+                string wav = System.IO.Path.Combine(dir, "Bed_SMG1_900rpm.wav");
+                cap = AudioOutputCapture.Arm(_d.gameObject, wav);
+                var kareler = new List<long>();
+                float periyot = 60f / set.StringRpm;
+                int atisSayisi = Mathf.FloorToInt(2f / periyot);
+                int enCokYatak = 0;
+                float bas = Time.realtimeSinceStartup;
+                int atis = 0;
+                long sonKare = 0;
+                while (Time.realtimeSinceStartup - bas < 0.3f + 2f + 3f)
+                {
+                    float t = Time.realtimeSinceStartup - bas;
+                    if (atis < atisSayisi && t >= 0.3f + atis * periyot)
+                    {
+                        // 2 m apart, alternating (beats the 1.6 m duplicate-cue merge), inside the Near band.
+                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", _s.Rig.transform.position + Vector3.up * 1.3f + Vector3.right * (2f * (atis % 2)), 0.75f, 50);
+                        sonKare = cap.FramesCaptured;
+                        kareler.Add(sonKare);
+                        atis++;
+                    }
+
+                    enCokYatak = Mathf.Max(enCokYatak, _d.TailBed.Sounding);
+                    yield return null;
+                }
+
+                UnityEngine.Object.DestroyImmediate(cap);
+                cap = null;
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+
+                float kaynak = SilahTepesiDb(wav, kareler);
+                Assert.GreaterOrEqual(kaynak, -30f, "kaynak kayıtta değil: kuru tepe " + kaynak.ToString("0.0") + " dBFS");
+                Wp097KuyrukOlc(wav, sonKare, periyot * 1.6f, out float kuyrukSn, out float c50);
+                float tavan = TailBedPolicy.BedLevel * Mathf.Pow(10f, 1f / 20f);
+                string ozet = "atış " + atis + " · reflect peak " + _d.ReflectPool.PeakActive + " düşen " + _d.ReflectPool.DroppedCount + " · yatak başlangıç " + _d.TailBed.Starts
+                              + " peak " + _d.TailBed.PeakSounding + " (gözlenen " + enCokYatak + ") maxHeld " + _d.TailBed.MaxHeldLevel.ToString("0.000") + " · rampa " + _d.TailBed.Ramps
+                              + " · bırakış sonrası −50 dBFS üstü " + kuyrukSn.ToString("0.00") + " s · C50 " + c50.ToString("0.0") + " dB · slap " + f.SlapsPlayed + " · kaynak " + kaynak.ToString("0.0");
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "bed.json"), "{\"shots\": " + atis + ", \"reflectPeakActive\": " + _d.ReflectPool.PeakActive
+                    + ", \"reflectDropped\": " + _d.ReflectPool.DroppedCount + ", \"bedStarts\": " + _d.TailBed.Starts + ", \"bedPeakVoices\": " + _d.TailBed.PeakSounding
+                    + ", \"bedMaxHeldLevel\": " + Wp097J(_d.TailBed.MaxHeldLevel) + ", \"bedRamps\": " + _d.TailBed.Ramps + ", \"tailAboveMinus50S\": " + Wp097J(kuyrukSn)
+                    + ", \"c50Db\": " + Wp097J(c50) + "}");
+                Debug.Log("[DD-TEST] wp097.bed " + ozet);
+                // R2 S7c (C-00 07.10 kararı 2): kaynak kayıtta (kuru tepe ≥ −30 dBFS) — ölçüm yazılır, sonra eşikler.
+                R2Olcum.Yaz("S7c", "DD.Prototype.Tests.PlayMode.AudioSliceTests.OtoAtes_KuyrukYatagi_Olcum", new Dictionary<string, double>
+                {
+                    { "reflectDropped", _d.ReflectPool.DroppedCount }, { "bedVoicesMax", _d.TailBed.PeakSounding },
+                    { "reflectPeakActive", _d.ReflectPool.PeakActive }, { "releaseTailAboveMinus50S", Math.Round(kuyrukSn, 3) }
+                }, atis);
+                Assert.Greater(_d.TailBed.Starts, 0, "yatak başlamadı (kuyruk üretilmedi mi?): " + ozet);
+                Assert.Less(_d.TailBed.Starts, atis, "yatak her atışta yeniden başlamamalı: " + ozet);
+                Assert.LessOrEqual(_d.ReflectPool.PeakActive, 8, ozet);
+                Assert.AreEqual(0, _d.ReflectPool.DroppedCount, "reflectDropped 0: " + ozet);
+                Assert.LessOrEqual(_d.TailBed.PeakSounding, 2, "en çok 2 yatak sesi: " + ozet);
+                Assert.LessOrEqual(_d.TailBed.MaxHeldLevel, tavan, "basılıyken ıslaklık ≤ WetDb − 6 + 1 dB: " + ozet);
+                Assert.AreEqual(rel0 + 1, f.Releases, "bırakış bir kez: " + ozet);
+                Assert.AreEqual(1, _d.TailBed.Ramps, "bırakış yatağı rampaladı (ikinci kuyruk yok): " + ozet);
+                Assert.GreaterOrEqual(kuyrukSn, 0.6f, "bırakış sonrası kuyruk ≥ 0,6 s −50 dBFS üstünde: " + ozet);
+            }
+            finally
+            {
+                if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+                AcousticSpaces.Resolver = onceki;
+                Wp097Solo(mixer, false);
+            }
+        }
+
+        /// <summary>
+        /// WP-097 K1 · GC 0 (DEC-088, 03 §6): top-down, 8 m duvar, Open; 10 s SMG1 900 RPM string (TryHandle doğrudan — slap,
+        /// yatak, duck) + yürüyüş (prob kare başına 0,1 m kayan kökenle yenilenir) + Reflect havuzu ve yatak tick'i. Her kare bu
+        /// çağrıların GC.Alloc örnekleri (bu iş parçacığı) sayılır; toplam 0. Pozitif kontrol: kayıtçı ayırmayı görür.
+        /// (Explicit: S-08 ilk koşuda yeşilse CI'a alınabilir — HotPathAllocationContractTests'e taşıma önerisi.)
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-097 K1 GC ölçümü — kanıt, CI dışı (S-08 yeşil görünce CI'a alınabilir)")]
+        [Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator Yansima_TdSeriAtesVeYuruyus_SifirAyirma()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            yield return new WaitForSecondsRealtime(0.5f);
+            Transform kulak = _d.Listener.Transform;
+            Vector3 kok = kulak.position;
+            int isin = Wp097SagIsin(kulak);
+            GameObject duvar = Wp097Duvar(kok, _s.Rig.transform.position.y, AcousticProbe.Direction(isin), 8f);
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            WeaponFireAudio f = _d.WeaponFire;
+            var cue = new CombatAudioCue(CombatAudioEvent.ClassicWeaponFire, kok + kulak.forward * 0.3f, 0.75f, 50, false, "SMG1");
+            float periyot = 60f / 900f;
+            bool atisVar = false;
+            float kayma = 0f;
+            System.Action adim = () =>
+            {
+                if (atisVar) f.TryHandle(cue);
+                _d.Probe.Refresh(kok + new Vector3(kayma, 0f, 0f), Time.unscaledTime, false);
+                _d.TailBed.Tick(Time.unscaledDeltaTime, false, Time.unscaledTime);
+                _d.ReflectPool.Tick(Time.unscaledDeltaTime, false);
+            };
+
+            try
+            {
+                AcousticSpaces.Resolver = _ => AcousticSpace.Open;
+                Physics.SyncTransforms();
+
+                // Isınma: 1 s ateş + bırakış (deste, sözlük girdisi, JIT, ilk prob).
+                float sonraki = Time.realtimeSinceStartup;
+                float bitis = Time.realtimeSinceStartup + 1f;
+                while (Time.realtimeSinceStartup < bitis)
+                {
+                    atisVar = Time.realtimeSinceStartup >= sonraki;
+                    if (atisVar) sonraki += periyot;
+                    adim();
+                    yield return null;
+                }
+
+                atisVar = false;
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                byte[] kontrol = null;
+                Assert.Greater(Wp097GcOrnek(() => { kontrol = new byte[64 * 1024]; }), 0, "Pozitif kontrol: GC ölçümü ayırmayı görmedi.");
+                GC.KeepAlive(kontrol);
+
+                int slap0 = f.SlapsPlayed, yatak0 = f.BedStarts, prob0 = _d.Probe.Refreshes, kare = 0, ornek = 0;
+                // S7d gcBytes: the GC.Alloc Recorder gives no size and GC.GetAllocatedBytesForCurrentThread is always 0 in Unity's Mono,
+                // so the byte value is a lower bound — 16 B (the smallest managed object, 64-bit Mono) per GC.Alloc sample: 0 ⇔ none.
+                const int EnKucukNesneBayt = 16;
+                sonraki = Time.realtimeSinceStartup;
+                bitis = Time.realtimeSinceStartup + 10f;
+                while (Time.realtimeSinceStartup < bitis)
+                {
+                    atisVar = Time.realtimeSinceStartup >= sonraki;
+                    if (atisVar) sonraki += periyot;
+                    kayma += 0.1f;   // 6 m/s yürüyüş: ~ her 10 karede bir prob yenilemesi
+                    if (kayma > 20f) kayma = 0f;
+                    ornek += Wp097GcOrnek(adim);
+                    kare++;
+                    yield return null;
+                }
+
+                long gcBayt = (long)ornek * EnKucukNesneBayt;
+                string ozet = "kare " + kare + " · GC.Alloc örnek " + ornek + " (≥ " + gcBayt + " B) · slap +" + (f.SlapsPlayed - slap0) + " · yatak +" + (f.BedStarts - yatak0) + " · prob yenileme +" + (_d.Probe.Refreshes - prob0);
+                Debug.Log("[DD-TEST] wp097.gc " + ozet);
+                // Source in the record: the path ran (slap, bed, probe) — only then the measurement is written (R2 S7d, C-00 07.10 kararı 2).
+                Assert.Greater(f.SlapsPlayed, slap0, "ölçümde slap çaldı (yol koştu): " + ozet);
+                Assert.Greater(f.BedStarts, yatak0, "ölçümde yatak başladı: " + ozet);
+                Assert.Greater(_d.Probe.Refreshes, prob0, "ölçümde prob yenilendi: " + ozet);
+                R2Olcum.Yaz("S7d", "DD.Prototype.Tests.PlayMode.AudioSliceTests.Yansima_TdSeriAtesVeYuruyus_SifirAyirma", new Dictionary<string, double>
+                {
+                    { "gcBytes", gcBayt }
+                }, kare);
+                Assert.AreEqual(0, ornek, "top-down yansıma yolu ayırdı — DEC-088 GC 0: " + ozet);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(duvar);
+                AcousticSpaces.Resolver = onceki;
+                f.StopAll();
+            }
+        }
+
+        // ---- WP-097 K1 ölçüm yardımcıları
+
+        /// <summary>Prob ışınlarından dinleyicinin sağına en yakını.</summary>
+        private static int Wp097SagIsin(Transform kulak)
+        {
+            int isin = 0;
+            float enIyi = -2f;
+            for (int i = 0; i < AcousticProbe.RayCount; i++)
+            {
+                float dot = Vector3.Dot(AcousticProbe.Direction(i), kulak.right);
+                if (dot > enIyi) { enIyi = dot; isin = i; }
+            }
+
+            return isin;
+        }
+
+        /// <summary>Işına dik 10 × 4 × 0,5 m Environment duvarı; yüzü kulaktan <paramref name="d"/> m.</summary>
+        private static GameObject Wp097Duvar(Vector3 kulak, float zeminY, Vector3 yon, float d)
+        {
+            GameObject duvar = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            duvar.name = "wp097_slap_wall";
+            duvar.layer = DD.Prototype.Core.PrototypeLayers.Environment;
+            duvar.transform.SetPositionAndRotation(new Vector3(kulak.x, zeminY + 2f, kulak.z) + yon * (d + 0.25f), Quaternion.LookRotation(yon, Vector3.up));
+            duvar.transform.localScale = new Vector3(10f, 4f, 0.5f);
+            return duvar;
+        }
+
+        /// <summary>8 ms, 1 kHz Hann darbesi (genlik 0,5) + 92 ms sessizlik, 48 kHz mono.</summary>
+        private static AudioClip Wp097Darbe()
+        {
+            const int sr = 48000;
+            var x = new float[sr / 10];
+            int n = sr * 8 / 1000;
+            for (int i = 0; i < n; i++) x[i] = 0.5f * Mathf.Sin(2f * Mathf.PI * 1000f * i / sr) * 0.5f * (1f - Mathf.Cos(2f * Mathf.PI * i / (n - 1)));
+            AudioClip c = AudioClip.Create("wp097_burst", x.Length, 1, sr, false);
+            c.SetData(x, 0);
+            return c;
+        }
+
+        /// <summary>Silahın mekanizma, mekân kuyrukları (silah + sınıf, oda dahil), release ve (isteğe bağlı) echo'su sessiz klip.</summary>
+        private void Wp097Sustur(WeaponVoiceSet set, AudioClip sessiz, bool echoDa)
+        {
+            var ids = new List<AudioSoundId>
+            {
+                WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.Mechanical),
+                WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.TailOpen),
+                WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.TailCorridor),
+                WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.TailHall),
+                WeaponAudioIdentity.ReleaseTail(set.TailClass),
+                WeaponAudioIdentity.Room(set.TailClass)
+            };
+            foreach (AcousticSpace a in new[] { AcousticSpace.Open, AcousticSpace.Corridor, AcousticSpace.Hall }) ids.Add(WeaponAudioIdentity.Tail(set.TailClass, a));
+            if (echoDa) ids.Add(WeaponAudioIdentity.Echo(set.TailClass));
+            foreach (AudioSoundId id in ids)
+            {
+                if (id != AudioSoundId.None) _d.Library.OverrideForKit(id, new[] { sessiz });
+            }
+        }
+
+        /// <summary>Weapon bus solo (S4 kalıbı: Master / SFX-Player dışındaki bus'lar −80 dB) ya da geri.</summary>
+        private static void Wp097Solo(UnityEngine.Audio.AudioMixer mixer, bool solo)
+        {
+            if (mixer == null) return;
+            string[] buslar = AudioMixerBridge.VolumeParams;
+            const int PlayerBus = 4;
+            for (int i = 0; i < buslar.Length; i++)
+            {
+                if (i == PlayerBus || i == 0) continue;
+                if (solo) mixer.SetFloat(buslar[i], -80f);
+                else mixer.ClearFloat(buslar[i]);
+            }
+        }
+
+        /// <summary>Kayıt: <paramref name="adet"/> tek atış, <paramref name="aralik"/> s arayla (ilki 0,3 s'de), atış kareleri listeye.</summary>
+        private IEnumerator Wp097Kaydet(string wav, string audioId, List<long> kareler, int adet, float aralik)
+        {
+            AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, wav);
+            try
+            {
+                float bas = Time.realtimeSinceStartup;
+                int atis = 0;
+                while (Time.realtimeSinceStartup - bas < 0.3f + adet * aralik)
+                {
+                    if (atis < adet && Time.realtimeSinceStartup - bas >= 0.3f + atis * aralik)
+                    {
+                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, audioId, _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * 0.3f, 1f, 50);
+                        kareler.Add(cap.FramesCaptured);
+                        atis++;
+                    }
+
+                    yield return null;
+                }
+
+                if (cap.FramesWritten == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+            }
+            finally
+            {
+                if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+            }
+        }
+
+        /// <summary>16-bit PCM kayıt → sol / sağ (mono kayıtta ikisi aynı).</summary>
+        private static float[] Wp097Stereo(string wav, out int rate, out float[] sag)
+        {
+            byte[] b = System.IO.File.ReadAllBytes(wav);
+            int ch = BitConverter.ToInt16(b, 22);
+            rate = BitConverter.ToInt32(b, 24);
+            int pos = 12;
+            while (pos + 8 <= b.Length && !(b[pos] == 'd' && b[pos + 1] == 'a' && b[pos + 2] == 't' && b[pos + 3] == 'a')) pos += 8 + BitConverter.ToInt32(b, pos + 4);
+            int dataStart = pos + 8, n = (b.Length - dataStart) / (2 * ch);
+            var sol = new float[n];
+            sag = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                sol[i] = BitConverter.ToInt16(b, dataStart + (i * ch) * 2) / 32768f;
+                sag[i] = ch > 1 ? BitConverter.ToInt16(b, dataStart + (i * ch + 1) * 2) / 32768f : sol[i];
+            }
+
+            return sol;
+        }
+
+        /// <summary>
+        /// Atış başına: kuru başlangıç (150 ms penceresinde tepenin %30'u), kuru 10 ms güç; slap = başlangıç + 20…120 ms'deki tepe,
+        /// onun %30 başlangıcı, 10 ms güç ve sağ/sol. <paramref name="pencereDb"/>: beklenen gecikmede (−5 … +15 ms) güç / kuru güç.
+        /// Medyanlar.
+        /// </summary>
+        private static void Wp097SlapOlc(string wav, List<long> kareler, float beklenenSn, out float gecikmeSn, out float seviyeDb, out float sagSolDb, out float pencereDb)
+        {
+            float[] l = Wp097Stereo(wav, out int rate, out float[] r);
+            var gec = new List<float>();
+            var sev = new List<float>();
+            var ss = new List<float>();
+            var pen = new List<float>();
+            int n10 = rate / 100;
+            foreach (long k in kareler)
+            {
+                int f0 = (int)k, w = (int)(0.15f * rate);
+                if (f0 + w + rate / 5 >= l.Length) continue;
+                float a = 0f;
+                for (int i = f0; i < f0 + w; i++) a = Mathf.Max(a, Mathf.Sqrt(l[i] * l[i] + r[i] * r[i]));
+                if (a <= 0f) continue;
+                int on = f0;
+                while (on < f0 + w && Mathf.Sqrt(l[on] * l[on] + r[on] * r[on]) < 0.3f * a) on++;
+                double kuru = 0;
+                for (int i = on; i < on + n10; i++) kuru += l[i] * l[i] + r[i] * r[i];
+                if (kuru <= 0) continue;
+
+                int p0 = on + (int)(0.02f * rate), p1 = on + (int)(0.12f * rate);
+                float bmax = 0f;
+                for (int i = p0; i < p1; i++) bmax = Mathf.Max(bmax, Mathf.Sqrt(l[i] * l[i] + r[i] * r[i]));
+                if (bmax > 0f)
+                {
+                    int on2 = p0;
+                    while (on2 < p1 && Mathf.Sqrt(l[on2] * l[on2] + r[on2] * r[on2]) < 0.3f * bmax) on2++;
+                    double sl = 0, sr = 0;
+                    for (int i = on2; i < on2 + n10; i++) { sl += l[i] * l[i]; sr += r[i] * r[i]; }
+                    gec.Add((on2 - on) / (float)rate);
+                    sev.Add(10f * Mathf.Log10((float)((sl + sr) / kuru)));
+                    ss.Add(10f * Mathf.Log10((float)((sr + 1e-12) / (sl + 1e-12))));
+                }
+
+                int q0 = on + (int)((beklenenSn - 0.005f) * rate), q1 = on + (int)((beklenenSn + 0.015f) * rate);
+                double pw = 0;
+                for (int i = q0; i < q1; i++) pw += l[i] * l[i] + r[i] * r[i];
+                pen.Add(10f * Mathf.Log10((float)((pw + 1e-12) / kuru)));
+            }
+
+            gecikmeSn = Medyan(gec.ToArray());
+            seviyeDb = sev.Count > 0 ? Medyan(sev.ToArray()) : -120f;
+            sagSolDb = ss.Count > 0 ? Medyan(ss.ToArray()) : 0f;
+            pencereDb = pen.Count > 0 ? Medyan(pen.ToArray()) : 0f;
+        }
+
+        /// <summary>Echo-only kayıt: başlangıç (ipucu karesinden, 0,6 s'de tepenin %10'u), 50 ms RMS zarfın tepeden −40 dB'e süresi, geniş bant tepe (dBFS). Medyanlar.</summary>
+        private static void Wp097EchoOlc(string wav, List<long> kareler, out float baslangicSn, out float sureSn, out float tepeDb)
+        {
+            float[] x = WavMono(wav, out int rate);
+            var bas = new List<float>();
+            var sure = new List<float>();
+            var tepe = new List<float>();
+            int pencere = rate / 20;
+            foreach (long k in kareler)
+            {
+                int f0 = (int)k, ara = (int)(0.6f * rate), boy = (int)(3.5f * rate);
+                if (f0 + ara + boy >= x.Length) continue;
+                float p = 0f;
+                for (int i = f0; i < f0 + ara; i++) p = Mathf.Max(p, Mathf.Abs(x[i]));
+                if (p <= 0f) continue;
+                tepe.Add(20f * Mathf.Log10(p));
+                int on = f0;
+                while (on < f0 + ara && Mathf.Abs(x[on]) < 0.1f * p) on++;
+                bas.Add((on - f0) / (float)rate);
+                float zTepe = -200f;
+                int sonUstte = on;
+                var z = new List<float>();
+                for (int i = on; i + pencere < on + boy; i += pencere / 2)
+                {
+                    double e = 0;
+                    for (int j = i; j < i + pencere; j++) e += x[j] * x[j];
+                    float db = 10f * Mathf.Log10((float)(e / pencere) + 1e-12f);
+                    z.Add(db);
+                    zTepe = Mathf.Max(zTepe, db);
+                }
+
+                for (int i = 0; i < z.Count; i++) if (z[i] >= zTepe - 40f) sonUstte = on + i * (pencere / 2) + pencere;
+                sure.Add((sonUstte - on) / (float)rate);
+            }
+
+            baslangicSn = bas.Count > 0 ? Medyan(bas.ToArray()) : -1f;
+            sureSn = sure.Count > 0 ? Medyan(sure.ToArray()) : 0f;
+            tepeDb = tepe.Count > 0 ? Medyan(tepe.ToArray()) : -120f;
+        }
+
+        /// <summary>Spektral ağırlık merkezi (Hz): ilk atışın başlangıcından (+ <paramref name="ofsetSn"/>) 4096 örnek, Hann + FFT.</summary>
+        private static float Wp097Merkez(string wav, List<long> kareler, float ofsetSn)
+        {
+            float[] x = WavMono(wav, out int rate);
+            const int N = 4096;
+            var olc = new List<float>();
+            foreach (long k in kareler)
+            {
+                int f0 = (int)k, w = (int)(0.6f * rate);
+                if (f0 + w + N >= x.Length) continue;
+                int on = f0 + (int)(ofsetSn * rate);
+                if (ofsetSn <= 0f)
+                {
+                    float p = 0f;
+                    for (int i = f0; i < f0 + w; i++) p = Mathf.Max(p, Mathf.Abs(x[i]));
+                    while (on < f0 + w && Mathf.Abs(x[on]) < 0.1f * p) on++;
+                }
+
+                var re = new double[N];
+                var im = new double[N];
+                for (int i = 0; i < N; i++) re[i] = x[on + i] * 0.5 * (1.0 - Math.Cos(2.0 * Math.PI * i / (N - 1)));
+                Wp097Fft(re, im);
+                double pay = 0, payda = 0;
+                for (int b = 1; b < N / 2; b++)
+                {
+                    double m = Math.Sqrt(re[b] * re[b] + im[b] * im[b]);
+                    pay += m * b * rate / (double)N;
+                    payda += m;
+                }
+
+                if (payda > 0) olc.Add((float)(pay / payda));
+            }
+
+            return olc.Count > 0 ? Medyan(olc.ToArray()) : 0f;
+        }
+
+        /// <summary>Yerinde radix-2 FFT (N 2'nin kuvveti).</summary>
+        private static void Wp097Fft(double[] re, double[] im)
+        {
+            int n = re.Length;
+            for (int i = 1, j = 0; i < n; i++)
+            {
+                int bit = n >> 1;
+                for (; (j & bit) != 0; bit >>= 1) j ^= bit;
+                j ^= bit;
+                if (i < j) { double t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+            }
+
+            for (int len = 2; len <= n; len <<= 1)
+            {
+                double a = -2.0 * Math.PI / len;
+                double wr = Math.Cos(a), wi = Math.Sin(a);
+                for (int i = 0; i < n; i += len)
+                {
+                    double cr = 1.0, ci = 0.0;
+                    for (int j = 0; j < len / 2; j++)
+                    {
+                        int u = i + j, v = i + j + len / 2;
+                        double vr = re[v] * cr - im[v] * ci, vi = re[v] * ci + im[v] * cr;
+                        re[v] = re[u] - vr; im[v] = im[u] - vi;
+                        re[u] += vr; im[u] += vi;
+                        double nr = cr * wr - ci * wi;
+                        ci = cr * wi + ci * wr;
+                        cr = nr;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// String'in son atışından sonra: bırakış (son atış + <paramref name="birakisSn"/>) ile 50 ms RMS zarfın −50 dBFS altına
+        /// ilk inişi arası (s); C50 = son atış başlangıcından 0–50 ms / 50 ms–2 s enerji (dB).
+        /// </summary>
+        private static void Wp097KuyrukOlc(string wav, long sonKare, float birakisSn, out float kuyrukSn, out float c50)
+        {
+            float[] x = WavMono(wav, out int rate);
+            int f0 = (int)sonKare;
+            kuyrukSn = 0f;
+            c50 = 0f;
+            if (f0 + 2 * rate >= x.Length) return;
+            float p = 0f;
+            int w = rate / 10;
+            for (int i = f0; i < f0 + w; i++) p = Mathf.Max(p, Mathf.Abs(x[i]));
+            int on = f0;
+            while (on < f0 + w && Mathf.Abs(x[on]) < 0.1f * p) on++;
+            double erken = 0, gec = 0;
+            for (int i = on; i < on + 2 * rate && i < x.Length; i++)
+            {
+                if (i < on + rate / 20) erken += x[i] * x[i];
+                else gec += x[i] * x[i];
+            }
+
+            c50 = 10f * Mathf.Log10((float)((erken + 1e-12) / (gec + 1e-12)));
+            int birakis = on + (int)(birakisSn * rate);
+            int pencere = rate / 20;
+            int t = birakis;
+            while (t + pencere < x.Length)
+            {
+                double e = 0;
+                for (int j = t; j < t + pencere; j++) e += x[j] * x[j];
+                if (10f * Mathf.Log10((float)(e / pencere) + 1e-12f) < -50f) break;
+                t += pencere / 2;
+            }
+
+            kuyrukSn = (t - birakis) / (float)rate;
+        }
+
+        /// <summary>Bir eşzamanlı çağrının bu iş parçacığındaki GC.Alloc örnek sayısı (ZombieSpawnGcTests kalıbı).</summary>
+        private static int Wp097GcOrnek(System.Action eylem)
+        {
+            UnityEngine.Profiling.Recorder recorder = UnityEngine.Profiling.Recorder.Get("GC.Alloc");
+            recorder.enabled = false;
+            recorder.FilterToCurrentThread();
+            recorder.enabled = true;
+            try
+            {
+                eylem();
+            }
+            finally
+            {
+                recorder.enabled = false;
+                recorder.CollectFromAllThreads();
+            }
+
+            return recorder.sampleBlockCount;
+        }
+
+        private static string Wp097J(float v)
+        {
+            return float.IsNaN(v) || float.IsInfinity(v) ? "null" : Math.Round(v, 3).ToString("R", System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }
