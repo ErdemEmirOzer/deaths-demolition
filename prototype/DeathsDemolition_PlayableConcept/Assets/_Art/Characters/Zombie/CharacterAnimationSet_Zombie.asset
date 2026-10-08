@@ -1698,7 +1698,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533
     speedMps: 4.79
-    unitySpeedMps: 4.988163
+    unitySpeedMps: 4.996588
     layer: base
     additive: 0
     frames: 17

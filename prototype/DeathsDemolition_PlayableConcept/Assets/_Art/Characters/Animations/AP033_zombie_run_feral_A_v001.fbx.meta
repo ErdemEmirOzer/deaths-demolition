@@ -19,7 +19,24 @@ ModelImporter:
     rigImportErrors: 
     rigImportWarnings: 
     animationImportErrors: 
-    animationImportWarnings: 
+    animationImportWarnings: "\nClip 'AP033_zombie_run_feral_A' has import animation
+      warnings that might lower retargeting quality:\nNote: Activate translation
+      DOF on avatar to improve retargeting quality.\n\t'Spine' has scale animation
+      that will be discarded.\n\t'Chest' has scale animation that will be discarded.\n\t'Head'
+      has scale animation that will be discarded.\n\t'LeftHand' has scale animation
+      that will be discarded.\n\t'LeftIndex1' has scale animation that will be discarded.\n\t'LeftIndex2'
+      has scale animation that will be discarded.\n\t'LeftMiddle3' has scale animation
+      that will be discarded.\n\t'LeftRing2' has scale animation that will be discarded.\n\t'LeftPinky1'
+      has scale animation that will be discarded.\n\t'LeftPinky3' has scale animation
+      that will be discarded.\n\t'RightThumb3' has scale animation that will be discarded.\n\t'RightIndex1'
+      has scale animation that will be discarded.\n\t'RightMiddle1' has scale animation
+      that will be discarded.\n\t'RightMiddle2' has scale animation that will be
+      discarded.\n\t'RightPinky1' has scale animation that will be discarded.\n\t'RightPinky2'
+      has scale animation that will be discarded.\n\t'RightPinky3' has scale animation
+      that will be discarded.\n\t'LeftUpperLeg' has scale animation that will be
+      discarded.\n\t'LeftLowerLeg' has scale animation that will be discarded.\n\t'RightUpperLeg'
+      has scale animation that will be discarded.\n\t'RightLowerLeg' has scale animation
+      that will be discarded.\n"
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
