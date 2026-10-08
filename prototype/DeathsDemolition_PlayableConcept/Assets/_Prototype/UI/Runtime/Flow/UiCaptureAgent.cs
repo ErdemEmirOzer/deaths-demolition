@@ -1969,6 +1969,13 @@ namespace DD.Prototype.UI
                 RunHudScreen hud = FindObjectOfType<RunHudScreen>();
                 if (hud == null) yield break;
                 RunHudScreen.CaptureParallax = Vector2.zero;
+                foreach (int round in HudV4Rounds)
+                {
+                    hud.CaptureRound(round);
+                    yield return WaitFor(() => !hud.RoundTransitionLive, 4f);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return HudV4Frame(folder, "v4-round-" + RomanNumerals.Cached(round), hud);
+                }
                 hud.CaptureRound(14);
                 yield return WaitFor(() => !hud.RoundTransitionLive, 4f);
                 yield return new WaitForSecondsRealtime(1f);

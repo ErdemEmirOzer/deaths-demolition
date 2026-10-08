@@ -93,6 +93,9 @@ namespace DD.Prototype.UI
         /// </summary>
         public const float SealEm = 0.60f;
         public const float SealGapEm = 0.22f;
+        // AD MUST-2: advance is not the visible ink edge. Exact alpha>.001 projection found a 3 px
+        // overshoot at cap 40 (XIV). Reserve 0.10 em for dry ink + bilinear footprint, shared by fit and layout.
+        public const float SealDryInkReserveEm = 0.10f;
         public const float SealFromDenseRight = 0.55f;
 
         /// <summary>The numeral's reveal clip pads the letters this much on every side (the brush ink past the advance box).</summary>
@@ -143,10 +146,10 @@ namespace DD.Prototype.UI
             return (Mathf.Max(face, ground) + 0.05f) / (Mathf.Min(face, ground) + 0.05f);
         }
 
-        /// <summary>The run-to-ring gap at <paramref name="cap"/>: 0.22 em, never under <see cref="SealGapMinPx"/>.</summary>
+        /// <summary>Advance-to-ring gap: the visible clearance floor plus dry-ink/filter reserve; shared by layout and plate fit.</summary>
         public static float SealGap(float cap)
         {
-            return Mathf.Max(SealGapEm * cap, SealGapMinPx);
+            return Mathf.Max(SealGapEm * cap, SealGapMinPx) + SealDryInkReserveEm * cap;
         }
 
         private static readonly Sprite[] s_gold = new Sprite[2];

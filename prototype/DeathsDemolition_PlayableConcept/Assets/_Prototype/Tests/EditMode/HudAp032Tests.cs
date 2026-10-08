@@ -247,7 +247,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual((HudArt.SmearNativeWidth - HudArt.SmearDenseRight) * texel + HudArt.SealFromDenseRight * seal, sealCentre, 1e-3f, name + ": the seal's place");
                 Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.60 em (AD MUST-2, S-09 08.10)");
                 Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f), runRight, 1e-3f, name + ": 0.22 em to the seal");
-                Assert.AreEqual(HudArt.SealGapEm * 44f, HudArt.SealGap(44f), 1e-4f, name + ": at cap 44 the 0.22 em rules (9.68 ≥ 9 px)");
+                Assert.GreaterOrEqual(HudArt.SealGap(44f) - 0.075f * 44f, HudArt.SealGapMinPx,
+                    name + ": measured dry-ink overshoot (3 px at cap 40) leaves at least 9 ref px");
             }
         }
 
