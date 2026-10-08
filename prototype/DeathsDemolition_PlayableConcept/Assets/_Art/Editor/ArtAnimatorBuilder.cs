@@ -69,6 +69,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static void BuildPlayerCli()
         {
+            ArtNatural24Calibration.ValidateInputs(); // fail before EnsureAvatars can reimport
             // hero-t4 (08.10): a first import of a new clip FBX keeps Unity's auto-map (54–55 human bones: fp_camera → LeftEye, jaw → Jaw,
             // sec_band_1 → RightEye); the v1.1 template lands on the contract re-import EnsureAvatars forces — before any clip is read.
             ArtCharacterPrefabBuilder.EnsureAvatars();
@@ -79,6 +80,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static Report Build(float playerReferenceSpeed, bool zombieToo)
         {
+            ArtNatural24Calibration.ValidateInputs(); // exact source pins before generated asset mutation
             Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest = ArtAnimationClipContract.Manifest();
             if (manifest == null) throw new FileNotFoundException(LogPrefix + "manifest missing", ArtAnimationClipContract.ManifestPath);
             if (manifest.Count != C.ClipCount) throw new InvalidDataException(LogPrefix + "manifest lists " + manifest.Count + " clips != " + C.ClipCount);
@@ -101,6 +103,7 @@ namespace DD.Art.Pipeline.EditorTools
             LocoData loco = LoadLocoData(clips);
             // WP-032 (ADR-032-1): the no-slip speeds measured on the Unity rig, used by the 2-D blend time scales and the sets.
             Dictionary<string, float> unitySpeeds = Calibrate(all, clips, zombieToo ? null : "player");
+            ArtNatural24Calibration.Apply(unitySpeeds, all, clips, loco); // final authoritative PHASE_ALL raw override
             AnimatorController player = BuildPlayer(clips, all, unitySpeeds, upper, aim, playerReferenceSpeed, loco, out report.playerStates, out report.playerLayers);
             if (loco != null)
                 WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, all, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
@@ -110,6 +113,7 @@ namespace DD.Art.Pipeline.EditorTools
                     clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps, new CharacterAnimationSet.LocomotionTables());
             WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips, manifest);
             WriteFirstPerson(ArtCharacterPrefabBuilder.PlayerAnimationSet, clips, manifest);
+            ArtNatural24Calibration.VerifyGenerated(); // validate in-memory speeds before SaveAssets
             if (zombieToo)
             {
                 AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
