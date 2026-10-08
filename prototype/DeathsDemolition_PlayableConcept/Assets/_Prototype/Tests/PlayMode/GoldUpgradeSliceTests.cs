@@ -585,11 +585,15 @@ namespace DD.Prototype.Tests.PlayMode
             int tamamlanmaOutstanding = -1;
             GoldAutoCollectReport tamamlanmaSweep = default;
             RoundReport tamamlanmaRapor = default;
+            bool tamamlanmaErtelendi = false;   // WP-095 K5
+            float tamamlanmaAni = 0f;
             Action<int> tamamlanma = r =>
             {
                 tamamlanmaSayisi++;
                 tamamlanmaRapor = _run.LastRoundReport;   // DEC-113: donmuş olmalı (sweep sonrası, RoundCompleted öncesi)
                 tamamlanmaTimeScale = Time.timeScale;
+                tamamlanmaErtelendi = _run.RoundEndHoldDeferred;
+                tamamlanmaAni = Time.realtimeSinceStartup;
                 tamamlanmaBakiye = _gold.Wallet.Balance;
                 tamamlanmaOutstanding = _gold.OutstandingPacketCount;
                 tamamlanmaSweep = _gold.LastAutoCollect;
@@ -628,7 +632,31 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(enSonPaketSayisi, 0, "Round boyunca yerde paket birikmiş olmalı (kaybolmadı).");
 
             // RoundCleared anı: dünya donuk, sweep BİTMİŞ, bakiye tam.
-            Assert.AreEqual(0f, tamamlanmaTimeScale, 0.0001f, "RoundCleared anında timeScale 0 (RoundEndHold).");
+            // WP-095 K5 (C-00 08.10) is the root cause of the branch: top-down with the last zombie's slow motion running, the
+            // round-end hold is DEFERRED until the moment ends (≤ 1.0 s); the sweep and RoundCompleted stay in the clear frame.
+            // Deferred: the world still runs (slowly) at RoundCompleted and the freeze must land within 1.0 s (+ one frame).
+            // Not deferred (first / third person, the slow motion off): the pre-K5 expectation, frozen at RoundCompleted.
+            if (tamamlanmaErtelendi)
+            {
+                Assert.Greater(tamamlanmaTimeScale, 0f, "K5: ertelenen donmada RoundCleared anında dünya hâlâ akar (ağır çekim).");
+                float enUzunKare = 0f;
+                while (!RunFlowClock.HasHold(RunFlowClock.RoundEndHold) && Time.realtimeSinceStartup - tamamlanmaAni < 3f)
+                {
+                    yield return null;
+                    enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+                }
+
+                float erteleme = Time.realtimeSinceStartup - tamamlanmaAni;
+                Debug.Log("[DD-TEST] wp095.k5 p10 erteleme=" + erteleme.ToString("F3") + "s enUzunKare=" + enUzunKare.ToString("F3"));
+                Assert.IsTrue(RunFlowClock.HasHold(RunFlowClock.RoundEndHold), "K5: ertelenen RoundEndHold gelmedi.");
+                Assert.LessOrEqual(erteleme, DD.Prototype.Feedback.FeelTimeScale.MaxRoundEndDeferSeconds + enUzunKare + 0.05f,
+                    "K5: raund sonu donması RoundCompleted'den ≤ 1,0 s sonra (bir kare payı).");
+                Assert.AreEqual(0f, Time.timeScale, 0.0001f, "K5: ertelenen donma geldi, dünya donuk.");
+            }
+            else
+            {
+                Assert.AreEqual(0f, tamamlanmaTimeScale, 0.0001f, "RoundCleared anında timeScale 0 (RoundEndHold).");
+            }
             Assert.AreEqual(0, tamamlanmaOutstanding, "RoundCleared yayınlanırken yerde bekleyen paket kalmamış olmalı.");
             Assert.GreaterOrEqual(roundOdulToplami, havuz * _standardDeger, "Her kill en az base öder.");
             Assert.AreEqual(roundOdulToplami, tamamlanmaBakiye, "Bakiye = round'un spawn snapshot ödüllerinin toplamı, RoundCleared anında (WP-008).");
@@ -1161,6 +1189,165 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp004.race killed=" + oldurulen + " phase=" + _run.Phase + " ledger=" + _director.State);
             yield return AkisiYatistir();
+        }
+
+        // ============================================================== WP-095 K1 / K5 · son zombi, ertelenen raund sonu donması
+
+        private bool _k5Tamamlandi;
+        private bool _k5Ertelendi;
+        private float _k5Ani;
+
+        /// <summary>
+        /// A real round 1 (director spawn, real ledger), top-down, killed to its last zombie; returns in the frame after
+        /// RoundCompleted with the deferral and the moment recorded. The slow motion and the stop must be switched on.
+        /// </summary>
+        private IEnumerator K5_SonZombiyeKadarOldur()
+        {
+            yield return RunSahnesiniHazirla(spawnKapali: false);
+            _rig.Health.DiagnosisInvulnerable = true;   // ölçüm oyuncu ölümüyle kesilmesin (tanı)
+            Assert.AreEqual(DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraModeService.Current, "K1/K5 yalnız tepeden.");
+            DD.Prototype.Feedback.FeelProfileTD profil = DD.Prototype.Feedback.FeelProfileTD.Active;
+            Assume.That(profil.lastZombieSlowMo, "FeelProfile_TD.lastZombieSlowMo kapalı: K5 ertelemesi yok.");
+            DD.Prototype.Feedback.FeelHitStopTD.Rearm();
+
+            RunFlowClock.ClearHolds();
+            _run.BeginRound(1);
+            yield return null;
+            Assert.AreEqual(RunPhase.Fighting, _run.Phase);
+
+            int sonZombiOnce = DD.Prototype.Feedback.FeelEvents.Count(DD.Prototype.Feedback.FeelEventKind.LastZombie);
+            int agirCekimOnce = DD.Prototype.Feedback.FeelTimeScale.LastZombies;
+            _k5Tamamlandi = false;
+            _k5Ertelendi = false;
+            Action<int> tamam = r =>
+            {
+                _k5Tamamlandi = true;
+                _k5Ertelendi = _run.RoundEndHoldDeferred;
+                _k5Ani = Time.realtimeSinceStartup;
+            };
+            RunEvents.RoundCompleted += tamam;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (!_k5Tamamlandi && Time.realtimeSinceStartup - t0 < 60f)
+                {
+                    TumYasayanlariOldur();
+                    yield return null;
+                }
+            }
+            finally
+            {
+                RunEvents.RoundCompleted -= tamam;
+            }
+
+            Assert.IsTrue(_k5Tamamlandi, "Raund tamamlanmadı.");
+            Assert.Greater(DD.Prototype.Feedback.FeelEvents.Count(DD.Prototype.Feedback.FeelEventKind.LastZombie), sonZombiOnce,
+                "Son zombi anı (FeelEvents.LastZombie) yayınlanmadı.");
+            Assert.AreEqual(agirCekimOnce + 1, DD.Prototype.Feedback.FeelTimeScale.LastZombies, "Ağır çekim başlamadı (tek kez).");
+            Assert.IsTrue(_k5Ertelendi, "K5: TD + ağır çekimde RoundEndHold RoundCompleted anında alınmamalı.");
+        }
+
+        /// <summary>
+        /// WP-095 (C-00 K1 / K5 08.10; his sözleşmesi §4.11, §9 S4): the round's last zombie dies in a real round → the world goes
+        /// into the slow motion (≤ lastZombieTimeScale), the round-end freeze waits for the moment and lands ≤ 1.0 s after
+        /// RoundCompleted, and when the upgrade screen closes the clock is 1 and the arbiter idle.
+        /// </summary>
+        [UnityTest]
+        [Category("WP095")]
+        [Timeout(300000)]
+        public IEnumerator Wp095_SonZombi_AgirCekim_DonmaBirSaniyeIcinde_SondaBir()
+        {
+            yield return K5_SonZombiyeKadarOldur();
+
+            float enDusuk = Time.timeScale;
+            float enUzunKare = 0f;
+            while (!RunFlowClock.HasHold(RunFlowClock.RoundEndHold) && Time.realtimeSinceStartup - _k5Ani < 3f)
+            {
+                enDusuk = Mathf.Min(enDusuk, Time.timeScale);
+                yield return null;
+                enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+            }
+
+            float erteleme = Time.realtimeSinceStartup - _k5Ani;
+            Debug.Log("[DD-TEST] wp095.k5 erteleme=" + erteleme.ToString("F3") + "s enDusukOlcek=" + enDusuk.ToString("F3") +
+                      " enUzunKare=" + enUzunKare.ToString("F3") + " durma=" + DD.Prototype.Feedback.FeelTimeScale.Stops +
+                      " stoppedSec=" + DD.Prototype.Feedback.FeelTimeScale.StoppedSeconds.ToString("F3"));
+            Assert.IsTrue(RunFlowClock.HasHold(RunFlowClock.RoundEndHold), "K5: ertelenen raund sonu donması gelmedi.");
+            Assert.LessOrEqual(erteleme, DD.Prototype.Feedback.FeelTimeScale.MaxRoundEndDeferSeconds + enUzunKare + 0.05f,
+                "K5: donma RoundCompleted'den ≤ 1,0 s sonra (bir kare payı).");
+            Assert.LessOrEqual(enDusuk, DD.Prototype.Feedback.FeelProfileTD.Active.lastZombieTimeScale + 0.01f,
+                "Ağır çekim olmadı (en düşük ölçek " + enDusuk.ToString("F3") + ").");
+            Assert.IsFalse(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive, "Donma geldiğinde son zombi anı bitmiş olmalı.");
+            Assert.AreEqual(0f, Time.timeScale, 0.0001f, "Raund sonu donması: dünya donuk.");
+
+            yield return Bekle(() => _run.Phase == RunPhase.Upgrading, FazZamanAsimi, "Upgrade ekranı açılmadı.");
+            _run.CloseUpgradeScreen();
+            yield return null;
+            Assert.AreEqual(1f, Time.timeScale, 0.0001f, "Sonunda timeScale 1.");
+            Assert.IsFalse(DD.Prototype.Feedback.FeelTimeScale.HasWork, "Saat hakemi boşta.");
+            _rig.Health.DiagnosisInvulnerable = false;
+        }
+
+        /// <summary>
+        /// WP-095 (C-00 K1, his sözleşmesi §9 S4): pause in the last zombie's slow motion → the world stops (the pause always
+        /// wins), the envelope and the K5 deferral wait (a pause does not count towards the 1.0 s safety); resume → the slow
+        /// motion goes on where it stopped, the round-end freeze follows when it ends, and the clock is 1 at the end.
+        /// </summary>
+        [UnityTest]
+        [Category("WP095")]
+        [Timeout(300000)]
+        public IEnumerator Wp095_SonZombiAgirCekimdeDuraklat_Surdur_ZarfTamamlanir()
+        {
+            yield return K5_SonZombiyeKadarOldur();
+            Assert.IsTrue(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive, "Ağır çekim RoundCompleted'in ardından sürüyor olmalı.");
+
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 0.2f && DD.Prototype.Feedback.FeelTimeScale.LastZombieActive)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive, "Ağır çekim 0,2 s içinde bitmemeli.");
+            RunFlowClock.AddHold(RunFlowClock.PauseHold);
+            yield return null;
+            float gecen = DD.Prototype.Feedback.FeelTimeScale.LastZombieElapsed;
+            Assert.AreEqual(0f, Time.timeScale, 0.0001f, "Duraklatma kazanır.");
+            Assert.IsTrue(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive, "TD: duraklatma zarfı askıya alır (K1).");
+
+            float p0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - p0 < 1.5f)
+            {
+                yield return null;   // longer than the whole envelope and the K5 safety
+            }
+
+            Assert.AreEqual(gecen, DD.Prototype.Feedback.FeelTimeScale.LastZombieElapsed, 1e-5f, "Donukken zarf yaşlanmaz.");
+            Assert.IsTrue(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive);
+            Assert.IsTrue(_run.RoundEndHoldDeferred, "Duraklatma ertelemeyi tüketmez (K5 emniyeti çalışan zamanı sayar).");
+            Assert.IsFalse(RunFlowClock.HasHold(RunFlowClock.RoundEndHold));
+            Assert.AreEqual(0f, Time.timeScale, 0.0001f);
+
+            RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+            yield return null;
+            yield return null;
+            Assert.Less(Time.timeScale, 0.999f, "Sürdürünce ağır çekim kaldığı yerden (ölçek " + Time.timeScale.ToString("F3") + ").");
+            Assert.Greater(DD.Prototype.Feedback.FeelTimeScale.LastZombieElapsed, gecen, "Zarf sürüyor.");
+
+            float r0 = Time.realtimeSinceStartup;
+            while (!RunFlowClock.HasHold(RunFlowClock.RoundEndHold) && Time.realtimeSinceStartup - r0 < 3f)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(RunFlowClock.HasHold(RunFlowClock.RoundEndHold), "Zarf bitince raund sonu donması gelmedi.");
+            Assert.IsFalse(DD.Prototype.Feedback.FeelTimeScale.LastZombieActive, "Zarf tamamlandı.");
+            Assert.AreEqual(0f, Time.timeScale, 0.0001f);
+
+            yield return Bekle(() => _run.Phase == RunPhase.Upgrading, FazZamanAsimi, "Upgrade ekranı açılmadı.");
+            _run.CloseUpgradeScreen();
+            yield return null;
+            Assert.AreEqual(1f, Time.timeScale, 0.0001f, "Sonunda timeScale 1.");
+            Assert.IsFalse(DD.Prototype.Feedback.FeelTimeScale.HasWork);
+            _rig.Health.DiagnosisInvulnerable = false;
         }
     }
 }

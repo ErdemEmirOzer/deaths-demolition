@@ -19,11 +19,27 @@ namespace DD.Prototype.Feedback
     /// Pause safety: a request is refused while the game is already stopped, and the
     /// restore only happens if nothing else has touched <c>Time.timeScale</c> in the
     /// meantime. Pausing during a hit-stop therefore cannot un-pause the game.
+    ///
+    /// WP-095 K1 / K2 (C-00 08.10): this service still never writes the clock — the top-down
+    /// GLOBAL stop is <see cref="FeelTimeScale"/>'s (requested from FeelEvents by FeelHitStopTD).
+    /// Two things changed here, both top-down only: the envelope's ceiling is the profile's
+    /// maxStopFrames / 60 (≤ 4 frames, 0.067 s; first / third person keep 0.04), and while the
+    /// global stop is on the clock <see cref="VisualDelta"/> returns the scaled delta, so a
+    /// group's effects are not slowed twice.
     /// </summary>
     public static class HitStopService
     {
         /// <summary>PROTOTYPE-ONLY: time scale during a hit stop. 0 would read as a dropped frame.</summary>
         public const float StopTimeScale = 0.06f;
+
+        /// <summary>The pre-K2 ceiling of one envelope (FeelConfig impact rows; first / third person).</summary>
+        public const float LegacyMaxSeconds = 0.04f;
+
+        /// <summary>WP-095 K2: the envelope's ceiling — top-down the profile's maxStopFrames / 60 (≤ 0.067 s), else 0.04 s.</summary>
+        public static float MaxSeconds =>
+            CameraSystem.CameraModeService.Current == CameraSystem.CameraMode.TopDown
+                ? Mathf.Clamp(FeelProfileTD.Active.maxStopFrames, 1, FeelTimeScale.MaxStopFrames) * FeelTimeScale.FrameSeconds
+                : LegacyMaxSeconds;
 
         private static float _remaining;
         private static float _presentationScale = StopTimeScale;
@@ -48,7 +64,7 @@ namespace DD.Prototype.Feedback
         /// remember 0.06 and leave the game running at 6% speed after unpausing.
         /// Calling <see cref="Cancel"/> before pausing is the other correct answer.
         /// </summary>
-        public static float BaseTimeScale => Time.timeScale;
+        public static float BaseTimeScale => FeelTimeScale.BaseScale;   // WP-095 K1: the arbiter's base, not a stop on screen
         public static int ActiveGroupId => IsActive ? _groupId : 0;
         public static float RemainingRealSeconds => Mathf.Max(0f, _remaining);
 
@@ -73,7 +89,7 @@ namespace DD.Prototype.Feedback
             {
                 // Extend rather than restart, so two heavy hits in the same frame do not
                 // double the freeze.
-                if (_groupId == groupId) _remaining = Mathf.Min(0.04f, Mathf.Max(_remaining, duration));
+                if (_groupId == groupId) _remaining = Mathf.Min(MaxSeconds, Mathf.Max(_remaining, duration));   // WP-095 K2: TD ceiling from the profile
                 else Refused++;
                 return _groupId == groupId;
             }
@@ -93,7 +109,7 @@ namespace DD.Prototype.Feedback
 
             _groupId = groupId;
             _presentationScale = Mathf.Clamp(presentationScale, StopTimeScale, 1f);
-            _remaining = Mathf.Min(0.04f, duration);
+            _remaining = Mathf.Min(MaxSeconds, duration);   // WP-095 K2: TD ceiling from the profile (≤ 4 frames), FP / TP 0.04
             IsActive = true;
             Count++;
             return true;
@@ -107,6 +123,7 @@ namespace DD.Prototype.Feedback
         public static float VisualDelta(int groupId, float scaledDelta, float unscaledDelta)
         {
             if (!IsActive || groupId == 0 || groupId != _groupId || unscaledDelta <= 0f) return scaledDelta;
+            if (FeelTimeScale.GlobalStopApplied) return scaledDelta;   // WP-095 K1: the world is already stopped (TD) — not twice
             float overlap = Mathf.Min(unscaledDelta, Mathf.Max(0f, _remaining));
             return overlap * _presentationScale + Mathf.Max(0f, unscaledDelta - overlap);
         }

@@ -537,7 +537,9 @@ namespace DD.Prototype.Core.Config
                 if (row.id != ImpactFeelId.ArmorBreak && row.id != ImpactFeelId.HeavyDeath && row.hitStopSeconds != 0f)
                     return Fail("hit stop is fixed to zero for " + row.id, out error);
             }
-            if (Mathf.Abs(d.hitStop.maxContinuousSeconds - .04f) > 1e-6f || !Range(d.hitStop.minIntervalSeconds, .12f, 1f) ||
+            // WP-095 K2 (C-00 08.10): a hit-stop may run 4 frames (0.067 s; the top-down global stop, FeelTimeScale) — the
+            // WP-062 baseline 0.04 stays valid. The impact rows' local stops keep their own 0.04 ceiling above.
+            if (!Range(d.hitStop.maxContinuousSeconds, .04f, .067f) || !Range(d.hitStop.minIntervalSeconds, .12f, 1f) ||
                 !Range(d.hitStop.presentationScale, .06f, 1f)) return Fail("hitStop out of range", out error);
             if (!Range(d.vignette.flashAlpha, 0f, .5f) || !Range(d.vignette.lowHealthAlpha, 0f, .5f) ||
                 !Range(d.vignette.lowHealthFraction, 0f, 1f) || d.vignette.flashInFrames < 1 || d.vignette.flashInFrames > 12 ||

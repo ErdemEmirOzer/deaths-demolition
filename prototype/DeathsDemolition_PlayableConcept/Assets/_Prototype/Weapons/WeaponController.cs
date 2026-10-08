@@ -558,14 +558,22 @@ namespace DD.Prototype.Weapons
             {
                 _classic.BufferPress();
             }
-            else if (mode == WeaponFireMode.Burst && (fireHeld || firePressed) && !_classic.BurstActive && _classic.CanFire)
+            else if (firePressed && FeelTimeScale.GlobalStopActive)
+            {
+                // WP-095 K1 (C-00 08.10): a press during the top-down global hit-stop is queued, never lost. At 0.06 the
+                // cooldown barely moves, so an auto / burst tap that fits inside the stop would end before the weapon is
+                // ready; the scaled press buffer (Single's) carries it past the stop. Only top-down ever has a global stop.
+                _classic.BufferPress();
+            }
+
+            if (mode == WeaponFireMode.Burst && (fireHeld || firePressed || _classic.PressBuffered) && !_classic.BurstActive && _classic.CanFire)
             {
                 _classic.BeginBurst();
             }
 
             bool wantsShot = mode == WeaponFireMode.Single ? fireHeld || _classic.PressBuffered
                 : mode == WeaponFireMode.Burst ? _classic.BurstActive || fireHeld
-                : fireHeld;
+                : fireHeld || _classic.PressBuffered;   // WP-095 K1: an auto press queued during the global stop
 
             if (!wantsShot)
             {
@@ -1011,6 +1019,13 @@ namespace DD.Prototype.Weapons
         private void ApplyFireShake(float scale, WeaponPower power, Vector3 aimDirection)
         {
             if (scale <= 0f)
+            {
+                return;
+            }
+
+            // WP-095 (R3): top-down fire shake is K1 / K3 of TopDownFeelCamera (fed by FeelEvents.ShotFired); this path would
+            // shake a second time. First / third person keep it.
+            if (CameraModeService.Current == CameraMode.TopDown)
             {
                 return;
             }

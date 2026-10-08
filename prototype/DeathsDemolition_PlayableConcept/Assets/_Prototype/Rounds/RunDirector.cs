@@ -100,10 +100,17 @@ namespace DD.Prototype.Rounds
         private string _completionId;
         private GoldAutoCollectReport _roundClearSweep;
 
+        // WP-095 K5 (C-00 08.10): the round-end hold waits for the last zombie's slow motion (top-down), ≤ 1.0 s real.
+        private bool _roundEndHoldDeferred;
+        private float _roundEndHoldWaited;
+
         // ------------------------------------------------------------------ public API
 
         /// <summary>Current phase. The screen-driving value.</summary>
         public RunPhase Phase => _phase;
+
+        /// <summary>WP-095 K5: the round is cleared and the round-end hold waits for the last zombie's slow motion.</summary>
+        public bool RoundEndHoldDeferred => _roundEndHoldDeferred;
 
         /// <summary>1-based round number.</summary>
         public int Round => _round;
@@ -199,6 +206,7 @@ namespace DD.Prototype.Rounds
             _runEverStarted = true;
 
             RunFlowClock.ClearHolds();
+            _roundEndHoldDeferred = false;   // WP-095 K5
             RunEvents.ClearState();
 
             // The special-weapon HUD snapshot is static and outlives the scene. A pickup
@@ -281,6 +289,7 @@ namespace DD.Prototype.Rounds
 
             // The round-end hold must be gone before the pool starts moving, or the next
             // round opens on a frozen world.
+            _roundEndHoldDeferred = false;   // WP-095 K5: a deferred hold is never taken by the next round
             RunFlowClock.RemoveHold(RunFlowClock.RoundEndHold);
 
             EnemySpawnDirector spawn = ResolveSpawnDirector();
@@ -329,6 +338,7 @@ namespace DD.Prototype.Rounds
 
             // The world must not stay frozen behind a results screen this class does not
             // own. G-08 takes RunFlowClock.ResultsHold if it wants the world still.
+            _roundEndHoldDeferred = false;   // WP-095 K5
             RunFlowClock.RemoveHold(RunFlowClock.RoundEndHold);
 
             RunSummary summary = BuildSummary(reason, killedBy);
@@ -372,6 +382,7 @@ namespace DD.Prototype.Rounds
 
             // The world moves again here, not at the end of the countdown: the request's
             // 3 s is a chance to reposition, which is only worth having if you can walk.
+            _roundEndHoldDeferred = false;   // WP-095 K5: closed before the deferred hold was taken (F1) → never taken
             RunFlowClock.RemoveHold(RunFlowClock.RoundEndHold);
 
             float countdown = HasConfig ? Config.Rounds.RoundStartCountdown : 3f;
@@ -394,6 +405,7 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
+            _roundEndHoldDeferred = false;   // WP-095 K5: the screen takes the hold itself (forced open mid-deferral)
             if (!RunFlowClock.HasHold(RunFlowClock.RoundEndHold))
             {
                 RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
@@ -501,6 +513,7 @@ namespace DD.Prototype.Rounds
             UnbindBuild();
             UnregisterDebugPanel();
 
+            _roundEndHoldDeferred = false;   // WP-095 K5
             RunFlowClock.RemoveHold(RunFlowClock.RoundEndHold);
 
             if (Instance == this)
@@ -580,6 +593,27 @@ namespace DD.Prototype.Rounds
 
         private void TickRoundCompleteBeat()
         {
+            // WP-095 K5 (C-00 08.10): the hold is deferred while the last zombie's slow motion plays — taken when it ends or
+            // after roundEndHoldSafetySeconds (≤ 1.0 s) of real running time (a pause does not count), whichever is first.
+            // The 1.1 s beat starts with the hold.
+            if (_roundEndHoldDeferred)
+            {
+                if (!RunFlowClock.IsFrozen)
+                {
+                    _roundEndHoldWaited += Time.unscaledDeltaTime;
+                }
+
+                if (Feedback.FeelTimeScale.LastZombieActive && _roundEndHoldWaited < Feedback.FeelTimeScale.RoundEndHoldSafetySeconds)
+                {
+                    return;
+                }
+
+                _roundEndHoldDeferred = false;
+                _phaseTimer = 0f;
+                RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+                return;
+            }
+
             // Unscaled, because this phase is the freeze. Scaled time is zero here.
             _phaseTimer += Time.unscaledDeltaTime;
 
@@ -648,7 +682,18 @@ namespace DD.Prototype.Rounds
             // The world stops here and stays stopped through the upgrade screen. One hold
             // covers both phases, so a pause taken during the beat cannot un-freeze the
             // shop when it is released.
-            RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+            // WP-095 K5 (C-00 08.10): top-down with the last zombie's slow motion running, the hold waits for the moment
+            // (TickRoundCompleteBeat, ≤ 1.0 s); the sweep and the events below stay HERE, in this frame. First / third
+            // person, or the slow motion off: the hold is taken now, as before.
+            if (Feedback.FeelTimeScale.ShouldDeferRoundEndHold)
+            {
+                _roundEndHoldDeferred = true;
+                _roundEndHoldWaited = 0f;
+            }
+            else
+            {
+                RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+            }
 
             // REQ-076 (WP-004): every packet still on the floor - the last kill's included,
             // it was dropped the frame before this event - is taken and credited NOW, in
