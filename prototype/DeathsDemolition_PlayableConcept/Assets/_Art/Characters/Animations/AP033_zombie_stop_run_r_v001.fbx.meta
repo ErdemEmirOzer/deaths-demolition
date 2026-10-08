@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 680ab7e483b1a436cd2f3bd3610538a5
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects: {}
+  materials:
+    materialImportMode: 0
+  animations:
+    clipAnimations: []
+  meshes:
+    globalScale: 1
+  importAnimation: 1
+  animationType: 3
+  avatarSetup: 1
+  userData: AP-033 p3; bounded intake; ArtCharacterContract configures on import
+  assetBundleName: 
+  assetBundleVariant: 

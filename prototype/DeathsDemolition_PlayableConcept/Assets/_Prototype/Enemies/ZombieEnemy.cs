@@ -1072,6 +1072,11 @@ namespace DD.Prototype.Enemies
 
             Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds, walkHeading, walkSpeed, distance, dt);
             Vector3 commanded = walkHeading * walkSpeed;
+            float transitionYawStep = 0f;
+            Vector3 transitionVelocity = Vector3.zero;
+            bool transitionMotor = _skinned != null && _skinned.StepTransition(walkHeading, walkSpeed, _groundForward,
+                (canWalk || _skinned.TransitionClip == ZombieTransitionData.Clips[9]) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds, dt, out transitionVelocity, out transitionYawStep);
+            if (transitionMotor) { ownVelocity = transitionVelocity; _steerSpeed = transitionVelocity.magnitude; }
 
             // The Runner's lunge adds committed forward speed during its active window.
             float impulse = _attack.ForwardImpulse;
@@ -1160,7 +1165,12 @@ namespace DD.Prototype.Enemies
                 facing = toTarget;
             }
 
-            if (facing.sqrMagnitude > 0.0004f)
+            if (transitionMotor)
+            {
+                transform.rotation = Quaternion.AngleAxis(transitionYawStep, Vector3.up) * transform.rotation;
+                _yawRate = dt > 0f ? transitionYawStep / dt : 0f;
+            }
+            else if (facing.sqrMagnitude > 0.0004f)
             {
                 TurnTowards(facing, dt);   // WP-096 P7: angular velocity capped at the tier turn rate, angular acceleration limited
             }

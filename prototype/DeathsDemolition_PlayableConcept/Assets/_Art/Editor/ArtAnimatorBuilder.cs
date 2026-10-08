@@ -714,6 +714,27 @@ namespace DD.Art.Pipeline.EditorTools
             loco.writeDefaultValues = true;
             sm.defaultState = loco;
 
+            c.AddParameter(ZombieTransitionData.RateParameter, AnimatorControllerParameterType.Float);
+            SetDefault(c, ZombieTransitionData.RateParameter, 1f);
+            foreach (string name in ZombieTransitionData.Clips)
+            {
+                if (!clips.TryGetValue(name, out AnimationClip transitionClip)) continue;
+                AnimatorState state = sm.AddState(name);
+                state.motion = transitionClip;
+                state.writeDefaultValues = true;
+                state.speedParameterActive = true;
+                state.speedParameter = ZombieTransitionData.RateParameter;
+                if (ZombieTransitionData.NominalYaw(name) > 0f)
+                {
+                    AnimatorState mirrored = sm.AddState(name + "_R");
+                    mirrored.motion = transitionClip;
+                    mirrored.mirror = true;
+                    mirrored.writeDefaultValues = true;
+                    mirrored.speedParameterActive = true;
+                    mirrored.speedParameter = ZombieTransitionData.RateParameter;
+                }
+            }
+
             // WP-032B: Wait = the v002 queue idle, entered from Locomotion on Waiting and left on !Waiting;
             // the cycle offset is the body's WaitPhase so a throat queue never shifts its weight in unison.
             AnimatorState wait = sm.AddState(C.WaitState);
@@ -1353,7 +1374,7 @@ namespace DD.Art.Pipeline.EditorTools
                     name = s.name, clip = clips[s.name], loop = s.loop, seconds = s.seconds, speedMps = s.speedMps,
                     unitySpeedMps = unitySpeeds != null && unitySpeeds.TryGetValue(s.name, out float u) ? u : 0f,
                     layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText(), stanceFrames = s.stanceFrames,
-                    minRate = band.x, maxRate = band.y
+                    minRate = band.x, maxRate = band.y, transition = s.transition
                 });
             }
 

@@ -1,0 +1,386 @@
+{
+ "schema": "AP026.anim-events.v002",
+ "note": "AP-033: olaylarda value 0=sol 1=sağ; blend_in_end/blend_out_start olay değil, ap033_clip_data.json alanı",
+ "clips": {
+  "AP033_zombie_stop_walk_l": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 23,
+   "frames": 24,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_r",
+     "frame": 6,
+     "value": 1
+    },
+    {
+     "name": "foot_l",
+     "frame": 10,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 14,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 18,
+     "value": 0
+    },
+    {
+     "name": "stop_plant",
+     "frame": 22,
+     "value": 0
+    }
+   ]
+  },
+  "AP033_zombie_stop_walk_r": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 23,
+   "frames": 24,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 6,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 10,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 14,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 18,
+     "value": 1
+    },
+    {
+     "name": "stop_plant",
+     "frame": 22,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_stop_run_l": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 19,
+   "frames": 20,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_r",
+     "frame": 5,
+     "value": 1
+    },
+    {
+     "name": "foot_l",
+     "frame": 8,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 10,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 14,
+     "value": 0
+    },
+    {
+     "name": "stop_plant",
+     "frame": 17,
+     "value": 0
+    }
+   ]
+  },
+  "AP033_zombie_stop_run_r": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 19,
+   "frames": 20,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 5,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 8,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 10,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 14,
+     "value": 1
+    },
+    {
+     "name": "stop_plant",
+     "frame": 17,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_turn90_L": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 37,
+   "frames": 38,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "pivot_plant",
+     "frame": 7,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 13,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 15,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 20,
+     "value": 1
+    },
+    {
+     "name": "foot_l",
+     "frame": 25,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 29,
+     "value": 0
+    }
+   ]
+  },
+  "AP033_zombie_turn180_L": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 24,
+   "frames": 25,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "pivot_plant",
+     "frame": 14,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 16,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_stumble_recover": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 35,
+   "frames": 36,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 14,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 19,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 26,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 27,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_start_walk": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 21,
+   "frames": 22,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 0,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 4,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 7,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 9,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 20,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_start_run": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 15,
+   "frames": 16,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 0,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 1,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 2,
+     "value": 1
+    },
+    {
+     "name": "foot_r",
+     "frame": 7,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 13,
+     "value": 1
+    }
+   ]
+  },
+  "AP033_zombie_turn45_run_L": {
+   "fps": 30,
+   "frame_origin": 0,
+   "cycle_frames": 15,
+   "frames": 16,
+   "loop": false,
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 5,
+     "value": 0
+    },
+    {
+     "name": "pivot_plant",
+     "frame": 8,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 14,
+     "value": 1
+    }
+   ]
+  }
+ }
+}

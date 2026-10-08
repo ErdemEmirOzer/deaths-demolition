@@ -328,10 +328,14 @@ namespace DD.Prototype.Characters
             // WP-096 AP-033 p1 zombie locomotion
             ZombieWalkLurchAV4, ZombieWalkLimpAV4, ZombieRunFeralAV4, ZombieWalkStompAV4,
             // WP-096 AP-033 p2
-            ZombieWalkLurchBV4, ZombieWalkDragAV4, ZombieWalkDragBV4, ZombieRunFeralBV4, ZombieRunStumbleAV4, ZombieWalkHeavyAV4, ZombieWalkHeavyBV4, ZombieWalkStompBV4
+            ZombieWalkLurchBV4, ZombieWalkDragAV4, ZombieWalkDragBV4, ZombieRunFeralBV4, ZombieRunStumbleAV4, ZombieWalkHeavyAV4, ZombieWalkHeavyBV4, ZombieWalkStompBV4,
+            // WP-096 AP-033 p3 transitions (never added to ZombieGaitClips)
+            "AP033_zombie_start_walk", "AP033_zombie_start_run", "AP033_zombie_stop_walk_l", "AP033_zombie_stop_walk_r",
+            "AP033_zombie_stop_run_l", "AP033_zombie_stop_run_r", "AP033_zombie_turn90_L", "AP033_zombie_turn180_L",
+            "AP033_zombie_turn45_run_L", "AP033_zombie_stumble_recover"
         };
 
-        public const int ClipCount = 244;   // WP-096: + AP-033 p2 zombie locomotion 8 (lurch_B, drag_A/B, feral_B, stumble_A, heavy_A/B, stomp_B); + AP-033 p1 zombie locomotion 4 (lurch_A, limp_A, run_feral_A, walk_stomp_A); + AP-022 player locomotion 10 (MUST-3/4); + AP-022 zombie locomotion 5 (MUST-I1); + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 254;   // WP-096: + AP-033 p3 transitions 10; + AP-033 p2 zombie locomotion 8 (lurch_B, drag_A/B, feral_B, stumble_A, heavy_A/B, stomp_B); + AP-033 p1 zombie locomotion 4 (lurch_A, limp_A, run_feral_A, walk_stomp_A); + AP-022 player locomotion 10 (MUST-3/4); + AP-022 zombie locomotion 5 (MUST-I1); + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -419,6 +423,8 @@ namespace DD.Prototype.Characters
             public string events;
             /// <summary>WP-032C: manifest stance frames per foot (contact length of a locomotion cycle; 0 = not given). The calibrator and the slip tests measure over exactly these frames.</summary>
             public int stanceFrames;
+            /// <summary>AP-033 p3 in-place transition motor contract; null for gait/player clips.</summary>
+            public ZombieTransitionData transition;
             /// <summary>
             /// WP-096 P3: this clip's playback-rate band — floor (applied while the body cruises) and cap; 0 = the
             /// <see cref="CadenceBand"/> default (Min / Max). Authored on the set asset (ArtAnimatorBuilder keeps it on a rebuild).

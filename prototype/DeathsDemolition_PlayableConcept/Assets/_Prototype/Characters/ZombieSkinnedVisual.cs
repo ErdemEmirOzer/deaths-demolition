@@ -29,7 +29,7 @@ namespace DD.Prototype.Characters
     /// <see cref="CharacterAnimationEvents"/> into <c>EnemyAttackState</c>.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ZombieSkinnedVisual : MonoBehaviour, IZombieAnimationDriver
+    public sealed partial class ZombieSkinnedVisual : MonoBehaviour, IZombieAnimationDriver
     {
         public const string PrefabName = "Zombie_AP007";
         /// <summary>
@@ -426,7 +426,7 @@ namespace DD.Prototype.Characters
             if (_footIk != null)
             {
                 _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far,
-                    () => _speed01 > 0.2f && _rateHonest && _lastRate <= FootLockMaxRate);   // WP-071: foot lock only where the cadence is honest (WP-096: the rate itself, not a fixed 1.05)
+                    () => (TransitionActive && _transitionRate <= FootLockMaxRate) || (_speed01 > 0.2f && _rateHonest && _lastRate <= FootLockMaxRate));   // WP-071: foot lock only where the cadence is honest (WP-096: the rate itself, not a fixed 1.05)
             }
 
             // WP-071 AP-022 zombie rig v002: the jaw (Head child, not in the human map, never keyed) — rest captured once
@@ -985,6 +985,10 @@ namespace DD.Prototype.Characters
                 case CharacterAnimationEvent.FootROff:
                     if (_footIk != null) ZombieFootLockEvent(_footIk, e);   // WP-071 B2 foot lock; WP-096: the plant names its foot
                     break;
+                case CharacterAnimationEvent.PivotPlant:
+                case CharacterAnimationEvent.StopPlant:
+                    if (TransitionActive && _footIk != null && _events != null && (_events.LastInt == 0 || _events.LastInt == 1)) _footIk.NotifyPlant(_events.LastInt);
+                    break;
                 case CharacterAnimationEvent.RagdollHandoff:
                     if (_dying) _handoffNow = true;   // WP-071: an AP-022 onset clip names its own hand-off frame
                     break;
@@ -1016,6 +1020,7 @@ namespace DD.Prototype.Characters
         public void ResetForSpawn(EnemyTier tier, float topSpeedMetersPerSecond, string fit, int idleVariant, bool rise)
         {
             if (!_authored) return;
+            ResetTransitions();
             EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
             RestoreVisualRest();
             _hasFullImpulse = false;
@@ -1189,6 +1194,7 @@ namespace DD.Prototype.Characters
             _rateMin = _animation.MinRateOf(clip);
             _rateMax = _animation.MaxRateOf(clip);
             if (_events != null) _events.MirrorLocomotionFeet = CharacterAnimatorContract.IsGaitMirrored(_gait);
+            SetExplicitLiftContract(_animation.Find(clip));
         }
 
         /// <summary>WP-096 AP-033 p1: the gait tree child plays its clip mirrored (limp R).</summary>
@@ -1228,6 +1234,7 @@ namespace DD.Prototype.Characters
         /// </summary>
         public float PlayAttack(ZombieAttackStyle style, float telegraphSeconds)
         {
+            CancelTransition(false);
             if (!_authored || _dying) return 1f;
             // WP-032B: the Ultra overhead has its own v002 clip (Attack_Overhead); a set without it (v001) falls back to the sweep.
             // WP-071 B5: bite_grab plays the lunge (both arms reach, the dive closes) until AP-022's attack_bite_grab
@@ -1325,6 +1332,7 @@ namespace DD.Prototype.Characters
         public void SetWaiting(bool waiting)
         {
             if (!_authored) return;
+            if (waiting) CancelTransition(true);
             _waiting = waiting;
             _animator.SetBool(WaitingId, waiting || _special == ZombieSpecialVisual.Dazed);
         }
@@ -1346,6 +1354,7 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             if (_special == state) return;
+            CancelTransition(true);
             ZombieSpecialVisual previous = _special;
             _special = state;
             if (state != ZombieSpecialVisual.Electrocuted) _animator.SetBool(ElectroId, false);   // any other state releases the seize loop
@@ -1466,12 +1475,13 @@ namespace DD.Prototype.Characters
             if (!_authored || _dying) return;
             _windowOpen = false;
             _animator.ResetTrigger(AttackId);
-            _animator.SetTrigger(StumbleId);
+            if (!BeginTransition(9, false, _topSpeed, transform.rotation)) _animator.SetTrigger(StumbleId);
         }
 
         /// <summary>WP-032C: armour break by region — the full-body armorbreak_<region> clip; held like the heavy stagger until its end (0.6 s clip).</summary>
         public void PlayArmorBreak(int region)
         {
+            CancelTransition(false);
             if (!_authored || _dying) return;
             _windowOpen = false;
             _heavyStaggerUntil = Time.time + Mathf.Min(HeavyStaggerCapSeconds, ArmorBreakHoldSeconds);
@@ -1486,6 +1496,7 @@ namespace DD.Prototype.Characters
         /// <summary>Full-body heavy stagger (armour break, ADR-018-2). Cancels the attack clip.</summary>
         public void PlayHeavyStagger()
         {
+            CancelTransition(false);
             if (!_authored || _dying) return;
             _windowOpen = false;
             _heavyStaggerUntil = Time.time + HeavyStaggerCapSeconds;   // WP-040: held until stagger_end (or the cap)
@@ -1496,6 +1507,7 @@ namespace DD.Prototype.Characters
         /// <summary>One of the four death clips; the body holds the last frame until death_end and the pool takes it.</summary>
         public void PlayDeath(int deathStyle)
         {
+            CancelTransition(false);
             if (!_authored) return;
             ZombieSpecialVisual was = _special;   // WP-071: the Special deaths read it (arc / gel)
             _special = ZombieSpecialVisual.None;   // WP-032E: a netted / dazed body still dies at full speed

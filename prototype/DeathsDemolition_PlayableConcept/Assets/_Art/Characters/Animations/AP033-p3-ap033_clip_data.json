@@ -1,0 +1,2922 @@
+{
+ "schema": "AP033.clip-data.v001",
+ "clips": {
+  "AP033_zombie_stop_walk_l": {
+   "loop": false,
+   "transition": "stop",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    -0.002558,
+    0.484877,
+    -27.003442
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     7.8e-05,
+     0.089843,
+     -0.229933
+    ],
+    [
+     2,
+     0.001177,
+     0.178246,
+     -1.45375
+    ],
+    [
+     3,
+     0.004245,
+     0.262948,
+     -2.864839
+    ],
+    [
+     4,
+     0.009916,
+     0.341127,
+     -4.225049
+    ],
+    [
+     5,
+     0.017285,
+     0.411086,
+     -5.531296
+    ],
+    [
+     6,
+     0.023956,
+     0.474118,
+     -6.78934
+    ],
+    [
+     7,
+     0.029383,
+     0.530328,
+     -8.012966
+    ],
+    [
+     8,
+     0.033516,
+     0.579555,
+     -9.220698
+    ],
+    [
+     9,
+     0.036361,
+     0.621905,
+     -10.432697
+    ],
+    [
+     10,
+     0.037985,
+     0.657696,
+     -11.668073
+    ],
+    [
+     11,
+     0.038502,
+     0.687394,
+     -12.93863
+    ],
+    [
+     12,
+     0.038057,
+     0.711559,
+     -14.248209
+    ],
+    [
+     13,
+     0.036816,
+     0.730793,
+     -15.594701
+    ],
+    [
+     14,
+     0.034948,
+     0.745704,
+     -16.968017
+    ],
+    [
+     15,
+     0.032851,
+     0.747155,
+     -18.352246
+    ],
+    [
+     16,
+     0.029889,
+     0.727526,
+     -19.727502
+    ],
+    [
+     17,
+     0.025638,
+     0.690451,
+     -21.072502
+    ],
+    [
+     18,
+     0.023044,
+     0.644785,
+     -22.369969
+    ],
+    [
+     19,
+     0.019644,
+     0.597058,
+     -23.610656
+    ],
+    [
+     20,
+     0.014391,
+     0.553085,
+     -24.793672
+    ],
+    [
+     21,
+     0.007382,
+     0.517667,
+     -25.927955
+    ],
+    [
+     22,
+     0.000868,
+     0.49435,
+     -26.855589
+    ],
+    [
+     23,
+     -0.002558,
+     0.484877,
+     -27.003442
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": -27.003,
+   "speed_in_mps": 2.6952870082813356,
+   "speed_out_mps": 0.30217859443312023,
+   "drive_window": {
+    "translate": [
+     1,
+     21
+    ],
+    "rotate": [
+     2,
+     21
+    ]
+   },
+   "blend_in_end": 5,
+   "blend_out_start": 14,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 7,
+    "phase": 0.2916666666666667,
+    "raw_error_cm_deg": [
+     39.272861392616846,
+     40.87980619772642
+    ],
+    "error_cm_deg": [
+     3.654117204730989e-07,
+     0.0
+    ],
+    "blend_frames": 5,
+    "entry_speed_mps": 2.7
+   },
+   "attach_out": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     27.12904106828568,
+     53.07826362411104
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 9,
+    "exit_speed_mps": 0.0
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    2.695,
+    2.652,
+    2.543,
+    2.352,
+    2.11,
+    1.902,
+    1.694,
+    1.482,
+    1.273,
+    1.075,
+    0.891,
+    0.725,
+    0.578,
+    0.451,
+    0.076,
+    0.596,
+    1.12,
+    1.372,
+    1.435,
+    1.329,
+    1.083,
+    0.726,
+    0.302
+   ],
+   "duration_s": 0.7666666666666667,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      10.0,
+      17.75
+     ],
+     [
+      22.0,
+      23.0
+     ]
+    ],
+    "Right": [
+     [
+      6.0,
+      14.0
+     ]
+    ]
+   },
+   "end_facing_vs_root_deg": 0.0,
+   "end_spine_twist_deg": 0.0,
+   "start_facing_vs_root_deg": 1.23,
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Run To Stop Fast.fbx (ayna)",
+   "stance_frames": {
+    "Left": 8.75,
+    "Right": 8.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.42044317722320557,
+    "arm_reach_ge_0p30_fraction": 0.8152173913043478,
+    "shoulder_lateral_sway_pp_m": 0.14155765622854233,
+    "lean_hips_to_head_deg_mean": 28.479328221195725,
+    "lean_hips_to_head_deg_range": [
+     15.631663181972586,
+     39.067282591243156
+    ],
+    "hips_to_neck_lean_deg": 24.243072628503313,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.21239681541919708,
+     "RightHand": -0.16616959869861603
+    },
+    "hips_to_neck_lean_deg_range": [
+     12.239796838838298,
+     34.672375211448305
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 24.243072628503313,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_stop_walk_r": {
+   "loop": false,
+   "transition": "stop",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    0.029507,
+    0.538231,
+    27.039225
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     -7.2e-05,
+     0.089843,
+     0.23868
+    ],
+    [
+     2,
+     -0.001138,
+     0.178245,
+     1.508394
+    ],
+    [
+     3,
+     -0.004164,
+     0.262941,
+     2.970738
+    ],
+    [
+     4,
+     -0.009826,
+     0.341114,
+     4.377625
+    ],
+    [
+     5,
+     -0.017228,
+     0.411068,
+     5.724712
+    ],
+    [
+     6,
+     -0.023942,
+     0.474096,
+     7.016712
+    ],
+    [
+     7,
+     -0.029411,
+     0.530301,
+     8.266631
+    ],
+    [
+     8,
+     -0.033583,
+     0.579525,
+     9.492504
+    ],
+    [
+     9,
+     -0.036466,
+     0.621873,
+     10.71434
+    ],
+    [
+     10,
+     -0.038124,
+     0.657661,
+     11.951428
+    ],
+    [
+     11,
+     -0.038672,
+     0.687359,
+     13.216115
+    ],
+    [
+     12,
+     -0.038253,
+     0.711525,
+     14.513162
+    ],
+    [
+     13,
+     -0.037033,
+     0.730761,
+     15.841557
+    ],
+    [
+     14,
+     -0.035183,
+     0.745674,
+     17.192528
+    ],
+    [
+     15,
+     -0.032162,
+     0.748855,
+     18.551644
+    ],
+    [
+     16,
+     -0.026354,
+     0.733916,
+     19.900446
+    ],
+    [
+     17,
+     -0.017805,
+     0.703742,
+     21.218868
+    ],
+    [
+     18,
+     -0.010362,
+     0.666273,
+     22.490631
+    ],
+    [
+     19,
+     -0.002289,
+     0.627351,
+     23.707227
+    ],
+    [
+     20,
+     0.006949,
+     0.591934,
+     24.868121
+    ],
+    [
+     21,
+     0.017009,
+     0.56386,
+     25.982124
+    ],
+    [
+     22,
+     0.025551,
+     0.545658,
+     26.893851
+    ],
+    [
+     23,
+     0.029507,
+     0.538231,
+     27.039225
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": 27.039,
+   "speed_in_mps": 2.6952870082813356,
+   "speed_out_mps": 0.25245635273736955,
+   "drive_window": {
+    "translate": [
+     1,
+     21
+    ],
+    "rotate": [
+     2,
+     21
+    ]
+   },
+   "blend_in_end": 5,
+   "blend_out_start": 14,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 18,
+    "phase": 0.75,
+    "raw_error_cm_deg": [
+     34.47786456750902,
+     37.79092642923244
+    ],
+    "error_cm_deg": [
+     6.43814099116246e-07,
+     0.0
+    ],
+    "blend_frames": 5,
+    "entry_speed_mps": 2.7
+   },
+   "attach_out": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     31.692027017517816,
+     58.854082124191756
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 9,
+    "exit_speed_mps": 0.0
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    2.695,
+    2.652,
+    2.543,
+    2.351,
+    2.11,
+    1.902,
+    1.694,
+    1.482,
+    1.273,
+    1.075,
+    0.891,
+    0.725,
+    0.578,
+    0.451,
+    0.132,
+    0.481,
+    0.941,
+    1.146,
+    1.193,
+    1.098,
+    0.895,
+    0.603,
+    0.252
+   ],
+   "duration_s": 0.7666666666666667,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      6.0,
+      14.0
+     ]
+    ],
+    "Right": [
+     [
+      10.0,
+      17.75
+     ],
+     [
+      22.0,
+      23.0
+     ]
+    ]
+   },
+   "end_facing_vs_root_deg": 0.0,
+   "end_spine_twist_deg": 0.0,
+   "start_facing_vs_root_deg": 2.39,
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Run To Stop Fast.fbx",
+   "stance_frames": {
+    "Left": 8.0,
+    "Right": 8.75
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.4195118546485901,
+    "arm_reach_ge_0p30_fraction": 0.7934782608695652,
+    "shoulder_lateral_sway_pp_m": 0.2219182848930359,
+    "lean_hips_to_head_deg_mean": 27.844939947231722,
+    "lean_hips_to_head_deg_range": [
+     15.591481928367008,
+     38.64623250630632
+    ],
+    "hips_to_neck_lean_deg": 23.74387479541266,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.2114061415195465,
+     "RightHand": -0.1672021746635437
+    },
+    "hips_to_neck_lean_deg_range": [
+     12.208895124722844,
+     34.48074779522984
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 23.74387479541266,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_stop_run_l": {
+   "loop": false,
+   "transition": "stop",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    0.017423,
+    0.734352,
+    -29.698042
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     2.2e-05,
+     0.157563,
+     -0.342005
+    ],
+    [
+     2,
+     0.001687,
+     0.300845,
+     -2.165463
+    ],
+    [
+     3,
+     0.00724,
+     0.421753,
+     -4.275057
+    ],
+    [
+     4,
+     0.017185,
+     0.520684,
+     -6.316729
+    ],
+    [
+     5,
+     0.026723,
+     0.608509,
+     -8.282645
+    ],
+    [
+     6,
+     0.034538,
+     0.686865,
+     -10.173761
+    ],
+    [
+     7,
+     0.040523,
+     0.755207,
+     -11.998396
+    ],
+    [
+     8,
+     0.044675,
+     0.813463,
+     -13.769156
+    ],
+    [
+     9,
+     0.04708,
+     0.861961,
+     -15.499234
+    ],
+    [
+     10,
+     0.047897,
+     0.90133,
+     -17.19846
+    ],
+    [
+     11,
+     0.048317,
+     0.925356,
+     -18.87308
+    ],
+    [
+     12,
+     0.046417,
+     0.925601,
+     -20.521723
+    ],
+    [
+     13,
+     0.041398,
+     0.905034,
+     -22.140048
+    ],
+    [
+     14,
+     0.034383,
+     0.869572,
+     -23.725441
+    ],
+    [
+     15,
+     0.030985,
+     0.830444,
+     -25.276442
+    ],
+    [
+     16,
+     0.027789,
+     0.793248,
+     -26.792497
+    ],
+    [
+     17,
+     0.023794,
+     0.763024,
+     -28.274428
+    ],
+    [
+     18,
+     0.01985,
+     0.743062,
+     -29.501465
+    ],
+    [
+     19,
+     0.017423,
+     0.734352,
+     -29.698042
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": -29.698,
+   "speed_in_mps": 4.726876221244551,
+   "speed_out_mps": 0.2712493553366953,
+   "drive_window": {
+    "translate": [
+     1,
+     17
+    ],
+    "rotate": [
+     2,
+     17
+    ]
+   },
+   "blend_in_end": 4,
+   "blend_out_start": 10,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_run_feral_A",
+    "loop_frame": 3,
+    "phase": 0.1875,
+    "raw_error_cm_deg": [
+     20.212818201016493,
+     40.041929635803605
+    ],
+    "error_cm_deg": [
+     6.99292594771036e-07,
+     0.0
+    ],
+    "blend_frames": 4,
+    "entry_speed_mps": 4.79
+   },
+   "attach_out": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     43.10707639314366,
+     72.38840248748303
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 9,
+    "exit_speed_mps": 0.0
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    4.727,
+    4.299,
+    3.631,
+    2.983,
+    2.65,
+    2.362,
+    2.058,
+    1.752,
+    1.457,
+    1.181,
+    0.721,
+    0.057,
+    0.635,
+    1.084,
+    1.178,
+    1.12,
+    0.915,
+    0.61,
+    0.271
+   ],
+   "duration_s": 0.6333333333333333,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      8.0,
+      14.0
+     ],
+     [
+      17.0,
+      19.0
+     ]
+    ],
+    "Right": [
+     [
+      5.0,
+      10.0
+     ]
+    ]
+   },
+   "end_facing_vs_root_deg": 0.0,
+   "end_spine_twist_deg": 0.0,
+   "start_facing_vs_root_deg": 4.16,
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Run To Stop Fast.fbx (ayna)",
+   "stance_frames": {
+    "Left": 8.0,
+    "Right": 5.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5236980319023132,
+    "arm_reach_ge_0p30_fraction": 0.8289473684210527,
+    "shoulder_lateral_sway_pp_m": 0.15626755356788635,
+    "lean_hips_to_head_deg_mean": 24.72356151511148,
+    "lean_hips_to_head_deg_range": [
+     15.148480668054528,
+     34.959357031549814
+    ],
+    "hips_to_neck_lean_deg": 21.059890665337257,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.21388770639896393,
+     "RightHand": -0.16760151088237762
+    },
+    "hips_to_neck_lean_deg_range": [
+     11.86464301684397,
+     31.33084184848891
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 21.059890665337257,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_stop_run_r": {
+   "loop": false,
+   "transition": "stop",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    0.012146,
+    0.785971,
+    29.698042
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     -2.2e-05,
+     0.157563,
+     0.342005
+    ],
+    [
+     2,
+     -0.001687,
+     0.300845,
+     2.165463
+    ],
+    [
+     3,
+     -0.00724,
+     0.421753,
+     4.275057
+    ],
+    [
+     4,
+     -0.017186,
+     0.520684,
+     6.316729
+    ],
+    [
+     5,
+     -0.026722,
+     0.608509,
+     8.282645
+    ],
+    [
+     6,
+     -0.034538,
+     0.686865,
+     10.173761
+    ],
+    [
+     7,
+     -0.040523,
+     0.755208,
+     11.998396
+    ],
+    [
+     8,
+     -0.044675,
+     0.813464,
+     13.769156
+    ],
+    [
+     9,
+     -0.04708,
+     0.86196,
+     15.499234
+    ],
+    [
+     10,
+     -0.047897,
+     0.901331,
+     17.19846
+    ],
+    [
+     11,
+     -0.047641,
+     0.926983,
+     18.87308
+    ],
+    [
+     12,
+     -0.043353,
+     0.931921,
+     20.521723
+    ],
+    [
+     13,
+     -0.034246,
+     0.918264,
+     22.140048
+    ],
+    [
+     14,
+     -0.022147,
+     0.89105,
+     23.725441
+    ],
+    [
+     15,
+     -0.013568,
+     0.860436,
+     25.276442
+    ],
+    [
+     16,
+     -0.005655,
+     0.831349,
+     26.792497
+    ],
+    [
+     17,
+     0.00224,
+     0.807985,
+     28.274428
+    ],
+    [
+     18,
+     0.008934,
+     0.792756,
+     29.501465
+    ],
+    [
+     19,
+     0.012146,
+     0.785971,
+     29.698042
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": 29.698,
+   "speed_in_mps": 4.726876221244551,
+   "speed_out_mps": 0.2251955012941196,
+   "drive_window": {
+    "translate": [
+     1,
+     16
+    ],
+    "rotate": [
+     2,
+     17
+    ]
+   },
+   "blend_in_end": 4,
+   "blend_out_start": 10,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_run_feral_A",
+    "loop_frame": 11,
+    "phase": 0.6875,
+    "raw_error_cm_deg": [
+     26.968628737368324,
+     50.03116969093896
+    ],
+    "error_cm_deg": [
+     7.744472572840909e-07,
+     0.0
+    ],
+    "blend_frames": 4,
+    "entry_speed_mps": 4.79
+   },
+   "attach_out": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     44.122951579401345,
+     74.69083590234337
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 9,
+    "exit_speed_mps": 0.0
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    4.727,
+    4.299,
+    3.631,
+    2.983,
+    2.65,
+    2.362,
+    2.058,
+    1.752,
+    1.457,
+    1.181,
+    0.77,
+    0.196,
+    0.492,
+    0.893,
+    0.954,
+    0.904,
+    0.74,
+    0.499,
+    0.225
+   ],
+   "duration_s": 0.6333333333333333,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      5.0,
+      10.0
+     ]
+    ],
+    "Right": [
+     [
+      8.0,
+      14.0
+     ],
+     [
+      17.0,
+      19.0
+     ]
+    ]
+   },
+   "end_facing_vs_root_deg": 0.0,
+   "end_spine_twist_deg": 0.0,
+   "start_facing_vs_root_deg": 2.05,
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Run To Stop Fast.fbx",
+   "stance_frames": {
+    "Left": 5.0,
+    "Right": 8.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5026853084564209,
+    "arm_reach_ge_0p30_fraction": 0.7894736842105263,
+    "shoulder_lateral_sway_pp_m": 0.15354697406291962,
+    "lean_hips_to_head_deg_mean": 24.620175660756203,
+    "lean_hips_to_head_deg_range": [
+     15.145955916865514,
+     34.959357031549814
+    ],
+    "hips_to_neck_lean_deg": 20.97683856062185,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.21300362050533295,
+     "RightHand": -0.1685025840997696
+    },
+    "hips_to_neck_lean_deg_range": [
+     11.86464301684397,
+     31.33084184848891
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 20.97683856062185,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_turn90_L": {
+   "loop": false,
+   "transition": "turn",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    -1.70704,
+    2.080375,
+    -83.566092
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     0.008061,
+     0.10202,
+     -0.341514
+    ],
+    [
+     2,
+     0.022766,
+     0.217777,
+     -2.231368
+    ],
+    [
+     3,
+     0.015572,
+     0.297796,
+     -4.577896
+    ],
+    [
+     4,
+     0.004458,
+     0.37135,
+     -7.068547
+    ],
+    [
+     5,
+     -0.010179,
+     0.439455,
+     -9.723076
+    ],
+    [
+     6,
+     -0.028128,
+     0.504593,
+     -12.544078
+    ],
+    [
+     7,
+     -0.049455,
+     0.569835,
+     -15.520097
+    ],
+    [
+     8,
+     -0.074348,
+     0.635746,
+     -18.62975
+    ],
+    [
+     9,
+     -0.102888,
+     0.702371,
+     -21.841151
+    ],
+    [
+     10,
+     -0.135039,
+     0.769679,
+     -25.117004
+    ],
+    [
+     11,
+     -0.170674,
+     0.837538,
+     -28.421796
+    ],
+    [
+     12,
+     -0.209611,
+     0.905734,
+     -31.727996
+    ],
+    [
+     13,
+     -0.251628,
+     0.973999,
+     -35.017531
+    ],
+    [
+     14,
+     -0.296475,
+     1.042015,
+     -38.280427
+    ],
+    [
+     15,
+     -0.343896,
+     1.109448,
+     -41.509459
+    ],
+    [
+     16,
+     -0.393636,
+     1.175977,
+     -44.695424
+    ],
+    [
+     17,
+     -0.445442,
+     1.241306,
+     -47.82672
+    ],
+    [
+     18,
+     -0.499057,
+     1.305191,
+     -50.886993
+    ],
+    [
+     19,
+     -0.554215,
+     1.367443,
+     -53.849818
+    ],
+    [
+     20,
+     -0.610635,
+     1.427917,
+     -56.685035
+    ],
+    [
+     21,
+     -0.668034,
+     1.486518,
+     -59.369008
+    ],
+    [
+     22,
+     -0.726144,
+     1.543172,
+     -61.882724
+    ],
+    [
+     23,
+     -0.78471,
+     1.597827,
+     -64.213899
+    ],
+    [
+     24,
+     -0.84351,
+     1.650458,
+     -66.359104
+    ],
+    [
+     25,
+     -0.902371,
+     1.701067,
+     -68.321212
+    ],
+    [
+     26,
+     -0.961175,
+     1.749681,
+     -70.114669
+    ],
+    [
+     27,
+     -1.019862,
+     1.796347,
+     -71.76646
+    ],
+    [
+     28,
+     -1.078418,
+     1.841137,
+     -73.301257
+    ],
+    [
+     29,
+     -1.137117,
+     1.883986,
+     -74.739522
+    ],
+    [
+     30,
+     -1.197635,
+     1.92397,
+     -76.1019
+    ],
+    [
+     31,
+     -1.261529,
+     1.960215,
+     -77.410634
+    ],
+    [
+     32,
+     -1.329901,
+     1.992065,
+     -78.682536
+    ],
+    [
+     33,
+     -1.403354,
+     2.019101,
+     -79.928947
+    ],
+    [
+     34,
+     -1.481968,
+     2.041153,
+     -81.158905
+    ],
+    [
+     35,
+     -1.565292,
+     2.058334,
+     -82.377781
+    ],
+    [
+     36,
+     -1.626296,
+     2.071678,
+     -83.400673
+    ],
+    [
+     37,
+     -1.70704,
+     2.080375,
+     -83.566092
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": -83.566,
+   "speed_in_mps": 3.0701349548287102,
+   "speed_out_mps": 2.436319402704799,
+   "drive_window": {
+    "translate": [
+     2,
+     35
+    ],
+    "rotate": [
+     3,
+     33
+    ]
+   },
+   "blend_in_end": 6,
+   "blend_out_start": 28,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 17,
+    "phase": 0.7083333333333334,
+    "raw_error_cm_deg": [
+     31.67644359546668,
+     34.31764938678989
+    ],
+    "error_cm_deg": [
+     5.87948900431964e-07,
+     0.0
+    ],
+    "blend_frames": 6,
+    "entry_speed_mps": 2.7
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 17,
+    "phase": 0.7083333333333334,
+    "raw_error_cm_deg": [
+     37.82702269153508,
+     49.403890654262625
+    ],
+    "error_cm_deg": [
+     5.87948900431964e-07,
+     0.0
+    ],
+    "blend_frames": 9,
+    "exit_speed_mps": 2.7
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    3.07,
+    3.501,
+    2.41,
+    2.232,
+    2.09,
+    2.027,
+    2.059,
+    2.114,
+    2.174,
+    2.238,
+    2.299,
+    2.356,
+    2.405,
+    2.444,
+    2.473,
+    2.492,
+    2.501,
+    2.502,
+    2.495,
+    2.481,
+    2.461,
+    2.435,
+    2.403,
+    2.367,
+    2.329,
+    2.289,
+    2.249,
+    2.212,
+    2.18,
+    2.176,
+    2.204,
+    2.263,
+    2.348,
+    2.449,
+    2.552,
+    1.873,
+    2.436
+   ],
+   "duration_s": 1.2333333333333334,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      6.75,
+      13.25
+     ],
+     [
+      25.0,
+      29.0
+     ]
+    ],
+    "Right": [
+     [
+      15.0,
+      20.0
+     ]
+    ]
+   },
+   "end_facing_vs_root_deg": 1.51,
+   "end_spine_twist_deg": 1.57,
+   "start_facing_vs_root_deg": 1.51,
+   "tier": [],
+   "notes": "X: tam dönüş penceresi, k_t 1,22, 37 kare / 1,23 s (süre bandı dışı) — S-03 onayı 08.10, yaw-güdümlü oynatma",
+   "source_id": "Mixamo zombie-r3/Drunk Running Left Turn.fbx",
+   "stance_frames": {
+    "Left": 10.5,
+    "Right": 5.5
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5546712875366211,
+    "arm_reach_ge_0p30_fraction": 1.0,
+    "shoulder_lateral_sway_pp_m": 0.24072498083114624,
+    "lean_hips_to_head_deg_mean": 30.269452505768875,
+    "lean_hips_to_head_deg_range": [
+     15.622591662674642,
+     42.79758969891971
+    ],
+    "hips_to_neck_lean_deg": 25.48108627442746,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.14356452226638794,
+     "RightHand": -0.27953284978866577
+    },
+    "hips_to_neck_lean_deg_range": [
+     10.265701028245788,
+     37.71664665504187
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 25.48108627442746,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_turn180_L": {
+   "loop": false,
+   "transition": "turn",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    -0.116841,
+    -0.031684,
+    -165.592894
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     -0.000527,
+     0.089803,
+     -0.880695
+    ],
+    [
+     2,
+     -0.003047,
+     0.177725,
+     -5.651261
+    ],
+    [
+     3,
+     -0.006817,
+     0.260806,
+     -11.343352
+    ],
+    [
+     4,
+     -0.007762,
+     0.335603,
+     -17.097538
+    ],
+    [
+     5,
+     -0.002882,
+     0.399325,
+     -22.942285
+    ],
+    [
+     6,
+     0.007149,
+     0.451232,
+     -28.911445
+    ],
+    [
+     7,
+     0.017525,
+     0.493303,
+     -35.044321
+    ],
+    [
+     8,
+     0.027047,
+     0.525766,
+     -41.382486
+    ],
+    [
+     9,
+     0.035484,
+     0.548584,
+     -47.96621
+    ],
+    [
+     10,
+     0.042589,
+     0.561988,
+     -54.833102
+    ],
+    [
+     11,
+     0.048106,
+     0.566409,
+     -62.014926
+    ],
+    [
+     12,
+     0.051793,
+     0.562377,
+     -69.53148
+    ],
+    [
+     13,
+     0.053439,
+     0.550433,
+     -77.385489
+    ],
+    [
+     14,
+     0.05289,
+     0.531045,
+     -85.560289
+    ],
+    [
+     15,
+     0.050059,
+     0.504604,
+     -94.020465
+    ],
+    [
+     16,
+     0.044941,
+     0.471428,
+     -102.716601
+    ],
+    [
+     17,
+     0.037613,
+     0.431799,
+     -111.590366
+    ],
+    [
+     18,
+     0.028235,
+     0.386005,
+     -120.581381
+    ],
+    [
+     19,
+     0.015806,
+     0.334401,
+     -129.633301
+    ],
+    [
+     20,
+     -0.00504,
+     0.27658,
+     -138.700367
+    ],
+    [
+     21,
+     -0.034036,
+     0.211077,
+     -147.752046
+    ],
+    [
+     22,
+     -0.065778,
+     0.136853,
+     -156.774836
+    ],
+    [
+     23,
+     -0.093594,
+     0.054687,
+     -164.364962
+    ],
+    [
+     24,
+     -0.116841,
+     -0.031684,
+     -165.592894
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": -165.593,
+   "speed_in_mps": 2.6941264578915867,
+   "speed_out_mps": 2.6833433670432925,
+   "drive_window": {
+    "translate": [
+     1,
+     24
+    ],
+    "rotate": [
+     3,
+     23
+    ]
+   },
+   "blend_in_end": 6,
+   "blend_out_start": 18,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 7,
+    "phase": 0.2916666666666667,
+    "raw_error_cm_deg": [
+     39.334058998723,
+     40.45984316422875
+    ],
+    "error_cm_deg": [
+     3.654117204730989e-07,
+     0.0
+    ],
+    "blend_frames": 6,
+    "entry_speed_mps": 2.7
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 6,
+    "phase": 0.25,
+    "raw_error_cm_deg": [
+     34.15782130368547,
+     33.17515873756992
+    ],
+    "error_cm_deg": [
+     5.511363526428924e-07,
+     0.0
+    ],
+    "blend_frames": 6,
+    "exit_speed_mps": 2.7
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    2.694,
+    2.639,
+    2.495,
+    2.244,
+    1.917,
+    1.586,
+    1.3,
+    1.015,
+    0.73,
+    0.455,
+    0.212,
+    0.164,
+    0.362,
+    0.582,
+    0.798,
+    1.007,
+    1.209,
+    1.402,
+    1.592,
+    1.844,
+    2.149,
+    2.422,
+    2.602,
+    2.683
+   ],
+   "duration_s": 0.8,
+   "stance_windows_world_frames": {
+    "Left": [],
+    "Right": [
+     [
+      13.75,
+      16.0
+     ]
+    ]
+   },
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Running Turn 180.fbx (ayna)",
+   "stance_frames": {
+    "Left": 0.0,
+    "Right": 2.5
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5697176456451416,
+    "arm_reach_ge_0p30_fraction": 1.0,
+    "shoulder_lateral_sway_pp_m": 0.22771470993757248,
+    "lean_hips_to_head_deg_mean": 21.692598862713663,
+    "lean_hips_to_head_deg_range": [
+     2.8710017539693924,
+     39.067282591243156
+    ],
+    "hips_to_neck_lean_deg": 16.669031290835207,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.3993023633956909,
+     "RightHand": -0.074406698346138
+    },
+    "hips_to_neck_lean_deg_range": [
+     -2.2436234428408413,
+     33.441715439265735
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 16.669031290835207,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_stumble_recover": {
+   "loop": false,
+   "transition": "stumble",
+   "root_motion": {
+    "xz": true,
+    "yaw": true,
+    "in_fbx": false
+   },
+   "root_delta": [
+    -0.119538,
+    3.128801,
+    2.1677
+   ],
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     -0.000216,
+     0.090199,
+     0.021253
+    ],
+    [
+     2,
+     -0.001845,
+     0.181688,
+     0.254113
+    ],
+    [
+     3,
+     -0.005463,
+     0.274847,
+     0.791944
+    ],
+    [
+     4,
+     -0.011055,
+     0.369094,
+     1.676337
+    ],
+    [
+     5,
+     -0.018247,
+     0.463192,
+     2.941598
+    ],
+    [
+     6,
+     -0.026265,
+     0.555783,
+     4.55782
+    ],
+    [
+     7,
+     -0.033819,
+     0.646044,
+     6.433316
+    ],
+    [
+     8,
+     -0.040882,
+     0.733871,
+     8.433622
+    ],
+    [
+     9,
+     -0.04774,
+     0.819323,
+     10.40023
+    ],
+    [
+     10,
+     -0.05466,
+     0.902571,
+     12.167995
+    ],
+    [
+     11,
+     -0.061857,
+     0.983873,
+     13.589857
+    ],
+    [
+     12,
+     -0.069448,
+     1.063571,
+     14.555913
+    ],
+    [
+     13,
+     -0.07743,
+     1.14209,
+     15.006983
+    ],
+    [
+     14,
+     -0.085682,
+     1.219918,
+     14.941865
+    ],
+    [
+     15,
+     -0.093976,
+     1.297604,
+     14.418184
+    ],
+    [
+     16,
+     -0.102012,
+     1.375724,
+     13.545053
+    ],
+    [
+     17,
+     -0.10946,
+     1.454843,
+     12.465639
+    ],
+    [
+     18,
+     -0.116004,
+     1.535487,
+     11.335373
+    ],
+    [
+     19,
+     -0.121397,
+     1.618113,
+     10.299175
+    ],
+    [
+     20,
+     -0.125491,
+     1.703063,
+     9.472128
+    ],
+    [
+     21,
+     -0.128248,
+     1.790542,
+     8.926389
+    ],
+    [
+     22,
+     -0.129755,
+     1.880609,
+     8.685096
+    ],
+    [
+     23,
+     -0.130215,
+     1.97317,
+     8.721992
+    ],
+    [
+     24,
+     -0.12991,
+     2.067999,
+     8.96624
+    ],
+    [
+     25,
+     -0.129186,
+     2.164749,
+     9.317245
+    ],
+    [
+     26,
+     -0.128422,
+     2.262994,
+     9.656781
+    ],
+    [
+     27,
+     -0.12798,
+     2.36227,
+     9.858505
+    ],
+    [
+     28,
+     -0.12816,
+     2.462108,
+     9.809478
+    ],
+    [
+     29,
+     -0.129183,
+     2.562107,
+     9.427574
+    ],
+    [
+     30,
+     -0.130859,
+     2.661735,
+     8.665521
+    ],
+    [
+     31,
+     -0.131406,
+     2.759572,
+     7.51293
+    ],
+    [
+     32,
+     -0.129875,
+     2.854905,
+     5.997213
+    ],
+    [
+     33,
+     -0.126663,
+     2.947838,
+     4.177629
+    ],
+    [
+     34,
+     -0.123042,
+     3.038959,
+     2.460168
+    ],
+    [
+     35,
+     -0.119538,
+     3.128801,
+     2.1677
+    ]
+   ],
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "turn_angle_deg": 2.168,
+   "speed_in_mps": 2.705981440627738,
+   "speed_out_mps": 2.6973132612307253,
+   "drive_window": {
+    "translate": [
+     2,
+     34
+    ],
+    "rotate": [
+     2,
+     5
+    ]
+   },
+   "blend_in_end": 6,
+   "blend_out_start": 29,
+   "blend_note": "varsayılan 0,2 s / son 0,2 s; attach fazına göre ayarlanır",
+   "attach_in": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 6,
+    "phase": 0.25,
+    "raw_error_cm_deg": [
+     28.110049123088114,
+     34.7510973432247
+    ],
+    "error_cm_deg": [
+     5.511363526428924e-07,
+     0.0
+    ],
+    "blend_frames": 6,
+    "entry_speed_mps": 2.7
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 6,
+    "phase": 0.25,
+    "raw_error_cm_deg": [
+     28.015376661404485,
+     32.7514651550711
+    ],
+    "error_cm_deg": [
+     5.511363526428924e-07,
+     0.0
+    ],
+    "blend_frames": 6,
+    "exit_speed_mps": 2.7
+   },
+   "mirror_of": null,
+   "unity_root_delta": "ölçülmedi",
+   "speed_profile_mps": [
+    2.706,
+    2.745,
+    2.797,
+    2.832,
+    2.831,
+    2.788,
+    2.717,
+    2.643,
+    2.572,
+    2.506,
+    2.449,
+    2.402,
+    2.368,
+    2.348,
+    2.344,
+    2.356,
+    2.384,
+    2.427,
+    2.484,
+    2.551,
+    2.626,
+    2.702,
+    2.777,
+    2.845,
+    2.903,
+    2.947,
+    2.978,
+    2.995,
+    3.0,
+    2.989,
+    2.935,
+    2.86,
+    2.79,
+    2.736,
+    2.697
+   ],
+   "duration_s": 1.1666666666666667,
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      14.0,
+      19.0
+     ]
+    ],
+    "Right": [
+     [
+      26.25,
+      27.25
+     ]
+    ]
+   },
+   "tier": [],
+   "notes": null,
+   "source_id": "Mixamo zombie-r3/Jogging Stumble.fbx",
+   "stance_frames": {
+    "Left": 4.25,
+    "Right": 1.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.533513605594635,
+    "arm_reach_ge_0p30_fraction": 0.6,
+    "shoulder_lateral_sway_pp_m": 0.11305435001850128,
+    "lean_hips_to_head_deg_mean": 36.76631429730809,
+    "lean_hips_to_head_deg_range": [
+     17.94130049600019,
+     54.36501979212002
+    ],
+    "hips_to_neck_lean_deg": 30.68777976355536,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.07625899463891983,
+     "RightHand": -0.2356790453195572
+    },
+    "hips_to_neck_lean_deg_range": [
+     13.3265922439687,
+     46.01192112922431
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 30.68777976355536,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_start_walk": {
+   "loop": false,
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     0.0,
+     2.1e-05,
+     0.0
+    ],
+    [
+     2,
+     0.0,
+     0.000804,
+     0.0
+    ],
+    [
+     3,
+     0.0,
+     0.00528,
+     0.0
+    ],
+    [
+     4,
+     0.0,
+     0.018014,
+     0.0
+    ],
+    [
+     5,
+     0.0,
+     0.042323,
+     0.0
+    ],
+    [
+     6,
+     0.0,
+     0.077082,
+     0.0
+    ],
+    [
+     7,
+     0.0,
+     0.122082,
+     0.0
+    ],
+    [
+     8,
+     0.0,
+     0.177323,
+     0.0
+    ],
+    [
+     9,
+     0.0,
+     0.242314,
+     0.0
+    ],
+    [
+     10,
+     0.0,
+     0.316071,
+     0.0
+    ],
+    [
+     11,
+     0.0,
+     0.39712,
+     0.0
+    ],
+    [
+     12,
+     0.0,
+     0.483495,
+     0.0
+    ],
+    [
+     13,
+     0.0,
+     0.572737,
+     0.0
+    ],
+    [
+     14,
+     0.0,
+     0.662737,
+     0.0
+    ],
+    [
+     15,
+     0.0,
+     0.752737,
+     0.0
+    ],
+    [
+     16,
+     0.0,
+     0.842737,
+     0.0
+    ],
+    [
+     17,
+     0.0,
+     0.932737,
+     0.0
+    ],
+    [
+     18,
+     0.0,
+     1.022737,
+     0.0
+    ],
+    [
+     19,
+     0.0,
+     1.112737,
+     0.0
+    ],
+    [
+     20,
+     0.0,
+     1.202737,
+     0.0
+    ],
+    [
+     21,
+     0.0,
+     1.292737,
+     0.0
+    ]
+   ],
+   "root_delta": [
+    0.0,
+    1.292737,
+    0.0
+   ],
+   "turn_angle_deg": 0.0,
+   "speed_in_mps": 0.0006365953573054167,
+   "speed_out_mps": 2.7000000000000024,
+   "speed_profile_mps": [
+    0.001,
+    0.023,
+    0.134,
+    0.382,
+    0.729,
+    1.043,
+    1.35,
+    1.657,
+    1.95,
+    2.213,
+    2.431,
+    2.591,
+    2.677,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7
+   ],
+   "drive_window": {
+    "translate": [
+     6,
+     21
+    ],
+    "rotate": null
+   },
+   "blend_in_end": 5,
+   "blend_out_start": 16,
+   "duration_s": 0.7,
+   "transition": "start",
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      0.0,
+      7.0
+     ]
+    ],
+    "Right": [
+     [
+      0.0,
+      4.0
+     ],
+     [
+      9.0,
+      20.0
+     ]
+    ]
+   },
+   "attach_in": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     1.9714541585360232e-05,
+     3.3460956626430084e-05
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 5,
+    "entry_speed_mps": 0.0
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_walk_lurch_A",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     5.471733802748244,
+     7.652500035962415
+    ],
+    "error_cm_deg": [
+     2.3510505588870562e-07,
+     0.0
+    ],
+    "blend_frames": 5,
+    "exit_speed_mps": 2.7
+   },
+   "end_facing_vs_root_deg": 14.83,
+   "end_spine_twist_deg": 24.96,
+   "start_facing_vs_root_deg": 0.0,
+   "tier": [],
+   "mirror_of": null,
+   "notes": null,
+   "source_id": "Blender kurgusu: oyun idle_sway v006 f0 -> walk_lurch_A pozları, kök 0 -> 2,7 m/s",
+   "stance_frames": {
+    "Left": 7.0,
+    "Right": 15.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5039455890655518,
+    "arm_reach_ge_0p30_fraction": 0.6785714285714286,
+    "shoulder_lateral_sway_pp_m": 0.16593622416257858,
+    "lean_hips_to_head_deg_mean": 29.700589420020886,
+    "lean_hips_to_head_deg_range": [
+     16.094741865448867,
+     34.456995077467624
+    ],
+    "hips_to_neck_lean_deg": 25.138586887059503,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.2094663679599762,
+     "RightHand": -0.161455899477005
+    },
+    "hips_to_neck_lean_deg_range": [
+     13.13731105263545,
+     29.549792616293676
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 25.138586887059503,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_start_run": {
+   "loop": false,
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     0.0,
+     0.000166,
+     0.0
+    ],
+    [
+     2,
+     0.0,
+     0.005435,
+     0.0
+    ],
+    [
+     3,
+     0.0,
+     0.029089,
+     0.0
+    ],
+    [
+     4,
+     0.0,
+     0.074434,
+     0.0
+    ],
+    [
+     5,
+     0.0,
+     0.142452,
+     0.0
+    ],
+    [
+     6,
+     0.0,
+     0.234101,
+     0.0
+    ],
+    [
+     7,
+     0.0,
+     0.348422,
+     0.0
+    ],
+    [
+     8,
+     0.0,
+     0.482542,
+     0.0
+    ],
+    [
+     9,
+     0.0,
+     0.631671,
+     0.0
+    ],
+    [
+     10,
+     0.0,
+     0.789102,
+     0.0
+    ],
+    [
+     11,
+     0.0,
+     0.948769,
+     0.0
+    ],
+    [
+     12,
+     0.0,
+     1.108436,
+     0.0
+    ],
+    [
+     13,
+     0.0,
+     1.268102,
+     0.0
+    ],
+    [
+     14,
+     0.0,
+     1.427769,
+     0.0
+    ],
+    [
+     15,
+     0.0,
+     1.587436,
+     0.0
+    ]
+   ],
+   "root_delta": [
+    0.0,
+    1.587436,
+    0.0
+   ],
+   "turn_angle_deg": 0.0,
+   "speed_in_mps": 0.004967407407407408,
+   "speed_out_mps": 4.789999999999999,
+   "speed_profile_mps": [
+    0.005,
+    0.158,
+    0.71,
+    1.36,
+    2.041,
+    2.749,
+    3.43,
+    4.024,
+    4.474,
+    4.723,
+    4.79,
+    4.79,
+    4.79,
+    4.79,
+    4.79
+   ],
+   "drive_window": {
+    "translate": [
+     5,
+     15
+    ],
+    "rotate": null
+   },
+   "blend_in_end": 3,
+   "blend_out_start": 12,
+   "duration_s": 0.5,
+   "transition": "start",
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      0.0,
+      1.0
+     ]
+    ],
+    "Right": [
+     [
+      0.0,
+      2.0
+     ],
+     [
+      7.25,
+      12.75
+     ]
+    ]
+   },
+   "attach_in": {
+    "clip": "AP009_zombie_idle_sway_v006_f0",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     1.9714541585360232e-05,
+     3.3460956626430084e-05
+    ],
+    "error_cm_deg": [
+     3.580875263437218e-07,
+     0.0
+    ],
+    "blend_frames": 3,
+    "entry_speed_mps": 0.0
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_run_feral_A",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     1.4406644832703008,
+     1.9758792529602514
+    ],
+    "error_cm_deg": [
+     3.109939695113238e-07,
+     0.0
+    ],
+    "blend_frames": 3,
+    "exit_speed_mps": 4.79
+   },
+   "end_facing_vs_root_deg": 12.0,
+   "end_spine_twist_deg": 6.93,
+   "start_facing_vs_root_deg": 0.0,
+   "tier": [],
+   "mirror_of": null,
+   "notes": null,
+   "source_id": "Blender kurgusu: oyun idle_sway v006 f0 -> run_feral_A pozları, kök 0 -> 4,79 m/s",
+   "stance_frames": {
+    "Left": 1.0,
+    "Right": 5.5
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5292905569076538,
+    "arm_reach_ge_0p30_fraction": 0.7833333333333333,
+    "shoulder_lateral_sway_pp_m": 0.08234472572803497,
+    "lean_hips_to_head_deg_mean": 26.986719076739725,
+    "lean_hips_to_head_deg_range": [
+     16.094741865448867,
+     32.686980610428975
+    ],
+    "hips_to_neck_lean_deg": 22.826518063076712,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.2104816436767578,
+     "RightHand": -0.1650944948196411
+    },
+    "hips_to_neck_lean_deg_range": [
+     13.13731105263545,
+     28.12238628343154
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 22.826518063076712,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  },
+  "AP033_zombie_turn45_run_L": {
+   "loop": false,
+   "root_curve": [
+    [
+     0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     1,
+     0.0,
+     0.159579,
+     0.0
+    ],
+    [
+     2,
+     0.0,
+     0.317145,
+     0.0
+    ],
+    [
+     3,
+     0.0,
+     0.469483,
+     0.0
+    ],
+    [
+     4,
+     -0.003257,
+     0.617581,
+     -1.26
+    ],
+    [
+     5,
+     -0.015089,
+     0.762108,
+     -4.68
+    ],
+    [
+     6,
+     -0.039169,
+     0.902688,
+     -9.72
+    ],
+    [
+     7,
+     -0.077693,
+     1.038468,
+     -15.84
+    ],
+    [
+     8,
+     -0.131512,
+     1.168397,
+     -22.5
+    ],
+    [
+     9,
+     -0.200282,
+     1.291649,
+     -29.16
+    ],
+    [
+     10,
+     -0.28266,
+     1.408081,
+     -35.28
+    ],
+    [
+     11,
+     -0.376489,
+     1.518643,
+     -40.32
+    ],
+    [
+     12,
+     -0.478907,
+     1.625667,
+     -43.74
+    ],
+    [
+     13,
+     -0.586534,
+     1.733478,
+     -45.0
+    ],
+    [
+     14,
+     -0.69795,
+     1.844894,
+     -45.0
+    ],
+    [
+     15,
+     -0.810789,
+     1.957733,
+     -45.0
+    ]
+   ],
+   "root_delta": [
+    -0.810789,
+    1.957733,
+    -45.0
+   ],
+   "turn_angle_deg": -45.0,
+   "speed_in_mps": 4.787356609903069,
+   "speed_out_mps": 4.787356609903068,
+   "speed_profile_mps": [
+    4.787,
+    4.727,
+    4.57,
+    4.444,
+    4.35,
+    4.279,
+    4.234,
+    4.219,
+    4.234,
+    4.279,
+    4.35,
+    4.444,
+    4.57,
+    4.727,
+    4.787
+   ],
+   "drive_window": {
+    "translate": [
+     1,
+     15
+    ],
+    "rotate": [
+     5,
+     12
+    ]
+   },
+   "blend_in_end": 3,
+   "blend_out_start": 12,
+   "duration_s": 0.5,
+   "transition": "turn",
+   "root_curve_note": "FBX in-place; kök = Hips zemin izdüşümü + pelvis yaw (yansıtmalı Gauss), giriş/çıkış bağlanma penceresinde döngü native hızına harmanlandı. Ölçek 1, Unity ekseni (x sağ, z ileri, yaw+ sağa), kare 0 = (0,0,0)",
+   "stance_windows_world_frames": {
+    "Left": [
+     [
+      0.25,
+      4.75
+     ]
+    ],
+    "Right": [
+     [
+      8.25,
+      13.75
+     ]
+    ]
+   },
+   "attach_in": {
+    "clip": "AP033_zombie_run_feral_A",
+    "loop_frame": 0,
+    "phase": 0.0,
+    "raw_error_cm_deg": [
+     1.5038291346690445e-05,
+     2.0982692419620064e-05
+    ],
+    "error_cm_deg": [
+     3.109939695113238e-07,
+     0.0
+    ],
+    "blend_frames": 3,
+    "entry_speed_mps": 4.79
+   },
+   "attach_out": {
+    "clip": "AP033_zombie_run_feral_A",
+    "loop_frame": 15,
+    "phase": 0.9375,
+    "raw_error_cm_deg": [
+     5.787092503548402,
+     8.093001048910025
+    ],
+    "error_cm_deg": [
+     3.3080636326879487e-07,
+     0.0
+    ],
+    "blend_frames": 3,
+    "exit_speed_mps": 4.79
+   },
+   "end_facing_vs_root_deg": 19.07,
+   "end_spine_twist_deg": 15.3,
+   "start_facing_vs_root_deg": 12.0,
+   "tier": [],
+   "mirror_of": null,
+   "notes": null,
+   "source_id": "Blender kurgusu: run_feral_A pozları + kök yaw rampası -45° (Mutant Left Turn 45 Blend yaw 0, Injured Run Left Turn -26° / 2,2 m/s: ölçümle RED)",
+   "stance_frames": {
+    "Left": 3.5,
+    "Right": 3.0
+   },
+   "drag_windows": null,
+   "drag_glide_windows": null,
+   "rate_nominal": null,
+   "rate_band": [
+    0.75,
+    1.2
+   ],
+   "td_readability": {
+    "arm_reach_forward_max_m": 0.5151472091674805,
+    "arm_reach_ge_0p30_fraction": 1.0,
+    "shoulder_lateral_sway_pp_m": 0.1288602650165558,
+    "lean_hips_to_head_deg_mean": 29.02858009338791,
+    "lean_hips_to_head_deg_range": [
+     24.759742065670473,
+     34.18611254953644
+    ],
+    "hips_to_neck_lean_deg": 24.60527645603729,
+    "hand_behind_hips_max_m": {
+     "LeftHand": -0.4394010007381439,
+     "RightHand": -0.4607745110988617
+    },
+    "hips_to_neck_lean_deg_range": [
+     20.431858881334996,
+     29.285890343376163
+    ],
+    "note": "Blender izi, ölçek 1; oyun kamerası izdüşümü px değil (öneri eşikleri: uzanma >= 0,30 m döngünün >= %60, omuz p-p >= 0,10 m, Runner eğim 15-25°)"
+   },
+   "hips_to_neck_lean_deg": 24.60527645603729,
+   "L1_event_avg": null,
+   "L1_event_p95": null,
+   "events_match_L1_stance": null,
+   "swing_end_metrics": null,
+   "stance_event_rule": "foot_X -> foot_X_off = geometrik L1 duruş penceresi (S-03 913640ee)"
+  }
+ }
+}

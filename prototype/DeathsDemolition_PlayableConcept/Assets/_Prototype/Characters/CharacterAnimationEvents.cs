@@ -216,6 +216,17 @@ namespace DD.Prototype.Characters
         /// the spawn's Gait index (<see cref="CharacterAnimatorContract.IsGaitMirrored"/>); the player never sets it.
         /// </summary>
         public bool MirrorLocomotionFeet { get; set; }
+        /// <summary>Zombie p3 turn states only; the driver sets the actual mirrored state hash on entry and clears on exit.</summary>
+        public int ZombieTransitionMirrorState { get; set; }
+        private bool TransitionFeetMirrored()
+        {
+            if (ZombieTransitionMirrorState == 0) return false;
+            // Awake normally caches it; inactive prefab/configuration paths can deliver their first event before Awake.
+            if (_mirrorAnimator == null) _mirrorAnimator = GetComponent<Animator>();
+            if (_mirrorAnimator == null || _mirrorAnimator.runtimeAnimatorController == null) return false;
+            return _mirrorAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash == ZombieTransitionMirrorState
+                || (_mirrorAnimator.IsInTransition(0) && _mirrorAnimator.GetNextAnimatorStateInfo(0).shortNameHash == ZombieTransitionMirrorState);
+        }
 
         /// <summary>WP-096: foot events swapped by <see cref="MirrorLocomotionFeet"/> since the last reset (tests).</summary>
         public static int MirroredFootEvents { get; private set; }
@@ -227,6 +238,7 @@ namespace DD.Prototype.Characters
 
         private bool FeetMirrored()
         {
+            if (TransitionFeetMirrored()) { MirroredFootEvents++; return true; }
             if (!MirrorLocomotionFeet) return false;
             if (_mirrorAnimator == null) _mirrorAnimator = GetComponent<Animator>();
             if (_mirrorAnimator == null || _mirrorAnimator.runtimeAnimatorController == null) return false;
@@ -279,8 +291,8 @@ namespace DD.Prototype.Characters
             if (FeetMirrored()) Raise(CharacterAnimationEvent.FootLOff, OtherSide(value));
             else Raise(CharacterAnimationEvent.FootROff, value);
         }
-        public void pivot_plant(int value) => Raise(CharacterAnimationEvent.PivotPlant, value);
-        public void stop_plant(int value) => Raise(CharacterAnimationEvent.StopPlant, value);
+        public void pivot_plant(int value) => Raise(CharacterAnimationEvent.PivotPlant, TransitionFeetMirrored() ? OtherSide(value) : value);
+        public void stop_plant(int value) => Raise(CharacterAnimationEvent.StopPlant, TransitionFeetMirrored() ? OtherSide(value) : value);
         public void weight_shift(int value) => Raise(CharacterAnimationEvent.WeightShift, value);
         public void attack_recover(int value) => Raise(CharacterAnimationEvent.AttackRecover, value);
         public void grab_start(int value) => Raise(CharacterAnimationEvent.GrabStart, value);

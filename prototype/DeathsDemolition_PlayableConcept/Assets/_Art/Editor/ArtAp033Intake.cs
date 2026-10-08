@@ -10,7 +10,7 @@ using C = DD.Prototype.Characters.CharacterAnimatorContract;
 namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
-    /// WP-096 (S-03) · AP-033 zombie locomotion intake, one batch step for every integrated part (<see cref="Deliveries"/>: p1 4 + p2 8):
+    /// WP-096 (S-03) · AP-033 zombie locomotion intake, one batch step for every integrated part (<see cref="Deliveries"/>: p1 4 + p2 8 + p3 10):
     /// <c>-executeMethod DD.Art.Pipeline.EditorTools.ArtAp033Intake.RunAll</c> (<see cref="RunP1"/> = the p1 window's entry).
     ///   1. force-imports the delivered FBX (Characters/Animations/AP033_*_v001.fbx) — ArtAssetPostprocessor applies the v1.1
     ///      character contract (Humanoid, avatar from the model, the 52-bone template mapping) and the manifest row's take
@@ -22,7 +22,7 @@ namespace DD.Art.Pipeline.EditorTools
     ///      the player controller / sets are not touched) — the build ends with the Unity-rig stride calibration
     ///      (ArtZombieStrideCalibration, one "[DD-ART] stride &lt;clip&gt; spd → unity" line per gait) — then checks the gait tree (one child per
     ///      ZombieGaitClips index, the limp R child mirrored) and every intake clip's set speed (measured, or the spd fallback);
-    ///   5. logs the verifiable line <c>[DD-ART] ap033.p1+p2 imported=12 gaitChildren=22 mirror=1 rebound=0 calibrated=… …</c>. Any failure throws.
+    ///   5. logs the verifiable line <c>[DD-ART] ap033.p1+p2+p3 imported=22 gaitChildren=22 mirror=1 rebound=0 calibrated=… …</c>. Any failure throws.
     /// </summary>
     public static class ArtAp033Intake
     {
@@ -33,10 +33,11 @@ namespace DD.Art.Pipeline.EditorTools
             C.ZombieWalkLurchBV4, C.ZombieWalkDragAV4, C.ZombieWalkDragBV4, C.ZombieRunFeralBV4, C.ZombieRunStumbleAV4, C.ZombieWalkHeavyAV4, C.ZombieWalkHeavyBV4, C.ZombieWalkStompBV4
         };
 
-        /// <summary>The integrated AP-033 parts (p3 = the transitions: a later round, with the start / stop / turn states).</summary>
-        public static readonly (string part, string[] clips)[] Deliveries = { ("p1", P1Clips), ("p2", P2Clips) };
+        /// <summary>Integrated AP-033 gaits and p3 one-shot transitions; only gait clips enter stride calibration.</summary>
+        public static readonly string[] P3Clips = ZombieTransitionData.Clips;
+        public static readonly (string part, string[] clips)[] Deliveries = { ("p1", P1Clips), ("p2", P2Clips), ("p3", P3Clips) };
 
-        [MenuItem("DD/Art/Run AP-033 Zombie Locomotion p1+p2 (WP-096)", priority = 334)]
+        [MenuItem("DD/Art/Run AP-033 Zombie Locomotion p1+p2+p3 (WP-096)", priority = 334)]
         public static void RunAll()
         {
             var clips = new List<string>();
@@ -114,6 +115,13 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 CharacterAnimationSet.Entry e = set.Find(name);
                 if (e == null) { problems.Add(name + " not in the set"); continue; }
+                if (manifest[name].transition != null)
+                {
+                    if (e.transition == null || !e.transition.Valid(e.frames)) problems.Add(name + " missing transition data");
+                    if (e.unitySpeedMps > 0f) problems.Add(name + " transition calibrated as gait");
+                    if (ArtAnimatorBuilder.FindState(controller, 0, name) == null) problems.Add(name + " missing transition state");
+                    continue;
+                }
                 float s = set.SpeedOf(name);
                 float spd = manifest[name].speedMps;
                 speeds.Add(name.Substring(ArtAnimationEventContract.Ap033Prefix.Length + "zombie_".Length) + "=" + s.ToString("F2", CultureInfo.InvariantCulture) + "/" + spd.ToString("F2", CultureInfo.InvariantCulture));
@@ -139,7 +147,8 @@ namespace DD.Art.Pipeline.EditorTools
             v.AddRange(ArtCharacterContract.Validate(importer));
             AnimationClip clip = ArtAnimationClipContract.ClipOf(spec);
             if (clip == null) { v.Add("clip " + spec.name + " not imported"); return v; }
-            if (!clip.isLooping) v.Add("clip not looping");
+            if (clip.isLooping != spec.loop) v.Add("clip loop != manifest");
+            if (spec.transition != null && !spec.transition.Valid(spec.frames)) v.Add("invalid p3 motor contract");
             if (!clip.isHumanMotion) v.Add("clip not humanoid");
             float seconds = (spec.frames - 1) / (float)ArtAnimationClipContract.Fps;
             if (Mathf.Abs(clip.length - seconds) > 0.5f / ArtAnimationClipContract.Fps) v.Add("clip length " + clip.length.ToString("F3", CultureInfo.InvariantCulture) + " s != " + seconds.ToString("F3", CultureInfo.InvariantCulture));

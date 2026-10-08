@@ -1,0 +1,297 @@
+{
+ "schema": "AP033.manifest.v001",
+ "set": "p3-v001",
+ "date": "2026-10-08",
+ "producer": "P-06 blender-specialist (AP-033 hattı)",
+ "rig": "AP-007 ZombieRig 73 kemik (56 çekirdek + 17 sec_*), FBX 7.4 binary, yalnız iskelet, 30 fps, metre, +Y yukarı, ileri +Z (Unity)",
+ "pipeline": "BATCH=1 bash AP-033/04-tools/ap033_run.sh all --job jobs/p3_v001.json",
+ "assumptions": [
+  "FBX in-place (S-03 kararı B): kök verisi ap033_clip_data.json; Unity kök yolu ölçülmedi.",
+  "Bağlanma: ilk/son B karede poz bağlanılan döngünün en yakın fazından harmanlanır, kök hızı döngü native'ine; ham (harman öncesi) fark ayrıca raporlanır.",
+  "stop_walk: Stop Walking RED (3,0 s, giriş 0,53 m/s; k_t ~5 gerekir) -> Run To Stop Fast (hareket tasarımı §4.2). _r = ayna.",
+  "stop_run: Run To Stop Fast k_t 1,42 + yol ölçeği 1,2; giriş 4,79 m/s bağlanma penceresinde.",
+  "turn180_L: Running Turn 180 aynası, k_t 0,83.",
+  "stumble_recover: Jogging Stumble, lurch_A'ya bağlı (doğal hızı 2,7 m/s; feral'e bağlamak 1,7x esnetme ister).",
+  "AD p3 düzeltmesi (08.10): stop kök yaw'ı görünen gövdeye (göğüs) çekildi (S-03 seçenek A); stop çıkışı ve start girişi oyun idle_sway v006 f0'a bağlı (repo main LFS nesnesi 0cd3f616…, salt okunur; 56 kemik bind = idle pozu, dünya yönelimi aktarıldı).",
+  "start_walk / start_run / turn45_run_L: Blender kurgusu; döngü olay tablosundaki her duruş dünyada kilitli (temas noktası), kök hız rampası; turn45 pivot_plant dış ayak (R).",
+  "turn_angle_deg gerçek ölçülen değerdir (ölçeklenmez).",
+  "turn90_L (X, S-03 onayı 08.10): Drunk Running Left Turn tam klip, k_t 1,22, 37 kare / 1,23 s (süre bandı dışı, yaw-güdümlü oynatma); bağlanma pencerelerinde kök XY iğnelemesi (yerdeki ayak dünyada sabit); turn_angle_deg gerçek değer."
+ ],
+ "files": [
+  {
+   "path": "AP033_zombie_start_run_v001.fbx",
+   "bytes": 549964,
+   "sha256": "b4a68cfdcaab4715cee60010386ee018ae558cdabe1e88f314a95b23f6878be5"
+  },
+  {
+   "path": "AP033_zombie_start_walk_v001.fbx",
+   "bytes": 574620,
+   "sha256": "13493e0e38c20d5b07560c4e7d739ccca0ea77ce58902d791208903bf6edf69a"
+  },
+  {
+   "path": "AP033_zombie_stop_run_l_v001.fbx",
+   "bytes": 561292,
+   "sha256": "2858bb076f97180dd2e4f98f186b3dde59766fd60322fb9df452910c4ad2334c"
+  },
+  {
+   "path": "AP033_zombie_stop_run_r_v001.fbx",
+   "bytes": 561292,
+   "sha256": "e273686ff2e954a5baa49138ed78907c0c7b0b03da5797123e92960ed9d10e1f"
+  },
+  {
+   "path": "AP033_zombie_stop_walk_l_v001.fbx",
+   "bytes": 588604,
+   "sha256": "9303b21c01c9a63cb704b46f2314cdf341ec039cc12ff71352c4e3300ae61056"
+  },
+  {
+   "path": "AP033_zombie_stop_walk_r_v001.fbx",
+   "bytes": 588604,
+   "sha256": "8475480f3066e58ce483195eec73a9474d899ffb8242658de2de8a3cf82450e9"
+  },
+  {
+   "path": "AP033_zombie_stumble_recover_v001.fbx",
+   "bytes": 638572,
+   "sha256": "d1b731c4c92af08c351d4433c9a0731c9b0bf21822cbdbe41b7990ecf53e5666"
+  },
+  {
+   "path": "AP033_zombie_turn180_L_v001.fbx",
+   "bytes": 595260,
+   "sha256": "2fd0ae2d234b30deb03baab941eb455edf57c67d5a52a6b01ba6a21f6f0c3331"
+  },
+  {
+   "path": "AP033_zombie_turn45_run_L_v001.fbx",
+   "bytes": 549980,
+   "sha256": "5e7f31fee55344e8bc11a904921d673431ce68db88d05ac744176627c89e42ee"
+  },
+  {
+   "path": "AP033_zombie_turn90_L_v001.fbx",
+   "bytes": 650044,
+   "sha256": "9f00ec1b17e151b1a71c94a85f6556c4656b8980240ffbaa9096c121b21fb9a1"
+  },
+  {
+   "path": "anim-events.json",
+   "bytes": 5918,
+   "sha256": "6666ae09df448b5f273d43bae107d61d00c2a2631cdc91b5979c9a0542a8f076"
+  },
+  {
+   "path": "ap033_clip_data.json",
+   "bytes": 49195,
+   "sha256": "696f25b693a8ee265265eb710b160634ede35251db5e43f73dc0c13d67f45839"
+  },
+  {
+   "path": "manifest.json",
+   "bytes": 10976,
+   "sha256": "05b130c9002fc2f6bb6c93fe6ab53de03d31e1be64d89079faed5a43ecc9308c"
+  },
+  {
+   "path": "previews/AP033_zombie_start_run_rootpath.png",
+   "bytes": 16988,
+   "sha256": "efcf55b940229240a02b6635f83244013979ed4c08db327b01a96f27c7a951fd"
+  },
+  {
+   "path": "previews/AP033_zombie_start_run_sheet4.png",
+   "bytes": 920181,
+   "sha256": "e83293b3486e2238a8e67277683aba28238c1e63a8d69d04e07bd37acf5887c3"
+  },
+  {
+   "path": "previews/AP033_zombie_start_run_sheet8.png",
+   "bytes": 1482073,
+   "sha256": "aed1954ea3ede163f57f33ea376668f29b6ac29e9ffc4db715e59afa890dd9e4"
+  },
+  {
+   "path": "previews/AP033_zombie_start_run_td_game_1080p_f0.png",
+   "bytes": 2016574,
+   "sha256": "83d63547f7b937d1934a95794c9a3f7323d9d90f5d974c2012fad82f9ac76183"
+  },
+  {
+   "path": "previews/AP033_zombie_start_walk_rootpath.png",
+   "bytes": 18033,
+   "sha256": "0fa209e5aacf8b85bfe64080277692463cb4fe5774c03136b50bf4b52bc6504a"
+  },
+  {
+   "path": "previews/AP033_zombie_start_walk_sheet4.png",
+   "bytes": 910854,
+   "sha256": "0fa1b982974aa9f8318abdfdce15176aa85e3eeb6ab842d7267b7c75d2aab8a0"
+  },
+  {
+   "path": "previews/AP033_zombie_start_walk_sheet8.png",
+   "bytes": 1472894,
+   "sha256": "0c6d1a681daa83bd55f9e0b34b9bba591bde412659eebd01bae15b87600f5390"
+  },
+  {
+   "path": "previews/AP033_zombie_start_walk_td_game_1080p_f0.png",
+   "bytes": 2016574,
+   "sha256": "199684713f83693f7331254fe0e06d3effc5984a54b9ecdd12b78260174cab06"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_l_rootpath.png",
+   "bytes": 18742,
+   "sha256": "18573e3235c237b6228ed78cab2b1313ab417dcf0103e319c9759fd1fc863040"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_l_sheet4.png",
+   "bytes": 927927,
+   "sha256": "71064411ff5f79b65516cfa344433920ba802d2883252fb2800fa74ed2dcef0c"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_l_sheet8.png",
+   "bytes": 1491889,
+   "sha256": "502c50a9b947786c484b8c6c76664f946650c42e4be4d799b99c33a21eb9b994"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_l_td_game_1080p_f0.png",
+   "bytes": 2017102,
+   "sha256": "79f62fb6761e4119ecce313b373b7d254fde2bd83de740d962bf0ccf3d1a584b"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_r_rootpath.png",
+   "bytes": 19406,
+   "sha256": "13b27ce9c8c73f028e08dd71cedc902459e2209688060ca4d35d53c2754926f9"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_r_sheet4.png",
+   "bytes": 922591,
+   "sha256": "57678f64d08c34a5fdedebc28d6935f3abfe0b4538c0b3024ed54cbcde2febd2"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_r_sheet8.png",
+   "bytes": 1487497,
+   "sha256": "9b0796fea4583f291ceda6819198dffbbdccbb7e8193721055e89a9a753a90c1"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_run_r_td_game_1080p_f0.png",
+   "bytes": 2016963,
+   "sha256": "b698bad366ac60effcf19741a2e2633f51bb1deb3e3c55b7cc91dfb808b6e334"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_l_rootpath.png",
+   "bytes": 18669,
+   "sha256": "b7c83c76c87aeaff9c980ddc90f422ddc0972fe38ddf43ea3cf7590f8db06fb4"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_l_sheet4.png",
+   "bytes": 894217,
+   "sha256": "43db97260b3ed4de387fbe5d38d4bfe9eb70bc3bdde8b272ef21fbf268a24593"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_l_sheet8.png",
+   "bytes": 1494963,
+   "sha256": "c7343562e930b4db0a1a3a4d540088db835194b32321887d32990bfd103dae4a"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_l_td_game_1080p_f0.png",
+   "bytes": 2018362,
+   "sha256": "19eaf91c2f84535cb0dccd14d14d3523c76ee7129913a26d5be9c39597cc52df"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_r_rootpath.png",
+   "bytes": 18760,
+   "sha256": "277a0d179fa9e590a9a91b7727110f5f58c6e7b29e12bb8f9f0ed94451818ecb"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_r_sheet4.png",
+   "bytes": 879723,
+   "sha256": "53f22fa3f4395d05e585513d5e35d5fe8caff910c2c780fbb9dbdda9af343d63"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_r_sheet8.png",
+   "bytes": 1478691,
+   "sha256": "41beae85d953229bbfcb52976e08674e0333039ad6bf6c25e7328e3528093fe0"
+  },
+  {
+   "path": "previews/AP033_zombie_stop_walk_r_td_game_1080p_f0.png",
+   "bytes": 2018205,
+   "sha256": "d20c9f241c83053b48978ac64265c5e76ba09f489ace2832fb0d3b5adc50b2da"
+  },
+  {
+   "path": "previews/AP033_zombie_stumble_recover_rootpath.png",
+   "bytes": 18269,
+   "sha256": "d903c6542f19722841a855e97bdbcbf08c691f94df2838ced0341cbe63e5dc20"
+  },
+  {
+   "path": "previews/AP033_zombie_stumble_recover_sheet4.png",
+   "bytes": 915219,
+   "sha256": "7ad806aaabe330870778181c2e1e8d88483dd600ac7437c6859ecfede9731d20"
+  },
+  {
+   "path": "previews/AP033_zombie_stumble_recover_sheet8.png",
+   "bytes": 1513524,
+   "sha256": "8fb43df02c7c1b57011dd65b2f1e76b54291a2094602905f2cb902bd6d1cf2b6"
+  },
+  {
+   "path": "previews/AP033_zombie_stumble_recover_td_game_1080p_f0.png",
+   "bytes": 2017073,
+   "sha256": "ccc585d8f86f9178d2920edc61e30ec70f88e36f12fab49c4118d3f4b889de78"
+  },
+  {
+   "path": "previews/AP033_zombie_turn180_L_rootpath.png",
+   "bytes": 17894,
+   "sha256": "5d6e390558e7488f294d03bd5c7805a0670825b68c442155b0bf83bfdf2c956f"
+  },
+  {
+   "path": "previews/AP033_zombie_turn180_L_sheet4.png",
+   "bytes": 920719,
+   "sha256": "0fc3bfdb20d1f57850b7beaffd8747a6f0551eddac45307ab52432f9aa37744f"
+  },
+  {
+   "path": "previews/AP033_zombie_turn180_L_sheet8.png",
+   "bytes": 1485220,
+   "sha256": "5b15d7155b98c01c7236f2a1db63dd275356dc213b5d8aa5b4561367526bb2c3"
+  },
+  {
+   "path": "previews/AP033_zombie_turn180_L_td_game_1080p_f0.png",
+   "bytes": 2018362,
+   "sha256": "d73bf91e066d9c1260772208c9a172fa8e366447d6fe4042d91b30ade7362c73"
+  },
+  {
+   "path": "previews/AP033_zombie_turn45_run_L_rootpath.png",
+   "bytes": 18541,
+   "sha256": "112175d6c0f13f85317757ee048356b61be11a31953100aa6b2ff988f5150c11"
+  },
+  {
+   "path": "previews/AP033_zombie_turn45_run_L_sheet4.png",
+   "bytes": 936678,
+   "sha256": "1eb4cab67a2ad1e51e98ffa088aa0b3623d26259b95705ca0ea010ec3f2b1850"
+  },
+  {
+   "path": "previews/AP033_zombie_turn45_run_L_sheet8.png",
+   "bytes": 1514736,
+   "sha256": "5e4d598ebfa30f6da560e048308f9dd37b83b76352e65d5acef273f0fee45651"
+  },
+  {
+   "path": "previews/AP033_zombie_turn45_run_L_td_game_1080p_f0.png",
+   "bytes": 2017780,
+   "sha256": "c2ccae100f8b069a89fb78635501a9b14d909ad155208f0f76753761270a21b6"
+  },
+  {
+   "path": "previews/AP033_zombie_turn90_L_rootpath.png",
+   "bytes": 22671,
+   "sha256": "dd2bdf8a9ee67c8ccac07a1365c4611df4cd497c5f0a438ebb2781b31d723b2a"
+  },
+  {
+   "path": "previews/AP033_zombie_turn90_L_sheet4.png",
+   "bytes": 926808,
+   "sha256": "57c55ca2d8ef7aa13177c3189d45af867733126f539043e0df0d3de2ea2dca23"
+  },
+  {
+   "path": "previews/AP033_zombie_turn90_L_sheet8.png",
+   "bytes": 1512415,
+   "sha256": "9c31b179cce9582bff333dcb17aad2d9389489d38dc8115b8722dd0c79b3ddaa"
+  },
+  {
+   "path": "previews/AP033_zombie_turn90_L_td_game_1080p_f0.png",
+   "bytes": 2017193,
+   "sha256": "dc6643c2889919d716c759988070cca9978e13631a709ce9c65b36e29b8851f5"
+  },
+  {
+   "path": "zombie_clip_index_v001.json",
+   "bytes": 14530,
+   "sha256": "2081e6b1974775c36571668c2f36e0983e6c87b1c1b45097827037af0a47da9a"
+  },
+  {
+   "path": "zombie_quality_v001.csv",
+   "bytes": 5163,
+   "sha256": "8d88b6c7236186bc66910588ca788a7411b10949a9352eb48b104b56881d2598"
+  }
+ ]
+}
