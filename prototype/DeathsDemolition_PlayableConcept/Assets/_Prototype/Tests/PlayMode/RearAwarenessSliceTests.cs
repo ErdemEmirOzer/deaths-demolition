@@ -19,6 +19,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// the rear level climbs to Alert and its first hit lands ≥ 0.8 s after the beat; a Standard that appears already
     /// close behind is warned at once and starts no wind-up for 0.8 s.
     /// </summary>
+    [Category("FPTP")]
     [Category("WP076")]
     public sealed class RearAwarenessSliceTests
     {

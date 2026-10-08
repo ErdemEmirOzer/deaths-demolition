@@ -197,6 +197,76 @@ class CodeMappingTests(unittest.TestCase):
         self.assertEqual((7, "out-of-scope changes", 32, True), (receipt["code"], receipt["why"], receipt["restoreExit"],
                                                                  receipt["outOfScopeChanged"]))
 
+    # --- WP-099 (C-00 08.10, FINAL audit Y4): an editor window's out-of-scope change goes through qa/oos_rule.py -------
+    LINE32 = "userdata-guard restore scope=editor touched=0 verified=1 outOfScopeChanged=1 retry=none class=OTHER"
+
+    def oos_ug(self):
+        ug = Path(tempfile.mkdtemp()); (ug / "out-of-scope-changed.txt").write_text("player  " + "a" * 64 + "  /x.plist\n")
+        return ug
+
+    def test_editor_oos_accepted_by_the_rule_passes_with_a_warning(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide", return_value=(True, "player area only, writers = …")) as rule:
+            ok, why = gr.verdict(ug, self.LINE32, ug / "after.plist", "editor")
+        self.assertTrue(ok, why); self.assertEqual(1, rule.call_count)
+        self.assertEqual("touched=0 · WARNING out-of-scope change accepted by oos_rule: player area only, writers = …", why)
+
+    def test_editor_oos_refused_by_the_rule_stops_with_its_reason(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide", return_value=(False, "condition 1: a change outside the player area")):
+            self.assertEqual((False, "out-of-scope changes (oos_rule: condition 1: a change outside the player area)"),
+                             gr.verdict(ug, self.LINE32, ug / "after.plist", "editor"))
+
+    def test_player_oos_still_stops_and_never_asks_the_rule(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide") as rule:
+            self.assertEqual((False, "out-of-scope changes"), gr.verdict(ug, self.LINE32, ug / "after.plist", "player"))
+        self.assertEqual(0, rule.call_count)
+
+    def test_editor_oos_rule_error_stops(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide", side_effect=RuntimeError("boom")):
+            ok, why = gr.verdict(ug, self.LINE32, ug / "after.plist", "editor")
+        self.assertFalse(ok); self.assertIn("oos_rule failed: RuntimeError: boom", why)
+
+    def test_close_editor_32_accepted_is_code_0(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "run_guard", return_value=done(32, self.LINE32)), mock.patch.object(gr, "export_prefs"), \
+                mock.patch.object(gr, "oos_decide", return_value=(True, "ok by rule")):
+            receipt = gr.close(ug, "editor")
+        self.assertEqual((0, 32, True), (receipt["code"], receipt["restoreExit"], receipt["outOfScopeChanged"]))
+        self.assertIn("WARNING out-of-scope change accepted by oos_rule: ok by rule", receipt["why"])
+        self.assertEqual("editor", receipt["scope"])
+        self.assertEqual({"rule": "oos_rule", "accepted": True, "why": receipt["why"]}, receipt["oosRule"])
+        self.assertTrue(gr.receipt_ok(dict(receipt, snapshotExit=0)))
+        self.assertFalse(gr.receipt_ok(dict(receipt, snapshotExit=0), allow_editor_oos=False))
+
+    def test_unverified_editor_oos_never_asks_the_rule(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide") as rule:
+            self.assertEqual((False, "guard verified!=1"),
+                             gr.verdict(ug, self.LINE32.replace("verified=1", "verified=0"), ug / "after.plist", "editor"))
+        rule.assert_not_called()
+
+    def test_editor_oos_real_rule_2b_end_to_end(self):
+        """the real oos_rule on fixture windows (KPROJ and the ledger pointed at a temp root): S-03 before4's case — the
+        plist changed with no Player alive inside another player window that restored verified=1 → accepted."""
+        import json, os
+        root = Path(tempfile.mkdtemp()); ug = root / "wp-096" / "ug"; other = root / "wp-099" / "ug"
+        for d in (ug, other):
+            d.mkdir(parents=True)
+        (ug / "window.json").write_text(json.dumps({"scope": "editor", "utc": "2026-10-07T21:08:55Z"}))
+        (ug / "out-of-scope-changed.txt").write_text("player  " + "a" * 64 + "  /P/x.plist (launch-counter keys excluded)\n")
+        (ug / "attribution.txt").write_text("/P/x.plist\tmtime 21:10:08Z\tno Player alive (Editor, or between samples)\n")
+        (ug / "players-lineage.tsv").write_text("")
+        (ug / "restore.txt").write_text("2026-10-07T21:10:34Z userdata-guard restore scope=editor touched=0 verified=1\nexit=32\n")
+        (other / "window.json").write_text(json.dumps({"scope": "player", "windowAreas": ["player"], "utc": "2026-10-07T21:05:08Z"}))
+        (other / "restore.txt").write_text("2026-10-07T21:10:11Z userdata-guard restore scope=player touched=1 verified=1\nexit=0\n")
+        with mock.patch.object(gr.dd_paths, "KPROJ", root), mock.patch.dict(os.environ, {"DD_GUARD_ROOT": str(root / "noledger"),
+                                                                                         "RC_OOS_WAIT": "0"}):
+            ok, why = gr.verdict(ug, self.LINE32, ug / "after.plist", "editor")
+        self.assertTrue(ok, why); self.assertIn("WARNING (2b", why); self.assertIn(str(other), why)
+
     def test_restore_32_after_a_retry_stops_although_the_first_list_is_empty(self):
         """D7 review SHOULD-1: a retry publishes its list as out-of-scope-changed.txt.N; the summary line decides."""
         ug = Path(tempfile.mkdtemp())

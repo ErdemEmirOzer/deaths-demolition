@@ -20,11 +20,11 @@ namespace DD.Prototype.Tests.EditMode.Audio
     /// ölçüm), mixer grup/snapshot tablosu, bölge haritası.
     /// </summary>
     [TestFixture]
-    [Category("WP021")]
     public sealed class AudioSliceEditModeTests
     {
         // ------------------------------------------------------------------ olay haritası
 
+        [Category("WP021")]
         [Test]
         public void OlayHaritasi_HerCombatVeRunOlayiIcinSatirVar()
         {
@@ -48,6 +48,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.IsEmpty(eksik, "Olay haritasında ses girdisi olmayan oyun olayı: " + string.Join(", ", eksik));
         }
 
+        [Category("WP021")]
         [Test]
         public void OlayHaritasi_OyuncuUiAmbiyansMuzikSatirlari_TamVeTekil()
         {
@@ -85,6 +86,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-068 slice 11: the UI v3 contract - fifteen new members bound (TimelineSkipped is the one control row), run cues ≤ 60 and never duck, sliders ≤ 12/s, ±3 % jitter.</summary>
+        [Category("WP021")]
         [Test]
         public void UiV3_Sozlesme_YeniOlaylarBagli_RunCuelariDuckYok_SliderHizi()
         {
@@ -117,6 +119,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-021C · §12: every WP-022B UiEvent member has exactly one map row; the router's table equals the map (bound ↔ reserved).</summary>
+        [Category("WP021")]
         [Test]
         public void UiOlaylari_HerUiEventUyesininSatiriVar_RouterHaritayaEsit()
         {
@@ -159,6 +162,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-048B · every AP-009 clip event (CharacterAnimationEvents.Names) has an Animation row; the WP-032C weapon foley resolves to 21 distinct ids.</summary>
+        [Category("WP021")]
         [Test]
         public void AnimasyonOlaylari_HerKlipOlayininSatiriVar_SilahFoleyAyrik()
         {
@@ -201,6 +205,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-058B · AP-015P plate → footstep variant rule (WP-038 plates carry Dirt/Stone/Water tags only).</summary>
+        [Category("WP021")]
         [Test]
         public void AyakSesi_PlakaVaryantlari_AdKurali()
         {
@@ -213,6 +218,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-072 B4 · DEC-094: the Raiju / Namekuji usage rows replace the WP-058 Kagura / Ofuda / Tide set (ids 310–332 gone).</summary>
+        [Category("WP021")]
         [Test]
         public void SpecialKullanim_RaijuNamekuji_Satirlari_EskiKimliklerYok()
         {
@@ -239,6 +245,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-048 · AP-017 breakable event table (AP017-breakable-event-table-v001): every family root name resolves to its own voice.</summary>
+        [Category("WP021")]
         [Test]
         public void Kirilabilirler_AP017AileAdlari_KendiSesineCozulur()
         {
@@ -261,6 +268,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-060 · WP-038B: the break event id is data on the prop; six events each own a voice, the name only refines inside the event.</summary>
+        [Category("WP021")]
         [Test]
         public void Kirilabilirler_EventIdVeriden_AltiOlayKendiSesi_AdOlayIcindeInceltir()
         {
@@ -288,6 +296,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-021C · tier vocal set: every tier has its own windup/attack/hit/death/idle/aggro id (B·B·B).</summary>
+        [Category("WP021")]
         [Test]
         public void TierVokalSeti_HerTierKendiKimligi()
         {
@@ -305,6 +314,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(tiers.Length * 6, gorulen.Count);
         }
 
+        [Category("WP021")]
         [Test]
         public void OlayHaritasi_HerSesinRecipeVeyaKatalogKarsiligiVar()
         {
@@ -333,6 +343,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
         // ------------------------------------------------------------------ ölçer
 
+        [Category("WP021")]
         [Test]
         public void LoudnessMeter_TamOlcekSinus_BS1770Referansi()
         {
@@ -354,6 +365,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
         // ------------------------------------------------------------------ katalog
 
+        [Category("WP021")]
         [Test]
         public void Katalog_ManifestVar_DonusturucuIdempotan_VeYuklenebilir()
         {
@@ -395,6 +407,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         /// WP-085 G2: the shipped catalog (as committed — not rebuilt here) has no null slot, every Sound once, ≥ 1 non-null
         /// clip per entry, and TryGet returns exactly that entry. A duplicate used to make TryGet rebuild its index on every call.
         /// </summary>
+        [Category("WP021")]
         [Test]
         public void Katalog_SevkEdilen_NullGirdiYok_SoundTekil_HerGirdideKlipVar()
         {
@@ -443,6 +456,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         /// second and later calls must allocate nothing. Statement lambdas on purpose: an expression lambda that
         /// returns bool binds to ActualValueDelegate and is evaluated outside the GC recorder.
         /// </summary>
+        [Category("WP021")]
         [Test]
         public void Katalog_AyniSoundIkiKez_IkinciTryGetAyirmaz()
         {
@@ -491,6 +505,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         /// WP-085 G2: with the count check gone, Set() and OnAfterDeserialize (load / in-place reimport / undo) are the only
         /// invalidations — both must lead to a rebuild, and only one. Same entry count throughout, which the old check could not see.
         /// </summary>
+        [Category("WP021")]
         [Test]
         public void Katalog_SetVeOnAfterDeserialize_IndeksiYenidenKurar()
         {
@@ -524,6 +539,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>WP-085 G2: the builder's overlay step — AP-027 wins per sound, AP-011 keeps the rest; a sound twice in one manifest throws.</summary>
+        [Category("WP021")]
         [Test]
         public void KatalogDonusturucu_AP027UsteBiner_ManifestteYinelenenSesHataVerir()
         {
@@ -550,6 +566,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             StringAssert.Contains("AP-011 " + smg, hata.Message);
         }
 
+        [Category("WP021")]
         [Test]
         public void Katalog_ManifestLufsVeTepe_StandartIcinde_VeYenidenOlcumTutuyor()
         {
@@ -666,6 +683,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         /// klip 0, DC 0, sevk OGG q8 (SFX) / q7 (loop). Manifest damgaları + kaynak WAV başlığı
         /// + importer ayarı + sevk klibinde yeniden ölçüm (en sessiz 100 ms penceresi).
         /// </summary>
+        [Category("WP021")]
         [Test]
         public void UstKalite_24BitKaynak_GurultuTabani_Klip_DC_ImporterKalitesi()
         {
@@ -769,6 +787,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
         // ------------------------------------------------------------------ mixer
 
+        [Category("WP021")]
         [Test]
         public void Mixer_AltiGrupDortSnapshot_AcikParametreler_KopruEslemesi()
         {
@@ -804,6 +823,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         // ------------------------------------------------------------------ WP-021C · yüzey etiketleri
 
         /// <summary>WP-021C · ADR-021-1 v2: every placement family in the shipped world has a surface rule (no family falls back by role).</summary>
+        [Category("WP021")]
         [Test]
         public void YuzeyEtiketleri_HerPlacementAilesininKuraliVar()
         {
@@ -834,6 +854,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
         // ------------------------------------------------------------------ bölge haritası
 
+        [Category("WP021")]
         [Test]
         public void BolgeHaritasi_BesPoligon_HerMerkezKendiBolgesineCozulur()
         {
@@ -855,6 +876,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             StringAssert.Contains("up to date", AudioCatalogBuilder.BuildRegionMap(), "ikinci koşu idempotan");
         }
 
+        [Category("WP021")]
         [Test]
         public void BolgeHaritasi_NoktaPoligonTesti()
         {
@@ -864,6 +886,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.IsFalse(AudioRegionMap.Contains(new float[] { 0f, 0f, 1f, 1f }, 0.5f, 0.5f), "3 köşeden az = dış");
         }
 
+        [Category("WP021")]
         [Test]
         public void AtesV4_KimlikTablosu_WP069AudioIdleri_SeriRpmWDIleAyni_KuyrukMatrisi()
         {
@@ -921,6 +944,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>R3 FPTP half of AtesV4_KimlikTablosu (C-00 07.10: mixed tests split): the FP player weapon is 2D.</summary>
+        [Category("WP021")]
         [Test]
         [Category("FPTP")]
         public void AtesV4_KimlikTablosu_FpSilah2D_TPFP()
@@ -928,6 +952,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(0f, WeaponPerspectiveMix.For(DD.Prototype.CameraSystem.CameraMode.FirstPerson).Spatial, "FP: oyuncu silahı 2D.");
         }
 
+        [Category("WP021")]
         [Test]
         public void FoleyV3_SilahBasinaMekanizmaSeti_AileVeKovanEslemi()
         {
@@ -998,6 +1023,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>R3 FPTP half of FoleyV3_SilahBasinaMekanizmaSeti (C-00 07.10): the top-down casing sits under the FP one.</summary>
+        [Category("WP021")]
         [Test]
         [Category("FPTP")]
         public void FoleyV3_KovanPerspektifSirasi_TPFP()
@@ -1005,6 +1031,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.Less(CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.FirstPerson));
         }
 
+        [Category("WP021")]
         [Test]
         public void DarbeV3_YuzeyKalibreMatrisi_AdlarVeKazanc()
         {
@@ -1026,6 +1053,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, ImpactAudio.For(SurfaceKind.Stone, DD.Prototype.Core.Weapons.WeaponCaliber.Explosive), "patlama kendi yolunda");
         }
 
+        [Category("WP021")]
         [Test]
         public void Firlatici_UcusDongusuEslemi_PitchRampasi_PatlamaKatmani()
         {
@@ -1041,6 +1069,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>R3 FPTP half of Firlatici_UcusDongusuEslemi (C-00 07.10): the FP flight loop drops 2 st past 45 m.</summary>
+        [Category("WP021")]
         [Test]
         [Category("FPTP")]
         public void Firlatici_PitchRampasi_TPFP()
@@ -1048,6 +1077,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(Mathf.Pow(2f, -2f / 12f), ProjectileFlightAudio.PitchFor(60f, DD.Prototype.CameraSystem.CameraMode.FirstPerson), 1e-4f, "45 m+ → −2 st");
         }
 
+        [Category("WP021")]
         [Test]
         public void SilahFoleyV3_KlipSetineGore_MekanizmaEslemesi()
         {
@@ -1071,6 +1101,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.FoleyAr1MagIn, WeaponFoleyV3.Mechanism("AR1", MagIn, true), "AR1 iki sette aynı");
         }
 
+        [Category("WP021")]
         [Test]
         public void SilahAtesCuesu_TekrarBastirmasinaTakilmaz_YuksekAtesHizi()
         {
@@ -1095,6 +1126,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(0, bastirilan, "silah cue'su bastırılmaz");
         }
 
+        [Category("WP021")]
         [Test]
         public void YagmurSonrasiKuslar_KazancFazdanBagimsiz_CatiAltindaKisik_DuckAltindaErtelenir()
         {
@@ -1110,6 +1142,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.LessOrEqual(AfterRainAmbience.BirdRangeMax, 25f);
         }
 
+        [Category("WP021")]
         [Test]
         public void AtesV4_AP027Ithal_OnSilah_KatalogdaVeKatmanlarCozuluyor()
         {
@@ -1157,6 +1190,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.IsTrue(AudioCatalogBuilder.IsStereoTail("WeaponAr1TailHall") && !AudioCatalogBuilder.IsStereoTail("WeaponAr1Mechanical"));
         }
 
+        [Category("WP021")]
         [Test]
         public void AtesV4_KatmanKazanci_LoudnessReferansli_UzakEsitEnerji_MekanikSpecOrani()
         {
@@ -1178,6 +1212,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             lib.Dispose();
         }
 
+        [Category("WP021")]
         [Test]
         public void AtesV4_KatmanYolu_AdlarBantlarOfsetler_AP027GelmedenSessiz()
         {
@@ -1214,6 +1249,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         /// <summary>R3 FPTP half of AtesV4_KatmanYolu (C-00 07.10): the Mechanical/Body and near-field ladder over all three modes.</summary>
+        [Category("WP021")]
         [Test]
         [Category("FPTP")]
         public void AtesV4_KatmanYolu_PerspektifMerdiveni_TPFP()
@@ -1236,6 +1272,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             }
         }
 
+        [Category("WP021")]
         [Test]
         public void SilahOnde_KullaniciB_FirlaticiAtesi4dBKisik_OtomatiklerRpmKirpmasi()
         {
@@ -1248,6 +1285,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             }
         }
 
+        [Category("WP021")]
         [Test]
         public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
         {

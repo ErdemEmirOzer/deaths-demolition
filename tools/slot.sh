@@ -3,8 +3,8 @@
 #   tools/slot.sh acquire unity <etiket>    # bloklar; slot alınca 0 döner (2 Unity batch; swap <10 GB ve yük <24 iken 3)
 #   tools/slot.sh acquire blender <etiket>  # en fazla 1 ağır Blender CLI (render/bake/sim)
 #   tools/slot.sh acquire smoke <etiket>    # release smoke (gerçek Player profilini yazar) — tek slot, eşzamanlı smoke yok
-#   tools/slot.sh acquire player <etiket>   # WP-043D: her Player başlatma (yakalama, bot, perf, smoke) — tek slot; main-ci
-#                                           # koşu boyunca tutar (ses cihazı + odak paylaşılıyor: UiV3 ses testi kırıldı)
+#   tools/slot.sh acquire player <etiket>   # WP-043D: her Player başlatma (yakalama, bot, perf, smoke) — tek slot. WP-099
+#                                           # (C-00 08.10, §0.8): editor-scope koşu (main-ci dahil) player slotu ALMAZ
 #   tools/slot.sh release unity|blender|smoke <etiket>
 #   tools/slot.sh status
 #   tools/slot.sh holds <kind> [<pid>]      # WP-079G D6a: salt okunur — <pid> (varsayılan: sahip) ya da atalarından biri canlı
@@ -19,7 +19,7 @@
 #   farklıyken siler (geçici boş `ps` yanıtı canlı kilidi silmez); (b) DD_SLOT_TIMEOUT=<s> (boş/0 = sınırsız, eski davranış):
 #   bekleme bu süreye ulaşırsa bilet silinir, stderr'e `SLOT <kind> TIMEOUT after <n>s` + tutucular, çıkış 75; (c) bekleyen
 #   acquire INT/TERM/HUP alınca biletini siler (130/143/129) — bekleme `sleep & wait` ile, tuzak hemen koşar.
-# Disk kapısı (C-00 01.10): unity|player slotu alındığı AN dd_disk_gate (dd-env.sh, tek kaynak: disk ≥ 15 GiB, swap ≤ 12 GiB).
+# Disk kapısı (C-00 01.10): unity|player slotu alındığı AN dd_disk_gate (dd-env.sh, tek kaynak: disk ≥ 15 GiB; swap ≤ 12 GiB, 12–16 GiB arası boş bellek ≥ %25 iken uyarıyla, > 16 GiB hiç — WP-099 08.10).
 #   Geçmezse slot bırakılır, bilet sırasını korur, stdout+stderr'e "disk-gate wait" satırı, 60 s sonra kuyruğa dönülür;
 #   toplam disk beklemesi DD_SLOT_DISK_WAIT saniyeyi (varsayılan 3600) aşarsa bilet silinir, çıkış 75. Yeniden giriş (atası
 #   tutan) kapıya bakmaz — tutucu zaten geçti. dd-env.sh slot.sh'nin yanında, yoksa wp-079 driver'ında aranır; ikisi de

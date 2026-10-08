@@ -1189,6 +1189,128 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        // ================================================================ WP-095 · FeelEvents tek kaynak
+
+        /// <summary>
+        /// WP-095 (R3, C-00 07.10): FeelEvents gerçek oyun döngüsünde tek kaynak. Basılı tetikle çıplak bir zombi öldürülür:
+        /// her tetik çekişi tek ShotFired (mermi 0'ın Spawned sayısına eşit, sıfırdan farklı ve tekil grup), her hasar
+        /// uygulaması tek EnemyHit (DamageEvents.EnemyDamaged sayısına eşit) ve kendi atışının grubunu taşır, ölüm tek
+        /// EnemyKilled (grup + klasik silah kimliği). Sonra elle reload: tek ReloadStarted, tek ReloadEnded (tamamlandı).
+        /// </summary>
+        [UnityTest]
+        [Category("Regression")]
+        [Timeout(180000)]
+        public IEnumerator FeelEvents_GercekAtisVurusOlumReload_TekKaynakVeAtisGrubu()
+        {
+            yield return RunSahnesiniHazirla();
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
+
+            Vector3 merkez = _rig.transform.position;
+            ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 7f), merkez);
+            Assert.IsNotNull(hedef);
+            hedef.FitArmorComposition(false, false, false);
+            Collider govde = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody);
+            Assert.IsNotNull(govde);
+
+            var atis = new List<FeelShot>(32);
+            var vurus = new List<FeelHit>(32);
+            var olum = new List<FeelKill>(2);
+            var reloadBas = new List<FeelReload>(2);
+            var reloadSon = new List<FeelReload>(2);
+            int mermi0 = 0, hasarOlayi = 0, olumOlayi = 0;
+            Action<FeelShot> aDinle = e => atis.Add(e);
+            Action<FeelHit> vDinle = e => vurus.Add(e);
+            Action<FeelKill> oDinle = e => olum.Add(e);
+            Action<FeelReload> rbDinle = e => reloadBas.Add(e);
+            Action<FeelReload> rsDinle = e => reloadSon.Add(e);
+            Action<ProjectileSpawnInfo> sDinle = i => { if (i.PelletIndex == 0) mermi0++; };
+            Action<EnemyDamageInfo> hDinle = _ => hasarOlayi++;
+            Action<EnemyDeathInfo> dDinle = _ => olumOlayi++;
+            FeelEvents.ShotFired += aDinle;
+            FeelEvents.EnemyHit += vDinle;
+            FeelEvents.EnemyKilled += oDinle;
+            FeelEvents.ReloadStarted += rbDinle;
+            FeelEvents.ReloadEnded += rsDinle;
+            ProjectileEvents.Spawned += sDinle;
+            DamageEvents.EnemyDamaged += hDinle;
+            DamageEvents.EnemyDied += dDinle;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (hedef.IsAlive && Time.realtimeSinceStartup - t0 < 20f)
+                {
+                    Vector3 nisan = govde.bounds.center;
+                    nisan.y = _rig.transform.position.y + NisanDuzlemi;
+                    _girdi.Imlec = EkranNoktasi(nisan);
+                    _girdi.AtesBasili = true;
+                    yield return null;
+                }
+
+                _girdi.AtesBasili = false;
+                Assert.IsFalse(hedef.IsAlive, "Zombi 20 sn'de öldürülemedi.");
+                for (int i = 0; i < 30; i++) yield return null;   // uçuşta kalan mermiler insin (0,5 s)
+
+                ClassicWeaponRuntime silah = WeaponRegistry.ActiveController.Classic;
+                Assert.Less(silah.Ammo, silah.MagazineSize, "Reload ölçümü için şarjör dolu olmamalı.");
+                _girdi.DoldurBasti = true;
+                yield return null;
+                _girdi.DoldurBasti = false;
+                float r0 = Time.realtimeSinceStartup;
+                while ((silah.IsReloading || reloadSon.Count == 0) && Time.realtimeSinceStartup - r0 < 10f) yield return null;
+
+                var gruplar = new HashSet<int>();
+                foreach (FeelShot s in atis) gruplar.Add(s.GroupId);
+                Debug.Log("[DD-TEST] wp095.feelevents atis=" + atis.Count + " mermi0=" + mermi0 + " grup=" + gruplar.Count +
+                          " vurus=" + vurus.Count + " hasarOlayi=" + hasarOlayi + " olum=" + olum.Count + " olumOlayi=" + olumOlayi +
+                          " olumGrup=" + (olum.Count > 0 ? olum[0].GroupId : -1) + " reload=" + reloadBas.Count + "/" + reloadSon.Count);
+
+                Assert.GreaterOrEqual(atis.Count, 3, "Ölçüm boş: üç vuruşluk zombiye en az üç atış.");
+                Assert.AreEqual(mermi0, atis.Count, "Tetik çekişi başına tek ShotFired (mermi 0'ın Spawned sayısı).");
+                Assert.IsFalse(gruplar.Contains(0), "Her atışın sunum grubu sıfırdan farklı olmalı.");
+                Assert.AreEqual(atis.Count, gruplar.Count, "Her tetik çekişinin kendi grubu.");
+                foreach (FeelShot s in atis)
+                {
+                    Assert.IsFalse(s.Special);
+                    Assert.AreEqual(ClassicWeaponId.AssaultRifle, s.Classic);
+                    Assert.AreEqual(1, s.Pellets);
+                }
+
+                Assert.Greater(vurus.Count, 0);
+                Assert.AreEqual(hasarOlayi, vurus.Count, "Hasar uygulaması başına tek EnemyHit.");
+                foreach (FeelHit h in vurus)
+                {
+                    Assert.IsTrue(gruplar.Contains(h.GroupId), "Vuruş kendi atışının grubunu taşımalı (grup " + h.GroupId + ").");
+                    Assert.IsTrue(h.FromClassic);
+                    Assert.AreEqual(ClassicWeaponId.AssaultRifle, h.Classic);
+                }
+
+                Assert.AreEqual(1, olumOlayi);
+                Assert.AreEqual(1, olum.Count, "Ölüm başına tek EnemyKilled.");
+                Assert.IsTrue(gruplar.Contains(olum[0].GroupId), "Öldürme, öldüren atışın grubunu taşımalı.");
+                Assert.AreEqual(vurus[vurus.Count - 1].GroupId, olum[0].GroupId);
+                Assert.IsTrue(olum[0].FromClassic);
+                Assert.AreEqual(0, FeelEvents.CurrentHitGroup, "Grup kapsamı hasar uygulamasından sonra kapanmalı.");
+
+                Assert.AreEqual(1, reloadBas.Count, "Tek ReloadStarted.");
+                Assert.AreEqual(1, reloadSon.Count, "Tek ReloadEnded.");
+                Assert.IsFalse(reloadBas[0].Empty, "Taktik reload (şarjör boş değildi).");
+                Assert.IsTrue(reloadSon[0].Completed, "Reload tamamlandı.");
+                Assert.Greater(reloadBas[0].DurationSeconds, 0f);
+            }
+            finally
+            {
+                _girdi.AtesBasili = false;
+                FeelEvents.ShotFired -= aDinle;
+                FeelEvents.EnemyHit -= vDinle;
+                FeelEvents.EnemyKilled -= oDinle;
+                FeelEvents.ReloadStarted -= rbDinle;
+                FeelEvents.ReloadEnded -= rsDinle;
+                ProjectileEvents.Spawned -= sDinle;
+                DamageEvents.EnemyDamaged -= hDinle;
+                DamageEvents.EnemyDied -= dDinle;
+            }
+        }
+
         // ================================================================ Aşama 8.11 · performans gözlemi
 
         /// <summary>

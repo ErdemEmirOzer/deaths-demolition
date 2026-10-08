@@ -14,7 +14,6 @@ namespace DD.Prototype.Tests.EditMode
     /// re-entrant spawns (#13), the look-frame cone (#16), config clones (#19); plus the S-10 WP-078 hooks.
     /// </summary>
     [TestFixture]
-    [Category("WP069")]
     public sealed class ArsenalReviewFixTests
     {
         /// <summary>Far above the world so no scene collider is in any path.</summary>
@@ -32,6 +31,8 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ #1 parallax
 
+        [Category("WP069")]
+        [Category("FPTP")]
         [Test]
         public void Paralaks_NoktaNamluArkasinda_YaDaDibinde_KameraIsininaDuser_YakinHedefNisangahta()
         {
@@ -63,6 +64,7 @@ namespace DD.Prototype.Tests.EditMode
             return go;
         }
 
+        [Category("WP069")]
         [Test]
         public void NamluYolu_DuvarIcindekiNamlu_VeAradakiDuvar_Yakalanir()
         {
@@ -95,6 +97,7 @@ namespace DD.Prototype.Tests.EditMode
             };
         }
 
+        [Category("WP069")]
         [Test]
         public void MermiOlaylari_OrtakKimlik_ClearHerMermiyiCleared_IleKapatir()
         {
@@ -122,6 +125,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void YenidenGiris_AdimIcindekiSpawn_AdimSonunaErtelenir()
         {
@@ -150,6 +154,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void DokunulanKume_SekizdenFazlaGovdeyiUnutmaz()
         {
@@ -164,6 +169,8 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ #16 look-frame cone
 
+        [Category("WP069")]
+        [Category("FPTP")]
         [Test]
         public void BakisModu_Koni_EgikNisandaTamGenislik_Yuvarlak()
         {
@@ -193,6 +200,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ R1-B W2 (C-00 30.09): Heavy power
 
         /// <summary>An automatic weapon is never Heavy by its impulse alone (lmg_2 0.50 took the shotgun's directional punch 7× a second); shotguns and heavy single shots stay Heavy.</summary>
+        [Category("WP069")]
         [Test]
         public void GucSinifi_OtomatikSilahDarbeyleAgirOlmaz_PompaliVeTekAtisAgir()
         {
@@ -224,6 +232,7 @@ namespace DD.Prototype.Tests.EditMode
         /// ring and sg_2's Gauss cone all leave flat along a flat aim — and their horizontal spread is exactly what it was:
         /// the same random draws give the same yaw, pellet by pellet (reference = the pre-B yaw formulas below).
         /// </summary>
+        [Category("WP069")]
         [Test]
         public void Tepeden_DikeySacilmaSifir_YatayDagilimOncekiyleAyni()
         {
@@ -294,6 +303,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ #19 clone
 
+        [Category("WP069")]
         [Test]
         public void KonfigKlonu_CanliSilahDuzenlemesiniTasir()
         {
@@ -320,6 +330,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ S-10 WP-078 hooks
 
+        [Category("WP069")]
         [Test]
         public void S10_TurRaporu_SayaclarVeKatalogHizi_SilahAyariGuvenli()
         {
@@ -357,6 +368,7 @@ namespace DD.Prototype.Tests.EditMode
         /// pellet) reaches the bodies the weapon's text promises: sr_1 four ("dört gövde"), lmg_2 two ("her mermi iki gövde").
         /// For all twelve weapons the builder's data, the live projectile's TargetsLeft and the stat strip read one number.
         /// </summary>
+        [Category("WP069")]
         [Test]
         public void W5_MermiBasinaGovde_OnIkiSilah_VeriMermiVeKartAyni()
         {

@@ -20,7 +20,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// these offline (K/wp-082/evidence/hero-v2-reach/). [Explicit]: run by its full name.
     /// </summary>
     [TestFixture]
-    [Category("WP082")]
     public sealed class Wp082HeroV2ErisimTests
     {
         private SpecialWeaponSahne _s;
@@ -37,6 +36,7 @@ namespace DD.Prototype.Tests.PlayMode
         private static string V(Vector3 v) => "[" + v.x.ToString("0.0000", CultureInfo.InvariantCulture) + "," + v.y.ToString("0.0000", CultureInfo.InvariantCulture) + "," + v.z.ToString("0.0000", CultureInfo.InvariantCulture) + "]";
         private static string F(float f) => f.ToString("0.0000", CultureInfo.InvariantCulture);
 
+        [Category("WP082")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

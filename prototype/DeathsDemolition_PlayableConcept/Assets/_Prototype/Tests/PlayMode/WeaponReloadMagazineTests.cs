@@ -16,7 +16,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// Game frames (1/60).
     /// </summary>
     [TestFixture]
-    [Category("WP082")]
     public sealed class WeaponReloadMagazineTests
     {
         private SpecialWeaponSahne _s;
@@ -59,6 +58,7 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.DoldurBasti = false;
         }
 
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Reload_SarjorSilahElElSilah_TamDortVurus()
@@ -96,6 +96,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(early0, m.EndedEarly);
         }
 
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator ReloadKesilir_SilahDegisimi_SarjorAninaSilahta()
@@ -123,6 +124,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// replaced: nothing named part_mag is left under the hand's socket, and the new weapon's reload takes its own part to the
         /// hand and back.
         /// </summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator ReloadKesilir_SilahDegisimi_EskiParcaElSoketindeKalmaz_YeniSilahReloadEder()
@@ -165,6 +167,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// the left hand's socket → weapon; it is never in neither (H3 "no frame in the air"); the one MagazineDropped is the
         /// hand_attach beat, after the detach, at the hand — no longer at mag_out; the part comes home at its authored local pose.
         /// </summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Gorsel_SarjorEleGiderGeriDoner_HavadaKareYok_DusmeElde()
@@ -229,6 +232,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// no-contact value when the hand never reaches the well (before S-06's contact IK). Before it writes r2-H3.json the test asserts
         /// the source is in the capture (S-10): socket_mag_l, every weapon's part_mag, two probed beats per weapon. Game frames (1/60).
         /// </summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok()
@@ -295,6 +299,8 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-082 visual: a camera change mid-reload ends the ownership and the magazine part is home the same frame.</summary>
+        [Category("WP082")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Gorsel_ReloadOrtasindaKameraDegisir_SarjorYuvada()
@@ -317,6 +323,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreNotEqual(DD.Prototype.Characters.MagazineSocket.Name, part.parent != null ? part.parent.name : "", "şarjör el soketinde");
         }
 
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Roketatar_BosTupleBaslar()
@@ -344,6 +351,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// timeline never invents a bolt release and the timer never publishes a Chambered (no chamber sound, S-08); a clip that sends
         /// its own bolt_release is still heard. ar_1's AP-022 _tac sends one, lmg_1's does not.
         /// </summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator Reload_Taktik_ZamanlayiciBoltReleaseVeChamberUydurmaz()
@@ -390,6 +398,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>§12: rl_1's clip names its round rocket_in / rocket_seat — they land the tube's Insert / BoltRelease and publish the
         /// seat and the chamber from the clip (the AP-022 v008 reload_empty carries both; before §12 both came from the timer).</summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Roketatar_RoketOlaylari_KliptenIner()
@@ -435,6 +444,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>§12: sg_1's AP-026-B reload_shell sends mag_insert and shell_in on the same frame — one beat: one event, one seat,
         /// one sound (WeaponFoleyAudio maps both to the SG1 shell-in); the next frame's shell_in is the next cartridge.</summary>
+        [Category("WP082")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Sg1_AyniKareMagInsertShellIn_TekOlayTekKoltukTekSes()

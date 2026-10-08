@@ -22,7 +22,6 @@ namespace DD.Art.Tests.PlayMode
     /// cadence is honest (foot lock).
     /// </summary>
     [TestFixture]
-    [Category("WP071")]
     public sealed class AnimationLocomotionV3Tests
     {
         private const float SahneZamanAsimi = 60f;
@@ -70,6 +69,7 @@ namespace DD.Art.Tests.PlayMode
             return v;
         }
 
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Zombi_KadansBandi_KalabalikFarkliFaz_Kayar()
@@ -109,6 +109,7 @@ namespace DD.Art.Tests.PlayMode
         /// WP-071 MUST-I2 (P-06 AD): the gait rate honours the body scale — the Executioner (1.48) at its 1.7 m/s walks the
         /// scaled stride (rate ≈ 1.7 / (clip × 1.48), inside the lock band) instead of the scale-1 cadence (×1.08, over it).
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Zombi_GovdeOlcegi_KadansOlcekliAdimla()
@@ -154,6 +155,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.Greater(unit.GaitRate, big.GaitRate, "ölçek 1 beden oynatılan oran da yüksek");
         }
 
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Zombi_DonusteIceEgilir_DuzdeDik()
@@ -189,6 +191,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.Less(Mathf.Abs(straightRoll), 1f, "düz yürüyüşte dik");
         }
 
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_YuruyusteBasanAyakKilitli_KaymaAz()
@@ -241,6 +244,7 @@ namespace DD.Art.Tests.PlayMode
         /// authored rate (LocoRate × child time scale ≈ 1, not the old 1.80×); at 6.2 m/s the run_fwd plays at 6.2 / 5.8; standing for 0.2 s
         /// the base layer is in Idle_Breath; the foot-lock gate is open on the walk ring and shut on run_back at 6.2 m/s (30 % slide).
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_YuruyusHalkasi_KendiHizinda_DururkenNefes_KilitBaskinCocukta()
@@ -297,6 +301,7 @@ namespace DD.Art.Tests.PlayMode
         /// WP-082 / WP-083 B2b (C-00 05.10, S-02 magazine contract v1): the player's left hand carries socket_mag_l at the palm centre
         /// (wrist → middle-finger base, half-way) and it follows the hand through the animated pose.
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_SolEl_SarjorSoketi_AvucOrtasinda_EliIzler()
@@ -342,6 +347,7 @@ namespace DD.Art.Tests.PlayMode
         /// walking. The left hand reaches the weapon's grip_l through WeaponGripIk on the placed weapon (≤ 1 cm). Switching the hold off
         /// fades it to 0 within the blend time and the hand returns to the clip.
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_SilahTutusu_SoketPivotta_SolElKabzada_NisanYonunde()
@@ -426,6 +432,7 @@ namespace DD.Art.Tests.PlayMode
         /// (the classic rig while a Special is out) are never the held weapon's: with an inactive attach_stock / Muzzle under the socket
         /// and the shouldered row selected, the pivot does not pop to the shoulder (frame-to-frame ≤ 1 cm, standing).
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_SilahTutusu_SpecialEldeyken_Kapali_GizliSilahIsaretiSayilmaz()
@@ -498,6 +505,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>WP-083 B2c diagnostics: the hold's reach — arm length, left shoulder → grip_l and both hands' errors for candidate hip holds.</summary>
+        [Category("WP071")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -565,6 +573,7 @@ namespace DD.Art.Tests.PlayMode
         /// diagonals blend two clips, so both clips' plant / lift events fire. Logs per direction: lock episodes, median / max
         /// drift, plants (and those from a clip under half weight), lifts, the first events.
         /// </summary>
+        [Category("WP071")]
         [UnityTest]
         [Explicit, Category("Diagnostics")]
         [Timeout(600000)]
@@ -674,6 +683,7 @@ namespace DD.Art.Tests.PlayMode
             private void Update() { if (Writing && Spine != null) Spine.localRotation = Quaternion.identity; }
         }
 
+        [Category("WP071")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Lean_KapiKapaninca_OmurgayaBilesikUygulanmaz()

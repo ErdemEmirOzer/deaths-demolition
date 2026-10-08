@@ -10,6 +10,8 @@ guard + helpers copied to <tmp>/tools, HOME=<tmp>/home, DD_SLOT_BASE=<tmp>/slots
   cp        pass-through; <tmp>/cp-slow → the first copy sleeps (and touches <tmp>/cp-started); <tmp>/cp-mutate → after
             copying ui-settings.json the live file changes (a save landing mid-copy)
   df/sysctl plenty of disk / no swap for slot.sh's disk gate
+  sleep     pass-through; only in a process whose env names SHIM_SLEEP_GATE: `sleep 1` (the guard's R10 verification step,
+            after the writes, record still "restoring") touches <tmp>/sleep-held and waits while that gate file exists (≤ 90 s)
 No Unity, no Player, no fixture process carries the real Player name (a lock holder is <tmp>/Unity.app/…/Unity → sleep)."""
 import hashlib, json, os, plistlib, shutil, signal, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
@@ -72,6 +74,13 @@ for a in "$@"; do case "$a" in *"Contents/MacOS/(Deaths Demolition"*)
   [ -x "$SHIM_TMP/pgrep-hook" ] && "$SHIM_TMP/pgrep-hook" "$n"
   [ -f "$SHIM_TMP/pgrep-player" ] && { cat "$SHIM_TMP/pgrep-player"; exit 0; }; exit 1 ;; esac; done
 exec /usr/bin/pgrep "$@"
+'''
+# WP-099 (gt MUST-1, 08.10): a hold no timeout cuts — the defaults shim's import hold is cut by io's 10 s DEFAULTS_TIMEOUT
+SLEEP_SHIM = r'''#!/bin/sh
+if [ "$1" = 1 ] && [ -n "${SHIM_SLEEP_GATE:-}" ] && [ -f "$SHIM_SLEEP_GATE" ]; then
+  : > "$SHIM_TMP/sleep-held"; n=0; while [ -f "$SHIM_SLEEP_GATE" ] && [ $n -lt 900 ]; do /bin/sleep 0.1; n=$((n+1)); done
+fi
+exec /bin/sleep "$@"
 '''
 CP_SHIM = r'''#!/bin/sh
 if [ -f "$SHIM_TMP/cp-slow" ] && [ ! -f "$SHIM_TMP/cp-started" ]; then : > "$SHIM_TMP/cp-started"; sleep "$(cat "$SHIM_TMP/cp-slow")"; fi
@@ -196,6 +205,7 @@ class GuardFixture(unittest.TestCase):
         write_exec(self.bin / "mv", MV_SHIM)
         write_exec(self.bin / "df", DF_SHIM)
         write_exec(self.bin / "sysctl", SYSCTL_SHIM)
+        write_exec(self.bin / "sleep", SLEEP_SHIM)
         (self.tmp / "home").mkdir(); (self.tmp / "slots").mkdir()
         self.log = self.tmp / "shim.log"; self.log.write_text("")
         self.dir = self.tmp / "ug"
@@ -589,6 +599,17 @@ class RestoreBase(GuardFixture):
 
     def hook(self, script):
         write_exec(self.tmp / "pgrep-hook", "#!/bin/sh\n" + script)
+
+    def kill_group(self, p, timeout=30):
+        """SIGKILL a fixture guard's group (start_new_session). macOS answers EPERM when every member has already exited
+        (zombies, not reaped yet), ESRCH once reaped — the guard ended on its own: no error, it is reaped. A leader still
+        alive after that answer is a real error (C-00 07.10: test_Ledger_CanliRestore_Bekler75 went red under the full
+        suite's load — the defaults shim's hold is cut by io's 10 s DEFAULTS_TIMEOUT, the restore had ended)."""
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            p.wait(timeout=5)   # still running after the answer → TimeoutExpired: a real error
+        return p.communicate(timeout=timeout)
 
     def player_changes(self):
         """only the player area changes (a player-scope restore then has no OTHER)."""
@@ -1254,6 +1275,41 @@ class ClassCodeTests(RestoreBase):
         self.assertEqual(30, rc, out + err)
         self.assertTrue(self.last(out).endswith("retry=same-dir class=FOREIGN_WRITER"), self.last(out))
 
+    # --- WP-099 (C-00 07.10): the window owner's ANCESTORS are never foreign writers --------------------------------
+    def window_through(self, outer_cmd_prefix):
+        """snapshot → change the player area → hold the window 7 s (≥ 1 sampler round) → restore, all in an inner zsh whose
+        PARENT is `outer` (so the inner zsh is the window owner and `outer` its ancestor). Returns (restore rc, output,
+        outer pid)."""
+        inner = ('zsh "$0" snapshot "$1" --scope player || exit 7; printf "%%s" "{\\"run\\": 1}" > "$2"; sleep 7; '
+                 'zsh "$0" restore "$1" --scope player; echo "restore-rc=$?"')
+        script = '%s zsh -c \'%s\' "%s" "%s" "%s"' % (outer_cmd_prefix, inner, self.guard, self.dir, self.d2 / "prototype-profile.json")
+        p = subprocess.Popen(["bash", "-c", script], env=self.env(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        out, err = p.communicate(timeout=180)
+        rc = [l for l in out.splitlines() if l.startswith("restore-rc=")]
+        return (int(rc[-1].split("=")[1]) if rc else None), out + err, p.pid
+
+    def test_Ornekleyici_AtaKabukPlayerDeseniTasir_YabanciSayilmaz_Cikis0(self):
+        """the grandparent shell's command line carries the Player pattern (as a pgrep in the same command would): before
+        WP-099 the sampler logged it owned=0 and the restore exited 30 FOREIGN_WRITER."""
+        rc, out, outer = self.window_through(': "%s/Fake.app/Contents/MacOS/Deaths Demolition";' % self.tmp)
+        self.assertEqual(0, rc, out)
+        rows = [l.split("\t") for l in (self.dir / "players-lineage.tsv").read_text().splitlines()] \
+            if (self.dir / "players-lineage.tsv").exists() else []
+        # gt SHOULD-2 (C-00 08.10): only OUR ancestor shell matters — another session's pattern-carrying command on a
+        # shared machine must not turn this test red
+        self.assertEqual([], [r for r in rows if r[1] == str(outer) and r[4] == "0"], rows)
+
+    def test_Ornekleyici_GercekYabanciPlayer_YineCikis30(self):
+        """positive control: a real process outside the owner's tree (double fork → reparented) still counts as foreign."""
+        fake = "%s/Fake.app/Contents/MacOS/Deaths Demolition" % self.tmp
+        subprocess.run(["/bin/sh", "-c", '(exec -a "%s" sleep 40 &)' % fake], check=True)
+        self.addCleanup(lambda: [os.kill(int(p), signal.SIGTERM) for p in subprocess.run(   # our own fixture only (unique tmp)
+            ["pgrep", "-f", fake], capture_output=True, text=True).stdout.split()])
+        time.sleep(0.5)
+        rc, out, _ = self.window_through("true;")
+        self.assertEqual(30, rc, out)
+        self.assertIn("FOREIGN_WRITER", out)
+
     def test_ForeignWriter_DegisiklikYok_Cikis0(self):
         self.snap("player")
         self.lineage_row(0)
@@ -1789,48 +1845,56 @@ class LedgerTests(RestoreBase):
         self.assertEqual(0, rc, out + err)   # no overlap with the dirty editor window
 
     def test_Ledger_CanliRestore_Bekler75(self):
+        """a snapshot over a window that a LIVE guard is restoring waits in the queue → 75 'restoring'. WP-099 (gt MUST-1,
+        08.10): the restore is held after its writes, in R10's `sleep 1` (the sleep shim, gated for this guard's env only) —
+        no timeout cuts that hold. The old hold sat in the defaults shim's import, which io's 10 s DEFAULTS_TIMEOUT cut under
+        load: the restore ended WRITE_FAILED, the record went dirty and the snapshot got 65 (1 in 9 runs at load ~100)."""
         self.snap("editor")
         (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
-        self.hook("")   # pgrep is not called for the editor area; hold the restore in its write phase via the defaults shim
-        (self.tmp / "defaults-import-sleep").write_text("")
         d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
-        g = self.start_guard("restore", self.dir, "--scope", "editor")
-        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        gate = self.tmp / "sleep-gate"; gate.write_text("")
+        g = self.start_guard("restore", self.dir, "--scope", "editor", SHIM_SLEEP_GATE=str(gate))
+        self.assertTrue(self.wait_file(self.tmp / "sleep-held", 120))
         rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
         self.assertEqual(75, rc, out + err); self.assertIn("restoring", out + err)
-        (self.tmp / "defaults-import-sleep").unlink()
-        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        self.assertIsNone(g.poll())   # the restorer was held, alive, the whole time
+        gate.unlink()
+        gout, gerr = g.communicate(timeout=120)
+        self.assertEqual(0, g.returncode, gout + gerr)   # let go, it verifies and ends clean
 
     def test_P5_IcPencereCanliRestoreEdiliyor_Dis75Yazimsiz_RestorerOlunce64_SonraIkisi0(self):
         """P5 gt N-4 (C-00 07.10, option A): the outer window's restore while the nested window is being restored by a live
         guard — 75 BUSY retry=same-dir, nothing written, the outer record still open. With that restorer dead (SIGKILL in
-        its write phase) the old 64 ('restore that window first'); the inner restored, the outer restores with 0."""
+        its write phase) the old 64 ('restore that window first'); the inner restored, the outer restores with 0.
+        07.10 (C-00): B is held by the pgrep hook in its player write phase until the test releases it — no timeout cuts
+        that hold (the defaults shim's is cut by io's 10 s DEFAULTS_TIMEOUT), so the 75 and the kill never race B's end."""
         before = self.live_state()
-        self.snap("editor")                                                   # A, the outer window
-        (self.d1 / "ui-settings.json").write_text('{"ui": 50}\n')            # A's run: B's base differs from A's
+        self.snap("player")                                                   # A, the outer window
+        (self.d2 / "prototype-profile.json").write_text('{"player": 50}\n')    # A's run: B's base differs from A's
         b = self.tmp / "ugB"
-        rc, out, err = self.run_guard("snapshot", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)   # nested
-        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
-        d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
-        self.hook("")
-        (self.tmp / "defaults-import-sleep").write_text("")                   # hold B's restore in its write phase
-        g = self.start_guard("restore", b, "--scope", "editor")
-        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
-        rc, out, err = self.restore("editor")
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "player"); self.assertEqual(0, rc, out + err)   # nested
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')    # B's run
+        hold = self.tmp / "hold"; hold.write_text("")
+        (self.tmp / "pgrep-count").unlink(missing_ok=True)
+        self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; n=0; while [ -f "%s" ] && [ $n -lt 900 ]; do sleep 0.1; '
+                  'n=$((n+1)); done; }\n' % (self.tmp, hold))
+        g = self.start_guard("restore", b, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "in-write"))
+        rc, out, err = self.restore("player")
         self.assertEqual(75, rc, out + err)
         self.assertIn("is being restored now by pid", out + err)
         last = out.strip().splitlines()[-1]
         self.assertTrue(last.endswith("(75) retry=same-dir class=BUSY"), last)
-        self.assertNotEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))   # A wrote nothing
-        self.assertIn((self.d1 / "ui-settings.json").read_text(), ('{"ui": 50}\n', '{"ui": 99}\n'))   # B's base or B's run
+        self.assertIn((self.d2 / "prototype-profile.json").read_text(), ('{"player": 50}\n', '{"player": 99}\n'))   # never A's base
         self.assertEqual(["open", "restoring"], sorted(r["state"] for r in self.records()))   # A open, B restoring
-        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
-        (self.tmp / "defaults-import-sleep").unlink()
-        rc, out, err = self.restore("editor")                                 # B's restorer is dead now
+        self.assertIsNone(g.poll())                                           # B still held: its restorer is alive
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)           # B's restorer dies mid-write
+        hold.unlink(); (self.tmp / "pgrep-hook").unlink()
+        rc, out, err = self.restore("player")                                 # B's restorer is dead now
         self.assertEqual(64, rc, out + err); self.assertIn("restore that window first", out + err)
-        rc, out, err = self.run_guard("restore", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)
-        rc, out, err = self.restore("editor"); self.assertEqual(0, rc, out + err)
-        self.assertEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))
+        rc, out, err = self.run_guard("restore", b, "--scope", "player"); self.assertEqual(0, rc, out + err)
+        rc, out, err = self.restore("player"); self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
         self.assertEqual([], self.records())
 
     def test_Ledger_GercekAtaPenceresi_Cikis0(self):
@@ -2261,6 +2325,24 @@ class KilitSirasiKuyrukTests(GuardFixture):
         self.assertEqual("64", done.read_text().strip(), text)
         self.assertIn(self.LOCK, text)
         self.assertFalse((d / "before.txt").exists())
+
+
+DISCOVERY_REASON = ("guard v2 suite: run it as a file — python3 tools/tests/test_userdata_guard_v2.py — it re-executes "
+                    "itself under sandbox-exec (no write to the real ~/Library, ledger or slots); never imported unsandboxed")
+
+
+def load_tests(loader, tests, pattern):
+    """C-00 07.10: `python3 -m unittest …` / discover IMPORTS this module — unsandboxed every test would fail its SANDBOX_FLAG
+    check (139 × "run this file directly"), read as a red suite. Imported without the flag the module hands over ONE skipped
+    placeholder that says how to run it; run as a file (sandboxed_main → SANDBOX_FLAG=1) every test loads as before. A test
+    named explicitly (module.Class.test) is not routed through here and still stops at its setUp assertion."""
+    if os.environ.get(SANDBOX_FLAG) == "1":
+        return tests
+
+    class GuardV2RunsOnlyAsAFile(unittest.TestCase):
+        def test_run_this_file_directly(self):
+            self.skipTest(DISCOVERY_REASON)
+    return loader.loadTestsFromTestCase(GuardV2RunsOnlyAsAFile)
 
 
 def sandboxed_main():

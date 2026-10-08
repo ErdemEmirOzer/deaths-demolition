@@ -27,7 +27,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// and residual.
     /// </summary>
     [TestFixture]
-    [Category("WP087")]
     public sealed class Wp087TutusTepmeTests
     {
         private SpecialWeaponSahne _s;
@@ -142,10 +141,12 @@ namespace DD.Prototype.Tests.PlayMode
 
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon_Ustten is the top-down run;
         // TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(1200000)]
         public IEnumerator TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon_Ustten() => TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYonCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(1200000)]
         [Category("FPTP")]
@@ -291,10 +292,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — His_IlkAtis_EskiYolun90i_GeriVeKalkis_Ustten is the top-down run;
         // His_IlkAtis_EskiYolun90i_GeriVeKalkis keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         public IEnumerator His_IlkAtis_EskiYolun90i_GeriVeKalkis_Ustten() => His_IlkAtis_EskiYolun90i_GeriVeKalkisCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         [Category("FPTP")]
@@ -360,10 +363,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz_Ustten is the top-down run;
         // Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz_Ustten() => Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramazCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(600000)]
         [Category("FPTP")]
@@ -436,10 +441,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>WP-087 (N2, C-00 06.10): a second reload of the same weapon takes the same magazine part to the hand again (G3: bound once).</summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — AyniSilahIkinciReload_AyniParcaEleGider_Ustten is the top-down run;
         // AyniSilahIkinciReload_AyniParcaEleGider keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator AyniSilahIkinciReload_AyniParcaEleGider_Ustten() => AyniSilahIkinciReload_AyniParcaEleGiderCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(300000)]
         [Category("FPTP")]
@@ -479,10 +486,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>WP-087: with the hold off nothing changes — the body inside the rig kicks back as before and the arms carry none (K6).</summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TutusKapali_GovdeEskiTepmede_Ustten is the top-down run;
         // TutusKapali_GovdeEskiTepmede keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator TutusKapali_GovdeEskiTepmede_Ustten() => TutusKapali_GovdeEskiTepmedeCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(180000)]
         [Category("FPTP")]

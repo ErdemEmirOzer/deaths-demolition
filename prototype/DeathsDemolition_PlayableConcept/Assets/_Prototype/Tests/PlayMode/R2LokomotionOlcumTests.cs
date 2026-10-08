@@ -49,7 +49,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// whose source is missing is not written (BLOCKED by name) and the test fails naming it, after every other gate was written.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2LokomotionOlcumTests
     {
         public const string TestName = "DD.Prototype.Tests.PlayMode.R2LokomotionOlcumTests.L1_L3_Lokomotion_8Yon_KalkisDurusDonus";
@@ -125,7 +124,9 @@ namespace DD.Prototype.Tests.PlayMode
             _kayit = null;
             if (_zemin != null) Object.Destroy(_zemin);
             _zemin = null;
-            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
             FootIkAdapter.ResetStatics();
@@ -179,6 +180,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Sur(45, Vector2.zero, -1, null);
         }
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

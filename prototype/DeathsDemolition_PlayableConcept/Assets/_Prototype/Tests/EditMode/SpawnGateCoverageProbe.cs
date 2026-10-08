@@ -22,7 +22,6 @@ namespace DD.Prototype.Tests.EditMode
     /// first contact — one table row per set. Both write DD_WP076_PROBE_OUT (and the log, [DD-OBS] wp076.probe / wp076.sets).
     /// B9 replaced the 29.09 "fixed3" mode (pinned scene / NavMesh / gates hashes of a pre-92232235 state and a hard-coded set).
     /// </summary>
-    [Category("WP076Probe")]
     public sealed class SpawnGateCoverageProbe
     {
         private const string ScenePath = "Assets/_Art/Scenes/World_V6_Greybox.unity";
@@ -42,6 +41,7 @@ namespace DD.Prototype.Tests.EditMode
             if (_scene.IsValid() && _scene.isLoaded) EditorSceneManager.CloseScene(_scene, true);
         }
 
+        [Category("WP076Probe")]
         [Test]
         [Explicit("Diagnostics: spawn-gate search (WP-076)")]
         [Category("Diagnostics")]
@@ -168,6 +168,7 @@ namespace DD.Prototype.Tests.EditMode
         /// Gate sampling, reachability and the per-cell metric are those of <see cref="SpawnGateCoverageTests"/>; a moved gate also
         /// reports its strict sample (≤ 0.9 m, as a builder would place it). Asserts nothing but the inputs (report tool).
         /// </summary>
+        [Category("WP076Probe")]
         [Test]
         [Explicit("Diagnostics: named gate sets (WP-076 B9 M-28)")]
         [Category("Diagnostics")]
