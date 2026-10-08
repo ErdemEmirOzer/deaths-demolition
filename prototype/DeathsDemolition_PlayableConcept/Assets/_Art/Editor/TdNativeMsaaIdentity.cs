@@ -13,9 +13,9 @@ namespace DD.Art.Pipeline.EditorTools
     internal static class TdNativeMsaaIdentity
     {
         internal const string Asset = "Assets/_Art/Editor/Native/GfxPluginDDNativeMsaaPositions.dylib";
-        private const string BinarySha = "42ccad59c8f96e25ca91271c66ae66fb91f36bdd02935c4cca33da06aa94c4c2";
+        private const string BinarySha = "315f5b5a7f2803624f9e6ef19fb6604feef9c44f6ede4c0ded5b219ad919c1ed";
         private const string DiskUuid = "82c51b8894e13e4c87d0437f2692fbee";
-        private const int BinaryBytes = 72696, HeaderBytes = 32, CommandBytes = 2840, CommandCount = 19;
+        private const int BinaryBytes = 91152, HeaderBytes = 32, CommandBytes = 2856, CommandCount = 20;
         private const string MetaSha = "c7525886b79959858cfded7cc9e328475366f0ee442f59d5df28b0b9213a28b0";
         [Serializable] internal sealed class Observation
         {
