@@ -102,10 +102,9 @@ namespace DD.Prototype.UI
             public float Time;
             public UiEvent Event;
             public string Detail;   // WP-094: the raise's detail (an existing string - "round" for the HUD seal)
-            public bool Silent;     // WP-094: a listener-only cue (UiTimeline.Call) - no UiEvent is raised
+            public bool Silent;     // WP-094/098A: Call and Callback share one listener-only cue flag
             public int Id;
             public bool Fired;
-            public bool Silent;   // WP-098A: UiTimeline.Callback - the listener's OnCue only, no UiEvent
         }
 
         private struct TimelineData
