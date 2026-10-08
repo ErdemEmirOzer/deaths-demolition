@@ -124,11 +124,22 @@ namespace DD.Art.Pipeline.EditorTools
             public int Buildings, Bays, Items, Lamps, BakedLights, PoolLamps, Emissive, Unlit, Ropes, Cleared;
             public readonly SortedSet<string> SkippedFamilies = new SortedSet<string>(StringComparer.Ordinal);
             public int Skipped;
-            public readonly List<string> BannedTops = new List<string>(), Warnings = new List<string>();
+            public readonly List<string> BannedTops = new List<string>(), Warnings = new List<string>(), RaisedTops = new List<string>();
+            public int InnerFadesRemoved;
             public override string ToString() => "layout v5: " + Buildings + " buildings (" + Bays + " bays), " + Items + " items, " + Lamps + " lamps (" + BakedLights + " baked lights, "
                                                  + PoolLamps + " pool, " + Emissive + " emissive, " + Unlit + " unlit), " + Ropes + " ropes, " + Cleared + " plants cleared, " + Skipped + " skipped"
-                                                 + (SkippedFamilies.Count > 0 ? " [" + string.Join(", ", SkippedFamilies) + "]" : "") + ", " + BannedTops.Count + " banned collider tops, "
-                                                 + Warnings.Count + " warnings";
+                                                 + (SkippedFamilies.Count > 0 ? " [" + string.Join(", ", SkippedFamilies) + "]" : "") + ", " + RaisedTops.Count + " collider tops raised over the banned band, "
+                                                 + BannedTops.Count + " banned collider tops, " + InnerFadesRemoved + " inner fade states folded into shells, " + Warnings.Count + " warnings";
+
+            /// <summary>Every warning and collider note, one per line (the builder logs it after the report line).</summary>
+            public string Details()
+            {
+                var lines = new List<string>();
+                foreach (string w in Warnings) lines.Add("[LAYOUT] warning: " + w);
+                foreach (string t in RaisedTops) lines.Add("[LAYOUT] raised: " + t);
+                foreach (string t in BannedTops) lines.Add("[LAYOUT] BANNED top: " + t);
+                return string.Join("\n", lines);
+            }
         }
 
         /// <summary>The plan at <paramref name="path"/>, or null when there is none (the world builds as before).</summary>
@@ -341,9 +352,10 @@ namespace DD.Art.Pipeline.EditorTools
             return t;
         }
 
-        /// <summary>Plants stay probe-lit dressing; a piece of ≥ 2 m footprint is lightmapped like a structure; the rest (props, debris) is probe-lit dressing.</summary>
+        /// <summary>Road modules and pieces of ≥ 2 m footprint are lightmapped like a structure; plants and the rest (props, debris) are probe-lit dressing.</summary>
         private static string RoleOf(Item item)
         {
+            if (item.Role == "road") return "structure";   // the AP-030 road kit: a lightmapped walking surface
             if (Array.IndexOf(PlantFamilies, item.Family) >= 0) return "dressing";
             return item.Footprint >= 2f ? "structure" : "dressing";
         }
@@ -399,7 +411,25 @@ namespace DD.Art.Pipeline.EditorTools
                 report.Bays++;
             }
 
+            report.InnerFadesRemoved += FoldFades(shell);
             return shell;
+        }
+
+        /// <summary>
+        /// The kit's Roof children carry their own <see cref="OccluderFadeState"/>, which the fader would find first (it walks up from the hit
+        /// collider) — only the roof would fade. Under a shell they go, so every occluder in the building resolves to the shell's one state.
+        /// </summary>
+        private static int FoldFades(Transform shell)
+        {
+            int n = 0;
+            foreach (OccluderFadeState state in shell.GetComponentsInChildren<OccluderFadeState>(true))
+            {
+                if (state.transform == shell) continue;
+                UnityEngine.Object.DestroyImmediate(state);
+                n++;
+            }
+
+            return n;
         }
 
         /// <summary>The Blender ccw yaw that turns the kit's +X to the plan's world direction (Blender y = Unity z).</summary>
@@ -425,6 +455,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (go == null) return shell;
             go.name = b.Id;
             Roof(go);
+            report.InnerFadesRemoved += FoldFades(shell);
             return shell;
         }
 
@@ -435,6 +466,7 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 if (!t.name.StartsWith(b.Id + "_", StringComparison.Ordinal) || !PrefabUtility.IsOutermostPrefabInstanceRoot(t.gameObject)) continue;
                 if (t.GetComponent<OccluderFadeState>() == null) t.gameObject.AddComponent<OccluderFadeState>();
+                report.InnerFadesRemoved += FoldFades(t);
                 return t;
             }
 
@@ -522,16 +554,57 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ---------------------------------------------------------------- items and lamps
 
-        /// <summary>The placed piece's collider top over its base: in the banned band it is reported (the tests hold the band empty).</summary>
+        /// <summary>
+        /// The placed piece's collider tops over its base. A box whose top lands in the banned 0.31–0.49 m band (a body reads it as a step, a
+        /// shot grazes it — the kit's tawara bale is 0.42, the yukimi lantern's foot 0.47) grows up to <see cref="RaisedTop"/>: still solid,
+        /// no longer a step. Any other collider in the band is reported (the tests hold the band empty).
+        /// </summary>
         private static void AuditTop(GameObject go, Item item, Report report)
         {
             Physics.SyncTransforms();
-            float top = float.MinValue;
-            foreach (Collider c in go.GetComponentsInChildren<Collider>(false)) top = Mathf.Max(top, c.bounds.max.y);
-            if (top == float.MinValue) return;
-            float rise = top - go.transform.position.y;
-            if (rise > BannedTopMin && rise < BannedTopMax) report.BannedTops.Add(item.Id + " " + item.Family + " V" + item.Variation.ToString("00") + " top " + rise.ToString("0.00") + " m");
+            float y = go.transform.position.y;
+            foreach (Collider c in go.GetComponentsInChildren<Collider>(false))
+            {
+                float rise = c.bounds.max.y - y;
+                if (rise <= BannedTopMin || rise >= BannedTopMax || c.bounds.size.y < 0.05f) continue;
+                int axis = UpAxis(c.transform, out float sign, out float metresPerUnit);
+                if (c is BoxCollider && axis >= 0)
+                {
+                    var box = (BoxCollider)c;
+                    float grow = (RaisedTop - rise) / metresPerUnit;   // in the box's own units, along whichever local axis points up (the kit's is often Z)
+                    Vector3 size = box.size, centre = box.center;
+                    size[axis] += grow;
+                    centre[axis] += sign * grow * 0.5f;
+                    box.size = size;
+                    box.center = centre;
+                    report.RaisedTops.Add(item.Id + " " + item.Family + "/" + c.name + " " + rise.ToString("0.00") + " -> " + RaisedTop.ToString("0.00") + " m");
+                }
+                else report.BannedTops.Add(item.Id + " " + item.Family + " V" + item.Variation.ToString("00") + "/" + c.name + " top " + rise.ToString("0.00") + " m");
+            }
         }
+
+        /// <summary>The local axis (0 x, 1 y, 2 z) of <paramref name="t"/> that points along world up within 8°, its sign, and its metres per unit; −1 if none.</summary>
+        private static int UpAxis(Transform t, out float sign, out float metresPerUnit)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 local = Vector3.zero;
+                local[i] = 1f;
+                Vector3 world = t.TransformVector(local);
+                float len = world.magnitude, dot = len > 1e-6f ? Vector3.Dot(world / len, Vector3.up) : 0f;
+                if (Mathf.Abs(dot) < 0.99f) continue;
+                sign = Mathf.Sign(dot);
+                metresPerUnit = len;
+                return i;
+            }
+
+            sign = 1f;
+            metresPerUnit = 1f;
+            return -1;
+        }
+
+        /// <summary>A banned-band box grows to this top over its base (≥ 0.5: the gameplay review's shoot-over class).</summary>
+        public const float RaisedTop = 0.55f;
 
         /// <summary>
         /// The lamp's light (light plan 07.10): "baked" and "pool" lamps take a baked point light at the kit's SOCKET_Light (2200–2700 K) for
@@ -546,7 +619,7 @@ namespace DD.Art.Pipeline.EditorTools
             Transform socket = FindDeep(go.transform, SocketLight);
             var holder = new GameObject(LampLightName);
             holder.transform.SetParent(go.transform, false);
-            holder.transform.position = socket != null ? socket.position : go.transform.position + Vector3.up * SocketFallbackHeight;
+            holder.transform.position = socket != null ? socket.position : BodyCentre(go);
             var light = holder.AddComponent<Light>();
             light.type = LightType.Point;
             light.lightmapBakeType = LightmapBakeType.Baked;
@@ -556,7 +629,7 @@ namespace DD.Art.Pipeline.EditorTools
             light.bounceIntensity = 1f;
             light.shadows = LightShadows.Soft;
             light.shadowRadius = 0.05f;
-            if (socket == null) report.Warnings.Add(lamp.Id + " " + lamp.Family + ": no " + SocketLight + " — light at +" + SocketFallbackHeight + " m");
+            if (socket == null && lamp.Source != Ap023) report.Warnings.Add(lamp.Id + " " + lamp.Family + ": no " + SocketLight + " — light at the body's centre");
             report.BakedLights++;
         }
 
@@ -644,6 +717,22 @@ namespace DD.Art.Pipeline.EditorTools
             renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.ArtRoot + "/Materials/M_ap023_rope.mat");
             renderer.shadowCastingMode = rope.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.OccludeeStatic | StaticEditorFlags.BatchingStatic);
+        }
+
+        /// <summary>A socketless lamp's light point (the AP-023 lanterns carry no sockets): the centre of its LOD0 renderers' bounds — the paper body
+        /// of a chōchin / tsuri, the light chamber's height of a stone lantern near enough; the base + 0.6 m if it has none.</summary>
+        private static Vector3 BodyCentre(GameObject go)
+        {
+            var b = new Bounds();
+            bool any = false;
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.name.IndexOf("LOD1", StringComparison.Ordinal) >= 0 || r.name.IndexOf("LOD2", StringComparison.Ordinal) >= 0) continue;
+                if (!any) { b = r.bounds; any = true; }
+                else b.Encapsulate(r.bounds);
+            }
+
+            return any ? b.center : go.transform.position + Vector3.up * SocketFallbackHeight;
         }
 
         private static Transform FindDeep(Transform t, string name)

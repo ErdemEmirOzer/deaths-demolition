@@ -260,6 +260,7 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildBamboo(g);
             WorldV5Dress.Report dressed = dress ? WorldV5Dress.Apply(g, root.transform) : null;
             WorldV5Layout.Report laid = dress ? WorldV5Layout.Apply(root.transform, WorldV5Layout.Load()) : null;   // WP-092: buildings, clusters, lamps
+            if (laid != null && laid.Details().Length > 0) Debug.Log(laid.Details());
             List<Room> rooms = AllRooms(dress);
             // R3 #1 (AD 07.10 M1): the ground and the water keep the runtime ambient (the approved Look B tone), not the baked probes
             int probeOff = WorldV5Lighting.ApplyProbeUsage(root.transform);

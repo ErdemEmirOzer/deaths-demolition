@@ -330,13 +330,85 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static string F(float v) => v.ToString("0.####", CultureInfo.InvariantCulture);
 
-        /// <summary>All three in one batch run (one scene open each; the look is applied per render).</summary>
+        /// <summary>All of them in one batch run (one scene open each; the look is applied per render).</summary>
         public static void RunAll()
         {
             RenderTopMap();
             RenderPoses();
             MeasureEmptyArea();
             MeasureObjectEmpty();
+            if (File.Exists(WorldV5Layout.LayoutJson)) RenderLayoutPoses();
+        }
+
+        /// <summary>
+        /// WP-092 · The layout plan's own frames, at the gameplay rig's framing (<c>layout/</c>): every plan building at its centre with the roofs
+        /// over it hidden — the top-down fade's end point (the game keeps them at 22 %: the room reads, the roof's ghost stays) — and every
+        /// moment (M1–M8) at its centre. The eight fixed poses stay the before / after pair; these show what the plan added.
+        /// </summary>
+        public static void RenderLayoutPoses() => WithLook(cam =>
+        {
+            string dir = Path.Combine(OutDir(), "layout");
+            Directory.CreateDirectory(dir);
+            Dictionary<string, object> json = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(WorldV5Layout.LayoutJson)), "layout");
+            var poses = new List<(string name, Vector2 feet, Rect? roofs)>();
+            foreach (object o in ArtJson.AsList(ArtJson.Require(json, "buildings"), "buildings"))
+            {
+                Dictionary<string, object> b = ArtJson.AsObject(o, "building");
+                List<object> r = ArtJson.AsList(ArtJson.Require(b, "rect"), "rect");
+                Rect rect = Rect.MinMaxRect(Mathf.Min(ArtJson.AsFloat(r[0]), ArtJson.AsFloat(r[2])), Mathf.Min(ArtJson.AsFloat(r[1]), ArtJson.AsFloat(r[3])),
+                                            Mathf.Max(ArtJson.AsFloat(r[0]), ArtJson.AsFloat(r[2])), Mathf.Max(ArtJson.AsFloat(r[1]), ArtJson.AsFloat(r[3])));
+                // R1 (33 × 10 m) and K1 (36 m long) are larger than the view: their frame sits on the plan's lamps there (the hall's west altar
+                // side, K1's middle); the others at their centre.
+                string id = ArtJson.AsString(ArtJson.Require(b, "id"));
+                Vector2 feet = id == "R1" ? new Vector2(-6f, 43.5f) : id == "K1" ? new Vector2(-33f, 4f) : rect.center;
+                poses.Add(("bld-" + id, feet, rect));
+            }
+
+            object moments = ArtJson.Get(json, "moments");
+            if (moments != null)
+                foreach (object o in ArtJson.AsList(moments, "moments"))
+                {
+                    Dictionary<string, object> m = ArtJson.AsObject(o, "moment");
+                    List<object> c = ArtJson.AsList(ArtJson.Require(m, "center"), "center");
+                    poses.Add(("mom-" + ArtJson.AsString(ArtJson.Require(m, "id")), new Vector2(ArtJson.AsFloat(c[0]), ArtJson.AsFloat(c[1])), null));
+                }
+
+            Renderer[] all = UnityEngine.Object.FindObjectsOfType<Renderer>();
+            foreach ((string name, Vector2 feet, Rect? roofs) in poses)
+            {
+                var hidden = new List<Renderer>();
+                if (roofs.HasValue)
+                {
+                    Rect area = Rect.MinMaxRect(roofs.Value.xMin - 1.5f, roofs.Value.yMin - 1.5f, roofs.Value.xMax + 1.5f, roofs.Value.yMax + 1.5f);
+                    foreach (Renderer r in all)
+                    {
+                        if (!r.enabled || !area.Contains(new Vector2(r.bounds.center.x, r.bounds.center.z)) || !UnderRoof(r.transform)) continue;
+                        r.enabled = false;
+                        hidden.Add(r);
+                    }
+                }
+
+                Vector3 focus = Ground(feet) + Vector3.up * FocusHeight;
+                cam.orthographic = false;
+                cam.fieldOfView = RigFov;
+                cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
+                Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
+                foreach (Renderer r in hidden) r.enabled = true;
+            }
+
+            Debug.Log("[TDCAP] " + poses.Count + " layout poses -> " + dir);
+        });
+
+        /// <summary>A roof piece: under a kit Roof child, the hall's roof holder, or a roof / rafters mesh.</summary>
+        private static bool UnderRoof(Transform t)
+        {
+            for (Transform p = t; p != null; p = p.parent)
+            {
+                if (p.name == ArtLibraryPrefabBuilder.RoofName || p.name == WorldV5Dress.HallRoofName) return true;
+                if (p.name.StartsWith("roof_LOD", StringComparison.Ordinal) || p.name.StartsWith("rafters_LOD", StringComparison.Ordinal)) return true;
+            }
+
+            return false;
         }
     }
 }

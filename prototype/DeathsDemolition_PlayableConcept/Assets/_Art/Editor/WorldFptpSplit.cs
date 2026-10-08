@@ -50,7 +50,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ForceFlag = "-ddFptpForce";
         public const string Schema = "dd.fptp-only/v1";
         /// <summary>Bump when the unit, key, pin, mode or hash rules change: every older list is then stale.</summary>
-        public const int RuleVersion = 1;
+        public const int RuleVersion = 2;   // 2: the layout root pinned (WP-092 lead 08.10)
 
         public enum Mode { Move, Proxy, Twin }
 
@@ -232,6 +232,7 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 if (p.GetComponent<Light>() != null) return "light";
                 if (p.name.StartsWith(LampPrefix, StringComparison.Ordinal)) return "lamp";
+                if (p.name == WorldV5Layout.RootName) return "layout";   // WP-092 lead 08.10: the plan's content is placed to be seen (interiors under faded roofs)
             }
 
             for (Transform p = u.Root; p != null && p != worldRoot; p = p.parent)
