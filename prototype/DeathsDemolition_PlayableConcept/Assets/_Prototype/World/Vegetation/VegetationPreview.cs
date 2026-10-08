@@ -36,6 +36,40 @@ namespace DD.Prototype.World.Vegetation
     {
         public const int TierPerformance = 0, TierHigh = 1, TierCinematic = 2;
 
+        // Opt-in editor evidence only. Normal previews retain their original draw and allocate no snapshot.
+        public sealed class DiagnosticSnapshot
+        {
+            public VegetationGrid Grid;
+            public VegetationDensityField Field;
+            public byte[] FinalZone, Clear;
+            public bool[] Corridor;
+        }
+
+        public static DiagnosticSnapshot LastDiagnostics { get; private set; }
+        public static bool DiagnosticDrawEnabled { get; set; } = true;
+        private static bool s_diagnosticsRequested;
+
+        public static IDisposable BeginDiagnostics() => new DiagnosticScope();
+
+        private sealed class DiagnosticScope : IDisposable
+        {
+            private readonly bool _requested = s_diagnosticsRequested, _draw = DiagnosticDrawEnabled;
+            private readonly DiagnosticSnapshot _previous = LastDiagnostics;
+            public DiagnosticScope() { s_diagnosticsRequested = true; LastDiagnostics = null; }
+            public void Dispose()
+            {
+                s_diagnosticsRequested = _requested;
+                DiagnosticDrawEnabled = _draw;
+                LastDiagnostics = _previous;
+            }
+        }
+
+        internal static void RecordDiagnostics(VegetationGrid grid, VegetationDensityField field, byte[] zone, bool[] corridor, byte[] clear)
+        {
+            if (!s_diagnosticsRequested) return;
+            LastDiagnostics = new DiagnosticSnapshot { Grid = grid, Field = field, FinalZone = zone, Corridor = corridor, Clear = clear };
+        }
+
         private static readonly int PushOnId = Shader.PropertyToID("_DD_VegPushOn");
 
         public sealed class Handle : IDisposable
@@ -47,7 +81,7 @@ namespace DD.Prototype.World.Vegetation
             {
                 _draw = draw;
                 if (draw == null) return;
-                _hook = (ctx, cam) => { if (_draw != null && cam != null) _draw.Render(cam, 0); };
+                _hook = (ctx, cam) => { if (DiagnosticDrawEnabled && _draw != null && cam != null) _draw.Render(cam, 0); };
                 RenderPipelineManager.beginCameraRendering += _hook;
             }
 

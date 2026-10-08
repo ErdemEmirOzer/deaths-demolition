@@ -53,6 +53,29 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-092 + WP-093 evidence: requires a populated Cinematic-tier runtime vegetation preview.</summary>
         public static void RenderCombinedPoses() => RenderPoses(true);
 
+        /// <summary>Opt-in companion evidence. First engine window is palace + SW only; no aggregate gate is changed.</summary>
+        public static void RenderCombinedDiagnostics()
+        {
+            string dir = OutDir();
+            using (var diagnostics = new TdCoverDiagnostics(dir))
+                WithLook(cam =>
+                {
+                    foreach ((string name, Vector2 feet) in Poses)
+                    {
+                        if (name != "td2-palace" && name != "td7-corner-sw") continue;
+                        Vector3 ground = Ground(feet);
+                        Vector3 focus = ground + Vector3.up * FocusHeight;
+                        cam.orthographic = false;
+                        cam.fieldOfView = RigFov;
+                        cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
+                        Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
+                        float bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
+                        File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare) + "}");
+                        diagnostics.Capture(cam, name, feet, ground);
+                    }
+                }, true, false);
+        }
+
         private static void RenderPoses(bool requireVegetation) => WithLook(cam =>
         {
             string dir = OutDir();
@@ -289,7 +312,7 @@ namespace DD.Art.Pipeline.EditorTools
             public float verticalFov, focusHeight;
         }
 
-        private static void WithLook(Action<Camera> body, bool requireVegetation = false)
+        private static void WithLook(Action<Camera> body, bool requireVegetation = false, bool writeCombinedContext = true)
         {
             EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
             WorldLayoutKind previous = WorldLayout.Current;
@@ -317,7 +340,7 @@ namespace DD.Art.Pipeline.EditorTools
                 Scene world = SceneManager.GetActiveScene();
                 vegetation = VegetationPreview(world, requireVegetation, out int tier, out int instances);
                 body(cam);
-                if (requireVegetation)
+                if (requireVegetation && writeCombinedContext)
                 {
                     var context = new CombinedCaptureContext
                     {

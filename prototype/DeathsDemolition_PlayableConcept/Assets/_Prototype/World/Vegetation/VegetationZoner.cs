@@ -321,6 +321,9 @@ namespace DD.Prototype.World.Vegetation
             }
 
             Accents(grid, recipe, field, dist, zoneOf, corridorOf, clear, shadowDir);
+#if UNITY_EDITOR
+            VegetationPreview.RecordDiagnostics(grid, field, zoneOf, corridorOf, clear);
+#endif
             return field;
         }
 
