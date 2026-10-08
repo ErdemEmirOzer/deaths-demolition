@@ -55,7 +55,7 @@ t_cleanup() {
 trap 't_cleanup' EXIT
 trap '[ "$T_CLEANING" -eq 1 ] || exit 130' INT; trap '[ "$T_CLEANING" -eq 1 ] || exit 143' TERM; trap '[ "$T_CLEANING" -eq 1 ] || exit 129' HUP
 dd_slot_acquire || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
-dd_disk_gate || exit $?   # C-00 30.09: no Unity below 15 GiB free disk / above 12 GiB swap (checked after the slot wait)
+dd_disk_gate || exit $?   # C-00 30.09: no Unity below 15 GiB free disk / under swap pressure (dd-env.sh dd_disk_gate; checked after the slot wait)
 PLAT=$( [ "$MODE" = "editmode" ] && echo EditMode || echo PlayMode ); NOGFX=(); [ "$MODE" = "editmode" ] && NOGFX=(-nographics)
 FARGS=(); [ -n "$FILTER" ] && FARGS=(-testFilter "$FILTER"); [ -n "$CATEGORY" ] && FARGS+=(-testCategory "$CATEGORY")
 T0=$(date +%s)

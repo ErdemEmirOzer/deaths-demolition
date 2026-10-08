@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """C-00 30.09 · dd_disk_gate (tools/dd-env.sh): the shared Unity/Player resource gate — free disk ≥ 15 GiB and used swap
-≤ 12 GiB, else 75 + one reason line; wired into compile-check, test.sh, build.sh and player-run.sh.
-Fake df / sysctl on PATH (no real disk state involved). usage: python3 tools/tests/test_disk_gate.py"""
+≤ 12 GiB (12–16 GiB while memory_pressure shows ≥ 25 % free, WP-099 08.10), else 75 + one reason line; wired into
+compile-check, test.sh, build.sh and player-run.sh. Fake df / sysctl / memory_pressure on PATH (no real machine state). usage: python3 tools/tests/test_disk_gate.py"""
 import subprocess, tempfile, unittest
 from pathlib import Path
 
@@ -11,17 +11,19 @@ TOOLS = Path(__file__).resolve().parents[1]
 class DiskGateTests(unittest.TestCase):
     def gate(self, free_kib, swap_used, path="/", mem_free="10"):
         with tempfile.TemporaryDirectory(prefix="dd-disk-gate-") as tmp:
-            fake = Path(tmp)
+            fake = Path(tmp); self.asked = False
             (fake / "df").write_text(f"#!/bin/sh\necho 'Filesystem 1024-blocks Used Available'\necho '/dev/x 999 1 {free_kib}'\n")
             (fake / "sysctl").write_text(f"#!/bin/sh\necho 'total = 16384.00M  used = {swap_used}  free = 1.00M  (encrypted)'\n")
             # WP-099 (C-00 08.10): memory_pressure -Q's free %; "missing" = no answer (unreadable). Default 10 % (low).
-            (fake / "memory_pressure").write_text("#!/bin/sh\nexit 1\n" if mem_free == "missing" else
-                                                  f"#!/bin/sh\necho 'The system has 17179869184 (1048576 pages with a page size of 16384).'\n"
-                                                  f"echo 'System-wide memory free percentage: {mem_free}%'\n")
+            mark = f": > '{fake}/memory_pressure-asked'\n"   # gt SHOULD-1 (08.10): the test sees whether the gate asked
+            (fake / "memory_pressure").write_text("#!/bin/sh\n" + mark + ("exit 1\n" if mem_free == "missing" else
+                                                  "echo 'The system has 17179869184 (1048576 pages with a page size of 16384).'\n"
+                                                  f"echo 'System-wide memory free percentage: {mem_free}%'\n"))
             for f in ("df", "sysctl", "memory_pressure"):
                 (fake / f).chmod(0o755)
             r = subprocess.run(["zsh", "-c", f'PATH="{fake}:$PATH"; DD_TIMELINE=""; source "$1"; dd_disk_gate "$2"', "zsh",
                                 str(TOOLS / "dd-env.sh"), path], capture_output=True, text=True, timeout=30)
+            self.asked = (fake / "memory_pressure-asked").exists()
             return r.returncode, r.stdout + r.stderr
 
     def test_DiskKapisi_YeterliDiskVeSwap_0(self):
@@ -85,8 +87,12 @@ class DiskGateTests(unittest.TestCase):
 
     def test_SwapKapisi_12AltindaBellekOkunmaz(self):
         """below 12 GiB the gate never asks memory_pressure — a missing tool changes nothing there."""
-        rc, out = self.gate(99999999, "12288.00M", mem_free="missing")
-        self.assertEqual(0, rc, out); self.assertNotIn("memFreePct", out)
+        for swap in ("12288.00M", "100.00M"):
+            with self.subTest(swap=swap):
+                rc, out = self.gate(99999999, swap, mem_free="missing")
+                self.assertEqual(0, rc, out); self.assertNotIn("memFreePct", out); self.assertFalse(self.asked)
+        self.gate(99999999, "12288.01M", mem_free="63"); self.assertTrue(self.asked)
+        self.gate(99999999, "16384.01M", mem_free="63"); self.assertFalse(self.asked)   # > 16 GiB: no need to ask
 
     def test_DiskKapisi_OkunamayanDegerler_75(self):
         rc, out = self.gate("n/a", "100.00M")
