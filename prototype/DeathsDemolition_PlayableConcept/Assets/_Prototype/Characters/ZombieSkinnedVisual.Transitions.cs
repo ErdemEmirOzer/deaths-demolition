@@ -13,7 +13,6 @@ namespace DD.Prototype.Characters
         private float _transitionFrame, _transitionRate = 1f, _transitionScale = 1f, _transitionYaw, _transitionCooldown, _attachRemaining;
         private Quaternion _transitionBasis;
         private int _savedGait;
-        private float _resumePhase;
         public string TransitionClip => _transitionEntry != null ? _transitionEntry.name : null;
         public bool TransitionActive => _transitionEntry != null;
         public bool TransitionMirror => _transitionMirror;
@@ -39,7 +38,6 @@ namespace DD.Prototype.Characters
             CancelTransition(false);
             for (int i = 0; i < _transitionEntries.Length; i++) _transitionEntries[i] = _animation.Find(ZombieTransitionData.Clips[i]);
             _intentMoving = false; _transitionCooldown = 0f; _attachRemaining = 0f;
-            _resumePhase = Mathf.Repeat(s_gaitOrdinal * 0.618034f, 1f);
             TransitionStarts = 0; TransitionCompletions = 0; LastAttachOutPhase = 0f;
         }
         private bool BeginTransition(int id, bool mirror, float speed, Quaternion basis)
@@ -141,8 +139,12 @@ namespace DD.Prototype.Characters
             if (_events != null) _events.ZombieTransitionMirrorState = 0;
             _animator.SetFloat(GaitId, _gait);
             RefreshGaitClip();
-            if (!_waiting && !_dying && !_rising)
-                _animator.CrossFade(CharacterAnimatorContract.LocomotionState, 0.12f, 0, Mathf.Repeat(_resumePhase + Time.time * _lastRate, 1f));
+            if (_waiting || _dying || _rising) return;
+            // The authored attach already owns the Locomotion clock. A second self-crossfade would reseed that clock.
+            if (_animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimatorContract.LocomotionState)) return;
+            if (_animator.IsInTransition(0) && _animator.GetNextAnimatorStateInfo(0).IsName(CharacterAnimatorContract.LocomotionState)) return;
+            // Retain recovery when neither active state is Locomotion (for example an interrupted attach).
+            _animator.CrossFade(CharacterAnimatorContract.LocomotionState, 0.12f, 0);
         }
         private void ReleaseTransitionFeet() { if (_footIk != null) { _footIk.NotifyLift(0); _footIk.NotifyLift(1); } }
         private void CancelTransition(bool returnToLocomotion)
