@@ -1363,7 +1363,14 @@ namespace DD.Prototype.Characters
                     if (l == null || l.ringSlot < 1 || l.ringSlot > 3 || l.dirIndex < 0 || l.dirIndex > 7 || l.cycleSecondsNatural <= 0.01f) continue;
                     int b = (l.ringSlot - 1) * 8 + l.dirIndex;
                     if (_ringCycle[b] <= 0f) filled++;
-                    _ringStride[b] = l.strideCycleMTemplate * k;
+                    CharacterAnimationSet.Entry entry = _animation.Find(l.clip);
+                    // unitySpeedMps is measured on this Avatar at the imported clip's rate 1.
+                    // The controller's child timeScale changes cycle duration, not distance
+                    // per cycle. Use that measured hero distance once; template * k is only
+                    // the fallback when no valid imported measurement is available.
+                    float measuredStride = entry?.clip != null ? entry.unitySpeedMps * entry.clip.length : 0f;
+                    _ringStride[b] = measuredStride > 0f && !float.IsNaN(measuredStride) && !float.IsInfinity(measuredStride)
+                        ? measuredStride : l.strideCycleMTemplate * k;
                     _ringCycle[b] = l.cycleSecondsNatural;
                 }
 
