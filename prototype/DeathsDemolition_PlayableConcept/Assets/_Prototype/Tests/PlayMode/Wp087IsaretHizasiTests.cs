@@ -22,7 +22,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// direction, the mechanism event S-08 hears, S-08's landing sound source) and where the visible casing comes to rest.
     /// </summary>
     [TestFixture]
-    [Category("WP087")]
     public sealed class Wp087IsaretHizasiTests
     {
         private SpecialWeaponSahne _s;
@@ -40,10 +39,12 @@ namespace DD.Prototype.Tests.PlayMode
 
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — IsaretHizasi_NamluKovan_FpTpUstten_Ustten is the top-down run;
         // IsaretHizasi_NamluKovan_FpTpUstten keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         public IEnumerator IsaretHizasi_NamluKovan_FpTpUstten_Ustten() => IsaretHizasi_NamluKovan_FpTpUsttenCore(new[] { CameraMode.TopDown });
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         [Category("FPTP")]
@@ -217,10 +218,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — IzGorseli_NamludanBaslar_IkiKaredeIsina_Ustten is the top-down run;
         // IzGorseli_NamludanBaslar_IkiKaredeIsina keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsina_Ustten() => IzGorseli_NamludanBaslar_IkiKaredeIsinaCore(new[] { CameraMode.TopDown });
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(300000)]
         [Category("FPTP")]
@@ -312,10 +315,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — KovanOlayi_TahminGorunenKovanla_SesRapor_Ustten is the top-down run;
         // KovanOlayi_TahminGorunenKovanla_SesRapor keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         public IEnumerator KovanOlayi_TahminGorunenKovanla_SesRapor_Ustten() => KovanOlayi_TahminGorunenKovanla_SesRaporCore(new[] { CameraMode.TopDown });
 
+        [Category("WP087")]
         [UnityTest]
         [Timeout(900000)]
         [Category("FPTP")]

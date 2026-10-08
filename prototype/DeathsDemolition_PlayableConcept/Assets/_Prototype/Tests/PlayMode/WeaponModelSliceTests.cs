@@ -24,7 +24,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// into the shoulder by more than 2 cm (AP-006 skinned mesh, current hold pose).
     /// </summary>
     [TestFixture]
-    [Category("WP042")]
     public sealed class WeaponModelSliceTests
     {
         private const float StockPenetrationMaxMetres = 0.02f;
@@ -77,6 +76,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// viewmodel camera's pose and projection): the frame as drawn equals the LOD0 frame and differs from the LOD2
         /// frame; each weapon also writes a 1920×1080 FP close-up as evidence.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator FP_SilahLod0_KlasikVeSpecial_ModDegisinceSerbest()
@@ -151,6 +152,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// as the player sees it — the camera's own world + viewmodel render with the HUD over it. Leaving FP puts the rig back
         /// on the hand.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator FP_GorusPozu_OnSilah_KadrajBandinda()
@@ -382,6 +385,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// is asserted 0 once S-09's FP layout is in. Evidence: both frames on one sheet and each as the player sees it
         /// with the HUD. Leaving FP puts the Special back on the hand.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator FP_GorusPozu_Special_KadrajBandinda()
@@ -481,6 +486,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// <c>fpArms = false</c> (ar_2, lmg_1, lmg_2, rl_1 until P-06's shoulder / yoke passes AD) shows no FP arms and publishes no
         /// arms socket: the weapon rests exactly at its fpView pose. S-06's FirstPersonArms reads the flag (same batch).
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator FP_Kollar_fpArmsKapaliSilahta_KolYok_FpViewPozunda()
@@ -537,6 +544,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// (gripOffset × the pose scale) on the socket, the socket's rotation, the pose scale — frame by frame; cleared,
         /// the fpView pose places it again.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator FP_KolSoketi_SilahSoketiIzler_YoksaFpView()
@@ -583,6 +592,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// clip's ~17° turn), settling onto fpView. Reduced motion keeps the view model on fpView. Evidence: hip / mid-ADS / ADS
         /// frames and the kick peak.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator FP_His_ADS_Kick_AzaltilmisHareket()
@@ -724,6 +735,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// person, one shot at rest, shot +1…+45 frames — the rig body's lift and the total barrel lift (rig + A4.2) against the
         /// view-model anchor. The before / after table for the delivery note (R2 FP feel reference). Measurement only.
         /// </summary>
+        [Category("WP042")]
         [UnityTest, Explicit]
         [Category("Diagnostics")]
         [Timeout(420000)]
@@ -841,6 +853,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// climbs more than 1° (R2 H4b, S-10 contract) above its lowest value so far. Game frames (1/60). Before the fix (b6g3): ar_2 settled to 1.2° at
         /// f13, then the fire clip lifted it to 16.4° (f16); smg_1 / sg_2 0° (their clips do not turn the mount).
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator FP_AnahtarPenceresindeAtes_KlipSizintisiYok()
@@ -921,6 +935,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// column's 61° + 34 cm: shot +1…+45 frames the rig body's lift stays within the A4.2 budget (6.5°) and the muzzle (the
         /// flash) stays on screen. Logged: the combined FP lift (rig + the A4.2 view-model kick) for C-00.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator FP_Tekme_RoketTupAgzinda_PompaliNamluButcede()
@@ -1072,10 +1088,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir_Ustten is the top-down run;
         // Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP042")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir_Ustten() => Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisirCore(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
 
+        [Category("WP042")]
         [UnityTest]
         [Timeout(300000)]
         [Category("FPTP")]
@@ -1166,6 +1184,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// crosshair (< 3 px at 1920 × 1080, the ar_1 check's bar). A weapon without both sight sockets (a scope) is reported, not
         /// failed. Logged per weapon: rear / front offset (px) and eye → rear sight / sight height from the sockets (cm).
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(420000)]
         public IEnumerator FP_ADS_HerSilahta_GezVeArpacikNisangahta()
@@ -1236,6 +1256,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// pose. The weapon's pixels stay off the HUD and the Special ring block (0 px; the arms are exempt — C-00 25.09).
         /// Evidence: a 12-frame sheet with the arms and the HUD frames.
         /// </summary>
+        [Category("WP042")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator FP_KollarAcik_ElKavrama_KadrajVeHud()
@@ -1457,10 +1479,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TP_BaslangicSilahi_HerKameraModunda_Elde_Ustten is the top-down run;
         // TP_BaslangicSilahi_HerKameraModunda_Elde keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("WP042")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator TP_BaslangicSilahi_HerKameraModunda_Elde_Ustten() => TP_BaslangicSilahi_HerKameraModunda_EldeCore(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
 
+        [Category("WP042")]
         [UnityTest]
         [Timeout(120000)]
         [Category("FPTP")]
@@ -1616,6 +1640,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// VfxDressing.EjectCasing and WeaponController.PublishMechanism read — points to the shooter's right. World-space
         /// sign test against the character's right (it faces the aim) and the camera's right.
         /// </summary>
+        [Category("WP042")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator HerSilah_Ejection_AticininSaginda_KovanSagaFirlar()
@@ -1668,6 +1693,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsEmpty(wrong, "Ejection / kovan atıcının SAĞINDA değil: " + string.Join(" | ", wrong));
         }
 
+        [Category("WP042")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator HerSilah_AP013Modeli_Elde_Soketler_OrtoKare_KundakOmuz()

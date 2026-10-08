@@ -37,12 +37,17 @@ dd_utc() { date -u +%Y%m%dT%H%M%SZ; }
 dd_log() { echo "$(date -u +%FT%TZ) $*"; [ -n "$DD_TIMELINE" ] && echo "$(date -u +%FT%TZ) $*" >> "$DD_TIMELINE"; }
 dd_unity_count() { pgrep -f "Unity.app/Contents/MacOS/Unity.* -batchmode" 2>/dev/null | wc -l | tr -d ' '; }
 # dd_disk_gate [path] (C-00 30.09 · machine rule §10): the one resource gate before any Unity or Player launch — free disk on
-# <path>'s volume (default the repo) ≥ 15 GiB and used swap ≤ 12 GiB; else one reason line and 75 (busy — nothing started).
+# <path>'s volume (default the repo) ≥ 15 GiB and used swap ≤ 12 GiB (≤ 16 GiB while memory_pressure shows ≥ 25 % free —
+# WP-099, C-00 08.10); else one reason line and 75 (busy — nothing started).
 # Unreadable df / sysctl counts as not ready. compile-check, test.sh, build.sh and player-run.sh call it (single source).
 # C-00 06.10: used swap ≥ DD_SWAP_WARN_MB (10 GiB) is an early WARNING line (timeline) — nothing is stopped below 12 GiB.
-DD_DISK_MIN_KIB=15728640; DD_SWAP_MAX_MB=12288; DD_SWAP_WARN_MB=10240
+# WP-099 (C-00 08.10): used swap alone stopped every launch while live memory was plentiful (swap moves up and down within
+# minutes; free memory swings 32–64 %). Above 12 GiB the gate also reads `memory_pressure -Q` (system-wide free %): it
+# stops only when free < DD_MEM_FREE_MIN_PCT (25 %) or unreadable; above DD_SWAP_HARD_MB (16 GiB) it always stops.
+# Between 12 and 16 GiB with enough free memory: a WARNING line, started. Every stop/warning line carries both values.
+DD_DISK_MIN_KIB=15728640; DD_SWAP_MAX_MB=12288; DD_SWAP_WARN_MB=10240; DD_SWAP_HARD_MB=16384; DD_MEM_FREE_MIN_PCT=25
 dd_disk_gate() {
-  local free swap frac cents
+  local free swap frac cents memfree
   free=$(df -k "${1:-$DD_REPO}" 2>/dev/null | awk 'NR==2{print $4}')
   # C-00 06.10 (N-8): the decimals count — "used = 12288.50M" was read as 12288 and passed the 12 GiB stop. The value is
   # compared in hundredths of a MB (the stop: > 12 GiB, the warning: ≥ 10 GiB) and shown as sysctl gave it.
@@ -51,10 +56,21 @@ dd_disk_gate() {
   [[ "${swap%%.*}" == <-> && "$frac" == <-> ]] && cents=$(( ${swap%%.*} * 100 + frac ))
   if [[ "$free" != <-> ]] || [ "$free" -lt "$DD_DISK_MIN_KIB" ]; then
     dd_log "disk-gate: free disk ${free:-unknown} KiB < $DD_DISK_MIN_KIB (15 GiB) on ${1:-$DD_REPO} — not started (75)"; return 75; fi
-  if [[ -z "$cents" ]] || (( cents > DD_SWAP_MAX_MB * 100 )); then
-    dd_log "disk-gate: used swap ${swap:-unknown} MB > $DD_SWAP_MAX_MB (12 GiB) — not started (75)"; return 75; fi
-  (( cents >= DD_SWAP_WARN_MB * 100 )) && dd_log "WARNING disk-gate: used swap $swap MB ≥ $DD_SWAP_WARN_MB (10 GiB) — near the 12 GiB stop; started anyway"
-  dd_log "disk-gate: ok freeKiB=$free swapUsedMB=$swap"; return 0
+  # below 12 GiB memory_pressure is never asked; every line above it (and an unreadable swap) carries both values
+  [[ -z "$cents" ]] || (( cents > DD_SWAP_MAX_MB * 100 )) \
+    && memfree=$(memory_pressure -Q 2>/dev/null | sed -n 's/.*free percentage: *\([0-9][0-9]*\)%.*/\1/p' | head -1)
+  if [[ -z "$cents" ]]; then
+    dd_log "disk-gate: used swap unknown, memory free ${memfree:-unknown}% — not started (75)"; return 75; fi
+  if (( cents > DD_SWAP_HARD_MB * 100 )); then
+    dd_log "disk-gate: used swap $swap MB > $DD_SWAP_HARD_MB (16 GiB), memory free ${memfree:-unknown}% — not started (75)"; return 75; fi
+  if (( cents > DD_SWAP_MAX_MB * 100 )); then
+    if [[ "$memfree" != <-> ]] || (( memfree < DD_MEM_FREE_MIN_PCT )); then
+      dd_log "disk-gate: used swap $swap MB > $DD_SWAP_MAX_MB (12 GiB) and memory free ${memfree:-unknown}% < $DD_MEM_FREE_MIN_PCT% — not started (75)"; return 75; fi
+    dd_log "WARNING disk-gate: used swap $swap MB > $DD_SWAP_MAX_MB (12 GiB) but memory free $memfree% ≥ $DD_MEM_FREE_MIN_PCT% — swap used above 12 GiB, live memory free ≥ 25 %; started anyway"
+  elif (( cents >= DD_SWAP_WARN_MB * 100 )); then
+    dd_log "WARNING disk-gate: used swap $swap MB ≥ $DD_SWAP_WARN_MB (10 GiB) — near the 12 GiB stop; started anyway"
+  fi
+  dd_log "disk-gate: ok freeKiB=$free swapUsedMB=$swap${memfree:+ memFreePct=$memfree}"; return 0
 }
 # Waits until fewer than DD_MAX_UNITY batch editors run. Returns 75 on timeout (EX_TEMPFAIL).
 dd_wait_slot() {

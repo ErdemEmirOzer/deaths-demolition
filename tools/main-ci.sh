@@ -19,7 +19,7 @@
 # Processes (R1 §4.13): this script kills nothing; tools/test.sh's watchdog only ends the Unity pid it started.
 # Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup. A running
 # test.sh (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120) to end with its Unity; if any of them is still
-# alive the user-data window is LEFT OPEN — no restore, no player slot / lease release — and the line says: tell C-00.
+# alive the user-data window is LEFT OPEN — no restore, no lease release — and the line says: tell C-00.
 # Driver (Codex-audit M-12, C-00 30.09): the git worktree holding THIS main-ci.sh (guard, summary, owners, suites come from
 # it) must be clean, on a detached HEAD, and carry main's tools tree; its HEAD + tools tree hash go into summary.json/md.
 # Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* (dd-env.sh), shared with compile-check.sh; a live owner → 75 at once
@@ -90,7 +90,7 @@ CORE_FILTER=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" core-filter "$DD_TOOLS_DIR/
 # Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
-CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_RAW=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
+CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_RAW=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
 CI_GSNAP=""; GDIR=""   # G4 D8 queue (06.10): the guard snapshot in flight (it can wait ≤ DD_GUARD_QUEUE_WAIT in the window queue)
 # CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
@@ -116,7 +116,7 @@ ci_not_restored() {   # <reason> [live pids]
 ci_guard_restore_safe() {
   ci_project_open; local open=$?
   if [ "$open" -ne 1 ]; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $DD_CI_LEASE kept, $OUT/$CI_MARKER (65)" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, lease $DD_CI_LEASE kept, $OUT/$CI_MARKER (65)" >&2
     ci_not_restored "a Unity has the CI checkout open, or the process check failed ($open)" "$(pgrep -f "Unity.app/Contents/MacOS/Unity" 2>/dev/null | tr '\n' ' ')"
     return 1
   fi
@@ -136,13 +136,12 @@ ci_cleanup() {
   fi
   # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, lease $DD_CI_LEASE kept" >&2
     [ "$CI_GUARD_READY" -eq 1 ] || exit "$original"   # no open window: nothing to mark
     ci_not_restored "child $DD_CHILD_ALIVE still alive ${DD_CI_CHILD_GRACE:-120} s after TERM" "$DD_CHILD_ALIVE"
     exit 65
   fi
   if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit 65; fi
-  if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
   dd_ci_lease_release; lease_exit=$?
   [ "$CI_GUARD_EXIT" -eq 0 ] && [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "CI cleanup failed: guard=$CI_GUARD_EXIT slot=$slot_exit lease=$lease_exit (original=$original)" >&2
   [ "$original" -eq 0 ] || exit "$original"
@@ -164,13 +163,15 @@ trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HU
 dd_ci_lease_acquire "$CI_DIR" || exit $?
 CI_DIR=$DD_CI_CHECKOUT
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
-# WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
-# focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.
+# WP-099 (C-00 08.10, queue starvation; gt MUST-1): main-ci takes NO player slot. It held the slot for the whole run
+# (WP-043D: Player captures share the audio device and focus with the PlayMode tests) — and so for up to an hour while
+# its editor snapshot waited in the window queue, holding every Player off. Taking it after the window instead closes a
+# cycle with callers that hold the player slot and then wait for an editor-area window (guard --scope all; K scripts
+# "player slot → snapshot --scope editor"). C-00's rule: an editor-scope run never takes the player slot. The cost is
+# the old WP-043D risk — a Player started during main-ci's PlayMode run can disturb an audio/focus test.
 OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT" || exit 3; DD_TIMELINE="$OUT/timeline.txt"
 ci_project_open; OPEN=$?
 [ "$OPEN" -eq 1 ] || { dd_log "CI project open or process check unavailable — busy"; exit 75; }
-CI_PLAYER_TAG="$DD_SLOT_TAG"; CI_PLAYER_HELD=1
-dd_slot_acquire player || exit $?
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
 dd_log "main-ci driver=$CI_DRIVER head=$CI_DRIVER_HEAD toolsTree=$CI_TOOLS_TREE (= main:tools)"
@@ -230,7 +231,7 @@ while :; do
   "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1 & CI_GSNAP=$!; wait $CI_GSNAP; GS=$?; CI_GSNAP=""
   [ "$GS" -eq 0 ] && break
   # G4 D8 queue reviews (06.10): a 75 after the window queue's own wait (DD_GUARD_QUEUE_WAIT, 3600 s — this run holds the
-  # player slot and the lease meanwhile) is not retried: a retry is a new ticket at the queue's end, ≤ 3 h of no Players
+  # lease meanwhile) is not retried: a retry is a new ticket at the queue's end
   [ "$GS" -eq 75 ] && grep -q "class=QUEUE_TIMEOUT" "$GDIR-snapshot.out" 2>/dev/null && { dd_log "userdata snapshot75 (try $GTRY, $GDIR): the window queue timed out — not retried; no tests started"; exit 75; }
   [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
   dd_log "userdata snapshot75 (try $GTRY/$CI_GUARD_TRIES, $GDIR): busy — retrying into a new directory; no tests started"

@@ -20,13 +20,16 @@
 ^(Qa|Lifecycle|SpawnMixSimulator)	S-10	QA
 # WP-079G (C-00 30.09): fixtures that fell through to C-00 after the M4-R1 / Codex-period additions (d6a73dc3 review).
 ^(NodeCard|Tree(Achievement|EffectValues|HitEffect|Model|WeaponStat|Stagger)|UpgradeOffer|UpgradePurchase|FeatAchievement)	S-04	run tree / shop / feats
-^(RunTreeScreen|HearthLimitScreen|PauseV3|ResultsV3|SelectionV3|GlyphTintHud|LoadingKeyArt|LoadingWatchdog|UpgradeWallpaper)	S-09	UI v3 screens
+^(RunTreeScreen|HearthLimitScreen|PauseV3|ResultsV3|SelectionV3|GlyphTintHud|LoadingKeyArt|LoadingWatchdog|UpgradeWallpaper|MenuCinematic|WallpaperIntake)	S-09	UI v3 screens · cinematic menu / wallpaper intake (C-00 07.10)
 ^(Wp073|BackingScale|WindowFit)	S-07	WP-073 VFX / feel (ShaderLibraryTests.cs fixtures)
-^(GreyboxV6|CloudShadow|QualityTiers|QualityDefaultDec100)	S-05	world V6 / quality tiers
-^(CorpseLifetime|DeathImpulse|HitResponseProfile|RearAwareness|V6AiRound|ZombieEmissionSlot|ShockSlice|NavRegionScene)	S-03	AI v3 / corpse / spawn
-^(FpWeaponFeel|Ap021ClassicModelGate|SpecialLinks)	S-02	weapons / FP feel / Specials
+^(GreyboxV6|CloudShadow|QualityTiers|QualityDefaultDec100|QualityModeApplier|ShadowCascadeModeDiag|V6CrossingShare)	S-05	world V6 / quality tiers · quality modes / cascades / V6 crossing (C-00 07.10)
+^(CorpseLifetime|DeathImpulse|HitResponseProfile|RearAwareness|V6AiRound|Zombie|ShockSlice|NavRegionScene|Z3CharacterBudget)	S-03	AI v3 / corpse / spawn · zombie v2 / Z3 budget (C-00 07.10)
+^(FpWeaponFeel|Ap021ClassicModelGate|SpecialLinks|ShotgunMuzzleDiag)	S-02	weapons / FP feel / Specials · shotgun muzzle diagnostic (C-00 07.10)
 ^(FlowSmoke|RunSceneDiagnosis|BootFirstSceneHandOff|CaptureAgentReleaseException)	S-01	boot / scene flow / capture agent
 # WP-087 (C-00 06.10): S-02's fixtures that were falling to C-00 — WP-087 (marker gates, B-03 GC, reload event contract, held kick),
 # the WP-082 hero v2 reach pre-study and WP-069 B5-18's top-down head exposure.
 ^(Wp087|Wp082HeroV2ErisimTests$|TopDownHeadExposureTests$)	S-02	WP-087 weapons / markers / held kick · hero v2 reach · top-down head exposure
+# WP-099 (S-01, 08.10): fixtures that fell to the C-00 catch-all on main — the td-capture logic (S-01) and WP-095 feel events (S-02)
+^TdCaptureLogicTests$	S-01	TopDown capture agent logic (WP-099 td-capture)
+^Wp095FeelEventsTests$	S-02	R3 feel events (WP-095)
 .*	C-00	unmapped (triage)

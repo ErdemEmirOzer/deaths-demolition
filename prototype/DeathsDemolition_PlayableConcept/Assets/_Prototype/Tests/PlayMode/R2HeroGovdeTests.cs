@@ -42,7 +42,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// its source checks and before its threshold assert, so a red value is recorded as red.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2HeroGovdeTests
     {
         public const string H2Name = "DD.Prototype.Tests.PlayMode.R2HeroGovdeTests.H2_SilahGovdeGomulmesi_TumKlasikSilahlar_DurusYuruyus";
@@ -87,6 +86,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------------------------ H2
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -507,6 +507,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------------------------ H6
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

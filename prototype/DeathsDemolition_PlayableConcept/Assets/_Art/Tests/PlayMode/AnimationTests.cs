@@ -35,7 +35,6 @@ namespace DD.Art.Tests.PlayMode
     /// on the prefab, and an allocation-free animation path over a 40-body crowd.
     /// </summary>
     [TestFixture]
-    [Category("WP018")]
     public sealed class AnimationTests
     {
         private const float SahneZamanAsimi = 60f, KurulumZamanAsimi = 60f, OyuncuZamanAsimi = 30f, YatismaZamanAsimi = 30f;
@@ -146,6 +145,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================== DEC-029 saldırı penceresi
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator SaldiriPenceresi_DEC029_YalnizKlipOlaylariArasinda_ZamanlayiciYedegi0()
@@ -214,6 +214,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ================================================================ hit reaction / stagger
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator HitReaction_YurumeyiKesmez_UstGovdeKatmani_ZirhKirilmasi_AgirSendeleme()
@@ -266,6 +267,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================================ ölüm ×4
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Olum_DortKlip_DeathEnd_HavuzaDonus()
@@ -332,6 +334,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ======================================================================== WP-071 B4 grip
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator SolEl_SilahKabzasinda_ReloadtaBirakir_SonraTutar()
@@ -360,6 +363,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ================================================================================ rise
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator SilahV3_B4c_TpAcikSetler_SniperSurguDongusu_ArSmgLegacy()
@@ -405,6 +409,7 @@ namespace DD.Art.Tests.PlayMode
             yield return CharacterTests.Bekle(() => !pv.Animator.GetBool(Animator.StringToHash(C.FireHeld)), 2f, "dizi bitince FireHeld kapanır");
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator SilahV3_SinifGecisi_smg2ar2_SpecialV3_swArc_Donus_VarsayilanKapali()
@@ -449,6 +454,7 @@ namespace DD.Art.Tests.PlayMode
             finally { PlayerSkinnedVisual.V3WeaponSets = false; }
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator SilahV3_AOC_ar1ar2_TacEmpty_BurstTekVurus_LocomotionSifirlanmaz()
@@ -527,6 +533,7 @@ namespace DD.Art.Tests.PlayMode
             finally { PlayerSkinnedVisual.V3WeaponSets = false; }
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
@@ -550,6 +557,7 @@ namespace DD.Art.Tests.PlayMode
             finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
@@ -670,6 +678,7 @@ namespace DD.Art.Tests.PlayMode
         // R2 H4a (C-00 05.10: split from H4, thresholds unchanged) — the source name the acceptance chain runs this test by.
         private const string H4aName = "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta";
 
+        [Category("WP018")]
         [UnityTest]
         [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
@@ -761,6 +770,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsEmpty(wrong, "FP kol kabulü (C-00: kol ≤ %10, kamera ≥ 15 cm, el ≤ 1 cm, dinlenme ≤ 0,3 cm, eller ekranda, dirsekler ekran dışında)");
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
@@ -963,6 +973,7 @@ namespace DD.Art.Tests.PlayMode
             return px;
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Twist_RigV002_SurucuBurulmasi_AgirlikKadarDagitilir()
@@ -993,6 +1004,7 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log(sb.ToString());
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Rise_SpawnKlibi_RiseEndeKadarYurumez_Saymaz()
@@ -1043,6 +1055,7 @@ namespace DD.Art.Tests.PlayMode
             return pv;
         }
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Oyuncu_2DBlend_Yonler_Nisan_Ates_Hit_Pickup_Olum()
@@ -1139,6 +1152,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ================================================================== kalabalık: GC 0 + uzak adım
 
+        [Category("WP018")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Kalabalik40_AnimasyonYolu_GcSifir_UzakAdim15Hz()

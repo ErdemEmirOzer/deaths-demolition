@@ -537,6 +537,7 @@ namespace DD.Prototype.Weapons
                 {
                     WeaponEvents.PublishDryFire();
                     AudioEvents.Raise(CombatAudioEvent.ClassicWeaponDryFire, Muzzle.position, 1f, 30);
+                    FeelEvents.RaiseDryFire(new FeelDryFire(_equippedId, Muzzle.position));   // WP-095: the feel layers' one source
                 }
 
                 // Holding the trigger on an empty magazine reloads: with hold-to-fire as
@@ -676,6 +677,10 @@ namespace DD.Prototype.Weapons
 
             _classic.ConsumeShot();
 
+            // WP-095 (R3): the feel layers' one shot event — one per trigger pull, after the round is spent (AmmoLeft = what the HUD shows next)
+            FeelEvents.RaiseShot(new FeelShot(false, _equippedId, default, feelId, origin, aim, pellets, presentationGroupId, ShotSerial,
+                powerScale, _classic.Ammo, _classic.MagazineSize));
+
             // WP-069 B2: game recoil. Look modes kick the camera (the rig drains and recovers it);
             // top-down keeps it on the shot as horizontal drift (ClassicWeaponRuntime.RecoilYawDegrees).
             if (lookMode && (_classic.LastRecoilPitch != 0f || _classic.LastRecoilYaw != 0f))
@@ -737,6 +742,8 @@ namespace DD.Prototype.Weapons
                 }
 
                 _host?.OnReloadStarted(_classic.ReloadDuration);
+                FeelEvents.RaiseReloadStarted(new FeelReload(false, _equippedId, default, _classic.ReloadDuration,
+                    _classic.ReloadIsEmpty, false, Muzzle.position));   // WP-095: every start, whatever started it
             }
             else if (!reloading && _wasReloading)
             {
@@ -753,6 +760,8 @@ namespace DD.Prototype.Weapons
                 }
 
                 _host?.OnReloadFinished(completed);
+                FeelEvents.RaiseReloadEnded(new FeelReload(false, _equippedId, default, _classic.ReloadDuration, false, completed,
+                    Muzzle.position));   // WP-095: every exit — completed, cut by the trigger, switched, a Special
             }
             else if (reloading && !_reloadInsertFired
                      && _classic.ReloadProgress01 >= ReloadInsertProgress)
@@ -955,6 +964,8 @@ namespace DD.Prototype.Weapons
             }
 
             _special.ConsumeShot();
+            FeelEvents.RaiseShot(new FeelShot(true, default, id, WeaponFeelIds.From(id), origin, aim, 1, 0, 0, 1f, _special.Ammo,
+                _special.MagazineSize));   // WP-095: the feel layers' one shot event
         }
 
         private void HandleSpecialEnded()

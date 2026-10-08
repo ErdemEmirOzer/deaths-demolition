@@ -40,7 +40,7 @@ fi
 # Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
-ci_disk_ready() { dd_disk_gate "$CI_DIR"; }   # C-00 30.09: the shared gate (disk ≥ 15 GiB + swap ≤ 12 GiB), dd-env.sh
+ci_disk_ready() { dd_disk_gate "$CI_DIR"; }   # C-00 30.09: the shared gate (disk ≥ 15 GiB + the swap / free-memory rule), dd-env.sh
 CI_SLOT_HELD=0; CI_CLEANING=0; CI_SIGNAL=""
 ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0

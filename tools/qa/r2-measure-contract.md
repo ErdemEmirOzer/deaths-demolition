@@ -226,6 +226,25 @@ name. An R1 build that fails on its own (wp078_perf_report.classify "failed", no
 windows stops the R1 side for the rest of the matrix (`wp078_perf.py --baseline-fail-stop`, KADRO test-engineer NOTE-4).
 That saves ~60 empty windows; FINAL's windows go on and P2 is BLOCKED.
 
+## S1 / S2 coverage (weapon kit, S-08 · C-00 07.10)
+
+Writer: `AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit` (top-down only since R3), from every enabled weapon's
+variant-A top-down stem take. Next to their sound keys, S1 and S2 carry the kit's coverage (S-10 proposal, C-00 07.10):
+
+- `weaponsMissing` (check `== 0`): `WeaponRoster.Enabled` count minus the weapons with a measured take. A weapon that is
+  enabled but has no Arsenal definition counts as missing. A run with `DD_KIT_WEAPONS` narrower than `all` fails on
+  purpose: the gate is the whole roster. The test asserts it too when `DD_R2_MEASURE_DIR` is set.
+- `weaponsMeasured`, `rosterEnabled` (report): the two counts behind it.
+
+S2 carries the same three keys. `samples` stays the shot count, and its floor is the coverage floor above (minSamples
+S1 66 / S2 151). That floor is written for today's roster; `weaponsMissing` checks the roster itself, so a weapon left out
+of the kit fails even when a changed roster or fire data still lands the shot count over the floor.
+
+## S2 fire voices (S-08 · S-10 07.10)
+
+`fireVoiceDeficit` sums each take's max(0, planned shots − fire voices): one take's extra voices never cancel another
+take's missing ones.
+
 ## S3 (Dense-40 loudness and peak, S-08 06.10)
 
 No C# test writes S3: three recordings are measured offline. Writer: `tools/qa/r2_s3.py` (S-08), run by the owner on the

@@ -137,6 +137,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(CameraCursorIntent.Locked, CameraModeService.CursorIntent);
         }
 
+        [Category("FPTP")]
         [Test]
         public void GecisSureleri_ModCiftineGoreVeAzaltilmisHareketteAni()
         {
@@ -212,6 +213,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(CameraModeService.IsTransitioning);
         }
 
+        [Category("FPTP")]
         [Test]
         public void R1A17_EtkinProfil_GecisinIlkYarisindaOncekiMod()
         {
@@ -221,6 +223,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(CameraOccluderPolicy.None, CameraModeService.EffectiveProfile.OccluderPolicy, "t≥0,5: yeni mod politikası.");
         }
 
+        [Category("FPTP")]
         [Test]
         public void R1A18_ImlecNiyeti_RunFlowClockuDogrudanOkur()
         {
@@ -252,6 +255,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(CameraModeService.TryParseMode(null, out m));
         }
 
+        [Category("FPTP")]
         [Test]
         public void BakisGirdisi_DestekYoksaCubukAimStickDoner()
         {

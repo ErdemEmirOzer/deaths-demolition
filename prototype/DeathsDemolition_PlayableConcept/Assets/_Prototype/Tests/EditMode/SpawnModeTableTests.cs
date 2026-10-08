@@ -12,7 +12,6 @@ namespace DD.Prototype.Tests.EditMode
     /// (0.30 / 0.25); the tier path gate rejects points beyond its path limit (Elite / Ultra 55 m, Special 75 m).
     /// WP-089 R3 (user 06.10: only TopDown): the TopDown rows stand alone; the TP / FP rows carry [Category("FPTP")].
     /// </summary>
-    [Category("WP076")]
     public sealed class SpawnModeTableTests
     {
         private SpawnConfigSection _config;
@@ -36,6 +35,7 @@ namespace DD.Prototype.Tests.EditMode
         private float W(SpawnPointRuntime p, in SpawnWeightInputs g, out SpawnWeightBreakdown b) =>
             SpawnWeightCalculator.Evaluate(p, in g, _config, _tuning, SpawnRelaxation.None, out b);
 
+        [Category("WP076")]
         [Test]
         public void Tepeden_MinMesafe_ArkaRet_Degismez()
         {
@@ -43,6 +43,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Greater(W(Nokta(17f, arkada: true), Girdi(0), out _), 0f, "tepeden 15 m (değişmez)");
         }
 
+        [Category("WP076")]
         [Test]
         [Category("FPTP")]
         public void TP_FP_MinMesafe_ArkaRet()
@@ -57,6 +58,7 @@ namespace DD.Prototype.Tests.EditMode
 
         /// <summary>TopDown: the on-screen factor is the threat layer's row (WP-054) — 0.35 at layer 0, the layer-3 row (0.10) at
         /// layer 3; no camera-mode floor applies (SpawnWeightCalculator §9: the mode row only when mode != 0).</summary>
+        [Category("WP076")]
         [Test]
         public void EkrandaCarpani_Tepeden_TehditKatmaniSatiri()
         {
@@ -65,6 +67,7 @@ namespace DD.Prototype.Tests.EditMode
             W(Nokta(30f, ekranda: true), in g, out SpawnWeightBreakdown k3); Assert.AreEqual(0.10f, k3.Visibility, 1e-5f, "tepeden tehdit katmanı 3 satırı (0,10)");
         }
 
+        [Category("WP076")]
         [Test]
         [Category("FPTP")]
         public void EkrandaCarpani_TP_FP_TehditKatmaniDahaDusukseOKazanir()
@@ -75,6 +78,7 @@ namespace DD.Prototype.Tests.EditMode
             W(Nokta(30f, ekranda: true), in g, out SpawnWeightBreakdown k3); Assert.AreEqual(0.10f, k3.Visibility, 1e-5f, "tehdit katmanı 3 (0,10) daha düşük → o");
         }
 
+        [Category("WP076")]
         [Test]
         public void TierYolKapisi()
         {

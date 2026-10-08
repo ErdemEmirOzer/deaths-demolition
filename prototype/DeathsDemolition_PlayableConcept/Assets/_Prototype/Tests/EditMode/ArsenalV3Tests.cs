@@ -16,7 +16,6 @@ namespace DD.Prototype.Tests.EditMode
     /// World / body impacts are PlayMode (ProjectileSliceTests).
     /// </summary>
     [TestFixture]
-    [Category("WP069")]
     public sealed class ArsenalV3Tests
     {
         private static PrototypeConfig Config => Resources.Load<PrototypeConfig>(PrototypeConfig.ResourcesPath);
@@ -29,6 +28,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ A4 catalog
 
+        [Category("WP069")]
         [Test]
         public void Katalog_OnTanim_Gecerli_KimliklerBenzersiz()
         {
@@ -68,6 +68,8 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>WP-069 B5 (C-00 30.09, option C): the FP arms stay off the long weapons until P-06's shoulder / yoke passes AD.</summary>
+        [Category("WP069")]
+        [Category("FPTP")]
         [Test]
         public void FpKollar_UzunSilahlardaKapali_DigerleriAcik()
         {
@@ -82,6 +84,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(12, n, "on klasik + iki Special");
         }
 
+        [Category("WP069")]
+        [Category("FPTP")]
         [Test]
         public void FpSolElOfseti_HepsiSifir_P06KliptenYerlestirir()
         {
@@ -96,6 +100,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void KonfigKopyasi_TanimSayilariniTasir_KonseySayilari()
         {
@@ -141,6 +146,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(10, Arsenal.Get("rl_1").unlock.metaCost, "meta bandı §6 tablosu");
         }
 
+        [Category("WP069")]
         [Test]
         public void KlonKonfig_KendiKopyasiniTasir_OrijinalDegismez()
         {
@@ -161,6 +167,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void ProfilGocuTablosu_EskiAdlar_V3Anahtarlar_CalismaZamaniIndeksleri()
         {
@@ -176,6 +183,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(WeaponIdMigration.TryGetRuntimeId("sw_arc", out _));
         }
 
+        [Category("WP069")]
         [Test]
         public void MenzilDususu_DogrusalPay_TamHasarSinirindanSonra()
         {
@@ -207,6 +215,7 @@ namespace DD.Prototype.Tests.EditMode
         /// <summary>Far above the world (y 900) so no collider can be in the path.</summary>
         private static readonly Vector3 Sky = new Vector3(0f, 900f, 0f);
 
+        [Category("WP069")]
         [Test]
         public void Mermi_MenzilSonundaSoner_TamMenzilKatEder()
         {
@@ -231,6 +240,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void Mermi_Yercekimi_YarimGTkare_Dususu()
         {
@@ -243,6 +253,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(-9.81f, p.Velocity.y, 0.01f);
         }
 
+        [Category("WP069")]
         [Test]
         public void Mermi_Deterministik_AyniGirdi_AyniYol()
         {
@@ -259,6 +270,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Category("WP069")]
         [Test]
         public void Havuz_TavanDolunca_EnEskiEmekli_SayilirSayim()
         {
@@ -274,6 +286,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(Sky.x + 1f, ProjectileSystem.Get(0).Origin.x, 1e-4f, "en eski (ilk doğan) emekli oldu");
         }
 
+        [Category("WP069")]
         [Test]
         public void Islem_SurdurmeKimligi_AcmadanVerilir_DevamEder()
         {

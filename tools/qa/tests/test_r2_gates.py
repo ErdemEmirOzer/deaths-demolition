@@ -32,6 +32,8 @@ class ContractTests(unittest.TestCase):
         # a changed threshold must be a reviewed edit of this file: pin the C-00 05.10 values
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
                   ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 24, ("S1", "below400ShareMin"): 0.20,
+                  # C-00 07.10 (S-10 proposal): every enabled weapon of the roster measured in the kit, or S1 / S2 cannot pass
+                  ("S1", "weaponsMissing"): 0, ("S2", "weaponsMissing"): 0,
                   ("S4", "hallRt60MaxS"): 2.28, ("S4", "openRt60MinS"): 0.56,   # C-00 05.10 S4 v2: the tail's RT60 (spec ±20 %)
                   ("U1", "u1_default"): 0.40, ("U1", "u1_same_content"): 0.40, ("H4b", "leakDegMax"): 1.0,   # U1: C-00 05.10, two measures
                   ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0,
@@ -230,7 +232,8 @@ class MeasuredByTests(unittest.TestCase):
                           "DD_KIT_VARIANTS": "AC", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
         self.assertEqual("/k/asset-production/AP-027/exports/v001-prototip",
                          r2.expand_env(kit[0]["env"], "/k")["DD_AP027_DIR"])
-        self.assertEqual(["below400ShareMinV4"], gate("S1")["report"])
+        self.assertEqual(["below400ShareMinV4", "weaponsMeasured", "rosterEnabled"], gate("S1")["report"])
+        self.assertEqual(["weaponsMeasured", "rosterEnabled"], gate("S2")["report"])   # C-00 07.10: coverage, reported
         normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
         self.assertEqual("editmode", normal["r2-U3"]["suite"])
         self.assertEqual("DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
@@ -400,7 +403,8 @@ class MinSamplesTests(unittest.TestCase):
 
     def test_below_the_floor_is_blocked_at_or_above_it_is_judged(self):
         s1 = gate("S1")
-        art = dict(measure("S1", below400ShareMin=0.25, below400ShareMinV4=0.3))
+        cover = dict(weaponsMissing=0, weaponsMeasured=10, rosterEnabled=10)   # C-00 07.10: S1 / S2 coverage keys
+        art = dict(measure("S1", below400ShareMin=0.25, below400ShareMinV4=0.3, **cover))
         for samples, status in ((65, "BLOCKED"), (66, "PASS"), (132, "PASS")):
             with self.subTest(samples=samples):
                 row = r2.evaluate_gate(s1, FINAL, measure=dict(art, samples=samples), cases={t: "Passed" for t in s1.get("tests", [])})
@@ -408,6 +412,12 @@ class MinSamplesTests(unittest.TestCase):
                 if status == "BLOCKED":
                     self.assertIn("kapsama eksik", row["reason"])
         self.assertIn("kapsama bilinmiyor", r2.evaluate_gate(s1, FINAL, measure=art, cases={t: "Passed" for t in s1.get("tests", [])})["reason"])
-        failing = dict(measure("S1", below400ShareMin=0.1, below400ShareMinV4=0.3), samples=10)
+        failing = dict(measure("S1", below400ShareMin=0.1, below400ShareMinV4=0.3, **cover), samples=10)
         low = r2.evaluate_gate(s1, FINAL, measure=failing, cases={t: "Passed" for t in s1.get("tests", [])})
         self.assertEqual("FAIL", low["status"])   # more samples only lower a minimum: a fail on few samples stands
+        # C-00 07.10: a weapon of the roster without a take fails S1 / S2 even over the shot floor
+        for gid, values in (("S1", dict(below400ShareMin=0.25)),
+                            ("S2", dict(fireVoiceDeficit=0, transients=0, loopStarts=0, rejectedNotStolen=0))):
+            short = dict(measure(gid, **values, weaponsMissing=1, weaponsMeasured=9, rosterEnabled=10), samples=200)
+            row = r2.evaluate_gate(gate(gid), FINAL, measure=short, cases={t: "Passed" for t in gate(gid).get("tests", [])})
+            self.assertEqual("FAIL", row["status"], (gid, row["reason"]))

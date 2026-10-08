@@ -20,7 +20,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// and 0 B for 100 frames of <see cref="AtmosphereSystem.Step"/> on the calling thread (positive control first).
     /// </summary>
     [TestFixture]
-    [Category("WP073")]
     public sealed class Wp073AtmosphereTests
     {
         private GameObject _world;
@@ -49,6 +48,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // DEC-102 (S-05 205ef275): while the volumetric field is live its regions are the mote anchors and the cards are off; with
         // the field off (Performance) the cards come back. The field is published as globals (DD.Art references this assembly).
+        [Category("WP073")]
         [UnityTest]
         public IEnumerator Dec102_AlanCanliyken_BolgelerCapa_KartlarKapali()
         {
@@ -96,6 +96,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(3, sys.InRangeCount(AtmosphereSystem.Source.Shaft), "alan kapalı: kartlar döndü");
         }
 
+        [Category("WP073")]
         [Test]
         public void KademeTablosu_SozlesmeVeCizimSayisi()
         {
@@ -110,6 +111,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, AtmosphereSystem.TargetLive(AtmosphereSystem.Layer.Drips, VfxTierLevel.Performance), "Performans: damla yok");
         }
 
+        [Category("WP073")]
         [Test]
         public void Atlas_SekizHucre_MerkezDoluKenarBos()
         {
@@ -134,6 +136,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("WP073")]
         [Test]
         public void Shader_KitapliktanGelir_BulutCerezSozlesmesiniOkur()
         {
@@ -142,6 +145,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(PrototypeShaders.VfxAtmo.isSupported);
         }
 
+        [Category("WP073")]
         [UnityTest]
         public IEnumerator Dunya_Taranir_KademeBasinaCanliVeCizim()
         {
@@ -181,6 +185,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(3, sys.ActiveShafts);
         }
 
+        [Category("WP073")]
         [UnityTest]
         public IEnumerator TekTane_EkranKaplamasi_KucukKalir()
         {
@@ -285,6 +290,8 @@ namespace DD.Prototype.Tests.PlayMode
             counts[0] = lit;
         }
 
+        [Category("WP073")]
+        [Category("FPTP")]
         [UnityTest]
         public IEnumerator YakinAlan_UcuncuSahis_KameraDibindeTaneYok()
         {
@@ -312,6 +319,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(near, 200, "TP yakın alanı boş (göz hizası taneleri)");
         }
 
+        [Category("WP073")]
         [UnityTest]
         public IEnumerator EskiDrift_SusarAmaOynar_SistemGidinceDoner()
         {
@@ -336,6 +344,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(authored, drift.System.emission.rateOverTime.constant, 1e-4f, "sistem gidince eski drift geri gelmeli");
         }
 
+        [Category("WP073")]
         [UnityTest]
         public IEnumerator YuzKare_SifirAyirma_IsParcacigiFiltreli()
         {
