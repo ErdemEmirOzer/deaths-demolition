@@ -339,7 +339,10 @@ namespace DD.Art.Tests.PlayMode
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv.GripIk, "WeaponGripIk bağlı değil");
-            Assert.AreEqual(3, pv.HeadRenderers.Length, "baş her LOD'da ayrı renderer (P-06 rig v002, S-01 FP)");
+            // WP-082 R3: hero v2 carries its head in the body mesh — four body LOD renderers, no head renderer (FP stays on the pre-hero
+            // body); the P-06 rig v002 body had three LODs with a separate head renderer each
+            if (pv.Renderers.Length == 4) Assert.AreEqual(0, pv.HeadRenderers.Length, "kahraman v2: baş gövde mesh'inde (4 LOD, ayrı baş renderer'ı yok)");
+            else Assert.AreEqual(3, pv.HeadRenderers.Length, "baş her LOD'da ayrı renderer (P-06 rig v002, S-01 FP)");
             yield return CharacterTests.Bekle(() => pv.GripIk.Grip != null && pv.GripIk.Weight >= 0.999f, 3f, "sol el kabzada");
             for (int i = 0; i < 10; i++) yield return null;
             float heldError = pv.GripIk.LastError;
@@ -1044,6 +1047,7 @@ namespace DD.Art.Tests.PlayMode
         [Timeout(120000)]
         public IEnumerator Oyuncu_2DBlend_Yonler_Nisan_Ates_Hit_Pickup_Olum()
         {
+            // WP-082 R3: "standing" — on the AP-026 8-way tree MoveX / MoveY stay the unit direction, LocoSpeed (m/s) goes to 0
             SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
             yield return null;
             yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu, SahneZamanAsimi, "MainMenu");
@@ -1066,7 +1070,7 @@ namespace DD.Art.Tests.PlayMode
             velocity = Vector3.back * 6.2f;
             yield return CharacterTests.Bekle(() => pv.Move.y < -0.9f, 2f, "geri blend");
             velocity = Vector3.zero;
-            yield return CharacterTests.Bekle(() => pv.Move.magnitude < 0.05f, 2f, "idle");
+            yield return CharacterTests.Bekle(() => Durgun(pv), 2f, "idle");
 
             // Aim layer: the spine turns toward the aim (yaw sign), pitches with it, and the bones actually move.
             Transform spine = an.GetBoneTransform(HumanBodyBones.Spine);
@@ -1117,7 +1121,7 @@ namespace DD.Art.Tests.PlayMode
             yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(over).IsName(C.AimState + "_0") && !an.IsInTransition(over), 3f, "pickup sonrası üst katman Aim_0'a dönmedi");
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "pickup boyunca taban katmanı locomotion kalmalı");
             velocity = Vector3.zero;
-            yield return CharacterTests.Bekle(() => pv.Move.magnitude < 0.05f, 2f, "pickup sonrası idle");
+            yield return CharacterTests.Bekle(() => Durgun(pv), 2f, "pickup sonrası idle");
 
             // Death: back push → Death_1; death_end arrives; no way back.
             pv.PlayDeath(Vector3.back, false);
@@ -1128,6 +1132,10 @@ namespace DD.Art.Tests.PlayMode
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.DeathState + "_1"), "ölü oyuncu ölümden çıktı");
         }
+
+        /// <summary>WP-082 R3: the player stands — LocoSpeed ≈ 0 on the 8-way tree (MoveX / MoveY keep the unit direction), Move ≈ 0 on the AP-022 4-way tree.</summary>
+        private static bool Durgun(PlayerSkinnedVisual pv) =>
+            pv.Locomotion8 ? pv.Animator.GetFloat(C.LocoSpeed) < 0.05f : pv.Move.magnitude < 0.05f;
 
         // ================================================================== kalabalık: GC 0 + uzak adım
 

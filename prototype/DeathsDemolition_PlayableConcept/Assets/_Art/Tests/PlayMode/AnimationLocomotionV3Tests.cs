@@ -180,7 +180,9 @@ namespace DD.Art.Tests.PlayMode
             pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
             pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             Assert.IsNotNull(pv.FootIk, "FootIkAdapter yok");
-            float walk = pv.AnimationSet.SpeedOf(C.PlayerWalkFwd);
+            // WP-082 R3: the walk is the walk ring's own speed — the AP-026 8-way tree's walk threshold (the pure Walk8 ring, LocoRate 1);
+            // the AP-022 4-way tree's walk_fwd no-slide speed
+            float walk = pv.Locomotion8 ? pv.AnimationSet.Locomotion.ringThresholdMps[1] : pv.AnimationSet.SpeedOf(C.PlayerWalkFwd);
             Time.captureDeltaTime = 1f / 60f;
             velocity = Vector3.forward * walk;
             Transform lf = pv.Animator.GetBoneTransform(HumanBodyBones.LeftFoot);
@@ -233,6 +235,12 @@ namespace DD.Art.Tests.PlayMode
             pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             CharacterAnimationSet anim = pv.AnimationSet;
             float reference = anim.LocomotionReferenceSpeed;
+            if (pv.Locomotion8)
+            {
+                yield return Halka8Hizi(pv, stage.transform, () => velocity, v => velocity = v);
+                yield break;
+            }
+
             float walk = anim.SpeedOf(C.PlayerWalkFwd), run = anim.SpeedOf(C.PlayerRunFwd);
             Time.captureDeltaTime = 1f / 60f;
 
@@ -265,6 +273,43 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(walkGate, "yürüyüş halkasında ayak kilidi açık");
             Assert.LessOrEqual(backSlide, CadenceBand.SlideClose, "run_back geri azami hızda kayma ≤ %20 (D-1)");
             Assert.AreEqual(backRate <= CadenceBand.LockMaxRate && backSlide <= PlayerSkinnedVisual.LockMaxSlide, backGate, "kilit kapısı baskın çocuğun oranı/kaymasıyla (MUST-4 e)");
+            Assert.IsTrue(pv.StillRequested && breath, "dururken Idle_Breath (MUST-3)");
+        }
+
+        /// <summary>
+        /// WP-082 R3 (the AP-026 8-way tree): the same MUST-3 / MUST-4 rules on the rings — at each ring's threshold speed (the pure ring)
+        /// the loop plays at its natural cadence (LocoRate ≈ 1, the child time scale bakes the cadence); at the motor's 6.2 m/s LocoRate is
+        /// the honest-speed ratio inside the cadence band; the foot-lock gate is open on the walk ring; standing 0.2 s → Idle_Breath.
+        /// </summary>
+        private IEnumerator Halka8Hizi(PlayerSkinnedVisual pv, Transform stage, System.Func<Vector3> get, System.Action<Vector3> set)
+        {
+            float[] t = pv.AnimationSet.Locomotion.ringThresholdMps;
+            float reference = pv.AnimationSet.LocomotionReferenceSpeed;
+            Time.captureDeltaTime = 1f / 60f;
+            var rates = new float[3];
+            bool walkGate = false;
+            for (int ring = 1; ring <= 2; ring++)
+            {
+                set(Vector3.forward * t[ring]);
+                for (int f = 0; f < 60; f++) { stage.position += get() * Time.deltaTime; yield return null; }
+                rates[ring] = pv.LocoRate;
+                if (ring == 1) walkGate = pv.FootIk.LockGateOpen;
+            }
+
+            set(Vector3.forward * reference);
+            for (int f = 0; f < 60; f++) { stage.position += get() * Time.deltaTime; yield return null; }
+            float topRate = pv.LocoRate, topHonest = pv.HonestSpeed;
+            set(Vector3.zero);
+            for (int f = 0; f < 40; f++) yield return null;
+            bool breath = pv.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.StillState) || pv.Animator.GetNextAnimatorStateInfo(0).IsName(C.StillState);
+            Debug.Log("[DD-TEST] wp082.locorate8 walk=" + t[1].ToString("F3", CultureInfo.InvariantCulture) + " walkRate=" + rates[1].ToString("F3", CultureInfo.InvariantCulture)
+                      + " run=" + t[2].ToString("F3", CultureInfo.InvariantCulture) + " runRate=" + rates[2].ToString("F3", CultureInfo.InvariantCulture)
+                      + " top=" + reference.ToString("F2", CultureInfo.InvariantCulture) + " topRate=" + topRate.ToString("F3", CultureInfo.InvariantCulture) + " honest=" + topHonest.ToString("F3", CultureInfo.InvariantCulture)
+                      + " walkGate=" + walkGate + " still=" + pv.StillRequested + " breathState=" + breath);
+            Assert.AreEqual(1f, rates[1], 0.05f, "yürüyüş halkası kendi hızında (MUST-3; 8 yön: eşik hızında LocoRate 1)");
+            Assert.AreEqual(1f, rates[2], 0.05f, "koşu halkası kendi hızında (eşik hızında LocoRate 1)");
+            Assert.AreEqual(CadenceBand.Clamp(reference / Mathf.Max(0.01f, topHonest)), topRate, 0.03f, "6,2 m/s'de LocoRate = v / dürüst hız (kadans bandında)");
+            Assert.IsTrue(walkGate, "yürüyüş halkasında ayak kilidi açık");
             Assert.IsTrue(pv.StillRequested && breath, "dururken Idle_Breath (MUST-3)");
         }
 

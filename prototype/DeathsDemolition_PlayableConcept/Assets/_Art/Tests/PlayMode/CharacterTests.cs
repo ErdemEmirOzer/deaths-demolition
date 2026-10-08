@@ -251,7 +251,9 @@ namespace DD.Art.Tests.PlayMode
             // WP-018: the authored set drives MoveX/MoveY/LocoRate; the rig-test set drives Speed.
             int speedId = Animator.StringToHash(CharacterAnimationSet.SpeedParameter);
             int speed01Id = Animator.StringToHash(CharacterAnimatorContract.Speed01);
-            if (pv.Authored) Assert.Less(pv.Move.magnitude, 0.05f, "duran oyuncu Move ≈ 0");
+            // WP-082 R3: on the AP-026 8-way tree MoveX / MoveY are the unit direction (kept while standing); standing = LocoSpeed ≈ 0
+            if (pv.Authored && pv.Locomotion8) Assert.Less(pv.Animator.GetFloat(CharacterAnimatorContract.LocoSpeed), 0.05f, "duran oyuncu LocoSpeed ≈ 0");
+            else if (pv.Authored) Assert.Less(pv.Move.magnitude, 0.05f, "duran oyuncu Move ≈ 0");
             else Assert.Less(pv.Animator.GetFloat(speedId), 0.05f, "duran oyuncu Speed ≈ 0");
 
             Vector3 p = PlayerRegistry.Primary.transform.position;
