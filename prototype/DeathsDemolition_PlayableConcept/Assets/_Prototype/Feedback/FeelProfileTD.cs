@@ -123,6 +123,7 @@ namespace DD.Prototype.Feedback
         [Range(0f, .6f)] public float lastZombieInSeconds = .08f;
         [Range(0f, .6f)] public float lastZombieOutSeconds = .30f;
         [Range(0f, .6f)] public float lastZombieFocusBlend = .30f;
+        [Range(0f, 3f)] public float lastZombieFocusMaxMeters = 1f;          // gt-f2 S4: ≤ 1 m ≈ 71 px between the cursor's picture and the aim
         [Range(.5f, 1.5f)] public float roundEndHoldSafetySeconds = 1f;
 
         [Header("Zombi tepkisi · birleştirme")]
@@ -149,6 +150,9 @@ namespace DD.Prototype.Feedback
         [Range(0f, .5f)] public float vignettePulseMax = .38f;
         [Range(40f, 140f)] public float heartbeatBpmAtEnter = 70f;
         [Range(40f, 140f)] public float heartbeatBpmAtFloor = 110f;
+        [Range(0f, .3f)] public float heartbeatFloorHealth = .10f;           // the health ratio where heartbeatBpmAtFloor is reached
+        [Range(0f, .5f)] public float heartbeatSecondBeatDelay = .18f;       // the "dub" after the "lub"
+        [Range(0f, 1f)] public float heartbeatSecondBeatShare = .667f;      // its low motor as a share of the first (.12 / .18)
         [Range(-60f, 0f)] public float desaturate = -25f;
         [Range(-60f, 0f)] public float desaturateFloor = -35f;
         [Range(0f, 1f)] public float desaturateInSeconds = .4f;
@@ -160,6 +164,9 @@ namespace DD.Prototype.Feedback
         [Range(0f, 1f)] public float rumbleCeiling = 1f;
         [Range(.1f, .4f)] public float rumbleMaxSeconds = .4f;
         [Range(0f, .3f)] public float rumbleEventOverSustained = .15f;
+        [Range(0f, 1f)] public float explosionOnScreenRumbleFloor = .20f;   // §4.0: an on-screen blast never rumbles below this
+        [Range(0f, 1f)] public float explosionOnScreenHighShare = .5f;      // the high motor's share of that floor
+        [Range(0f, .5f)] public float goldRumbleMinInterval = .1f;          // §4.0: ≤ 1 gold pulse per this
 
         public WeaponFeelTD[] weapons;                          // 13 rows (§3)
         public EventFeelTD[] events;                            // 23 rows (§4.0), indexed by FeelEventId

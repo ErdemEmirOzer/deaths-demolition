@@ -156,8 +156,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(defaults.events.Length, asset.events.Length);
                 for (int i = 0; i < defaults.events.Length; i++)
                     Assert.AreEqual(JsonUtility.ToJson(defaults.events[i]), JsonUtility.ToJson(asset.events[i]), "event row " + i);
-                Assert.AreEqual(defaults.aggregateCapMeters, asset.aggregateCapMeters, 1e-6f);
-                Assert.AreEqual(defaults.lastZombieTimeScale, asset.lastZombieTimeScale, 1e-6f);
+                // gt-f2 S3: every serialized field, not two of them
+                Assert.AreEqual(JsonUtility.ToJson(defaults), JsonUtility.ToJson(asset), "FeelProfile_TD.asset = the code defaults (all fields)");
                 FeelProfileTD.SetActiveForTests(null);
                 Assert.AreSame(asset, FeelProfileTD.Active, "the Resources asset is the active profile");
             }

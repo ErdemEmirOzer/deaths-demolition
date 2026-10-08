@@ -498,6 +498,12 @@ namespace DD.Prototype.Feedback
         private static void SyncFixed(float target)
         {
             if (s_baseFixed <= 0f) return;
+            if (!IsTopDown)
+            {
+                RestoreFixed();   // gt-f2 MUST-1: first / third person keep today's step (the death beat drives the clock there too)
+                return;
+            }
+
             float ratio = s_base > 0.01f ? Mathf.Clamp(target / s_base, MinFixedRatio, 1f) : 1f;
             if (ratio >= 1f)
             {

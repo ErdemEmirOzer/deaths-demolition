@@ -607,7 +607,7 @@ namespace DD.Prototype.Feedback
         internal static float HeartbeatBpm(float healthRatio)
         {
             FeelProfileTD profile = FeelProfileTD.Active;
-            float t = Mathf.InverseLerp(Thresholds.LowHealthEnter, 0.10f, healthRatio);
+            float t = Mathf.InverseLerp(Thresholds.LowHealthEnter, profile.heartbeatFloorHealth, healthRatio);
             return Mathf.Lerp(profile.heartbeatBpmAtEnter, profile.heartbeatBpmAtFloor, t);
         }
 

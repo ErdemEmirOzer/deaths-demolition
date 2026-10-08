@@ -258,8 +258,9 @@ namespace DD.Prototype.Inputs
             float a = player != null ? CameraModesFeel.ExplosionFalloff(Vector3.Distance(player.transform.position, e.Origin)) : 1f;
             EventFeelTD row = FeelProfileTD.Active.Event(FeelEventId.Explosion);
             // §4.0: × A(d), at least .20 when the blast is on screen
-            float floor = OnScreen(e.Origin) ? 0.20f : 0f;
-            float low = Mathf.Max(row.rumbleLow * a, floor), high = Mathf.Max(row.rumbleHigh * a, floor * 0.5f);
+            FeelProfileTD profile = FeelProfileTD.Active;
+            float floor = OnScreen(e.Origin) ? profile.explosionOnScreenRumbleFloor : 0f;
+            float low = Mathf.Max(row.rumbleLow * a, floor), high = Mathf.Max(row.rumbleHigh * a, floor * profile.explosionOnScreenHighShare);
             Pulse(low, high, row.rumbleSeconds);
         }
 
@@ -294,7 +295,7 @@ namespace DD.Prototype.Inputs
 
         private void OnGoldTD(FeelGold g)
         {
-            if (!IsTopDown || Now - _lastGoldPulse < 0.1f) return;   // §4.0: ≤ 1 per 0.1 s
+            if (!IsTopDown || Now - _lastGoldPulse < FeelProfileTD.Active.goldRumbleMinInterval) return;   // §4.0: ≤ 1 per 0.1 s
             _lastGoldPulse = Now;
             Row(FeelEventId.GoldPickup);
         }
@@ -311,7 +312,7 @@ namespace DD.Prototype.Inputs
             if (!profile.lowHealthHeartbeatRumble) return;
             EventFeelTD row = profile.Event(FeelEventId.Heartbeat);
             Pulse(row.rumbleLow, row.rumbleHigh, row.rumbleSeconds);
-            _td.Schedule(0.18f, row.rumbleLow * (0.12f / 0.18f), row.rumbleHigh, row.rumbleSeconds, Now);
+            _td.Schedule(profile.heartbeatSecondBeatDelay, row.rumbleLow * profile.heartbeatSecondBeatShare, row.rumbleHigh, row.rumbleSeconds, Now);
         }
     }
 }
