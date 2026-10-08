@@ -915,9 +915,9 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
-                if (_screen == "hudv4" || _screen == "hudv4demo")
+                if (_screen == "hudv4" || _screen == "hudv4demo" || _screen == "hudv4plate")
                 {
-                    yield return _screen == "hudv4" ? HudV4Frames() : HudV4Demo();
+                    yield return _screen == "hudv4" ? HudV4Frames() : _screen == "hudv4plate" ? HudV4Plates() : HudV4Demo();
                     Application.Quit();
                     yield break;
                 }
@@ -1866,8 +1866,21 @@ namespace DD.Prototype.UI
 
                 PlayerHealth health = rig.Health;
                 Vector3 at = rig.transform.position;
+                string folder = Path.HasExtension(_out) ? Path.GetDirectoryName(_out) : _out;
+                string videoRoot = Arg("-ddTdCapture");
+                // The existing async capture agent owns video/audio, not a second recorder. Wait for its t0 anchor.
+                if (!string.IsNullOrEmpty(videoRoot))
+                    yield return WaitFor(() => File.Exists(Path.Combine(videoRoot, "video", "sync.json")), 30f);
+                float began = Time.realtimeSinceStartup;
+                // Evidence source cadence only; no persistent settings or simulation clock change.
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = 120;
+                var probe = gameObject.AddComponent<HudEvidenceProbe>();
+                probe.Begin(hud, folder);
+                probe.Mark("start", "production HUD events; real-time capture; no fixed-clock playback");
                 Debug.Log("[UiCapture] hudv4demo t=0 calm");
                 yield return new WaitForSecondsRealtime(2.5f);
+                probe.Mark("A1,A2", "shot accents and casing sequence");
                 for (int burst = 0; burst < 3; burst++)
                 {
                     for (int shot = 0; shot < 7 && classic.Ammo > 8; shot++)
@@ -1879,6 +1892,8 @@ namespace DD.Prototype.UI
                     yield return new WaitForSecondsRealtime(0.5f);
                 }
 
+                probe.Mark("A5", "low-ammo hold before empty");
+                yield return new WaitForSecondsRealtime(1.2f);
                 while (classic.Ammo > 0)
                 {
                     classic.ConsumeShot();
@@ -1887,24 +1902,40 @@ namespace DD.Prototype.UI
 
                 Debug.Log("[UiCapture] hudv4demo empty pulls");
                 yield return new WaitForSecondsRealtime(0.3f);
+                probe.Mark("A6", "first empty pull");
                 HudV4DryFire();
                 yield return new WaitForSecondsRealtime(0.4f);
                 HudV4DryFire();
                 yield return new WaitForSecondsRealtime(0.3f);
+                probe.Mark("A3", "reload started");
                 classic.TryBeginReload();
                 yield return WaitFor(() => !classic.IsReloading, 6f);
+                probe.Mark("A4", "reload completed");
                 yield return new WaitForSecondsRealtime(0.4f);
+                ClassicWeaponId home = classic.Id;
+                ClassicWeaponId other = home == ClassicWeaponId.CombatShotgun ? ClassicWeaponId.AssaultRifle : ClassicWeaponId.CombatShotgun;
+                probe.Mark("A7", "EquipClassic " + other);
+                weapon.EquipClassic(other);
+                yield return new WaitForSecondsRealtime(1.2f);
+                weapon.EquipClassic(home);
+                yield return new WaitForSecondsRealtime(0.8f);
 
+                probe.Mark("H1,H2,D1,D2", "left hit 30%; upper-right hit follows in .6s");
                 Debug.Log("[UiCapture] hudv4demo hits");
                 yield return HudV4Hit(health, at, Vector3.left, 0.3f);
                 yield return new WaitForSecondsRealtime(0.6f);
                 yield return HudV4Hit(health, at, (Vector3.right + Vector3.forward).normalized, 0.08f);
                 yield return new WaitForSecondsRealtime(1.8f);
+                probe.Mark("H5", "enter LOW with real damage");
                 yield return HudV4Hit(health, at, Vector3.back, 0.4f);
-                yield return new WaitForSecondsRealtime(1.5f);
+                yield return new WaitForSecondsRealtime(3f);
+                probe.Mark("H4", "heal 20% through PlayerHealth");
                 health.Heal(health.Max * 0.2f);
                 yield return new WaitForSecondsRealtime(2f);
 
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(2f); // leave danger posture so G4 is not intentionally suppressed
+                probe.Mark("G1,G3,G4", "wallet credits; no fabricated flight");
                 Debug.Log("[UiCapture] hudv4demo gold");
                 if (GoldService.Instance != null)
                 {
@@ -1917,11 +1948,49 @@ namespace DD.Prototype.UI
 
                 yield return new WaitForSecondsRealtime(2f);
                 Debug.Log("[UiCapture] hudv4demo round");
-                RunDirector director = RunDirector.Instance;
-                hud.CaptureRound(director != null ? director.Round + 1 : 4);
+                probe.Mark("R1,R2", "CaptureRound IV; R3 cue is observed separately");
+                hud.CaptureRound(4);
                 yield return new WaitForSecondsRealtime(3.5f);
                 health.HealToFull();
+                while (Time.realtimeSinceStartup - began < 35f) yield return null;
+                probe.End();
+                // Let TdCaptureAgent complete and drain its 40 s window; it quits the Player itself.
+                if (!string.IsNullOrEmpty(videoRoot))
+                    yield return WaitFor(() => File.Exists(Path.Combine(videoRoot, "video", "summary.json")), 20f);
                 Debug.Log("[UiCapture] hudv4demo done · rm=" + UiMotion.ReducedMotion);
+            }
+
+            /// <summary>AD M1: real rendered plate over black/white, plus XIV over world and B1; no alpha inferred from a neighbouring world patch.</summary>
+            private IEnumerator HudV4Plates()
+            {
+                string folder = Path.HasExtension(_out) ? Path.GetDirectoryName(_out) : _out;
+                Directory.CreateDirectory(folder);
+                yield return HudV4Run();
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                if (hud == null) yield break;
+                RunHudScreen.CaptureParallax = Vector2.zero;
+                hud.CaptureRound(14);
+                yield return WaitFor(() => !hud.RoundTransitionLive, 4f);
+                yield return new WaitForSecondsRealtime(1f);
+                yield return HudV4Frame(folder, "plate-world-XIV", hud);
+                Canvas canvas = UiFactory.CreateCanvas("[PlateEvidenceBackground]", UiTokens.SortingHud - 1);
+                UnityEngine.UI.Image back = UiFactory.NewImage("Back", canvas.transform, UiColor.SurfaceInset);
+                UiFactory.Fill(back.rectTransform);
+                hud.RoundNumeral.Box.gameObject.SetActive(false);
+                hud.RoundSeal.gameObject.SetActive(false);
+                back.color = Color.black;
+                yield return null;
+                yield return HudV4Frame(folder, "plate-black-XIV", hud);
+                back.color = Color.white;
+                yield return null;
+                yield return HudV4Frame(folder, "plate-white-XIV", hud);
+                hud.RoundNumeral.Box.gameObject.SetActive(true);
+                hud.RoundSeal.gameObject.SetActive(true);
+                back.color = new Color32(216, 210, 196, 255);
+                yield return null;
+                yield return HudV4Frame(folder, "plate-B1-XIV", hud);
+                Destroy(canvas.gameObject);
+                RunHudScreen.CaptureParallax = null;
             }
 
             private static readonly float[] HudV4CoinGaps = { 0.1f, 0.3f, 0.2f, 0.15f };
