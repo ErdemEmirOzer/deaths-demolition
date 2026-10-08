@@ -458,6 +458,9 @@ namespace DD.Prototype.Characters
             // WP-071: foot lock where the cadence is honest (walk ring rate ≈ 1; run ring when its clip rate ≤ LockMaxRate)
             // WP-071 MUST-4 (e): the lock follows the DOMINANT ring child's clip rate and slide share (run_back at 6.2 m/s slides 30 % → no lock)
             if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true, LockGateOpen);
+            // WP-082 R3 (E3 RAPOR §L3, S-03 WP-096): the swing foot keeps its animated lift — the per-foot solve pulled both feet to
+            // the ground every frame, dropping the pelvis 0.19–0.27 m and reading every frame as contact
+            if (_footIk != null) _footIk.PreserveSwingLift = true;
             // WP-071 B2: procedural lean on the spine from the planar acceleration
             if (_lean == null && _animator != null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
             if (_lean != null) _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying);
