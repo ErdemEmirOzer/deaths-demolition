@@ -16,11 +16,13 @@ namespace DD.Prototype.Tests
     {
         public const string Schema = "dd-r2-measure-v1";
 
-        public static string Yaz(string gate, string source, IDictionary<string, double> values, int samples)
+        /// <param name="field">Optional top-level string field of the artifact (S-10 08.10: L1 / L1t / L2 carry "l1Def"); the judge ignores
+        /// unknown top-level fields. Null = the artifact as before.</param>
+        public static string Yaz(string gate, string source, IDictionary<string, double> values, int samples, string field = null, string fieldValue = null)
         {
             var v = new List<KeyValuePair<string, double?>>(values.Count);
             foreach (KeyValuePair<string, double> kv in values) v.Add(new KeyValuePair<string, double?>(kv.Key, kv.Value));
-            return Write(gate, source, v, samples, null);
+            return Write(gate, source, v, samples, null, field, fieldValue);
         }
 
         /// <summary>
@@ -32,17 +34,19 @@ namespace DD.Prototype.Tests
         {
             var v = new List<KeyValuePair<string, double?>>(values.Count);
             foreach (KeyValuePair<string, double?> kv in values) v.Add(kv);
-            return Write(gate, source, v, samples, note);
+            return Write(gate, source, v, samples, note, null, null);
         }
 
-        private static string Write(string gate, string source, List<KeyValuePair<string, double?>> values, int samples, string note)
+        private static string Write(string gate, string source, List<KeyValuePair<string, double?>> values, int samples, string note, string field, string fieldValue)
         {
             string dir = Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR");
             if (string.IsNullOrEmpty(dir)) return null;
             var sb = new StringBuilder();
             sb.Append("{\"schema\": \"").Append(Schema).Append("\", \"gate\": \"").Append(gate)
               .Append("\", \"commit\": \"").Append(Environment.GetEnvironmentVariable("DD_R2_COMMIT") ?? "")
-              .Append("\", \"source\": \"").Append(source).Append("\", \"values\": {");
+              .Append("\", \"source\": \"").Append(source).Append('"');
+            if (!string.IsNullOrEmpty(field)) sb.Append(", \"").Append(field).Append("\": \"").Append((fieldValue ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
+            sb.Append(", \"values\": {");
             for (int i = 0; i < values.Count; i++)
             {
                 KeyValuePair<string, double?> kv = values[i];
