@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.Navigation;

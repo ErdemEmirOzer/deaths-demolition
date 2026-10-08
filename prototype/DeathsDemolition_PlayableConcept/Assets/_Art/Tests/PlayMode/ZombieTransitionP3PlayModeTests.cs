@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Reflection;
 using DD.Prototype.Characters;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Enemies;
 using NUnit.Framework;
 using UnityEditor;
