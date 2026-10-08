@@ -2508,13 +2508,34 @@ namespace DD.Prototype.Tests.PlayMode
                 public Vector3 animatedGoalL, animatedGoalR, targetGoalL, targetGoalR, lockBeforeL, lockBeforeR, lockAfterL, lockAfterR, hipPreL, hipPreR;
                 public float offsetXZL, offsetXZR, targetWeightL, targetWeightR;
                 public int preIkOffsetReleases, postIkOffsetReleases;
+                public bool actualLockCaptureRequested, actualLockPairAvailable;
+                public ActualLockSample actualLockLeft, actualLockRight;
+            }
+            [Serializable] private struct ActualLockState
+            {
+                public bool locked, releasePending, gateOpenCached, gateEvaluatedThisPass, served, supportsZombieData;
+                public Vector3 lockPosition;
+                public float lockWeight, adapterWeight;
+                public int plantPending, zombiePlantPending, stretchReleases, gateReleases, liftReleases, plantReleases, offsetReleases;
+            }
+            [Serializable] private struct ActualLockSample
+            {
+                public bool available, offsetEvaluated;
+                public int frame, layer, foot, branches;
+                public uint sequence;
+                public Vector3 animatedInput, targetInput, offsetXZ, returnedTarget;
+                public float offSquared;
+                public ActualLockState before, after;
             }
             [Serializable] private struct ClipName { public int id; public string name; }
             [Serializable] private sealed class Packet
             {
-                public string schema = "wp096-zombie-failure-trace-v1", sourceCommit, unityVersion, body;
+                public string schema = "wp096-zombie-failure-trace-v2", sourceCommit, unityVersion, body;
                 public string sampleStage = "existing recorder LateUpdate after Animator/IK; raw event flags use unchanged classifier";
-                public string limit = "pre/post IK probes request script orders -32000/+32000; same-frame/counter flags must validate callback order; no runtime parity claimed";
+                public string limit = "external pre/post probes do not prove a Lock straddle; actualLock fields come from the adapter accepted pass only; no causal or runtime parity claim";
+                public bool actualLockTraceEnabled;
+                public int actualLockPairs, actualLockMissingPairs;
+                public string actualLockScope = "DD_WP096_ACTUAL_LOCK_TRACE=1 opt-in; copied readonly Lock inputs/offset/return; PrepareZombieLocks already consumed events; not pure source clip or solved bone";
                 public int frameCapacity = MaxFrames, frameCount, observedFrames, droppedFrames, bonesPerFrame, droppedClipNames;
                 public Frame[] frames = new Frame[MaxFrames];
                 public Quaternion[] rootSpaceBoneRotations;
@@ -2530,6 +2551,8 @@ namespace DD.Prototype.Tests.PlayMode
             private readonly Vector3[] _lockPositions;
             private readonly ZombiIkTraceBefore _beforeIk;
             private readonly ZombiIkTraceAfter _afterIk;
+            private readonly FootIkAdapter _actualLockAdapter;
+            private readonly bool _actualLockEnabled, _previousTraceZombieLock;
             private FailureTrace(string directory, string body, Animator animator)
             {
                 _directory = directory;
@@ -2542,6 +2565,12 @@ namespace DD.Prototype.Tests.PlayMode
                     _motorFrame?.Invoke(_visual); _motorRate?.Invoke(_visual); _motorScale?.Invoke(_visual); // warm before measured frames
                 }
                 FootIkAdapter ik = animator.GetComponent<FootIkAdapter>();
+                _actualLockAdapter = ik;
+                _actualLockEnabled = ik != null && Environment.GetEnvironmentVariable("DD_WP096_ACTUAL_LOCK_TRACE") == "1";
+                if (_actualLockEnabled)
+                {
+                    _previousTraceZombieLock = ik.TraceZombieLock;
+                }
                 FieldInfo locks = typeof(FootIkAdapter).GetField("_lockPos", BindingFlags.Instance | BindingFlags.NonPublic);
                 _lockPositions = ik != null && locks != null ? locks.GetValue(ik) as Vector3[] : null; // once, not in the frame callback
                 _beforeIk = animator.gameObject.AddComponent<ZombiIkTraceBefore>();
@@ -2552,9 +2581,11 @@ namespace DD.Prototype.Tests.PlayMode
                 _data = new Packet
                 {
                     sourceCommit = Environment.GetEnvironmentVariable("DD_R2_COMMIT"), unityVersion = Application.unityVersion, body = body,
-                    bonesPerFrame = bones.Length, rootSpaceBoneRotations = new Quaternion[MaxFrames * bones.Length], boneNames = new string[bones.Length]
+                    bonesPerFrame = bones.Length, rootSpaceBoneRotations = new Quaternion[MaxFrames * bones.Length], boneNames = new string[bones.Length],
+                    actualLockTraceEnabled = _actualLockEnabled
                 };
                 for (int i = 0; i < bones.Length; i++) _data.boneNames[i] = bones[i].ToString();
+                if (_actualLockEnabled) ik.TraceZombieLock = true; // enable only after all setup succeeded
             }
             public static FailureTrace Create(string body, Animator animator)
             {
@@ -2640,6 +2671,7 @@ namespace DD.Prototype.Tests.PlayMode
                         left.y = right.y = 0f; frame.offsetXZL = left.magnitude; frame.offsetXZR = right.magnitude;
                     }
                 }
+                if (_actualLockEnabled) CaptureActualLock(ref frame);
                 Quaternion inverse = Quaternion.Inverse(owner._kok.rotation);
                 for (int b = 0; b < owner._kemik.Length; b++)
                 {
@@ -2649,6 +2681,39 @@ namespace DD.Prototype.Tests.PlayMode
                     _data.rootSpaceBoneRotations[_data.frameCount * _data.bonesPerFrame + b] = inverse * bone.rotation;
                 }
                 _data.frames[_data.frameCount++] = frame;
+            }
+            private static ActualLockState CopyActualLockState(FootIkAdapter.TraceLockState s) => new ActualLockState
+            {
+                locked = s.Locked, releasePending = s.ReleasePending, gateOpenCached = s.GateOpenCached,
+                gateEvaluatedThisPass = s.GateEvaluatedThisPass, served = s.Served, supportsZombieData = s.SupportsZombieData,
+                lockPosition = s.LockPosition, lockWeight = s.LockWeight, adapterWeight = s.AdapterWeight,
+                plantPending = s.PlantPending, zombiePlantPending = s.ZombiePlantPending,
+                stretchReleases = s.Releases.Stretch, gateReleases = s.Releases.Gate, liftReleases = s.Releases.Lift,
+                plantReleases = s.Releases.Plant, offsetReleases = s.Releases.Offset
+            };
+            private static ActualLockSample CopyActualLock(FootIkAdapter.LockTraceSnapshot s) => new ActualLockSample
+            {
+                available = true, offsetEvaluated = s.OffsetEvaluated, frame = s.Stamp.Frame, layer = s.Stamp.LayerIndex,
+                sequence = s.Stamp.Sequence, foot = s.Foot, branches = (int)s.Branches,
+                animatedInput = s.AnimatedInput, targetInput = s.TargetInput, offsetXZ = s.OffsetXZ,
+                // Unavailable offset must remain guarded; use a JSON-safe value rather than serializing NaN.
+                offSquared = s.OffsetEvaluated ? s.OffSquared : 0f, returnedTarget = s.ReturnedTarget,
+                before = CopyActualLockState(s.Before), after = CopyActualLockState(s.After)
+            };
+            private void CaptureActualLock(ref Frame frame)
+            {
+                frame.actualLockCaptureRequested = true;
+                bool leftAvailable = _actualLockAdapter.TryReadLockTrace(0, out FootIkAdapter.LockTraceSnapshot left);
+                bool rightAvailable = _actualLockAdapter.TryReadLockTrace(1, out FootIkAdapter.LockTraceSnapshot right);
+                leftAvailable = leftAvailable && left.Foot == 0 && left.Stamp.Frame == Time.frameCount;
+                rightAvailable = rightAvailable && right.Foot == 1 && right.Stamp.Frame == Time.frameCount;
+                if (leftAvailable) frame.actualLockLeft = CopyActualLock(left);
+                if (rightAvailable) frame.actualLockRight = CopyActualLock(right);
+                frame.actualLockPairAvailable = leftAvailable && rightAvailable
+                    && left.Stamp.Frame == right.Stamp.Frame && left.Stamp.LayerIndex == right.Stamp.LayerIndex
+                    && left.Stamp.Sequence == right.Stamp.Sequence;
+                if (frame.actualLockPairAvailable) _data.actualLockPairs++;
+                else _data.actualLockMissingPairs++;
             }
             private static float DominantWeight(Animator animator, bool next)
             {
@@ -2662,6 +2727,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 if (_written) return;
                 _written = true;
+                if (_actualLockEnabled && _actualLockAdapter != null) _actualLockAdapter.TraceZombieLock = _previousTraceZombieLock;
                 if (_beforeIk != null) { _beforeIk.enabled = false; Object.Destroy(_beforeIk); }
                 if (_afterIk != null) { _afterIk.enabled = false; Object.Destroy(_afterIk); }
                 try
