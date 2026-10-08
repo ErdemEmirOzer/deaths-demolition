@@ -174,6 +174,9 @@ class TdCaptureTests(unittest.TestCase):
         self.assertEqual(0.0, rec["videoQuality"]["avAlign"]["maxSecondErr"]); self.assertIn("video/audio-aligned.wav", sums)
         self.assertIn("video/td-t1.mp4", sums); self.assertIn("stills/contact.png", sums); self.assertNotIn("frames/", sums)
         stills, video = self.calls()
+        for argv in (stills, video):
+            self.assertEqual(("1", "1920", "1080"), tuple(argv[argv.index(flag) + 1] for flag in
+                             ("-screen-fullscreen", "-screen-width", "-screen-height")))
         for flag in ("-ddDirectToRun", "-ddTdPoses", "-ddProfilePath", "-ddUiDataRoot", "-ddTelemetryDir"):
             self.assertIn(flag, stills)
         self.assertEqual(("topdown", "1", "26", "45"), (stills[stills.index("-ddCameraMode") + 1],

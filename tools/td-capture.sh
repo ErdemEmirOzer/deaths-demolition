@@ -90,7 +90,9 @@ if [ $GS -ne 0 ]; then
   fi
 fi
 
-COMMON=(-screen-fullscreen 0 -screen-width "$W" -screen-height "$H" -ddProfilePath "$OUT/sandbox/profile.json"
+# PrototypeWindowFit clamps windowed rendering to the desktop work area. Fullscreen keeps the requested backbuffer
+# for both stills and video (S-04: windowed 1920x1080 was actually 1496x842).
+COMMON=(-screen-fullscreen 1 -screen-width "$W" -screen-height "$H" -ddProfilePath "$OUT/sandbox/profile.json"
         -ddUiDataRoot "$OUT/sandbox/ui" -ddTelemetryDir "$OUT/sandbox/telemetry" -ddCameraMode topdown
         -ddQualityTier "$TIER" -ddTdCapture "$OUT" -ddTdSeed "$SEED" -ddTdHud "$HUD")
 # launch <name> <limit s> <args…>: tools/player-run.sh in the background (a signal reaches it at once), bounded
