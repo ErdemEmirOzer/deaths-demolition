@@ -28,7 +28,7 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int UvId = Shader.PropertyToID("_AtlasUV");
         private static readonly int RevealId = Shader.PropertyToID("_Reveal");
         private static readonly int WetId = Shader.PropertyToID("_WetScale");
-        private const int FloorMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+        private static int FloorMask => (1 << 0) | PrototypeLayers.AimBlockMask;
         private static FeelBrushVfxSystem s_instance;
         public static FeelBrushVfxSystem Instance => s_instance;
         public static bool OwnsTdLayers => s_instance != null && s_instance.isActiveAndEnabled && s_instance.AssetsReady
