@@ -174,13 +174,8 @@ namespace DD.Prototype.Feedback.Vfx
             if (_owner == null || !_owner.IsReady || mask == 0) return false;
             bool rocket = source == ExplosionSource.Rocket;
             bool brushOwned = FeelBrushVfxSystem.OwnsTdLayers;
-            if (brushOwned)
-            {
-                int active = 0;
-                for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].BrushOwned) active++;
-                // Keep debris/smoke lifetime in the eight-blast budget, not just the 0.25 s ring.
-                if (active >= FeelBrushVfxPolicy.ExplosionCapacity) return true;
-            }
+            // Reserve once before debris and the following FeelEvents ring/light are presented.
+            if (brushOwned && !FeelBrushVfxSystem.TryReserveExplosion(at, radius)) return true;
             if (!rocket) mask &= 1 | 2 | 8;
             int full = 0;
             for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].Full) full++;
@@ -262,7 +257,7 @@ namespace DD.Prototype.Feedback.Vfx
                         }
                         Residues++;
                     }
-                    if (age >= 1.2f) b.Active = false;
+                    if (age >= FeelBrushVfxSystem.ExplosionReservationSeconds) b.Active = false;
                     continue;
                 }
                 if(age>=.016f && (b.Stages&1)==0)

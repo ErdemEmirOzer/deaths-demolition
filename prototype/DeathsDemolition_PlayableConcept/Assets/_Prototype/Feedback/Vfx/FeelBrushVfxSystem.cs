@@ -17,6 +17,7 @@ namespace DD.Prototype.Feedback.Vfx
     {
         public const string ResourceRoot = "VFX/AP037/";
         public const int TransientCapacity = 24, StainCapacity = 40;
+        public const float ExplosionReservationSeconds = 1.25f; // .05 s delayed debris + 1.2 s maximum lifetime.
         private const int StainStart = TransientCapacity;
         private const int DropletStart = StainStart + StainCapacity;
         private const int BlastStart = DropletStart + FeelBrushVfxPolicy.DropletCapacity;
@@ -54,7 +55,9 @@ namespace DD.Prototype.Feedback.Vfx
         private sealed class BlastLight
         {
             public Light Light;
-            public float Age;
+            public float Age, ReservationRemaining, Radius;
+            public Vector3 Origin;
+            public bool Pending;
             public int GroupId;
         }
 
@@ -121,7 +124,15 @@ namespace DD.Prototype.Feedback.Vfx
                 for (int i = 0; i < 6; i++)
                 {
                     if (materials[i] == null || materials[i].shader == null || !materials[i].shader.isSupported
-                        || !materials[i].HasProperty(UvId) || materials[i].GetTexture("_Mask") == null)
+                        || materials[i].shader.name != "DeathsDemolition/VFX/AP037Brush"
+                        || !materials[i].HasProperty(UvId) || !materials[i].HasProperty(TintId)
+                        || !materials[i].HasProperty(AlphaId) || !materials[i].HasProperty(RevealId)
+                        || !materials[i].HasProperty(WetId) || !materials[i].HasProperty("_UseTime")
+                        || !materials[i].HasProperty("_InkCap") || !materials[i].HasProperty("_Soft")
+                        || !materials[i].HasProperty("_Mask") || !materials[i].HasProperty("_TimeMask")
+                        || materials[i].GetTexture("_Mask") == null
+                        || ((i == 3 || i == 4) && (materials[i].GetTexture("_TimeMask") == null
+                            || materials[i].GetFloat("_UseTime") < .5f)))
                     { AssetsReady = false; break; }
                 }
             }
@@ -203,7 +214,8 @@ namespace DD.Prototype.Feedback.Vfx
             LastMultiCenter = Vector3.zero;
             if (!_built) return;
             for (int i = 0; i < _slots.Length; i++) Hide(i);
-            for (int i = 0; i < _lights.Length; i++) _lights[i].Light.enabled = false;
+            for (int i = 0; i < _lights.Length; i++)
+            { _lights[i].Light.enabled = false; _lights[i].ReservationRemaining = 0f; _lights[i].Pending = false; }
             LiveDroplets = 0; LiveExplosions = 0;
         }
         private void Hide(int index)
@@ -311,9 +323,11 @@ namespace DD.Prototype.Feedback.Vfx
             Vector3 direction = FeelBrushVfxPolicy.FlatDirection(kill.Direction);
             float scale = kill.Heavy || kill.LastOfRound ? 1.6f : 1f;
             float size = 1.2f * scale;
+            if (!Ground(kill.Position, out Vector3 point, out Vector3 normal)) return;
+            Vector3 tangent = Vector3.ProjectOnPlane(direction, normal).normalized;
             int index = Acquire(0, TransientCapacity, true);
             Begin(index, Kind.Kill, Random01() < .5f ? 0 : 1,
-                kill.Position + direction * (.4f * size), direction, Vector3.up, size, FeelBrushVfxPolicy.KillSeconds,
+                point + tangent * (.4f * size), tangent, normal, size, FeelBrushVfxPolicy.KillSeconds,
                 kill.Critical ? FeelBrushVfxPolicy.CriticalTint : FeelBrushVfxPolicy.BloodTint, 1f, 1, kill.GroupId);
             if (kill.LastOfRound) { _lastRoundKill = kill; _hasLastRoundKill = true; _lastKillSlot = index; }
             KillBursts++;
@@ -331,29 +345,59 @@ namespace DD.Prototype.Feedback.Vfx
                 FeelBrushVfxPolicy.InkTint, .9f, 0, groupCenter ? multi.GroupId : 0);
             MultiRings++;
         }
+        /// <summary>Shared admission for debris, ring and light. Holds each slot through the longest delayed debris layer.</summary>
+        public static bool TryReserveExplosion(Vector3 origin, float radius)
+        {
+            return s_instance != null && s_instance.ReserveExplosion(origin, radius) >= 0;
+        }
+        private int ReserveExplosion(Vector3 origin, float radius)
+        {
+            if (!CanPlay) return -1;
+            for (int i = 0; i < _lights.Length; i++)
+            {
+                BlastLight light = _lights[i];
+                if (light.ReservationRemaining > 0f) continue;
+                light.ReservationRemaining = ExplosionReservationSeconds; light.Origin = origin; light.Radius = radius;
+                light.Pending = true; light.GroupId = 0;
+                return i;
+            }
+            return -1;
+        }
         private void OnExplosion(FeelExplosion explosion)
         {
-            if (!CanPlay || !Ground(explosion.Origin, out Vector3 point, out Vector3 normal)) return;
-            int index = Acquire(BlastStart, FeelBrushVfxPolicy.ExplosionCapacity, false);
-            if (index < 0) return;
-            Begin(index, Kind.Shock, 4, point, Vector3.forward, normal,
-                FeelBrushVfxPolicy.ShockQuadMetres(explosion.Radius), FeelBrushVfxPolicy.ShockSeconds,
-                FeelBrushVfxPolicy.DustTint, .6f, 0, explosion.GroupId);
-            int lightIndex = index - BlastStart;
-            var light = _lights[lightIndex]; light.Age = 0f; light.GroupId = explosion.GroupId;
+            if (!CanPlay) return;
+            int lightIndex = -1;
+            for (int i = 0; i < _lights.Length; i++)
+                if (_lights[i].Pending && _lights[i].Origin == explosion.Origin
+                    && Mathf.Abs(_lights[i].Radius - explosion.Radius) < .0001f)
+                { lightIndex = i; break; }
+            // Direct FeelEvents publishers use the same budget as the legacy debris bridge.
+            if (lightIndex < 0) lightIndex = ReserveExplosion(explosion.Origin, explosion.Radius);
+            if (lightIndex < 0) return;
+            var light = _lights[lightIndex]; light.Pending = false;
+            if (Ground(explosion.Origin, out Vector3 point, out Vector3 normal))
+            {
+                Begin(BlastStart + lightIndex, Kind.Shock, 4, point, Vector3.forward, normal,
+                    FeelBrushVfxPolicy.ShockQuadMetres(explosion.Radius), FeelBrushVfxPolicy.ShockSeconds,
+                    FeelBrushVfxPolicy.DustTint, .6f, 0, explosion.GroupId);
+                LiveExplosions++;
+            }
+            // Air/water blasts still flash; only the dry-ground brush ring requires a floor.
+            light.Age = 0f; light.GroupId = explosion.GroupId;
             light.Light.transform.position = explosion.Origin + Vector3.up * .3f;
             light.Light.range = 2.5f * Mathf.Max(.05f, explosion.Radius);
             light.Light.intensity = 30f * Mathf.Clamp01(GameFeelSettings.FlashScale);
             light.Light.shadows = ExplosionDirector.LightCastsShadows ? LightShadows.Soft : LightShadows.None;
-            light.Light.enabled = true; LiveExplosions++;
+            light.Light.enabled = true;
         }
         private void OnLast(FeelLastZombie last)
         {
             if (!CanPlay || !_hasLastRoundKill || _lastRoundKill.Enemy != last.Enemy || _lastRoundKill.Round != last.Round) return;
             Vector3 direction = FeelBrushVfxPolicy.FlatDirection(_lastRoundKill.Direction);
             // The protected same-call kill already carries x1.6 and its critical tint/group.
-            Vector3 at = Ground(last.Position, out Vector3 point, out Vector3 normal) ? point : last.Position;
-            Begin(Acquire(0, TransientCapacity, true), Kind.LastStroke, 0, at + direction * .768f,
+            if (!Ground(last.Position, out Vector3 point, out Vector3 normal)) return;
+            direction = Vector3.ProjectOnPlane(direction, normal).normalized;
+            Begin(Acquire(0, TransientCapacity, true), Kind.LastStroke, 0, point + direction * .768f,
                 direction, normal, 1.92f, FeelBrushVfxPolicy.KillSeconds, FeelBrushVfxPolicy.InkTint, 1f, 1, _lastRoundKill.GroupId);
             _hasLastRoundKill = false; _lastRoundKill = default; _lastKillSlot = -1;
             LastStrokes++;
@@ -415,9 +459,12 @@ namespace DD.Prototype.Feedback.Vfx
             }
             for (int i = 0; i < _lights.Length; i++)
             {
-                BlastLight light = _lights[i]; if (!light.Light.enabled) continue;
+                BlastLight light = _lights[i];
                 float dt = HitStopService.VisualDelta(light.GroupId, scaledDelta, unscaledDelta);
                 if (dt <= 0f) continue;
+                light.ReservationRemaining = Mathf.Max(0f, light.ReservationRemaining - dt);
+                if (light.ReservationRemaining <= 0f) light.Pending = false;
+                if (!light.Light.enabled) continue;
                 light.Age += dt; float t = Mathf.Clamp01((light.Age - 2f / 60f) / .25f);
                 light.Light.intensity = 30f * (1f - t) * (1f - t) * Mathf.Clamp01(GameFeelSettings.FlashScale);
                 if (t >= 1f) light.Light.enabled = false;
