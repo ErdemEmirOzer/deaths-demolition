@@ -5,6 +5,9 @@ namespace DD.Prototype.Characters
     /// slide to cover the distance"). Clip playback rates stay inside [<see cref="Min"/>, <see cref="Max"/>]; travel beyond
     /// that is covered by sliding. The foot lock (<see cref="FootIkAdapter"/>) engages only at rates ≤ <see cref="LockMaxRate"/>,
     /// where the cadence is honest enough for a planted foot not to fight the slide.
+    /// WP-096 P3: for the zombie gaits <see cref="Min"/> / <see cref="Max"/> are only the defaults — a clip carries its own band
+    /// (<see cref="CharacterAnimationSet.Entry.minRate"/> / <c>maxRate</c>, e.g. walk_stomp 0.6) and the zombie's foot lock
+    /// reads the honest rate (<c>ZombieSkinnedVisual.FootLockMaxRate</c>), not <see cref="LockMaxRate"/>.
     /// </summary>
     public static class CadenceBand
     {

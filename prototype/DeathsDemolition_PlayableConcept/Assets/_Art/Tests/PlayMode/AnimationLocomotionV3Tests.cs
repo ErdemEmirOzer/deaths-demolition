@@ -75,6 +75,9 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator Zombi_KadansBandi_KalabalikFarkliFaz_Kayar()
         {
             yield return Stage();
+            // WP-096 P2: the per-spawn variety is the MOVE SPEED jitter (the cadence multiplier is retired, GaitMultiplier ≡ 1); the
+            // ordinal restarts so the six bodies are ordinals 0..5 whatever ran before (three antithetic pairs, six distinct speeds)
+            ZombieSkinnedVisual.ResetGaitOrdinalForTests();
             var zs = new List<ZombieSkinnedVisual>();
             for (int i = 0; i < 6; i++) zs.Add(Zombie(new Vector3(i * 2f, 0f, 0f), (uint)(40 + i)));
             var phases = new HashSet<int>();
@@ -82,8 +85,9 @@ namespace DD.Art.Tests.PlayMode
             foreach (ZombieSkinnedVisual z in zs)
             {
                 phases.Add(Mathf.RoundToInt(Mathf.Repeat(z.Animator.GetCurrentAnimatorStateInfo(0).normalizedTime, 1f) * 20f));
-                muls.Add(Mathf.RoundToInt(z.GaitMultiplier * 100f));
-                Assert.That(z.GaitMultiplier, Is.InRange(1f - ZombieSkinnedVisual.GaitSpread - 1e-4f, 1f + ZombieSkinnedVisual.GaitSpread + 1e-4f));
+                muls.Add(Mathf.RoundToInt(z.SpeedJitter * 1000f));
+                Assert.AreEqual(1f, z.GaitMultiplier, 1e-6f, "WP-096 P2: kadans çarpanı emekli (oran dürüst)");
+                Assert.That(z.SpeedJitter, Is.InRange(1f - ZombieLocomotionMath.SpeedSpread - 1e-4f, 1f + ZombieLocomotionMath.SpeedSpread + 1e-4f));
             }
 
             Time.captureDeltaTime = 1f / 60f;
@@ -93,12 +97,12 @@ namespace DD.Art.Tests.PlayMode
             {
                 float clip = z.AnimationSet.SpeedOf(C.ZombieGaitClips[z.Gait]);
                 rows.Add("rate=" + z.GaitRate.ToString("F2", CultureInfo.InvariantCulture) + " slide=" + (CadenceBand.SlideFraction(2.7f, clip, z.GaitRate) * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%");
-                Assert.That(z.GaitRate, Is.InRange(CadenceBand.Min - 1e-3f, CadenceBand.Max + 1e-3f), "kadans bandı");
+                Assert.That(z.GaitRate, Is.InRange(z.GaitRateMin - 1e-3f, z.GaitRateMax + 1e-3f), "kadans bandı (klibin kendi bandı, WP-096 P3)");
             }
 
-            Debug.Log("[DD-TEST] wp071.cadence phases=" + phases.Count + " multipliers=" + muls.Count + " | " + string.Join(" · ", rows));
+            Debug.Log("[DD-TEST] wp071.cadence phases=" + phases.Count + " multipliers=" + muls.Count + " (WP-096: speedJitter) | " + string.Join(" · ", rows));
             Assert.GreaterOrEqual(phases.Count, 4, "kalabalık aynı fazda yürüyor");
-            Assert.GreaterOrEqual(muls.Count, 4, "kadans yayılımı yok");
+            Assert.GreaterOrEqual(muls.Count, 4, "hız yayılımı yok (WP-096 P2)");
         }
 
         /// <summary>
@@ -121,13 +125,34 @@ namespace DD.Art.Tests.PlayMode
             Time.captureDeltaTime = 1f / 60f;
             for (int f = 0; f < 60; f++) { big.SetSpeed(speed, Time.deltaTime); unit.SetSpeed(speed, Time.deltaTime); yield return null; }
             float clip = big.AnimationSet.SpeedOf(C.ZombieGaitClips[big.Gait]);
-            float honest = Mathf.Clamp(speed / (clip * scale), CadenceBand.Min, CadenceBand.Max);
+            // WP-096 P3: the clip's own band — walk_stomp's floor 0.6 leaves the honest ×0.676 unclamped (was 0.75, slide 11 %)
+            float honest = Mathf.Clamp(speed / (clip * scale), big.GaitRateMin, big.GaitRateMax);
             Debug.Log("[DD-TEST] wp071.bodyscale clip=" + clip.ToString("F2", CultureInfo.InvariantCulture) + " body=" + big.GaitBodyScale.ToString("F2", CultureInfo.InvariantCulture) + " rate=" + big.GaitRate.ToString("F2", CultureInfo.InvariantCulture) + " unscaled=" + unit.GaitRate.ToString("F2", CultureInfo.InvariantCulture) + " slide=" + (CadenceBand.SlideFraction(speed, clip * scale, big.GaitRate) * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%");
             Assert.AreEqual(scale, big.GaitBodyScale, 1e-3f, "gövde ölçeği okunmadı");
             Assert.AreEqual(1f, unit.GaitBodyScale, 1e-3f);
             Assert.AreEqual(honest, big.GaitRate, 1e-3f, "kadans ölçekli adıma göre değil");
-            Assert.LessOrEqual(big.GaitRate, CadenceBand.LockMaxRate, "ölçekli beden ayak kilidi bandında");
-            Assert.Greater(unit.GaitRate, big.GaitRate * 1.3f, "ölçek 1 beden daha hızlı kadans (kontrol)");
+            if (C.ZombieGaitClips[big.Gait] == C.ZombieWalkStompV3)
+            {
+                Assert.AreEqual(speed / (clip * scale), big.GaitRate, 1e-3f, "WP-096 P3: walk_stomp dürüst oranı kırpılmamalı");
+                Assert.IsTrue(big.GaitRateHonest, "WP-096 P3: dürüst oran bayrağı");
+            }
+            // WP-096 AP-033 p1: GaitVariety 0 → both bodies on the Executioner's primary walk_stomp_A (native 1.15 = 1.7 / 1.48): rate ≈ 1
+            Assert.AreEqual(big.Gait, unit.Gait, "iki beden aynı klipte (varyete 0 → birincil)");
+            if (C.ZombieGaitClips[big.Gait] == C.ZombieWalkStompAV4)
+            {
+                // WP-096 p2 window: the set speed is the intake's Unity-rig measurement (no longer the Blender 1.15), so the rate is ≈ 1 ± the retarget share
+                Assert.That(big.GaitRate, Is.InRange(0.85f, 1.25f), "WP-096 AP-033: walk_stomp_A ölçekli bedende oran ≈ 1");
+                Assert.IsTrue(big.GaitRateHonest, "WP-096 AP-033: dürüst oran");
+            }
+            // the zombie foot lock's own gate (ZombieSkinnedVisual.FootLockMaxRate 1.25, WP-096 P3), not the player's CadenceBand.LockMaxRate
+            Assert.LessOrEqual(big.GaitRate, ZombieSkinnedVisual.FootLockMaxRate, "ölçekli beden ayak kilidi bandında");
+            // control: the scale-1 body's honest cadence is 1.48× the scaled one. WP-096 AP-033: over walk_stomp_A that is ×1.48, past the
+            // band cap 1.2 — the PLAYED rate is capped (the scale-1 Executioner never ships), so the control compares the honest rate
+            float unitClip = unit.AnimationSet.SpeedOf(C.ZombieGaitClips[unit.Gait]);
+            float unitHonest = speed / unitClip;
+            Assert.AreEqual(Mathf.Clamp(unitHonest, unit.GaitRateMin, unit.GaitRateMax), unit.GaitRate, 1e-3f, "ölçek 1 beden: dürüst oran, bantla kırpılmış");
+            Assert.Greater(unitHonest, big.GaitRate * 1.3f, "ölçek 1 beden daha hızlı kadans (kontrol)");
+            Assert.Greater(unit.GaitRate, big.GaitRate, "ölçek 1 beden oynatılan oran da yüksek");
         }
 
         [Category("WP071")]

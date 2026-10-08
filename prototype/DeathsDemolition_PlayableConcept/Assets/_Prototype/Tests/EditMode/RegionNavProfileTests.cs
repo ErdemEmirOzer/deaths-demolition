@@ -284,5 +284,237 @@ namespace DD.Prototype.Tests.EditMode
             RegionNavRouter.EnsureAreaCosts();
             Assert.IsTrue(RegionNavRouter.AreaCostsAppliedOnce); Assert.AreEqual(5, RegionNavRouter.AreaCostsApplied);
         }
+
+        // WP-096 Bridgev4: new functional cases only; existing assertions and allocation benchmark are unchanged.
+        private sealed class BridgeV4Fixture : System.IDisposable
+        {
+            public readonly RegionNavProfile Profile;
+            public readonly NavRegionVolume Volume;
+            private readonly System.Collections.Generic.List<ICrowdMember> _members = new System.Collections.Generic.List<ICrowdMember>();
+            public BridgeV4Fixture(NavRegionKind kind = NavRegionKind.Bridge, int capacity = 2)
+            {
+                Profile = ScriptableObject.CreateInstance<RegionNavProfile>();
+                Volume = new NavRegionVolume { id = "BridgeV4_test", kind = kind, center = new Vector3(10000f, 0f, 10000f),
+                    size = new Vector3(2f, 6f, 2f), capacity = capacity, costMultiplier = 1.35f,
+                    hasAlternative = true, alternative = new Vector3(10000f, 0f, 10005f) };
+                Profile.Set(new[] { Volume });
+                RegionNavProfile.RegisterSceneVolume(Volume);
+            }
+            public void AddOccupant()
+            {
+                ICrowdMember member = Uye(Volume.center);
+                _members.Add(member);
+                CrowdService.Solver.Register(member);
+            }
+            public void Dispose()
+            {
+                foreach (ICrowdMember member in _members) CrowdService.Solver.Unregister(member);
+                RegionNavProfile.UnregisterSceneVolume(Volume);
+                Object.DestroyImmediate(Profile);
+            }
+            public Vector3 From => Volume.center + Vector3.left * 2f;
+            public Vector3 Beyond => Volume.center + Vector3.right * 4f;
+        }
+
+        [Test]
+        public void BridgeV4_Mouth_CornerBeyondDeck_OrdinaryKindsExcluded()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Assert.IsFalse(f.Volume.Contains(f.Beyond));
+                Assert.AreSame(f.Volume, f.Profile.FindBridgeMouth(f.From, f.Beyond), "next corner may be beyond the bridge");
+                Assert.IsNull(f.Profile.FindBridgeMouth(f.From - Vector3.right * 4f, f.Beyond), "far from the mouth: no early stop");
+                Assert.IsNull(f.Profile.FindBridgeMouth(f.From, f.From - Vector3.right), "heading away");
+                Assert.IsNull(f.Profile.FindBridgeMouth(f.Volume.center, f.Beyond), "inside the bridge: no mouth queue");
+                f.Volume.capacity = 0;
+                Assert.IsNull(f.Profile.FindBridgeMouth(f.From, f.Beyond), "capacity zero never creates bridge reservations");
+                f.Volume.capacity = 2;
+                foreach (NavRegionKind kind in new[] { NavRegionKind.Gate, NavRegionKind.Corridor })
+                {
+                    f.Volume.kind = kind;
+                    Assert.IsNull(f.Profile.FindBridgeMouth(f.From, f.Beyond));
+                    Assert.IsFalse(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, 10f, out _));
+                    Assert.IsFalse(RegionNavRouter.BridgeOverflowAllows(f.Profile, f.Volume, 0));
+                }
+            }
+        }
+
+        [Test]
+        public void BridgeV4_Admission_ExactOwner_Expiry_ReusedSlotNotSubtracted()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Assert.IsTrue(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, 10f, out var first));
+                Assert.IsTrue(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, 10f, out var second));
+                Assert.AreEqual(2, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, 10.1f));
+                Assert.AreEqual(1, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, 10.1f, first));
+                Assert.IsTrue(RegionNavRouter.ShouldQueueBridge(f.Profile, f.From, f.Beyond, 0f, 10.1f, default, out _));
+                Assert.IsFalse(RegionNavRouter.ShouldQueueBridge(f.Profile, f.From, f.Beyond, 0f, 10.1f, first, out _), "valid owner may enter");
+                float expired = 10f + f.Profile.BridgeAdmitHold + 0.01f;
+                Assert.AreEqual(0, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, expired));
+                // Fill and reuse every ring slot without relying on implementation slot indexes.
+                for (int i = 0; i < 64; i++)
+                {
+                    Assert.IsTrue(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, expired, out var current));
+                    if (i < 63) RegionNavRouter.CancelBridgeAdmission(current);
+                }
+                Assert.AreEqual(1, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, expired, first), "expired owner's identity cannot subtract a replacement");
+                RegionNavRouter.CancelBridgeAdmission(first);
+                RegionNavRouter.CancelBridgeAdmission(second);
+                Assert.AreEqual(1, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, expired), "old cancellation cannot remove another owner's slot");
+            }
+        }
+
+        [Test]
+        public void BridgeV4_ClockRestart_AndReset_ClearFutureReservations()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Assert.IsTrue(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, 100f, out var old));
+                Assert.AreEqual(1, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, 100.1f));
+                Assert.AreEqual(0, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, 1f), "clock went back: old/future state cleared");
+                Assert.IsTrue(RegionNavRouter.NoteBridgeAdmission(f.Profile, f.Volume, 1f, out var current));
+                Assert.IsFalse(RegionNavRouter.HasBridgeAdmission(f.Profile, f.Volume, 1f, old));
+                Assert.AreNotEqual(old.Id, current.Id, "identity sequence survives a clock reset");
+                RegionNavRouter.ResetStatics();
+                Assert.AreEqual(0, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, 1f));
+            }
+        }
+
+        [Test]
+        public void BridgeV4_Timeout_BoundedOverflow_OneReleasePerInterval()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                f.AddOccupant(); f.AddOccupant();
+                Assert.AreEqual(2, RegionNavRouter.BridgeLoad(f.Profile, f.Volume, 10f));
+                Assert.IsFalse(RegionNavRouter.TryBridgeTimedOutRelease(f.Profile, f.Volume, 1f, 10f, out _), "must first wait original bridge timeout");
+                Assert.IsTrue(RegionNavRouter.TryBridgeTimedOutRelease(f.Profile, f.Volume, f.Profile.BridgeQueueReleaseSeconds, 10f, out var first));
+                Assert.IsFalse(RegionNavRouter.TryBridgeTimedOutRelease(f.Profile, f.Volume, 10f, 10f, out _), "same-tick burst cannot overfill deck");
+                Assert.IsTrue(RegionNavRouter.BridgeOverflowAllows(f.Profile, f.Volume, 3));
+                Assert.IsFalse(RegionNavRouter.BridgeOverflowAllows(f.Profile, f.Volume, 4), "capacity2+overflow2 is bounded");
+                f.Profile.BridgeHardMax = 3;
+                Assert.IsFalse(RegionNavRouter.TryBridgeTimedOutRelease(f.Profile, f.Volume, 10f, 10.5f, out _));
+                Assert.IsFalse(RegionNavRouter.BridgeOverflowAllows(f.Profile, f.Volume, 3), "hard bound wins");
+                RegionNavRouter.CancelBridgeAdmission(first);
+            }
+        }
+
+        private static void PinBridgeFollower(NavPathFollower follower, Vector3[] corners, Vector3 goal, float queued = 0f)
+        {
+            follower.SetCornersForTests(corners, corners.Length);
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            typeof(NavPathFollower).GetField("_nextRepathTime", flags).SetValue(follower, float.PositiveInfinity);
+            typeof(NavPathFollower).GetField("_lastGoal", flags).SetValue(follower, goal);
+            typeof(NavPathFollower).GetField("_queuedSeconds", flags).SetValue(follower, queued);
+        }
+
+        [Test]
+        public void BridgeV4_Follower_OnlyBridgeStops_OrdinaryCreepAnd2_5Remain()
+        {
+            RegionNavProfile old = RegionNavProfile.Active;
+            try
+            {
+                foreach (NavRegionKind kind in new[] { NavRegionKind.Gate, NavRegionKind.Corridor })
+                using (var f = new BridgeV4Fixture(kind))
+                {
+                    RegionNavProfile.SetActive(f.Profile);
+                    f.AddOccupant(); f.AddOccupant();
+                    var follower = new NavPathFollower();
+                    PinBridgeFollower(follower, new[] { f.From, f.Volume.center, f.Beyond }, f.Beyond);
+                    Assert.IsTrue(follower.Tick(f.From, f.Beyond, out _));
+                    Assert.IsTrue(follower.IsQueued);
+                    Assert.AreEqual(0.15f, follower.SpeedFactor);
+                    Assert.AreEqual(2.5f, f.Profile.MaxQueueSeconds);
+                    Assert.AreEqual(0, RegionNavRouter.RecentBridgeAdmissions(f.Profile, f.Volume, Time.time));
+                    PinBridgeFollower(follower, new[] { f.From, f.Volume.center, f.Beyond }, f.Beyond, 2.5f);
+                    Assert.IsTrue(follower.Tick(f.From, f.Beyond, out _));
+                    Assert.IsFalse(follower.IsQueued);
+                    Assert.AreEqual(1f, follower.SpeedFactor);
+                }
+                using (var f = new BridgeV4Fixture())
+                {
+                    RegionNavProfile.SetActive(f.Profile);
+                    f.AddOccupant(); f.AddOccupant();
+                    var follower = new NavPathFollower();
+                    PinBridgeFollower(follower, new[] { f.From, f.Beyond }, f.Beyond);
+                    Assert.IsTrue(follower.Tick(f.From, f.Beyond, out _));
+                    Assert.IsTrue(follower.IsQueued);
+                    Assert.AreEqual(0f, follower.SpeedFactor);
+                    follower.HoldsChokepoints = true;
+                    Assert.IsTrue(follower.Tick(f.From, f.Beyond, out _));
+                    Assert.IsFalse(follower.IsQueued);
+                    Assert.AreEqual(1f, follower.SpeedFactor);
+                    follower.Invalidate();
+                    Assert.IsFalse(follower.IsQueued);
+                }
+            }
+            finally { RegionNavProfile.SetActive(old); }
+        }
+
+        [Test]
+        public void BridgeV4_TimeoutRoute_OnlyTargetBridge_CompleteBypass_CostBound()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Vector3 from = f.Volume.center + Vector3.left * 4f, goal = f.Beyond;
+                Vector3[] Direct() => new[] { from, f.Volume.center, goal, Vector3.zero, Vector3.zero, Vector3.zero };
+                var bypass = new[] { from, from + Vector3.forward * 3f, goal + Vector3.forward * 3f, goal };
+                var gate = new NavRegionVolume { id = "OtherGate", kind = NavRegionKind.Gate, center = from + Vector3.right,
+                    size = new Vector3(1f, 4f, 2f), costMultiplier = 4f, hasAlternative = true, alternative = from + Vector3.left * 10f };
+                RegionNavProfile.RegisterSceneVolume(gate);
+                try
+                {
+                    int calls = 0;
+                    float price = 1f;
+                    RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile pr, NavRegionVolume target, Vector3 a, Vector3 b, Vector3[] buf, out float cost) =>
+                    {
+                        calls++;
+                        Assert.AreSame(f.Volume, target, "never the other costly Gate");
+                        for (int i = 0; i < bypass.Length; i++) buf[i] = bypass[i];
+                        cost = price;
+                        return bypass.Length;
+                    };
+                    Vector3[] direct = Direct();
+                    float directCost = RegionNavRouter.EffectiveCost(f.Profile, direct, 3, out _);
+                    Assert.AreEqual(4, RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out bool routed));
+                    Assert.IsTrue(routed);
+                    price = directCost * (1f + f.Profile.RouteBiasSpread) + 0.01f;
+                    direct = Direct();
+                    Assert.AreEqual(3, RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out routed));
+                    Assert.IsFalse(routed, "dearer than existing acceptance band keeps direct buffer");
+                    Assert.AreEqual(f.Volume.center, direct[1]);
+                    f.Volume.hasAlternative = false;
+                    RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out routed);
+                    Assert.IsFalse(routed); Assert.AreEqual(2, calls, "no alternative: no query");
+                    f.Volume.hasAlternative = true;
+                    RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, gate, from, goal, direct, 3, out routed);
+                    Assert.IsFalse(routed); Assert.AreEqual(2, calls, "ordinary Gate is never a timeout target");
+                }
+                finally { RegionNavProfile.UnregisterSceneVolume(gate); RegionNavRouter.AlternativeQueryOverride = null; }
+            }
+        }
+
+        [Test]
+        public void BridgeV4_TimeoutRoute_UnreachableOrTruncated_DirectBufferPreserved()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Vector3 from = f.Volume.center + Vector3.left * 4f, goal = f.Beyond;
+                var direct = new[] { from, f.Volume.center, goal, Vector3.zero };
+                RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float cost) => { cost = -1f; return 0; };
+                Assert.AreEqual(3, RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out bool routed));
+                Assert.IsFalse(routed); Assert.AreEqual(f.Volume.center, direct[1]);
+                RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float cost) =>
+                { buf[0] = a; buf[1] = v.alternative; cost = 0f; return 2; };
+                Assert.AreEqual(3, RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out routed));
+                Assert.IsFalse(routed, "truncated result did not reach goal"); Assert.AreEqual(f.Volume.center, direct[1]);
+                RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float cost) =>
+                { buf[0] = a; buf[1] = v.center; buf[2] = b; cost = 0f; return 3; };
+                Assert.AreEqual(3, RegionNavRouter.ChooseBridgeTimeoutRoute(f.Profile, f.Volume, from, goal, direct, 3, out routed));
+                Assert.IsFalse(routed, "an alternative still crossing the same bridge does not release the queue");
+                RegionNavRouter.AlternativeQueryOverride = null;
+            }
+        }
     }
 }

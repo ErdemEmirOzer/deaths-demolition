@@ -19,7 +19,7 @@ namespace DD.Prototype.Characters
         public const string Speed01 = "Speed01";
         /// <summary>Zombie: playback rate of the gait state = ground speed / clip speed_mps (no foot slide).</summary>
         public const string GaitRate = "GaitRate";
-        /// <summary>Zombie: 0 shamble_A, 1 shamble_B, 2 shamble_C, 3 run (fit / version).</summary>
+        /// <summary>Zombie: gait tree child index = <see cref="ZombieGaitClips"/> index (0–3 AP-009, 4–8 AP-022, 9–13 AP-033; per-spawn tier pool pick).</summary>
         public const string Gait = "Gait";
         /// <summary>Zombie: 0 sway, 1 twitch.</summary>
         public const string IdleVariant = "IdleVariant";
@@ -270,6 +270,31 @@ namespace DD.Prototype.Characters
         public const string ZombieWalkStompV3 = "AP022_zombie_walk_stomp";
         /// <summary>WP-071 MUST-I1: Gait indices of the AP-022 tier gaits in <see cref="ZombieGaitClips"/> (0–3 stay the AP-009 fallback).</summary>
         public const int GaitShambleFastAV3 = 4, GaitShambleFastBV3 = 5, GaitRunV3 = 6, GaitWalkHeavyV3 = 7, GaitWalkStompV3 = 8;
+        // WP-096 · AP-033 p1 (P-06 p1-v001, 73-bone ZombieRig, in place, 30 fps): native speed = the tier's world speed / its body
+        // scale (spd, honest rate ≈ 1.0): Standard lurch_A / limp_A 2.7, Runner run_feral_A 4.79, Executioner walk_stomp_A 1.15
+        public const string ZombieWalkLurchAV4 = "AP033_zombie_walk_lurch_A";
+        public const string ZombieWalkLimpAV4 = "AP033_zombie_walk_limp_A";
+        public const string ZombieRunFeralAV4 = "AP033_zombie_run_feral_A";
+        public const string ZombieWalkStompAV4 = "AP033_zombie_walk_stomp_A";
+        /// <summary>
+        /// WP-096 AP-033 p1: Gait indices appended after the AP-022 ones (0–8 keep their numbers). 11 = walk_limp_A played MIRRORED
+        /// (limp R; the gait tree child carries ChildMotion.mirror, the clip is the same) — see <see cref="IsGaitMirrored"/>.
+        /// </summary>
+        public const int GaitWalkLurchAV4 = 9, GaitWalkLimpAV4 = 10, GaitWalkLimpRV4 = 11, GaitRunFeralAV4 = 12, GaitWalkStompAV4 = 13;
+        // WP-096 · AP-033 p2 (P-06 p2-v001): the remaining loop variants — Standard lurch_B / drag_A / drag_B 2.7, Runner run_feral_B /
+        // run_stumble_A 4.79, Guard walk_heavy_A / B 1.9 (2.2 / 1.16), Executioner walk_stomp_B 1.15 (Blender spd; the set carries the
+        // Unity-rig speed the intake measures, ArtZombieStrideCalibration)
+        public const string ZombieWalkLurchBV4 = "AP033_zombie_walk_lurch_B";
+        public const string ZombieWalkDragAV4 = "AP033_zombie_walk_drag_A";
+        public const string ZombieWalkDragBV4 = "AP033_zombie_walk_drag_B";
+        public const string ZombieRunFeralBV4 = "AP033_zombie_run_feral_B";
+        public const string ZombieRunStumbleAV4 = "AP033_zombie_run_stumble_A";
+        public const string ZombieWalkHeavyAV4 = "AP033_zombie_walk_heavy_A";
+        public const string ZombieWalkHeavyBV4 = "AP033_zombie_walk_heavy_B";
+        public const string ZombieWalkStompBV4 = "AP033_zombie_walk_stomp_B";
+        /// <summary>WP-096 AP-033 p2: Gait indices 14–21 (0–13 keep their numbers).</summary>
+        public const int GaitWalkLurchBV4 = 14, GaitWalkDragAV4 = 15, GaitWalkDragBV4 = 16, GaitRunFeralBV4 = 17, GaitRunStumbleAV4 = 18,
+            GaitWalkHeavyAV4 = 19, GaitWalkHeavyBV4 = 20, GaitWalkStompBV4 = 21;
         /// <summary>WP-071: AP-022 attacks by state index (0 swipe_R, 1 lunge, 2 sweep, 3 overhead_slam, 4 bite_grab, 5 swipe_L).</summary>
         public static readonly string[] ZombieAttackClipsV3 = { ZombieAttackSwipeRV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3, ZombieAttackSwipeLV3 };
         public static readonly string[] HitDirections = { "front", "back", "left", "right" };
@@ -316,10 +341,18 @@ namespace DD.Prototype.Characters
             // WP-071 AP-022 slice 2a
             ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3,
             // WP-071 AP-022 zombie locomotion (MUST-I1)
-            ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3
+            ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3,
+            // WP-096 AP-033 p1 zombie locomotion
+            ZombieWalkLurchAV4, ZombieWalkLimpAV4, ZombieRunFeralAV4, ZombieWalkStompAV4,
+            // WP-096 AP-033 p2
+            ZombieWalkLurchBV4, ZombieWalkDragAV4, ZombieWalkDragBV4, ZombieRunFeralBV4, ZombieRunStumbleAV4, ZombieWalkHeavyAV4, ZombieWalkHeavyBV4, ZombieWalkStompBV4,
+            // WP-096 AP-033 p3 transitions (never added to ZombieGaitClips)
+            "AP033_zombie_start_walk", "AP033_zombie_start_run", "AP033_zombie_stop_walk_l", "AP033_zombie_stop_walk_r",
+            "AP033_zombie_stop_run_l", "AP033_zombie_stop_run_r", "AP033_zombie_turn90_L", "AP033_zombie_turn180_L",
+            "AP033_zombie_turn45_run_L", "AP033_zombie_stumble_recover"
         };
 
-        public const int ClipCount = 232;   // + AP-022 player locomotion 10 (MUST-3/4); + AP-022 zombie locomotion 5 (MUST-I1); + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 254;   // WP-096: + AP-033 p3 transitions 10; + AP-033 p2 zombie locomotion 8 (lurch_B, drag_A/B, feral_B, stumble_A, heavy_A/B, stomp_B); + AP-033 p1 zombie locomotion 4 (lurch_A, limp_A, run_feral_A, walk_stomp_A); + AP-022 player locomotion 10 (MUST-3/4); + AP-022 zombie locomotion 5 (MUST-I1); + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -330,8 +363,51 @@ namespace DD.Prototype.Characters
         public static readonly string[] PlayerDeathClips = { PlayerDeathFwd, PlayerDeathBack, PlayerDeathSide };
         /// <summary>The zombie attack clips in AttackStyle order (0 swipe, 1 lunge, 2 sweep, 3 overhead).</summary>
         public static readonly string[] ZombieAttackClips = { ZombieAttackSwipe, ZombieAttackLunge, ZombieAttackSweep, ZombieAttackOverhead };
-        /// <summary>The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run — AP-009; WP-071 MUST-I1: 4 shamble_fast_A, 5 shamble_fast_B, 6 run, 7 walk_heavy, 8 walk_stomp — AP-022).</summary>
-        public static readonly string[] ZombieGaitClips = { ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun, ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3 };
+        /// <summary>
+        /// The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run — AP-009; WP-071 MUST-I1: 4 shamble_fast_A, 5 shamble_fast_B, 6 run, 7 walk_heavy,
+        /// 8 walk_stomp — AP-022; WP-096: 9 lurch_A, 10 limp_A, 11 limp_A mirrored (limp R), 12 run_feral_A, 13 walk_stomp_A — AP-033 p1;
+        /// 14 lurch_B, 15 drag_A, 16 drag_B, 17 run_feral_B, 18 run_stumble_A, 19 walk_heavy_A, 20 walk_heavy_B, 21 walk_stomp_B — AP-033 p2).
+        /// An index is a gait tree child; the same clip may sit at two indices (10 / 11 differ only by the child's mirror flag).
+        /// </summary>
+        public static readonly string[] ZombieGaitClips =
+        {
+            ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun, ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3,
+            ZombieWalkLurchAV4, ZombieWalkLimpAV4, ZombieWalkLimpAV4, ZombieRunFeralAV4, ZombieWalkStompAV4,
+            ZombieWalkLurchBV4, ZombieWalkDragAV4, ZombieWalkDragBV4, ZombieRunFeralBV4, ZombieRunStumbleAV4, ZombieWalkHeavyAV4, ZombieWalkHeavyBV4, ZombieWalkStompBV4
+        };
+
+        /// <summary>WP-096 AP-033 p1: the gait tree child at this index plays its clip mirrored (limp R = limp_A through Unity's humanoid mirror).</summary>
+        public static bool IsGaitMirrored(int gait) => gait == GaitWalkLimpRV4;
+
+        /// <summary>
+        /// WP-096 AP-033 · the per-tier gait pools, indexed by <c>(int)EnemyTier</c> (0 Standard, 1 Special/Runner, 2 Elite/Guard,
+        /// 3 Ultra/Executioner). Entry 0 is the tier's primary look (the pick while the per-spawn variety is off); a spawn walks the
+        /// pool in order (ZombieSkinnedVisual.GaitIndexFor), skipping members the set does not carry.
+        /// p2 (S-03 08.10): Standard 6 AP-033 looks (lurch A/B, limp L/R, drag A/B; the limp sides and the A/B pairs apart so
+        /// consecutive spawns differ in silhouette) — AP-022 shamble_fast A/B leave the pool (150–157 spm at ×1.125 read frantic);
+        /// Runner feral A/B + stumble — AP-022 run leaves (rate 0.90, a different arm read); Guard heavy A/B + AP-022 walk_heavy
+        /// (calibrated, heavy read, a third look for the six-body Guard share); Executioner stomp A/B — AP-022 walk_stomp leaves
+        /// (rate 0.68 under its own 0.6 floor). The dropped AP-022 gaits keep their indices and are <see cref="ZombieGaitFallbacks"/>.
+        /// </summary>
+        public static readonly int[][] ZombieGaitPools =
+        {
+            new[] { GaitWalkLurchAV4, GaitWalkLimpAV4, GaitWalkDragAV4, GaitWalkLurchBV4, GaitWalkLimpRV4, GaitWalkDragBV4 },
+            new[] { GaitRunFeralAV4, GaitRunStumbleAV4, GaitRunFeralBV4 },
+            new[] { GaitWalkHeavyAV4, GaitWalkHeavyBV4, GaitWalkHeavyV3 },
+            new[] { GaitWalkStompAV4, GaitWalkStompBV4 }
+        };
+
+        /// <summary>
+        /// WP-096 AP-033 p2 · the tier's AP-022 gaits, used only when the set carries no member of <see cref="ZombieGaitPools"/> (a set
+        /// built before AP-033); without those too, the AP-009 fit fallback (ZombieSkinnedVisual.GaitIndexFor).
+        /// </summary>
+        public static readonly int[][] ZombieGaitFallbacks =
+        {
+            new[] { GaitShambleFastAV3, GaitShambleFastBV3 },
+            new[] { GaitRunV3 },
+            new[] { GaitWalkHeavyV3 },
+            new[] { GaitWalkStompV3 }
+        };
     }
 
     /// <summary>
@@ -364,6 +440,14 @@ namespace DD.Prototype.Characters
             public string events;
             /// <summary>WP-032C: manifest stance frames per foot (contact length of a locomotion cycle; 0 = not given). The calibrator and the slip tests measure over exactly these frames.</summary>
             public int stanceFrames;
+            /// <summary>AP-033 p3 in-place transition motor contract; null for gait/player clips.</summary>
+            public ZombieTransitionData transition;
+            /// <summary>
+            /// WP-096 P3: this clip's playback-rate band — floor (applied while the body cruises) and cap; 0 = the
+            /// <see cref="CadenceBand"/> default (Min / Max). Authored on the set asset (ArtAnimatorBuilder keeps it on a rebuild).
+            /// </summary>
+            public float minRate;
+            public float maxRate;
         }
 
         [SerializeField] private AnimationClip _idle;
@@ -468,6 +552,20 @@ namespace DD.Prototype.Characters
             Entry e = Find(clipName);
             if (e == null) return 0f;
             return e.unitySpeedMps > 0.01f ? e.unitySpeedMps : Mathf.Max(0f, e.speedMps);
+        }
+
+        /// <summary>WP-096 P3: the clip's playback-rate floor (its own <c>minRate</c>, else <see cref="CadenceBand.Min"/>).</summary>
+        public float MinRateOf(string clipName)
+        {
+            Entry e = Find(clipName);
+            return e != null && e.minRate > 0f ? e.minRate : CadenceBand.Min;
+        }
+
+        /// <summary>WP-096 P3: the clip's playback-rate cap (its own <c>maxRate</c>, else <see cref="CadenceBand.Max"/>).</summary>
+        public float MaxRateOf(string clipName)
+        {
+            Entry e = Find(clipName);
+            return e != null && e.maxRate > 0f ? e.maxRate : CadenceBand.Max;
         }
 
         /// <summary>The manifest (Blender) speed, for the calibration report.</summary>

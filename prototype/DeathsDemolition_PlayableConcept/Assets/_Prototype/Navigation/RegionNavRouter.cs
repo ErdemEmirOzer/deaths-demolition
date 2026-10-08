@@ -46,6 +46,7 @@ namespace DD.Prototype.Navigation
         public static void ResetStatics()
         {
             AlternativeQueryOverride = null;
+            RegionNavProfile.ResetBridgeRuntimeState();
             RerouteCount = 0;
             RouteSwitchCount = 0;
             QueueEvents = 0;
@@ -174,6 +175,198 @@ namespace DD.Prototype.Navigation
             bool full = Occupancy(v) >= v.capacity;
             if (full && queuedSeconds <= 0f) QueueEvents++;
             return full;
+        }
+
+        /// <summary>Identity of one provisional Bridge entry; never a generic chokepoint reservation.</summary>
+        public readonly struct BridgeAdmission
+        {
+            public readonly NavRegionVolume Volume;
+            public readonly int Id;
+            public readonly float Created;
+            internal BridgeAdmission(NavRegionVolume volume, int id, float created)
+            { Volume = volume; Id = id; Created = created; }
+        }
+
+        public static bool AtBridgeMouth(NavRegionVolume volume, Vector3 position, Vector3 nextCorner, float probe)
+        {
+            if (volume == null || volume.kind != NavRegionKind.Bridge || !volume.IsChokepoint || volume.Contains(position) || probe <= 0f) return false;
+            Vector3 d = nextCorner - position;
+            d.y = 0f;
+            float length = d.magnitude;
+            if (length < 0.0001f) return false;
+            Vector3 end = position + d * (Mathf.Min(probe, length) / length);
+            return BridgeSegmentIntersects(volume, position, end);
+        }
+
+        // Analytic XZ box clipping; Bridge scene volumes are rectangles. A polygon still uses its actual outline.
+        private static bool BridgeSegmentIntersects(NavRegionVolume volume, Vector3 a, Vector3 b)
+        {
+            if (volume.Contains(a) || volume.Contains(b)) return true;
+            if (volume.polygonXZ != null && volume.polygonXZ.Length >= 3)
+            {
+                // Segment/polygon edge intersection, including a narrow deck between two outside corners.
+                Vector2 p = new Vector2(a.x, a.z), r = new Vector2(b.x - a.x, b.z - a.z);
+                Vector2[] poly = volume.polygonXZ;
+                for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
+                {
+                    Vector2 q = poly[j], e = poly[i] - q;
+                    float cross = r.x * e.y - r.y * e.x;
+                    if (Mathf.Abs(cross) < 0.000001f) continue;
+                    Vector2 delta = q - p;
+                    float t = (delta.x * e.y - delta.y * e.x) / cross;
+                    float u = (delta.x * r.y - delta.y * r.x) / cross;
+                    if (t >= 0f && t <= 1f && u >= 0f && u <= 1f) return true;
+                }
+                return false;
+            }
+            float lo = 0f, hi = 1f;
+            return ClipBridgeAxis(a.x, b.x - a.x, volume.center.x - volume.size.x * 0.5f, volume.center.x + volume.size.x * 0.5f, ref lo, ref hi)
+                && ClipBridgeAxis(a.z, b.z - a.z, volume.center.z - volume.size.z * 0.5f, volume.center.z + volume.size.z * 0.5f, ref lo, ref hi);
+        }
+
+        private static bool ClipBridgeAxis(float at, float delta, float min, float max, ref float lo, ref float hi)
+        {
+            if (Mathf.Abs(delta) < 0.000001f) return at >= min && at <= max;
+            float a = (min - at) / delta, b = (max - at) / delta;
+            if (a > b) { float swap = a; a = b; b = swap; }
+            lo = Mathf.Max(lo, a); hi = Mathf.Min(hi, b);
+            return lo <= hi;
+        }
+
+        private static bool BridgePathIntersects(NavRegionVolume bridge, Vector3[] corners, int count)
+        {
+            for (int i = 1; i < count; i++) if (BridgeSegmentIntersects(bridge, corners[i - 1], corners[i])) return true;
+            return false;
+        }
+
+        private static bool PrepareBridgeClock(NavRegionVolume volume, float now)
+        {
+            if (volume == null || volume.kind != NavRegionKind.Bridge || volume.BridgeAdmissionIds == null
+                || volume.BridgeAdmissionTimes == null || float.IsNaN(now) || float.IsInfinity(now)) return false;
+            if (now < volume.BridgeLastClock) volume.ClearBridgeState();
+            volume.BridgeLastClock = now;
+            return true;
+        }
+
+        public static int RecentBridgeAdmissions(RegionNavProfile profile, NavRegionVolume bridge, float now, BridgeAdmission own = default)
+        {
+            if (profile == null || !PrepareBridgeClock(bridge, now)) return 0;
+            int n = 0;
+            float hold = Mathf.Max(0.1f, profile.BridgeAdmitHold);
+            for (int i = 0; i < bridge.BridgeAdmissionIds.Length; i++)
+            {
+                int id = bridge.BridgeAdmissionIds[i];
+                if (id == 0) continue;
+                float created = bridge.BridgeAdmissionTimes[i];
+                if (created > now || now - created >= hold) { bridge.BridgeAdmissionIds[i] = 0; continue; }
+                if (ReferenceEquals(own.Volume, bridge) && own.Id == id && own.Created == created) continue;
+                n++;
+            }
+            return n;
+        }
+
+        public static bool HasBridgeAdmission(RegionNavProfile profile, NavRegionVolume bridge, float now, BridgeAdmission own)
+        {
+            if (profile == null || !ReferenceEquals(own.Volume, bridge) || own.Id == 0 || !PrepareBridgeClock(bridge, now)) return false;
+            if (own.Created > now || now - own.Created >= Mathf.Max(0.1f, profile.BridgeAdmitHold)) return false;
+            for (int i = 0; i < bridge.BridgeAdmissionIds.Length; i++)
+                if (bridge.BridgeAdmissionIds[i] == own.Id && bridge.BridgeAdmissionTimes[i] == own.Created) return true;
+            return false;
+        }
+
+        public static int BridgeLoad(RegionNavProfile profile, NavRegionVolume bridge, float now, BridgeAdmission own = default)
+        {
+            if (bridge == null || bridge.kind != NavRegionKind.Bridge) return 0;
+            return Occupancy(bridge) + RecentBridgeAdmissions(profile, bridge, now, own);
+        }
+
+        public static bool NoteBridgeAdmission(RegionNavProfile profile, NavRegionVolume bridge, float now, out BridgeAdmission admission)
+        {
+            admission = default;
+            if (profile == null || bridge == null || !bridge.IsChokepoint || !PrepareBridgeClock(bridge, now)) return false;
+            RecentBridgeAdmissions(profile, bridge, now); // Expire slots before reuse; no hot-path allocation.
+            for (int offset = 0; offset < bridge.BridgeAdmissionIds.Length; offset++)
+            {
+                int i = (bridge.BridgeAdmissionCursor + offset) % bridge.BridgeAdmissionIds.Length;
+                if (bridge.BridgeAdmissionIds[i] != 0) continue;
+                int id = unchecked(++bridge.BridgeNextAdmissionId);
+                if (id == 0) id = unchecked(++bridge.BridgeNextAdmissionId);
+                bridge.BridgeAdmissionIds[i] = id;
+                bridge.BridgeAdmissionTimes[i] = now;
+                bridge.BridgeAdmissionCursor = (i + 1) % bridge.BridgeAdmissionIds.Length;
+                admission = new BridgeAdmission(bridge, id, now);
+                return true;
+            }
+            return false;
+        }
+
+        public static void CancelBridgeAdmission(BridgeAdmission admission)
+        {
+            NavRegionVolume bridge = admission.Volume;
+            if (bridge == null || bridge.kind != NavRegionKind.Bridge || admission.Id == 0 || bridge.BridgeAdmissionIds == null) return;
+            for (int i = 0; i < bridge.BridgeAdmissionIds.Length; i++)
+                if (bridge.BridgeAdmissionIds[i] == admission.Id && bridge.BridgeAdmissionTimes[i] == admission.Created)
+                { bridge.BridgeAdmissionIds[i] = 0; return; }
+        }
+
+        public static bool ShouldQueueBridge(RegionNavProfile profile, Vector3 position, Vector3 nextCorner,
+            float queuedSeconds, float now, BridgeAdmission own, out NavRegionVolume bridge)
+        {
+            bridge = profile != null ? profile.FindBridgeMouth(position, nextCorner) : null;
+            if (bridge == null || HasBridgeAdmission(profile, bridge, now, own)) return false;
+            bool full = BridgeLoad(profile, bridge, now) >= bridge.capacity;
+            if (full && queuedSeconds <= 0f) QueueEvents++;
+            return full;
+        }
+
+        public static bool BridgeOverflowAllows(RegionNavProfile profile, NavRegionVolume bridge, int load)
+        {
+            if (profile == null || bridge == null || bridge.kind != NavRegionKind.Bridge || !bridge.IsChokepoint) return false;
+            int bound = Mathf.Min(Mathf.Max(1, profile.BridgeHardMax), bridge.capacity + Mathf.Max(0, profile.BridgeOverflowBodies));
+            return load < bound;
+        }
+
+        public static bool TryBridgeTimedOutRelease(RegionNavProfile profile, NavRegionVolume bridge, float queuedSeconds, float now, out BridgeAdmission admission)
+        {
+            admission = default;
+            if (profile == null || queuedSeconds < Mathf.Max(0f, profile.BridgeQueueReleaseSeconds) || !PrepareBridgeClock(bridge, now)
+                || now < bridge.BridgeNextRelease || !BridgeOverflowAllows(profile, bridge, BridgeLoad(profile, bridge, now))) return false;
+            if (!NoteBridgeAdmission(profile, bridge, now, out admission)) return false;
+            bridge.BridgeNextRelease = now + Mathf.Max(0.1f, profile.BridgeAdmitHold);
+            return true;
+        }
+
+        /// <summary>Timeout comparison for ONE waiting Bridge. Generic ChooseRoute and other volume choices are untouched.</summary>
+        public static int ChooseBridgeTimeoutRoute(RegionNavProfile profile, NavRegionVolume bridge, Vector3 position, Vector3 goal,
+            Vector3[] buffer, int directCount, out bool rerouted)
+        {
+            rerouted = false;
+            if (profile == null || !profile.BridgeTimeoutDetour || bridge == null || bridge.kind != NavRegionKind.Bridge || !bridge.hasAlternative
+                || buffer == null || directCount < 2 || directCount > buffer.Length
+                || !AlternativeAhead(bridge, position, goal, profile.AlternativeAheadMargin)
+                || !BridgePathIntersects(bridge, buffer, directCount)) return directCount;
+            float direct = EffectiveCost(profile, buffer, directCount, out _);
+            AlternativeQuery query = AlternativeQueryOverride ?? TryAlternative;
+            int n = query(profile, bridge, position, goal, s_altScratch, out float altCost);
+            if (n < 2 || n > buffer.Length || n > s_altScratch.Length || altCost < 0f || float.IsNaN(altCost) || float.IsInfinity(altCost)) return directCount;
+            // A truncated or partial path must never become a timeout route. TryAlternative already rejects non-complete legs.
+            if (FlatSquared(s_altScratch[0], position) > 0.25f || FlatSquared(s_altScratch[n - 1], goal) > 0.25f
+                || BridgePathIntersects(bridge, s_altScratch, n)) return directCount;
+            for (int i = 0; i < n; i++)
+                if (float.IsNaN(s_altScratch[i].x) || float.IsInfinity(s_altScratch[i].x)
+                    || float.IsNaN(s_altScratch[i].y) || float.IsInfinity(s_altScratch[i].y)
+                    || float.IsNaN(s_altScratch[i].z) || float.IsInfinity(s_altScratch[i].z)) return directCount;
+            if (altCost >= direct * (1f + Mathf.Clamp01(profile.RouteBiasSpread))) return directCount;
+            for (int i = 0; i < n; i++) buffer[i] = s_altScratch[i];
+            rerouted = true;
+            RerouteCount++;
+            return n;
+        }
+
+        private static float FlatSquared(Vector3 a, Vector3 b)
+        {
+            float x = a.x - b.x, z = a.z - b.z;
+            return x * x + z * z;
         }
     }
 }

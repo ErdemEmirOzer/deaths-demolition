@@ -125,6 +125,11 @@ namespace DD.Prototype.Navigation
         private bool _rerouted;              // the current path is the alternative route
         private NavRegionVolume _queueVolume;
 
+        // Bridge-only state; ordinary Gate/Corridor uses the existing queue branch below.
+        private NavRegionVolume _bridgeTracked, _bridgeDetour;
+        private bool _bridgeDetourAttempted;
+        private RegionNavRouter.BridgeAdmission _bridgeAdmission;
+
         /// <summary>Speed factor the owner applies this tick: 1, or the profile's QueueSpeedFactor while queued at a full chokepoint.</summary>
         public float SpeedFactor { get; private set; } = 1f;
         public bool IsQueued => _queueVolume != null;
@@ -190,11 +195,63 @@ namespace DD.Prototype.Navigation
                 if (HoldsChokepoints)
                 {
                     // WP-040: a corridor closer never yields at the mouth.
+                    ClearBridgeState();
                     _queueVolume = null;
                     _queuedSeconds = 0f;
                     SpeedFactor = 1f;
                     return true;
                 }
+
+                if (_bridgeAdmission.Id != 0 && (_bridgeAdmission.Volume.Contains(position)
+                    || !RegionNavRouter.HasBridgeAdmission(profile, _bridgeAdmission.Volume, now, _bridgeAdmission)))
+                {
+                    RegionNavRouter.CancelBridgeAdmission(_bridgeAdmission);
+                    _bridgeAdmission = default;
+                }
+                NavRegionVolume bridge = profile.FindBridgeMouth(position, steeringTarget);
+                if (bridge != null)
+                {
+                    if (!ReferenceEquals(_bridgeTracked, bridge))
+                    {
+                        ClearBridgeQueue();
+                        _queuedSeconds = 0f; // A previous ordinary throat must not donate its wait time to a new Bridge.
+                        _bridgeTracked = bridge;
+                        if (!ReferenceEquals(_bridgeDetour, bridge)) { _bridgeDetour = null; _bridgeDetourAttempted = false; }
+                    }
+                    bool queue = RegionNavRouter.ShouldQueueBridge(profile, position, steeringTarget, _queuedSeconds, now, _bridgeAdmission, out _);
+                    if (queue && _queuedSeconds >= Mathf.Max(0f, profile.BridgeQueueReleaseSeconds))
+                    {
+                        bool wantsDetour = profile.BridgeTimeoutDetour && bridge.hasAlternative
+                            && RegionNavRouter.AlternativeAhead(bridge, position, goal, profile.AlternativeAheadMargin);
+                        if (wantsDetour && !ReferenceEquals(_bridgeDetour, bridge))
+                        {
+                            _bridgeDetour = bridge;
+                            _bridgeDetourAttempted = false;
+                            _nextRepathTime = 0f; // One early repath; subsequent tries keep the existing per-body interval/budget.
+                        }
+                        if ((!wantsDetour || _bridgeDetourAttempted)
+                            && RegionNavRouter.TryBridgeTimedOutRelease(profile, bridge, _queuedSeconds, now, out var admitted))
+                        {
+                            _bridgeAdmission = admitted;
+                            queue = false;
+                        }
+                    }
+                    if (!queue && !RegionNavRouter.HasBridgeAdmission(profile, bridge, now, _bridgeAdmission))
+                        queue = !RegionNavRouter.NoteBridgeAdmission(profile, bridge, now, out _bridgeAdmission);
+                    if (queue)
+                    {
+                        _queueVolume = bridge;
+                        _queuedSeconds += Time.deltaTime;
+                        SpeedFactor = 0f; // Stop at a Bridge mouth; ordinary Gate/Corridor retains its original creep.
+                    }
+                    else
+                    {
+                        _queueVolume = null;
+                        SpeedFactor = 1f;
+                    }
+                    return true;
+                }
+                ClearBridgeQueue();
 
                 if (RegionNavRouter.ShouldQueue(profile, position, steeringTarget, _queuedSeconds, out NavRegionVolume volume))
                 {
@@ -210,6 +267,7 @@ namespace DD.Prototype.Navigation
                 return true;
             }
 
+            ClearBridgeQueue();
             _queueVolume = null;
             SpeedFactor = 1f;
             steeringTarget = goal;
@@ -229,6 +287,26 @@ namespace DD.Prototype.Navigation
             SpeedFactor = 1f;
             ClearHold();
             _hasReleasedCorner = false;
+            ClearBridgeState();
+        }
+
+        private void ClearBridgeQueue()
+        {
+            RegionNavRouter.CancelBridgeAdmission(_bridgeAdmission);
+            _bridgeAdmission = default;
+            if (_bridgeTracked != null)
+            {
+                _queuedSeconds = 0f;
+                if (_queueVolume != null && _queueVolume.kind == NavRegionKind.Bridge) _queueVolume = null;
+            }
+            _bridgeTracked = null;
+        }
+
+        private void ClearBridgeState()
+        {
+            ClearBridgeQueue();
+            _bridgeDetour = null;
+            _bridgeDetourAttempted = false;
         }
 
         /// <summary>
@@ -280,6 +358,21 @@ namespace DD.Prototype.Navigation
                 // WP-040: a corridor closer keeps the direct corners (it goes THROUGH the throat by design).
                 bool wasRerouted = _rerouted;
                 if (HoldsChokepoints) _rerouted = false;
+                else if (_bridgeDetour != null)
+                {
+                    RegionNavProfile profile = RegionNavProfile.Active;
+                    if (Status == NavPathStatus.Complete && RegionNavRouter.AlternativeAhead(_bridgeDetour, position, goal, profile.AlternativeAheadMargin))
+                    {
+                        _cornerCount = RegionNavRouter.ChooseBridgeTimeoutRoute(profile, _bridgeDetour, position, goal, _corners, _cornerCount, out _rerouted);
+                        _bridgeDetourAttempted = true;
+                    }
+                    else
+                    {
+                        _bridgeDetour = null;
+                        _bridgeDetourAttempted = false;
+                        _rerouted = false;
+                    }
+                }
                 else _cornerCount = RegionNavRouter.ChooseRoute(RegionNavProfile.Active, position, goal, _corners, _cornerCount, _routeRoll, out _rerouted);
                 if (_rerouted && !wasRerouted) RegionNavRouter.NoteRouteSwitch();   // WP-055B: a body that CHANGED to the alternative (RerouteCount counts every refresh decision)
                 // Corner 0 is the agent's own position; start steering at the next one.

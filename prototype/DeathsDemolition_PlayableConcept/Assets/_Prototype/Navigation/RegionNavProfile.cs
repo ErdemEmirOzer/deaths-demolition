@@ -49,6 +49,31 @@ namespace DD.Prototype.Navigation
         /// <summary>WP-076 B6: optional world XZ outline (≥ 3 points; regions-v6 polygons); empty = the box.</summary>
         public Vector2[] polygonXZ;
 
+        // Bridge-only, prewarmed at profile/scene registration; no allocations from queue ticks.
+        internal const int BridgeAdmissionSlots = 64;
+        [NonSerialized] internal int[] BridgeAdmissionIds;
+        [NonSerialized] internal float[] BridgeAdmissionTimes;
+        [NonSerialized] internal int BridgeAdmissionCursor, BridgeNextAdmissionId;
+        [NonSerialized] internal float BridgeNextRelease, BridgeLastClock = float.NegativeInfinity;
+
+        internal void PrewarmBridgeState()
+        {
+            if (kind != NavRegionKind.Bridge) return;
+            if (BridgeAdmissionIds == null) BridgeAdmissionIds = new int[BridgeAdmissionSlots];
+            if (BridgeAdmissionTimes == null) BridgeAdmissionTimes = new float[BridgeAdmissionSlots];
+            ClearBridgeState();
+        }
+
+        internal void ClearBridgeState()
+        {
+            if (BridgeAdmissionIds != null) Array.Clear(BridgeAdmissionIds, 0, BridgeAdmissionIds.Length);
+            if (BridgeAdmissionTimes != null) Array.Clear(BridgeAdmissionTimes, 0, BridgeAdmissionTimes.Length);
+            BridgeAdmissionCursor = 0;
+            BridgeNextRelease = 0f;
+            BridgeLastClock = float.NegativeInfinity;
+            // Keep the identity sequence: an old pooled follower cannot own a newly issued slot after a clock reset.
+        }
+
         public bool Contains(Vector3 p)
         {
             if (polygonXZ != null && polygonXZ.Length >= 3) return InsidePolygon(polygonXZ, p.x, p.z);
@@ -79,6 +104,19 @@ namespace DD.Prototype.Navigation
 
         [PrototypeOnly(PendingDecisions.None, "Seconds a member queues at a full chokepoint before it pushes in anyway (never a deadlock).", true)]
         [Range(0f, 10f)] public float MaxQueueSeconds = 2.5f;
+
+        [PrototypeOnly(PendingDecisions.None, "Bridge-only wait before trying the target bridge alternative or a bounded admission.", true)]
+        [Range(0f, 10f)] public float BridgeQueueReleaseSeconds = 1.5f;
+        [PrototypeOnly(PendingDecisions.None, "Bridge-only timeout may query that bridge alternative; ordinary routes keep their seeded choice.", true)]
+        public bool BridgeTimeoutDetour = true;
+        [PrototypeOnly(PendingDecisions.None, "Bridge mouth look-ahead along the next path segment, metres.", true)]
+        [Range(0f, 5f)] public float BridgeMouthProbe = 1.5f;
+        [PrototypeOnly(PendingDecisions.None, "Bridge-only admission lifetime and minimum interval between overflow releases, seconds.", true)]
+        [Range(0.1f, 5f)] public float BridgeAdmitHold = 1.2f;
+        [PrototypeOnly(PendingDecisions.None, "Bridge-only extra admissions after timeout, still limited by BridgeHardMax.", true)]
+        [Range(0, 4)] public int BridgeOverflowBodies = 2;
+        [PrototypeOnly(PendingDecisions.None, "Bridge-only hard upper bound on occupancy plus live admissions.", true)]
+        [Range(1, 40)] public int BridgeHardMax = 10;
 
         [PrototypeOnly(PendingDecisions.None, "Speed factor while queued at a chokepoint mouth (0 = stop, keeps the DEC-032 threat visible).", true)]
         [Range(0f, 1f)] public float QueueSpeedFactor = 0.15f;
@@ -112,11 +150,38 @@ namespace DD.Prototype.Navigation
             }
         }
 
-        public static void SetActive(RegionNavProfile profile) => s_active = profile;
-        public static void ResetStatics() => s_active = null;
+        private void OnEnable() => PrewarmBridgeState();
+
+        private void PrewarmBridgeState()
+        {
+            if (_volumes == null) return;
+            for (int i = 0; i < _volumes.Length; i++) _volumes[i]?.PrewarmBridgeState();
+        }
+
+        public static void SetActive(RegionNavProfile profile)
+        {
+            s_active = profile;
+            if (profile != null) profile.PrewarmBridgeState();
+        }
+        public static void ResetStatics()
+        {
+            ResetBridgeRuntimeState();
+            s_active = null;
+        }
+
+        internal static void ResetBridgeRuntimeState()
+        {
+            if (s_active != null && s_active._volumes != null)
+                for (int i = 0; i < s_active._volumes.Length; i++) s_active._volumes[i]?.ClearBridgeState();
+            for (int i = 0; i < s_scene.Count; i++) s_scene[i]?.ClearBridgeState();
+        }
 
         public NavRegionVolume[] Volumes => _volumes;
-        public void Set(NavRegionVolume[] volumes) => _volumes = volumes ?? new NavRegionVolume[0];
+        public void Set(NavRegionVolume[] volumes)
+        {
+            _volumes = volumes ?? new NavRegionVolume[0];
+            PrewarmBridgeState();
+        }
 
         public float FitRadiusScale(string fit)
         {
@@ -132,7 +197,12 @@ namespace DD.Prototype.Navigation
         // and replace the profile's own list (the profile's coordinates are World_AP005's).
         private static readonly System.Collections.Generic.List<NavRegionVolume> s_scene = new System.Collections.Generic.List<NavRegionVolume>(32);
         public static int SceneVolumeCount => s_scene.Count;
-        public static void RegisterSceneVolume(NavRegionVolume v) { if (v != null && !s_scene.Contains(v)) s_scene.Add(v); }
+        public static void RegisterSceneVolume(NavRegionVolume v)
+        {
+            if (v == null || s_scene.Contains(v)) return;
+            v.PrewarmBridgeState();
+            s_scene.Add(v);
+        }
         public static void UnregisterSceneVolume(NavRegionVolume v) { s_scene.Remove(v); }
 
         /// <summary>WP-076 B6c: the scene Gate volumes that open room <paramref name="roomId"/> (appended; caller clears). 0 allocation.</summary>
@@ -169,6 +239,20 @@ namespace DD.Prototype.Navigation
                 if (_volumes[i] != null && _volumes[i].Contains(p)) return _volumes[i];
             }
 
+            return null;
+        }
+
+        /// <summary>Only a Bridge mouth on the next segment; a corner beyond the deck is supported.</summary>
+        public NavRegionVolume FindBridgeMouth(Vector3 position, Vector3 nextCorner)
+        {
+            if (s_scene.Count > 0)
+            {
+                for (int i = 0; i < s_scene.Count; i++)
+                    if (RegionNavRouter.AtBridgeMouth(s_scene[i], position, nextCorner, BridgeMouthProbe)) return s_scene[i];
+                return null;
+            }
+            for (int i = 0; i < _volumes.Length; i++)
+                if (RegionNavRouter.AtBridgeMouth(_volumes[i], position, nextCorner, BridgeMouthProbe)) return _volumes[i];
             return null;
         }
 
@@ -215,6 +299,7 @@ namespace DD.Prototype.Navigation
                 // North-west service gate.
                 new NavRegionVolume { id = "NW_ServiceGate", kind = NavRegionKind.Gate, center = new Vector3(-26f, 0f, 25f), size = new Vector3(5f, 6f, 5f), costMultiplier = 1.15f, capacity = 2, hasAlternative = true, alternative = new Vector3(-8f, 0f, 31f), areaName = "Gate" },
             };
+            p.PrewarmBridgeState();
             return p;
         }
     }

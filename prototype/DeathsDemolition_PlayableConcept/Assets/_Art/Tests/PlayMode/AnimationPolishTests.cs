@@ -113,6 +113,9 @@ namespace DD.Art.Tests.PlayMode
             var v = go.GetComponent<ZombieSkinnedVisual>();
             v.Assemble(set.ZombieLibrary, ZombieLookSelector.Select(set.ZombieLibrary, seed));
             v.ApplyMaterial(set.ZombieLibrary, 0);
+            // WP-096 AP-033 p1: the Standard gait is a per-spawn pool pick — restart the pools so the stage actor walks the
+            // tier's primary look (walk_lurch_A) whatever spawned before, not a member chosen by test order
+            ZombieSkinnedVisual.ResetGaitPicksForTests();
             v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
             // Stage actors are off-camera in the menu scene: CullUpdateTransforms would skip the IK pass and the bone
             // write (that is the production rule); the measurement needs the pass, so animate always here.
@@ -294,7 +297,8 @@ namespace DD.Art.Tests.PlayMode
             // for the shamble is 5 cm/step, the run cycles keep 2 cm on their contact frames (AnimationV002Tests).
             // WP-071 K3 (N5): the Standard's 2.7 m/s is past the shamble's cadence band — the clip plays at ≤ ×1.2 and the body
             // slides the rest by design (≈ 30–43 % until AP-022's shamble_fast); the gate is the band, the slip is reported.
-            Assert.LessOrEqual(v.Animator.GetFloat(C.GaitRate), CadenceBand.Max + 1e-3f, "shamble kadans bandını aştı");
+            // WP-096: the clip's own band (an AP-033 gait may carry an automatic maxRate from the Unity-rig calibration)
+            Assert.LessOrEqual(v.Animator.GetFloat(C.GaitRate), v.GaitRateMax + 1e-3f, "yürüyüş kadans bandını aştı");
             Assert.GreaterOrEqual(v.GaitRate, CadenceBand.Min - 1e-3f);
         }
 

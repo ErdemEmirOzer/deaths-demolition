@@ -63,6 +63,7 @@ namespace DD.Art.Pipeline.EditorTools
             public bool optional;
             /// <summary>WP-032B: manifest validation.foot_contact_A stance frames (min over both feet); 0 = not given (whole-window calibration).</summary>
             public int stanceFrames;
+            public ZombieTransitionData transition;
             public readonly List<KeyValuePair<string, int>> events = new List<KeyValuePair<string, int>>();
             /// <summary>WP-071: the int payload per event (index / side; 0 = none), parallel to <see cref="events"/>.</summary>
             public readonly List<int> eventValues = new List<int>();
@@ -92,6 +93,36 @@ namespace DD.Art.Pipeline.EditorTools
 
                 return sb.ToString();
             }
+        }
+
+        private static ZombieTransitionData ParseTransition(Dictionary<string, object> d)
+        {
+            var result = new ZombieTransitionData
+            {
+                kind = ArtJson.AsString(ArtJson.Require(d, "kind")),
+                blendInEnd = ArtJson.AsInt(ArtJson.Require(d, "blendInEnd")),
+                blendOutStart = ArtJson.AsInt(ArtJson.Require(d, "blendOutStart")),
+                attachInClip = ArtJson.AsString(ArtJson.Require(d, "attachInClip")),
+                attachOutClip = ArtJson.AsString(ArtJson.Require(d, "attachOutClip")),
+                attachInPhase = ArtJson.AsFloat(ArtJson.Require(d, "attachInPhase")),
+                attachOutPhase = ArtJson.AsFloat(ArtJson.Require(d, "attachOutPhase")),
+                entrySpeed = ArtJson.AsFloat(ArtJson.Require(d, "entrySpeed")),
+                exitSpeed = ArtJson.AsFloat(ArtJson.Require(d, "exitSpeed")),
+                turnAngle = ArtJson.AsFloat(ArtJson.Require(d, "turnAngle"))
+            };
+            var samples = ArtJson.AsList(ArtJson.Require(d, "curve"), "curve");
+            result.curve = new ZombieTransitionData.Sample[samples.Count];
+            for (int i = 0; i < samples.Count; i++)
+            {
+                var s = ArtJson.AsObject(samples[i], "sample");
+                result.curve[i] = new ZombieTransitionData.Sample { frame = ArtJson.AsFloat(ArtJson.Require(s, "frame")),
+                    x = ArtJson.AsFloat(ArtJson.Require(s, "x")), z = ArtJson.AsFloat(ArtJson.Require(s, "z")), yaw = ArtJson.AsFloat(ArtJson.Require(s, "yaw")) };
+            }
+            var tr = ArtJson.AsList(ArtJson.Require(d, "translate"), "translate");
+            var ro = ArtJson.AsList(ArtJson.Require(d, "rotate"), "rotate");
+            result.translate = new Vector2(ArtJson.AsFloat(tr[0]), ArtJson.AsFloat(tr[1]));
+            result.rotate = new Vector2(ArtJson.AsFloat(ro[0]), ArtJson.AsFloat(ro[1]));
+            return result;
         }
 
         private static Dictionary<string, ClipSpec> s_cache;
@@ -166,6 +197,8 @@ namespace DD.Art.Pipeline.EditorTools
                     mask = ArtJson.AsString(ArtJson.Require(c, "mask"), "mask"),
                     optional = ArtJson.Get(c, "optional") is bool b && b
                 };
+                if (ArtJson.Get(c, "transition_data") != null)
+                    spec.transition = ParseTransition(ArtJson.AsObject(ArtJson.Get(c, "transition_data"), "transition_data"));
                 object speed = ArtJson.Get(c, "speed_mps");
                 spec.speedMps = speed == null ? 0f : ArtJson.AsFloat(speed, "speed_mps");
                 object fit = ArtJson.Get(c, "fit");

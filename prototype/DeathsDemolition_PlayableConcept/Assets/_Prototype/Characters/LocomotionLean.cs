@@ -33,6 +33,9 @@ namespace DD.Prototype.Characters
         public float Pitch => _pitch;
         public float Roll => _roll;
 
+        /// <summary>WP-096 P7: this body's side (roll) cap, degrees — the owner sets it per tier (zombie Runner 12°); default <see cref="MaxSide"/>.</summary>
+        public float SideCapDegrees { get; set; } = MaxSide;
+
         public void Configure(Transform spine, Transform body, Func<bool> gate)
         {
             _spine = spine;
@@ -77,7 +80,8 @@ namespace DD.Prototype.Characters
             _hasLast = true;
             Vector3 local = _body.InverseTransformDirection(_accel);
             float targetPitch = Mathf.Clamp(local.z * DegreesPerAccel, -MaxBack, MaxForward);
-            float targetRoll = Mathf.Clamp(-local.x * DegreesPerAccel, -MaxSide, MaxSide);   // roll into the turn (lateral accel points inward)
+            float side = SideCapDegrees > 0f ? SideCapDegrees : MaxSide;
+            float targetRoll = Mathf.Clamp(-local.x * DegreesPerAccel, -side, side);   // roll into the turn (lateral accel points inward)
             float s = 1f - Mathf.Exp(-dt / Smoothing);
             _pitch = Mathf.Lerp(_pitch, targetPitch, s);
             _roll = Mathf.Lerp(_roll, targetRoll, s);

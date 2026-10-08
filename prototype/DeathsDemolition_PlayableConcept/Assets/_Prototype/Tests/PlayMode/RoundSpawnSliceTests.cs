@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.Navigation;
@@ -399,6 +400,17 @@ namespace DD.Prototype.Tests.PlayMode
             _rig.Health.DiagnosisInvulnerable = true;   // the fixture's TearDown clears it
             _director.ForceActiveTarget(32, false);
             int maxAlive = 0, maxRing = 0;
+            Action<EnemyTier, Vector3, ZombieEnemy.OutOfWorldReason, ZombieBodyState> removed = (tier, where, reason, state) =>
+            {
+                if (reason != ZombieEnemy.OutOfWorldReason.Stuck) return;
+                ZombieEnemy body = NearestLive(where);
+                Debug.Log("[DD-TEST] wp096.p12.removed body=" + (body != null ? body.GetInstanceID() : 0)
+                          + " tier=" + tier + " position=" + where.ToString("F3")
+                          + " target=" + _rig.transform.position.ToString("F3")
+                          + " distance=" + Flat(where, _rig.transform.position).ToString("F3")
+                          + " realSpeed=" + (body != null ? body.RealGroundSpeed.ToString("F3") : "unknown") + " state=" + state);
+            };
+            ZombieEnemy.OutOfWorldRemoved += removed;
             try
             {
                 float t0 = Time.realtimeSinceStartup;
@@ -418,6 +430,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                ZombieEnemy.OutOfWorldRemoved -= removed;
                 ZombieEnemy.StuckWindowOverride = 0f;
                 _director.ForceActiveTarget(0, false);
             }
