@@ -70,8 +70,10 @@ namespace DD.Prototype.Weapons
             if (Part == null || socket == null || !socket.gameObject.activeInHierarchy) return false;
             if (Socket == socket) return true;
             ReloadPartSocket row = socket.GetComponent<ReloadPartSocket>();
-            bool calibrated = row != null && row.Key == _key && ReloadPartCalibration.TryGet(_key, out _);
-            Matrix4x4 primary = calibrated && ReloadPartCalibration.TryGet(_key, out Matrix4x4 m) ? socket.localToWorldMatrix * m : Matrix4x4.identity;
+            bool calibrated = row != null && ReloadPartCalibration.TryGet(row.Key, out _);
+            Matrix4x4 primary = Matrix4x4.identity;
+            if (calibrated && ReloadPartCalibration.TryGet(row.Key, out Matrix4x4 m))
+                primary = Matrix4x4.TRS(socket.TransformPoint(m.GetColumn(3)), socket.rotation * m.rotation, Part.lossyScale);
             for (int i = 0; i < _poses.Length; i++)
             {
                 Transform part = _poses[i].Part;

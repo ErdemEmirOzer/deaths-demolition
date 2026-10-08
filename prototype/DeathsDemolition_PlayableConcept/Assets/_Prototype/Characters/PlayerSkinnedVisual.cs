@@ -711,7 +711,7 @@ namespace DD.Prototype.Characters
 
         private ClassicWeaponId _classicId;
         private bool _specialV3;
-        private bool _feelSubscribed, _specialReload;
+        private bool _feelSubscribed, _specialReload, _specialReloadRestoreLegacy;
         private SpecialWeaponId _specialReloadId;
         private readonly WeaponMagazineOwnership _specialMagazine = new WeaponMagazineOwnership();
         private readonly WeaponMagazineVisual _specialMagazineVisual = new WeaponMagazineVisual();
@@ -729,10 +729,10 @@ namespace DD.Prototype.Characters
         /// the v3 pose. The classic weapon's definition, burst clock and FP arms are not touched; the classic id is kept for the
         /// way back. Returns false (the SwHold interim pose stays) when the set is off or missing.
         /// </summary>
-        public bool EquipSpecialV3(SpecialWeaponId id)
+        public bool EquipSpecialV3(SpecialWeaponId id, bool reloadOnly = false)
         {
             string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(id);
-            int k = key != null && TpV3On(key) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
+            int k = key != null && (TpV3On(key) || reloadOnly) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
             if (k < 0) return false;
             SetSpecialHold(0);
             if (_gripIk != null) _gripIk.SetGrasp(false);   // WP-083 B2f: the grasp is the classic handguard's
@@ -762,8 +762,10 @@ namespace DD.Prototype.Characters
             if (controller == null || !controller.SpecialWeaponActive || controller.Special.Id != e.SpecialId) return;
             string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(e.SpecialId);
             if (key != "sw_arc" && key != "sw_gel") return;
-            if ((!_specialV3 || WeaponAnimSet != key) && !EquipSpecialV3(e.SpecialId)) return;
+            bool restoreLegacy = !_specialV3;
             CancelReload();
+            if ((!_specialV3 || WeaponAnimSet != key) && !EquipSpecialV3(e.SpecialId, reloadOnly: true)) return;
+            _specialReloadRestoreLegacy = restoreLegacy;
             _specialReload = true;
             _specialReloadId = e.SpecialId;
             _specialMagazineVisual.Bind(controller.SpecialRigBody, key);
@@ -795,10 +797,19 @@ namespace DD.Prototype.Characters
         }
         private void EndSpecialReload()
         {
+            bool restoreLegacy = _specialReload && _specialReloadRestoreLegacy;
+            _specialReloadRestoreLegacy = false;
             _specialReload = false;
             _specialMagazine.Stepped -= OnSpecialMagazineStep;
             _specialMagazine.End();
             _specialMagazineVisual.Home();
+            if (restoreLegacy)
+            {
+                _specialV3 = false;
+                EquipWeapon(_weaponDef, _classicId);
+                WeaponController c = WeaponRegistry.ActiveController;
+                if (c != null && c.SpecialWeaponActive && c.Special.Id == _specialReloadId) SetSpecialHold(HoldIndexOf(_specialReloadId));
+            }
         }
         private void TickSpecialReload()
         {
@@ -898,7 +909,7 @@ namespace DD.Prototype.Characters
         public void CancelReload()
         {
             EndSpecialReload();
-            if (!_authored) return;
+            if (!_authored || _animator == null) return;
             if (_contactIk != null) _contactIk.CancelReload();
             if (_fpArms != null) _fpArms.CancelContact();
             _animator.ResetTrigger(ReloadId);

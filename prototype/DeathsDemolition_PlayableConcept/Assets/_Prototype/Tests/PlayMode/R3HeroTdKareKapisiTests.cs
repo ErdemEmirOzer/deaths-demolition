@@ -62,6 +62,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// </para>
     /// </summary>
     [TestFixture]
+    [Category("Diagnostics")]
     public sealed class R3HeroTdKareKapisiTests
     {
         public const string TestName = "DD.Prototype.Tests.PlayMode.R3HeroTdKareKapisiTests.G1_TdCikis_12Silah_3An_8Yaw_ReloadElParca";
@@ -84,7 +85,7 @@ namespace DD.Prototype.Tests.PlayMode
         private const byte FBody = 1, FWeapon = 2, FExit = 4, FOver = 8, FPartSil = 16, FPartExit = 32, FPartVis = 64;
 
         private static readonly string[] Moments = { "aim", "recoil", "reload" };
-        private static readonly string[] PartWeapons = { "ar_1", "smg_1", "sr_1", "sw_arc" };
+        private static readonly string[] PartWeapons = { "ar_1", "smg_1", "sr_1", "lmg_1", "lmg_2", "sw_arc", "sw_gel" };
 
         private struct Silah
         {
@@ -250,6 +251,33 @@ namespace DD.Prototype.Tests.PlayMode
         private Result _ctlPos, _ctlNeg;
         private Kanit _ctlPosEv, _ctlNegEv;
         private string _ctlNote = "";
+        private HumanPoseHandler _wristPose;
+        private HumanPose _humanPose;
+        private readonly List<string> _wristSamples = new List<string>();
+        private readonly List<string> _contactSamples = new List<string>();
+        private int[] _wristIds;
+        private void SampleWrist(Meta meta)
+        {
+            if (meta.Moment != "reload" || (meta.Key != "lmg_2" && meta.Key != "sw_arc")) return;
+            Animator a = _body != null ? _body.Animator : null;
+            if (a == null || a.avatar == null || !a.isHuman) return;
+            if (_wristPose == null)
+            {
+                _wristPose = new HumanPoseHandler(a.avatar, a.transform);
+                _wristIds = new[] { System.Array.IndexOf(HumanTrait.MuscleName, "Left Forearm Twist In-Out"),
+                    System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand Down-Up"), System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand In-Out") };
+            }
+            _wristPose.GetHumanPose(ref _humanPose);
+            var values = new List<string>();
+            foreach (int id in _wristIds)
+            {
+                if (id < 0) continue;
+                float muscle = _humanPose.muscles[id];
+                float deg = muscle * (muscle >= 0f ? HumanTrait.GetMuscleDefaultMax(id) : -HumanTrait.GetMuscleDefaultMin(id));
+                values.Add(Q(HumanTrait.MuscleName[id]) + ": {\"muscle\": " + muscle.ToString("F4", CultureInfo.InvariantCulture) + ", \"degreesDefaultRange\": " + F1(deg) + ", \"nearLimit\": " + (Mathf.Abs(muscle) >= 0.999f ? "true" : "false") + "}");
+            }
+            _wristSamples.Add("{\"key\": " + Q(meta.Key) + ", \"yaw\": " + meta.Yaw * 45 + ", \"frame\": " + meta.Frame + ", \"phase\": " + Q(meta.Phase) + ", \"muscles\": {" + string.Join(", ", values) + "}}");
+        }
 
         private WeaponController Ctl => _s.Controller;
 
@@ -269,6 +297,8 @@ namespace DD.Prototype.Tests.PlayMode
         {
             RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
             _aimOn = false;
+            _wristPose?.Dispose();
+            _wristPose = null;
             Time.captureDeltaTime = 0f;
             if (_s != null && _s.Controller != null && _s.Controller.SpecialWeaponActive) _s.Controller.CancelSpecialWeapon();
             CameraModeService.Request(CameraMode.TopDown, instant: true);
@@ -305,6 +335,7 @@ namespace DD.Prototype.Tests.PlayMode
         // ---------------------------------------------------------------------------------------------------- the test
 
         [UnityTest]
+        [Explicit("E5 TD kapısı: yalnız C-00 makine sırasında hedefli koşulur")]
         [Timeout(3600000)]
         public IEnumerator G1_TdCikis_12Silah_3An_8Yaw_ReloadElParca()
         {
@@ -354,7 +385,9 @@ namespace DD.Prototype.Tests.PlayMode
             Directory.CreateDirectory(outDir);
             string json = Path.Combine(outDir, "g1-td-gate.json");
             File.WriteAllText(json, Json(seconds));
+            File.WriteAllText(Path.Combine(outDir, "e5-wrist-samples.json"), "{\"definition\": \"Final rendered reload pose; normalized humanoid muscles + default-range degree estimate. nearLimit is a proxy, not proof of source curve clipping.\", \"samples\": [" + string.Join(",\n", _wristSamples) + "]}");
             File.WriteAllText(Path.Combine(outDir, "g1-td-gate.md"), Markdown(seconds));
+            File.WriteAllText(Path.Combine(outDir, "e5-contact-samples.json"), "{\"target\": \"part home world matrix * inverse(socket-to-part-pivot calibration)\", \"samples\": [" + string.Join(",\n", _contactSamples) + "]}");
             int frames = !string.IsNullOrEmpty(frameDir) ? KareleriYaz(frameDir) : 0;
             Debug.Log("[DD-TEST] r3.g1td done " + _kayit.Count + " weapons, " + seconds.ToString("F0", CultureInfo.InvariantCulture) + " s, snapshots render " + _fromRender +
                       " / coroutine " + _fromCoroutine + ", flipY " + _flipY + ", lod overrides " + _lodOverrides + " → " + json + (frames > 0 ? ", " + frames + " PNG → " + frameDir : ", frames off (DD_G1_FRAME_DIR)"));
@@ -379,6 +412,7 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (string key in PartWeapons)
             {
                 Kayit k = _kayit[key];
+                if (ReloadPartCalibration.TryGet(key, out _)) Assert.IsTrue(k.PartInHandSeen, key + ": E5 kalibre parça hiçbir yaw'da ele gelmedi");
                 if (!k.PartInHandSeen) Debug.LogWarning("[DD-TEST] r3.g1td.part " + key + ": parça oyunda ele gelmiyor — el–parça ölçülemedi (" + (k.Special ? "Special: oyunda reload klibi / parça bağlama yok" : "klasik: part_mag ele bağlanmadı") + ")");
             }
 
@@ -478,7 +512,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             if (!learnt) k.Notes.Add("tepme tepesi öğrenilemedi");
-            k.Notes.Add("Special: oyunda reload klibi yok (WeaponController reload sunumu yalnız klasik) — 'reload' anı reload sırasındaki nişan pozu");
+            k.Notes.Add("E5 Special reload: FeelEvents → AP-024D v009 klip + canister/cell parça grubu; oyun lifecycle değişmez");
         }
 
         /// <summary>Waits for the aim rest: facing within 3° of the yaw, the hold at full weight (classic), not reloading.</summary>
@@ -604,7 +638,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             yield return Kare();   // the reload presentation (the ownership's Begin) runs in the next Update
-            bool magazine = !special && Ctl.Magazine.Active;
+            WeaponMagazineOwnership owner = special ? _body.SpecialMagazine : Ctl.Magazine;
+            bool magazine = owner.Active;
             int stride = special ? SpecialReloadStride : ClassicReloadStride, inWindow = 0, frame = 0;
             float t0 = Time.time;
             while ((special ? Ctl.Special.IsReloading : Ctl.Classic.IsReloading) && Time.time - t0 < 15f)
@@ -614,8 +649,8 @@ namespace DD.Prototype.Tests.PlayMode
                 string phase;
                 if (magazine)
                 {
-                    window = Ctl.Magazine.Owner != MagazineOwner.Weapon;
-                    phase = Ctl.Magazine.Owner.ToString();
+                    window = owner.Owner != MagazineOwner.Weapon;
+                    phase = owner.Owner.ToString();
                 }
                 else
                 {
@@ -625,7 +660,7 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 if (meta != null && window && inWindow++ % stride == 0)
-                    Iste(new Meta { Key = meta.Key, Moment = "reload", Yaw = meta.Yaw, Frame = frame, Phase = phase, PartInHand = !special && Ctl.MagazineVisual.InHand });
+                    Iste(new Meta { Key = meta.Key, Moment = "reload", Yaw = meta.Yaw, Frame = frame, Phase = phase, PartInHand = special ? _body.SpecialMagazineVisual.InHand : Ctl.MagazineVisual.InHand });
                 yield return Kare();
             }
 
@@ -806,6 +841,12 @@ namespace DD.Prototype.Tests.PlayMode
 
         private Snap Capture(Meta meta, string source)
         {
+            SampleWrist(meta);
+            if (meta.Moment == "reload" && ReloadPartCalibration.TryGet(meta.Key, out _) && _body.ContactIk != null)
+            {
+                MagazineContactIk ik = _body.ContactIk;
+                _contactSamples.Add("{\"key\": " + Q(meta.Key) + ", \"yaw\": " + meta.Yaw * 45 + ", \"frame\": " + meta.Frame + ", \"weight\": " + F1(ik.Weight) + ", \"socketTargetErrorMm\": " + (float.IsNaN(ik.LastError) ? "null" : F1(ik.LastError * 1000f)) + "}");
+            }
             var s = new Snap { Meta = meta, Source = source };
             Camera cam = _cam;
             s.View = cam.worldToCameraMatrix;
@@ -835,10 +876,8 @@ namespace DD.Prototype.Tests.PlayMode
             // the held weapon (the rig shown) and its magazine part wherever it is
             var weapon = new List<Renderer>();
             Ctl.CollectWeaponRenderers(weapon);
-            Transform part = Ctl.MagazineVisual != null ? Ctl.MagazineVisual.Part : null;
-            if (part != null)
-                foreach (Renderer r in part.GetComponentsInChildren<Renderer>(true))
-                    if (!weapon.Contains(r)) weapon.Add(r);
+            WeaponMagazineVisual partVisual = Ctl.SpecialWeaponActive ? _body.SpecialMagazineVisual : Ctl.MagazineVisual;
+            partVisual?.CollectRenderers(weapon);
             var groups = new Dictionary<LODGroup, HashSet<Renderer>>();
             Transform rigRoot = Ctl.SpecialWeaponActive ? _mount.Find("SpecialWeaponRig") : _mount.Find("ClassicWeaponRig");
             if (rigRoot != null)
@@ -855,7 +894,7 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (KeyValuePair<LODGroup, HashSet<Renderer>> g in groups)
                     if (InGroup(g.Key, r) && g.Value != null && !g.Value.Contains(r)) skip = true;
                 if (skip) continue;
-                Add(s, r, part != null && r.transform.IsChildOf(part) ? 2 : 1);
+                Add(s, r, partVisual != null && partVisual.Contains(r.transform) ? 2 : 1);
             }
 
             return s;
