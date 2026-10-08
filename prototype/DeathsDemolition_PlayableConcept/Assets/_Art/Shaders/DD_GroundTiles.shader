@@ -4,6 +4,12 @@
 // ground manifest v001 channels). Wet stone darkens to the P-05 wet albedo — measured albedo × 0.82 in linear light, so a
 // constant — and reads flatter and smoother (≤ 0.60, the AP-018 wet cap); standing water (puddle mask × wetness past the
 // threshold) goes near-mirror with a flat normal. The lighting path, cookie and passes are DD/GroundBlend's.
+// WP-092 B5 (#4, the TD plaza's white blot): the 0.78 wet body and 0.86 puddles mirror the 50° NNW sun right in front of the north-
+// looking TD camera — an uncapped GGX peak in the hundreds that the bloom spread over a quarter of the frame. The sun and the lights
+// now see the slate through DD_GroundLighting.hlsl: a sun-disc roughness floor (_DirectSmoothnessCap) and a soft highlight knee
+// (_DirectSpecMax: the direct specular never exceeds that × the light; _EnvSpecMax the probe's sun-side sky), so the glint keeps its
+// puddle-sized shape without blowing out; the probes, the planar and the sky sheen keep the true smoothness. The planar sample is clamped to _PlanarMax luminance
+// (the mirrored sun disc, DEC-102, stays a glint).
 Shader "DD/GroundTiles"
 {
     Properties
@@ -33,6 +39,10 @@ Shader "DD/GroundTiles"
         _PlanarDistortion("Planar distortion (normal)", Range(0, 0.1)) = 0.03
         _PlanarWet("Planar on wet stone (× Fresnel)", Range(0, 1)) = 0.35
         _PuddleDarken("Puddle albedo scale", Range(0.5, 1)) = 0.85
+        _PlanarMax("Planar reflection luminance cap (WP-092 B5)", Range(0.25, 64)) = 1.5
+        _DirectSmoothnessCap("Smoothness the sun / lights see (WP-092 B5: the sun disc's roughness floor)", Range(0, 1)) = 0.85
+        _DirectSpecMax("Direct specular cap (WP-092 B5: the glint stops at this × the light)", Range(0.05, 4)) = 0.3
+        _EnvSpecMax("Probe specular cap (WP-092 B5: the sun-side sky in the probe)", Range(0.1, 16)) = 1.5
         [Header(Overcast sky sheen DEC 101)]
         _SkyReflColor("Sky sheen colour (linear; the overcast the wet stone mirrors)", Color) = (0, 0, 0, 1)
         _SkyReflWet("Sky sheen on wet stone", Range(0, 1)) = 0
@@ -75,6 +85,10 @@ Shader "DD/GroundTiles"
             half _PlanarStrength;
             half _PlanarDistortion;
             half _PlanarWet;
+            half _PlanarMax;
+            half _DirectSmoothnessCap;
+            half _DirectSpecMax;
+            half _EnvSpecMax;
             half4 _SkyReflColor;
             half _SkyReflWet;
             half _SkyReflPuddle;
@@ -140,6 +154,7 @@ Shader "DD/GroundTiles"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceData.hlsl"
+            #include "DD_GroundLighting.hlsl"
 
             struct Attributes
             {
@@ -239,12 +254,14 @@ Shader "DD/GroundTiles"
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
 
-                half4 color = UniversalFragmentPBR(inputData, surfaceData);
+                half4 color = DDGroundFragmentPBR(inputData, surfaceData, _DirectSmoothnessCap, _DirectSpecMax, _EnvSpecMax);
                 if (_DD_PlanarReflectionOn > 0.5)
                 {
                     // Standing water mirrors (≥ 50 % at the steep gameplay angles), wet stone by Fresnel only.
                     float2 suv = inputData.normalizedScreenSpaceUV + normalTS.xy * _PlanarDistortion;
                     half3 reflection = SAMPLE_TEXTURE2D(_DD_PlanarReflection, sampler_DD_PlanarReflection, suv).rgb;
+                    half reflectionLuma = dot(reflection, half3(0.2126h, 0.7152h, 0.0722h));
+                    reflection *= min(1.0h, _PlanarMax / max(reflectionLuma, 1e-3h));
                     half ndv = saturate(dot(normalWS, inputData.viewDirectionWS));
                     half fresnel = 0.02h + 0.98h * pow(1.0h - ndv, 5.0h);
                     half w = saturate(max(puddle, _PlanarWet * wet) * lerp(fresnel, 1.0h, 0.5h * puddle)) * _PlanarStrength;

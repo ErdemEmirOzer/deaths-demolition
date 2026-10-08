@@ -42,7 +42,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Shaders that are ground, water or air, never "content" for the empty-area measure.</summary>
         private static readonly string[] NonContentShaders =
         {
-            "DD/GroundTiles", "DD/GroundMoss", "DD/GroundBlend", "DD/Water", "DD/FogSheet", "DD/ShaftCard", "DD/SkyPlate",
+            "DD/GroundTiles", "DD/GroundMoss", "DD/GroundBlend", "DD/GroundTerrain", "DD/Water", "DD/FogSheet", "DD/ShaftCard", "DD/SkyPlate",
             "DD/SkyPanorama", "DD/UnderstorySkirt", "DD/SunDisc",
         };
 
@@ -66,6 +66,16 @@ namespace DD.Art.Pipeline.EditorTools
 
             File.WriteAllText(Path.Combine(dir, "bare-ground.json"), "{" + bareRows + ", \"mean\": " + F(bareSum / Poses.Length) + "}");
             Debug.Log("[TDCAP] " + Poses.Length + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / Poses.Length));
+        });
+
+        /// <summary>WP-092 B5 · One frame at the TD rig's angle from another offset (the ground study's close looks) → DD_TD_OUT/&lt;name&gt;.png.</summary>
+        public static void RenderAt(string name, Vector2 feet, Vector3 offset) => WithLook(cam =>
+        {
+            Vector3 focus = Ground(feet) + Vector3.up * FocusHeight;
+            cam.orthographic = false;
+            cam.fieldOfView = RigFov;
+            cam.transform.SetPositionAndRotation(focus + offset, Quaternion.LookRotation(-offset.normalized, Vector3.up));
+            Save(Grab(cam, Width, Height), Path.Combine(OutDir(), name + ".png"));
         });
 
         public static void RenderTopMap() => WithLook(cam =>
@@ -151,7 +161,7 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 if (!r.enabled || r.sharedMaterial == null) continue;
                 string shader = r.sharedMaterial.shader.name;
-                if (shader == "DD/GroundTiles" || shader == "DD/GroundMoss" || shader == "DD/GroundBlend" || shader == "DD/FogSheet" || shader == "DD/ShaftCard")
+                if (shader == "DD/GroundTiles" || shader == "DD/GroundMoss" || shader == "DD/GroundBlend" || shader == "DD/GroundTerrain" || shader == "DD/FogSheet" || shader == "DD/ShaftCard")
                 {
                     r.enabled = false;
                     hidden.Add(r);

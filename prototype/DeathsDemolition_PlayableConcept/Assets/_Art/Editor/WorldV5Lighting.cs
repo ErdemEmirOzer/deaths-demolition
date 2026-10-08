@@ -43,10 +43,12 @@ namespace DD.Art.Pipeline.EditorTools
         public static string StandaloneProbesPath => GreyboxV6Builder.DataFolder + "/V6_LightProbes.asset";
 
         /// <summary>R3 #1 (AD 07.10 M1) · the large ground and water renderers that keep the runtime ambient instead of the baked
-        /// probes: the greybox ground, the plaza slate, the rock garden gravel and every pond's water.</summary>
+        /// probes: the greybox ground (WP-092 B5: the terrain chunks that replace its renderer), the plaza slate, the rock garden
+        /// gravel and every pond's water.</summary>
         public static bool IsProbeOff(string rendererName)
         {
-            return rendererName == "Ground" || rendererName == WorldV5Ground.PlazaName || rendererName == "Karesansui_Gravel"
+            return rendererName == "Ground" || rendererName.StartsWith(WorldV5Terrain.ChunkPrefix, StringComparison.Ordinal)
+                   || rendererName == WorldV5Ground.PlazaName || rendererName == "Karesansui_Gravel"
                    || (rendererName.StartsWith("Pond", StringComparison.Ordinal) && rendererName.EndsWith("_Water", StringComparison.Ordinal));
         }
 

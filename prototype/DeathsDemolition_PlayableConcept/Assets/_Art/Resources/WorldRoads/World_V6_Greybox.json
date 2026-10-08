@@ -1,0 +1,1309 @@
+{
+ "schema": "wp092.roads.v1",
+ "version": "v002",
+ "frame": "Unity world metres, +X east, +Z north",
+ "roads": [
+  {
+   "id": "R01",
+   "type": "ishidatami",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     0,
+     -14
+    ],
+    [
+     0,
+     -16.5
+    ],
+    [
+     4,
+     -18.5
+    ]
+   ],
+   "task": "Güney ekseni: meydan → karamon → C8 köprü başı"
+  },
+  {
+   "id": "R02",
+   "type": "ishidatami",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     4,
+     -39.5
+    ],
+    [
+     4,
+     -46
+    ],
+    [
+     4,
+     -52
+    ]
+   ],
+   "task": "C8 güney başı → S_BridgeSouth",
+   "notes": "3,0 → 4,0 (ana rota)"
+  },
+  {
+   "id": "R03",
+   "type": "ishidatami",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     -16,
+     -7
+    ],
+    [
+     -30.4,
+     -7
+    ]
+   ],
+   "task": "Meydan → K1 E kapısı (güney)"
+  },
+  {
+   "id": "R04",
+   "type": "ishidatami",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     -16,
+     7
+    ],
+    [
+     -30.4,
+     7
+    ]
+   ],
+   "task": "Meydan → K1 E kapısı (kuzey)"
+  },
+  {
+   "id": "R05",
+   "type": "ishidatami",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     16,
+     1
+    ],
+    [
+     27,
+     1
+    ]
+   ],
+   "task": "Meydan → R7 W kapısı"
+  },
+  {
+   "id": "R06",
+   "type": "ishidatami",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     36,
+     10
+    ],
+    [
+     35.5,
+     20
+    ],
+    [
+     35,
+     24.8
+    ]
+   ],
+   "task": "R7 N kapısı → K4 altı → köşk S kapısı"
+  },
+  {
+   "id": "R07",
+   "type": "ishidatami",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     36,
+     -8
+    ],
+    [
+     36,
+     -11
+    ]
+   ],
+   "task": "R7 S kapısı ağzı"
+  },
+  {
+   "id": "R33a",
+   "type": "ishidatami",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     -20.6,
+     44
+    ],
+    [
+     -22,
+     36.5
+    ]
+   ],
+   "task": "Salon W merdiveni ayağı → K3 batı kuzey ucu"
+  },
+  {
+   "id": "R33b",
+   "type": "ishidatami",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     20.6,
+     44
+    ],
+    [
+     22,
+     36.5
+    ]
+   ],
+   "task": "Salon E merdiveni ayağı → K3 doğu kuzey ucu"
+  },
+  {
+   "id": "R08",
+   "type": "gravel",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     -21.0,
+     -16
+    ],
+    [
+     -21.0,
+     -6.5
+    ],
+    [
+     -27.3,
+     -3.5
+    ],
+    [
+     -27.3,
+     3.5
+    ],
+    [
+     -21.0,
+     6.5
+    ],
+    [
+     -21.0,
+     16
+    ],
+    [
+     -18.5,
+     17.2
+    ],
+    [
+     -16,
+     17.2
+    ]
+   ],
+   "task": "Pazar ağzı sokağı: E1 adasının batısından (A2 ≥ 6 m K–G şeridi)",
+   "notes": "x −23,5 düz hat E1 adasının (x −24…−20) içinden geçiyordu"
+  },
+  {
+   "id": "R09",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -33,
+     -16
+    ],
+    [
+     -34,
+     -22
+    ],
+    [
+     -35,
+     -27.5
+    ],
+    [
+     -33.8,
+     -31.2
+    ]
+   ],
+   "task": "Roji: K1 güney ağzı → çay evi K girişi"
+  },
+  {
+   "id": "R09s",
+   "type": "stepstone",
+   "width": 1.2,
+   "class": "decor",
+   "points": [
+    [
+     -33.8,
+     -31.2
+    ],
+    [
+     -33.8,
+     -32.9
+    ]
+   ],
+   "task": "Roji son 2 m basamak taşı"
+  },
+  {
+   "id": "R10",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -44,
+     -44
+    ],
+    [
+     -40,
+     -41.5
+    ],
+    [
+     -38.4,
+     -36.5
+    ],
+    [
+     -37.2,
+     -32.4
+    ],
+    [
+     -35.4,
+     -28.6
+    ],
+    [
+     -35.0,
+     -27.5
+    ]
+   ],
+   "task": "SW kapısı → roji (R09'a bağlanır)",
+   "notes": "yüzey; yürünür genişlik çevredeki çimle ≥ 4 m; C19 ile çay evi arasından"
+  },
+  {
+   "id": "R11",
+   "type": "gravel",
+   "width": 4.0,
+   "class": "main",
+   "points": [
+    [
+     -16,
+     -52
+    ],
+    [
+     -14.5,
+     -46
+    ],
+    [
+     -10.5,
+     -40
+    ],
+    [
+     -8,
+     -37
+    ]
+   ],
+   "task": "S_ShoreWest → C1 güney başı",
+   "notes": "2,5 → 4,0"
+  },
+  {
+   "id": "R12",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -33,
+     20
+    ],
+    [
+     -35,
+     24
+    ],
+    [
+     -36,
+     30
+    ]
+   ],
+   "task": "K1 kuzey ağzı → avlu G kapısı"
+  },
+  {
+   "id": "R30",
+   "type": "gravel",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     -36,
+     30
+    ],
+    [
+     -36,
+     34.2
+    ],
+    [
+     -31,
+     36.5
+    ],
+    [
+     -31,
+     40
+    ],
+    [
+     -33,
+     40
+    ]
+   ],
+   "task": "Avlu G kapısı → kura E kapısı"
+  },
+  {
+   "id": "R31",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -45,
+     40
+    ],
+    [
+     -46.5,
+     43
+    ],
+    [
+     -48,
+     46
+    ]
+   ],
+   "task": "Kura W kapısı → avlu W kapısı",
+   "notes": "2,0 → 2,5"
+  },
+  {
+   "id": "R32",
+   "type": "gravel",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     -31,
+     36.5
+    ],
+    [
+     -28,
+     32
+    ]
+   ],
+   "task": "Avlu içi → avlu E kapısı"
+  },
+  {
+   "id": "R13",
+   "type": "gravel",
+   "width": 3.0,
+   "class": "secondary",
+   "points": [
+    [
+     -45,
+     -26
+    ],
+    [
+     -45,
+     26
+    ]
+   ],
+   "task": "Bambu ana şeridi (yotsume ±1,9 kalır)",
+   "notes": "2,0 → 3,0 (şerit nominal 3 m)"
+  },
+  {
+   "id": "R14",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     36,
+     -11
+    ],
+    [
+     30,
+     -18
+    ],
+    [
+     28.5,
+     -29
+    ],
+    [
+     30,
+     -33
+    ]
+   ],
+   "task": "R7 → azumaya (bahçe yolu 2)"
+  },
+  {
+   "id": "R15",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     45,
+     -8
+    ],
+    [
+     48,
+     -20
+    ],
+    [
+     40,
+     -34
+    ],
+    [
+     28,
+     -41
+    ]
+   ],
+   "task": "Doğu bahçe gezi yolu (bahçe yolu 3)"
+  },
+  {
+   "id": "R16",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     42,
+     -42
+    ],
+    [
+     36.5,
+     -38.5
+    ],
+    [
+     34.5,
+     -36.2
+    ]
+   ],
+   "task": "SE_Shore → azumaya",
+   "notes": "2,0 → 2,5"
+  },
+  {
+   "id": "R17",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     52,
+     -14
+    ],
+    [
+     45,
+     -8
+    ]
+   ],
+   "task": "E_GardenSouth → R7",
+   "notes": "2,0 → 2,5"
+  },
+  {
+   "id": "R18",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     52,
+     16
+    ],
+    [
+     44,
+     20
+    ]
+   ],
+   "task": "E_GardenNorth → K4",
+   "notes": "2,0 → 2,5"
+  },
+  {
+   "id": "R20",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     44,
+     44
+    ],
+    [
+     40,
+     40
+    ],
+    [
+     36,
+     34
+    ]
+   ],
+   "task": "NE_Corner → köşk kuzeyi"
+  },
+  {
+   "id": "R20b",
+   "type": "stepstone",
+   "width": 1.2,
+   "class": "decor",
+   "points": [
+    [
+     40,
+     40
+    ],
+    [
+     37.2,
+     43.8
+    ],
+    [
+     35.6,
+     47.3
+    ]
+   ],
+   "task": "R20 → B5 açık ucu (M3 ışık kaması bu taşlara düşer)",
+   "notes": "B5 yeni yerine"
+  },
+  {
+   "id": "R34",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -48.0,
+     -51.2
+    ],
+    [
+     -46.3,
+     -48.0
+    ],
+    [
+     -44,
+     -44
+    ]
+   ],
+   "task": "B3 doğu kapısı → SW kapısı",
+   "notes": "2,0 → 2,5; B3 yeni yerine"
+  },
+  {
+   "id": "R35",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     4.0,
+     -45.0
+    ],
+    [
+     16.0,
+     -45.0
+    ],
+    [
+     16.0,
+     -51.2
+    ]
+   ],
+   "task": "R02 → çarşı meydanı → B6 kapısı",
+   "notes": "2,0 → 2,5; B1/B6 yeni yerine"
+  },
+  {
+   "id": "R35b",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     16.0,
+     -45.0
+    ],
+    [
+     21.0,
+     -43.8
+    ],
+    [
+     29.5,
+     -43.8
+    ],
+    [
+     29.5,
+     -51.2
+    ]
+   ],
+   "task": "Çarşı → B1 açık ucu önü → B1 doğu kapısı"
+  },
+  {
+   "id": "R37",
+   "type": "gravel",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -23.5,
+     -16
+    ],
+    [
+     -18,
+     -19.5
+    ],
+    [
+     -14.6,
+     -22.5
+    ]
+   ],
+   "task": "Pazar güney ağzı → sazlık iskelesi"
+  },
+  {
+   "id": "R19",
+   "type": "dirt",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     45,
+     1
+    ],
+    [
+     53.6,
+     1
+    ]
+   ],
+   "task": "R7 E kapısı → mühürlü doğu kapısı (C29)",
+   "notes": "1,5 → 2,5"
+  },
+  {
+   "id": "R21a",
+   "type": "dirt",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -33,
+     -16
+    ],
+    [
+     -45,
+     -26
+    ]
+   ],
+   "task": "Bambu çapraz şeridi (GD)",
+   "notes": "1,5 → 2,5"
+  },
+  {
+   "id": "R21b",
+   "type": "dirt",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -33,
+     20
+    ],
+    [
+     -45,
+     26
+    ]
+   ],
+   "task": "Bambu çapraz şeridi (KD)",
+   "notes": "1,5 → 2,5"
+  },
+  {
+   "id": "R21c",
+   "type": "dirt",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -54,
+     -18
+    ],
+    [
+     -45,
+     -14
+    ]
+   ],
+   "task": "W_BambooSouth bağlantısı",
+   "notes": "1,5 → 2,5"
+  },
+  {
+   "id": "R21d",
+   "type": "dirt",
+   "width": 2.5,
+   "class": "secondary",
+   "points": [
+    [
+     -54,
+     18
+    ],
+    [
+     -45,
+     14
+    ]
+   ],
+   "task": "W_BambooNorth bağlantısı",
+   "notes": "1,5 → 2,5"
+  },
+  {
+   "id": "R22",
+   "type": "boardwalk",
+   "width": 3.2,
+   "class": "secondary",
+   "points": [
+    [
+     -35.6,
+     0
+    ],
+    [
+     -44,
+     0
+    ]
+   ],
+   "task": "K1 W kapısı → bambu ana şeridi (çamur üstü)",
+   "notes": "1,6 → 2 modül 3,2"
+  },
+  {
+   "id": "R23",
+   "type": "boardwalk",
+   "width": 3.2,
+   "class": "secondary",
+   "points": [
+    [
+     -14.4,
+     -22.5
+    ],
+    [
+     -14.6,
+     -29
+    ],
+    [
+     -14,
+     -35.5
+    ]
+   ],
+   "task": "Sazlık iskelesi (P1 batı kıyısı); C1 kıyı alternatifi yürünür",
+   "notes": "1,6 → 3,2"
+  },
+  {
+   "id": "R24",
+   "type": "stepstone",
+   "width": 1.2,
+   "class": "decor",
+   "points": [
+    [
+     -40,
+     -41.5
+    ],
+    [
+     -43.5,
+     -41.2
+    ],
+    [
+     -46.5,
+     -41.0
+    ],
+    [
+     -49.46,
+     -41.6
+    ]
+   ],
+   "task": "R10 → keşiş avlusu (B3/B4 açık uçları)"
+  },
+  {
+   "id": "R25",
+   "type": "stepstone",
+   "width": 1.2,
+   "class": "decor",
+   "points": [
+    [
+     41.87,
+     2.25
+    ],
+    [
+     40.85,
+     4.53
+    ],
+    [
+     39.0,
+     6.2
+    ],
+    [
+     36.63,
+     6.97
+    ],
+    [
+     34.15,
+     6.71
+    ],
+    [
+     31.99,
+     5.46
+    ],
+    [
+     30.52,
+     3.44
+    ],
+    [
+     30.0,
+     1.0
+    ],
+    [
+     30.52,
+     -1.44
+    ],
+    [
+     31.99,
+     -3.46
+    ],
+    [
+     34.15,
+     -4.71
+    ],
+    [
+     36.63,
+     -4.97
+    ],
+    [
+     39.0,
+     -4.2
+    ],
+    [
+     40.85,
+     -2.53
+    ],
+    [
+     41.87,
+     -0.25
+    ],
+    [
+     41.87,
+     2.25
+    ]
+   ],
+   "task": "Büyük sakura çevresi r 6 (15 seyrek taş = N04; A7 %2 H1 bütçesi)"
+  },
+  {
+   "id": "R26",
+   "type": "stepstone",
+   "width": 1.2,
+   "class": "decor",
+   "points": [
+    [
+     30,
+     -18
+    ],
+    [
+     33.5,
+     -21
+    ],
+    [
+     36.5,
+     -23.5
+    ],
+    [
+     40,
+     -24
+    ]
+   ],
+   "task": "Momiji halısı içinden (M3)"
+  }
+ ],
+ "zones": [
+  {
+   "id": "M4_W1",
+   "kind": "wet",
+   "polygon": [
+    [
+     -10.0,
+     12.0
+    ],
+    [
+     -8.6,
+     16.4
+    ],
+    [
+     -4.2,
+     18.4
+    ],
+    [
+     0.6,
+     17.6
+    ],
+    [
+     4.8,
+     18.6
+    ],
+    [
+     8.8,
+     16.8
+    ],
+    [
+     10.2,
+     12.6
+    ],
+    [
+     7.2,
+     11.2
+    ],
+    [
+     4.2,
+     12.4
+    ],
+    [
+     1.0,
+     10.8
+    ],
+    [
+     -2.6,
+     11.6
+    ],
+    [
+     -6.4,
+     10.6
+    ]
+   ],
+   "notes": "M4 Yağmur Aynası kuzey ayna (ANLAR)"
+  },
+  {
+   "id": "M4_W2",
+   "kind": "wet",
+   "polygon": [
+    [
+     -4.6,
+     6.4
+    ],
+    [
+     -1.6,
+     6.0
+    ],
+    [
+     -1.2,
+     7.8
+    ],
+    [
+     -2.4,
+     9.6
+    ],
+    [
+     -4.8,
+     9.4
+    ],
+    [
+     -5.4,
+     7.8
+    ]
+   ],
+   "notes": "M4 batı fener aynası"
+  },
+  {
+   "id": "M4_W3",
+   "kind": "wet",
+   "polygon": [
+    [
+     1.8,
+     6.8
+    ],
+    [
+     4.4,
+     6.2
+    ],
+    [
+     5.6,
+     7.6
+    ],
+    [
+     4.8,
+     9.8
+    ],
+    [
+     2.2,
+     9.6
+    ]
+   ],
+   "notes": "M4 doğu fener aynası"
+  },
+  {
+   "id": "plaza_moss_edge",
+   "kind": "moss",
+   "polygon": [
+    [
+     -17.5,
+     -15.5
+    ],
+    [
+     17.5,
+     -15.5
+    ],
+    [
+     17.5,
+     19.5
+    ],
+    [
+     -17.5,
+     19.5
+    ]
+   ],
+   "notes": "derz yosunu kenar 1,5 m bandı (S-07 decal)"
+  },
+  {
+   "id": "market_mouth",
+   "kind": "soil",
+   "polygon": [
+    [
+     -30.2,
+     -16
+    ],
+    [
+     -16.5,
+     -16
+    ],
+    [
+     -16.5,
+     19.5
+    ],
+    [
+     -30.2,
+     19.5
+    ]
+   ],
+   "notes": "A2 aşınmış toprak + saçılmış pirinç"
+  },
+  {
+   "id": "east_open",
+   "kind": "soil",
+   "polygon": [
+    [
+     16.5,
+     -14
+    ],
+    [
+     26.7,
+     -14
+    ],
+    [
+     26.7,
+     19.5
+    ],
+    [
+     16.5,
+     19.5
+    ]
+   ],
+   "notes": "A3 aşınma izi"
+  },
+  {
+   "id": "forecourt_gravel",
+   "kind": "gravel",
+   "polygon": [
+    [
+     -19.6,
+     20.3
+    ],
+    [
+     19.6,
+     20.3
+    ],
+    [
+     19.6,
+     36.4
+    ],
+    [
+     -19.6,
+     36.4
+    ]
+   ],
+   "notes": "ön avlu ince çakıl (aks döşemesi hariç)"
+  },
+  {
+   "id": "yard_gravel",
+   "kind": "gravel",
+   "polygon": [
+    [
+     -47.9,
+     30.1
+    ],
+    [
+     -28.1,
+     30.1
+    ],
+    [
+     -28.1,
+     47.9
+    ],
+    [
+     -47.9,
+     47.9
+    ]
+   ],
+   "notes": "kura avlusu"
+  },
+  {
+   "id": "bamboo_mud",
+   "kind": "mud",
+   "polygon": [
+    [
+     -54.5,
+     -30
+    ],
+    [
+     -37.5,
+     -30
+    ],
+    [
+     -37.5,
+     30
+    ],
+    [
+     -54.5,
+     30
+    ]
+   ],
+   "notes": "şerit dışı çamur + kuru bambu yaprağı"
+  },
+  {
+   "id": "k5_shore_mud",
+   "kind": "mud",
+   "polygon": [
+    [
+     -22,
+     -50
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     0,
+     -42
+    ],
+    [
+     -22,
+     -42
+    ]
+   ],
+   "notes": "K5 kıyı çamuru"
+  },
+  {
+   "id": "roji_moss",
+   "kind": "moss",
+   "polygon": [
+    [
+     -37.5,
+     -33
+    ],
+    [
+     -28,
+     -33
+    ],
+    [
+     -28,
+     -16
+    ],
+    [
+     -37.5,
+     -16
+    ]
+   ],
+   "notes": "roji yosunu"
+  },
+  {
+   "id": "r7_moss",
+   "kind": "moss",
+   "polygon": [
+    [
+     27,
+     -8
+    ],
+    [
+     45,
+     -8
+    ],
+    [
+     45,
+     10
+    ],
+    [
+     27,
+     10
+    ]
+   ],
+   "notes": "R7 yosun avlusu"
+  },
+  {
+   "id": "market_square",
+   "kind": "soil",
+   "polygon": [
+    [
+     13.94,
+     -54.5
+    ],
+    [
+     23.0,
+     -54.5
+    ],
+    [
+     23.0,
+     -45.0
+    ],
+    [
+     13.94,
+     -45.0
+    ]
+   ],
+   "notes": "çarşı meydanı dövülmüş toprak"
+  },
+  {
+   "id": "monk_yard",
+   "kind": "soil",
+   "polygon": [
+    [
+     -54.2,
+     -45.16
+    ],
+    [
+     -49.46,
+     -45.16
+    ],
+    [
+     -49.46,
+     -39.84
+    ],
+    [
+     -54.2,
+     -39.84
+    ]
+   ],
+   "notes": "keşiş avlusu"
+  },
+  {
+   "id": "pond_banks",
+   "kind": "wet",
+   "polygon": [
+    [
+     -13,
+     -36
+    ],
+    [
+     13,
+     -36
+    ],
+    [
+     13,
+     -22
+    ],
+    [
+     -13,
+     -22
+    ]
+   ],
+   "notes": "gölet kıyısı ıslak bant (elips + 2,5 m)"
+  }
+ ]
+}

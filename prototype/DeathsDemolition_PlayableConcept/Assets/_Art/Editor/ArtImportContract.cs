@@ -771,7 +771,26 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsContractTexture(string assetPath)
         {
-            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath) && !IsLightCookieTexture(assetPath);
+            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath) && !IsLightCookieTexture(assetPath)
+                   && !IsDataMaskTexture(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-092 B5 data masks
+
+        /// <summary>
+        /// WP-092 B5: data masks — the V6 ground's world masks (WorldV5Terrain, T_V6_GroundMask*) and the WP-093 vegetation masks
+        /// (Resources/VegetationMasks, K/wp-093/MASK-CONTRACT.md) — hold values, not colour: their writer sets the import (linear,
+        /// exact, clamped) and the T_&lt;role&gt;_&lt;Map&gt; contract leaves them alone (the LUT / menu plate / cookie precedent). Their own
+        /// import contract is WorldV5TerrainTests'.
+        /// </summary>
+        public const string VegetationMaskRoot = ArtRoot + "/Resources/VegetationMasks/";
+        public const string GroundMaskPrefix = ArtRoot + "/Environment/World/V6/Ground/T_V6_GroundMask";
+
+        public static bool IsDataMaskTexture(string assetPath)
+        {
+            if (assetPath == null || !assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return false;
+            string p = assetPath.Replace('\\', '/');
+            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal);
         }
 
         // ------------------------------------------------------------------ WP-075 light cookies

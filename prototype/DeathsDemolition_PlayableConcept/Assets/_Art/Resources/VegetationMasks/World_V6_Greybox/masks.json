@@ -1,0 +1,4 @@
+{"schema":"wp093.vegmask.v1","version":"v001","scene":"World_V6_Greybox",
+ "minX":-55,"minZ":-55,"maxX":55,"maxZ":55,"width":440,"height":440,
+ "source":"S-05 WP-092 zemin ajanı, 2026-10-07, WorldV5Terrain.BuildVegetationMasks / ExportMasksCli (roads: roads.json; zones: layout-data.json v002 zones[].vegZone + vegZoneOverrides[]; clear: layout clear[])",
+ "zoneNotes":{"13":"Z01 derz: plaza joints only (Ap005SurfaceTags.V6PlazaRects; mask_a.R stays 255 = paving), density channel (mask_b.B) = joint lines 255, stone faces 1. Bare earth / interiors elsewhere (the layout's other vegZone 13) are mask_a.G exclusions with zone 0."}}

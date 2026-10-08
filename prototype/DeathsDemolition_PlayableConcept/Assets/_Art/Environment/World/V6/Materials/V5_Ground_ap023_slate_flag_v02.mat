@@ -40,9 +40,13 @@ Material:
     - _AlbedoSaturation: 0.28
     - _AlbedoValue: 1
     - _Cull: 2
+    - _DirectSmoothnessCap: 0.85
+    - _DirectSpecMax: 0.3
+    - _EnvSpecMax: 1.5
     - _NormalStrength: 1
     - _Occlusion: 1
     - _PlanarDistortion: 0.03
+    - _PlanarMax: 1.5
     - _PlanarStrength: 1
     - _PlanarWet: 0.35
     - _PuddleDarken: 1

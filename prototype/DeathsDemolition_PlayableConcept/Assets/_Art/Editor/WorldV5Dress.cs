@@ -356,7 +356,7 @@ namespace DD.Art.Pipeline.EditorTools
             Chumon(dress);
             Buildings(dress);
             GardenTrees(dress, garden);
-            Ground(greybox);
+            Ground(dress, greybox);
             Ponds(dress, greybox);
             Bridges(dress);
             Grove(dress, greybox);
@@ -919,11 +919,13 @@ namespace DD.Art.Pipeline.EditorTools
             return h - Mathf.Floor(h);
         }
 
-        private static void Ground(Transform greybox)
+        private static void Ground(Transform dress, Transform greybox)
         {
-            // The greybox ground (170 m box) on DD/GroundMoss (WP-075 C7b: graded kit moss, tone field, soil / gravel / leaf patches, path
-            // bands; WorldV5Moss); the ponds on the AP-015 water v2 (world-space: fits the discs).
-            WorldV5Moss.Apply(greybox);
+            // WP-092 B5: the ground is WorldV5Terrain's chunked micro-relief mesh on DD/GroundTerrain (layered moss / soil / dirt / gravel /
+            // pebble / mud, Look B wet, world masks; the box keeps its collider and loses its renderer). DD_GROUND_LEGACY=1 (the before
+            // frames) keeps the WP-075 C7b box on DD/GroundMoss (WorldV5Moss). The ponds on the AP-015 water v2 (world-space: fits the discs).
+            if (WorldV5Terrain.Legacy) WorldV5Moss.Apply(greybox);
+            else WorldV5Terrain.Build(dress, greybox);
             var water = AssetDatabase.LoadAssetAtPath<Material>(WaterMaterialPath);
             if (water == null) throw new InvalidOperationException("water v2 material missing: " + WaterMaterialPath);
             foreach (Transform t in Children(greybox))

@@ -53,6 +53,7 @@ namespace DD.Art.Tests.EditMode
                 if (ArtImportContract.IsLutTexture(p)) continue;   // WP-029: LUT strips have their own contract (LutTests)
                 if (ArtImportContract.IsMenuPlateTexture(p)) continue;   // WP-068: menu plates have their own contract (MenuPlateTests)
                 if (ArtImportContract.IsLightCookieTexture(p)) continue;   // WP-075 C2: the cloud cookie has its own contract (ApplyLightCookie, CloudShadowTests)
+                if (ArtImportContract.IsDataMaskTexture(p)) continue;   // WP-092 B5: ground / vegetation data masks have their own contract (WorldV5TerrainTests)
                 sonuc.Add(p);
             }
 
