@@ -27,6 +27,301 @@ namespace DD.Art.Pipeline.EditorTools
         private ScreenRayTarget _screenRayTarget;
         private ScreenRayRecord[] _screenRays;
         private PhysicalInventory _physicalInventory;
+        // Opt-in CPU geometry evidence; no render/physics/scene mutation and no acceptance threshold here.
+        private const long GroundGeometryCap = 16L * 1024 * 1024, GroundMetadataCap = 8L * 1024 * 1024;
+        private const long GroundRawCap = 256L * 1024 * 1024, GroundFutureReserve = 128L * 1024 * 1024;
+        private readonly HashSet<string> _groundMeshFiles = new HashSet<string>();
+        private long _groundGeometryBytes, _groundMetadataBytes;
+        private Renderer[] _groundSourceRenderers;
+        private GroundMeshEvidence _groundMeshEvidence;
+        [Serializable] private sealed class GroundMeshEvidence
+        {
+            public string schema = "DD_GROUND_MESH_RAYS_V1", producerPin, sourceSha256, label, status, chosenColliderRendererLink;
+            public bool complete;
+            public string fullPreStateSha256, fullPreCameraTargetSha256;
+            public int fullPreColorTargetInstanceId;
+            public string[] fullPreRendererStateSha256;
+            public GroundCategoryCheck category1PreRender;
+            public int frameOrdinal, cameraInstanceId;
+            public ScreenRayTarget target;
+            public int category = 1, chosenColliderInstanceId, categoryRendererCount, chosenColliderSameObjectRendererCount;
+            public long uniqueGeometryBytes, metadataBytesBeforePose, geometryCap = GroundGeometryCap, metadataCap = GroundMetadataCap, rawCap = GroundRawCap, futureRawReserve = GroundFutureReserve;
+            public GroundMeshRenderer[] renderers;
+            public GroundMeshRay[] rays;
+            public string geometryContract = "DDGM u32 magic 0x4d474444/version1/vertexCount/submeshCount; LE float32 local xyz; per-submesh i32 topology/i32 baseVertex/i32 indexCount then u32 absolute indices (GetIndices applyBaseVertex=true). Content SHA deduplicates bytes, never renderer identity.";
+            public string numericalPolicy = "double triangle arithmetic on captured float32 world vertices; norm<=1e-12 or abs(det)<=norm*1e-12 skipped; exact barycentric domain; edge flag<=1e-10; no world-distance acceptance tolerance";
+            public string limits = "Independent CPU pixel-center geometry only. No MSAA sample positions assumed; physical bare/2cm/3anchor/spread/repeat/identity gates unchanged. Unknown shader displacement/cull/LOD/sample-center remains UNKNOWN. Hits include all category1 relations, not a visible-fragment proof.";
+        }
+        [Serializable] private sealed class GroundMeshRenderer
+        {
+            public int rendererInstanceId, meshFilterInstanceId, meshInstanceId, layer, vertexCount, submeshCount;
+            public string path, type, status, reason, meshName, meshAssetPath, meshGuid, meshDependencyHash, indexFormat;
+            public string geometryFile, geometrySha256, matrixSha256;
+            public long geometryBytes;
+            public bool enabled, activeInHierarchy, forceRenderingOff, cameraLayerIncluded, sameGameObjectAsChosenCollider;
+            public Matrix4x4 localToWorld;
+            public float transformDeterminant;
+            public GroundMeshMaterial[] materials;
+            public GroundMeshSubmesh[] submeshes;
+        }
+        [Serializable] private sealed class GroundMeshMaterial
+        {
+            public int slot, instanceId, shaderInstanceId, renderQueue;
+            public string name, shader, shaderAssetPath, shaderSha256;
+            public bool hasCull, hasZWrite, hasSurface;
+            public float cull, zWrite, surface;
+        }
+        [Serializable] private sealed class GroundMeshSubmesh
+        {
+            public int submesh, topology, baseVertex, indexStart, indexCount;
+            public string materialBinding = "Exact one-to-one only if materials.Length==submeshCount; otherwise consumer must treat draw mapping as UNKNOWN";
+        }
+        [Serializable] private sealed class GroundMeshRay
+        {
+            public int[] pixelLowerLeft;
+            public Vector3 origin, direction;
+            public string status, nearestStatus;
+            public int nearestHitIndex = -1, chosenColliderNearestHitIndex = -1, otherRendererNearestHitIndex = -1;
+            public GroundTriangleHit[] hits;
+        }
+        [Serializable] private sealed class GroundTriangleHit
+        {
+            public int rendererInstanceId, meshInstanceId, submesh, triangleOrdinal;
+            public int[] indices;
+            public double distance, barycentricU, barycentricV, barycentricW, normalDotRay;
+            public Vector3 point, geometricNormal;
+            public bool sameGameObjectAsChosenCollider, edgeOrVertex;
+            public string facePolicy;
+        }
+        private sealed class GroundMeshCpu
+        {
+            public Vector3[] vertices;
+            public int[][] indices;
+            public GroundMeshSubmesh[] submeshes;
+            public byte[] bytes;
+        }
+        [Serializable] private sealed class GroundCategoryCheck
+        {
+            public string label, status, expectedStateSha256, currentStateSha256, expectedCameraTargetSha256, currentCameraTargetSha256;
+            public bool equal, complete;
+            public int frameOrdinal, cameraInstanceId, colorTargetInstanceId, actualCategoryRendererCount;
+            public ScreenRayTarget target;
+            public string[] rendererStateSha256;
+            public string reason;
+        }
+        private static string GroundRendererStateHash(GroundMeshRenderer row)
+        {
+            using(var stream=new MemoryStream()) using(var writer=new BinaryWriter(stream))
+            {
+                writer.Write(JsonUtility.ToJson(row));
+                if(row.materials!=null) foreach(GroundMeshMaterial material in row.materials)
+                { writer.Write(material.cull); writer.Write(material.zWrite); writer.Write(material.surface); }
+                return GroundBytesHash(stream.ToArray());
+            }
+        }
+        private static string GroundCameraTargetHash(Camera camera)
+        {
+            using(var stream=new MemoryStream()) using(var writer=new BinaryWriter(stream))
+            {
+                writer.Write(camera.GetInstanceID()); writer.Write(camera.cullingMask); writer.Write(camera.pixelWidth); writer.Write(camera.pixelHeight);
+                writer.Write(camera.aspect); writer.Write(camera.nearClipPlane); writer.Write(camera.farClipPlane); writer.Write(camera.fieldOfView); writer.Write(camera.orthographic); writer.Write(camera.orthographicSize);
+                Rect rect=camera.pixelRect; writer.Write(rect.x); writer.Write(rect.y); writer.Write(rect.width); writer.Write(rect.height);
+                writer.Write(GroundMatrixHash(camera.worldToCameraMatrix)); writer.Write(GroundMatrixHash(camera.projectionMatrix)); writer.Write(GroundMatrixHash(GL.GetGPUProjectionMatrix(camera.projectionMatrix,true)));
+                RenderTexture rt=camera.targetTexture; writer.Write(rt!=null);
+                if(rt!=null) { writer.Write(rt.width); writer.Write(rt.height); writer.Write(rt.antiAliasing); writer.Write(rt.bindTextureMS); writer.Write((int)rt.graphicsFormat); writer.Write((int)rt.depthStencilFormat); writer.Write(rt.IsCreated()); }
+                return GroundBytesHash(stream.ToArray());
+            }
+        }
+        private static string GroundStateHash(GroundMeshRenderer[] rows, out string[] hashes)
+        {
+            var ordered=new List<GroundMeshRenderer>(rows); ordered.Sort((a,b)=>a.rendererInstanceId.CompareTo(b.rendererInstanceId)); hashes=new string[ordered.Count];
+            using(var stream=new MemoryStream()) using(var writer=new BinaryWriter(stream))
+            { writer.Write(ordered.Count); for(int i=0;i<ordered.Count;i++) { hashes[i]=GroundRendererStateHash(ordered[i]); writer.Write(ordered[i].rendererInstanceId); writer.Write(hashes[i]); } return GroundBytesHash(stream.ToArray()); }
+        }
+        private void CheckCategory1GroundMesh(Camera camera,string label)
+        {
+            var check=new GroundCategoryCheck { label=label,frameOrdinal=_frames.Count,cameraInstanceId=camera.GetInstanceID(),colorTargetInstanceId=camera.targetTexture!=null?camera.targetTexture.GetInstanceID():0,
+                expectedStateSha256=_groundMeshEvidence.fullPreStateSha256,expectedCameraTargetSha256=_groundMeshEvidence.fullPreCameraTargetSha256,target=new ScreenRayTarget {
+                    label=label,width=camera.pixelWidth,height=camera.pixelHeight,aspect=camera.aspect,near=camera.nearClipPlane,far=camera.farClipPlane,pixelRect=new[]{camera.pixelRect.x,camera.pixelRect.y,camera.pixelRect.width,camera.pixelRect.height},renderIntoTexture=camera.targetTexture!=null,
+                    view=camera.worldToCameraMatrix,projection=camera.projectionMatrix,gpuProjection=GL.GetGPUProjectionMatrix(camera.projectionMatrix,true),inverseGpuViewProjection=(GL.GetGPUProjectionMatrix(camera.projectionMatrix,true)*camera.worldToCameraMatrix).inverse } };
+            _groundMeshEvidence.category1PreRender=check;
+            try
+            {
+                var rows=new List<GroundMeshRenderer>();
+                foreach(Renderer renderer in Object.FindObjectsOfType<Renderer>())
+                {
+                    Material[] materials=renderer.sharedMaterials; if(Category(materials)!=1) continue;
+                    var row=new GroundMeshRenderer { rendererInstanceId=renderer.GetInstanceID(),path=Hierarchy(renderer.transform),type=renderer.GetType().FullName,enabled=renderer.enabled,activeInHierarchy=renderer.gameObject.activeInHierarchy,
+                        forceRenderingOff=renderer.forceRenderingOff,layer=renderer.gameObject.layer,cameraLayerIncluded=(camera.cullingMask&(1<<renderer.gameObject.layer))!=0,sameGameObjectAsChosenCollider=_groundCollider!=null&&renderer.gameObject==_groundCollider.gameObject,
+                        localToWorld=renderer.localToWorldMatrix,transformDeterminant=renderer.localToWorldMatrix.determinant,matrixSha256=GroundMatrixHash(renderer.localToWorldMatrix),materials=GroundMaterials(materials),status="ACTUAL_GEOMETRY_RECORDED" };
+                    if(!(renderer is MeshRenderer)) throw new NotSupportedException("category1 non-MeshRenderer at category render");
+                    MeshFilter filter=renderer.GetComponent<MeshFilter>(); if(filter==null||filter.sharedMesh==null) throw new NotSupportedException("category1 MeshFilter/sharedMesh missing at category render");
+                    Mesh mesh=filter.sharedMesh; row.meshFilterInstanceId=filter.GetInstanceID(); row.meshInstanceId=mesh.GetInstanceID();row.meshName=mesh.name;row.meshAssetPath=UnityEditor.AssetDatabase.GetAssetPath(mesh);row.meshGuid=UnityEditor.AssetDatabase.AssetPathToGUID(row.meshAssetPath);
+                    row.meshDependencyHash=string.IsNullOrEmpty(row.meshAssetPath)?"":UnityEditor.AssetDatabase.GetAssetDependencyHash(row.meshAssetPath).ToString();row.indexFormat=mesh.indexFormat.ToString();
+                    GroundMeshCpu cpu=ReadGroundMesh(mesh);row.vertexCount=cpu.vertices.Length;row.submeshCount=cpu.submeshes.Length;row.submeshes=cpu.submeshes;row.geometrySha256=GroundBytesHash(cpu.bytes);row.geometryFile="ground-mesh-"+row.geometrySha256+".ddgm";row.geometryBytes=cpu.bytes.LongLength;rows.Add(row);
+                }
+                check.actualCategoryRendererCount=rows.Count;check.currentStateSha256=GroundStateHash(rows.ToArray(),out check.rendererStateSha256);check.currentCameraTargetSha256=GroundCameraTargetHash(camera);
+                check.equal=check.currentStateSha256==check.expectedStateSha256&&check.currentCameraTargetSha256==check.expectedCameraTargetSha256;
+                check.complete=_groundMeshEvidence.complete&&check.equal;check.status=check.complete?"EXACT_CATEGORY1_PRE_RENDER_STATE_MATCH":"UNKNOWN_STATE_CHANGED_OR_FULL_SNAPSHOT_INCOMPLETE";
+            }
+            catch(Exception ex) { check.status="UNKNOWN_CATEGORY1_CHECK_FAILED";check.reason=ex.GetType().Name+": "+ex.Message; }
+            if(!check.complete) { _groundMeshEvidence.complete=false;_groundMeshEvidence.status="UNKNOWN_CATEGORY1_PRE_RENDER_NOT_EQUIVALENT"; }
+            byte[] json=System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(check,true));
+            if(_groundMetadataBytes+json.LongLength>GroundMetadataCap||GroundDirectoryBytes()+json.LongLength+GroundFutureReserve>GroundRawCap)
+            { check.complete=false;check.status="UNKNOWN_CATEGORY1_CHECK_METADATA_BUDGET";_groundMeshEvidence.complete=false;_groundMeshEvidence.status=check.status;return; }
+            using(var stream=new FileStream(Path.Combine(_dir,label+"-ground-mesh-check.json"),FileMode.CreateNew,FileAccess.Write)) stream.Write(json,0,json.Length);
+            _groundMetadataBytes+=json.LongLength;
+        }
+
+        private static bool GroundFinite(double x) => !double.IsNaN(x) && !double.IsInfinity(x);
+        private static bool GroundFinite(Vector3 v) => GroundFinite(v.x) && GroundFinite(v.y) && GroundFinite(v.z);
+        private static string GroundBytesHash(byte[] bytes)
+        { using (var sha = System.Security.Cryptography.SHA256.Create()) return HexHash(sha.ComputeHash(bytes)); }
+        private static string GroundMatrixHash(Matrix4x4 m)
+        {
+            using (var stream = new MemoryStream())
+            using (var writer = new BinaryWriter(stream))
+            { for (int row = 0; row < 4; row++) for (int col = 0; col < 4; col++) writer.Write(m[row, col]); return GroundBytesHash(stream.ToArray()); }
+        }
+        private long GroundDirectoryBytes()
+        {
+            long count = 0;
+            foreach (string file in Directory.EnumerateFiles(_dir, "*", SearchOption.AllDirectories)) count = checked(count + new FileInfo(file).Length);
+            return count;
+        }
+        private GroundMeshCpu ReadGroundMesh(Mesh mesh)
+        {
+            if (!BitConverter.IsLittleEndian || !mesh.isReadable) throw new NotSupportedException("little-endian readable mesh required; no importer changes");
+            long estimated = checked(16L + 12L * mesh.vertexCount + 12L * mesh.subMeshCount);
+            for (int s = 0; s < mesh.subMeshCount; s++) estimated = checked(estimated + 4L * (long)mesh.GetIndexCount(s));
+            if (estimated > GroundGeometryCap) throw new NotSupportedException("single mesh exceeds geometry cap before array read");
+            var cpu = new GroundMeshCpu { vertices = mesh.vertices, indices = new int[mesh.subMeshCount][], submeshes = new GroundMeshSubmesh[mesh.subMeshCount] };
+            if (cpu.vertices.Length != mesh.vertexCount) throw new InvalidOperationException("vertex count mismatch");
+            using (var stream = new MemoryStream((int)estimated))
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write(0x4d474444u); writer.Write(1u); writer.Write((uint)cpu.vertices.Length); writer.Write((uint)mesh.subMeshCount);
+                foreach (Vector3 v in cpu.vertices)
+                { if (!GroundFinite(v)) throw new InvalidOperationException("nonfinite local vertex"); writer.Write(v.x); writer.Write(v.y); writer.Write(v.z); }
+                for (int s = 0; s < mesh.subMeshCount; s++)
+                {
+                    MeshTopology topology = mesh.GetTopology(s);
+                    if (topology != MeshTopology.Triangles) throw new NotSupportedException("non-triangle submesh");
+                    int[] indices = mesh.GetIndices(s, true);
+                    if (indices.Length % 3 != 0) throw new InvalidOperationException("triangle index count");
+                    int baseVertex = checked((int)mesh.GetBaseVertex(s));
+                    cpu.indices[s] = indices; cpu.submeshes[s] = new GroundMeshSubmesh { submesh = s, topology = (int)topology, baseVertex = baseVertex, indexStart = checked((int)mesh.GetIndexStart(s)), indexCount = indices.Length };
+                    writer.Write((int)topology); writer.Write(baseVertex); writer.Write(indices.Length);
+                    foreach (int index in indices)
+                    { if (index < 0 || index >= cpu.vertices.Length) throw new InvalidOperationException("index outside actual vertex array"); writer.Write((uint)index); }
+                }
+                cpu.bytes = stream.ToArray();
+            }
+            if (cpu.bytes.LongLength != estimated) throw new InvalidOperationException("geometry budget/count changed during snapshot");
+            return cpu;
+        }
+        private GroundMeshMaterial[] GroundMaterials(Material[] materials)
+        {
+            var rows = new GroundMeshMaterial[materials.Length];
+            for (int i = 0; i < rows.Length; i++)
+            {
+                Material m = materials[i]; var row = rows[i] = new GroundMeshMaterial { slot = i };
+                if (m == null) continue;
+                row.instanceId = m.GetInstanceID(); row.name = m.name; row.renderQueue = m.renderQueue;
+                row.hasCull = m.HasProperty("_Cull"); row.hasZWrite = m.HasProperty("_ZWrite"); row.hasSurface = m.HasProperty("_Surface");
+                row.cull = row.hasCull ? m.GetFloat("_Cull") : -1; row.zWrite = row.hasZWrite ? m.GetFloat("_ZWrite") : -1; row.surface = row.hasSurface ? m.GetFloat("_Surface") : -1;
+                if (m.shader == null) continue;
+                row.shaderInstanceId = m.shader.GetInstanceID(); row.shader = m.shader.name; row.shaderAssetPath = UnityEditor.AssetDatabase.GetAssetPath(m.shader);
+                if (!string.IsNullOrEmpty(row.shaderAssetPath) && File.Exists(Path.Combine(Application.dataPath, "..", row.shaderAssetPath))) row.shaderSha256 = ProjectFileHash(row.shaderAssetPath);
+            }
+            return rows;
+        }
+        // Double arithmetic on the exact captured float32 world vertices/ray. Fixed numerical guards are not world-error tolerances.
+        private static GroundTriangleHit GroundIntersect(ScreenRayRecord ray, Vector3 a, Vector3 b, Vector3 c, double far)
+        {
+            double ex=b.x-(double)a.x, ey=b.y-(double)a.y, ez=b.z-(double)a.z, fx=c.x-(double)a.x, fy=c.y-(double)a.y, fz=c.z-(double)a.z;
+            double dx=ray.direction.x, dy=ray.direction.y, dz=ray.direction.z;
+            double px=dy*fz-dz*fy, py=dz*fx-dx*fz, pz=dx*fy-dy*fx, det=ex*px+ey*py+ez*pz;
+            double nx=ey*fz-ez*fy, ny=ez*fx-ex*fz, nz=ex*fy-ey*fx, norm=Math.Sqrt(nx*nx+ny*ny+nz*nz);
+            if (!GroundFinite(norm) || norm <= 1e-12 || Math.Abs(det) <= norm*1e-12) return null;
+            double tx=ray.origin.x-(double)a.x, ty=ray.origin.y-(double)a.y, tz=ray.origin.z-(double)a.z;
+            double u=(tx*px+ty*py+tz*pz)/det;
+            double qx=ty*ez-tz*ey, qy=tz*ex-tx*ez, qz=tx*ey-ty*ex;
+            double v=(dx*qx+dy*qy+dz*qz)/det, t=(fx*qx+fy*qy+fz*qz)/det;
+            if (!GroundFinite(u) || !GroundFinite(v) || !GroundFinite(t) || u<0 || v<0 || u+v>1 || t<=0 || t>far) return null;
+            return new GroundTriangleHit { distance=t, barycentricU=u, barycentricV=v, barycentricW=1-u-v,
+                point=new Vector3((float)(ray.origin.x+dx*t),(float)(ray.origin.y+dy*t),(float)(ray.origin.z+dz*t)),
+                geometricNormal=new Vector3((float)(nx/norm),(float)(ny/norm),(float)(nz/norm)), normalDotRay=(nx*dx+ny*dy+nz*dz)/norm,
+                edgeOrVertex=Math.Min(u,Math.Min(v,1-u-v))<=1e-10 };
+        }
+        private void CaptureGroundMeshRays(Camera camera, string label)
+        {
+            var evidence = _groundMeshEvidence = new GroundMeshEvidence { label=label, producerPin=Environment.GetEnvironmentVariable("DD_TD_SOURCE_PIN"),
+                sourceSha256=ProjectFileHash("Assets/_Art/Editor/TdCoverDiagnostics.cs"), frameOrdinal=_frames.Count, cameraInstanceId=camera.GetInstanceID(), target=_screenRayTarget, chosenColliderInstanceId=_groundCollider!=null?_groundCollider.GetInstanceID():0,
+                categoryRendererCount=_groundSourceRenderers.Length, metadataBytesBeforePose=_groundMetadataBytes, complete=true };
+            int triangleHitCount=0;
+            var rendererRows = new List<GroundMeshRenderer>(); var rayRows = new GroundMeshRay[_screenRays.Length]; var hits = new List<GroundTriangleHit>[_screenRays.Length];
+            for (int i=0;i<rayRows.Length;i++) { ScreenRayRecord ray=_screenRays[i]; hits[i]=new List<GroundTriangleHit>(); rayRows[i]=new GroundMeshRay { pixelLowerLeft=ray.pixelLowerLeft,origin=ray.origin,direction=ray.direction }; }
+            foreach (Renderer renderer in _groundSourceRenderers)
+            {
+                var row = new GroundMeshRenderer { rendererInstanceId=renderer!=null?renderer.GetInstanceID():0, status="NOTRECORDED" }; rendererRows.Add(row);
+                try
+                {
+                    if (renderer==null) throw new InvalidOperationException("category1 renderer disappeared");
+                    Material[] materials=renderer.sharedMaterials;
+                    row.path=Hierarchy(renderer.transform); row.type=renderer.GetType().FullName; row.enabled=renderer.enabled; row.activeInHierarchy=renderer.gameObject.activeInHierarchy;
+                    row.forceRenderingOff=renderer.forceRenderingOff; row.layer=renderer.gameObject.layer; row.cameraLayerIncluded=(camera.cullingMask & (1<<row.layer))!=0;
+                    row.sameGameObjectAsChosenCollider=_groundCollider!=null && renderer.gameObject==_groundCollider.gameObject;
+                    if (row.sameGameObjectAsChosenCollider) evidence.chosenColliderSameObjectRendererCount++;
+                    row.localToWorld=renderer.localToWorldMatrix; row.transformDeterminant=row.localToWorld.determinant; row.matrixSha256=GroundMatrixHash(row.localToWorld); row.materials=GroundMaterials(materials);
+                    if (Category(materials)!=1 || !(renderer is MeshRenderer)) throw new NotSupportedException("actual category1 MeshRenderer required");
+                    for (int j=0;j<16;j++) if (!GroundFinite(row.localToWorld[j])) throw new InvalidOperationException("nonfinite transform");
+                    if (!GroundFinite(row.transformDeterminant) || row.transformDeterminant==0) throw new InvalidOperationException("singular transform");
+                    MeshFilter filter=renderer.GetComponent<MeshFilter>(); if (filter==null || filter.sharedMesh==null) throw new NotSupportedException("actual same-object MeshFilter/sharedMesh missing");
+                    Mesh mesh=filter.sharedMesh; row.meshFilterInstanceId=filter.GetInstanceID(); row.meshInstanceId=mesh.GetInstanceID(); row.meshName=mesh.name;
+                    row.meshAssetPath=UnityEditor.AssetDatabase.GetAssetPath(mesh); row.meshGuid=UnityEditor.AssetDatabase.AssetPathToGUID(row.meshAssetPath);
+                    row.meshDependencyHash=string.IsNullOrEmpty(row.meshAssetPath)?"":UnityEditor.AssetDatabase.GetAssetDependencyHash(row.meshAssetPath).ToString(); row.indexFormat=mesh.indexFormat.ToString();
+                    GroundMeshCpu cpu=ReadGroundMesh(mesh); row.vertexCount=cpu.vertices.Length; row.submeshCount=cpu.submeshes.Length; row.submeshes=cpu.submeshes;
+                    row.geometrySha256=GroundBytesHash(cpu.bytes); row.geometryFile="ground-mesh-"+row.geometrySha256+".ddgm"; row.geometryBytes=cpu.bytes.LongLength;
+                    if (!_groundMeshFiles.Contains(row.geometrySha256))
+                    {
+                        if (_groundGeometryBytes+row.geometryBytes>GroundGeometryCap || GroundDirectoryBytes()+row.geometryBytes+GroundMetadataCap+GroundFutureReserve>GroundRawCap)
+                            throw new NotSupportedException("unique geometry or total raw byte budget exceeded before write");
+                        using (var stream=new FileStream(Path.Combine(_dir,row.geometryFile),FileMode.CreateNew,FileAccess.Write)) stream.Write(cpu.bytes,0,cpu.bytes.Length);
+                        _groundMeshFiles.Add(row.geometrySha256); _groundGeometryBytes+=row.geometryBytes;
+                    }
+                    var world=new Vector3[cpu.vertices.Length]; for(int j=0;j<world.Length;j++) { world[j]=row.localToWorld.MultiplyPoint3x4(cpu.vertices[j]); if(!GroundFinite(world[j])) throw new InvalidOperationException("nonfinite world vertex"); }
+                    for(int ri=0;ri<rayRows.Length;ri++) for(int s=0;s<cpu.indices.Length;s++)
+                    {
+                        int[] ix=cpu.indices[s];
+                        for(int t=0;t<ix.Length;t+=3)
+                        {
+                            GroundTriangleHit hit=GroundIntersect(_screenRays[ri],world[ix[t]],world[ix[t+1]],world[ix[t+2]],camera.farClipPlane); if(hit==null) continue;
+                            if(triangleHitCount>=4096) throw new NotSupportedException("ray hit budget exceeded; incomplete metadata is UNKNOWN");
+                            hit.rendererInstanceId=row.rendererInstanceId; hit.meshInstanceId=row.meshInstanceId; hit.submesh=s; hit.triangleOrdinal=t/3; hit.indices=new[]{ix[t],ix[t+1],ix[t+2]}; hit.sameGameObjectAsChosenCollider=row.sameGameObjectAsChosenCollider;
+                            hit.facePolicy="UNKNOWN: geometry candidate only; consumer verifies shader/Cull/visibility/material-submesh policy"; hits[ri].Add(hit); triangleHitCount++;
+                        }
+                    }
+                    row.status="ACTUAL_GEOMETRY_RECORDED";
+                }
+                catch(Exception ex) { row.reason=ex.GetType().Name+": "+ex.Message; evidence.complete=false; }
+            }
+            for(int i=0;i<rayRows.Length;i++)
+            {
+                hits[i].Sort((a,b)=>a.distance.CompareTo(b.distance)); rayRows[i].hits=hits[i].ToArray(); rayRows[i].status=evidence.complete?"GEOMETRY_HITS_RECORDED":"UNKNOWN_INCOMPLETE_GEOMETRY";
+                rayRows[i].nearestStatus="UNKNOWN_RENDERED_FACE_AND_MSAA_SAMPLE_POSITION";
+                if(evidence.complete && hits[i].Count>0) { rayRows[i].nearestHitIndex=0; for(int h=0;h<hits[i].Count;h++) if(hits[i][h].sameGameObjectAsChosenCollider) { if(rayRows[i].chosenColliderNearestHitIndex<0) rayRows[i].chosenColliderNearestHitIndex=h; } else if(rayRows[i].otherRendererNearestHitIndex<0) rayRows[i].otherRendererNearestHitIndex=h; }
+            }
+            evidence.chosenColliderRendererLink=evidence.chosenColliderSameObjectRendererCount==0?"NOT_LINKED: no category1 renderer on chosen collider GameObject":"EXACT_SAME_GAMEOBJECT_IDS_RECORDED";
+            evidence.uniqueGeometryBytes=_groundGeometryBytes; evidence.renderers=rendererRows.ToArray(); evidence.rays=rayRows; evidence.status=evidence.complete?"ACTUAL_CATEGORY1_GEOMETRY_RECORDED_NOT_ACCEPTED":"NOTRECORDED_OR_INCOMPLETE_UNKNOWN";
+            evidence.fullPreStateSha256=GroundStateHash(evidence.renderers,out evidence.fullPreRendererStateSha256); evidence.fullPreCameraTargetSha256=GroundCameraTargetHash(camera); evidence.fullPreColorTargetInstanceId=camera.targetTexture!=null?camera.targetTexture.GetInstanceID():0;
+            byte[] json=System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(evidence,true));
+            if(_groundMetadataBytes+json.LongLength>GroundMetadataCap || GroundDirectoryBytes()+json.LongLength+GroundFutureReserve>GroundRawCap)
+            { evidence.complete=false; evidence.status="NOTRECORDED_METADATA_BUDGET"; evidence.rays=null; evidence.renderers=null; return; }
+            using(var stream=new FileStream(Path.Combine(_dir,label+"-ground-mesh-rays.json"),FileMode.CreateNew,FileAccess.Write)) stream.Write(json,0,json.Length);
+            _groundMetadataBytes+=json.LongLength;
+        }
+
 
 
         public TdCoverDiagnostics(string dir)
@@ -553,6 +848,7 @@ namespace DD.Art.Pipeline.EditorTools
                 rows.Add(row); // Keep misses, including absent chosen collider.
             }
             _screenRays = rows.ToArray();
+            CaptureGroundMeshRays(camera, label);
         }
 
         [Serializable] private sealed class MaterialState
@@ -759,6 +1055,7 @@ namespace DD.Art.Pipeline.EditorTools
             public ScreenRayTarget cpuScreenRayTarget;
             public ScreenRayRecord[] cpuScreenRays;
             public PhysicalInventory physicalCoverageInventory;
+            public GroundMeshEvidence groundMeshGeometry;
         }
 
         public void Capture(Camera cam, string name, Vector2 feet, Vector3 ground)
@@ -787,6 +1084,9 @@ namespace DD.Art.Pipeline.EditorTools
                     materials = matNames, shaders = shaderNames, enabled = r.enabled,
                     forceRenderingOff = off[i], category = Category(materials) };
             }
+            var category1 = new List<Renderer>();
+            for (int i = 0; i < records.Length; i++) if (records[i].category == 1) category1.Add(renderers[i]);
+            _groundSourceRenderers = category1.ToArray();
             bool draw = (bool)_draw.GetValue(null);
             CameraClearFlags clear = cam.clearFlags;
             Color background = cam.backgroundColor;
@@ -891,7 +1191,7 @@ namespace DD.Art.Pipeline.EditorTools
                     reversedZ = SystemInfo.usesReversedZBuffer, uvStartsAtTop = SystemInfo.graphicsUVStartsAtTop,
                     fullRepeatChanged = fullChanged, bareRepeatChanged = bareChanged, fullCategoryPixels = counts,
                     renderers = records, groundRayHits = hitRows, copiedFrames = feature.CopiedFrames,
-                    actualGroundCollider = _groundColliderRecord, cpuScreenRayTarget = _screenRayTarget, cpuScreenRays = _screenRays, physicalCoverageInventory = _physicalInventory,
+                    actualGroundCollider = _groundColliderRecord, cpuScreenRayTarget = _screenRayTarget, cpuScreenRays = _screenRays, physicalCoverageInventory = _physicalInventory, groundMeshGeometry = _groundMeshEvidence,
                     sourceDepth = feature.SourceDescription, featureListRestored = restored,
                     fullRgbChanged = fullRgbChanged, bareRgbChanged = bareRgbChanged, feetGridProbe = Probe(feet),
                     bareMaskMembershipChanged = bareMembershipChanged, runtimeEntropyReplayed = true });
@@ -973,6 +1273,7 @@ namespace DD.Art.Pipeline.EditorTools
                 cam.aspect = (float)W / H;
                 if (name.EndsWith("-depth-full", StringComparison.Ordinal)) CaptureScreenRays(cam, name);
                 feature.PrepareSamples(name, _frames.Count);
+                if (name.EndsWith("-depth-category-1", StringComparison.Ordinal)) CheckCategory1GroundMesh(cam, name);
                 cam.Render();
                 if (!rt.IsCreated() || !feature.Output.IsCreated())
                     throw new InvalidOperationException("UNKNOWN: color/depth output lost during render");
