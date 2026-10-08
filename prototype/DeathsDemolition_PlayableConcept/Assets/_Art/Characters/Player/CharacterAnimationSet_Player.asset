@@ -1905,7 +1905,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.566667
     speedMps: 4.445
-    unitySpeedMps: 4.1263065
+    unitySpeedMps: 3.83201194
     layer: base
     additive: 0
     frames: 18
@@ -1916,7 +1916,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 4.886879
+    unitySpeedMps: 4.44486141
     layer: base
     additive: 0
     frames: 15
@@ -1927,7 +1927,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 5.0733724
+    unitySpeedMps: 4.55897379
     layer: base
     additive: 0
     frames: 15
@@ -1938,7 +1938,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 4.605704
+    unitySpeedMps: 4.67611742
     layer: base
     additive: 0
     frames: 15
@@ -1949,7 +1949,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 5.3286085
+    unitySpeedMps: 4.16336155
     layer: base
     additive: 0
     frames: 15
@@ -1960,7 +1960,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 5.9996266
+    unitySpeedMps: 4.19939089
     layer: base
     additive: 0
     frames: 15
@@ -1971,7 +1971,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 5.392063
+    unitySpeedMps: 4.57672739
     layer: base
     additive: 0
     frames: 15
@@ -1982,7 +1982,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.466667
     speedMps: 4.2847
-    unitySpeedMps: 5.846832
+    unitySpeedMps: 4.40232515
     layer: base
     additive: 0
     frames: 15
@@ -2345,7 +2345,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 4.5860496
+    unitySpeedMps: 6.07207966
     layer: base
     additive: 0
     frames: 17
@@ -2356,7 +2356,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 4.561934
+    unitySpeedMps: 5.99718571
     layer: base
     additive: 0
     frames: 17
@@ -2367,7 +2367,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 5.5146747
+    unitySpeedMps: 6.20200348
     layer: base
     additive: 0
     frames: 17
@@ -2378,7 +2378,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 6.178773
+    unitySpeedMps: 5.68791914
     layer: base
     additive: 0
     frames: 17
@@ -2389,7 +2389,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 6.921711
+    unitySpeedMps: 5.86099863
     layer: base
     additive: 0
     frames: 17
@@ -2400,7 +2400,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 6.01756
+    unitySpeedMps: 5.74655437
     layer: base
     additive: 0
     frames: 17
@@ -2411,7 +2411,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 5.875278
+    unitySpeedMps: 5.77928495
     layer: base
     additive: 0
     frames: 17
@@ -2422,7 +2422,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533333
     speedMps: 6.6
-    unitySpeedMps: 6.2730994
+    unitySpeedMps: 5.96058655
     layer: base
     additive: 0
     frames: 17
@@ -2785,7 +2785,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.233333
     speedMps: 1.8381
-    unitySpeedMps: 1.424599
+    unitySpeedMps: 1.38111174
     layer: base
     additive: 0
     frames: 38
@@ -2796,7 +2796,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.4884154
+    unitySpeedMps: 1.4179703
     layer: base
     additive: 0
     frames: 39
@@ -2807,7 +2807,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.438962
+    unitySpeedMps: 1.39276636
     layer: base
     additive: 0
     frames: 39
@@ -2818,7 +2818,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.4458404
+    unitySpeedMps: 1.38287687
     layer: base
     additive: 0
     frames: 39
@@ -2829,7 +2829,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.3809707
+    unitySpeedMps: 1.35466754
     layer: base
     additive: 0
     frames: 39
@@ -2840,7 +2840,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.4720678
+    unitySpeedMps: 1.39687371
     layer: base
     additive: 0
     frames: 39
@@ -2851,7 +2851,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.4188206
+    unitySpeedMps: 1.37795758
     layer: base
     additive: 0
     frames: 39
@@ -2862,7 +2862,7 @@ MonoBehaviour:
     loop: 1
     seconds: 1.266667
     speedMps: 1.8268
-    unitySpeedMps: 1.4547875
+    unitySpeedMps: 1.39011908
     layer: base
     additive: 0
     frames: 39
