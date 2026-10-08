@@ -142,9 +142,20 @@ namespace DD.Art.Tests.EditMode
             Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_stomp_B", 43, true, E("foot_l", 0, "foot_r_off", 2, "foot_r", 21, "foot_l_off", 25)));
 
             var m = ArtAnimationClipContract.Manifest();
-            int ap033 = 0;
-            foreach (string k in m.Keys) if (k.StartsWith(ArtAnimationEventContract.Ap033Prefix, System.StringComparison.Ordinal)) ap033++;
-            Assert.AreEqual(12, ap033, "manifestte AP-033 p1 4 + p2 8 klip");
+            var loops = new HashSet<string>();
+            var transitions = new HashSet<string>();
+            foreach (var entry in m)
+            {
+                if (!entry.Key.StartsWith(ArtAnimationEventContract.Ap033Prefix, System.StringComparison.Ordinal)) continue;
+                (entry.Value.loop ? loops : transitions).Add(entry.Key);
+            }
+            var expectedLoops = new HashSet<string>(ArtAp033Intake.P1Clips);
+            expectedLoops.UnionWith(ArtAp033Intake.P2Clips);
+            Assert.AreEqual(12, loops.Count, "AP-033 p1 4 + p2 8 looping gait clips");
+            Assert.IsTrue(loops.SetEquals(expectedLoops), "looping AP-033 names must be exactly the p1+p2 delivery");
+            Assert.AreEqual(10, transitions.Count, "AP-033 p3 10 non-looping transitions");
+            Assert.IsTrue(transitions.SetEquals(ZombieTransitionData.Clips), "non-looping AP-033 names must be exactly p3");
+            Assert.AreEqual(22, loops.Count + transitions.Count, "AP-033 p1+p2+p3 total");
         }
     }
 }
