@@ -97,6 +97,7 @@ namespace DD.Prototype.UI
         private Camera _camera;
         private GameObject _lookVolume;
         private RenderTexture _held;
+        private bool _capturing;   // R3 (C-00 07.10): this frame the camera draws the cut into the held target, not the screen
         private RawImage _heldImage;
         private Canvas _heldCanvas;
         private float _clock;
@@ -182,6 +183,17 @@ namespace DD.Prototype.UI
         public float Clock => _clock;
         public Camera Camera => _camera;
         public bool Still => _wasStill;
+
+        /// <summary>The held frame's render texture name (tests count the live ones: none outside the menu).</summary>
+        public const string HeldName = "MenuCinematicHeld";
+
+        /// <summary>Tests and logs: the held frame on screen now (null when none shows) and its weight over the live image.</summary>
+        public Texture HeldTexture => _heldImage != null && _heldImage.enabled ? _heldImage.texture : null;
+
+        public float HeldWeightNow => _heldImage != null && _heldImage.enabled ? _heldImage.color.a : 0f;
+
+        /// <summary>Tests and logs: the cuts whose held frame was the cut frame itself (no second render) since the menu came up.</summary>
+        public int CutCaptures { get; private set; }
 
         private static string Arg(string flag)
         {
@@ -405,13 +417,30 @@ namespace DD.Prototype.UI
         /// <summary>Puts the camera where the timeline says and fades the held frame over what it shows now.</summary>
         private void Apply(float time, bool first)
         {
+            if (_capturing)
+            {
+                _camera.targetTexture = null;   // the cut frame went into the held target; from here the camera draws the screen
+                _capturing = false;
+            }
+
             int slice = SliceAt(time, out float local);
             bool blending = Blending(local);
             if (blending && _heldSlice != slice)
             {
-                HoldFrame(PoseOf(Shots[slice], Slice));   // the slice's end, rendered once as the blend begins
                 _heldSlice = slice;
                 _freezeFadeAt = -1f;
+                if (!first)
+                {
+                    // R3 (C-00 07.10; gt MUST-1 07.10): the held frame is the cut frame itself. For this one frame the camera
+                    // stays on the slice's end - where it came to rest on the smoothstep, the world streamed and its LODs
+                    // settled around it - and draws into the held target instead of the screen, which the held image covers at
+                    // full weight. No second world render in the frame (b31: 85 ms at each cut when HoldFrame rendered the end
+                    // here), nothing drawn ahead of time, the memory as before (one target, from the first cut on).
+                    CaptureCut(slice);
+                    return;
+                }
+
+                HoldFrame(PoseOf(Shots[slice], Slice));
             }
             else if (!blending)
             {
@@ -440,6 +469,47 @@ namespace DD.Prototype.UI
         /// <summary>Renders a pose (null = where the camera stands now) once into the held frame shown over the live camera.</summary>
         private void HoldFrame(Pose? pose)
         {
+            RenderInto(pose);
+            EnsureHeldImage();
+            _heldImage.texture = _held;
+        }
+
+        /// <summary>
+        /// The cut's frame into the held target: the camera on <paramref name="slice"/>'s end draws <see cref="_held"/> this
+        /// frame and the held image covers the screen at weight 1 (URP 14 leaves the overlay UI to the engine - it draws with
+        /// no camera on the screen - and its post writes alpha 1). The next <see cref="Apply"/> hands the camera back.
+        /// </summary>
+        private void CaptureCut(int slice)
+        {
+            EnsureHeldTarget();
+            Place(_camera, PoseOf(Shots[slice], Slice));
+            _camera.targetTexture = _held;
+            EnsureHeldImage();
+            _heldImage.texture = _held;
+            _heldImage.enabled = true;
+            _heldImage.color = Color.white;
+            _capturing = true;
+            CutCaptures++;
+        }
+
+        /// <summary>Renders a pose (null = where the camera stands now) into <see cref="_held"/>, the screen-sized MSAA target.</summary>
+        private void RenderInto(Pose? pose)
+        {
+            EnsureHeldTarget();
+            if (pose.HasValue)
+            {
+                Place(_camera, pose.Value);
+            }
+
+            _camera.targetTexture = _held;
+            _camera.Render();
+            _camera.targetTexture = null;
+            _capturing = false;
+        }
+
+        /// <summary>The held target at the screen's size with the pipeline's MSAA (made on the first use, remade on a resize).</summary>
+        private void EnsureHeldTarget()
+        {
             int width = Mathf.Max(1, Screen.width);
             int height = Mathf.Max(1, Screen.height);
             if (_held != null && (_held.width != width || _held.height != height))
@@ -456,36 +526,27 @@ namespace DD.Prototype.UI
                 var pipeline = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
                 _held = new RenderTexture(width, height, 24, RenderTextureFormat.Default)
                 {
-                    name = "MenuCinematicHeld",
+                    name = HeldName,
                     antiAliasing = _camera.allowMSAA && pipeline != null ? Mathf.Max(1, pipeline.msaaSampleCount) : 1
                 };
-                if (_heldImage != null)
-                {
-                    _heldImage.texture = _held;
-                }
             }
+        }
 
-            if (_heldImage == null)
+        private void EnsureHeldImage()
+        {
+            if (_heldImage != null)
             {
-                var go = new GameObject("MenuCinematicHeld", typeof(RectTransform), typeof(Canvas), typeof(RawImage));
-                _heldCanvas = go.GetComponent<Canvas>();
-                _heldCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                _heldCanvas.sortingOrder = UiTokens.SortingScreen - 1;   // over the world, under the menu
-                _heldImage = go.GetComponent<RawImage>();
-                _heldImage.texture = _held;
-                _heldImage.raycastTarget = false;
-                _heldImage.enabled = false;
-                UiFactory.Fill(_heldImage.rectTransform);
+                return;
             }
 
-            if (pose.HasValue)
-            {
-                Place(_camera, pose.Value);
-            }
-
-            _camera.targetTexture = _held;
-            _camera.Render();
-            _camera.targetTexture = null;
+            var go = new GameObject("MenuCinematicHeld", typeof(RectTransform), typeof(Canvas), typeof(RawImage));
+            _heldCanvas = go.GetComponent<Canvas>();
+            _heldCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _heldCanvas.sortingOrder = UiTokens.SortingScreen - 1;   // over the world, under the menu
+            _heldImage = go.GetComponent<RawImage>();
+            _heldImage.raycastTarget = false;
+            _heldImage.enabled = false;
+            UiFactory.Fill(_heldImage.rectTransform);
         }
 
         private void OnDestroy()
@@ -497,6 +558,11 @@ namespace DD.Prototype.UI
 
             WorldViewer.Active = false;
             UiFactory.OverlayScreens = false;
+            if (_camera != null)
+            {
+                _camera.targetTexture = null;   // a cut frame may be drawing into the held target as the menu goes
+            }
+
             if (_held != null)
             {
                 _held.Release();

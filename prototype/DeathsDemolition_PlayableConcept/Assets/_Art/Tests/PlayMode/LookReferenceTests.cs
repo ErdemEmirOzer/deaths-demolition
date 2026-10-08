@@ -40,7 +40,6 @@ namespace DD.Art.Tests.PlayMode
     /// <c>[Category("FPTP")]</c> test — the same procedure and cookie phases, in a run and crowd of its own.
     /// </summary>
     [TestFixture]
-    [Category("WP029")]
     public sealed class LookReferenceTests
     {
         private const float SahneZamanAsimi = 60f, KurulumZamanAsimi = 60f, OyuncuZamanAsimi = 30f, DolusZamanAsimi = 90f, YatismaZamanAsimi = 30f;
@@ -116,6 +115,7 @@ namespace DD.Art.Tests.PlayMode
             return dir;
         }
 
+        [Category("WP029")]
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator ReferansKareleri_9Kadraj_CookieFazli_HamVePost_1080p()
@@ -124,6 +124,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>The six <see cref="LookV3Poses"/> (TP shoulder / FP eye heights): the same procedure and cookie phase, its own run and crowd.</summary>
+        [Category("WP029")]
         [UnityTest]
         [Timeout(600000)]
         [Category("FPTP")]

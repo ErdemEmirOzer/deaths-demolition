@@ -31,7 +31,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// stood ≥ 6 s more than 4 m away without moving 0.75 m (where, how far) — the map's trouble spots.
     /// </summary>
     [TestFixture]
-    [Category("WP076")]
     public sealed class V6AiRoundTests
     {
         private const int Target = 12;
@@ -108,6 +107,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>
         /// The acceptance test: no environment input (WP-076 B9 M-22 — the C1 observation lives in its own Explicit Diagnostics method).
         /// </summary>
+        [Category("WP076")]
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator V6_OdalarKopruSelale_TakilmaSifir()
@@ -137,6 +137,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// WP-076 B9 (M-22 / Y6, C-00 30.09): the C1 contact observation of the unchanged KnownOpen station — a diagnostic, never an
         /// acceptance gate. Explicit + Diagnostics (not in full runs); output: DD_WP076_C1_CONTACT_OUT or the temporary cache.
         /// </summary>
+        [Category("WP076")]
         [UnityTest]
         [Explicit("Diagnostics: C1 contact observation (WP-076 B9 M-22)")]
         [Category("Diagnostics")]
@@ -153,6 +154,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// controller stepOffset 0.35 / NavMesh climb 0.30) is the suspected stall; the spawn-seed sequence is fixed (Y4 hook) so repeated
         /// runs compare. Explicit + Diagnostics; output: DD_WP076_R4_CONTACT_OUT or the temporary cache.
         /// </summary>
+        [Category("WP076")]
         [UnityTest]
         [Explicit("Diagnostics: R4 tea-house contact observation (WP-076 B9 M-32)")]
         [Category("Diagnostics")]
@@ -402,6 +404,7 @@ namespace DD.Prototype.Tests.PlayMode
 
 #if UNITY_EDITOR
         /// <summary>Observer plumbing proof; not a C1 cause test. WP-076 B9 (Y6): Explicit + Diagnostics instead of an env-gated Ignore.</summary>
+        [Category("WP076")]
         [UnityTest]
         [Explicit("Diagnostics: C1 observer hook smoke (WP-076 B9 Y6)")]
         [Category("Diagnostics")]

@@ -20,7 +20,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// Sahne kurulumu WP-007 kitini (SpecialWeaponSahne) yeniden kullanır.
     /// </summary>
     [TestFixture]
-    [Category("WP021")]
     public sealed class AudioSliceTests
     {
         private SpecialWeaponSahne _s;
@@ -54,6 +53,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== 10 olay
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator OlayTetikleme_OnOlay_HerBiriSesUretir()
@@ -94,6 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== bölge crossfade
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator BolgeGecisi_Crossfade_EnAzIkiSaniye_TekBolgeAktif()
@@ -127,6 +128,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp021.region crossfade=" + sure.ToString("0.00") + "s changes=" + amb.RegionChanges + " " + amb.Describe());
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator BolgeHaritasi_OyuncuKonumundan_Cozulur()
@@ -152,6 +154,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== müzik
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator MuzikYogunluk_KatmanlarTepkiVerir_RoundArasiGeriCekilir()
@@ -183,6 +186,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== havuz tavanı
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator HavuzTavani_AsimdaDusurur_AktifSesKapasiteyiAsmaz()
@@ -207,6 +211,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp021.pool requested=" + istek + " capacity=" + kapasite + " " + dunya.Describe() + " dropped=" + dunya.DroppedCount + " blocked=" + dunya.RetriggerBlockedCount + " stolen=" + dunya.StolenCount);
         }
 
+        [Category("WP021")]
         [Test]
         public void HavuzKarari_Telemetri_SebepleriAyriKaydeder()
         {
@@ -259,6 +264,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== mixer snapshot
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator MixerSnapshot_FightingRun_PauseHold_Pause_VeGeri()
@@ -321,6 +327,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== zombi hazırlık sesi
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator ZombiHazirlikSesi_SaldiridanOnce_Yonlu_VeVurusSesi()
@@ -351,6 +358,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-021B · ADR-018-1 ayak sesi
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator AyakSesi_AnimasyonOlayi_YuzeyeGoreKlip()
@@ -418,6 +426,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-021C · UI olayları (WP-022B)
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator UiOlaylari_BagliSatirCalar_RezerveSatirCiftCalmaz()
@@ -450,6 +459,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp021c.ui " + r.Describe());
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator AnaSes_UiSettingsSozlesmesi_MixerParametresiniRampaIleTakipEder()
@@ -477,6 +487,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Aggro_SpawnLandBeat_TierVokali()
@@ -495,6 +506,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp048.aggro tier=" + z.Tier + " beats=" + DD.Prototype.Enemies.EnemyCombatEvents.Total + " " + r.Describe());
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator YuzeyEtiketleri_DunyaYuklenince_Uygulanir_ZeminCozulur()
@@ -517,6 +529,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-057 · müzik v2
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(90000)]
         public IEnumerator MuzikV2_TehditKatmaniTaban_Stinger_MenuSonucDongusu()
@@ -562,6 +575,7 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-065E: a score whose sources were stopped from outside (audio device / configuration reset) comes back by itself, in lock-step.</summary>
+        [Category("WP021")]
         [UnityTest]
         [Timeout(30000)]
         public IEnumerator Muzik_KaynaklarDisaridanDurunca_Kendiliginden_Doner()
@@ -576,6 +590,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp065e.heal " + m.DescribeSources());
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(90000)]
         public IEnumerator MixGecisi_FazOlcumu_LowHealthMuzikDuck()
@@ -696,6 +711,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(_d.Mixer.DuckLevel(AudioBus.Music), 0.9f, "duck 1 s içinde bırakılmalı");
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator SpecialTepkisi_SwShockSlideBeat_GovdeSesi()
@@ -725,6 +741,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-058 · WP-056 Special kullanım sesleri
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator SpecialKullanim_RaijuNamekuji_KendiSesleri_ZincirBirikinti()
@@ -823,6 +840,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-048B · WP-032C silah foley
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator SilahFoley_KlipOlayi_SecilenSilahinKendiSesi()
@@ -871,6 +889,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-072 B1 / WP-085 B1 · ateş sesi: her atış tam ses
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator AtesV4_HerAtisTamSes_BirakistaTekKuyruk_MekanKuyrugu()
@@ -935,6 +954,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp085b1.fire voices=" + f.FireVoices + " refused=" + f.FireRefused + " releases=" + f.Releases + " tail=" + f.LastTail);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator AtesV4_KatmanYolu_Mekanik_SilahKuyruguOfsetli_UzakBant()
@@ -989,6 +1009,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// game time 0.2 s per frame here, a hitch on a loaded host — lets both staggered same-frame shells fall due in one Tick;
         /// the pool's retrigger gate counts unscaled time, so the second used to be refused 0 s after the first. Both are heard.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator KovanV2_UzunKare_AyniKareIkiKabuk_IkisiDeDuyulur()
@@ -1030,6 +1051,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// behind the shots (06.10: 0.677 s on a loaded host with a real 0.4 s sleep). A real sleep is not used: a landing held
         /// just before it would count the sleep itself as hold.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator KovanV2_SurekliAtes_TakilmaSonrasi_BekletmeSinirli()
@@ -1093,6 +1115,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, c.InAir, "Kuyruk boşaldı.");
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma()
@@ -1204,6 +1227,7 @@ namespace DD.Prototype.Tests.PlayMode
                       + "–" + c.FallMaxHeard.ToString("0.000") + " voicesMax=" + sesTavan + " queueMax=" + kuyrukTavan + " surface=" + beklenen + " mismatches=" + uyumsuz + " rocket=" + roket);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator FoleyV3_KovanYuzeyeDuser_KuruTetikAilesi()
@@ -1228,6 +1252,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b2.casing landed=" + _d.Casings.Landed + " last=" + _d.Casings.LastSound);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator DarbeV3_MermiZemine_KalibreSesi_EskiIpucuYerineGecer()
@@ -1262,6 +1287,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b3.impact played=" + _d.Impacts.Played + " replaced=" + _d.Impacts.Replaced + " last=" + _d.Impacts.LastSound);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator UcusDongusu_RoketMenziliBitince_Kapanir_PatlamaMesafeKatmani()
@@ -1302,6 +1328,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b5.flight started=" + _d.Flight.Started + " ended=" + _d.Flight.Ended);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Rl1_Bombacik_KucukPatlamaDizisi_Dud_CizSesi()
@@ -1342,6 +1369,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072rl1 duds=" + _d.RocketBlasts.Duds + " pops=" + _d.RocketBlasts.Bomblets);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator YagmurSonrasi_Kuslar_SacakDamlasi_BambuKorusu_IslakAdim()
@@ -1417,6 +1445,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072dec102 birds=" + ar.BirdCount + " drips=" + ar.EaveDripCount + " gusts=" + ar.GustCount + " leaf=" + ar.LeafDripCount + " wet=" + _d.Router.WetStepCount + " kulak=" + kulak);
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(90000)]
         public IEnumerator V6_VarsayilanDunya_YuzeyKoruSacakAkustik_SesYakalanir()
@@ -1508,6 +1537,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// captured post-mixer per camera mode — the full mix and each bus solo (music / ambience / world SFX / player SFX).
         /// Measurement only (not a gate): Explicit, out of CI; the table goes to the log.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1519,6 +1549,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>R3 FPTP half of MixV6_UcKameraModu_BusSeviyeleri_Olcum (C-00 07.10: mixed tests split): the TP / FP rows
         /// (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1611,6 +1642,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// level-matches and measures them. 3 the calm after-rain
         /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1623,6 +1655,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>R3 FPTP half of DinlemePaketi_AB_Uret (C-00 07.10: mixed tests split): the 2 first-person take
         /// (2_birinci-sahis_*); the courtyard pair 3 does not depend on the camera and is recorded by both
         /// (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1788,6 +1821,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// and S2 (full voice per shot, no transient / loop voice, no pool refusal) — r2-S1 / r2-S2 when DD_R2_MEASURE_DIR is set.
         /// Written under temporaryCachePath/wp085-kit; the batch copies them.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-085 B4 gerçek RPM silah kiti — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1799,6 +1833,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>R3 FPTP half of SilahKiti_GercekRpm_OyunIci_Kayit (C-00 07.10: mixed tests split): the first-person takes
         /// (Kit_/Stem_*_FP_*) (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-085 B4 gerçek RPM silah kiti — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -1853,6 +1888,8 @@ namespace DD.Prototype.Tests.PlayMode
             var ozet = new System.Text.StringBuilder("[");
             float s1Min = 1f, s1MinC = 1f;
             int s1Shots = 0, s2Deficit = 0, s2Transients = 0, s2Loops = 0, s2Refused = 0, s2Shots = 0;
+            // C-00 07.10 (S-10 proposal): S1 / S2 coverage — the weapons with a variant-A top-down stem against the enabled roster.
+            var olculenSilahlar = new HashSet<string>();
             var s1Detay = new List<string>();
 
             AudioOutputCapture cap = null;
@@ -2009,8 +2046,9 @@ namespace DD.Prototype.Tests.PlayMode
 
                                 if (v == 'A' && stem)
                                 {
+                                    if (camMode == DD.Prototype.CameraSystem.CameraMode.TopDown) olculenSilahlar.Add(wd.weaponId);
                                     s2Shots += plan.Count;
-                                    s2Deficit += plan.Count - voices;
+                                    s2Deficit += Mathf.Max(0, plan.Count - voices);   // per take (S-10 07.10): a take's extra voices never cancel another's missing ones
                                     s2Transients += gecici;
                                     s2Loops += dongu;
                                     s2Refused += refused;
@@ -2051,14 +2089,23 @@ namespace DD.Prototype.Tests.PlayMode
             // R3: the S1 / S2 rows are the top-down test's (source above); the FPTP twin's FP takes never write them.
             if (varyantlar.IndexOf('A') >= 0 && kameralar[0].camMode == DD.Prototype.CameraSystem.CameraMode.TopDown)
             {
-                var s1 = new Dictionary<string, double> { { "below400ShareMin", Math.Round(s1Min, 4) } };
+                // weaponsMissing (check == 0): an enabled weapon without a measured take, also one the Arsenal cannot build;
+                // weaponsMeasured / rosterEnabled are reported. DD_KIT_WEAPONS narrower than "all" fails it on purpose.
+                int roster = DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, eksik = Mathf.Max(0, roster - olculenSilahlar.Count);
+                var s1 = new Dictionary<string, double>
+                {
+                    { "below400ShareMin", Math.Round(s1Min, 4) }, { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }
+                };
                 if (varyantlar.IndexOf('C') >= 0 && s1MinC < 1f) s1["below400ShareMinV4"] = Math.Round(s1MinC, 4);   // report (S-10 2ccda99b)
                 R2Olcum.Yaz("S1", kaynak, s1, s1Shots);
                 R2Olcum.Yaz("S2", kaynak, new Dictionary<string, double>
                 {
-                    { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused }
+                    { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused },
+                    { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }
                 }, s2Shots);
                 Assert.AreEqual(0, s2Deficit + s2Transients + s2Loops + s2Refused, "R2 S2: her atış tam katman, hafif katman / döngü / havuz reddi yok.");
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR")))   // a gate run measures the whole roster
+                    Assert.AreEqual(0, eksik, "R2 S1/S2: kadrodaki " + roster + " silahın " + olculenSilahlar.Count + "'i ölçüldü (DD_KIT_WEAPONS=all).");
                 Assert.GreaterOrEqual(s1Min, 0.2f, "R2 S1: basılı tutmada 2.–10. atış, ilk 150 ms, 400 Hz altı pay ≥ %20 (" + string.Join(" · ", s1Detay) + ")");
             }
         }
@@ -2077,6 +2124,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// 0.88–1.68, 1.28–2.28 — orderViolations (open < corridor < hall per weapon), report open / corridor / hall edc30 minima.
         /// Needs a quiet machine. Written under temporaryCachePath/wp085-edc.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-085 R2 S4 mekân kuyruğu ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -2517,6 +2565,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// 10 m up, 24 forced calls 3 s apart: ~4 events per variant of the shuffle deck — 2 were too few, ±2 dB per run). Music / SFX / UI buses muted in all three.
         /// Each bird's onset (capture frame) and clip go to a sidecar CSV; tools/bird_contrast.py measures the own-band contrast.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 B7 kuş ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -2601,6 +2650,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// master limiter threshold opened to 0 dB (MasterLimiterThreshold, exposed) so the output is uncompressed: the envelope above
         /// −8 dBFS is the gain reduction the real −8 dB limiter would apply (wp-072/tools/a9_stack.py). Explicit, out of CI.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Explicit("WP-072 B7 A9 yığın ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
@@ -2661,6 +2711,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// music phase loop: none in AudioClipLibrary.AllSounds) built its library entry there. After the prewarm every sound
         /// the catalog owns is wrapped: asking for each of them allocates nothing.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Kutuphane_OnIsitmaSonrasi_KatalogSesleri_IlkIstekteAyirmaz()
@@ -2746,6 +2797,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator UiV3_RuloYerlesinceDurur_HoldBirakilincaSoner_BootAtlamadaSoner()
@@ -2780,6 +2832,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp068.voices " + r.UiVoiceCount + " · " + r.Describe());
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator UiV3_PauseArayuzuDuyulur_PauseSesleri_UiVolumeAyriKaydirici()
@@ -2812,6 +2865,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator UiV3_KartBasamagi_DamgaKatmani_HoverSonumu_SliderPerdesi_SeritErteleme()
@@ -2859,6 +2913,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// PressDown (a ≤ 40 ms tick under the Confirm that follows on release) is reported, not gated: a 100 ms
         /// short-term window cannot rate a 40 ms transient.
         /// </summary>
+        [Category("WP021")]
         [UnityTest]
         [Timeout(90000)]
         public IEnumerator UiV3_MenuCuelari_YatakUstunde_6LU()
@@ -2978,6 +3033,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-065C · fūrin rüzgâr çanı
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Furin_RuzgarliHavada_EnYakinCanCalar_DurgunHavadaSessiz()
@@ -3010,6 +3066,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-021C · master limiter ölçümü
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Limiter_EnYuksekYigin_CikisTepesi_TavaninAltinda()
@@ -3058,6 +3115,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-060 · output capture
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator CikisKaydi_DinlemeTuru_WavVeFazIsaretleri()
@@ -3134,6 +3192,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== GC 0
 
+        [Category("WP021")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator AmbiyansYolu_V6Fp_YagmurSonrasi_SifirAyirma()
@@ -3180,6 +3240,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("WP021")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator SesYolu_KararliDurumda_SifirAyirma()

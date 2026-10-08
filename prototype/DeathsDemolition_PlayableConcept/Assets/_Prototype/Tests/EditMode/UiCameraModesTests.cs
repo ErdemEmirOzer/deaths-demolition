@@ -123,6 +123,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(UiCursor.WantLocked(CameraCursorIntent.Free, false, true), "tepeden / donmuş / bakış bloğu → serbest");
         }
 
+        [Category("FPTP")]
         [Test]
         public void KenarYayi_Yonu_ArkaAlttaSolSolda()
         {
@@ -139,6 +140,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Less(behindLeft.y, 0f);
         }
 
+        [Category("FPTP")]
         [Test]
         public void ArkaYay_64Yonde_KumelereGirmez_CizgiIcKenarda_EkranIcinde()
         {
@@ -213,6 +215,7 @@ namespace DD.Prototype.Tests.EditMode
         /// where the sprite fits under it (R1-A's 120° case), and the lift stands where it does not; the 64-bearing sweep above
         /// runs the same Place.
         /// </summary>
+        [Category("FPTP")]
         [Test]
         public void ArkaYay_DogruNoktaDikdortgenOrtasininAltinda_AsagiCozulur_YerYoksaKalkar()
         {

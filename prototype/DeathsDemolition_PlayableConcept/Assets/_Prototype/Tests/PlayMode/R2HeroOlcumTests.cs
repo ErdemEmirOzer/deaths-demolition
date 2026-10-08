@@ -30,7 +30,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// fails on the contract's limit itself.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2HeroOlcumTests
     {
         public const string H1Name = "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus";
@@ -57,7 +56,9 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
             WeaponHoldIk.ResetStatics();
@@ -65,6 +66,7 @@ namespace DD.Prototype.Tests.PlayMode
             PlayerSkinnedVisual.FirstPersonV3Arms = _fpArmsBefore;
         }
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -147,6 +149,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// they do not roll them. For every enabled classic weapon, standing then walking, the right (WeaponHoldIk) and the left
         /// (WeaponGripIk) upper arm's roll about its own axis against the clip's pose stays within 15° at full weight.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -214,6 +217,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// weight; the goal rides the authored body, so the recoil kick is in it) stays within 1 cm.
         /// A weapon on <see cref="AtisBilinenKirmizi"/> is measured and reported on its own line, outside the 1 cm check.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -287,6 +291,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// WP-083 B2d diagnostics: the long weapons' stock penetration (attach_stock vs the AP-006 body, nearest baked vertex and its
         /// normal — WeaponModelSliceTests' measure, ≤ 2 cm) against the support hand's error (H1, ≤ 1 cm) for candidate stock clearances.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -333,6 +338,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// candidate ar_2 rows — the hold raised (HipHold y) and the support point moved back along the handguard (weapon −Z) — each
         /// scored on the rest hold (left error), ten presses (left error at full weight, outside reload) and the stock's penetration.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -403,6 +409,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// below) and +X (a vertical foregrip held from the left). The palm normal is the hand's axis that points down in the avatar's
         /// T-pose (the humanoid T-pose's palms face down).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -508,11 +515,17 @@ namespace DD.Prototype.Tests.PlayMode
         /// bounds' narrower side.
         /// The measured rows are logged in C# (a missing or drifted row is red).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar()
+        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar() => KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The grasp rows against the LOD0 section from one game camera (R3, C-00 07.10: the top-down test above; the
+        /// third-person twin, the same lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            // the rows against the LOD0 section are camera-independent
+            DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
             Time.captureDeltaTime = 1f / 60f;
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
@@ -576,6 +589,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// axis, 0.5 cm cells; '#' section, 'G' the support goal, '+' the weapon axis) — where the support hand meets the weapon, to
         /// pick the grasped element of a weapon whose goal is off the mesh.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -718,6 +732,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// fingertipGapMaxCm — the nearer of the index / middle fingertips to the weapon's LOD0 surface; palmGapMaxCm — the palm point to
         /// that surface. All the worst frame; reports wristClampShare, wristMaxDeg, thetaSwitchCount (per weapon, the largest).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -814,6 +829,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// the grip IK aims for (the one that puts the palm on its contact; WeaponGripIk.LastWristGoal), the worst frame; negative = out
         /// of reach.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -996,6 +1012,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// clearance from the head and from the shoulder joint, the eye's height against the axis at the head, the stock's and the
         /// tube's penetration into the body, both hands' errors; a front-right and a front frame each (DD_B2D_COMPARE_DIR).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -1139,6 +1156,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// within 2 frames (the H3 contactDeviationFramesMax limit; S-02's H3 test carries the gate value). Third person on the default
         /// path. <see cref="H3Temas_FPKollar_SarjorluSilahlar_ElVurustaYuvada"/> covers first person with the arms on.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -1152,6 +1170,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// WP-083 B2e: the same in first person with the FP arms on (PlayerSkinnedVisual.FirstPersonV3Arms; off on today's default
         /// path, where first person shows no hand; the arms stay off for the long guns). The seat is the held model's part_mag.
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -1231,9 +1250,11 @@ namespace DD.Prototype.Tests.PlayMode
         /// from behind). The player is teleported to the same spot for each state and the frames run at a
         /// fixed 1/60 s, so the pose and the light match. PNG files go to DD_B2D_COMPARE_DIR (required: the run names the folder).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
+        [Category("FPTP")]   // R3 (C-00 07.10): the third-person over-the-shoulder before / after set — out of scope (user 06.10, top-down only)
         [Timeout(600000)]
         public IEnumerator Kare_TutusOnceSonra_TPOmuz_Ustten()
         {
@@ -1286,15 +1307,21 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-083 B2f / AP-024C2 AD MUST-1 (C-00 06.10): the weapon ↔ body frame set in game — every enabled classic weapon from the
-        /// third-person and the top-down game cameras, aiming, at the recoil's peak (one shot, three frames on) and mid-reload; then one
-        /// Special (the production RNG picks it; its id is logged). The verdict is the frames' (stock under the shoulder plate's edge,
+        /// top-down game camera, aiming, at the recoil's peak (one shot, three frames on) and mid-reload; then one Special (the
+        /// production RNG picks it; its id is logged). R3 (C-00 07.10): the top-down side only — the third-person frames are out of
+        /// scope (user 06.10). The verdict is the frames' (stock under the shoulder plate's edge,
         /// 0 px out, 0 px mask seam); PNGs to DD_B2D_COMPARE_DIR (the run names it; scratch).
         /// </summary>
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
         [Timeout(1800000)]
-        public IEnumerator Kare_M1_SilahGovde_TP_TD_NisanTepmeReload()
+        public IEnumerator Kare_M1_SilahGovde_TD_NisanTepmeReload() => KareM1(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The M1 frame set from one game camera (R3, C-00 07.10: the top-down test above; the third-person twin, the same
+        /// lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KareM1(DD.Prototype.CameraSystem.CameraMode camera)
         {
             string dir = System.Environment.GetEnvironmentVariable("DD_B2D_COMPARE_DIR");
             Assert.IsFalse(string.IsNullOrEmpty(dir), "DD_B2D_COMPARE_DIR yok (kare klasörü; tanı testi)");
@@ -1305,7 +1332,7 @@ namespace DD.Prototype.Tests.PlayMode
             var written = new List<string>();
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     string cam = mode == DD.Prototype.CameraSystem.CameraMode.TopDown ? "td" : "tp";
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
@@ -1338,7 +1365,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             // one Special: the production RNG picks it (sw_arc / sw_gel / …); the hold is the classic weapons' only, the Special keeps main's path
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            DD.Prototype.CameraSystem.CameraModeService.Request(camera, instant: true);
             yield return _s.SpawnEt(0.5f);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             string special = "none";
@@ -1347,7 +1374,7 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.PickupaGit(pickup);
                 yield return SpecialWeaponSahne.Kareler(90);
                 special = WeaponEvents.Special.WeaponId.ToString();
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
                     yield return SpecialWeaponSahne.Kareler(40);

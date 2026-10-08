@@ -28,7 +28,6 @@ namespace DD.Art.Tests.PlayMode
     /// events, and the queue Wait state runs out of step across bodies.
     /// </summary>
     [TestFixture]
-    [Category("WP032B")]
     public sealed class AnimationV002Tests
     {
         private const float SahneZamanAsimi = 60f;
@@ -133,6 +132,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ foot events name the landing foot (v002)
 
+        [Category("WP032B")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator AyakOlaylari_v002_foot_l_SolAyakBasar_foot_r_SagAyakBasar()
@@ -186,6 +186,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ player run ring (v002) at the reference speed
 
+        [Category("WP032B")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Oyuncu_KosuHalkasi_6_2ms_AyakKaymasi_2cmAlti_OranTavani()
@@ -268,6 +269,7 @@ namespace DD.Art.Tests.PlayMode
         // ============================================================ Ultra overhead (v002) — DEC-029 on the clip
 
         /// <summary>WP-071 MUST-I1 A/B diagnostic: the same Ultra overhead run with every tier on the AP-009 fallback gait.</summary>
+        [Category("WP032B")]
         [UnityTest]
         [Explicit, Category("Diagnostics")]
         [Timeout(300000)]
@@ -278,6 +280,7 @@ namespace DD.Art.Tests.PlayMode
             ZombieSkinnedVisual.TierGaits = true;
         }
 
+        [Category("WP032B")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Overhead_Ultra_v002_KendiKlibi_PencereKlipOlaylarindan()
@@ -324,6 +327,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ queue Wait state, per-body phase
 
+        [Category("WP032B")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Bekleme_WaitDurumu_IdleQueue_IkiGovdeFarkliFaz_GeriDonus()
@@ -352,6 +356,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ zombie run (Runner) slip — stance-rule calibration evidence
 
+        [Category("WP032B")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator ZombiKosu_Runner_4_6ms_AyakKaymasi_2cmAlti()

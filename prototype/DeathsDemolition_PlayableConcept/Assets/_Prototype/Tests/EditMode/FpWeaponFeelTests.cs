@@ -11,6 +11,7 @@ namespace DD.Prototype.Tests.EditMode
     /// (peak, recovery, ADS scaling, auto stacking), A4.1 sway (gain per weight class, rotation cap, ADS), the view-model bob,
     /// reduced motion off, the ADS ease and FOV factors, the kick table in step with S-07's CameraModesFeel rows.
     /// </summary>
+    [Category("FPTP")]
     [TestFixture]
     [Category("WP069")]
     public sealed class FpWeaponFeelTests

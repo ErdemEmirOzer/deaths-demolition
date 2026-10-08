@@ -24,6 +24,9 @@ AnimationTests                    # 110.3 s · 15 tests
 AnimationV003Tests                # 16.4 s · 4 tests
 AnimationRagdollTests             # 16.6 s · 4 tests
 AnimationSpecialTests             # 4.9 s · 2 tests
+R2FiksturKameraTests              # 0.0 s · 1 test (r3b-ci 07.10, no scene): the R2 fixtures hand the next test TopDown
+Sr1BoltTutusTests                 # 2.8–10.0 s · 1 test (r3b 07.10): sr_1's bolt cycle keeps the hold + support hand
+R2HeroOlcumTests                  # 4.1–12.8 s · KavramaSatiri only (r3b-ci 07.10: rows vs LOD0 ≤ 0.3 cm, TD); its 14 Explicit tests Skipped
 # UI (S-09)
 MetaUiSliceTests                  # 92.5 s · 12 tests
 HudCoverageTests                  # 8.2 s · 1 test

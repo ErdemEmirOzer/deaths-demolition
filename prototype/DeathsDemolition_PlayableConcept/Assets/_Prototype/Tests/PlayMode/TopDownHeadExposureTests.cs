@@ -26,7 +26,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// frames at or below it. Numbers for C-00 and S-04 (the simulator's top-down head share); asserts only that each pose
     /// was sampled. Explicit: run by name.
     /// </summary>
-    [Category("WP069KafaPayi")]
     public sealed class TopDownHeadExposureTests
     {
         private const float KurulumZamanAsimi = 30f;
@@ -55,6 +54,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
         }
 
+        [Category("WP069KafaPayi")]
         [UnityTest, Explicit]
         [Category("Diagnostics")]
         [Timeout(300000)]
@@ -191,6 +191,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// TP/FP line (eye 1.6 m → the body's visual centre) for comparison. Standard / Special / Elite / Ultra; idle, walk, run,
         /// attack phases, stagger, gel. Numbers for C-00 (the fix is decided on them); asserts only that the poses were sampled.
         /// </summary>
+        [Category("WP069KafaPayi")]
         [UnityTest, Explicit]
         [Category("Diagnostics")]
         [Timeout(420000)]
