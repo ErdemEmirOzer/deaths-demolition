@@ -48,7 +48,12 @@ namespace DD.Art.Pipeline.EditorTools
             "DD/SkyPanorama", "DD/UnderstorySkirt", "DD/SunDisc",
         };
 
-        public static void RenderPoses() => WithLook(cam =>
+        public static void RenderPoses() => RenderPoses(false);
+
+        /// <summary>WP-092 + WP-093 evidence: requires a populated Cinematic-tier runtime vegetation preview.</summary>
+        public static void RenderCombinedPoses() => RenderPoses(true);
+
+        private static void RenderPoses(bool requireVegetation) => WithLook(cam =>
         {
             string dir = OutDir();
             var bareRows = new StringBuilder();
@@ -68,7 +73,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             File.WriteAllText(Path.Combine(dir, "bare-ground.json"), "{" + bareRows + ", \"mean\": " + F(bareSum / Poses.Length) + "}");
             Debug.Log("[TDCAP] " + Poses.Length + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / Poses.Length));
-        });
+        }, requireVegetation);
 
         /// <summary>WP-092 B5 · One frame at the TD rig's angle from another offset (the ground study's close looks) → DD_TD_OUT/&lt;name&gt;.png.</summary>
         public static void RenderAt(string name, Vector2 feet, Vector3 offset) => WithLook(cam =>
@@ -258,7 +263,18 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[TDCAP] object-empty " + json);
         }
 
-        private static void WithLook(Action<Camera> body)
+        [Serializable]
+        private sealed class CombinedCaptureContext
+        {
+            public string scenePath, vegetationType, completedUtc;
+            public string[] poseNames;
+            public Vector2[] poseFeet;
+            public Vector3 rigOffset;
+            public int vegetationTier, vegetationInstances, poseCount, width, height;
+            public float verticalFov, focusHeight;
+        }
+
+        private static void WithLook(Action<Camera> body, bool requireVegetation = false)
         {
             EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
             WorldLayoutKind previous = WorldLayout.Current;
@@ -280,8 +296,31 @@ namespace DD.Art.Pipeline.EditorTools
             cam.farClipPlane = 600f;
             cam.enabled = false;
             WorldAtmosphere.ConfigureCamera(cam);
-            IDisposable vegetation = VegetationPreview(SceneManager.GetActiveScene());
-            try { body(cam); }
+            IDisposable vegetation = null;
+            try
+            {
+                Scene world = SceneManager.GetActiveScene();
+                vegetation = VegetationPreview(world, requireVegetation, out int tier, out int instances);
+                body(cam);
+                if (requireVegetation)
+                {
+                    var context = new CombinedCaptureContext
+                    {
+                        scenePath = world.path, vegetationType = VegetationPreviewType,
+                        completedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+                        vegetationTier = tier, vegetationInstances = instances,
+                        poseCount = Poses.Length, width = Width, height = Height, verticalFov = RigFov,
+                        focusHeight = FocusHeight, rigOffset = RigOffset,
+                        poseNames = new string[Poses.Length], poseFeet = new Vector2[Poses.Length],
+                    };
+                    for (int i = 0; i < Poses.Length; i++)
+                    {
+                        context.poseNames[i] = Poses[i].name;
+                        context.poseFeet[i] = Poses[i].feet;
+                    }
+                    File.WriteAllText(Path.Combine(OutDir(), "combined-capture-context.json"), JsonUtility.ToJson(context, true));
+                }
+            }
             finally
             {
                 vegetation?.Dispose();
@@ -299,20 +338,41 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public const string VegetationPreviewType = "DD.Prototype.World.Vegetation.VegetationPreview";
 
-        private static IDisposable VegetationPreview(Scene world)
+        private static IDisposable VegetationPreview(Scene world, bool required, out int selectedTier, out int instances)
         {
+            selectedTier = -1;
+            instances = 0;
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type type = assembly.GetType(VegetationPreviewType, false);
                 if (type == null) continue;
-                FieldInfo tier = type.GetField("TierHigh", BindingFlags.Public | BindingFlags.Static);
+                FieldInfo tier = type.GetField(required ? "TierCinematic" : "TierHigh", BindingFlags.Public | BindingFlags.Static);
                 MethodInfo populate = type.GetMethod("Populate", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Scene), typeof(int) }, null);
-                if (populate == null) { Debug.LogWarning("[TDCAP] vegetation preview: " + VegetationPreviewType + " has no Populate(Scene, int)"); return null; }
-                int high = tier != null ? Convert.ToInt32(tier.GetValue(null)) : 1;
-                Debug.Log("[TDCAP] vegetation preview: on (tier " + high + ")");
-                return populate.Invoke(null, new object[] { world, high }) as IDisposable;
+                if (populate == null)
+                {
+                    if (required) throw new InvalidOperationException("[TDCAP] combined capture requires Populate(Scene, int)");
+                    Debug.LogWarning("[TDCAP] vegetation preview: " + VegetationPreviewType + " has no Populate(Scene, int)");
+                    return null;
+                }
+                selectedTier = tier != null ? Convert.ToInt32(tier.GetValue(null)) : (required ? 2 : 1);
+                IDisposable handle = populate.Invoke(null, new object[] { world, selectedTier }) as IDisposable;
+                try
+                {
+                    PropertyInfo total = handle?.GetType().GetProperty("TotalInstances", BindingFlags.Public | BindingFlags.Instance);
+                    instances = total != null ? Convert.ToInt32(total.GetValue(handle)) : 0;
+                    if (required && (handle == null || instances <= 0))
+                        throw new InvalidOperationException("[TDCAP] combined capture requires a populated vegetation field; TotalInstances=" + instances);
+                    Debug.Log("[TDCAP] vegetation preview: tier=" + selectedTier + " instances=" + instances);
+                    return handle;
+                }
+                catch
+                {
+                    handle?.Dispose();
+                    throw;
+                }
             }
 
+            if (required) throw new InvalidOperationException("[TDCAP] combined capture requires WP-093 VegetationPreview");
             Debug.Log("[TDCAP] vegetation preview: absent (WP-093 not in this project) — ground cover without the grass");
             return null;
         }
