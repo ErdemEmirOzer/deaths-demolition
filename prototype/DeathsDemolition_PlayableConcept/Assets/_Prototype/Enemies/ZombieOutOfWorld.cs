@@ -122,7 +122,11 @@ namespace DD.Prototype.Enemies
             if (now - _stuckWindowStart < window) return false;
 
             bool noPath = _pathFollower == null || !_pathFollower.HasCompletePath;
-            bool notMoving = FlatDistance(p, _stuckAnchor) < StuckMoveMetres;
+            // The diagnostic short window must retain the shipped watchdog's minimum movement
+            // rate. Comparing 0.75 m over 1.5 s instead of 9 s wrongly removed a complete-path body
+            // still moving 0.4–0.9 m/s (ik2 P12, 41 m from the target). The shipped 9 s rule is unchanged.
+            float moveThreshold = StuckMoveMetres * Mathf.Min(1f, window / StuckWindowSeconds);
+            bool notMoving = FlatDistance(p, _stuckAnchor) < moveThreshold;
             if (!noPath && !notMoving)
             {
                 StartStuckWindow(now, p, distance);   // moving on a complete path (a kited chase) — not stuck
@@ -177,7 +181,10 @@ namespace DD.Prototype.Enemies
 
             Vector3 fwd = transform.forward; fwd.y = 0f;
             float headingError = _commandedVelocity.sqrMagnitude > 1e-4f && fwd.sqrMagnitude > 1e-4f ? Vector3.Angle(fwd, _commandedVelocity) : -1f;
-            Debug.Log("[OutOfWorld] stuck." + what + " tier=" + _tier + " dist=" + distance.ToString("F2") + " noPath=" + noPath + " notMoving=" + notMoving
+            Debug.Log("[OutOfWorld] stuck." + what + " body=" + GetInstanceID() + " tier=" + _tier
+                      + " position=" + p.ToString("F3") + " target=" + target.ToString("F3") + " anchor=" + _stuckAnchor.ToString("F3")
+                      + " elapsed=" + (Time.time - _stuckWindowStart).ToString("F2")
+                      + " window=" + (StuckWindowOverride > 0f ? StuckWindowOverride : StuckWindowSeconds).ToString("F2") + " dist=" + distance.ToString("F2") + " noPath=" + noPath + " notMoving=" + notMoving
                       + " moved=" + FlatDistance(p, _stuckAnchor).ToString("F2") + " waiting=" + _waiting + " stall=" + _stallSeconds.ToString("F2") + "/" + _waitStallSeconds.ToString("F2")
                       + " crowdAhead=" + ahead + " requested=" + _currentSpeed.ToString("F2") + " real=" + RealGroundSpeed.ToString("F2") + " own=" + _steerSpeed.ToString("F2")
                       + " commanded=" + _commandedVelocity.magnitude.ToString("F2") + " headingErr=" + headingError.ToString("F0") + " queued=" + (_pathFollower != null && _pathFollower.IsQueued));
