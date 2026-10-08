@@ -908,6 +908,11 @@ namespace DD.Prototype.Characters
                 // that transition in time for the authored magazine beats. Select the
                 // same v3 reload state explicitly and clear any pending pickup request.
                 _animator.ResetTrigger(PickupId);
+                // HandleSpecialEnded requests the classic hand-back SwitchIn. If a new
+                // Special reload starts before that old upper transition finishes, the
+                // pending trigger becomes eligible as SwitchIn_V3 and cuts off ReloadTac.
+                // This reload supersedes that previous weapon's hand-back request.
+                _animator.ResetTrigger(SwitchInId);
                 _animator.ResetTrigger(ReloadId);
                 _animator.CrossFadeInFixedTime(empty ? CharacterAnimatorContract.ReloadEmptyState : CharacterAnimatorContract.ReloadTacState,
                     0.05f, _overrideLayer, 0f);
