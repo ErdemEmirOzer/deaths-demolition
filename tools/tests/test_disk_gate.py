@@ -9,12 +9,16 @@ TOOLS = Path(__file__).resolve().parents[1]
 
 
 class DiskGateTests(unittest.TestCase):
-    def gate(self, free_kib, swap_used, path="/"):
+    def gate(self, free_kib, swap_used, path="/", mem_free="10"):
         with tempfile.TemporaryDirectory(prefix="dd-disk-gate-") as tmp:
             fake = Path(tmp)
             (fake / "df").write_text(f"#!/bin/sh\necho 'Filesystem 1024-blocks Used Available'\necho '/dev/x 999 1 {free_kib}'\n")
             (fake / "sysctl").write_text(f"#!/bin/sh\necho 'total = 16384.00M  used = {swap_used}  free = 1.00M  (encrypted)'\n")
-            for f in ("df", "sysctl"):
+            # WP-099 (C-00 08.10): memory_pressure -Q's free %; "missing" = no answer (unreadable). Default 10 % (low).
+            (fake / "memory_pressure").write_text("#!/bin/sh\nexit 1\n" if mem_free == "missing" else
+                                                  f"#!/bin/sh\necho 'The system has 17179869184 (1048576 pages with a page size of 16384).'\n"
+                                                  f"echo 'System-wide memory free percentage: {mem_free}%'\n")
+            for f in ("df", "sysctl", "memory_pressure"):
                 (fake / f).chmod(0o755)
             r = subprocess.run(["zsh", "-c", f'PATH="{fake}:$PATH"; DD_TIMELINE=""; source "$1"; dd_disk_gate "$2"', "zsh",
                                 str(TOOLS / "dd-env.sh"), path], capture_output=True, text=True, timeout=30)
@@ -42,7 +46,7 @@ class DiskGateTests(unittest.TestCase):
     def test_DiskKapisi_Swap12GiBUstu_75(self):
         rc, out = self.gate(99999999, "12289.50M")
         self.assertEqual(rc, 75, out)
-        self.assertIn("used swap 12289.50 MB > 12288 (12 GiB)", out)
+        self.assertIn("used swap 12289.50 MB > 12288 (12 GiB) and memory free 10% < 25%", out)
 
     def test_DiskKapisi_N8_SwapOndaligi_Sayilir(self):
         """C-00 06.10 (N-8): 12288.50M is over the 12 GiB stop — it was read as 12288 and passed; the decimals count both
@@ -54,6 +58,35 @@ class DiskGateTests(unittest.TestCase):
                 self.assertEqual(rc_want, rc, out)
         rc, out = self.gate(99999999, "10240.01M")
         self.assertIn("WARNING disk-gate: used swap 10240.01 MB", out)
+
+    def test_SwapKapisi_12Ustu16Alti_BellekBossa_UyariylaBaslar(self):
+        """WP-099 (C-00 08.10): macOS keeps stale swap until a restart — above 12 GiB the gate looks at live memory:
+        ≥ 25 % free → a WARNING line with both values, started; < 25 % or no answer → 75 with both values."""
+        rc, out = self.gate(99999999, "13000.00M", mem_free="63")
+        self.assertEqual(0, rc, out)
+        self.assertIn("WARNING disk-gate: used swap 13000.00 MB > 12288 (12 GiB) but memory free 63% ≥ 25%", out)
+        self.assertIn("disk-gate: ok freeKiB=99999999 swapUsedMB=13000.00 memFreePct=63", out)
+        for mem, rc_want in (("25", 0), ("24", 75), ("missing", 75)):
+            with self.subTest(mem=mem):
+                rc, out = self.gate(99999999, "13000.00M", mem_free=mem)
+                self.assertEqual(rc_want, rc, out)
+        rc, out = self.gate(99999999, "13000.00M", mem_free="24")
+        self.assertIn("used swap 13000.00 MB > 12288 (12 GiB) and memory free 24% < 25% — not started (75)", out)
+        rc, out = self.gate(99999999, "13000.00M", mem_free="missing")
+        self.assertIn("memory free unknown% < 25%", out)
+
+    def test_SwapKapisi_16GiBUstu_HerDurumda75(self):
+        for swap, rc_want in (("16384.00M", 0), ("16384.01M", 75), ("20000.00M", 75)):
+            with self.subTest(swap=swap):
+                rc, out = self.gate(99999999, swap, mem_free="90")
+                self.assertEqual(rc_want, rc, out)
+        rc, out = self.gate(99999999, "16384.01M", mem_free="90")
+        self.assertIn("used swap 16384.01 MB > 16384 (16 GiB) — not started (75)", out)
+
+    def test_SwapKapisi_12AltindaBellekOkunmaz(self):
+        """below 12 GiB the gate never asks memory_pressure — a missing tool changes nothing there."""
+        rc, out = self.gate(99999999, "12288.00M", mem_free="missing")
+        self.assertEqual(0, rc, out); self.assertNotIn("memFreePct", out)
 
     def test_DiskKapisi_OkunamayanDegerler_75(self):
         rc, out = self.gate("n/a", "100.00M")
