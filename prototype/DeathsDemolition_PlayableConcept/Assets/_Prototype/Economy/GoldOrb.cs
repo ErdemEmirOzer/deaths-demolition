@@ -1,5 +1,7 @@
 using DD.Prototype.Core.Pooling;
+using System;
 using DD.Prototype.Feedback;
+using DD.Prototype.UI;
 using UnityEngine;
 
 namespace DD.Prototype.Economy
@@ -16,20 +18,37 @@ namespace DD.Prototype.Economy
     ///   Spawned      the hop from the death point to the resting point (scaled time)
     ///   Waiting      lying on the ground; NEVER expires (WP-004: gold does not vanish)
     ///   Magnetizing  the player came within MagnetRadius: accelerate at him
-    ///   Collected    taken on contact - credited first, then a short flash, then the pool
+    ///   Collected    taken on contact - credited first, then (WP-098B) a short flight to the HUD
+    ///                gold symbol on UNSCALED time when the HUD answers, else today's short
+    ///                flash in place; then the pool
     ///   AutoCollected the round-end sweep took it - credited first, then a short flight to
     ///                the player on UNSCALED time (the world is frozen), then the pool
     ///
     /// Everything before collection is scaled delta time: a paused game must not move a
     /// packet, and a frozen round end must not let packets drift toward the player. Only
-    /// the sweep flight runs on unscaled time, because it happens under the freeze and
-    /// the gold it shows is already in the wallet.
+    /// the flights run on unscaled time, because the sweep happens under the freeze and
+    /// the gold they show is already in the wallet.
+    ///
+    /// WP-098B feel: Landed (glint) → MagnetStart → FeelEvents.GoldCollected (S-02's, off the wallet
+    /// credit) → FlightArrived; the other three through <see cref="GoldFeelEvents"/>. The HUD flight is bound to
+    /// S-09's <see cref="HudGoldTarget"/>: the point is read at flight start (and again when its
+    /// LayoutVersion moves), Depart(amount) when the coin leaves, Arrive(amount) when it lands.
+    /// No HUD point → no Depart, today's presentation. Reduced Motion → no flight, Arrive at once.
     ///
     /// Built from primitives at spawn, like every other visual in this prototype. No
     /// authored prefab means no missing reference.
     /// </summary>
     public sealed class GoldOrb : PooledBehaviour
     {
+        /// <summary>Reads the HUD gold symbol's screen point. Signature of <see cref="HudGoldTarget.TryGetScreenPoint"/>.</summary>
+        internal delegate bool HudPointProbe(out Vector2 screenPoint);
+
+        /// <summary>
+        /// EditMode seam: EditMode has no HUD, so a test answers the screen point. Null in the game
+        /// (the packet reads <see cref="HudGoldTarget"/>). Depart/Arrive always go to HudGoldTarget.
+        /// </summary>
+        internal static HudPointProbe HudProbeForTests;
+
         private readonly GoldPacketLifecycle _packet = new GoldPacketLifecycle();
 
         private GoldService _owner;
@@ -53,6 +72,17 @@ namespace DD.Prototype.Economy
         private float _bobPhase;
         private float _baseScale = 0.28f;
 
+        // WP-098B HUD flight. _arrivalAmount > 0 while a Depart waits for its Arrive.
+        private bool _flightToHud;
+        private float _flightDuration;
+        private float _flightEndScale;
+        private float _hudDistance;
+        private Vector2 _hudScreenPoint;
+        private int _hudLayout;
+        private Vector3 _flightTarget;
+        private int _arrivalAmount;
+        private GoldCollectKind _arrivalKind;
+
         /// <summary>Ownership state of this packet. The wallet-facing truth.</summary>
         public GoldPacketLifecycle Packet => _packet;
 
@@ -64,6 +94,9 @@ namespace DD.Prototype.Economy
 
         /// <summary>True while this packet holds one of the light budget's slots.</summary>
         public bool HasLight => _lightOwned;
+
+        /// <summary>WP-098B · True while the packet flies to the HUD gold symbol (Depart called, Arrive pending).</summary>
+        public bool IsFlyingToHud => _flightToHud;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -100,12 +133,14 @@ namespace DD.Prototype.Economy
             _magnetSpeed = 0f;
             _flashTime = 0f;
             _flightTime = 0f;
-            _bobPhase = Random.value * Mathf.PI * 2f;
+            _flightToHud = false;
+            _arrivalAmount = 0;
+            _bobPhase = UnityEngine.Random.value * Mathf.PI * 2f;
 
             _hopFrom = deathPosition + Vector3.up * 0.6f;
 
-            Vector2 scatter = Random.insideUnitCircle.normalized *
-                              Random.Range(_tuning.ScatterMin, _tuning.ScatterMax);
+            Vector2 scatter = UnityEngine.Random.insideUnitCircle.normalized *
+                              UnityEngine.Random.Range(_tuning.ScatterMin, _tuning.ScatterMax);
             _hopTo = deathPosition + new Vector3(scatter.x, _tuning.RestHeight, scatter.y);
 
             transform.position = _hopFrom;
@@ -120,24 +155,30 @@ namespace DD.Prototype.Economy
             {
                 _visual.localScale = Vector3.one * _baseScale;
                 _visual.localPosition = Vector3.zero;
-                _visual.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                _visual.localRotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f);
             }
 
             return true;
         }
 
         /// <summary>
-        /// The sweep took this packet (already credited). Fly to the player on unscaled
-        /// time and return to the pool. Called by the service; the state is already
-        /// AutoCollected.
+        /// The sweep took this packet (already credited). Fly to the HUD gold symbol when one
+        /// answers (WP-098B, Depart/Arrive per coin), else to the player as before, on unscaled
+        /// time, and return to the pool. Called by the service; the state is already
+        /// AutoCollected. <paramref name="creditedAmount"/> 0 = the wallet refused it: no HUD traffic.
         /// </summary>
-        internal void BeginSweepFlight()
+        internal void BeginSweepFlight(int creditedAmount)
         {
             _flightTime = 0f;
             _flightFrom = transform.position;
             if (_visual != null)
             {
                 _visual.localPosition = Vector3.zero;
+            }
+
+            if (creditedAmount > 0)
+            {
+                TryFlyToHud(creditedAmount, GoldCollectKind.RoundClearAuto, _owner != null ? _owner.SweepFlightDuration : 0.35f);
             }
         }
 
@@ -153,6 +194,11 @@ namespace DD.Prototype.Economy
             {
                 _ap010.SetPulling(false, Vector3.zero);
             }
+
+            // A coin that departed always arrives: a body pulled mid-flight (run end, F1 clear)
+            // releases its amount now instead of leaving the HUD counter behind for 2 s.
+            CompleteArrival();
+            _flightToHud = false;
 
             bool lostGold = _packet.Recycle();
 
@@ -180,17 +226,27 @@ namespace DD.Prototype.Economy
                 return;
             }
 
-            // The sweep flight runs under the round-end freeze, so it is the one thing
-            // here that must not wait for scaled time. The gold is already credited; if
-            // the flight never finished the wallet would still be right.
-            if (_packet.State == GoldPacketState.AutoCollected)
+            Tick(Time.deltaTime, Mathf.Min(Time.unscaledDeltaTime, 0.1f));
+        }
+
+        /// <summary>One frame of the packet. Update feeds the real clocks; EditMode tests feed their own.</summary>
+        internal void Tick(float dt, float unscaledDt)
+        {
+            if (_tuning == null)
             {
-                TickSweepFlight(Mathf.Min(Time.unscaledDeltaTime, 0.1f));
+                return;
+            }
+
+            // The flights (sweep and HUD) run under the round-end freeze, so they are the one
+            // thing here that must not wait for scaled time. The gold is already credited; if
+            // the flight never finished the wallet would still be right.
+            if (_packet.State == GoldPacketState.AutoCollected || _flightToHud)
+            {
+                TickFlight(unscaledDt);
                 return;
             }
 
             // Scaled: pause and the round-end freeze stop the packet with everything else.
-            float dt = Time.deltaTime;
             if (dt <= 0f)
             {
                 return;
@@ -233,7 +289,22 @@ namespace DD.Prototype.Economy
             if (t >= 1f)
             {
                 _packet.Land();
+                if (_packet.State == GoldPacketState.Waiting)
+                {
+                    OnLanded();
+                }
             }
+        }
+
+        private void OnLanded()
+        {
+            // WP-098B: the landing glint (AP-010 sparkle card) and the feel event (S-08 thud, S-07 VFX).
+            if (_ap010 != null)
+            {
+                _ap010.Glint();
+            }
+
+            GoldFeelEvents.RaiseLanded(new GoldLandedFeel(transform.position, _packet.Amount));
         }
 
         private void TickIdleAndMagnet(float dt)
@@ -265,6 +336,7 @@ namespace DD.Prototype.Economy
                 if (distanceSqr <= magnet * magnet && _packet.Attract())
                 {
                     _magnetSpeed = 0f;
+                    GoldFeelEvents.RaiseMagnetStart(new GoldMagnetFeel(this, transform.position, _packet.Amount));
                 }
             }
 
@@ -298,7 +370,7 @@ namespace DD.Prototype.Economy
 
         private void Collect()
         {
-            if (!_packet.TryCollect(GoldCollectKind.Manual, out _))
+            if (!_packet.TryCollect(GoldCollectKind.Manual, out int amount))
             {
                 return;
             }
@@ -306,8 +378,104 @@ namespace DD.Prototype.Economy
             _flashTime = 0f;
 
             // Credit first, animate second. If anything below throws, the player still
-            // has the gold.
-            _owner?.OnPacketCollected(this);
+            // has the gold. The flight (WP-098B) never credits: it only moves the coin.
+            bool credited = _owner != null && _owner.OnPacketCollected(this);
+            if (credited)
+            {
+                _flightTime = 0f;
+                _flightFrom = transform.position;
+                TryFlyToHud(amount, GoldCollectKind.Manual, _owner.HudFlightDuration);
+            }
+        }
+
+        // ------------------------------------------------------------------ HUD flight (WP-098B)
+
+        /// <summary>
+        /// Starts the coin's flight to the HUD gold symbol. False = the packet keeps today's
+        /// presentation (flash in place / sweep flight to the player):
+        ///   no HUD point        → no Depart, no Arrive (the HUD counts at the credit, as today);
+        ///   Reduced Motion, a zero duration or no camera → no flight, Arrive at once.
+        /// </summary>
+        private bool TryFlyToHud(int amount, GoldCollectKind kind, float duration)
+        {
+            if (!TryReadHudPoint(out Vector2 point))
+            {
+                return false;
+            }
+
+            Camera cam = FeedbackCameraRef.Current;
+            if (UiMotion.ReducedMotion || duration <= 0f || cam == null || _owner == null)
+            {
+                Arrive(amount, kind, false);
+                return false;
+            }
+
+            // The end point lies on the camera ray through the symbol, nearer the lens than the
+            // packet, so the coin rises out of the garden; at that depth it projects exactly
+            // onto the symbol whatever the camera does meanwhile.
+            Transform camT = cam.transform;
+            float depth = Vector3.Dot(transform.position - camT.position, camT.forward);
+            _hudDistance = Mathf.Max(cam.nearClipPlane + 0.5f, depth * _owner.HudFlightDepth);
+            _hudScreenPoint = point;
+            _hudLayout = HudGoldTarget.LayoutVersion;
+
+            _flightToHud = true;
+            _flightTime = 0f;
+            _flightFrom = transform.position;
+            _flightDuration = duration;
+            _flightEndScale = _owner.HudFlightEndScale;
+            _flightTarget = HudWorldPoint(cam);
+            _arrivalAmount = amount;
+            _arrivalKind = kind;
+
+            if (_visual != null)
+            {
+                _visual.localPosition = Vector3.zero;
+            }
+
+            try { HudGoldTarget.Depart(amount); }
+            catch (Exception e) { Debug.LogException(e, this); }
+
+            return true;
+        }
+
+        private static bool TryReadHudPoint(out Vector2 point)
+        {
+            HudPointProbe probe = HudProbeForTests;
+            return probe != null ? probe(out point) : HudGoldTarget.TryGetScreenPoint(out point);
+        }
+
+        /// <summary>The symbol's point at the flight's depth; re-reads the screen point when the HUD layout moved.</summary>
+        private Vector3 HudWorldPoint(Camera cam)
+        {
+            int layout = HudGoldTarget.LayoutVersion;
+            if (layout != _hudLayout && TryReadHudPoint(out Vector2 moved))
+            {
+                _hudScreenPoint = moved;
+                _hudLayout = layout;
+            }
+
+            return cam.ScreenToWorldPoint(new Vector3(_hudScreenPoint.x, _hudScreenPoint.y, _hudDistance));
+        }
+
+        private void CompleteArrival()
+        {
+            if (_arrivalAmount <= 0)
+            {
+                return;
+            }
+
+            int amount = _arrivalAmount;
+            _arrivalAmount = 0;
+            Arrive(amount, _arrivalKind, true);
+        }
+
+        private void Arrive(int amount, GoldCollectKind kind, bool flew)
+        {
+            try { HudGoldTarget.Arrive(amount); }
+            catch (Exception e) { Debug.LogException(e, this); }
+
+            GoldFeelEvents.RaiseFlightArrived(new GoldArrivedFeel(amount, kind, flew));
         }
 
         private void TickFlash(float dt)
@@ -334,15 +502,30 @@ namespace DD.Prototype.Economy
             }
         }
 
-        private void TickSweepFlight(float unscaledDt)
+        /// <summary>
+        /// The one flight path: the round-end sweep to the player (as before) and, WP-098B, any
+        /// taken packet to the HUD gold symbol. Unscaled; the gold is already in the wallet.
+        /// </summary>
+        private void TickFlight(float unscaledDt)
         {
             _flightTime += unscaledDt;
 
-            float duration = _owner != null ? _owner.SweepFlightDuration : 0.35f;
-            float t = Mathf.Clamp01(_flightTime / duration);
+            float duration = _flightToHud ? _flightDuration : (_owner != null ? _owner.SweepFlightDuration : 0.35f);
+            float t = Mathf.Clamp01(_flightTime / Mathf.Max(0.01f, duration));
 
             Vector3 target = _flightFrom;
-            if (_owner != null && _owner.TryGetPlayerPoint(out Vector3 player))
+            if (_flightToHud)
+            {
+                // Re-projected every frame: the camera follows the player while the coin flies.
+                Camera cam = FeedbackCameraRef.Current;
+                if (cam != null)
+                {
+                    _flightTarget = HudWorldPoint(cam);
+                }
+
+                target = _flightTarget;
+            }
+            else if (_owner != null && _owner.TryGetPlayerPoint(out Vector3 player))
             {
                 target = player;
             }
@@ -353,7 +536,13 @@ namespace DD.Prototype.Economy
 
             if (_visual != null)
             {
-                _visual.localScale = Vector3.one * (_baseScale * Mathf.Lerp(1f, 0.35f, t));
+                float endScale = _flightToHud ? _flightEndScale : 0.35f;
+                _visual.localScale = Vector3.one * (_baseScale * Mathf.Lerp(1f, endScale, t));
+            }
+
+            if (_flightToHud && _ap010 != null)
+            {
+                _ap010.SetPulling(t < 1f, target);   // the REQ-014 trail points at the symbol
             }
 
             if (_light != null && _light.enabled)
@@ -363,6 +552,7 @@ namespace DD.Prototype.Economy
 
             if (t >= 1f || _owner == null)
             {
+                CompleteArrival();   // FlightArrived = the Arrive call, before the body leaves
                 Despawn();
             }
         }
@@ -394,7 +584,9 @@ namespace DD.Prototype.Economy
             Collider collider = sphere.GetComponent<Collider>();
             if (collider != null)
             {
-                Destroy(collider);
+                // EditMode tests build packets too, and Destroy is play-mode only.
+                if (Application.isPlaying) Destroy(collider);
+                else DestroyImmediate(collider);
             }
 
             _visual = sphere.transform;

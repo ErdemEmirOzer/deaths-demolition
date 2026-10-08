@@ -36,7 +36,7 @@ namespace DD.Prototype.UI
     /// buffer at its own size (the WP-011 CaptureAgent lesson: CaptureScreenshotAsTexture,
     /// not the path overload) and quits.
     /// </summary>
-    public static class UiCaptureAgent
+    public static partial class UiCaptureAgent
     {
         private const string ScreenFlag = "-ddUiCapture";
         private const string OutFlag = "-ddUiCaptureOut";
@@ -819,7 +819,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        private sealed class Driver : MonoBehaviour
+        private sealed partial class Driver : MonoBehaviour
         {
             private string _screen;
             private string _out;
@@ -932,6 +932,14 @@ namespace DD.Prototype.UI
                 {
                     yield return _screen == "cinematic" ? CinematicFrames() : _screen == "cinematicperf" ? CinematicPerf() : CinematicMp4();
                     Debug.Log("[UiCapture] " + _screen + " done");
+                    Application.Quit();
+                    yield break;
+                }
+
+                if (_screen == "windows")
+                {
+                    yield return WindowsFrames();
+                    Debug.Log("[UiCapture] windows done");
                     Application.Quit();
                     yield break;
                 }

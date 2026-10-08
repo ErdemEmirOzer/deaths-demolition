@@ -563,8 +563,8 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreNotSame(screen.SkinPreviews[i].sprite, screen.SkinPreviews[(i + 1) % 3].sprite, "her skin farklı görsel");
             }
 
-            // WP-068 slice 7 (M4-R1): one row per roster weapon, each with its own glyph (a v3 id without its cell borrows
-            // its class sibling's until N19 / AP-021).
+            // WP-068 slice 7 (M4-R1): one row per roster weapon, each with its own picture. R3 m12 (WP-098B): the picture is
+            // the weapon's own AP-036 side view ("Weapon.<weaponId>.<id>" → AP036_side_<weaponId>), not a G1 glyph.
             int satir = 0;
             int glif = 0;
             foreach (UiButton b in screen.GetComponentsInChildren<UiButton>(true))
@@ -575,9 +575,10 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 satir++;
+                string weaponId = b.name.Split('.')[1];
                 foreach (Image img in b.GetComponentsInChildren<Image>(true))
                 {
-                    if (img.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Weapon."))
+                    if (img.name == "Icon" && img.sprite != null && img.sprite.name == SelectionScreen.WeaponSideView.FilePrefix + weaponId)
                     {
                         glif++;
                         break;
@@ -586,7 +587,27 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.GreaterOrEqual(satir, 9, "on silahlık kadro (rl_1 B3'e kadar kapalı)");
-            Assert.AreEqual(satir, glif, "her silah satırı kendi silah glifini çizer");
+            Assert.AreEqual(satir, glif, "her silah satırı kendi AP-036 yan görünümünü çizer");
+
+            // The two Special tiles draw their own side views too.
+            foreach (string special in new[] { "sw_arc", "sw_gel" })
+            {
+                Transform tile = null;
+                foreach (RectTransform r in screen.GetComponentsInChildren<RectTransform>(true))
+                {
+                    if (r.name == "Special." + special)
+                    {
+                        tile = r;
+                        break;
+                    }
+                }
+
+                Assert.IsNotNull(tile, "Special." + special + " karosu");
+                Transform icon = tile.Find("Icon");
+                Assert.IsNotNull(icon, special + " görseli");
+                Image iconImage = icon.GetComponent<Image>();
+                Assert.AreEqual(SelectionScreen.WeaponSideView.FilePrefix + special, iconImage.sprite != null ? iconImage.sprite.name : null, special + " AP-036 yan görünümü");
+            }
 
             PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
@@ -825,10 +846,12 @@ namespace DD.Prototype.Tests.PlayMode
                     if (!b.IsInteractable())
                     {
                         locked++;
-                        // Slice 9 · E3 T1 (direction E3): a locked option says what opens it - the kit's disabled reason.
-                        Transform reason = b.transform.Find("Reason");
-                        Assert.IsNotNull(reason, b.name + " carries its condition");
-                        StringAssert.StartsWith(UiStrings.Get("tree.state.locked"), reason.GetComponent<TMPro.TMP_Text>().text, b.name);
+                        // Slice 9 · E3 T1 (direction E3): a locked option says what opens it. WP-098B: the option is a brush kit list
+                        // row - the condition is its trailing word (SetRowStatus), not a child named "Reason".
+                        bool worded = false;
+                        foreach (TMPro.TMP_Text word in b.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                            worded |= word.text.StartsWith(UiStrings.Get("tree.state.locked"), System.StringComparison.Ordinal);
+                        Assert.IsTrue(worded, b.name + " carries its condition");
                     }
                 }
             }

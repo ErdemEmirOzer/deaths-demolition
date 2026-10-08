@@ -1,0 +1,361 @@
+{
+  "schema": "dd.ui.ap036-intake.v1",
+  "package": "AP-036 v001 (AP035-WeaponSideViews)",
+  "work_package": "WP-098B madde 12",
+  "date": "2026-10-07",
+  "source_folder": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-036/exports/v001",
+  "source_manifest_sha256": "bf32d705a07c25f32cb3f5e17abf1e19eb6a94794c7a3dffb69798482133abe8",
+  "length_source": "AP-021 exports/AP021-manifest.json weapons[*].length_m (the renders are not one ortho scale)",
+  "method": "alpha bbox trim, premultiplied Lanczos to min(600 px/m, source px/m), 4 px transparent pad, canvas to x4 (BC7 blocks)",
+  "license": "project-owned AP-021 models rendered by AP-036; no third-party source (AP-036 LICENSES.csv)",
+  "items": [
+    {
+      "weapon_id": "ar_1",
+      "display_name": "Hinawa",
+      "file": "AP036_side_ar_1.png",
+      "size": [
+        728,
+        140
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 720,
+        "h": 131
+      },
+      "length_m": 1.2,
+      "height_m": 0.2183,
+      "px_per_m": 600.0,
+      "source_px_per_m": 668.3,
+      "source_file": "ar_1_Hinawa_side_ortho.png",
+      "source_sha256": "63a456f9c297ebbd444592136a4743ed86a1283a9ddb222ae829de5248d102c2",
+      "source_bbox": [
+        799,
+        343,
+        1601,
+        489
+      ],
+      "sha256": "d7f4b5045edf72cee51cb92fe190a282b9da1bb5509892844831476df488bd91",
+      "bytes": 57258
+    },
+    {
+      "weapon_id": "ar_2",
+      "display_name": "Sanren",
+      "file": "AP036_side_ar_2.png",
+      "size": [
+        668,
+        216
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 660,
+        "h": 205
+      },
+      "length_m": 1.0999,
+      "height_m": 0.3416,
+      "px_per_m": 600.1,
+      "source_px_per_m": 778.3,
+      "source_file": "ar_2_Sanren_side_ortho.png",
+      "source_sha256": "698ccfe015d78888c81476675e380041ef3da2b5767fdf27b368922821325c07",
+      "source_bbox": [
+        772,
+        311,
+        1628,
+        577
+      ],
+      "sha256": "a46cb94cbefcb93e03fefbaee28f66d03872d49403d32a12d2693d671ac73bda",
+      "bytes": 89323
+    },
+    {
+      "weapon_id": "lmg_1",
+      "display_name": "Mukade",
+      "file": "AP036_side_lmg_1.png",
+      "size": [
+        788,
+        236
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 780,
+        "h": 227
+      },
+      "length_m": 1.3002,
+      "height_m": 0.3784,
+      "px_per_m": 599.9,
+      "source_px_per_m": 616.8,
+      "source_file": "lmg_1_Mukade_side_ortho.png",
+      "source_sha256": "759ae0914e5099a91440c1fc38e281c49dc991ab558db48be71897ed4cbe80df",
+      "source_bbox": [
+        799,
+        300,
+        1601,
+        533
+      ],
+      "sha256": "2ba2b018df0d24575a710ea955aec1fadf4e175652235daa8b62e6d6ae94fbdf",
+      "bytes": 114819
+    },
+    {
+      "weapon_id": "lmg_2",
+      "display_name": "Kurogane",
+      "file": "AP036_side_lmg_2.png",
+      "size": [
+        728,
+        212
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 720,
+        "h": 204
+      },
+      "length_m": 1.1999,
+      "height_m": 0.34,
+      "px_per_m": 600.1,
+      "source_px_per_m": 653.4,
+      "source_file": "lmg_2_Kurogane_side_ortho.png",
+      "source_sha256": "23068d0c3b55149fc5e2be361dcd100ba165dd2dfd1e6cf800d4d2b25c574219",
+      "source_bbox": [
+        808,
+        295,
+        1592,
+        517
+      ],
+      "sha256": "f0d7b32ec66956211d5b7e9780206ae3de08bcf925affb7dbe70b8c85ce8533a",
+      "bytes": 98663
+    },
+    {
+      "weapon_id": "rl_1",
+      "display_name": "Bohiya",
+      "file": "AP036_side_rl_1.png",
+      "size": [
+        668,
+        196
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 660,
+        "h": 186
+      },
+      "length_m": 1.1,
+      "height_m": 0.31,
+      "px_per_m": 600.0,
+      "source_px_per_m": 709.1,
+      "source_file": "rl_1_Bohiya_side_ortho.png",
+      "source_sha256": "52745a9dcf64d2ffb9bdb48f41220a40219cbfcc6b7bfd5d5e99a04309701fa2",
+      "source_bbox": [
+        810,
+        294,
+        1590,
+        514
+      ],
+      "sha256": "69936a85cf8cc872551ce52f9ffe3d7fee50675189952bbff829d1076eb75688",
+      "bytes": 77760
+    },
+    {
+      "weapon_id": "sg_1",
+      "display_name": "Rappa",
+      "file": "AP036_side_sg_1.png",
+      "size": [
+        476,
+        132
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 468,
+        "h": 123
+      },
+      "length_m": 0.78,
+      "height_m": 0.205,
+      "px_per_m": 600.0,
+      "source_px_per_m": 928.2,
+      "source_file": "sg_1_Rappa_side_ortho.png",
+      "source_sha256": "88436a0e5de38ea7a34bcfaf07b1df79c1c157729b45ed7bbd58c12fbcc24745",
+      "source_bbox": [
+        838,
+        280,
+        1562,
+        470
+      ],
+      "sha256": "a156ece6ee976f46e527b1b49d837327f49cbf282a38a5b1eea16f82a72b26b4",
+      "bytes": 42597
+    },
+    {
+      "weapon_id": "sg_2",
+      "display_name": "Nito",
+      "file": "AP036_side_sg_2.png",
+      "size": [
+        560,
+        160
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 552,
+        "h": 149
+      },
+      "length_m": 0.92,
+      "height_m": 0.2483,
+      "px_per_m": 600.0,
+      "source_px_per_m": 804.3,
+      "source_file": "sg_2_Nito_side_ortho.png",
+      "source_sha256": "71eeb7e8918a98ee1817386ff1f6dd4a85591833b498e759daabacdf7539dd68",
+      "source_bbox": [
+        830,
+        284,
+        1570,
+        484
+      ],
+      "sha256": "c892b2d6eb4879a6b075407a9d5a5201ed2af1d54fea28612913646e8f8293d4",
+      "bytes": 62173
+    },
+    {
+      "weapon_id": "smg_1",
+      "display_name": "Shippu",
+      "file": "AP036_side_smg_1.png",
+      "size": [
+        520,
+        212
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 510,
+        "h": 203
+      },
+      "length_m": 0.85,
+      "height_m": 0.3383,
+      "px_per_m": 600.0,
+      "source_px_per_m": 1291.8,
+      "source_file": "smg_1_Shippu_side_ortho.png",
+      "source_sha256": "6d82f476dcb203410be76e37e6f13760ae52549b1a5ebe986022189a8864aa29",
+      "source_bbox": [
+        651,
+        352,
+        1749,
+        788
+      ],
+      "sha256": "77f64773983a1332346398a7cd1b5122b99f6b125e117d35479431e37de15056",
+      "bytes": 56101
+    },
+    {
+      "weapon_id": "smg_2",
+      "display_name": "Tetsui",
+      "file": "AP036_side_smg_2.png",
+      "size": [
+        440,
+        140
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 432,
+        "h": 131
+      },
+      "length_m": 0.72,
+      "height_m": 0.2183,
+      "px_per_m": 600.0,
+      "source_px_per_m": 1163.9,
+      "source_file": "smg_2_Tetsui_side_ortho.png",
+      "source_sha256": "c3cb5f1a28f38bfef9157282d54e0f5e09e3cb3ba558ec5ecda654d46c6f62dd",
+      "source_bbox": [
+        781,
+        307,
+        1619,
+        561
+      ],
+      "sha256": "fba20837209a051519c5ffcf23c1eee37690c0a182d243b3d25b715524c075a5",
+      "bytes": 37132
+    },
+    {
+      "weapon_id": "sr_1",
+      "display_name": "Tomi",
+      "file": "AP036_side_sr_1.png",
+      "size": [
+        488,
+        92
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 480,
+        "h": 84
+      },
+      "length_m": 1.4495,
+      "height_m": 0.2537,
+      "px_per_m": 331.1,
+      "source_px_per_m": 331.1,
+      "source_file": "sr_1_Tomi_side_ortho.png",
+      "source_sha256": "170ec1cff3541a67e776f96fe3dc0730592c2dab4c4390c42bd45efe1c149a70",
+      "source_bbox": [
+        960,
+        206,
+        1440,
+        290
+      ],
+      "sha256": "d1ab4c4a9ab3b2061efcea41e0850d047e194685efaf53c06a1be0ce4403e1ca",
+      "bytes": 27313
+    },
+    {
+      "weapon_id": "sw_arc",
+      "display_name": "Raiju",
+      "file": "AP036_side_sw_arc.png",
+      "size": [
+        640,
+        232
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 630,
+        "h": 222
+      },
+      "length_m": 1.0502,
+      "height_m": 0.3701,
+      "px_per_m": 599.9,
+      "source_px_per_m": 763.7,
+      "source_file": "sw_arc_Raiju_side_ortho.png",
+      "source_sha256": "08e2308a242e92a4223202b1ced4b43871b24e9b09426976562f05694a5fab09",
+      "source_bbox": [
+        799,
+        275,
+        1601,
+        557
+      ],
+      "sha256": "9fb6d8a901ab700752ad6aa1bf468db510e05c643cfdffa2df625bbe685b310b",
+      "bytes": 98264
+    },
+    {
+      "weapon_id": "sw_gel",
+      "display_name": "Namekuji",
+      "file": "AP036_side_sw_gel.png",
+      "size": [
+        580,
+        240
+      ],
+      "content": {
+        "x": 4,
+        "y": 4,
+        "w": 570,
+        "h": 230
+      },
+      "length_m": 0.95,
+      "height_m": 0.3833,
+      "px_per_m": 600.0,
+      "source_px_per_m": 844.2,
+      "source_file": "sw_gel_Namekuji_side_ortho.png",
+      "source_sha256": "4e117f3defcfa77b89a9e21caa34d74f500601d5254412251dfb333f16342d24",
+      "source_bbox": [
+        799,
+        254,
+        1601,
+        578
+      ],
+      "sha256": "fe0ba90b5502110cf74e1e76a465ff88026790ae706aa50bb6ba390c674d3aa8",
+      "bytes": 107048
+    }
+  ]
+}

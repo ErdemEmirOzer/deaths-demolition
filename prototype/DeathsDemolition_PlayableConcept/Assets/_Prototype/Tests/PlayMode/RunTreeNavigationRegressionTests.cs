@@ -140,6 +140,8 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest] public IEnumerator OwnedForkReforge_TR() { yield return OwnedForkReforge(UiStrings.Turkish); }
         [UnityTest] public IEnumerator TemporaryGroupAndReactivation_EN() { yield return TemporaryGroupAndReactivation(UiStrings.English); }
         [UnityTest] public IEnumerator TemporaryGroupAndReactivation_TR() { yield return TemporaryGroupAndReactivation(UiStrings.Turkish); }
+        [UnityTest] public IEnumerator BrushControls_NoFillNoPlate_EN() { yield return BrushControls(UiStrings.English); }
+        [UnityTest] public IEnumerator BrushControls_NoFillNoPlate_TR() { yield return BrushControls(UiStrings.Turkish); }
 
         private IEnumerator HearthLiveBuyDown(string language)
         {
@@ -249,6 +251,75 @@ namespace DD.Prototype.Tests.PlayMode
             Selected(_panel.BuyButton);
             Move(MoveDirection.Down, _footer);
             Unchanged(before);
+        }
+
+        /// <summary>
+        /// WP-098B M3 (AD MUST M3; KILAVUZ §1 vermilion / gold reserves, C7, C11): BUY is the kit's unfilled C11 - no fill, no
+        /// frame, no vermilion; live, it carries the Submit glyph. A focused seal draws no wash plate and no gold focus ring:
+        /// its focus is the cream brackets alone. A dead BUY is the kit's disabled C11 - TextSecondary word, the hairline,
+        /// no glyph - and its reason is a tooltip. Nothing in the panel is filled vermilion.
+        /// </summary>
+        private IEnumerator BrushControls(string language)
+        {
+            yield return OpenPanel(language);
+            UiButton buy = _panel.BuyButton;
+            Assert.IsTrue(_panel.BuyLive, "fixture: the Hearth can be stoked");
+            Assert.AreEqual(UiButtonVariant.Brush, buy.Variant, "BUY = the kit's C11");
+            Assert.IsFalse(buy.DrawsFocusRing, "BUY draws no focus ring of its own");
+            NoSurface(buy, "live BUY");
+            Assert.IsTrue(buy.GetComponentInChildren<UiPrompt>(true).gameObject.activeSelf, "live BUY carries the Submit glyph");
+
+            UiButton seal = _panel.ButtonOf(_panel.Snapshot.HearthIndex);
+            Selected(seal);
+            yield return null;
+            Assert.AreEqual(UiButtonVariant.Brush, seal.Variant, "a seal is a frameless control");
+            Assert.IsFalse(seal.DrawsFocusRing, "no gold focus ring on a seal");
+            NoSurface(seal, "focused seal");
+            Assert.AreSame(seal.transform, UiFocusBrackets.Target, "focus = the kit's cream brackets");
+            NoVermilionFill();
+
+            _wallet.DebugSet(0); // Gold fixture arrangement, not a transaction or purchase.
+            Refresh();
+            _panel.FocusNode(_panel.Snapshot.HearthIndex);
+            yield return null;
+            Assert.IsFalse(_panel.BuyLive, "no gold: BUY cannot buy");
+            Assert.IsTrue(buy.gameObject.activeInHierarchy, "a dead BUY stays on screen (kit C11 disabled)");
+            Assert.IsTrue(buy.DisabledRuleVisible, "disabled = the kit's hairline");
+            Assert.AreEqual(UiTokens.Get(UiColor.TextSecondary), buy.LabelText.color, "disabled word in TextSecondary");
+            Assert.IsFalse(buy.GetComponentInChildren<UiPrompt>(true).gameObject.activeSelf, "no Submit glyph on a dead BUY");
+            NoSurface(buy, "dead BUY");
+            bool tooltip = false;
+            foreach (MonoBehaviour c in buy.GetComponents<MonoBehaviour>()) tooltip |= c != null && c.GetType().Name == "TooltipSource";
+            Assert.IsTrue(tooltip, "the reason is read in BUY's tooltip (kit C27)");
+            NoVermilionFill();
+        }
+
+        /// <summary>No fill / border / wash drawn and no v3 focus ring or halo built on the control (its own children).</summary>
+        private static void NoSurface(UiButton button, string what)
+        {
+            Assert.IsNull(button.transform.Find("FocusRing"), what + ": no v3 focus ring");
+            Assert.IsNull(button.transform.Find("FocusHalo"), what + ": no v3 focus halo");
+            foreach (string part in new[] { "Fill", "Border", "Wash" })
+            {
+                Transform t = button.transform.Find(part);
+                Image image = t != null ? t.GetComponent<Image>() : null;
+                bool drawn = image != null && image.enabled && image.gameObject.activeInHierarchy
+                             && image.color.a * image.canvasRenderer.GetColor().a * image.canvasRenderer.GetAlpha() > 0.01f;
+                Assert.IsFalse(drawn, what + ": its " + part + " is drawn");
+            }
+        }
+
+        /// <summary>No active image in the panel draws AccentPrimary (the kit keeps vermilion for the C8 alone).</summary>
+        private void NoVermilionFill()
+        {
+            Color accent = UiTokens.Get(UiColor.AccentPrimary);
+            foreach (Image image in _panelRoot.GetComponentsInChildren<Image>(false))
+            {
+                if (!image.enabled) continue;
+                Color c = image.color * image.canvasRenderer.GetColor();
+                bool vermilion = Mathf.Abs(c.r - accent.r) < 0.03f && Mathf.Abs(c.g - accent.g) < 0.03f && Mathf.Abs(c.b - accent.b) < 0.03f;
+                Assert.IsFalse(vermilion && c.a * image.canvasRenderer.GetAlpha() > 0.05f, "vermilion fill on " + image.name + " (" + image.transform.parent.name + ")");
+            }
         }
 
         private void Move(MoveDirection direction, Selectable expected)

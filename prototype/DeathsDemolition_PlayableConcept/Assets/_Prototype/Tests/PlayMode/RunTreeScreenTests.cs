@@ -137,7 +137,11 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(tree.ButtonOf(bought).gameObject, EventSystem.current.currentSelectedGameObject, "focus = the detail's subject (MUST-4)");
             Assert.IsTrue(tree.BuyButton.IsInteractable(), "BUY is live on an offered, affordable node");
             UiButton next = Named(screen, "Continue");
-            Assert.AreEqual(UiButtonVariant.Secondary, next.Variant, "one Primary: BUY is live, CONTINUE steps down (MUST-1)");
+            // WP-098B M3: both are the kit's unfilled C11; the one main action is the one carrying the Submit glyph (MUST-1).
+            Assert.AreEqual(UiButtonVariant.Brush, next.Variant, "CONTINUE is the kit's C11 (no vermilion fill)");
+            Assert.AreEqual(UiButtonVariant.Brush, tree.BuyButton.Variant, "BUY is the kit's C11 (no vermilion fill)");
+            Assert.IsTrue(tree.BuyButton.GetComponentInChildren<UiPrompt>(true).gameObject.activeSelf, "BUY is live: the Submit glyph is BUY's");
+            Assert.IsFalse(next.GetComponentInChildren<UiPrompt>(true).gameObject.activeSelf, "one main action: CONTINUE shows no Submit glyph (MUST-1)");
             int gold = shop.Gold;
             tree.OnBuy();
             yield return null;
@@ -161,7 +165,8 @@ namespace DD.Prototype.Tests.PlayMode
             if (locked >= 0)
             {
                 tree.FocusNode(locked);
-                Assert.AreEqual(UiButtonVariant.Primary, next.Variant, "nothing buyable detailed: CONTINUE is the Primary");
+                Assert.IsTrue(next.GetComponentInChildren<UiPrompt>(true).gameObject.activeSelf, "nothing buyable detailed: CONTINUE carries the Submit glyph");
+                Assert.AreEqual(UiButtonVariant.Brush, next.Variant, "still the unfilled C11");
             }
             Assert.IsFalse(undo.gameObject.activeInHierarchy, "one step of undo");
 

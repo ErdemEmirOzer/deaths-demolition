@@ -1011,12 +1011,150 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 if (hepsi[i].name == "PaneCard")
                 {
-                    // PaneCard/Fill/Content
+                    // WP-098B: the kit carrier PaneCard/{Content (+ C2 wash, edge trace)[, PaneLeaving while a pane cross-fades]} - no Fill / Frame
                     return hepsi[i].GetComponentsInChildren<Transform>(true).Length;
                 }
             }
 
             return -1;
+        }
+
+        private static Transform PaneParcasi(MainMenuScreen menu, string ad)
+        {
+            foreach (Transform t in menu.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == ad)
+                {
+                    return t;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// WP-098B · pane taşıyıcısı ömrü (fırça kiti, KILAVUZ §3): kapalı gelişte taşıyıcı ve perde çizilmez; açılınca
+        /// çerçevesiz "PaneCard" (yıkama, çerçeve yok), perde kitin Pane α'sında ve metin zemini ≥ 0,945; her pane'de iz
+        /// bütçesi (başlık 1, ayırıcı ≤ 2, C8 ≤ 2, kenar ≤ 1, toplam ≤ 6); pane değişince eski içerik solarak gider
+        /// (çapraz geçiş) ve sonra düşer; kapatınca PaneOpen hemen false, solma bitince taşıyıcı ve perde kapanır, içerik
+        /// temizlenir. Süreler ≤ 0,35 s.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AnaMenuPane_PerdeYikamaCaprazGecisKapanis()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            yield return null;
+            MainMenuScreen menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            float bekle = MainMenuScreen.PaneLook.MaxSeconds + 0.15f;
+
+            UiBrushPane tasiyici = menu.PaneCarrier;
+            Assert.IsNotNull(tasiyici, "pane taşıyıcısı kitten (UiBrushKit.Pane)");
+            Transform kart = PaneParcasi(menu, MainMenuScreen.PaneLook.CardName);
+            Assert.IsNotNull(kart, "PaneCard adı korunur");
+            Assert.AreSame(tasiyici.Root, kart, "PaneCard = kitin pane kökü");
+            Image perde = tasiyici.Scrim;
+            Assert.IsNotNull(perde, "C1 perde var");
+            Assert.IsFalse(menu.PaneOpen, "G5: pane'ler kapalı gelir");
+            Assert.IsFalse(tasiyici.IsOpen);
+            Assert.IsTrue(!perde.gameObject.activeInHierarchy || perde.color.a * perde.canvasRenderer.GetAlpha() < 1e-3f, "kapalı: perde çizilmez");
+
+            menu.ShowPane(UiContext.Profile);
+            yield return null;
+            Assert.IsTrue(menu.PaneOpen);
+            Assert.IsTrue(kart.gameObject.activeInHierarchy && perde.gameObject.activeInHierarchy);
+            Assert.IsNotNull(tasiyici.Wash, "C2 yıkama");
+            Assert.AreEqual(UiBrushScrim.Pane, tasiyici.ScrimLevel, "menü pane'i: Pane perdesi");
+            Assert.IsNull(kart.GetComponent<Image>(), "çerçevesiz kart");
+            Assert.IsNull(kart.Find("Frame"), "A4 çerçevesi yok");
+            yield return new WaitForSecondsRealtime(bekle);
+            Assert.AreEqual(UiBrushTokens.ScrimPane, perde.color.a * perde.canvasRenderer.GetAlpha(), 0.01f, "perde kitin Pane α'sında (doğrusal 0,72)");
+            Assert.GreaterOrEqual(tasiyici.TextGroundAlpha, UiBrushTokens.TextGroundMin, "metin zemini perde ⊕ yıkama ≥ 0,945");
+            CanvasGroup icerik = tasiyici.Content.GetComponent<CanvasGroup>();
+            Assert.IsTrue(icerik == null || Mathf.Approximately(icerik.alpha, 1f), "içerik 0,35 s içinde yerinde");
+
+            menu.ShowPane(UiContext.Statistics);
+            yield return null;
+            if (!UiMotion.ReducedMotion)
+            {
+                Transform giden = PaneParcasi(menu, MainMenuScreen.PaneLook.LeavingName);
+                Assert.IsNotNull(giden, "çapraz geçiş: eski pane solarak gider");
+                Assert.IsFalse(giden.GetComponent<CanvasGroup>().interactable, "giden içerik etkileşimsiz");
+            }
+
+            Assert.IsTrue(MetinVar<MainMenuScreen>("Runs Played", out _), "yeni pane hemen kurulu");
+            yield return new WaitForSecondsRealtime(bekle);
+            yield return null;
+            Assert.IsNull(PaneParcasi(menu, MainMenuScreen.PaneLook.LeavingName), "solma bitince eski içerik düştü");
+
+            // KILAVUZ §1: per window ≤ 6 traces - title 1, dividers ≤ 2, C8 ≤ 2, edge ≤ 1, wash ≤ 2.
+            var butce = new List<string>();
+            foreach (UiContext pane in new[] { UiContext.Profile, UiContext.Statistics, UiContext.Achievements, UiContext.Settings, UiContext.Controls, UiContext.Accessibility })
+            {
+                menu.ShowPane(pane);
+                yield return new WaitForSecondsRealtime(bekle);
+                yield return null;
+                int baslik = 0, ayirici = 0, secim = 0, kenar = 0;
+                foreach (UiBrushMark iz in kart.GetComponentsInChildren<UiBrushMark>(false))
+                {
+                    switch (iz.Kind)
+                    {
+                        case UiBrushMarkKind.TitleStroke: baslik++; break;
+                        case UiBrushMarkKind.Divider: ayirici++; break;
+                        case UiBrushMarkKind.Selection: secim++; break;
+                        default: kenar++; break;
+                    }
+                }
+
+                int yikama = tasiyici.Wash != null ? 1 : 0;
+                int toplam = baslik + ayirici + secim + kenar + yikama;
+                Debug.Log("[DD-TEST] wp098b.paneTraces " + pane + " title=" + baslik + " divider=" + ayirici + " c8=" + secim + " edge=" + kenar + " wash=" + yikama + " total=" + toplam);
+                if (baslik != UiBrushTokens.MaxTitle) butce.Add(pane + ": başlık fırçası " + baslik);
+                if (ayirici > UiBrushTokens.MaxDivider) butce.Add(pane + ": ayırıcı " + ayirici);
+                if (secim > UiBrushTokens.MaxSelection) butce.Add(pane + ": C8 " + secim);
+                if (kenar > UiBrushTokens.MaxEdge) butce.Add(pane + ": kenar " + kenar);
+                if (toplam > UiBrushTokens.MaxTraces) butce.Add(pane + ": toplam " + toplam);
+                if (pane == UiContext.Settings && secim != 1) butce.Add("Settings: sekme şeridinde tek C8 beklenir, " + secim);
+                if (!menu.PaneOpen || menu.Pane != pane) butce.Add(pane + ": açılmadı");
+
+                // WP-098B 2a: the content rows are the kit's - no legacy uGUI slider or Outline in any pane (envanter #7).
+                if (kart.GetComponentsInChildren<Slider>(true).Length > 0) butce.Add(pane + ": eski uGUI Slider");
+                if (kart.GetComponentsInChildren<Outline>(true).Length > 0) butce.Add(pane + ": Outline");
+                if (pane == UiContext.Settings)
+                {
+                    Transform olcek = PaneParcasi(menu, "Setting.UI SCALE"), veri = PaneParcasi(menu, "Telemetry"), ekran = PaneParcasi(menu, "Display");
+                    if (olcek == null || olcek.GetComponent<UiSlider>() == null) butce.Add("Settings: Setting.UI SCALE kitin C14'ü değil");
+                    if (veri == null || veri.GetComponent<UiSwitch>() == null) butce.Add("Settings: Telemetry kitin C15'i değil");
+                    if (ekran == null || ekran.GetComponent<UiStepper>() == null) butce.Add("Settings: Display kitin C16'sı değil");
+                }
+
+                if (pane == UiContext.Achievements)
+                {
+                    // C18 rows: a focus stop per achievement on the page, its status a word (EARNED / NEW / IN PROGRESS), no chip pulse.
+                    int satir = 0;
+                    foreach (UiButton b in kart.GetComponentsInChildren<UiButton>(false))
+                    {
+                        if (b.name.StartsWith("Achievement.")) satir++;
+                    }
+
+                    if (satir == 0) butce.Add("Achievements: satırlar kitin ListRow'u değil (UiButton yok)");
+                    if (kart.GetComponentsInChildren<UiPulse>(true).Length > 0) butce.Add(pane + ": NEW çipi hâlâ nabızlı");
+                }
+            }
+
+            Assert.IsEmpty(butce, "WP-098B iz bütçesi:\n" + string.Join("\n", butce));
+
+            menu.ShowPane(UiContext.MainMenu);
+            Assert.IsFalse(menu.PaneOpen, "kapatınca PaneOpen hemen false (solma 'açık' değil)");
+            Assert.AreEqual(UiContext.MainMenu, menu.Pane);
+            yield return new WaitForSecondsRealtime(bekle);
+            yield return null;
+            Assert.IsFalse(kart.gameObject.activeSelf, "solma bitince taşıyıcı kapandı (kitin cue'su)");
+            Assert.IsFalse(perde.gameObject.activeSelf, "solma bitince perde kapandı");
+            Assert.AreEqual(0, tasiyici.Content.childCount, "içerik temizlendi");
+            Debug.Log("[DD-TEST] wp098b.paneLifecycle=OK reducedMotion=" + UiMotion.ReducedMotion);
         }
 
         /// <summary>Bir StatRow'da anahtar/değer çifti var mı (Row/Key, Row/Value).</summary>
@@ -1148,6 +1286,130 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             Debug.Log("[DD-TEST] wp005.pauseUpgrade=OK");
+        }
+
+        /// <summary>
+        /// WP-098B · raund sonu fırça penceresi (KILAVUZ §3 "Raund sonu / yükseltme", G6): taşıyıcı kitin UiBrushPane'i -
+        /// Wallpaper perdesi kitin doğrusal α'sında, ağaç + detay sütununda iki C2 yıkama, metin zemini ≥ 0,945; başlık kitin
+        /// C5'i (Menu.Upgrade, tek başlık fırçası), v2 süsü (yaprak, örtü, ayak çizgisi) yok; Continue / Undo / Reroll adları
+        /// korunur; REROLL kitin C11'i ve isabeti ≥ 48; pad sırası düğümler → AL / İĞNELE → REROLL → DEVAM; kapanış kitin:
+        /// girdi anında kapanır, solma bitince pane ve tuval kapanır (≤ 0,35 s).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Yukseltme_FircaPencere_DuvarKagidiPerdesi_IkiYikama_RerollIsabet_PadSirasi()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            yield return KontrolluSaha();
+            RunDirector run = RunDirector.Instance;
+            PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;
+            UpgradeScreen upgrade = UnityEngine.Object.FindObjectOfType<UpgradeScreen>();
+            Assert.IsNotNull(upgrade);
+            run.Shop.NodeCardsOverride = true;   // G6 is the tree's order (this fixture's default is the classic card row)
+            GoldService.Instance.Wallet.DebugSet(5000);
+
+            yield return RoundTamamla();
+            Assert.AreEqual(UiContext.RoundUpgrade, UiNavigation.Layer);
+            yield return new WaitForSecondsRealtime(0.4f);   // the kit's open: C1 140 ms, washes / title brush 280 ms, content 60 + 220 ms
+            yield return null;
+
+            UiBrushPane pane = upgrade.Pane;
+            Assert.IsNotNull(pane, "taşıyıcı kitten (UiBrushKit.Pane)");
+            Assert.IsTrue(pane.IsOpen, "pencere açık");
+            Assert.AreEqual(UiBrushScrim.Wallpaper, pane.ScrimLevel, "KILAVUZ §3: Wallpaper perdesi");
+            Assert.AreEqual(UiBrushTokens.ScrimWallpaper, pane.Scrim.color.a * pane.Scrim.canvasRenderer.GetAlpha(), 0.01f,
+                "perde kitin doğrusal 0,71'inde (elle α yok)");
+            // C2 yıkamaları pane kökünün doğrudan çocuklarıdır (UiBrushPane.AddWash: "Wash", "Wash.1", Content'in önünde).
+            // Her UiButton da kendi hover katmanını "Wash" adıyla taşır (UiButton; düğümler, AL, İĞNELE, REROLL, DEVAM...):
+            // o bir C2 değil, bu yüzden sayım alt ağaçta değil kökün kendi çocuklarında yapılır.
+            int yikama = 0;
+            foreach (Transform cocuk in pane.Root)
+            {
+                if (cocuk.gameObject.activeSelf && cocuk.name.StartsWith("Wash", StringComparison.Ordinal) && cocuk.GetComponent<Image>() != null)
+                {
+                    yikama++;
+                }
+            }
+
+            Assert.AreEqual(UiBrushTokens.MaxWash, yikama, "ağaç + detay sütunu: iki C2 yıkama");
+            Assert.IsNotNull(pane.Wash, "ilk C2 pane'in yıkaması (TextGroundAlpha onu okur)");
+            Assert.AreSame(pane.Root, pane.Wash.transform.parent, "C2 pane kökünde");
+            Assert.GreaterOrEqual(pane.TextGroundAlpha, UiBrushTokens.TextGroundMin, "metin zemini perde ⊕ yıkama ≥ 0,945");
+            Assert.IsTrue(pane.Content.GetComponent<CanvasGroup>().interactable, "girdi açık");
+
+            int baslik = 0, diger = 0;
+            foreach (UiBrushMark iz in upgrade.GetComponentsInChildren<UiBrushMark>(false))
+            {
+                if (iz.Kind == UiBrushMarkKind.TitleStroke && iz.transform.IsChildOf(pane.Root)) baslik++;
+                else if (iz.Kind == UiBrushMarkKind.TitleStroke) diger++;
+            }
+
+            Assert.AreEqual(1, baslik, "tek başlık fırçası (Menu.Upgrade başlığı)");
+            Assert.AreEqual(0, diger);
+            foreach (Transform t in upgrade.GetComponentsInChildren<Transform>(true))
+            {
+                Assert.IsFalse(t.name == "Petal" || t.name == "SkyVeil" || t.name == "GroundVeil" || t.name == "FootRule" || t.name == "HeaderOrnament",
+                    "v2 süsü kalktı: " + t.name);
+            }
+
+            Assert.IsTrue(MetinVar<UpgradeScreen>(run.Shop.Gold.ToString(), out _), "gold bakiyesi ekranda yazılı");
+
+            UiButton reroll = Buton<UpgradeScreen>("Reroll");
+            UiButton devam = Buton<UpgradeScreen>("Continue");
+            Assert.IsFalse(reroll.DrawsFocusRing, "REROLL kitin C11'i (odak = köşebent)");
+            Assert.GreaterOrEqual(((RectTransform)reroll.transform).rect.height, UiTokens.TargetPreferred, "G6: REROLL isabeti ≥ 48");
+
+            // G6: düğümler → AL / İĞNELE → REROLL → DEVAM.
+            UiRunTreePanel agac = upgrade.GetComponentInChildren<UiRunTreePanel>(false);
+            Assert.IsNotNull(agac, "ağaç modu");
+            UiButton undo = Buton<UpgradeScreen>("Undo");
+            Selectable altBant = undo.gameObject.activeInHierarchy ? (Selectable)undo : devam;
+            Selectable cikis = reroll.IsInteractable() ? (Selectable)reroll : altBant;
+            Selectable sonDetay = Canli(agac.ReforgeButton) ?? Canli(agac.PinButton) ?? Canli(agac.BuyButton);
+            if (sonDetay != null)
+            {
+                Assert.AreSame(cikis, sonDetay.navigation.selectOnDown, "detayın son düğmesinden aşağı = " + cikis.name);
+            }
+
+            if (reroll.IsInteractable())
+            {
+                Selectable detay = Canli(agac.BuyButton) ?? Canli(agac.PinButton) ?? agac.FocusTarget();
+                Assert.AreSame(detay, reroll.navigation.selectOnUp, "REROLL'den yukarı = detay (AL, yoksa İĞNELE, yoksa düğüm)");
+            }
+
+            if (reroll.IsInteractable())
+            {
+                Assert.AreSame(altBant, reroll.navigation.selectOnRight, "REROLL → UNDO / DEVAM");
+            }
+
+            Assert.IsTrue(devam.IsInteractable());
+
+            // Kapanış: girdi anında kapanır, kitin solması ve cue'su pane'i, ardından tuvali kapatır.
+            Canvas tuval = null;
+            foreach (Canvas c in upgrade.GetComponentsInChildren<Canvas>(true))
+            {
+                if (c.GetComponent<CanvasGroup>() != null) { tuval = c; break; }
+            }
+
+            Assert.IsNotNull(tuval);
+            run.CloseUpgradeScreen();
+            yield return null;
+            Assert.AreEqual(UiContext.None, UiNavigation.Layer, "shop kapandı");
+            Assert.IsFalse(pane.IsOpen, "kapanışta girdi anında kapanır");
+            yield return new WaitForSecondsRealtime(0.35f);
+            yield return null;
+            Assert.IsFalse(pane.Root.gameObject.activeSelf, "solma bitince pane kapandı (kitin cue'su)");
+            Assert.IsFalse(tuval.gameObject.activeSelf, "pane kapanınca tuval de kapandı");
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+            Debug.Log("[DD-TEST] wp098b.upgradeWindow=OK reroll=" + reroll.IsInteractable());
+        }
+
+        private static Selectable Canli(UiButton button)
+        {
+            return button != null && button.gameObject.activeInHierarchy && button.IsInteractable() ? button : null;
         }
 
         // ================================================================== 8 · ölüm ve pause

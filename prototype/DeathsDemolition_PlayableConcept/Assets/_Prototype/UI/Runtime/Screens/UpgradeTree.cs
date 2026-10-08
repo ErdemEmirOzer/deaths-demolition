@@ -20,7 +20,8 @@ namespace DD.Prototype.UI
     /// - The edges are one Graphic (UiTreeEdges): hairline, owned Rim 2, dashed while a prerequisite is missing,
     ///   4 px along the pinned path.
     /// - The detail card names the focused node: kind, name, pips, what it does, the state sentence, the price. BUY is
-    ///   its one Primary (STOKE on the Hearth), with PIN / UNPIN and REFORGE on an owned fork. UNDO LAST lives in the
+    ///   its main action (STOKE on the Hearth; WP-098B M3: the kit's unfilled C11, its Submit glyph beside it while it can
+    ///   buy), with PIN / UNPIN and REFORGE on an owned fork. UNDO LAST lives in the
     ///   screen's footer, beside CONTINUE, because it is about the offer rather than the node.
     /// The layout is measured from the host and the text (TextScale, UI scale): 112 px rows and 64 px seals where they
     /// fit (1080p), a compact row with the seal beside its words where they do not (Mac 1.2 × 1.25). Every fact comes
@@ -51,8 +52,8 @@ namespace DD.Prototype.UI
 
         /// <summary>Caption at text 1.0 (UiTokens, the DEC-077 comfort floor): the smallest a stacked NEEDS line steps down to.</summary>
         private const float StateFloor = 14f;
-        private const float BuyWidth = 204f;
-        private const float BuyChrome = 132f;   // the prompt keycap, its gap and the button's side padding
+        /// <summary>WP-098B M3: BUY's share of the detail card's width (its glyph outside it included); STOKE THE HEARTH steps down to STOKE past it.</summary>
+        private const float BuyShare = 0.62f;
 
         private sealed class NodeView
         {
@@ -317,7 +318,9 @@ namespace DD.Prototype.UI
         private NodeView BuildNode(int slot)
         {
             var v = new NodeView();
-            v.Button = UiFactory.Button("Node." + slot / Tiers + "." + slot % Tiers, _grid, string.Empty, UiButtonVariant.Ghost, () => OnNodeActivated(slot));
+            // WP-098B M3 (KILAVUZ §1 C7): a seal is a frameless control - no wash plate, no focus ring; focus is the kit's cream
+            // brackets alone, and the seal's own ring carries its state (gold only where gold is the offer's).
+            v.Button = UiFactory.Button("Node." + slot / Tiers + "." + slot % Tiers, _grid, string.Empty, UiButtonVariant.Brush, () => OnNodeActivated(slot));
             v.Rect = (RectTransform)v.Button.transform;
             v.Button.LabelText.gameObject.SetActive(false);
             v.Button.gameObject.AddComponent<UiTreeNodeInput>().Configure(this, slot);
@@ -417,9 +420,12 @@ namespace DD.Prototype.UI
             _dPrice = UiFactory.Numeric("Price", _dBuyRow, string.Empty, UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleLeft, false);
             RectTransform priceRect = UiFactory.Fill((RectTransform)_dPrice.transform);
             priceRect.offsetMax = new Vector2(-212f, 0f);
-            _buy = UiFactory.Button("Buy", _dBuyRow, UiStrings.Get("tree.action.buy", "BUY"), UiButtonVariant.Primary, OnBuy);
-            _buyPrompt = UiInput.Prompt(_buy, UiPromptAction.Submit, true);
-            PlaceAnchored((RectTransform)_buy.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
+            // WP-098B M3 (KILAVUZ §1 vermilion reserve, §4.1 C11): BUY is the kit's unfilled C11 - glyph + MenuBody word, no fill,
+            // no frame; disabled = TextSecondary word + the kit's hairline, the reason in its tooltip. Its Submit glyph stands
+            // outside its left edge (the C11 keeps its measured width) and shows only while BUY can buy.
+            _buy = UiBrushKit.Button(_dBuyRow, "Buy", "tree.action.buy", "BUY", BuyGlyph, OnBuy);   // BuyGlyph null: the word alone
+            _buyPrompt = SubmitGlyphBeside(_buy);
+            PlaceAnchored((RectTransform)_buy.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, ((RectTransform)_buy.transform).sizeDelta);
 
             _dActions = UiFactory.NewRect("Actions", _dContent);
             _pin = UiFactory.Button("Pin", _dActions, UiStrings.Get("tree.action.pin", "PIN"), UiButtonVariant.Secondary, OnPin);
@@ -541,9 +547,10 @@ namespace DD.Prototype.UI
             float stateLine = LineOf(_dState);
             float body = LineOf(_dDesc);
             float button = UiTokens.TargetPreferred;
+            float buyRow = UiBrushTokens.ControlHeight;   // WP-098B M3: BUY is a C11, the kit's 64
 
             // The foot: BUY over the node actions, anchored to the card's bottom; the description takes what is left.
-            float foot = button * 2f + (int)UiSpace.S;
+            float foot = buyRow + button + (int)UiSpace.S;
             float head = h - foot >= SealSize + nameLine + stateLine + body * 3f + (int)UiSpace.M * 3f ? SealSize : 48f;
             _headSize = head;
 
@@ -573,7 +580,7 @@ namespace DD.Prototype.UI
             Dock((RectTransform)_dDesc.transform, y, descH);
 
             DockBottom(_dActions, 0f, button);
-            DockBottom(_dBuyRow, button + (int)UiSpace.S, button);
+            DockBottom(_dBuyRow, button + (int)UiSpace.S, buyRow);
             _innerWidth = _dContent.rect.width;
             if (_dPips != null)
             {
@@ -1556,7 +1563,14 @@ namespace DD.Prototype.UI
             _buy.SetInteractable(buyable);
             if (_buyPrompt != null)
             {
-                _buyPrompt.gameObject.SetActive(buyable);   // the key chip follows the Primary (AD R1-C MUST-1)
+                _buyPrompt.gameObject.SetActive(buyable);   // the Submit glyph marks the live action (AD R1-C MUST-1)
+            }
+
+            // WP-098B M3 (C11 disabled): the word says nothing more; why BUY is dead is read in its tooltip (pad focus too).
+            UiBrushKit.Tooltip(_buy, null, buyable ? string.Empty : _dState.text);
+            if (buyable)
+            {
+                UiTooltip.Hide((RectTransform)_buy.transform);   // a reason that no longer holds leaves with it
             }
             UpdatePinControl(index, out _, out _);
             bool reforge = n.Kind == RunTreeNodeKind.Fork && IsOwned(n) && n.ReforgeCost >= 0;
@@ -1570,25 +1584,62 @@ namespace DD.Prototype.UI
             DetailShown?.Invoke();
         }
 
-        /// <summary>BUY holds its word and its prompt: STOKE THE HEARTH widens it, up to 62 % of the card.</summary>
+        /// <summary>
+        /// BUY is as wide as its glyph and word (the kit's C11 measure, ≥ 232), its Submit glyph outside it; together they take
+        /// what the price leaves (at least 62 % of the card) - past that STOKE THE HEARTH reads STOKE (the name and kind above already say HEARTH). The
+        /// price takes what is left.
+        /// </summary>
         private void FitBuy()
         {
-            float word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
-            if (_innerWidth > 0f && word + BuyChrome > Mathf.Floor(_innerWidth * 0.62f) && _buy.LabelText.text != UiStrings.Get("tree.action.buy", "BUY"))
+            float glyph = SubmitGlyphRoom();
+            float width = UiBrushKit.FitWidth(_buy);
+            // BUY takes what the price leaves (the price measured as written), never less than its 62 % share: STOKE THE HEARTH
+            // keeps its words wherever the card holds both, and steps down only on the narrow card.
+            float price = string.IsNullOrEmpty(_dPrice.text) ? 0f : Mathf.Ceil(_dPrice.GetPreferredValues(_dPrice.text).x) + (int)UiSpace.S;
+            float cap = _innerWidth > 0f
+                ? Mathf.Max(Mathf.Floor(_innerWidth * BuyShare) - glyph, Mathf.Floor(_innerWidth - price) - glyph)
+                : float.MaxValue;
+            if (width > cap && _buy.LabelText.text != UiStrings.Get("tree.action.buy", "BUY"))
             {
-                // The narrow card (Mac 1.2 × 1.25): the short verb; the name and kind above already say HEARTH.
+                // The narrow card (Mac 1.2 × 1.25): the short verb.
                 _buy.SetText(UiStrings.Get("tree.action.stoke_short", "STOKE"));
-                word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
+                width = UiBrushKit.FitWidth(_buy);
             }
 
-            float width = Mathf.Max(BuyWidth, word + BuyChrome);
-            if (_innerWidth > 0f)
+            width = Mathf.Min(width, cap);
+            ((RectTransform)_buy.transform).sizeDelta = new Vector2(width, UiBrushTokens.ControlHeight);
+            ((RectTransform)_dPrice.transform).offsetMax = new Vector2(-(width + glyph + (int)UiSpace.S), 0f);
+        }
+
+        /// <summary>
+        /// WP-098B M3: BUY is a word-only C11 (the kit has no purchase glyph; a check stood in and cost STOKE THE HEARTH its
+        /// words beside the price on the 1080p card). The Submit glyph beside it marks the live action.
+        /// </summary>
+        internal const string BuyGlyph = null;
+
+        /// <summary>
+        /// WP-098B M3 (as SelectionScreen's START RUN): the Submit glyph (A / ENTER, following the device) outside a C11's left
+        /// edge - the control stays unfilled and keeps its measured width; no key cap inside the brush control.
+        /// </summary>
+        internal static UiPrompt SubmitGlyphBeside(UiButton button)
+        {
+            UiPrompt prompt = UiInputGlyphs.Build("Prompt", button.transform, UiPromptAction.Submit, UiColor.TextPrimary, UiColor.SurfaceInset);
+            if (prompt != null)
             {
-                width = Mathf.Min(width, Mathf.Floor(_innerWidth * 0.62f));
+                var rect = (RectTransform)prompt.transform;
+                rect.anchorMin = new Vector2(0f, 0.5f);
+                rect.anchorMax = new Vector2(0f, 0.5f);
+                rect.pivot = new Vector2(1f, 0.5f);
+                rect.anchoredPosition = new Vector2(-(int)UiSpace.S, 0f);
             }
 
-            ((RectTransform)_buy.transform).sizeDelta = new Vector2(width, UiTokens.TargetPreferred);
-            ((RectTransform)_dPrice.transform).offsetMax = new Vector2(-(width + (int)UiSpace.S), 0f);
+            return prompt;
+        }
+
+        /// <summary>The room <see cref="SubmitGlyphBeside"/> takes left of its control: the widest Submit glyph either device draws, and the gap.</summary>
+        internal static float SubmitGlyphRoom()
+        {
+            return UiInputGlyphs.ReservedWidth(UiPromptAction.Submit) + (int)UiSpace.S;
         }
 
         /// <summary>

@@ -592,5 +592,204 @@ namespace DD.Prototype.Tests.EditMode
             slider.DragToNormalisedForTests(0.3f);   // 1.075 → the nearest stop is 1.10
             Assert.AreEqual(1.1f, slider.Value, 1e-4f, "sürükleme de durağa oturur");
         }
+
+        // ------------------------------------------------------------------ WP-098B · C31 brush-kit confirmations
+
+        private UiModal EndRunConfirm(Action onEnd = null, Action onKeep = null)
+        {
+            return PauseScreen.CreateEndRunConfirm(_root, onEnd, onKeep);
+        }
+
+        /// <summary>The confirmation's C1: the full-screen ink image named "Scrim" (the kit modal's own name for it).</summary>
+        private static Image ConfirmScrim(UiModal confirm)
+        {
+            foreach (Image image in confirm.GetComponentsInChildren<Image>(true))
+            {
+                if (image.name == "Scrim")
+                {
+                    return image;
+                }
+            }
+
+            Assert.Fail(confirm.name + ": perde (Scrim) yok");
+            return null;
+        }
+
+        [Test]
+        public void FircaOnay_DialogClosed_YalnizGercekKapanista_OdakTuzagi_GuvenliVarsayilan()
+        {
+            int confirmed = 0, kept = 0, opened = 0, closed = 0;
+            Action<UiEvent, string> record = (e, detail) =>
+            {
+                if (detail != PauseScreen.ConfirmName) return;
+                if (e == UiEvent.DialogOpened) opened++;
+                if (e == UiEvent.DialogClosed) closed++;
+            };
+
+            UiEvents.Raised += record;
+            try
+            {
+                UiModal confirm = EndRunConfirm(() => confirmed++, () => kept++);
+                Assert.AreEqual(PauseScreen.ConfirmName, confirm.name, "kök eski adını korur (ConfirmRoot)");
+                Assert.IsFalse(confirm.IsOpen, "kapalı kurulur");
+                confirm.Close();
+                Assert.IsFalse(confirm.HandleCancel(), "kapalı onay iptali almaz");
+                Assert.AreEqual(0, closed, "hiç açılmamış onay DialogClosed yaymaz (WP-098B: eski sahte olay)");
+
+                UnityEngine.UI.Navigation p = confirm.Primary.navigation, s = confirm.Secondary.navigation;
+                Assert.AreEqual(UnityEngine.UI.Navigation.Mode.Explicit, p.mode);
+                Assert.AreEqual(UnityEngine.UI.Navigation.Mode.Explicit, s.mode);
+                Assert.AreSame(confirm.Secondary, p.selectOnLeft);
+                Assert.AreSame(confirm.Secondary, p.selectOnRight);
+                Assert.AreSame(confirm.Primary, s.selectOnLeft);
+                Assert.AreSame(confirm.Primary, s.selectOnRight);
+                Assert.IsNull(p.selectOnUp, "onaydan yukarı kaçış yok");
+                Assert.IsNull(p.selectOnDown, "onaydan aşağı kaçış yok");
+                Assert.IsNull(s.selectOnUp);
+                Assert.IsNull(s.selectOnDown);
+                Assert.AreEqual("Cancel", confirm.Secondary.name, "güvenli eylem eski adıyla");
+                Assert.AreEqual("Confirm", confirm.Primary.name);
+                Assert.AreEqual(UiButtonVariant.Brush, confirm.Primary.Variant, "C11: dolgusuz, çerçevesiz fırça eylemi");
+                Assert.AreEqual(UiButtonVariant.Brush, confirm.Secondary.Variant);
+
+                confirm.Open();
+                Assert.IsTrue(confirm.IsOpen);
+                Assert.AreEqual(1, opened);
+
+                Assert.IsTrue(confirm.HandleCancel(), "iptal (B / Esc) onayca alınır");
+                Assert.AreEqual(1, kept, "iptal = güvenli eylem");
+                Assert.AreEqual(0, confirmed, "iptal yıkıcı eylemi çağırmaz");
+                Assert.IsFalse(confirm.IsOpen);
+                Assert.AreEqual(1, closed, "gerçek kapanış: bir DialogClosed");
+                confirm.Close();
+                Assert.IsFalse(confirm.HandleCancel());
+                Assert.AreEqual(1, closed, "kapalıyken Close / iptal sahte DialogClosed yaymaz");
+
+                confirm.Open();
+                confirm.Primary.OnSubmit(null);
+                Assert.AreEqual(1, confirmed, "END RUN yalnız basınca");
+                Assert.IsFalse(confirm.IsOpen);
+                Assert.AreEqual(2, closed);
+            }
+            finally
+            {
+                UiEvents.Raised -= record;
+            }
+        }
+
+        /// <summary>
+        /// KILAVUZ §1 / §3 / §6: the destructive action is said in a word and a glyph (Menu.EndRun, Menu.Quit), never in
+        /// Danger red or a vermilion edge; the pad's default is the SAFE action (KEEP PLAYING / NO); the scrim is the kit's
+        /// Confirm level (linear-light, not AP-028's sRGB α230); its own dialog layer.
+        /// </summary>
+        [Test]
+        public void FircaOnay_YikiciKelimeVeIkonla_ConfirmPerdesi_GuvenliEylemSolda()
+        {
+            UiBrushConfirm endRun = PauseScreen.EndRunSpec;
+            Assert.IsTrue(endRun.Destructive);
+            Assert.AreEqual("Menu.EndRun", endRun.ConfirmIcon, "END RUN ikonla");
+            Assert.AreEqual("pause.confirm.end", endRun.ConfirmKey);
+            Assert.AreEqual("pause.confirm.keep", endRun.CancelKey, "güvenli eylem KEEP PLAYING");
+            Assert.IsFalse(string.IsNullOrEmpty(endRun.CancelIcon));
+            Assert.AreEqual("pause.confirm.body", endRun.BodyKey, "kayıp ve korunan: gövde");
+
+            UiBrushConfirm quit = PrototypeUiFlow.QuitSpec;
+            Assert.IsTrue(quit.Destructive);
+            Assert.AreEqual("Menu.Quit", quit.ConfirmIcon, "QUIT ikonla");
+            Assert.AreEqual("menu.quit", quit.ConfirmKey);
+            Assert.AreEqual("common.no", quit.CancelKey, "pad varsayılanı Hayır (C-00 07.10)");
+            Assert.AreEqual("menu.quit.confirm", quit.TitleKey);
+            Assert.IsTrue(string.IsNullOrEmpty(quit.BodyKey) && string.IsNullOrEmpty(quit.BodyFallback), "kısa onay: gövde yok (harf az)");
+
+            // In the game the confirmation hangs under the screen's canvas (PauseScreen.ScreenRect); overrideSorting is a
+            // nested canvas's setting - on a root canvas there is nothing to override. The bare test root gets that canvas
+            // (world space, so its 1920×1080 rect is not driven by the Editor's screen).
+            Canvas screen = _root.gameObject.AddComponent<Canvas>();
+            screen.renderMode = RenderMode.WorldSpace;
+            _root.sizeDelta = new Vector2(1920f, 1080f);
+
+            UiModal confirm = EndRunConfirm();
+            Assert.IsFalse(confirm.gameObject.activeSelf, "kapalı kurulur (katman yazımı onu açık bırakmaz)");
+            Assert.AreNotEqual(UiButtonVariant.Danger, confirm.Primary.Variant, "Danger dolgusu yok");
+            confirm.Open();
+            Color accent = UiTokens.Get(UiColor.AccentPrimary);
+            foreach (Image image in confirm.GetComponentsInChildren<Image>(false))
+            {
+                bool vermilion = Mathf.Abs(image.color.r - accent.r) < 1e-3f && Mathf.Abs(image.color.g - accent.g) < 1e-3f &&
+                                 Mathf.Abs(image.color.b - accent.b) < 1e-3f;
+                Assert.IsFalse(vermilion && image.enabled, image.name + ": onayda vermilion yok (yıkıcılık renkle anlatılmaz)");
+            }
+
+            // Read while it is shown - the moment the layer matters.
+            Canvas layer = confirm.GetComponent<Canvas>();
+            Assert.IsNotNull(layer, "kendi tuval katmanı");
+            // WP-098B (em-1 #2): Unity drops overrideSorting written on an inactive canvas, and the kit builds the confirm
+            // closed - RaiseToDialogLayer now writes it with the root on.
+            Assert.IsTrue(layer.overrideSorting, "kapalı kurulan onay da kendi sıralamasını alır");
+            Assert.AreEqual(UiTokens.SortingDialog, layer.sortingOrder, "ekranın üstünde, diyalog sırasında");
+
+            confirm.Close();
+
+            Image scrim = ConfirmScrim(confirm);
+            Assert.AreEqual(UiBrushTokens.ScrimConfirm, scrim.color.a, 1e-3f, "perde = kitin Confirm seviyesi");
+            Assert.AreEqual(UiBrushTokens.Scrim(UiBrushScrim.Confirm), UiBrushTokens.ScrimConfirm, 1e-4f);
+            Assert.IsTrue(scrim.raycastTarget, "perde alttaki tıklamaları yutar");
+
+            var safe = (RectTransform)confirm.Secondary.transform;
+            var act = (RectTransform)confirm.Primary.transform;
+            safe.GetWorldCorners(s_corners);
+            float safeX = s_corners[0].x;
+            act.GetWorldCorners(s_corners);
+            Assert.Less(safeX, s_corners[0].x, "güvenli eylem solda (KILAVUZ §4 Confirm)");
+        }
+
+        private static readonly Vector3[] s_corners = new Vector3[4];
+
+        [Test]
+        public void FircaOnay_Acilis_EnFazla035sn_AzHareketteSure0()
+        {
+            Assert.LessOrEqual(UiMotionTokens.Seconds(UiBrushTokens.ScrimIn), 0.35f, "perde ≤ 0,35 s");
+            Assert.LessOrEqual(UiMotionTokens.Seconds(UiBrushTokens.Close), 0.35f, "kapanış ≤ 0,35 s");
+            UiModal confirm = EndRunConfirm();
+
+            confirm.Open();
+            Assert.Greater(UiMotion.ActiveCount, 0, "giriş baştan oynar (EnterModal)");
+            Step(0.35f);
+            Assert.AreEqual(0, UiMotion.ActiveCount, "0,35 s sonra canlı tween yok: yerinde");
+            confirm.Close();
+            Assert.IsFalse(confirm.IsOpen, "kapanış anında (UiModal sözleşmesi)");
+
+            UiMotion.ReducedMotion = true;
+            confirm.Open();
+            Assert.IsTrue(confirm.IsOpen);
+            Assert.AreEqual(0, UiMotion.ActiveCount, "azaltılmış hareket: tween açılmaz, süre 0");
+        }
+
+        /// <summary>
+        /// KILAVUZ §6, for the two files of this window until the kit's general FircaIzleri_YalnizKittenGelir lands: the
+        /// pause screen and the QUIT flow draw brush traces only through UiBrushKit - no raw ink channel or mask, no
+        /// stop-gap confirm / mark class, no Danger fill - and the pause keeps its recipe (Window, edge 1, title 1, C8 1).
+        /// </summary>
+        [Test]
+        public void FircaOnay_DuraklatVeCikis_FircaYalnizKittenGelir()
+        {
+            string root = Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime");
+            string[] files = { Path.Combine("Screens", "PauseScreen.cs"), Path.Combine("Flow", "PrototypeUiFlow.cs") };
+            var banned = new Regex(@"UiInkChannel\.|InkMask\(|UiSprites\.(BrushRibbon|EnsoBrush)|UiInkConfirm|UiInkMarks|UiButtonVariant\.Danger|UiColor\.AccentPrimary");
+            foreach (string file in files)
+            {
+                string code = UiOrnamentCensusTests.StripComments(File.ReadAllText(Path.Combine(root, file)));
+                Match hit = banned.Match(code);
+                Assert.IsFalse(hit.Success, file + ": " + (hit.Success ? hit.Value : string.Empty) + " (fırça yalnız UiBrushKit üzerinden)");
+            }
+
+            string pause = UiOrnamentCensusTests.StripComments(File.ReadAllText(Path.Combine(root, files[0])));
+            StringAssert.Contains("UiBrushKit.Pane(", pause);
+            StringAssert.Contains("UiBrushScrim.Window", pause, "Duraklat = Window perdesi");
+            Assert.AreEqual(1, Regex.Matches(pause, @"UiBrushKit\.EdgeTrace\(").Count, "kenar izi 1");
+            Assert.AreEqual(1, Regex.Matches(pause, @"UiBrushKit\.Title\(").Count, "başlık fırçası 1");
+            Assert.AreEqual(1, Regex.Matches(pause, @"UiBrushKit\.(Tabs|Segments|SelectionMark)\(").Count, "C8 1 (kamera)");
+            Assert.AreEqual(0, Regex.Matches(pause, @"UiBrushKit\.Divider\(").Count, "fırça ayırıcı yok");
+        }
     }
 }

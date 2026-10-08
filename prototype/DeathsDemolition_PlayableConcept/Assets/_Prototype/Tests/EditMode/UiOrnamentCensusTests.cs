@@ -286,5 +286,31 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.IsEmpty(failures, "fırça izi kit dışında (UiBrushKit kullan):\n" + string.Join("\n", failures));
         }
+
+        /// <summary>
+        /// WP-098B M3 (AD MUST M3; KILAVUZ §1 vermilion reserve, C7, §4.1 C11): the round-end window builds no filled button and
+        /// no focus plate - no Primary / Danger variant (a vermilion fill), no Ghost (its wash plate and gold focus ring on a
+        /// seal), and no variant swap standing in for "the primary"; its actions are the kit's C11 and its focus the brackets.
+        /// The variant appears only in a call, so the source census sees every construction site.
+        /// </summary>
+        [Test]
+        public void RaundSonu_DolguluButonYok_OdakPlakasiYok()
+        {
+            var filled = new Regex(@"UiButtonVariant\.(Primary|Danger|Ghost)\b|\.SetVariant\(");
+            var failures = new List<string>();
+            foreach (Group group in Groups)
+            {
+                if (group.Name != "Shop") continue;
+                foreach (string file in group.Files)
+                {
+                    foreach (Match m in filled.Matches(StripComments(File.ReadAllText(Path.Combine(Root, file)))))
+                    {
+                        failures.Add(file + ": " + m.Value);
+                    }
+                }
+            }
+
+            Assert.IsEmpty(failures, "raund sonu: dolgulu buton / odak plakası (kitin C11'i ve köşebendi kullanılır):\n" + string.Join("\n", failures));
+        }
     }
 }

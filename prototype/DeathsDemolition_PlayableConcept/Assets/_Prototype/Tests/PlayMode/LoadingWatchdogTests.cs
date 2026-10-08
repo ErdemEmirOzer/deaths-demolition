@@ -200,19 +200,20 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Canvas.ForceUpdateCanvases();
             UiModal modal = OpenError(curtain);
+            // WP-098B (kit Confirm): the way back is the SAFE action (Secondary: first, focused), QUIT the confirming one.
             Assert.IsNotNull(modal.Secondary);
-            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Primary.LabelText.text);
-            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Secondary.LabelText.text);
-            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "Safe primary is the initial focus.");
+            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Secondary.LabelText.text);
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Primary.LabelText.text);
+            Assert.AreSame(modal.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "The safe way back is the initial focus.");
             AssertIgnoredCancel(modal);
             Assert.AreEqual(0, primaryCalls);
-            TMP_Text body = modal.transform.Find("Card/Content/Body").GetComponent<TMP_Text>();
+            TMP_Text body = FindText(modal, "Body");
             Assert.AreEqual(UiStrings.Format("loading.error.body", "value", UiCurtain.SentenceFor(PrototypeScenes.Run), "reason", UiStrings.Get("loading.error.missing"), ""), body.text);
             foreach (TMP_Text text in modal.GetComponentsInChildren<TMP_Text>()) AssertFits(text, language);
             Assert.AreEqual(_profileHash, ProfileHash());
-            Assert.IsTrue(ExecuteEvents.Execute(modal.Primary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
-            Assert.AreEqual(1, primaryCalls, "Actual primary Submit invokes its safe action once.");
-            Assert.IsFalse(curtain.ErrorOpen, "Primary Submit closes the modal.");
+            Assert.IsTrue(ExecuteEvents.Execute(modal.Secondary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
+            Assert.AreEqual(1, primaryCalls, "Actual Submit on the way back invokes its safe action once.");
+            Assert.IsFalse(curtain.ErrorOpen, "Submit on the way back closes the modal.");
             Assert.AreEqual(_profileHash, ProfileHash());
             curtain.HideError();
             curtain.Open(true);
@@ -245,10 +246,10 @@ namespace DD.Prototype.Tests.PlayMode
             Canvas.ForceUpdateCanvases();
             UiCurtain curtain = UiCurtain.Instance;
             UiModal modal = OpenError(curtain);
-            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Primary.LabelText.text);
             Assert.IsNotNull(modal.Secondary);
-            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Secondary.LabelText.text);
-            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "Safe primary is the initial focus.");
+            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Secondary.LabelText.text);
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Primary.LabelText.text);
+            Assert.AreSame(modal.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "The safe way back is the initial focus.");
             Assert.IsFalse(PrototypeUiFlow.IsLoading, "Nothing is loading: the scene never started.");
             Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
 
@@ -258,12 +259,12 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsTrue(curtain.ErrorOpen, "Cancel keeps the load error open.");
             Assert.AreEqual(UiContext.Settings, UiNavigation.Layer, "The screen under the load error ignores Cancel.");
-            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "Cancel does not move focus off the modal.");
+            Assert.AreSame(modal.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "Cancel does not move focus off the modal.");
             Assert.AreEqual(_profileHash, ProfileHash(), "Neither the error nor Cancel writes the profile.");
 
-            // The primary is the way back: a real main-menu load.
-            Assert.IsTrue(ExecuteEvents.Execute(modal.Primary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
-            Assert.IsFalse(curtain.ErrorOpen, "Primary Submit closes the modal.");
+            // The safe action is the way back: a real main-menu load.
+            Assert.IsTrue(ExecuteEvents.Execute(modal.Secondary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
+            Assert.IsFalse(curtain.ErrorOpen, "Submit on the way back closes the modal.");
             _manualError = false;
             yield return Bekle(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 20f, "The way back did not reach the main menu.");
             Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
@@ -292,20 +293,94 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             UiCurtain curtain = UiCurtain.Instance;
             UiModal modal = OpenError(curtain);
-            Assert.AreEqual(UiStrings.Get("loading.error.retry"), modal.Primary.LabelText.text, "The menu itself missing: TRY AGAIN.");
             Assert.IsNotNull(modal.Secondary);
-            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Secondary.LabelText.text);
+            Assert.AreEqual(UiStrings.Get("loading.error.retry"), modal.Secondary.LabelText.text, "The menu itself missing: TRY AGAIN (the safe action).");
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Primary.LabelText.text);
+            Assert.AreSame(modal.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "TRY AGAIN is the initial focus.");
             Assert.IsFalse(PrototypeUiFlow.IsLoading);
             curtain.HideError();
             curtain.Open(true);
             _manualError = false;
         }
 
+        /// <summary>
+        /// WP-098B (brush kit KILAVUZ §3): a stalled load is the single-action notice - QUIT only (no way back, CancelKey
+        /// null), focused, Cancel ignored; the kit's Confirm scrim; QUIT said in a word, never in Danger red.
+        /// </summary>
+        [UnityTest, Timeout(60000)]
+        public IEnumerator ErrorModal_Takilma_TekEylem_ConfirmPerdesi_IptalYok()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiFactory.EnsureEventSystem();
+            UiCurtain curtain = UiCurtain.Instance;
+            _manualError = true;
+            curtain.Close(true);
+            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false);
+            curtain.ShowError(PrototypeScenes.Results, true, null, null);
+            yield return null;
+            UiModal modal = OpenError(curtain);
+            Assert.IsNull(modal.Secondary, "tek eylem: geri dönüş yok");
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Primary.LabelText.text);
+            Assert.AreNotEqual(UiButtonVariant.Danger, modal.Primary.Variant, "QUIT renkle değil kelime + ikonla");
+            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "tek eylem odakta");
+            Assert.AreEqual(UiBrushTokens.ScrimConfirm, ScrimAlpha(modal), 1e-3f, "yükleme hatası = Confirm perdesi");
+            AssertIgnoredCancel(modal);
+            UiInput.SimulateCancelNextFrame();
+            yield return null;
+            yield return null;
+            Assert.IsTrue(curtain.ErrorOpen, "Cancel bilerek yok sayılır");
+
+            UiBrushConfirm spec = UiCurtain.LoadErrorSpec("body", null);
+            Assert.IsNull(spec.CancelKey, "tek eylemli bildirim: CancelKey null");
+            Assert.AreEqual("Menu.Quit", spec.ConfirmIcon);
+            Assert.IsTrue(spec.Destructive);
+            spec = UiCurtain.LoadErrorSpec("body", UiStrings.Get("loading.error.retry"));
+            Assert.AreEqual("loading.error.retry", spec.CancelKey, "geri dönüşün okuyucu adı bir anahtar");
+            Assert.AreEqual("Menu.Retry", spec.CancelIcon);
+            spec = UiCurtain.LoadErrorSpec("body", UiStrings.Get("loading.error.to_menu"));
+            Assert.AreEqual("loading.error.to_menu", spec.CancelKey);
+            Assert.AreEqual("Menu.Home", spec.CancelIcon);
+
+            curtain.HideError();
+            curtain.Open(true);
+            _manualError = false;
+        }
+
+        private static TMP_Text FindText(UiModal modal, string name)
+        {
+            foreach (TMP_Text text in modal.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.name == name)
+                {
+                    return text;
+                }
+            }
+
+            Assert.Fail(modal.name + ": no " + name + " text");
+            return null;
+        }
+
+        /// <summary>The confirmation's C1: the full-screen ink image named "Scrim" (the kit modal's own name for it).</summary>
+        private static float ScrimAlpha(UiModal modal)
+        {
+            foreach (UnityEngine.UI.Image image in modal.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+            {
+                if (image.name == "Scrim")
+                {
+                    return image.color.a;
+                }
+            }
+
+            Assert.Fail(modal.name + ": no Scrim");
+            return 0f;
+        }
+
         private static UiModal OpenError(UiCurtain curtain)
         {
             UiModal modal = curtain.GetComponentInChildren<UiModal>();
             Assert.IsNotNull(modal);
-            Assert.AreEqual("LoadError", modal.name);
+            Assert.AreEqual(UiCurtain.LoadErrorName, modal.name);
             Assert.IsTrue(modal.IsOpen);
             return modal;
         }
@@ -314,7 +389,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Assert.IsNotNull(EventSystem.current);
             GameObject focused = EventSystem.current.currentSelectedGameObject;
-            Assert.AreSame(modal.Primary.gameObject, focused);
+            Assert.AreSame((modal.Secondary != null ? modal.Secondary : modal.Primary).gameObject, focused);
             Assert.IsFalse(ExecuteEvents.Execute(focused, new BaseEventData(EventSystem.current), ExecuteEvents.cancelHandler), "Loading error does not wire a Cancel action.");
             Assert.IsTrue(modal.IsOpen, "Cancel event keeps the load error open.");
         }

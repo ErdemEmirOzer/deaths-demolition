@@ -7,6 +7,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
+using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
@@ -347,6 +348,22 @@ namespace DD.Prototype.Tests.PlayMode
             Action profilDinle = () => profilDegisti++;
             ProfileService.Changed += profilDinle;
 
+            // WP-098B his olayları: Landed → MagnetStart → FeelEvents.GoldCollected (S-02, cüzdan kredisinden) → (HUD varsa) FlightArrived.
+            // Köprü cüzdanı oyunun kendi yolundan bağlar (RoundStarted / EnemyDied); Rearm sahne değişimindekiyle aynı, idempotent.
+            FeelEvents.Rearm();
+            var hisSirasi = new List<string>();
+            int toplamaAnindaBakiye = -1;
+            FeelGold sonToplama = default;
+            Action<GoldLandedFeel> hisInis = e => hisSirasi.Add("Landed");
+            Action<GoldMagnetFeel> hisMagnet = e => hisSirasi.Add("MagnetStart");
+            Action<FeelGold> hisToplama = e => { hisSirasi.Add("GoldCollected"); sonToplama = e; toplamaAnindaBakiye = _gold.Wallet.Balance; };
+            Action<GoldArrivedFeel> hisVaris = e => hisSirasi.Add("FlightArrived");
+            GoldFeelEvents.Landed += hisInis;
+            GoldFeelEvents.MagnetStart += hisMagnet;
+            FeelEvents.GoldCollected += hisToplama;
+            GoldFeelEvents.FlightArrived += hisVaris;
+            int yoldaOnce = HudGoldTarget.InFlight;
+
             ZombieEnemy z = Dogur(OyuncuKonumu + new Vector3(12f, 0f, 0f));
             z.Kill();
             yield return null;
@@ -380,16 +397,32 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(1, _gold.PacketsCollected);
             Assert.AreEqual(_gold.Wallet.Balance, RunEvents.Current.Gold, "HUD anlık görüntüsü cüzdanla aynı.");
 
-            // Tekrar gelir yok: 30 kare daha; paket flash sonrası havuza döner.
+            // Tekrar gelir yok: 30 kare daha; paket flaş (HUD yok) ya da HUD uçuşu (WP-098B, unscaled ≤ 0,35 s) sonrası havuza döner.
             for (int i = 0; i < 30; i++)
             {
                 yield return null;
             }
 
+            yield return Bekle(() => _gold.LiveOrbCount == 0, 2f, "Toplanan paket havuza dönmedi (flaş/HUD uçuşu bitmedi).");
             Assert.AreEqual(1, kredi, "Aynı paket ikinci kez gelir üretmedi.");
             Assert.AreEqual(_standardDeger, _gold.Wallet.Balance);
             Assert.AreEqual(0, _gold.LiveOrbCount, "Toplanan paket havuza döndü.");
             Assert.AreEqual(0, AktifPaketSayisi());
+
+            GoldFeelEvents.Landed -= hisInis;
+            GoldFeelEvents.MagnetStart -= hisMagnet;
+            FeelEvents.GoldCollected -= hisToplama;
+            GoldFeelEvents.FlightArrived -= hisVaris;
+            Assert.GreaterOrEqual(hisSirasi.Count, 3, "His olayları: " + string.Join(",", hisSirasi));
+            Assert.AreEqual("Landed", hisSirasi[0], "His sırası: " + string.Join(",", hisSirasi));
+            Assert.AreEqual("MagnetStart", hisSirasi[1], "His sırası: " + string.Join(",", hisSirasi));
+            Assert.AreEqual("GoldCollected", hisSirasi[2], "His sırası: " + string.Join(",", hisSirasi));
+            Assert.AreEqual(_standardDeger, sonToplama.Amount, "FeelGold.Amount = paket");
+            Assert.AreEqual(_standardDeger, sonToplama.Balance, "FeelGold.Balance = kredi sonrası bakiye");
+            Assert.LessOrEqual(hisSirasi.Count, 4, "Paket başına en çok bir FlightArrived: " + string.Join(",", hisSirasi));
+            if (hisSirasi.Count == 4) Assert.AreEqual("FlightArrived", hisSirasi[3]);
+            Assert.AreEqual(_standardDeger, toplamaAnindaBakiye, "Kredi toplama anında (uçuştan bağımsız).");
+            Assert.AreEqual(yoldaOnce, HudGoldTarget.InFlight, "Her Depart bir Arrive ile kapandı.");
 
             // Profil XP: gold toplamak profile hiçbir şey yazmaz.
             ProfileService.Changed -= profilDinle;
@@ -603,6 +636,17 @@ namespace DD.Prototype.Tests.PlayMode
             int sweepOlayi = 0;
             _gold.AutoCollected += r => sweepOlayi++;
 
+            // WP-098B: FeelEvents.GoldCollected cüzdan kredisi başına bir kez (süpürme toplu değil: süpürülen her sikke bir olay);
+            // süpürme tek karede koştuğu için zincir indeksi sikke sikke artar (perde merdiveni). HUD varsa sikke başına bir FlightArrived.
+            FeelEvents.Rearm();
+            var hisZincir = new List<int>();
+            int hisToplamMiktar = 0, hisSonBakiye = -1;
+            int supurmeVaris = 0;
+            Action<FeelGold> hisToplama = e => { hisZincir.Add(e.ChainIndex); hisToplamMiktar += e.Amount; hisSonBakiye = e.Balance; };
+            Action<GoldArrivedFeel> hisSupurmeVaris = e => { if (e.Kind == GoldCollectKind.RoundClearAuto) supurmeVaris++; };
+            FeelEvents.GoldCollected += hisToplama;
+            GoldFeelEvents.FlightArrived += hisSupurmeVaris;
+
             // WP-008: every kill pays its spawn snapshot (Standard base + rolled armour bonus);
             // the round's income is the sum of those, read off the death events.
             int roundOdulToplami = 0;
@@ -679,6 +723,19 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => _gold.LiveOrbCount == 0, 2f, "Sweep uçuşu donuk dünyada bitmedi.");
             float ucus = Time.realtimeSinceStartup - t1;
             Assert.AreEqual(0, AktifPaketSayisi());
+
+            FeelEvents.GoldCollected -= hisToplama;
+            GoldFeelEvents.FlightArrived -= hisSupurmeVaris;
+            Assert.AreEqual(havuz, hisZincir.Count, "Her kredi tek GoldCollected: elle " + _gold.PacketsCollected + " + süpürme " + tamamlanmaSweep.Packets + " (WP-098B).");
+            Assert.AreEqual(_gold.Wallet.TotalEarned, hisToplamMiktar, "GoldCollected toplamı = kazanılan altın.");
+            Assert.AreEqual(tamamlanmaBakiye, hisSonBakiye, "Son GoldCollected bakiyesi = RoundCleared bakiyesi.");
+            for (int i = hisZincir.Count - tamamlanmaSweep.Packets + 1; i < hisZincir.Count; i++)
+            {
+                Assert.AreEqual(hisZincir[i - 1] + 1, hisZincir[i], "Süpürme tek karede: zincir indeksi sikke sikke +1 (" + string.Join(",", hisZincir) + ").");
+            }
+
+            Assert.IsTrue(supurmeVaris == 0 || supurmeVaris == tamamlanmaSweep.Packets,
+                "HUD varsa sikke başına tek Arrive, yoksa hiç: " + supurmeVaris + "/" + tamamlanmaSweep.Packets);
 
             // Ekran doğru bakiyeyle açılır (1.1 s beat, unscaled).
             yield return Bekle(() => _run.Phase == RunPhase.Upgrading, FazZamanAsimi, "Upgrade ekranı açılmadı.");

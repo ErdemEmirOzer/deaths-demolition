@@ -23,8 +23,18 @@ namespace DD.Prototype.Feedback.Vfx
         private float _clock;
         private bool _pulling;
         private Vector3 _pullTarget;
+        private float _glint;   // WP-098B: seconds left of the landing glint
+
+        // WP-098B landing glint: the sparkle card swells and brightens, then settles back into
+        // its idle pulse. INVENTED values (presentation only); scaled by Reduce Flashes.
+        private const float GlintSeconds = 0.28f;
+        private const float GlintScaleBoost = 0.7f;
+        private const float GlintAlphaBoost = 0.3f;
 
         public bool IsPulling => _pulling;
+
+        /// <summary>True while the landing glint is playing. Tests / probes.</summary>
+        public bool IsGlinting => _glint > 0f;
 
         /// <summary>
         /// Builds the pouch under <paramref name="parent"/>. Returns null when the catalog has no
@@ -94,8 +104,15 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        /// <summary>WP-098B · The packet just landed: one short swell of the sparkle card (scaled time, stops with the world).</summary>
+        public void Glint()
+        {
+            _glint = GlintSeconds;
+        }
+
         private void OnDisable()
         {
+            _glint = 0f;
             _pulling = false;
             if (_trail != null) _trail.enabled = false;
         }
@@ -103,13 +120,20 @@ namespace DD.Prototype.Feedback.Vfx
         private void Update()
         {
             _clock += Time.deltaTime;
+            if (_glint > 0f)
+            {
+                _glint = Mathf.Max(0f, _glint - Time.deltaTime);
+            }
+
+            // 1 at the landing, 0 when settled; Reduce Flashes takes it to 0.4x.
+            float glint = (_glint / GlintSeconds) * GameFeelSettings.FlashScale;
             bool haveViewer = FeedbackCameraRef.TryGetPosition(out Vector3 viewer);
 
             if (_sparkle != null && haveViewer)
             {
                 // Manifest: glow 0.6 m pulsing scale 0.85–1.0 — the card's soft glow fills the 0.6 m; the
                 // star core reads at ~0.12 m. AD fix 2 (v002): 0.45 m card, alpha 0.3–0.45; AD M8 (v003 card, 6–8 stars baked): alpha 0.5–0.7 so the stars peak.
-                float pulse = 0.925f + 0.075f * Mathf.Sin(_clock * 4.2f);
+                float pulse = (0.925f + 0.075f * Mathf.Sin(_clock * 4.2f)) * (1f + GlintScaleBoost * glint);
                 _sparkleT.localScale = new Vector3(0.45f * pulse, 0.45f * pulse, 1f);
                 Vector3 to = viewer - _sparkleT.position;
                 if (to.sqrMagnitude > 1e-4f)
@@ -118,7 +142,7 @@ namespace DD.Prototype.Feedback.Vfx
                 }
 
                 _block.SetColor(TintId, VfxLibrary.GoldTint);
-                _block.SetFloat(AlphaId, 0.60f + 0.10f * Mathf.Sin(_clock * 6.1f));
+                _block.SetFloat(AlphaId, Mathf.Min(1f, 0.60f + 0.10f * Mathf.Sin(_clock * 6.1f) + GlintAlphaBoost * glint));
                 _sparkle.SetPropertyBlock(_block);
             }
 

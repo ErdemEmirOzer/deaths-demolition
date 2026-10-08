@@ -739,7 +739,7 @@ S-09 (R1-D, 25.09):
 | `loading.error.missing` | The scene is missing from this build. | Sahne bu sürümde yok. |
 | `loading.error.retry` | TRY AGAIN | TEKRAR DENE |
 | `loading.error.stalled` | Loading stopped making progress. | Yükleme ilerlemiyor. |
-| `loading.error.title` | THE NEXT SCREEN DID NOT LOAD | SONRAKİ EKRAN YÜKLENMEDİ |
+| `loading.error.title` | LOADING FAILED | YÜKLENEMEDİ |
 | `loading.error.to_menu` | RETURN TO MAIN MENU | ANA MENÜYE DÖN |
 | `loading.percent` | LOADING · {0}% | YÜKLENİYOR · %{0} |
 | `loading.reduced_motion` | Loading. The screen changes on its own; no input is needed. | Yükleniyor. Ekran kendiliğinden değişir; bir şeye basman gerekmez. |

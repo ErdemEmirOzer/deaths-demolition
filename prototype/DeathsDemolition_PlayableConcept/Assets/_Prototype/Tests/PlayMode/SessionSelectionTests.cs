@@ -116,6 +116,10 @@ namespace DD.Prototype.Tests.PlayMode
                 if (butonlar[i].IsSelectedChoice)
                 {
                     secili++;
+                    // WP-098B: the remembered choice is drawn by the kit's C18 check glyph (no SELECTED chip any more).
+                    Transform glif = butonlar[i].transform.Find("Status");
+                    Assert.IsNotNull(glif, butonlar[i].name + ": seçim satırı kitin liste satırı (durum glifi)");
+                    Assert.IsTrue(glif.GetComponent<UnityEngine.UI.Image>().enabled, butonlar[i].name + ": hatırlanan seçim check glifiyle görünür");
                 }
             }
 

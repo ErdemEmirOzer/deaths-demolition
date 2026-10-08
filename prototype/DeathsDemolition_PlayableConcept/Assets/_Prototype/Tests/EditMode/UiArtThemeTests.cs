@@ -996,5 +996,200 @@ namespace DD.Prototype.Tests.EditMode
                 UnityEngine.Object.DestroyImmediate(png);
             }
         }
+
+        // ======================================================= R3 m12 · AP-036 side views (WP-098B)
+
+        private const string SideViewFolder = ArtFolder + "/AP036";
+
+        /// <summary>The Prepare Run page's twelve weapons: the ten classics and the two Specials (AP-036 v001).</summary>
+        private static readonly string[] SideViewIds =
+        {
+            "ar_1", "ar_2", "lmg_1", "lmg_2", "rl_1", "sg_1", "sg_2", "smg_1", "smg_2", "sr_1", "sw_arc", "sw_gel"
+        };
+
+        [Serializable]
+        private sealed class SideViewContent
+        {
+            public int x, y, w, h;
+        }
+
+        [Serializable]
+        private sealed class SideViewItem
+        {
+            public string weapon_id;
+            public string file;
+            public int[] size;
+            public SideViewContent content;
+            public float length_m;
+            public string sha256;
+        }
+
+        [Serializable]
+        private sealed class SideViewManifest
+        {
+            public string schema;
+            public SideViewItem[] items;
+        }
+
+        /// <summary>
+        /// R3 m12: each of the twelve weapons has its side view - a Single sprite, no mipmaps, ≤ 1024 (Standalone BC7, high
+        /// quality), sRGB, alpha is transparency, clamp + bilinear, sides a multiple of 4 (BC blocks) - and the table the
+        /// screen places it by (SelectionScreen.WeaponSideView) is the intake manifest's: the PNG's SHA-256, its size, the
+        /// real length, and its alpha box measured again here from the PNG's own bytes.
+        /// </summary>
+        [Test]
+        public void AP036YanGorunum_OnIkiSilah_ImportSozlesmesi_TabloPngIleAyni()
+        {
+            SideViewManifest manifest = JsonUtility.FromJson<SideViewManifest>(File.ReadAllText(SideViewFolder + "/AP036-intake-manifest.json"));
+            Assert.AreEqual("dd.ui.ap036-intake.v1", manifest.schema);
+            Assert.AreEqual(SideViewIds.Length, manifest.items.Length, "manifest 12 silah");
+            Assert.AreEqual(SideViewIds.Length, SelectionScreen.WeaponSideView.Table.Length, "tablo 12 silah");
+
+            var failures = new List<string>();
+            foreach (string id in SideViewIds)
+            {
+                int index = SelectionScreen.WeaponSideView.IndexOf(id);
+                Assert.GreaterOrEqual(index, 0, id + ": tabloda yok");
+                SelectionScreen.WeaponSideView.Entry e = SelectionScreen.WeaponSideView.Table[index];
+                SideViewItem item = Array.Find(manifest.items, it => it.weapon_id == id);
+                Assert.IsNotNull(item, id + ": manifestte yok");
+
+                string path = SideViewFolder + "/" + SelectionScreen.WeaponSideView.FilePrefix + id + ".png";
+                Assert.AreEqual(Path.GetFileName(path), item.file, id + ": dosya adı");
+                byte[] bytes = File.ReadAllBytes(path);
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    string hex = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
+                    if (hex != item.sha256) failures.Add(id + ": SHA-256 manifestten farklı");
+                }
+
+                if (Mathf.Abs(e.LengthM - item.length_m) > 0.0005f) failures.Add(id + ": uzunluk " + e.LengthM + " ≠ manifest " + item.length_m);
+                if (e.Width != item.size[0] || e.Height != item.size[1]) failures.Add(id + ": boyut tablo ≠ manifest");
+                if (e.Content.x != item.content.x || e.Content.y != item.content.y || e.Content.width != item.content.w || e.Content.height != item.content.h)
+                {
+                    failures.Add(id + ": alfa kutusu tablo ≠ manifest");
+                }
+
+                // The alpha box from the PNG itself (Texture2D rows run bottom-up, as the table's y).
+                var png = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                try
+                {
+                    Assert.IsTrue(png.LoadImage(bytes), id + " png");
+                    Assert.AreEqual(e.Width, png.width, id + ": genişlik");
+                    Assert.AreEqual(e.Height, png.height, id + ": yükseklik");
+                    Color32[] px = png.GetPixels32();
+                    int xMin = int.MaxValue, yMin = int.MaxValue, xMax = -1, yMax = -1;
+                    for (int y = 0; y < png.height; y++)
+                    {
+                        for (int x = 0; x < png.width; x++)
+                        {
+                            if (px[y * png.width + x].a == 0) continue;
+                            xMin = Mathf.Min(xMin, x);
+                            yMin = Mathf.Min(yMin, y);
+                            xMax = Mathf.Max(xMax, x);
+                            yMax = Mathf.Max(yMax, y);
+                        }
+                    }
+
+                    var measured = new RectInt(xMin, yMin, xMax - xMin + 1, yMax - yMin + 1);
+                    if (!measured.Equals(e.Content)) failures.Add(id + ": PNG alfa kutusu " + measured + " ≠ tablo " + e.Content);
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(png);
+                }
+
+                if (e.Width % 4 != 0 || e.Height % 4 != 0) failures.Add(id + ": kenar 4'ün katı değil (BC7 blokları)");
+
+                var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
+                Assert.IsNotNull(importer, id + ": TextureImporter yok");
+                if (importer.textureType != UnityEditor.TextureImporterType.Sprite) failures.Add(id + ": Sprite değil");
+                if (importer.spriteImportMode != UnityEditor.SpriteImportMode.Single) failures.Add(id + ": Single değil");
+                if (importer.mipmapEnabled) failures.Add(id + ": mipmap açık");
+                if (importer.maxTextureSize > 1024) failures.Add(id + ": max " + importer.maxTextureSize);
+                if (!importer.alphaIsTransparency) failures.Add(id + ": alphaIsTransparency kapalı");
+                if (!importer.sRGBTexture) failures.Add(id + ": sRGB kapalı");
+                if (importer.wrapMode != TextureWrapMode.Clamp) failures.Add(id + ": Clamp değil");
+                if (importer.filterMode != FilterMode.Bilinear) failures.Add(id + ": Bilinear değil");
+                if (importer.textureCompression != UnityEditor.TextureImporterCompression.CompressedHQ) failures.Add(id + ": sıkıştırma " + importer.textureCompression);
+                UnityEditor.TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings("Standalone");
+                if (!standalone.overridden || standalone.maxTextureSize > 1024 || standalone.format != UnityEditor.TextureImporterFormat.BC7)
+                {
+                    failures.Add(id + ": Standalone " + standalone.overridden + " / " + standalone.maxTextureSize + " / " + standalone.format + " (BC7 ≤ 1024 bekleniyor)");
+                }
+
+                Sprite sprite = SelectionScreen.WeaponSideView.Load(index);
+                Assert.IsNotNull(sprite, id + ": Resources yüklemesi");
+                if (sprite.rect.width != e.Width || sprite.rect.height != e.Height) failures.Add(id + ": sprite " + sprite.rect + " (küçültülmüş?)");
+                if (sprite.texture.mipmapCount != 1) failures.Add(id + ": dokuda mip var");
+            }
+
+            Assert.IsEmpty(failures, "AP-036 yan görünüm sözleşmesi:\n" + string.Join("\n", failures));
+            Debug.Log("[DD-TEST] r3m12.sideviews=" + SideViewIds.Length + " maxLen=" + SelectionScreen.WeaponSideView.MaxLengthM + " maxH=" + SelectionScreen.WeaponSideView.MaxHeightM);
+        }
+
+        /// <summary>
+        /// R3 m12, the placement rule: at one px-per-metre every weapon's alpha box is its real length wide (the aspect kept),
+        /// its foot on the given baseline and its stock on the given line - so the length order survives on screen (Tomi
+        /// longest, Tetsui shortest) - and the slot rule lets the longest fill the width or the tallest the height.
+        /// </summary>
+        [Test]
+        public void AP036YanGorunum_OrtakTabanVeOlcek_UzunlukSirasiKorunur()
+        {
+            var parentGo = new GameObject("SideViewParent", typeof(RectTransform));
+            try
+            {
+                var parent = (RectTransform)parentGo.transform;
+                parent.sizeDelta = new Vector2(1000f, 400f);
+                const float pxPerM = 100f;
+                var stock = new Vector2(900f, -50f);
+                var widths = new Dictionary<string, float>();
+                foreach (SelectionScreen.WeaponSideView.Entry e in SelectionScreen.WeaponSideView.Table)
+                {
+                    var go = new GameObject(e.WeaponId, typeof(RectTransform));
+                    var rect = (RectTransform)go.transform;
+                    rect.SetParent(parent, false);
+                    SelectionScreen.WeaponSideView.Place(rect, SelectionScreen.WeaponSideView.IndexOf(e.WeaponId), pxPerM, new Vector2(0f, 0.5f), stock);
+
+                    float k = rect.sizeDelta.x / e.Width;
+                    Assert.AreEqual(rect.sizeDelta.y / e.Height, k, 1e-4f, e.WeaponId + ": oran korunur");
+                    Assert.AreEqual(new Vector2(0f, 0.5f), rect.anchorMin);
+                    Assert.AreEqual(new Vector2(1f, 0f), rect.pivot);
+                    float contentRight = rect.anchoredPosition.x - (e.Width - e.Content.xMax) * k;
+                    float contentBottom = rect.anchoredPosition.y + e.Content.y * k;
+                    float contentWidth = e.Content.width * k;
+                    Assert.AreEqual(stock.x, contentRight, 0.01f, e.WeaponId + ": dipçik çizgisi ortak");
+                    Assert.AreEqual(stock.y, contentBottom, 0.01f, e.WeaponId + ": taban çizgisi ortak");
+                    Assert.AreEqual(e.LengthM * pxPerM, contentWidth, 0.01f, e.WeaponId + ": ortak ölçek (gerçek uzunluk)");
+                    Assert.LessOrEqual(e.HeightM, SelectionScreen.WeaponSideView.MaxHeightM + 1e-5f);
+                    widths[e.WeaponId] = contentWidth;
+                }
+
+                // The roster's real length order (AP-021 length_m) reads on screen.
+                string[] longToShort = { "sr_1", "lmg_1", "ar_1", "lmg_2", "rl_1", "ar_2", "sw_arc", "sw_gel", "sg_2", "smg_1", "sg_1", "smg_2" };
+                for (int i = 0; i + 1 < longToShort.Length; i++)
+                {
+                    Assert.GreaterOrEqual(widths[longToShort[i]], widths[longToShort[i + 1]] - 0.2f, longToShort[i] + " ≥ " + longToShort[i + 1]);
+                }
+
+                Assert.Greater(widths["sr_1"] / widths["smg_2"], 1.9f, "Tomi Tetsui'nin ~2 katı (1.45 / 0.72 m)");
+
+                // The slot rule: a wide slot is height-bound, a tall one width-bound - nothing leaves the slot.
+                foreach (Vector2 slot in new[] { new Vector2(128f, 40f), new Vector2(500f, 128f), new Vector2(40f, 40f) })
+                {
+                    float s = SelectionScreen.WeaponSideView.PixelsPerMetre(slot.x, slot.y);
+                    Assert.LessOrEqual(SelectionScreen.WeaponSideView.MaxLengthM * s, slot.x + 1e-3f, slot + ": en uzun sığar");
+                    Assert.LessOrEqual(SelectionScreen.WeaponSideView.MaxHeightM * s, slot.y + 1e-3f, slot + ": en yüksek sığar");
+                    Assert.IsTrue(Mathf.Approximately(SelectionScreen.WeaponSideView.MaxLengthM * s, slot.x) || Mathf.Approximately(SelectionScreen.WeaponSideView.MaxHeightM * s, slot.y), slot + ": bir kenar dolar");
+                }
+
+                Assert.AreEqual(1f, SelectionScreen.WeaponSideView.Tint(true).a);
+                Assert.AreEqual(UiGlyphTints.LockedAlpha, SelectionScreen.WeaponSideView.Tint(false).a, 1e-5f, "kilitli α 0.55, gri takas yok");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(parentGo);
+            }
+        }
     }
 }

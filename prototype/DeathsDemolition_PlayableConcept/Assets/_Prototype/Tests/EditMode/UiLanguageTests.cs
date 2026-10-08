@@ -573,6 +573,44 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Dec113_SayimSeridi_SonKareSatirinKendisi_SifirdanSayar_TR_EN_KareBasiAyirmaYok()
+        {
+            // WP-098B: the round-end count-up writes the DEC-113 line into a char buffer. At k = 1 it is the line itself
+            // (S-09's copy, both languages, with and without an Elite sample); at k = 0 every counted number reads 0 and
+            // the Elite kill time is already the printed one (a time, not a tally); a frame of the roll allocates nothing.
+            var timed = new RoundReport(3, 20, 5, 2, 1, 44.6f, 1250, 4.23f, 3);
+            var untimed = new RoundReport(2, 7, 0, 0, 0, 12f, 31, 0f, 0);
+            var tally = new UpgradeScreen.RoundTally();
+            foreach (string language in new[] { UiStrings.English, UiStrings.Turkish })
+            {
+                UiStrings.Language = language;
+                foreach (RoundReport report in new[] { timed, untimed })
+                {
+                    string line = UpgradeScreen.RoundReportLine(report, true);
+                    tally.Prepare(report);
+                    Assert.IsTrue(tally.Write(0f), language + ": the first frame writes");
+                    string first = new string(tally.Buffer, 0, tally.Length);
+                    StringAssert.StartsWith(UiStrings.Format("shop.report.standard", "value", "0", "STANDARD {value}") + "  ·  ", first, language + ": counts from 0");
+                    StringAssert.Contains(UiStrings.Format("shop.report.gold", "value", "0", "GOLD +{value}"), first, language);
+                    string tail = line.Substring(line.LastIndexOf("  ·  ", System.StringComparison.Ordinal));
+                    StringAssert.EndsWith(tail, first, language + ": the Elite kill time is printed, not counted (— without a sample)");
+                    Assert.IsFalse(tally.Write(0f), language + ": no number changed, nothing written");
+                    Assert.IsTrue(tally.Write(1f));
+                    Assert.AreEqual(line, new string(tally.Buffer, 0, tally.Length), language + ": the last frame is the line itself");
+                }
+            }
+
+            UiStrings.Language = UiStrings.English;
+            tally.Prepare(timed);
+            tally.Write(0.5f);   // warm-up
+            Assert.That(() =>
+            {
+                for (int f = 0; f <= 60; f++) tally.Write(f / 60f);
+            }, UnityEngine.TestTools.Constraints.ConstraintExtensions.AllocatingGCMemory(UnityEngine.TestTools.Constraints.Is.Not),
+                "a roll frame writes into the buffer, no string");   // the extension called statically: a using would make the bare Is ambiguous
+        }
+
+        [Test]
         public void Kozmetik_Kilitli_KosulSatirda_TR_EN_EskiGelistiriciMetniYok()
         {
             int checkedRows = 0;

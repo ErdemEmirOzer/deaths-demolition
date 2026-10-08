@@ -1171,9 +1171,10 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The load error (UXW §2.2): an opaque M modal on the curtain - THE NEXT SCREEN DID NOT
-        /// LOAD, why, and what now. <paramref name="onPrimary"/> null = QUIT only (a stalled load
-        /// cannot be cancelled). Cancel does nothing: there is no safe "back". Nothing writes the profile.
+        /// The load error (UXW §2.2): LOADING FAILED, why, and what now. <paramref name="onPrimary"/> null =
+        /// QUIT only (a stalled load cannot be cancelled). Cancel does nothing: there is no safe "back". Nothing writes the
+        /// profile. WP-098B (brush kit KILAVUZ §3, C31): the kit's Confirm on the curtain (Confirm scrim, no card) - see
+        /// <see cref="LoadErrorSpec"/>; the root keeps the name "LoadError".
         /// </summary>
         public void ShowError(string scene, bool stalled, string primaryLabel, Action onPrimary)
         {
@@ -1196,11 +1197,67 @@ namespace DD.Prototype.UI
             // The ring and its labels step out under the modal (12b, AD R1-D SHOULD-7b): the arc peeked over the modal's top
             // edge and the destination sat on its bottom border. HideError puts back what was shown.
             HideDevice();
-            _error = onPrimary != null
-                ? UiModal.Create("LoadError", _root, UiModalSize.M, UiStrings.Get("loading.error.title", "THE NEXT SCREEN DID NOT LOAD"), body, primaryLabel, UiButtonVariant.Primary, onPrimary, UiStrings.Get("menu.quit", "QUIT"), quit, false, true)
-                : UiModal.Create("LoadError", _root, UiModalSize.M, UiStrings.Get("loading.error.title", "THE NEXT SCREEN DID NOT LOAD"), body, UiStrings.Get("menu.quit", "QUIT"), UiButtonVariant.Secondary, quit, null, null, false, true);
+            // Cancel is ignored on purpose: nothing calls _error.HandleCancel, and UiInput.CancelPressed is false while it
+            // stands (LoadErrorOpen), so neither the modal nor the screen under it takes a "back".
+            _error = UiBrushKit.Confirm(LoadErrorName, _root, LoadErrorSpec(body, onPrimary != null ? primaryLabel : null), quit, onPrimary);
             _error.Open();
             UiCursor.SetContextVisible(true);
+        }
+
+        /// <summary>The load error's root name since R1-E (the watchdog suite and captures find it by it).</summary>
+        public const string LoadErrorName = "LoadError";
+
+        /// <summary>
+        /// WP-098B · the load error as the kit's Confirm. QUIT is the confirming action (it ends the session: said in a word
+        /// and the Menu.Quit glyph, never a colour). <paramref name="wayBackLabel"/> null = a single-action notice (CancelKey
+        /// null: QUIT only, the stalled load). Otherwise the way back (TRY AGAIN / RETURN TO MAIN MENU) is the SAFE action -
+        /// first, and focused, as it always was - so a pad's A pressed twice never closes the game. The body is already
+        /// formatted (scene and reason), so it rides as the fallback of a null key.
+        /// </summary>
+        public static UiBrushConfirm LoadErrorSpec(string body, string wayBackLabel)
+        {
+            bool single = string.IsNullOrEmpty(wayBackLabel);
+            string wayBackKey = single ? null : WayBackKeyFor(wayBackLabel);
+            return new UiBrushConfirm
+            {
+                // WP-098B (pm-1 #3): the kit's confirm title is one Display line (56 px - it does not follow TextScale) in the
+                // 1088 measure, no wrap. "THE NEXT SCREEN DID NOT LOAD" overran it (pm-1: truncated, 1070 px of glyphs left in
+                // the 1088 box) at every text scale; the shorter title (U1: fewer letters) takes half the measure, and the body
+                // still names the screen and the reason. r1-strings.json (both copies) carries the same words.
+                TitleKey = "loading.error.title",
+                TitleFallback = "LOADING FAILED",
+                BodyKey = null,
+                BodyFallback = body,
+                ConfirmKey = "menu.quit",
+                ConfirmFallback = "QUIT",
+                ConfirmIcon = "Menu.Quit",
+                CancelKey = wayBackKey,
+                CancelFallback = single ? null : wayBackLabel,
+                CancelIcon = single ? null : wayBackKey == RetryKey ? "Menu.Retry" : "Menu.Home",
+                Destructive = true,
+            };
+        }
+
+        private const string RetryKey = "loading.error.retry";
+        private const string ToMenuKey = "loading.error.to_menu";
+
+        /// <summary>
+        /// The string key behind a way-back label the flow resolved (TRY AGAIN / RETURN TO MAIN MENU), so the action's reader
+        /// name is a key; a label from elsewhere (a test, a capture) is its own key and resolves to itself.
+        /// </summary>
+        private static string WayBackKeyFor(string label)
+        {
+            if (label == UiStrings.Get(RetryKey, "TRY AGAIN"))
+            {
+                return RetryKey;
+            }
+
+            if (label == UiStrings.Get(ToMenuKey, "RETURN TO MAIN MENU"))
+            {
+                return ToMenuKey;
+            }
+
+            return label;
         }
 
         public void HideError()

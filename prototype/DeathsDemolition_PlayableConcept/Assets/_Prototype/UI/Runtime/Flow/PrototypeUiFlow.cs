@@ -118,6 +118,7 @@ namespace DD.Prototype.UI
             Load(PrototypeScenes.MainMenu);
         }
 
+        /// <summary>Saves the profile and leaves at once. The main menu's QUIT asks first (<see cref="RequestQuit"/>); probes and tools call this.</summary>
         public static void Quit()
         {
             ProfileService.Save();
@@ -127,6 +128,127 @@ namespace DD.Prototype.UI
 #else
             Application.Quit();
 #endif
+        }
+
+        // ================================================= WP-098B: the QUIT confirmation
+
+        /// <summary>The QUIT confirmation's root name (tests and captures find it by it).</summary>
+        public const string QuitConfirmName = "QuitConfirm";
+
+        private static UiModal s_quitConfirm;
+
+        /// <summary>
+        /// WP-098B (C-00 07.10; brush kit KILAVUZ §3, C31): QUIT THE GAME? - the heading only (no body: fewer letters), the
+        /// SAFE "NO" first and focused so a pad's A pressed twice does not close the game; QUIT says what it does in a word
+        /// and the Menu.Quit glyph, never a colour.
+        /// </summary>
+        public static UiBrushConfirm QuitSpec
+        {
+            get
+            {
+                return new UiBrushConfirm
+                {
+                    TitleKey = "menu.quit.confirm",
+                    TitleFallback = "QUIT THE GAME?",
+                    BodyKey = null,
+                    BodyFallback = null,
+                    ConfirmKey = "menu.quit",
+                    ConfirmFallback = "QUIT",
+                    ConfirmIcon = "Menu.Quit",
+                    CancelKey = "common.no",
+                    CancelFallback = "NO",
+                    CancelIcon = "Menu.Back",
+                    Destructive = true,
+                };
+            }
+        }
+
+        /// <summary>
+        /// WP-098B (C-00 07.10): the main menu's QUIT asks first - the brush kit's Confirm (<see cref="UiBrushKit.Confirm"/>,
+        /// the same dialog as the pause screen's END THIS RUN?) with <see cref="QuitSpec"/>; confirming is <see cref="Quit"/>,
+        /// unchanged. Built on the main menu's canvas on each request (a press, never per frame), so the language and text
+        /// scale are the current ones. With no main menu on screen it quits at once, as QUIT always did.
+        /// </summary>
+        public static void RequestQuit()
+        {
+            if (QuitConfirmOpen)
+            {
+                return;
+            }
+
+            RectTransform host = QuitHost();
+            if (host == null)
+            {
+                Quit();
+                return;
+            }
+
+            if (s_quitConfirm != null)
+            {
+                Object.Destroy(s_quitConfirm.gameObject);
+            }
+
+            s_quitConfirm = UiBrushKit.Confirm(QuitConfirmName, host, QuitSpec, Quit, null);
+            PauseScreen.KeepConfirmNames(s_quitConfirm);
+            PauseScreen.RaiseToDialogLayer(s_quitConfirm);
+            s_quitConfirm.gameObject.AddComponent<QuitConfirmInput>().Bind(s_quitConfirm);
+            s_quitConfirm.Open();
+        }
+
+        /// <summary>
+        /// The QUIT confirmation is up. A screen that polls Cancel under it skips its own Cancel while this is true: the
+        /// confirmation reads Cancel in LateUpdate (<see cref="QuitConfirmInput"/>), after every screen's Update, so on the
+        /// press that closes it the flag is still set.
+        /// </summary>
+        public static bool QuitConfirmOpen
+        {
+            get { return s_quitConfirm != null && s_quitConfirm.IsOpen; }
+        }
+
+        /// <summary>The last QUIT confirmation built (tests); null outside the main menu.</summary>
+        public static UiModal QuitConfirmation
+        {
+            get { return s_quitConfirm; }
+        }
+
+        /// <summary>The main menu screen's own canvas (its first child), so the dialog renders on the menu's path.</summary>
+        private static RectTransform QuitHost()
+        {
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            Canvas canvas = menu != null ? menu.GetComponentInChildren<Canvas>() : null;
+            return canvas != null ? (RectTransform)canvas.transform : null;
+        }
+
+        /// <summary>
+        /// The QUIT confirmation's Cancel (pad B / Esc = NO) and focus reclaim. On the dialog's own root, so it runs only
+        /// while the dialog is open. LateUpdate, not Update: it runs after every screen's Update whatever the script order,
+        /// so the menu still reads <see cref="QuitConfirmOpen"/> on the press that closes it, and the focus this hands back
+        /// to QUIT is the frame's last word.
+        /// </summary>
+        private sealed class QuitConfirmInput : MonoBehaviour
+        {
+            private UiModal _confirm;
+
+            public void Bind(UiModal confirm)
+            {
+                _confirm = confirm;
+            }
+
+            private void LateUpdate()
+            {
+                if (_confirm == null)
+                {
+                    return;
+                }
+
+                if (UiInput.CancelPressed())
+                {
+                    _confirm.HandleCancel();
+                    return;
+                }
+
+                UiInput.ReclaimFocus(_confirm.Secondary);
+            }
         }
 
         // ================================================================ plumbing
@@ -810,6 +932,7 @@ namespace DD.Prototype.UI
             s_loadGeneration = 0;
             FastTransitions = Application.isBatchMode;
             SelectedSkin = PlayerSkins.Default;
+            s_quitConfirm = null;
         }
     }
 

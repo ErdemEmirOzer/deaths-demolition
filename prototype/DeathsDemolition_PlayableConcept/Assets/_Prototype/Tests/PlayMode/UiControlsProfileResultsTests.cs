@@ -116,6 +116,13 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(reset.IsHoldButton, "RESET ALL BINDINGS is a 500 ms hold (direction E7, slice 9 R1).");
             UiButton rumble = columns.Find("Gamepad/Rumble").GetComponent<UiButton>();
             Assert.Greater(columns.Find("Keyboard").childCount, 5, "Use the actual binding rows.");
+            // WP-098B 2a (envanter #7): the controls pane's rows are the brush kit's - C15 Toggle, C16 Cycle, C14 Slider and
+            // C18 list rows for the slots; the legacy uGUI slider, the Outline'd key caps and the state chips are gone.
+            Assert.IsNotNull(rumble.GetComponent<UiSwitch>(), "RUMBLE is the kit's C15 toggle (the row stays a UiButton)");
+            Assert.IsNotNull(columns.Find("Gamepad/AimAssist")?.GetComponent<UiStepper>(), "AIM ASSIST is the kit's C16 cycle (Off / Light / Full)");
+            Assert.IsNotNull(columns.Find("Gamepad/Setting.STICK DEAD ZONE")?.GetComponent<UiSlider>(), "STICK DEAD ZONE is the kit's C14 slider");
+            Assert.AreEqual(0, scroll.Content.GetComponentsInChildren<Slider>(true).Length, "no legacy uGUI Slider");
+            Assert.AreEqual(0, scroll.Content.GetComponentsInChildren<Outline>(true).Length, "no Outline");
             Assert.GreaterOrEqual(ReferenceRect((RectTransform)rumble.transform).yMin, ReferenceRect((RectTransform)columns).yMin - 0.5f, "Right options fit the measured columns band.");
             Assert.Less(ReferenceRect((RectTransform)reset.transform.parent).yMax, ReferenceRect((RectTransform)rumble.transform).yMin, "Footer is below Rumble; it cannot overlay the right column.");
             UiInput.Focus(rumble);
@@ -141,6 +148,12 @@ namespace DD.Prototype.Tests.PlayMode
             AssertFits(file);
             AssertFits(reset.LabelText);
             AssertFits(rumble.LabelText);
+            // WP-098B F3: every gamepad option's word fits its kit row - the kit keeps a fixed value column, so where the half
+            // column cannot hold the words (this Mac frame) the Gamepad column goes under the Keyboard column at the pane width.
+            AssertFits(columns.Find("Gamepad/AimAssist").GetComponent<UiStepper>().Label);
+            AssertFits(columns.Find("Gamepad/Setting.STICK DEAD ZONE").GetComponent<UiSlider>().Label);
+            Assert.LessOrEqual(ReferenceRect((RectTransform)columns.Find("Gamepad")).yMax, ReferenceRect((RectTransform)columns.Find("Keyboard")).yMin + 0.5f,
+                "At UI 1.2 × text 1.25 on the Mac the Gamepad column sits under the Keyboard column.");
             Assert.That(reset.LabelText.text, Is.EqualTo(UiStrings.Get("controls.reset")));
             Transform pane = scroll.transform.parent;
             foreach (UiButton slot in columns.GetComponentsInChildren<UiButton>())
@@ -149,6 +162,10 @@ namespace DD.Prototype.Tests.PlayMode
                 string id = slot.name.Substring(5);
                 string path = (string)typeof(MainMenuScreen).GetMethod("FindSlotPath", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(menu, new object[] { id });
                 Assert.AreSame(slot.transform, pane.Find(path), "Completion refocus path still reaches its original binding button.");
+                // The slot's words (action name, the control's name as the trailing word) are measured by the kit: none cut
+                // at the Mac's UI 1.2 × TextScale 1.25, in either language.
+                foreach (TMP_Text word in slot.GetComponentsInChildren<TMP_Text>())
+                    if (!string.IsNullOrEmpty(word.text)) AssertFits(word);
             }
             Debug.Log("[S09-UI] controls language=" + language + " frame=" + Width + "x" + Height + " canvas=" + ((RectTransform)menu.GetComponentInChildren<Canvas>().transform).rect.size + " scrollOffset=" + scroll.Offset + " reset=" + ReferenceRect((RectTransform)reset.transform) + " rumble=" + ReferenceRect((RectTransform)rumble.transform));
             yield return Capture(language + "-controls-footer");
@@ -163,6 +180,20 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(language == UiStrings.Turkish ? UiStrings.Get("profile.content." + title.Id + ".detail") : UnlockCatalog.Find(title.Id).Detail, title.Detail);
             Assert.IsTrue(Contains(menu, language == UiStrings.Turkish ? UiStrings.Get("profile.content." + title.Id + ".name") : "Blooded"),
                 "The picker shows the title's name in the language on screen (M-68).");
+            // WP-098B 2a (C18): the picker's options are kit list rows; the current choice is the selected one (its check glyph),
+            // a locked option is not interactable and still words its condition (lock glyph + LOCKED · …, never colour alone).
+            Transform none = FindDeep(menu.transform, "Option.Title.None");
+            Assert.IsNotNull(none, "the None title option");
+            Assert.AreEqual(string.IsNullOrEmpty(ProfileService.CosmeticsSource.SelectedTitle),
+                none.GetComponent<UiButton>().IsSelectedChoice, "None is the choice exactly when no title is chosen");
+            foreach (UiButton option in menu.GetComponentsInChildren<UiButton>(true))
+            {
+                if (!option.name.StartsWith("Option.", StringComparison.Ordinal) || option.IsInteractable()) continue;
+                bool worded = false;
+                foreach (TMP_Text word in option.GetComponentsInChildren<TMP_Text>(true))
+                    worded |= word.text.StartsWith(UiStrings.Get("tree.state.locked"), StringComparison.Ordinal);
+                Assert.IsTrue(worded, option.name + ": a locked option words its condition");
+            }
             UiUnlockLine branch = ProfileViewModel.From(ProfileService.Current, ProfileServiceLookup.Instance).Unlocks.Find(x => x.Title != null && x.Title.Contains(language == UiStrings.Turkish ? "Zincir" : "Chain"));
             Assert.IsNotNull(branch.Title, "The existing Chain unlock branch uses the language key.");
             Object.DestroyImmediate(menu.gameObject);
@@ -217,6 +248,12 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreNotEqual(source, value, title + " description localized");
                 Assert.IsFalse(value.Contains("{") || value.Contains("}"), title + " has no unresolved placeholders");
             }
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+            return null;
         }
 
         private static bool Contains(UiScreen screen, string value)

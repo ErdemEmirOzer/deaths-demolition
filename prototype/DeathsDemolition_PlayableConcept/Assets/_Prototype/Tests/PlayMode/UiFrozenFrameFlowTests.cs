@@ -69,8 +69,25 @@ namespace DD.Prototype.Tests.PlayMode
 
             PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
             Assert.IsNotNull(pause, "Run sahnesinde PauseScreen yok");
+            int captures = UiFrozenFrame.CaptureCount;
             pause.SetPaused(true);
-            yield return Bekle(() => UiFrozenFrame.IsShowing, 3f, "pause altında donmuş kare görünmedi");
+            Assert.IsTrue(pause.IsPaused, "pause açılmadı (CanOpen)");
+            Assert.IsTrue(UiFrozenFrame.IsHeld, "pause donmuş kareyi tutmadı");
+
+            // WP-098B (pm-1 #4): this is the Run camera's FIRST render (batch: it had never drawn before the RT above), and
+            // on a cold shader cache that frame builds the world's pipeline states - seconds, in one frame (pm-1: 7.9 s for
+            // a ~2.2 s boot-to-fight; the Metal first-use lines sit right before the capture log). A 3 s wall clock across
+            // it measured the cache, not the pause: the frame after the capture resumed this wait past 3 s, before the
+            // layer's LateUpdate had shown the frame. The contract is "one capture per hold, shown from the next frame on":
+            // the capture gets a generous clock, the showing is counted in frames, and the hold must still stand.
+            yield return Bekle(() => UiFrozenFrame.CaptureCount > captures, 30f, "pause altında yakalama olmadı");
+            for (int i = 0; i < 3 && !UiFrozenFrame.IsShowing; i++)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(UiFrozenFrame.IsHeld, "yakalamadan sonra tutma bırakıldı (" + UiFrozenFrame.DescribeOwners() + ")");
+            Assert.IsTrue(UiFrozenFrame.IsShowing, "pause altında donmuş kare yakalamadan sonraki karede görünmedi");
 
             int forced = UiFrozenFrame.ForcedReleases;
             MethodInfo confirmQuit = typeof(PauseScreen).GetMethod("ConfirmQuit", BindingFlags.Instance | BindingFlags.NonPublic);

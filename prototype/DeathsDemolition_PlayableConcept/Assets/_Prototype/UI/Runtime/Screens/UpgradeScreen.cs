@@ -67,6 +67,15 @@ namespace DD.Prototype.UI
     /// the HUD's near-opaque HudInk backing for that reason - the same treatment, and the
     /// same audited pairs, as every HUD panel.
     ///
+    /// WP-098B (brush kit KILAVUZ §3 "Raund sonu / yükseltme"; AP-028 §3.8): the screen is the kit's window - the ink-wash
+    /// wallpaper under the kit's Wallpaper scrim (C1, linear 0.71), two C2 washes (the tree column and the detail column,
+    /// abutting, so every word stands on scrim ⊕ wash ≥ 0.945), the kit's C5 title (Menu.Upgrade glyph + ROUND COMPLETE,
+    /// its rule and title brush). <see cref="UiBrushPane"/> opens it (input at once, C1 Fast, washes and the title brush ink
+    /// in, the content rises) and closes it (input off at once, a Fast fade, the canvas off when the kit's close cue has
+    /// run) - no hand-rolled fade. The gold strip is open words on the wash (no card); REROLL is the kit's C11 in the footer
+    /// (64 high, so its hit is ≥ 48), and the pad walks the tree in the order nodes → BUY / PIN → REROLL → CONTINUE (G6).
+    /// The tree (UpgradeTree.cs: nodes, seals, detail) is unchanged. Trace budget: title brush 1 + washes 2 = 3.
+    ///
     /// FIVE STATES
     ///   normal    three cards, at least one affordable
     ///   locked    one card PURCHASED, the other two OFFER LOCKED, reroll closed, focus on
@@ -117,8 +126,18 @@ namespace DD.Prototype.UI
         /// <summary>PROTOTYPE-ONLY: the recessed action shelf at the foot of every card.</summary>
         private const float ShelfHeight = 96f;
 
-        /// <summary>PROTOTYPE-ONLY: gold banner under the header.</summary>
+        /// <summary>PROTOTYPE-ONLY: gold banner under the header (open words on the wash since WP-098B; the height is kept so
+        /// the tree's host keeps its room - RunTreeScreenTests' stacked / compact thresholds).</summary>
         private const float GoldStripHeight = 128f;
+
+        /// <summary>
+        /// WP-098B: where the two C2 washes meet - the middle of the gutter between the tree (8 columns, 0.657 of the host)
+        /// and the detail card (from 0.672), so the cores abut and no word stands on the bare Wallpaper scrim.
+        /// </summary>
+        private const float WashSplit = 0.6645f;
+
+        /// <summary>The window's kit pane (its root under the page grid; its C1 on the screen root).</summary>
+        public const string PaneName = "UpgradePane";
 
         /// <summary>PROTOTYPE-ONLY: tier ladder well. Pips are inset 4 px inside it.</summary>
         private const float PipWellHeight = 20f;
@@ -144,9 +163,6 @@ namespace DD.Prototype.UI
         /// <summary>PROTOTYPE-ONLY: hero gold value box. Numeric shrinks to fit inside it.</summary>
         private const float HeroValueHeight = 48f;
 
-        /// <summary>PROTOTYPE-ONLY: CONTINUE, same width as the Results screen's.</summary>
-        private const float ContinueWidth = 320f;
-
         /// <summary>PROTOTYPE-ONLY: the countdown strip that survives the screen's close.</summary>
         private const float CountdownWidth = 380f; // AD v005 MUST-3 (360 + the frame's notches)
 
@@ -166,6 +182,11 @@ namespace DD.Prototype.UI
         // ----------------------------------------------------------------- runtime
 
         private CanvasGroup _panelGroup;
+        private UiBrushPane _pane;
+        private RectTransform _page;          // the pane's clipped content: every block of the window lives here
+        private CanvasGroup _ground;          // the wallpaper (outside the pane): it fades out with the window's close
+        private bool _closing;                // the pane is fading out; the canvas goes off when its root has
+        private UiBrushTitle _title;
 
         private Canvas _countdownCanvas;
         private TMP_Text _countdownValue;
@@ -205,25 +226,38 @@ namespace DD.Prototype.UI
         private RoundUpgradeShop _boundShop;
         private GoldWallet _boundWallet;
         private string _notice;
-        private float _fade;
+
+        // WP-098B: the DEC-113 line's count-up (see StartTally).
+        private readonly RoundTally _tally = new RoundTally();
+        private Image _tallyClock;     // disabled; its fill is the count's progress, driven by UiMotion
+        private UiTimeline _tallyLine;
+        private bool _tallyRolling;
+        private int _tallySession = -1;
+        private string _roundReportFinal;
 
         /// <summary>
         /// WP-068 R1-C (user request 25.09): the round-end screen stands on an ink-wash wallpaper - a faded black silhouette of
         /// the ronin before the ruined keep, the horde on the horizon (Higgsfield gpt_image_2_5, luminance-clamped: see
         /// UpgradeWallpaperTests). 80 % of its width is shown, so the ronin stands in the gap between the tree and the
-        /// detail card and the keep's roofs rise over the header.
+        /// detail card and the keep's roofs rise over the header. WP-098B: drawn by <see cref="BuildWallpaper"/> (no v2
+        /// veils, petals or foot rule); the kit's Wallpaper scrim lies over it.
         /// </summary>
-        protected override string BackdropArt
-        {
-            get { return UpgradeWallpaper; }
-        }
-
-        protected override float BackdropArtWidth
-        {
-            get { return 0.8f; }
-        }
-
         public const string UpgradeWallpaper = "UI/Wallpapers/upgrade_wallpaper";
+
+        /// <summary>The share of the wallpaper's width shown, anchored to its bottom-right corner (UiBackdropArt).</summary>
+        public const float WallpaperWidth = 0.8f;
+
+        /// <summary>The kit's carrier: C1 Wallpaper scrim, two washes, the clipped content (tests).</summary>
+        public UiBrushPane Pane
+        {
+            get { return _pane; }
+        }
+
+        /// <summary>WP-098B: no v2 backdrop - the wallpaper is <see cref="BuildWallpaper"/>'s, the scrim the kit's.</summary>
+        protected override bool WantsBackdrop
+        {
+            get { return false; }
+        }
 
         protected override bool WantsUiCamera
         {
@@ -237,30 +271,118 @@ namespace DD.Prototype.UI
         protected override void Build()
         {
             _panelGroup = UiFactory.Group(Canvas.gameObject);
+            BuildWallpaper();
 
-            // Header. Round number comes from the shop when it is open, so the eyebrow is
-            // re-written on every open rather than baked in here.
-            _cardsTop = BuildHeader(
-                UiStrings.Get("shop.eyebrow", "ROUND COMPLETE"),
-                UiStrings.Get("shop.title", "SPEND YOUR GOLD"),
-                IntroSentence());
-            Transform intro = Content.Find("Subtitle");
-            _intro = intro != null ? intro.GetComponent<TMP_Text>() : null;   // DEC-107: re-written on every open
+            // KILAVUZ §3: the Wallpaper scrim takes no text by itself - the two column washes (BuildWashes) carry the words,
+            // so the pane is built without its own whole-pane wash.
+            _pane = UiBrushKit.Pane(ScreenRect, Content, PaneName, UiBrushScrim.Wallpaper, UiBrushWash.None);
+            _page = _pane.Content;
+
+            // Header: the kit's title (Menu.Upgrade glyph + ROUND COMPLETE, its rule and brush), then the DEC-107 intro line
+            // (re-written on every open). U1 (fewer letters): "SPEND YOUR GOLD" left with the v2 header - the gold strip says it.
+            _title = UiBrushKit.Title(_page, "shop.eyebrow", "ROUND COMPLETE", "Menu.Upgrade");
+            _cardsTop = _title.Height + (int)UiSpace.S;
+            _intro = UiFactory.Label("Intro", _page, IntroSentence(), UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.UpperLeft);
+            _intro.enableWordWrapping = false;
+            _intro.overflowMode = TextOverflowModes.Ellipsis;
+            float introLine = UiFactory.LineHeight(UiType.MenuSmall);
+            TopStrip(_intro.rectTransform, _cardsTop, introLine);
+            _cardsTop += introLine;
             BuildRoundReport();
 
-            _cardsTop += (int)UiSpace.XXL;
+            // The gold strip starts no higher than the v2 header ended: the brush header is 9 px shorter at every TextScale,
+            // and the tree's host must keep the height its stacked / compact switch was set against (Mac 1.2 × 1.25: 671 px,
+            // ~510 on the Mac aspect, compacts; 1080p: 923, stacked - RunTreeScreenTests). The difference is air above the strip.
+            _cardsTop = Mathf.Max(_cardsTop + (int)UiSpace.XL, V2HeaderBand());
 
             BuildGoldStrip(_cardsTop);
             _cardsTop += GoldStripHeight + (int)UiSpace.XL;
 
-            _cardsHost = Content;
+            _cardsHost = _page;
 
             BuildEmptyPanel();
             BuildFooter();
             BuildTree();
+            BuildWashes();
             BuildCountdownStrip();
 
             Canvas.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// The ground under the window: a base fill (a build without the art keeps a plain ink ground) and the wallpaper,
+        /// cover-fit at <see cref="WallpaperWidth"/>. Static; its CanvasGroup fades it with the window's close.
+        /// </summary>
+        private void BuildWallpaper()
+        {
+            RectTransform ground = UiFactory.NewRect("Backdrop", ScreenRect);
+            UiFactory.Fill(ground);
+            ground.SetAsFirstSibling();
+            _ground = UiFactory.Group(ground.gameObject);
+            _ground.interactable = false;
+            _ground.blocksRaycasts = false;
+
+            Image baseFill = UiFactory.NewImage("Base", ground, UiColor.SurfaceBase);
+            UiFactory.Fill((RectTransform)baseFill.transform);
+
+            Texture2D art = Resources.Load<Texture2D>(UpgradeWallpaper);
+            if (art == null)
+            {
+                return;
+            }
+
+            var artObject = new GameObject("Art", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(UiBackdropArt));
+            var artRect = (RectTransform)artObject.transform;
+            artRect.SetParent(ground, false);
+            UiFactory.Fill(artRect);
+            RawImage image = artObject.GetComponent<RawImage>();
+            image.texture = art;
+            image.raycastTarget = false;
+            artObject.GetComponent<UiBackdropArt>().Configure(WallpaperWidth);
+        }
+
+        /// <summary>
+        /// KILAVUZ §3 (C2 × 2): one wash under the tree column, one under the detail column, each the page's full height (the
+        /// header, the gold strip and the footer stand in them too) and abutting at <see cref="WashSplit"/>. The kit lays a
+        /// wash from its column's rect once, at build, so the columns are laid out first.
+        /// </summary>
+        private void BuildWashes()
+        {
+            RectTransform tree = WashColumn("TreeColumn", 0f, WashSplit);
+            RectTransform detail = WashColumn("DetailColumn", WashSplit, 1f);
+            UiBrushKit.Wash(_pane, tree);
+            UiBrushKit.Wash(_pane, detail);
+        }
+
+        /// <summary>
+        /// The v2 header's band (UiScreen.BuildHeader: eyebrow Label + XS + H1 title + S + Body subtitle + L + the hairline
+        /// rule, then XXL to the gold strip), from the same line heights at the live TextScale. The tree host's room - and so
+        /// UiRunTreePanel's stacked / compact switch - was measured against it; Build keeps the gold strip no higher.
+        /// </summary>
+        private static float V2HeaderBand()
+        {
+            return UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS + UiFactory.LineHeight(UiType.H1) + (int)UiSpace.S
+                   + UiFactory.LineHeight(UiType.Body) + (int)UiSpace.L + UiTokens.StrokeHairline + (int)UiSpace.XXL;
+        }
+
+        private RectTransform WashColumn(string name, float from, float to)
+        {
+            RectTransform column = UiFactory.NewRect(name, _page);
+            column.anchorMin = new Vector2(from, 0f);
+            column.anchorMax = new Vector2(to, 1f);
+            column.offsetMin = Vector2.zero;
+            column.offsetMax = Vector2.zero;
+            return column;
+        }
+
+        /// <summary>A full-width strip <paramref name="height"/> tall, <paramref name="top"/> below its parent's top.</summary>
+        private static void TopStrip(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(0f, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
         }
 
         // This screen holds no RunFlowClock hold: the round-end freeze is RunDirector's
@@ -274,6 +396,7 @@ namespace DD.Prototype.UI
             if (_panelVisible)
             {
                 _panelVisible = false;
+                StopTally();
                 UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitLayer(UiContext.RoundUpgrade);
             }
@@ -350,23 +473,27 @@ namespace DD.Prototype.UI
 
         // ============================================================== gold banner
 
+        /// <summary>
+        /// The gold strip. WP-098B: open words on the washes - no card, no frame (KILAVUZ §1 "iz, yüzey değil"); TextSecondary
+        /// captions (TextMuted is no text colour on a brush window). Four zones, none across the washes' seam: GOLD AVAILABLE
+        /// (the hero number, the economy's gold), SPENT THIS ROUND and the reroll's price / state line on the tree column; the
+        /// advisory sentence on the detail column. The REROLL control itself is the footer's (G6).
+        /// </summary>
         private void BuildGoldStrip(float top)
         {
-            RectTransform card = UiFactory.FramedCard("GoldStrip", Content, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
-            card.anchorMin = new Vector2(0f, 1f);
-            card.anchorMax = new Vector2(1f, 1f);
-            card.pivot = new Vector2(0.5f, 1f);
-            card.offsetMin = new Vector2(0f, -(top + GoldStripHeight));
-            card.offsetMax = new Vector2(0f, -top);
-
-            RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XL));
+            RectTransform host = UiFactory.NewRect("GoldStrip", _page);
+            host.anchorMin = new Vector2(0f, 1f);
+            host.anchorMax = new Vector2(1f, 1f);
+            host.pivot = new Vector2(0.5f, 1f);
+            host.offsetMin = new Vector2(0f, -(top + GoldStripHeight));
+            host.offsetMax = new Vector2(0f, -top);
 
             // ---- available gold, the hero number of this screen ------------------
             RectTransform available = Zone(host, 0f, 0.26f);
             var availableStack = new UiStack(available);
 
             TMP_Text label = UiFactory.Label(
-                "AvailableLabel", available, UiStrings.Get("shop.gold_available", "GOLD AVAILABLE"), UiType.Label, UiColor.TextMuted);
+                "AvailableLabel", available, UiStrings.Get("shop.gold_available", "GOLD AVAILABLE"), UiType.Label, UiColor.TextSecondary);
             availableStack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
 
             availableStack.Gap(UiSpace.XS);
@@ -392,7 +519,7 @@ namespace DD.Prototype.UI
             var spentStack = new UiStack(spent);
 
             TMP_Text spentLabel = UiFactory.Label(
-                "SpentLabel", spent, UiStrings.Get("shop.spent", "SPENT THIS ROUND"), UiType.Label, UiColor.TextMuted);
+                "SpentLabel", spent, UiStrings.Get("shop.spent", "SPENT THIS ROUND"), UiType.Label, UiColor.TextSecondary);
             spentStack.Add((RectTransform)spentLabel.transform, UiFactory.LineHeight(UiType.Label));
 
             spentStack.Gap(UiSpace.XS);
@@ -400,38 +527,24 @@ namespace DD.Prototype.UI
             _goldSpent = UiFactory.Numeric("SpentValue", spent, "0", UiType.NumericM, UiColor.TextPrimary);
             spentStack.Add((RectTransform)_goldSpent.transform, HeroValueHeight);
 
+            // ---- the reroll's price and state (WP-008, DEC-050) ------------------
+            // The one paid reroll of the round. The control's caption is fixed ("REROLL", in the footer); the price and the
+            // state (used / locked / too expensive) are this line - beside the gold they are paid from - and the control's
+            // tooltip, so the control never changes its name under the focus brackets.
+            RectTransform reroll = Zone(host, 0.48f, WashSplit - 0.01f);
+            _rerollLabel = UiFactory.Label(
+                "RerollLabel", reroll, UiStrings.Get("shop.reroll", "REROLL"), UiType.Label, UiColor.TextSecondary, TextAnchor.UpperLeft);
+            TopStrip(_rerollLabel.rectTransform, 0f, UiFactory.LineHeight(UiType.Label) * 2f);
+
             // ---- advisory line ---------------------------------------------------
             // Carries the 0-gold case. It is a finished sentence, not an error: a player
             // who cannot afford anything has still done nothing wrong.
-            RectTransform note = Zone(host, 0.48f, 0.72f);
+            RectTransform note = Zone(host, WashSplit + 0.01f, 1f);
             _goldNote = UiFactory.Label(
                 "Note", note,
                 UiStrings.Get("shop.note.choose", "Choose what to strengthen, then continue."),
-                UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
+                UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
             UiFactory.Fill((RectTransform)_goldNote.transform);
-
-            // ---- reroll (WP-008, DEC-050) ----------------------------------------
-            // The one paid reroll of the round. The BUTTON caption is fixed ("REROLL");
-            // the price and the state (used / locked / too expensive) live in the label
-            // above it, so the control never changes its name under the focus ring.
-            // The strip clips its content (RectMask2D) and UiFactory.Button draws the
-            // focus ring OUTSIDE the control, so the zone is inset by one UiSpace.S on the
-            // right and the bottom and the stack (label 24 + button 48 = 72 of 80) leaves
-            // the ring its room. Label and button meet edge to edge; the label is the
-            // caption of the control.
-            RectTransform reroll = Zone(host, 0.74f, 1f);
-            reroll.offsetMin = new Vector2(0f, (int)UiSpace.S);
-            reroll.offsetMax = new Vector2(-(int)UiSpace.S, 0f);
-            var rerollStack = new UiStack(reroll);
-
-            _rerollLabel = UiFactory.Label(
-                "RerollLabel", reroll, UiStrings.Get("shop.reroll", "REROLL"), UiType.Label, UiColor.TextMuted, TextAnchor.MiddleRight);
-            rerollStack.Add((RectTransform)_rerollLabel.transform, UiFactory.LineHeight(UiType.Label));
-
-            _rerollButton = UiFactory.Button(
-                "Reroll", reroll, UiStrings.Get("shop.reroll", "REROLL"), UiButtonVariant.Secondary, OnRerollActivated);
-            UiInput.Prompt(_rerollButton, UiPromptAction.Reroll);
-            rerollStack.Add((RectTransform)_rerollButton.transform, UiTokens.TargetPreferred);
         }
 
         /// <summary>A fractional-width zone of a row. Same responsive rule as UiScreen.Column.</summary>
@@ -722,7 +835,7 @@ namespace DD.Prototype.UI
 
         private void BuildEmptyPanel()
         {
-            RectTransform card = UiFactory.FramedCard("EmptyCard", Content, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
+            RectTransform card = UiFactory.FramedCard("EmptyCard", _page, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0.5f, 0.5f);
             card.anchorMax = new Vector2(0.5f, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);
@@ -746,29 +859,35 @@ namespace DD.Prototype.UI
             _emptyPanel.SetActive(false);
         }
 
+        /// <summary>
+        /// The footer row: the note, then (right to left) CONTINUE, UNDO LAST (tree mode, after a purchase) and REROLL.
+        /// WP-098B (G6): REROLL is the kit's C11 here - 64 high (its hit ≥ 48), as wide as its word, focus = the brackets -
+        /// so the pad's order reads nodes → BUY / PIN → REROLL → CONTINUE down the screen. WP-098B M3 (KILAVUZ §1 vermilion
+        /// reserve, §4.1 C11 "no difference between primary and secondary"): CONTINUE is a C11 too - glyph + MenuBody, no
+        /// fill, no frame; its Submit glyph stands outside its left edge and shows while BUY is not the live action
+        /// (SyncPrimary). UNDO keeps its variant. The row is the kit's control height; the
+        /// tree's host ends S above it (the room it had over the 48 px row + XL).
+        /// </summary>
         private void BuildFooter()
         {
-            RectTransform footer = UiFactory.NewRect("Footer", Content);
+            RectTransform footer = UiFactory.NewRect("Footer", _page);
             footer.anchorMin = new Vector2(0f, 0f);
             footer.anchorMax = new Vector2(1f, 0f);
             footer.pivot = new Vector2(0.5f, 0f);
-            footer.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
+            footer.sizeDelta = new Vector2(0f, UiBrushTokens.ControlHeight);
             footer.anchoredPosition = Vector2.zero;
 
             _footerNote = UiFactory.Label(
-                "FooterNote", footer, string.Empty, UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            RectTransform noteRect = UiFactory.Fill((RectTransform)_footerNote.transform);
-            noteRect.offsetMax = new Vector2(-(ContinueWidth + (int)UiSpace.XL), 0f);
+                "FooterNote", footer, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            UiFactory.Fill((RectTransform)_footerNote.transform);
 
-            _continueButton = UiFactory.Button(
-                "Continue", footer, UiStrings.Get("shop.continue", "CONTINUE"), UiButtonVariant.Primary, CloseScreen);
-            _continuePrompt = UiInput.Prompt(_continueButton, UiPromptAction.Submit, true);
+            _continueButton = UiBrushKit.Button(footer, "Continue", "shop.continue", "CONTINUE", ContinueGlyph, CloseScreen);
+            _continuePrompt = UiRunTreePanel.SubmitGlyphBeside(_continueButton);
             RectTransform rect = (RectTransform)_continueButton.transform;
             rect.anchorMin = new Vector2(1f, 0.5f);
             rect.anchorMax = new Vector2(1f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f);
-            rect.sizeDelta = new Vector2(ContinueWidth, UiTokens.TargetPreferred);
-            rect.anchoredPosition = Vector2.zero;
+            rect.anchoredPosition = Vector2.zero;   // the kit's measured width and 64 height
 
             // WP-068 R1-C (WP-077 §2.5): UNDO LAST beside CONTINUE - it is about the offer, not a node. Full refund
             // until the player continues; shown only while the shop offers it.
@@ -779,11 +898,20 @@ namespace DD.Prototype.UI
             undo.anchorMax = new Vector2(1f, 0.5f);
             undo.pivot = new Vector2(1f, 0.5f);
             undo.sizeDelta = new Vector2(UndoWidth, UiTokens.TargetPreferred);
-            undo.anchoredPosition = new Vector2(-(ContinueWidth + (int)UiSpace.M), 0f);
-            _undoButton.gameObject.SetActive(false);
+            _undoButton.gameObject.SetActive(false);   // placed by LayoutFooter, left of CONTINUE and its glyph
+
+            _rerollButton = UiBrushKit.Button(footer, "Reroll", "shop.reroll", "REROLL", null, OnRerollActivated);
+            RectTransform reroll = (RectTransform)_rerollButton.transform;
+            reroll.anchorMin = new Vector2(1f, 0.5f);
+            reroll.anchorMax = new Vector2(1f, 0.5f);
+            reroll.pivot = new Vector2(1f, 0.5f);
+            LayoutFooter(false);
         }
 
         private const float UndoWidth = 260f;
+
+        /// <summary>WP-098B M3: CONTINUE's leading glyph (C11 = glyph + word).</summary>
+        internal const string ContinueGlyph = "Menu.Next";
 
         /// <summary>
         /// WP-068 R1-C: the tree takes the card row's place (and its height, down to the footer). Built once, shown
@@ -791,31 +919,40 @@ namespace DD.Prototype.UI
         /// </summary>
         private void BuildTree()
         {
-            RectTransform host = UiFactory.NewRect("TreeHost", Content);
+            RectTransform host = UiFactory.NewRect("TreeHost", _page);
             host.anchorMin = new Vector2(0f, 0f);
             host.anchorMax = new Vector2(1f, 1f);
-            host.offsetMin = new Vector2(0f, UiTokens.TargetPreferred + (int)UiSpace.XL);
+            host.offsetMin = new Vector2(0f, UiBrushTokens.ControlHeight + (int)UiSpace.S);
             host.offsetMax = new Vector2(0f, -_cardsTop);
             _tree = UiRunTreePanel.Create(host);
             _tree.Refused = OnTreeRefused;
             _tree.Changed = OnTreeChanged;
             _tree.DescribePurchase = DescribeRefusal;
-            _tree.DetailShown = SyncPrimary;
+            _tree.DetailShown = OnTreeDetailShown;
             host.gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// One Primary per screen (AD R1-C MUST-1): while the tree details a node BUY can buy, BUY is the Primary and
-        /// CONTINUE steps down to Secondary without its key chip; otherwise CONTINUE is the Primary. The card row keeps
-        /// CONTINUE as its Primary (its cards are tiles, not Primaries).
+        /// One main action per screen (AD R1-C MUST-1), carried by the Submit glyph, not by a fill (WP-098B M3, KILAVUZ §1:
+        /// vermilion is the C8's alone, C11 has no primary / secondary look): while the tree details a node BUY can buy, the
+        /// glyph is BUY's and CONTINUE shows none; otherwise CONTINUE carries it. The default focus does the rest.
         /// </summary>
         private void SyncPrimary()
         {
             bool buy = TreeMode && _tree.BuyLive;
-            _continueButton.SetVariant(buy ? UiButtonVariant.Secondary : UiButtonVariant.Primary);
-            if (_continuePrompt != null)
+            if (_continuePrompt != null && _continuePrompt.gameObject.activeSelf == buy)
             {
                 _continuePrompt.gameObject.SetActive(!buy);
+            }
+        }
+
+        /// <summary>The detail card follows the focused node: the one Primary, and the footer row's way back up (G6).</summary>
+        private void OnTreeDetailShown()
+        {
+            SyncPrimary();
+            if (TreeMode)
+            {
+                LinkTreeNavigation();
             }
         }
 
@@ -908,12 +1045,23 @@ namespace DD.Prototype.UI
             SetPanelVisible(phase == RunPhase.Upgrading && contextValid);
             UpdateCountdown(phase);
 
+            if (_closing && !_pane.Root.gameObject.activeSelf)
+            {
+                // The kit's close cue has run (the content, the washes and C1 faded and went off): the canvas follows.
+                _closing = false;
+                Canvas.gameObject.SetActive(false);
+            }
+
             if (!_panelVisible)
             {
                 return;
             }
 
-            TickFade();
+            if (_tallyRolling)
+            {
+                TickTally();
+            }
+
             GateForPause();
             if (TreeMode && !UiNavigation.IsPaused)
             {
@@ -939,21 +1087,35 @@ namespace DD.Prototype.UI
             }
 
             _panelVisible = visible;
-            Canvas.gameObject.SetActive(visible);
 
             if (!visible)
             {
+                StopTally();
                 UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitLayer(UiContext.RoundUpgrade);
+                // WP-098B: the kit closes the window - input off at once, the content, washes and C1 fade (Fast, Exit, on
+                // the unscaled clock) and its cue takes the pane off; the wallpaper fades with them, and Update turns the
+                // canvas off once the pane has gone (Reduced Motion: in the same call / the next frame).
+                _pane.Close();
+                UiMotion.Alpha(_ground, 0f, UiBrushTokens.Close, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, GetInstanceID());
+                _closing = true;
                 return;
             }
+
+            _closing = false;
+            Canvas.gameObject.SetActive(true);
+            UiMotion.KillTarget(_ground, false);
+            _ground.alpha = 1f;
 
             UiFrozenFrame.Hold(FrozenOwner);   // WP-068 slice 4: frozen-frame blur under the shop (C8, E24)
             UiNavigation.EnterLayer(UiContext.RoundUpgrade);
 
             _notice = null;
-            _fade = 0f;
-            _panelGroup.alpha = 0f;
+            // WP-098B: the kit opens the window (KILAVUZ §4.2) - the input on this frame (CONTINUE holds the focus until
+            // FocusFirstUsefulControl below picks the useful one), C1 in 140 ms, the washes and the title brush ink in over
+            // 280 ms, the content rises; all on the unscaled clock (the round-end freeze runs at timeScale 0) and Decor, so
+            // Reduced Motion lands it at once. No hand-rolled fade.
+            _pane.Open(_continueButton);
             _tree.BeginOpening();
 
             // The session this screen belongs to. Every purchase from here quotes it, so a
@@ -966,21 +1128,6 @@ namespace DD.Prototype.UI
             _dirty = false;
 
             FocusFirstUsefulControl();
-        }
-
-        /// <summary>
-        /// Unscaled fade-in. The round-end freeze runs at timeScale 0, so a scaled fade
-        /// would never finish and the screen would open invisible.
-        /// </summary>
-        private void TickFade()
-        {
-            if (_fade >= 1f)
-            {
-                return;
-            }
-
-            _fade = Mathf.MoveTowards(_fade, 1f, Time.unscaledDeltaTime / UiTokens.MotionScreen);
-            _panelGroup.alpha = _fade;
         }
 
         /// <summary>
@@ -1197,8 +1344,11 @@ namespace DD.Prototype.UI
 
             RefreshFooter(shop.Gold, shop.PurchasesThisRound);
             SetFooterNoteRoom(undo);
-            _tree.ExitDown = undo ? (Selectable)_undoButton : _continueButton;
-            _tree.ExitUp = _rerollButton != null && _rerollButton.IsInteractable() ? _rerollButton : null;
+            // G6 (KILAVUZ §8): nodes → BUY / PIN → REROLL → CONTINUE. Down from the detail's buttons (and from a lane's last
+            // node) is REROLL while it can be pressed, else UNDO / CONTINUE; nothing sits above the lane tabs any more.
+            Selectable footer = undo ? (Selectable)_undoButton : _continueButton;
+            _tree.ExitDown = RerollLive ? _rerollButton : footer;
+            _tree.ExitUp = null;
             _treeWasLocked = shop.IsLocked;
             _tree.Refresh(shop);
             LinkTreeNavigation();
@@ -1207,32 +1357,63 @@ namespace DD.Prototype.UI
 
         private bool _treeWasLocked;
 
-        /// <summary>The footer note gives UNDO its room while it shows.</summary>
+        /// <summary>The footer note gives UNDO its room while it shows; REROLL stands left of UNDO (or of CONTINUE).</summary>
         private void SetFooterNoteRoom(bool undo)
         {
-            var noteRect = (RectTransform)_footerNote.transform;
-            noteRect.offsetMax = new Vector2(-(ContinueWidth + (int)UiSpace.XL + (undo ? UndoWidth + (int)UiSpace.M : 0f)), 0f);
+            LayoutFooter(undo);
         }
 
         /// <summary>
-        /// Pad map in tree mode: the tree links its own nodes, tabs and detail buttons; REROLL (in the gold strip,
-        /// above the tabs) and UNDO / CONTINUE (in the footer, below) lead back to the detailed node.
+        /// Right to left: CONTINUE (the kit's width) and its Submit glyph's room (kept while the glyph is BUY's, so nothing
+        /// shifts), UNDO (while shown), REROLL (the kit's width); the note takes what is left.
+        /// </summary>
+        private void LayoutFooter(bool undo)
+        {
+            float right = ((RectTransform)_continueButton.transform).sizeDelta.x + UiRunTreePanel.SubmitGlyphRoom() + (int)UiSpace.M;
+            ((RectTransform)_undoButton.transform).anchoredPosition = new Vector2(-right, 0f);
+            right += undo ? UndoWidth + (int)UiSpace.M : 0f;
+            var reroll = (RectTransform)_rerollButton.transform;
+            reroll.anchoredPosition = new Vector2(-right, 0f);
+            right += reroll.sizeDelta.x + (int)UiSpace.XL;
+            var noteRect = (RectTransform)_footerNote.transform;
+            noteRect.offsetMax = new Vector2(-right, 0f);
+        }
+
+        /// <summary>
+        /// Pad map in tree mode (G6: nodes → BUY / PIN → REROLL → CONTINUE): the tree links its own nodes, tabs and detail
+        /// buttons, their Down leading to REROLL; REROLL, UNDO and CONTINUE are one footer row (← / →), and Up from it goes
+        /// back to the detail's live button (BUY, else PIN), else to the detailed node.
         /// </summary>
         private void LinkTreeNavigation()
         {
             Selectable node = _tree.FocusTarget();
+            Selectable detail = Live(_tree.BuyButton) ?? Live(_tree.PinButton) ?? node;
             bool undo = _undoButton.gameObject.activeSelf;
+            Selectable reroll = RerollLive ? _rerollButton : null;
+            Selectable afterReroll = undo ? (Selectable)_undoButton : _continueButton;
             if (_rerollButton != null)
             {
-                Nav(_rerollButton, null, node, null, null);
+                Nav(_rerollButton, detail, null, null, afterReroll);
             }
 
             if (undo)
             {
-                Nav(_undoButton, node, null, null, _continueButton);
+                Nav(_undoButton, detail, null, reroll, _continueButton);
             }
 
-            Nav(_continueButton, node, null, undo ? _undoButton : null, null);
+            Nav(_continueButton, detail, null, undo ? _undoButton : reroll, null);
+        }
+
+        /// <summary>REROLL can be pressed now (the shop says so).</summary>
+        private bool RerollLive
+        {
+            get { return _rerollButton != null && _rerollButton.IsInteractable(); }
+        }
+
+        /// <summary>A control the pad may land on: shown and pressable, else null.</summary>
+        private static Selectable Live(UiButton button)
+        {
+            return button != null && button.gameObject.activeInHierarchy && button.IsInteractable() ? button : null;
         }
 
         private static void Nav(Selectable control, Selectable up, Selectable down, Selectable left, Selectable right)
@@ -1352,15 +1533,15 @@ namespace DD.Prototype.UI
                     break;
                 case RerollAvailability.Used:
                     _rerollLabel.text = UiStrings.Get("shop.reroll.used", "REROLL · USED THIS ROUND");
-                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
                     break;
                 case RerollAvailability.LockedByPurchase:
                     _rerollLabel.text = UiStrings.Get("shop.reroll.locked", "REROLL · LOCKED");
-                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
                     break;
                 case RerollAvailability.NoAlternatives:
                     _rerollLabel.text = UiStrings.Get("shop.reroll.nothing", "REROLL · NOTHING TO SWAP");
-                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
                     break;
                 case RerollAvailability.TooExpensive:
                     _rerollLabel.text = UiStrings.Format("shop.reroll.need", "value", cost.ToString(), "REROLL · NEED {value} GOLD");
@@ -1368,9 +1549,13 @@ namespace DD.Prototype.UI
                     break;
                 default:
                     _rerollLabel.text = UiStrings.Get("shop.reroll.unavailable", "REROLL · UNAVAILABLE");
-                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
                     break;
             }
+
+            // WP-098B (C27): the same words on the control while it is lifted (hover or pad focus - a disabled REROLL too),
+            // so the price / reason is read where the focus is. Event-time only (a redraw), never per frame.
+            UiBrushKit.Tooltip(_rerollButton, null, _rerollLabel.text);
         }
 
         /// <summary>Player-facing sentence for an offer fault. English, finished, no jargon.</summary>
@@ -1556,7 +1741,7 @@ namespace DD.Prototype.UI
                 // The round's purchase is made: every remaining card is locked, not
                 // "unaffordable" - say the true thing (probe screenshot 06 caught this).
                 _goldNote.text = shop.PurchasesThisRound > 1 ? UiStrings.Get("shop.note.applied_many", "Upgrades applied. Continue when ready.") : UiStrings.Get("shop.note.applied_one", "Upgrade applied. Continue when ready.");
-                _goldNote.color = UiTokens.Get(UiColor.TextMuted);
+                _goldNote.color = UiTokens.Get(UiColor.TextSecondary);
                 return;
             }
 
@@ -1576,7 +1761,7 @@ namespace DD.Prototype.UI
                     ? UiStrings.Get("shop.note.another", "Choose another upgrade, or continue.")
                     : UiUpgradeCopy.Choose(PicksPerRound))
                 : UiStrings.Get("shop.note.choose_one", "Choose one upgrade, or reroll once, then continue.");
-            _goldNote.color = UiTokens.Get(UiColor.TextMuted);
+            _goldNote.color = UiTokens.Get(UiColor.TextSecondary);
         }
 
         /// <summary>
@@ -1589,28 +1774,34 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// DEC-113: the Round Report line - one line on the ROUND COMPLETE row, right-aligned, so the header keeps its
-        /// height. It starts after the eyebrow's own words and never wraps (information only, no focus stop).
+        /// height. WP-098B: the row is the kit title's band - the line starts after the title's glyph and words (+ XL) and
+        /// never wraps (information only, no focus stop); MenuSmall, TextSecondary, on the washes.
         /// </summary>
         private void BuildRoundReport()
         {
-            Transform eyebrowTransform = Content.Find("Eyebrow");
-            TMP_Text eyebrow = eyebrowTransform != null ? eyebrowTransform.GetComponent<TMP_Text>() : null;
-            if (eyebrow == null)
+            if (_title.Text == null)
             {
                 return;
             }
 
-            _roundReport = UiFactory.Label("RoundReport", Content, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.LowerRight);
+            _roundReport = UiFactory.Label("RoundReport", _page, string.Empty, UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleRight);
             _roundReport.enableWordWrapping = false;
             _roundReport.overflowMode = TextOverflowModes.Ellipsis;
-            RectTransform from = eyebrow.rectTransform;
+            float band = _title.Height - UiBrushTokens.TitleRuleGap - UiBrushTokens.TitleStrokeHeight;
+            float lead = _title.Icon != null ? _title.Icon.rectTransform.sizeDelta.x + (int)UiSpace.L : 0f;
+            float words = Mathf.Ceil(_title.Text.GetPreferredValues(_title.Text.text).x);
             RectTransform to = _roundReport.rectTransform;
-            to.anchorMin = from.anchorMin;
-            to.anchorMax = from.anchorMax;
-            to.pivot = from.pivot;
-            to.offsetMin = new Vector2(from.offsetMin.x + Mathf.Ceil(eyebrow.GetPreferredValues(eyebrow.text).x) + (int)UiSpace.XL, from.offsetMin.y);
-            to.offsetMax = from.offsetMax;
+            to.anchorMin = new Vector2(0f, 1f);
+            to.anchorMax = new Vector2(1f, 1f);
+            // WP-098B: pivot at the right middle (set before the offsets, so the rect is unchanged) - the landing punch grows
+            // the right-aligned line away from its anchored end.
+            to.pivot = new Vector2(1f, 0.5f);
+            to.offsetMin = new Vector2(lead + words + (int)UiSpace.XL, -band);
+            to.offsetMax = new Vector2(0f, 0f);
             _roundReport.gameObject.SetActive(false);
+
+            _tallyClock = UiFactory.NewImage("ReportTally", _page, UiColor.TextSecondary);
+            _tallyClock.enabled = false;
         }
 
         private void RefreshRoundReport()
@@ -1621,12 +1812,232 @@ namespace DD.Prototype.UI
             }
 
             RunDirector run = RunDirector.Instance;
-            string line = RoundReportLine(run != null ? run.LastRoundReport : default,
+            RoundReport report = run != null ? run.LastRoundReport : default;
+            string line = RoundReportLine(report,
                 CaptureShowRoundReport || DD.Prototype.Profile.MetaPathRules.Owns(DD.Prototype.Profile.ProfileService.Current, DD.Prototype.Profile.MetaPathEffects.RoundReport, out _));
             _roundReport.gameObject.SetActive(line != null);
-            if (line != null)
+            if (line == null)
+            {
+                StopTally();
+                return;
+            }
+
+            _roundReportFinal = line;
+            if (_tallySession != _sessionId)
+            {
+                // The first draw of this round's offer: the line counts up. A redraw of the same offer (a purchase, the
+                // wallet, a return from pause) leaves a running count alone and never restarts it.
+                _tallySession = _sessionId;
+                StartTally(report);
+                return;
+            }
+
+            if (!_tallyRolling)
             {
                 _roundReport.text = line;
+            }
+        }
+
+        // ======================================================== DEC-113 count-up
+
+        /// <summary>WP-098B: the count's start after the panel opens (it rolls while the screen settles in).</summary>
+        public const float TallyDelaySeconds = 0.12f;
+
+        /// <summary>WP-098B: one roll for the whole line (Reveal 600 ms, Settle): every number lands together at 0.72 s.</summary>
+        public const UiDuration TallyDuration = UiDuration.Reveal;
+
+        /// <summary>
+        /// WP-098B: the landing punch of a whole line of words - a third of the hero numbers' TextPop (a 1.06 punch moved
+        /// the line's far end ~50 px), around the right baseline.
+        /// </summary>
+        public const float TallyPunchScale = 1.02f;
+
+        public const float TallyPunchSeconds = 0.12f;
+
+        /// <summary>
+        /// WP-098B (DEC-113 data, S-09's line unchanged): the Round Report line counts its numbers 0 → value - kills by type,
+        /// damage taken, gold - as one roll on the motion core (Delta), then lands with a short punch and a tok. The Elite
+        /// kill time is a time, not a tally: it prints as it is from the first frame (its "—" when no Elite was timed).
+        /// The frames in between are written into a char buffer (TMP SetCharArray), so the roll allocates nothing per
+        /// frame; the end is <see cref="RoundReportLine"/>'s own string. Reduced Motion: the line at once.
+        /// </summary>
+        private void StartTally(RoundReport report)
+        {
+            StopTally();
+            if (UiMotion.ReducedMotion || _tallyClock == null)
+            {
+                _roundReport.text = _roundReportFinal;
+                return;
+            }
+
+            _tally.Prepare(report);
+            _tally.Write(0f);
+            _roundReport.SetCharArray(_tally.Buffer, 0, _tally.Length);
+
+            int owner = GetInstanceID();
+            float land = TallyDelaySeconds + UiMotionTokens.Seconds(TallyDuration);
+            _tallyClock.fillAmount = 0f;
+            _tallyLine = UiMotion.Timeline(owner);
+            _tallyLine.Add(UiMotion.Fill(_tallyClock, 1f, TallyDuration, UiEase.Settle, UiMotionClass.Delta, TallyDelaySeconds, UiClock.Unscaled, owner));
+            _tallyLine.Add(UiMotion.ScaleSeconds(_roundReport.rectTransform, TallyPunchScale, 1f, TallyPunchSeconds, UiEase.Settle, UiMotionClass.Decor, land, owner));
+            _tallyLine.Cue(UiEvent.CounterRolling, TallyDelaySeconds).Cue(UiEvent.CounterSettled, land);
+            _tallyRolling = true;
+        }
+
+        /// <summary>The line at the count's progress; the end writes the exact line and stops.</summary>
+        private void TickTally()
+        {
+            float k = _tallyClock.fillAmount;
+            if (k >= 1f)
+            {
+                _tallyRolling = false;
+                _roundReport.text = _roundReportFinal;
+                return;
+            }
+
+            if (_tally.Write(k))
+            {
+                _roundReport.SetCharArray(_tally.Buffer, 0, _tally.Length);
+            }
+        }
+
+        /// <summary>Lands a running count (the panel closed or the line went away): the exact line, the settle cue (the roll voice stops).</summary>
+        private void StopTally()
+        {
+            if (_tallyLine.IsAlive)
+            {
+                _tallyLine.Complete();
+            }
+
+            if (_tallyRolling)
+            {
+                _tallyRolling = false;
+                if (_roundReport != null && _roundReportFinal != null)
+                {
+                    _roundReport.text = _roundReportFinal;
+                }
+            }
+        }
+
+        /// <summary>
+        /// WP-098B: the Round Report line written at a count's progress into a fixed char buffer - the same parts, words
+        /// and separator as <see cref="UiUpgradeCopy.RoundReport"/> (UiLanguageTests pins the two equal at k = 1, EN and TR),
+        /// each counted number at round(k × value), the Elite kill time part as printed. Built once per round
+        /// (<see cref="Prepare"/>); <see cref="Write"/> allocates nothing.
+        /// </summary>
+        internal sealed class RoundTally
+        {
+            public const int Capacity = 256;
+            private const string Separator = "  ·  ";
+            private const string Slot = "{value}";
+            private const int MaxCounted = 6;
+
+            private readonly string[] _before = new string[MaxCounted];
+            private readonly string[] _after = new string[MaxCounted];
+            private readonly int[] _target = new int[MaxCounted];
+            private readonly int[] _shown = new int[MaxCounted];
+            private int _count;
+            private string _tail = string.Empty;
+
+            public readonly char[] Buffer = new char[Capacity];
+
+            public int Length { get; private set; }
+
+            /// <summary>The parts of this round's line in <see cref="UiUpgradeCopy.RoundReport"/>'s order (types with no kill are left out, as there).</summary>
+            public void Prepare(RoundReport report)
+            {
+                _count = 0;
+                Add("shop.report.standard", "STANDARD {value}", Mathf.Max(0, report.KillsStandard));
+                if (report.KillsSpecial > 0) Add("shop.report.special", "SPECIAL {value}", report.KillsSpecial);
+                if (report.KillsElite > 0) Add("shop.report.elite", "ELITE {value}", report.KillsElite);
+                if (report.KillsUltra > 0) Add("shop.report.ultra", "ULTRA {value}", report.KillsUltra);
+                Add("shop.report.damage", "DAMAGE TAKEN {value}", Mathf.Max(0, Mathf.RoundToInt(report.DamageTaken)));
+                Add("shop.report.gold", "GOLD +{value}", Mathf.Max(0, report.GoldIncome));
+                string ttk = report.EliteTtkSamples > 0
+                    ? UiStrings.Format("stat.fmt.seconds", "value", UiStrings.Number(Mathf.Max(0f, report.EliteTtkAverage), "0.0"), "{value} s")
+                    : UiStrings.Get("shop.report.none", "—");
+                _tail = UiStrings.Format("shop.report.elite_ttk", "value", ttk, "ELITE KILL TIME {value}");
+                for (int i = 0; i < MaxCounted; i++)
+                {
+                    _shown[i] = int.MinValue;
+                }
+            }
+
+            private void Add(string key, string fallback, int value)
+            {
+                string template = UiStrings.Get(key, fallback);
+                int at = template.IndexOf(Slot, System.StringComparison.Ordinal);
+                _before[_count] = at >= 0 ? template.Substring(0, at) : template;
+                _after[_count] = at >= 0 ? template.Substring(at + Slot.Length) : string.Empty;
+                _target[_count] = value;
+                _count++;
+            }
+
+            /// <summary>Writes the line at progress <paramref name="k"/> (0..1); false when no number changed since the last write.</summary>
+            public bool Write(float k)
+            {
+                bool changed = false;
+                for (int i = 0; i < _count; i++)
+                {
+                    int value = k >= 1f ? _target[i] : Mathf.RoundToInt(_target[i] * Mathf.Clamp01(k));
+                    if (value != _shown[i])
+                    {
+                        _shown[i] = value;
+                        changed = true;
+                    }
+                }
+
+                if (!changed)
+                {
+                    return false;
+                }
+
+                int n = 0;
+                for (int i = 0; i < _count; i++)
+                {
+                    if (i > 0) n = Put(Separator, n);
+                    n = Put(_before[i], n);
+                    n = PutNumber(_shown[i], n);
+                    n = Put(_after[i], n);
+                }
+
+                n = Put(Separator, n);
+                n = Put(_tail, n);
+                Length = n;
+                return true;
+            }
+
+            private int Put(string text, int n)
+            {
+                for (int i = 0; i < text.Length && n < Capacity; i++)
+                {
+                    Buffer[n++] = text[i];
+                }
+
+                return n;
+            }
+
+            /// <summary>A non-negative int in invariant digits (UiStrings.Number's form), no string.</summary>
+            private int PutNumber(int value, int n)
+            {
+                int digits = 1;
+                for (int v = value; v >= 10; v /= 10)
+                {
+                    digits++;
+                }
+
+                if (n + digits > Capacity)
+                {
+                    return n;
+                }
+
+                for (int i = digits - 1; i >= 0; i--)
+                {
+                    Buffer[n + i] = (char)('0' + value % 10);
+                    value /= 10;
+                }
+
+                return n + digits;
             }
         }
 
@@ -1654,8 +2065,15 @@ namespace DD.Prototype.UI
         private void RefreshFooter(int gold, int purchases)
         {
             // One fixed label. A button whose caption changes under the focus ring reads
-            // as a different control to a keyboard or gamepad player.
-            _continueButton.SetText(UiStrings.Get("shop.continue", "CONTINUE"));
+            // as a different control to a keyboard or gamepad player. WP-098B M3: the C11 is as wide as its word, so a
+            // language switch re-measures it and re-lays the footer (never on an unchanged word).
+            string word = UiStrings.Get("shop.continue", "CONTINUE");
+            if (_continueButton.LabelText.text != word)
+            {
+                _continueButton.SetText(word);
+                UiBrushKit.FitWidth(_continueButton);
+                LayoutFooter(_undoButton.gameObject.activeSelf);
+            }
 
             if (!string.IsNullOrEmpty(_notice))
             {
@@ -1674,7 +2092,7 @@ namespace DD.Prototype.UI
             bool locked = shop == null || shop.IsLocked;
             _footerNote.text = UiUpgradeCopy.Footer(max, gold, purchases, locked);
 
-            _footerNote.color = UiTokens.Get(UiColor.TextMuted);
+            _footerNote.color = UiTokens.Get(UiColor.TextSecondary);
         }
 
         private void ShowNotice(string title, string body)
@@ -1695,7 +2113,7 @@ namespace DD.Prototype.UI
             _goldValue.text = Shop != null ? Shop.Gold.ToString() : "0";
             _goldSpent.text = Shop != null ? Shop.GoldSpentThisRound.ToString() : "0";
             _goldNote.text = UiStrings.Get("shop.note.nothing", "Nothing to spend it on this round. It carries over.");
-            _goldNote.color = UiTokens.Get(UiColor.TextMuted);
+            _goldNote.color = UiTokens.Get(UiColor.TextSecondary);
         }
 
         // ================================================================== actions

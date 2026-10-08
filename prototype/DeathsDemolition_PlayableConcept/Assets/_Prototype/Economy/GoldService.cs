@@ -36,6 +36,103 @@ namespace DD.Prototype.Economy
         }
     }
 
+    /// <summary>WP-098B · A packet finished its landing hop and lies on the ground (the landing glint moment).</summary>
+    public readonly struct GoldLandedFeel
+    {
+        public readonly Vector3 Position;
+        public readonly int Amount;
+
+        public GoldLandedFeel(Vector3 position, int amount)
+        {
+            Position = position;
+            Amount = amount;
+        }
+    }
+
+    /// <summary>WP-098B · The magnet grabbed a packet. Not every packet gets one: a packet the player stands on is taken without a pull.</summary>
+    public readonly struct GoldMagnetFeel
+    {
+        public readonly GoldOrb Orb;
+        public readonly Vector3 Position;
+        public readonly int Amount;
+
+        public GoldMagnetFeel(GoldOrb orb, Vector3 position, int amount)
+        {
+            Orb = orb;
+            Position = position;
+            Amount = amount;
+        }
+    }
+
+    /// <summary>
+    /// WP-098B · Raised at the moment the packet calls <c>HudGoldTarget.Arrive</c>: after its flight to the
+    /// HUD gold symbol, or at once (<see cref="Flew"/> false) when Reduced Motion skips the flight.
+    /// Never raised when no HUD answered at collection (today's in-place flash, no Depart/Arrive).
+    /// </summary>
+    public readonly struct GoldArrivedFeel
+    {
+        public readonly int Amount;
+        public readonly GoldCollectKind Kind;
+        public readonly bool Flew;
+
+        public GoldArrivedFeel(int amount, GoldCollectKind kind, bool flew)
+        {
+            Amount = amount;
+            Kind = kind;
+            Flew = flew;
+        }
+    }
+
+    /// <summary>
+    /// WP-098B · The gold pickup's feel surface: presentation moments only, never the wallet's truth
+    /// (credits are <see cref="GoldWallet.Credited"/> / RunEvents.GoldChanged). Struct args, no
+    /// allocation per raise. Per packet, in order: Landed → MagnetStart (optional) →
+    /// <c>FeelEvents.GoldCollected</c> → FlightArrived (only when a HUD took the coin).
+    /// The collection moment itself is S-02's <c>FeelEvents.GoldCollected</c> (FeelGold: Amount, Balance,
+    /// Position, ChainIndex in a 0.6 s window), raised from the run wallet's Credited - one per credit,
+    /// so one per swept coin too. This class carries only the moments FeelEvents has no counterpart for.
+    /// Listeners subscribe on enable and unsubscribe on disable; a process-long listener re-subscribes
+    /// on scene change (static bus rearm lesson).
+    /// </summary>
+    public static class GoldFeelEvents
+    {
+        public static event Action<GoldLandedFeel> Landed;
+        public static event Action<GoldMagnetFeel> MagnetStart;
+        public static event Action<GoldArrivedFeel> FlightArrived;
+
+        internal static void RaiseLanded(GoldLandedFeel e)
+        {
+            Action<GoldLandedFeel> h = Landed;
+            if (h == null) return;
+            try { h.Invoke(e); }
+            catch (Exception ex) { Debug.LogException(ex); }
+        }
+
+        internal static void RaiseMagnetStart(GoldMagnetFeel e)
+        {
+            Action<GoldMagnetFeel> h = MagnetStart;
+            if (h == null) return;
+            try { h.Invoke(e); }
+            catch (Exception ex) { Debug.LogException(ex); }
+        }
+
+        internal static void RaiseFlightArrived(GoldArrivedFeel e)
+        {
+            Action<GoldArrivedFeel> h = FlightArrived;
+            if (h == null) return;
+            try { h.Invoke(e); }
+            catch (Exception ex) { Debug.LogException(ex); }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Landed = null;
+            MagnetStart = null;
+            FlightArrived = null;
+        }
+    }
+
     /// <summary>
     /// Gold: who earns it, how it reaches the player, and nothing else.
     ///
@@ -78,6 +175,20 @@ namespace DD.Prototype.Economy
             "so it finishes under the round-end freeze. The wallet is credited before the flight " +
             "starts; this is presentation only. INVENTED.", true)]
         [SerializeField] private float _sweepFlightDuration = 0.35f;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "WP-098B: seconds a picked-up packet takes to fly to the HUD gold symbol (UNSCALED; the wallet is " +
+            "credited at pickup, the flight is presentation only). Within the 0.35 s open/close budget. INVENTED.", true)]
+        [SerializeField] private float _hudFlightDuration = 0.3f;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "WP-098B: the HUD flight's end point sits on the camera ray through the gold symbol at this fraction " +
+            "of the packet's own camera depth, so the flight rises toward the lens over the garden's canopy. INVENTED.", true)]
+        [SerializeField] private float _hudFlightDepth = 0.5f;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "WP-098B: scale a packet shrinks to by the end of its HUD flight (it is then nearer the lens). INVENTED.", true)]
+        [SerializeField] private float _hudFlightEndScale = 0.25f;
 
         [PrototypeOnly(PendingDecisions.UpgradesAndGold,
             "Extra packets the pool is sized for beyond the round's enemy pool, so a debug spawn " +
@@ -143,6 +254,15 @@ namespace DD.Prototype.Economy
 
         /// <summary>Seconds a swept packet flies (unscaled). Presentation only.</summary>
         public float SweepFlightDuration => Mathf.Max(0.01f, _sweepFlightDuration);
+
+        /// <summary>WP-098B · Seconds a picked-up packet flies to the HUD gold symbol (unscaled). 0 = no flight. Presentation only.</summary>
+        public float HudFlightDuration => Mathf.Clamp(_hudFlightDuration, 0f, 0.35f);
+
+        /// <summary>WP-098B · Fraction of the packet's camera depth the HUD flight ends at.</summary>
+        public float HudFlightDepth => Mathf.Clamp(_hudFlightDepth, 0.1f, 1f);
+
+        /// <summary>WP-098B · Scale at the end of the HUD flight.</summary>
+        public float HudFlightEndScale => Mathf.Clamp(_hudFlightEndScale, 0.05f, 1f);
 
         /// <summary>Packets currently checked out of the pool (outstanding or animating out).</summary>
         public int LiveOrbCount => _liveOrbs.Count;
@@ -547,11 +667,20 @@ namespace DD.Prototype.Economy
             return true;
         }
 
-        /// <summary>Called by a packet the moment the player takes it. One credit, under the packet's own id.</summary>
-        internal void OnPacketCollected(GoldOrb orb)
+        /// <summary>
+        /// Called by a packet the moment the player takes it. One credit, under the packet's own id.
+        /// True when the wallet took it (the packet may then fly to the HUD; the flight never credits).
+        /// </summary>
+        internal bool OnPacketCollected(GoldOrb orb)
         {
             _packetsCollected++;
-            CreditPickup(orb.Packet.Amount, orb.transform.position, orb.Packet.TransactionId);
+            return CreditPickup(orb.Packet.Amount, orb.transform.position, orb.Packet.TransactionId);
+        }
+
+        /// <summary>EditMode seam: the magnet homes at this transform (no PlayerRegistry outside a scene).</summary>
+        internal void SetPlayerForTests(Transform player)
+        {
+            _player = player;
         }
 
         /// <summary>Called by a packet as it returns to the pool, taken or destroyed.</summary>
@@ -570,7 +699,7 @@ namespace DD.Prototype.Economy
             }
         }
 
-        private void CreditPickup(int amount, Vector3 position, int transactionId)
+        private bool CreditPickup(int amount, Vector3 position, int transactionId)
         {
             GoldTransactionResult result = _wallet.Credit(amount, GoldSource.EnemyPickup, transactionId, position);
             if (result != GoldTransactionResult.Applied)
@@ -580,7 +709,7 @@ namespace DD.Prototype.Economy
                 // see it rather than a silent zero.
                 _creditRefusals++;
                 LastCreditRefusal = result;
-                return;
+                return false;
             }
 
             _streak++;
@@ -590,12 +719,15 @@ namespace DD.Prototype.Economy
             // own flash; this is the sound and the HUD counter kick, which the wallet has
             // already published through RunEvents.GoldChanged.
             RunAudioEvents.Raise(RunAudioEvent.GoldCollected, position, 1f, _streak - 1);
+
+            // WP-098B: the feel moment already fired inside _wallet.Credit (FeelEvents.GoldCollected off Credited).
+            return true;
         }
 
         /// <summary>
         /// Takes every outstanding packet. Each packet is credited under its own reserved
         /// transaction id (so nothing can pay it twice), one sound plays for the batch,
-        /// and the packets fly out on unscaled time.
+        /// and the packets fly out on unscaled time (to the HUD gold symbol when one answers, else to the player).
         /// </summary>
         private GoldAutoCollectReport SweepOutstanding(int round, bool silent)
         {
@@ -624,15 +756,20 @@ namespace DD.Prototype.Economy
                     continue;
                 }
 
+                int credited = 0;
                 if (_wallet.Credit(value, GoldSource.RoundClearAutoCollect, transactionId, orb.transform.position) == GoldTransactionResult.Applied)
                 {
                     packets++;
                     amount += value;
+                    credited = value;
+
+                    // WP-098B: the Credit above raised FeelEvents.GoldCollected for this coin (one per swept coin; the
+                    // whole sweep runs in one frame, so its ChainIndex climbs 0, 1, 2…); the batch audio cue below stays.
                 }
 
                 _packetsAutoCollected++;
                 lastPosition = orb.transform.position;
-                orb.BeginSweepFlight();
+                orb.BeginSweepFlight(credited);
             }
 
             // Only the round-clear path records the report (CollectOutstanding); the silent

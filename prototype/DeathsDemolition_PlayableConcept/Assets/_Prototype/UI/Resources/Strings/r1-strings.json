@@ -2239,6 +2239,10 @@
     "en": "MAIN MENU",
     "tr": "ANA MENÜ"
   },
+  "common.no": {
+    "en": "NO",
+    "tr": "HAYIR"
+  },
   "common.off": {
     "en": "OFF",
     "tr": "KAPALI"
@@ -2452,8 +2456,8 @@
     "tr": "Yükleme ilerlemiyor."
   },
   "loading.error.title": {
-    "en": "THE NEXT SCREEN DID NOT LOAD",
-    "tr": "SONRAKİ EKRAN YÜKLENMEDİ"
+    "en": "LOADING FAILED",
+    "tr": "YÜKLENEMEDİ"
   },
   "loading.error.to_menu": {
     "en": "RETURN TO MAIN MENU",
@@ -2598,6 +2602,10 @@
   "menu.quit": {
     "en": "QUIT",
     "tr": "ÇIKIŞ"
+  },
+  "menu.quit.confirm": {
+    "en": "QUIT THE GAME?",
+    "tr": "OYUNDAN ÇIKILSIN MI?"
   },
   "menu.subtitle": {
     "en": "An old palace, a garden, and a crowd that never stops arriving.",
