@@ -62,11 +62,11 @@ class DiskGateTests(unittest.TestCase):
         self.assertIn("WARNING disk-gate: used swap 10240.01 MB", out)
 
     def test_SwapKapisi_12Ustu16Alti_BellekBossa_UyariylaBaslar(self):
-        """WP-099 (C-00 08.10): macOS keeps stale swap until a restart — above 12 GiB the gate looks at live memory:
+        """WP-099 (C-00 08.10): used swap alone stopped launches while memory was plentiful — above 12 GiB the gate looks at live memory:
         ≥ 25 % free → a WARNING line with both values, started; < 25 % or no answer → 75 with both values."""
         rc, out = self.gate(99999999, "13000.00M", mem_free="63")
         self.assertEqual(0, rc, out)
-        self.assertIn("WARNING disk-gate: used swap 13000.00 MB > 12288 (12 GiB) but memory free 63% ≥ 25%", out)
+        self.assertIn("WARNING disk-gate: used swap 13000.00 MB > 12288 (12 GiB) but memory free 63% ≥ 25% — swap used above 12 GiB, live memory free ≥ 25 %; started anyway", out)
         self.assertIn("disk-gate: ok freeKiB=99999999 swapUsedMB=13000.00 memFreePct=63", out)
         for mem, rc_want in (("25", 0), ("24", 75), ("missing", 75)):
             with self.subTest(mem=mem):
@@ -83,7 +83,7 @@ class DiskGateTests(unittest.TestCase):
                 rc, out = self.gate(99999999, swap, mem_free="90")
                 self.assertEqual(rc_want, rc, out)
         rc, out = self.gate(99999999, "16384.01M", mem_free="90")
-        self.assertIn("used swap 16384.01 MB > 16384 (16 GiB) — not started (75)", out)
+        self.assertIn("used swap 16384.01 MB > 16384 (16 GiB), memory free 90% — not started (75)", out)
 
     def test_SwapKapisi_12AltindaBellekOkunmaz(self):
         """below 12 GiB the gate never asks memory_pressure — a missing tool changes nothing there."""
@@ -92,13 +92,13 @@ class DiskGateTests(unittest.TestCase):
                 rc, out = self.gate(99999999, swap, mem_free="missing")
                 self.assertEqual(0, rc, out); self.assertNotIn("memFreePct", out); self.assertFalse(self.asked)
         self.gate(99999999, "12288.01M", mem_free="63"); self.assertTrue(self.asked)
-        self.gate(99999999, "16384.01M", mem_free="63"); self.assertFalse(self.asked)   # > 16 GiB: no need to ask
+        self.gate(99999999, "16384.01M", mem_free="63"); self.assertTrue(self.asked)   # C-00 08.10: its line carries both values
 
     def test_DiskKapisi_OkunamayanDegerler_75(self):
         rc, out = self.gate("n/a", "100.00M")
         self.assertEqual(rc, 75, out)
-        rc, out = self.gate(99999999, "garbage")
-        self.assertEqual(rc, 75, out)
+        rc, out = self.gate(99999999, "garbage", mem_free="44")
+        self.assertEqual(rc, 75, out); self.assertIn("used swap unknown, memory free 44% — not started (75)", out)
 
     def test_DiskKapisi_TumGirisNoktalarindaTekKaynak(self):
         for name in ("test.sh", "build.sh", "player-run.sh", "compile-check.sh", "slot.sh"):

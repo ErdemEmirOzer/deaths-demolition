@@ -41,10 +41,10 @@ dd_unity_count() { pgrep -f "Unity.app/Contents/MacOS/Unity.* -batchmode" 2>/dev
 # WP-099, C-00 08.10); else one reason line and 75 (busy — nothing started).
 # Unreadable df / sysctl counts as not ready. compile-check, test.sh, build.sh and player-run.sh call it (single source).
 # C-00 06.10: used swap ≥ DD_SWAP_WARN_MB (10 GiB) is an early WARNING line (timeline) — nothing is stopped below 12 GiB.
-# WP-099 (C-00 08.10): macOS does not shrink swap without a restart and counts stale pages, so swap alone stopped every
-# launch on a machine with plenty of live memory. Above 12 GiB the gate now also reads `memory_pressure -Q` (system-wide
-# free %): it stops only when free < DD_MEM_FREE_MIN_PCT (25 %) or unreadable; above DD_SWAP_HARD_MB (16 GiB) it always
-# stops. Between 12 and 16 GiB with enough free memory: a WARNING line with both values, started.
+# WP-099 (C-00 08.10): used swap alone stopped every launch while live memory was plentiful (swap moves up and down within
+# minutes; free memory swings 32–64 %). Above 12 GiB the gate also reads `memory_pressure -Q` (system-wide free %): it
+# stops only when free < DD_MEM_FREE_MIN_PCT (25 %) or unreadable; above DD_SWAP_HARD_MB (16 GiB) it always stops.
+# Between 12 and 16 GiB with enough free memory: a WARNING line, started. Every stop/warning line carries both values.
 DD_DISK_MIN_KIB=15728640; DD_SWAP_MAX_MB=12288; DD_SWAP_WARN_MB=10240; DD_SWAP_HARD_MB=16384; DD_MEM_FREE_MIN_PCT=25
 dd_disk_gate() {
   local free swap frac cents memfree
@@ -56,15 +56,17 @@ dd_disk_gate() {
   [[ "${swap%%.*}" == <-> && "$frac" == <-> ]] && cents=$(( ${swap%%.*} * 100 + frac ))
   if [[ "$free" != <-> ]] || [ "$free" -lt "$DD_DISK_MIN_KIB" ]; then
     dd_log "disk-gate: free disk ${free:-unknown} KiB < $DD_DISK_MIN_KIB (15 GiB) on ${1:-$DD_REPO} — not started (75)"; return 75; fi
+  # below 12 GiB memory_pressure is never asked; every line above it (and an unreadable swap) carries both values
+  [[ -z "$cents" ]] || (( cents > DD_SWAP_MAX_MB * 100 )) \
+    && memfree=$(memory_pressure -Q 2>/dev/null | sed -n 's/.*free percentage: *\([0-9][0-9]*\)%.*/\1/p' | head -1)
   if [[ -z "$cents" ]]; then
-    dd_log "disk-gate: used swap unknown — not started (75)"; return 75; fi
+    dd_log "disk-gate: used swap unknown, memory free ${memfree:-unknown}% — not started (75)"; return 75; fi
   if (( cents > DD_SWAP_HARD_MB * 100 )); then
-    dd_log "disk-gate: used swap $swap MB > $DD_SWAP_HARD_MB (16 GiB) — not started (75)"; return 75; fi
+    dd_log "disk-gate: used swap $swap MB > $DD_SWAP_HARD_MB (16 GiB), memory free ${memfree:-unknown}% — not started (75)"; return 75; fi
   if (( cents > DD_SWAP_MAX_MB * 100 )); then
-    memfree=$(memory_pressure -Q 2>/dev/null | sed -n 's/.*free percentage: *\([0-9][0-9]*\)%.*/\1/p' | head -1)
     if [[ "$memfree" != <-> ]] || (( memfree < DD_MEM_FREE_MIN_PCT )); then
       dd_log "disk-gate: used swap $swap MB > $DD_SWAP_MAX_MB (12 GiB) and memory free ${memfree:-unknown}% < $DD_MEM_FREE_MIN_PCT% — not started (75)"; return 75; fi
-    dd_log "WARNING disk-gate: used swap $swap MB > $DD_SWAP_MAX_MB (12 GiB) but memory free $memfree% ≥ $DD_MEM_FREE_MIN_PCT% (stale swap) — started anyway"
+    dd_log "WARNING disk-gate: used swap $swap MB > $DD_SWAP_MAX_MB (12 GiB) but memory free $memfree% ≥ $DD_MEM_FREE_MIN_PCT% — swap used above 12 GiB, live memory free ≥ 25 %; started anyway"
   elif (( cents >= DD_SWAP_WARN_MB * 100 )); then
     dd_log "WARNING disk-gate: used swap $swap MB ≥ $DD_SWAP_WARN_MB (10 GiB) — near the 12 GiB stop; started anyway"
   fi
