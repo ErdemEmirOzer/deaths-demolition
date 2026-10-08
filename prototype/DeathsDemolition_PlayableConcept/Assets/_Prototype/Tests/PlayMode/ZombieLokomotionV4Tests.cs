@@ -50,7 +50,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// <item>CAP_*: frames for the before / after review (DD_WP096_CAPTURE_DIR).</item>
     /// </list>
     /// A measuring test asserts only that its source is in the record; the target goes into the log line (PASS / FAIL) and turns into an
-    /// assert with DD_WP096_ENFORCE=1 (or <see cref="ZorlaSabit"/>), for the "after" run. Every metric: one "wp096.&lt;test&gt;.&lt;key&gt;=" log
+    /// assert by default (DD_WP096_ENFORCE=0 only for the explicit before/diagnostic recording); DD_WP096_ENFORCE=1 (or <see cref="ZorlaSabit"/>), for the "after" run. Every metric: one "wp096.&lt;test&gt;.&lt;key&gt;=" log
     /// line and r2-wp096-zl&lt;n&gt;.json through the R2 writer. TD only; nothing here touches the player's profile or settings (the
     /// assembly's TestProfileIsolation / TestUiDataIsolation fixtures redirect them, checked at every scene start).
     /// </summary>
@@ -65,7 +65,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>true = the target checks assert (the "after" run) without the environment variable.</summary>
         private static readonly bool ZorlaSabit = false;
-        private static bool Zorla => ZorlaSabit || Environment.GetEnvironmentVariable(ZorlaDegiskeni) == "1";
+        private static bool Zorla => ZorlaSabit || Environment.GetEnvironmentVariable(ZorlaDegiskeni) != "0";
 
         private const float Dt = 1f / 60f;
         private const float GovdeHizTabani = 0.5f;      // m/s — slide ratio floor (plan §3.1; the player's L1 uses 1.0)
@@ -271,7 +271,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (g.DurusKare > 0) { double kl = (double)g.DurusKilitli / g.DurusKare; if (double.IsNaN(kilitMin) || kl < kilitMin) { kilitMin = kl; kilitAd = g.Ad; } }
             }
 
-            r.Bilgi("contactSlideAvgWorst", temasKotu, temasAd + " (temas noktası = ayak bileği / parmak işaretçilerinin alçak olanı; IK açık)");
+            r.Bilgi("markerVelocityDiagnosticWorst", temasKotu, temasAd + " (değişen ayak/parmak işaretçisi hız tanısı; fiziksel taban tutunması kabul metriği değildir)");
             r.Bilgi("ikServedShareMin", servisMin, servisAd + " (yürüyüş karelerinde FootIkAdapter.Served)");
             r.Bilgi("ikLockedInStanceShareMin", kilitMin, kilitAd + " (durus ayak-karelerinde IsLocked)");
             r.Bilgi("slideP95", Yuzdelik(hepsi, 0.95));
@@ -637,7 +637,7 @@ namespace DD.Prototype.Tests.PlayMode
             public readonly List<string> Engel = new List<string>();   // why this group is left out (empty = valid)
             public double USum, VSum;
             // WP-096: the IK as each lane got it (stance foot-frames by the chosen stance; walk frames for the service) and the contact slide
-            public int IkKare, IkServis, DurusKare, DurusKilitli;
+            public int IkKare, IkServis, DurusKare, DurusKilitli, CiftDurusKare, CiftDurusKilitli;
             public readonly List<double> KaymaTemas = new List<double>();
             public readonly int[] IkFark = new int[IkSayacAdlari.Length];
             public double TemasPayi => AyakKare > 0 ? (double)TemasKare / AyakKare : double.NaN;
@@ -732,8 +732,8 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (ZombiKaydedici.Kare k in ks) if (Olculen(k) && k.Gecerli) { toplam += k.KokV; n++; }
             Vector3 yon = n > 0 && toplam.sqrMagnitude > 1e-8f ? toplam.normalized : Vector3.forward;
             float sonL = -1f, sonR = -1f;
-            // WP-096: the contact point = the lower of the ankle / toe markers relative to its own lowest point while walking (the intake
-            // calibration's definition) — the ankle alone moves during the heel-to-toe roll inside an event stance without any slide
+            // Diagnostic only: choose the lower ankle/toe marker relative to its own walk minimum. Switching markers does
+            // not track one physical sole point, so these velocities never replace the ankle slide acceptance metric.
             float minAL = float.MaxValue, minTL = float.MaxValue, minAR = float.MaxValue, minTR = float.MaxValue;
             foreach (ZombiKaydedici.Kare k in ks)
             {
@@ -767,6 +767,11 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     g.KaymaTemas.Add(Oran(k.ParmakYR - minTR < k.AyakYR - minAR ? k.ParmakVR : k.AyakVR, k.KalcaV));
                     if (k.IkVar) { g.DurusKare++; if (k.KilitR) g.DurusKilitli++; }
+                }
+                if (s.L[i] && s.R[i] && k.IkVar)
+                {
+                    g.CiftDurusKare++;
+                    if (k.KilitL && k.KilitR) g.CiftDurusKilitli++;
                 }
             }
         }
@@ -933,13 +938,14 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-096: the lane's IK as it got it — served share of the walk frames, locked share of the stance foot-frames, the
-        /// contact-point slide next to the ankle slide, and the release / budget counters over the pass.</summary>
+        /// marker-velocity diagnostic next to the ankle slide, and the release / budget counters over the pass.</summary>
         private static string IkOzeti(Grup g)
         {
             var c = new List<string>();
             for (int i = 0; i < IkSayacAdlari.Length; i++) c.Add(IkSayacKisa[i] + " " + g.IkFark[i]);
             return "ik served " + (g.IkKare > 0 ? F((double)g.IkServis / g.IkKare, 2) : "n/a") + " lockedInStance " + (g.DurusKare > 0 ? F((double)g.DurusKilitli / g.DurusKare, 2) : "n/a")
-                   + " contactSlide avg " + F(Ort(g.KaymaTemas)) + " p95 " + F(Yuzdelik(g.KaymaTemas, 0.95)) + " release " + string.Join(" ", c);
+                   + " doubleSupportLocked " + (g.CiftDurusKare > 0 ? F((double)g.CiftDurusKilitli / g.CiftDurusKare, 2) : "n/a") + " doubleSupportFrames " + g.CiftDurusKare
+                   + " markerVelocityDiagnostic avg " + F(Ort(g.KaymaTemas)) + " p95 " + F(Yuzdelik(g.KaymaTemas, 0.95)) + " release " + string.Join(" ", c);
         }
 
         private static string TabanOzeti(Grup g)
@@ -1347,7 +1353,12 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 merkez = SahneKur();
             MethodInfo hizMetodu = HizMetodu();
             Assert.IsNotNull(hizMetodu, "kaynak yok: ZombieSkinnedVisual.SetSpeed(float, float) yok — sahne sürücüsü bağlanamadı");
+            MethodInfo motorMetodu = Metot(typeof(ZombieSkinnedVisual), "StepTransition", typeof(Vector3), typeof(float), typeof(float), typeof(bool),
+                typeof(float), typeof(Vector3).MakeByRefType(), typeof(float).MakeByRefType());
+            // Before runs remain source-compatible; an after run cannot silently bypass the p3 motor drive windows.
+            if (Zorla) Assert.IsNotNull(motorMetodu, "kaynak yok: StepTransition motor API yok — p3 geçiş ölçümü sürülemez");
             int n = Kademeler.Length;
+            var gercekHiz = new float[n];
             var zler = new List<ZombieEnemy>(n);
             var kayitlar = new List<ZombiKaydedici>(n);
             var hizlar = new float[n];
@@ -1369,23 +1380,24 @@ namespace DD.Prototype.Tests.PlayMode
 
             Physics.SyncTransforms();
             var arg = new object[2];
+            var motorArg = new object[7];
             for (int rep = 0; rep < KdTekrar; rep++)
             {
                 for (int f = 0; f < KdDur; f++)          // still (the last 30 frames: the idle reference)
                 {
-                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f >= KdDur - KlipPencere ? 40 + rep : -1; Sur(zler[i], ref konum[i], 0f, hizMetodu, arg); }
+                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f >= KdDur - KlipPencere ? 40 + rep : -1; Sur(zler[i], ref konum[i], 0f, ref gercekHiz[i], hizMetodu, arg, motorMetodu, motorArg); }
                     yield return null;
                 }
 
                 for (int f = 0; f < KdYuru; f++)         // start (window), then steady walk (reference)
                 {
-                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f < L3Pencere ? 10 + rep : 30 + rep; Sur(zler[i], ref konum[i], hizlar[i], hizMetodu, arg); }
+                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f < L3Pencere ? 10 + rep : 30 + rep; Sur(zler[i], ref konum[i], hizlar[i], ref gercekHiz[i], hizMetodu, arg, motorMetodu, motorArg); }
                     yield return null;
                 }
 
                 for (int f = 0; f < KdDurus; f++)        // stop (window)
                 {
-                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f < L3Pencere ? 20 + rep : -1; Sur(zler[i], ref konum[i], 0f, hizMetodu, arg); }
+                    for (int i = 0; i < n; i++) { kayitlar[i].Etiket = f < L3Pencere ? 20 + rep : -1; Sur(zler[i], ref konum[i], 0f, ref gercekHiz[i], hizMetodu, arg, motorMetodu, motorArg); }
                     yield return null;
                 }
             }
@@ -1546,16 +1558,47 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("adaptiveContactBodies", uyarlamali);
             r.Bilgi("eventContactBodies", olayliGovde, "/" + n + " gövde klip olaylarıyla");
             r.Bilgi("gaitOrdinalStart", sira);
+            r.Bilgi("transitionMotorDriven", motorMetodu != null ? 1 : 0, "StepTransition velocity/yaw motor output applied to the physical root; SetSpeed receives achieved forward speed");
+            double baslamaMin = double.NaN, bitisMin = double.NaN;
+            for (int i = 0; i < n; i++)
+            {
+                int? starts = OrnekInt(zler[i].Skinned, "TransitionStarts"), ends = OrnekInt(zler[i].Skinned, "TransitionCompletions");
+                if (starts.HasValue) baslamaMin = double.IsNaN(baslamaMin) ? starts.Value : Math.Min(baslamaMin, starts.Value);
+                if (ends.HasValue) bitisMin = double.IsNaN(bitisMin) ? ends.Value : Math.Min(bitisMin, ends.Value);
+            }
+            r.Hedef("transitionStartsPerBodyMin", baslamaMin, true, 2 * KdTekrar, "five start + five stop intents per body");
+            r.Hedef("transitionCompletionsPerBodyMin", bitisMin, true, 2 * KdTekrar, "p3 motor reaches clip end / attach_out per start and stop");
             r.Kaynak(eksik);
-            r.Yazdir("ZL5_KalkisDurus_GecisVarligi", hepsi.Count, "4 tiers x 5 start/stop on the stage, SetSpeed step profile; stance = clip events + idle clip");
+            r.Yazdir("ZL5_KalkisDurus_GecisVarligi", hepsi.Count, "4 tiers x 5 start/stop on the stage, intent speed step + p3 motor drive windows; stance = clip events + idle clip");
         }
 
-        private static void Sur(ZombieEnemy z, ref Vector3 konum, float hiz, MethodInfo hizMetodu, object[] arg)
+        private static void Sur(ZombieEnemy z, ref Vector3 konum, float hiz, ref float gercekHiz, MethodInfo hizMetodu, object[] arg,
+            MethodInfo motorMetodu, object[] motorArg)
         {
             float dt = Time.deltaTime;
-            konum += Vector3.forward * (hiz * dt);
+            Vector3 velocity = Vector3.forward * hiz;
+            float yaw = 0f;
+            if (motorMetodu != null)
+            {
+                motorArg[0] = Vector3.forward;
+                motorArg[1] = hiz;
+                motorArg[2] = gercekHiz;
+                motorArg[3] = true;
+                motorArg[4] = dt;
+                motorArg[5] = Vector3.zero;
+                motorArg[6] = 0f;
+                if ((bool)motorMetodu.Invoke(z.Skinned, motorArg))
+                {
+                    velocity = (Vector3)motorArg[5];
+                    yaw = (float)motorArg[6];
+                }
+            }
+            Vector3 before = konum;
+            konum += velocity * dt;
             z.transform.position = konum;
-            arg[0] = hiz;
+            if (Mathf.Abs(yaw) > 1e-5f) z.transform.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * z.transform.rotation;
+            gercekHiz = dt > 1e-6f ? Mathf.Max(0f, Vector3.Dot((konum - before) / dt, z.transform.forward)) : 0f;
+            arg[0] = gercekHiz;
             arg[1] = dt;
             hizMetodu.Invoke(z.Skinned, arg);
         }
@@ -1655,6 +1698,7 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (long b in kalB) if (b > bosMax) ustte++;
             // the heaviest frames (window index, Time.frameCount, bytes, count) to bisect: the recorder reads the last completed frame
             string kalTepe = TepeKareler(kalB, kalN, kalF, 3), bosTepe = TepeKareler(bosB, bosN, bosF, 1);
+            GcPencereYaz(bosB, bosN, bosF, kalB, kalN, kalF);   // outside the measured windows / disposed recorders
             int tepe = 0;
             for (int i = 1; i < GcKare; i++) if (kalB[i] > kalB[tepe]) tepe = i;
             Debug.Log("[DD-TEST] wp096.zl6.ozet control=" + kontrol + " idle bytes max/med/p95 " + bosMax + "/" + bosMed + "/" + Yuzdelik(bosB, 0.95) + " count max/med " + bosNMax + "/" + bosNMed
@@ -1710,6 +1754,25 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Match m = Regex.Match(json, "\"" + Regex.Escape(anahtar) + "\":\\s*(-?[0-9][0-9.eE+-]*)");
             return m.Success && double.TryParse(m.Groups[1].Value, NumberStyles.Float, Inv, out double d) ? d : (double?)null;
+        }
+
+        /// <summary>Keep every original recorder sample for spike attribution. No filtering, subtraction or gate adjustment;
+        /// the frame stamp is the observation frame (LastValue is the last completed recorder frame).</summary>
+        private static void GcPencereYaz(long[] idleBytes, long[] idleCount, int[] idleFrame, long[] crowdBytes, long[] crowdCount, int[] crowdFrame)
+        {
+            string dir = Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR");
+            if (string.IsNullOrEmpty(dir)) return;
+            Directory.CreateDirectory(dir);
+            string path = Path.Combine(dir, "r2-wp096-zl6-frames.csv");
+            using (var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(false)))
+            {
+                writer.WriteLine("window,index,observationFrame,gcAllocatedBytes,gcAllocationCount");
+                for (int i = 0; i < idleBytes.Length; i++)
+                    writer.WriteLine("idle," + i.ToString(Inv) + "," + idleFrame[i].ToString(Inv) + "," + idleBytes[i].ToString(Inv) + "," + idleCount[i].ToString(Inv));
+                for (int i = 0; i < crowdBytes.Length; i++)
+                    writer.WriteLine("crowd," + i.ToString(Inv) + "," + crowdFrame[i].ToString(Inv) + "," + crowdBytes[i].ToString(Inv) + "," + crowdCount[i].ToString(Inv));
+            }
+            Debug.Log("wp096.zl6.rawFrames=" + path);
         }
 
         /// <summary>The n heaviest frames of a window: "#index@frameCount bytesB/countN".</summary>
@@ -2452,6 +2515,12 @@ namespace DD.Prototype.Tests.PlayMode
             else if (e == CharacterAnimationEvent.FootRight) _bekleyen |= 2;
             else if (e == CharacterAnimationEvent.FootLOff) _bekleyen |= 4;
             else if (e == CharacterAnimationEvent.FootROff) _bekleyen |= 8;
+            else if (e == CharacterAnimationEvent.PivotPlant || e == CharacterAnimationEvent.StopPlant)
+            {
+                // P3 publishes the authored plant side after mirroring. It is the same physical contact input as foot_l/r.
+                if (c.LastInt == 0) _bekleyen |= 1;
+                else if (c.LastInt == 1) _bekleyen |= 2;
+            }
         }
 
         /// <summary>One event bit → this frame's flag, collapsed per kind inside OlayAyrimKare (the blend's other clips repeat it).</summary>

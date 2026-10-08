@@ -133,6 +133,11 @@ namespace DD.Prototype.Characters
         /// NEAREST zombies (camera distance, one-frame-lagged cut with hysteresis) instead of the Animator update order.
         /// </summary>
         public bool ZombieLock;
+        /// <summary>Owner-selected clip contract: both foot_*_off events exist, so a plant must preserve the other foot's
+        /// double-support stance until its own lift. False keeps the legacy other-plant release for clips without lift events.</summary>
+        public bool ZombieExplicitLiftEvents;
+        private int _zombiePlantPending;
+        private readonly float[] _zombieLastPlantTime = { -1f, -1f };
         /// <summary>WP-096 diagnostics: locks released by <see cref="ZombieLockMaxOffset"/>.</summary>
         public int ReleasedByOffset { get; private set; }
         /// <summary>WP-096 diagnostics: frames this body wanted the IK / the lock and the budget refused it.</summary>
@@ -201,6 +206,8 @@ namespace DD.Prototype.Characters
         {
             for (int i = 0; i < 2; i++) { _locked[i] = false; _lockWeight[i] = 0f; _releasePending[i] = false; }
             _plantPending = 0;
+            _zombiePlantPending = 0;
+            _plantFoot = -1;
         }
 
         private void OnDisable()
@@ -209,6 +216,7 @@ namespace DD.Prototype.Characters
             _pelvisOffset = 0f;
             _commonDelta = 0f;
             ClearLock();
+            _zombieLastPlantTime[0] = _zombieLastPlantTime[1] = -1f;
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -293,6 +301,10 @@ namespace DD.Prototype.Characters
                 if (up != null && lo != null && ft != null) _legLength = Vector3.Distance(up.position, lo.position) + Vector3.Distance(lo.position, ft.position);
             }
 
+            // Consume both feet's events before either target is sent. The old right-foot callback processed a left plant
+            // after the left target had already been written, leaving one extra unlocked frame on every left landing.
+            if (ZombieLock) PrepareZombieLocks();
+
             float footHeight = _animator.leftFeetBottomHeight;
             float leftDelta, rightDelta;
             if (PreserveSwingLift)
@@ -330,17 +342,14 @@ namespace DD.Prototype.Characters
             if (foot == 0) LastHeightGap = gap;
             // event-driven stance: a plant event locks the LOWER foot at its landing point and frees the other (the stance
             // window "own contact → the other foot's contact", as the AP-009 slip gates define it); foot_*_off frees one foot.
-            if (_plantPending == 1 && foot == 1)
+            if (!ZombieLock && _plantPending == 1 && foot == 1)
             {
-                // both feet solved this frame: decide which one landed (WP-096 ZombieLock: the event's own foot)
-                int lower = ZombieLock && _plantFoot >= 0 ? _plantFoot : _gapThisFrame[0] <= gap ? 0 : 1;
+                // Legacy player solve: both feet have been read, so pick the lower one.
+                int lower = _gapThisFrame[0] <= gap ? 0 : 1;
                 if (_lockThisFrame)
                 {
                     _locked[lower] = true;
                     _lockPos[lower] = lower == 1 ? target : _targetThisFrame[0];
-                    // WP-096 ZombieLock: the held point IS the foot's position at the plant, so the lock takes full weight at once — the
-                    // 0.06 s blend-in let a run's stance foot (≈ 0.17 s on the ground) slide for a share of its contact
-                    if (ZombieLock) _lockWeight[lower] = 1f;
                     Transform lockHip = _animator.GetBoneTransform(lower == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
                     _lockReach[lower] = lockHip != null ? Vector3.Distance(lockHip.position, _lockPos[lower]) : 0f;   // same metric as the release
                 }
@@ -351,7 +360,7 @@ namespace DD.Prototype.Characters
             }
 
             if (foot == 0) { _gapThisFrame[0] = gap; _targetThisFrame[0] = target; }
-            if (_releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
+            if (!ZombieLock && _releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
             if (!_lockThisFrame) { if (_locked[foot]) ReleasedByGate++; _locked[foot] = false; }
             if (_locked[foot] && ZombieLock)
             {
@@ -377,12 +386,65 @@ namespace DD.Prototype.Characters
             return Vector3.Lerp(target, held, _lockWeight[foot]);
         }
 
+        /// <summary>Zombie-only event solve. Explicit lift clips can have both feet planted at once; an opposite plant is
+        /// not a lift. Event order within the frame is resolved by NotifyPlant / NotifyLift before the shared IK pass.</summary>
+        private void PrepareZombieLocks()
+        {
+            Vector3 left = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
+            Vector3 right = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+            int plants = _zombiePlantPending;
+            if (_plantPending != 0) plants |= 1 << (left.y <= right.y ? 0 : 1);
+            for (int foot = 0; foot < 2; foot++)
+            {
+                if (_releasePending[foot])
+                {
+                    if (_locked[foot]) ReleasedByLift++;
+                    _locked[foot] = false;
+                }
+                if (!_lockThisFrame)
+                {
+                    if (_locked[foot]) ReleasedByGate++;
+                    _locked[foot] = false;
+                }
+                _releasePending[foot] = false;
+            }
+            if (_lockThisFrame)
+            {
+                for (int foot = 0; foot < 2; foot++)
+                {
+                    if ((plants & (1 << foot)) == 0) continue;
+                    _locked[foot] = true;
+                    _lockPos[foot] = foot == 0 ? left : right;
+                    _lockWeight[foot] = 1f;
+                    int other = 1 - foot;
+                    if (!ZombieExplicitLiftEvents && (plants & (1 << other)) == 0)
+                    {
+                        if (_locked[other]) ReleasedByPlant++;
+                        _locked[other] = false;
+                    }
+                }
+            }
+            _zombiePlantPending = 0;
+            _plantPending = 0;
+        }
+
         /// <summary>WP-071: the clip's foot_l / foot_r contact (owner forwards the event; the lower foot is taken, names aside).</summary>
         public void NotifyPlant() => NotifyPlant(-1);
 
         /// <summary>WP-096: the plant names its foot (0 left, 1 right; −1 = the lower animated foot) — used while <see cref="ZombieLock"/>.</summary>
         public void NotifyPlant(int foot)
         {
+            if (ZombieLock && foot >= 0 && foot < 2)
+            {
+                // Debounce each foot independently: a rapid opposing step is a different contact, not a blend duplicate.
+                float previous = _zombieLastPlantTime[foot];
+                if (previous >= 0f && Time.time - previous < PlantDebounceSeconds) { PlantsDebounced++; return; }
+                _zombieLastPlantTime[foot] = Time.time;
+                PlantsAccepted++;
+                _zombiePlantPending |= 1 << foot;
+                _releasePending[foot] = false;   // a later plant supersedes an earlier lift / transition cleanup
+                return;
+            }
             // WP-071 (C-00 01.10, 4a): one footfall, one plant — the blend's other clips fire the same contact 1–2 frames later
             if (_lastPlantTime >= 0f && Time.time - _lastPlantTime < PlantDebounceSeconds) { PlantsDebounced++; return; }
             _lastPlantTime = Time.time;
@@ -392,7 +454,11 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>WP-071: foot_l_off / foot_r_off (AP-022) — free that foot now (0 left, 1 right).</summary>
-        public void NotifyLift(int foot) => _releasePending[foot] = true;
+        public void NotifyLift(int foot)
+        {
+            _releasePending[foot] = true;
+            if (ZombieLock) _zombiePlantPending &= ~(1 << foot);   // a later lift supersedes this frame's earlier plant
+        }
 
         /// <summary>
         /// WP-096 PreserveSwingLift solve: both feet raycast first, the correction that grounds the lower sole is shared by both
