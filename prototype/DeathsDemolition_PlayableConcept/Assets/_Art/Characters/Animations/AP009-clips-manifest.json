@@ -18712,7 +18712,7 @@
    "clip": "AP033_zombie_run_feral_A",
    "fbx": "AP033_zombie_run_feral_A_v001.fbx",
    "target": "zombie",
-   "rig": "AP-007 ZombieRig (73 bones = 56 core + 17 sec_*; armature node 'ZombieRig'), AP-033 p1-v001 (P-06)",
+   "rig": "AP-007 ZombieRig (73 bones), AP-033 s03-runner-fixed-ankle-v002; original 30fps timebase, 120Hz subframe keys",
    "frames": 17,
    "fps": 30,
    "seconds": 0.533,
@@ -18746,7 +18746,7 @@
    "maps_to": "WP-096 AP-033-SPEC-v1 §2 run_feral_A (Runner, p1)",
    "tier": "Runner",
    "gait_index": 12,
-   "variant": "feral run: arms forward and reaching, torso forward, hips 6 cm; 225 spm, step 1.28 m",
+   "variant": "feral run: arms forward and reaching, torso forward, hips 6 cm; 225 spm, step 1.28 m; fixed-ankle stance correction, constant pelvis lowering 19mm; original upper-body rotations/events/root/duration preserved",
    "mirror_of": null,
    "mirror_design": null,
    "root_motion": {
@@ -18760,7 +18760,7 @@
    ],
    "spd": 4.79,
    "speed_mps": 4.79,
-   "speed_reference": "AP-033 native_speed_mps = measured stance-foot backward speed of the in-place cycle at rate 1.0 (ap033_measure_v001: 120 Hz, lowest heel / MTP / toe marker, geometric stance mask); contact spd authoritative",
+   "speed_reference": "AP033 v002 native4.79m/s, fixed ankle over original plant/lift events; runtime unitySpeedMps uses shipped Animator fixed ankle over the same event windows (ArtZombieStrideCalibration); Unity acceptance pending",
    "travel_dir_unity_xz": [
     0.0,
     1.0
@@ -18771,6 +18771,53 @@
    "cadence_spm": 225.0,
    "step_length_m": 1.2773,
    "validation": {
+    "minimum_sole_marker_height_m": -0.0028500939077439613,
+    "hips_vertical_range_m": 0.060470402240753174,
+    "loop_position_mm": 0.0,
+    "loop_rotation_deg": 1.7075472925031877e-06,
+    "root_drift_m": 0.0,
+    "fixed_ankle_after_roundtrip": [
+     {
+      "side": "Left",
+      "plant": 0,
+      "lift": 5,
+      "samples": 80,
+      "absoluteAnklePathCm": 0.5667036136397824
+     },
+     {
+      "side": "Right",
+      "plant": 8,
+      "lift": 14,
+      "samples": 96,
+      "absoluteAnklePathCm": 1.7641468656006791
+     }
+    ],
+    "check": "S03 v002 480Hz Blender evaluated bones + FBX roundtrip; fixed ankle, original events",
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 5
+     },
+     "right": {
+      "stance_frames": 5
+     }
+    },
+    "fbx_roundtrip": true,
+    "result": "BLENDER_PASS_UNITY_NOTRUN",
+    "L1t_Unity": "ölçülmedi",
+    "evidence": "AP-033/validation/s03-runner-fixed-ankle-v002/bake-result.json"
+   },
+   "source": {
+    "package": "AP-033 s03-runner-fixed-ankle-v002 (exports/v002/s03-runner-fixed-ankle)",
+    "fbx_sha256": "486797031fa2de57a9a2b86cd76afe84fe9930fb2a4d7e23078c182cbab3d45f",
+    "source_id": "Mixamo Fast Run.fbx (M05, 05.10) + zombi üst gövde katmanı",
+    "anim_events_sha256": "457b223e79eabe89851b16096887e2cc0f2907c23362f2d6ef481001a24c2150",
+    "production_fbx": "AP033_zombie_run_feral_A_v002.fbx",
+    "unity_alias": "AP033_zombie_run_feral_A_v001.fbx",
+    "alias_reason": "Existing Unity filename and GUID retained to preserve controller, set and transition references",
+    "candidate_solve_sha256": "97b0d783ab48d31182c7364b47f310b144cf8d4396e6a81c8f30cdc5505d4fb4",
+    "license": "AP033-runner-v002-LICENSES.csv"
+   },
+   "prior_validation_p1_v001": {
     "foot_contact_A": {
      "left": {
       "stance_frames": 5
@@ -18799,7 +18846,7 @@
     "L1t_Unity": "ölçülmedi",
     "result": "PASS"
    },
-   "source": {
+   "prior_source_p1_v001": {
     "package": "AP-033 p1-v001 (K/asset-production/AP-033/exports/v001/p1)",
     "fbx_sha256": "b74d25b8df791d8f8724b97ad80a7d0c17fe8a8ac895d64053242373e3732c4a",
     "source_id": "Mixamo Fast Run.fbx (M05, 05.10) + zombi üst gövde katmanı",

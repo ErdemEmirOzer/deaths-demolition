@@ -1,0 +1,3 @@
+asset,source,url,license,date,notes
+mixamo/Fast Run.fbx,"Mixamo (Adobe), X Bot, FBX 7.4 Without Skin 30 fps, In Place",https://www.mixamo.com,Mixamo/Adobe: royalty-free use in commercial games with an Adobe account (Mixamo FAQ),2026-10-05,M05 (INDIRME-NOTU.md); sha256 a859208d0a4a0a8d
+s03 fixed-ankle solve/bake scripts and derived Runner v002,Original project code and derivative of licensed AP033 p1 Runner/Mixamo Fast Run,project-internal; inherited Mixamo provenance in previous row,Original project contribution; underlying Mixamo commercial-game license retained,2026-10-08,"No new download, purchase, account, HF generation; original AP033 exports immutable. Real Unity Runner gate NOTRUN."
