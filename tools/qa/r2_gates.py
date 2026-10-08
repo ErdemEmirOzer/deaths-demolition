@@ -75,6 +75,13 @@ def load_contract(text):
         if modes is not None and not (isinstance(modes, list) and modes and len(set(modes)) == len(modes)
                                       and all(m in SCOPE_MODES for m in modes)):
             raise ContractError(f"{gid}: modes is a non-empty list of distinct {SCOPE_MODES}")
+        if "minSamples" in gate:
+            # C-00 07.10: a gate judged on a worst value or a count reads as a PASS on too few samples — the coverage floor.
+            # evaluate_gate applies it to a gate's checks only, so a report entry, a tests-only gate or null is refused
+            min_samples = gate["minSamples"]
+            if gate["kind"] != "gate" or not gate.get("checks") or not (
+                    isinstance(min_samples, int) and not isinstance(min_samples, bool) and min_samples > 0):
+                raise ContractError(f"{gid}: minSamples is a whole number > 0 on a gate with checks")
         measured = gate.get("measuredBy")
         if measured is not None:
             if gate["kind"] == "human":
@@ -214,6 +221,14 @@ def evaluate_gate(gate, commit, measure=None, review=None, cases=None, modes=Non
               if not _check(values[c["key"]], c["op"], c["limit"])]
     if failed:
         return stop("FAIL", "; ".join(failed))
+    # C-00 07.10: a coverage floor for a worst value or a count — more samples can only make either worse, so a FAIL on
+    # few samples stands, but a PASS on fewer than the contract's minSamples is not one (BLOCKED, coverage missing)
+    floor = gate.get("minSamples")
+    if floor is not None:
+        if "samples" not in measure:
+            return stop("BLOCKED", f"kapsama bilinmiyor: the measurement has no samples count, the contract wants at least {floor}")
+        if samples < floor:
+            return stop("BLOCKED", f"kapsama eksik: the measurement counted {samples} samples, the contract wants at least {floor}")
     return row
 
 

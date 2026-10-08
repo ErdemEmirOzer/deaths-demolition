@@ -32,6 +32,7 @@ namespace DD.Art.Tests.PlayMode
     [TestFixture]
     [Explicit("S-06 rest-pose A/B frames — run explicitly with DD_S06_AB_OUT=<folder>")]
     [Category("Diagnostics")]
+    [Category("FPTP")]   // R3 (C-00 07.10): third / first person frames only — out of scope (user 06.10: top-down only)
     public sealed class AnimationRestAbTests
     {
         private const float SahneZamanAsimi = 60f, OyuncuZamanAsimi = 30f, YatismaZamanAsimi = 30f;
@@ -51,6 +52,7 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator UnityTearDown()
         {
             PlayerSkinnedVisual.FirstPersonV3Arms = _armsBefore;   // the shipped default is untouched
+            CameraModeService.Request(CameraMode.TopDown, instant: true);   // R3 (C-00 07.10): the next test starts top-down, the default
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
             UiDataPaths.UseProcessLocalRoot();   // never the real persistentDataPath
             RunFlowClock.ClearHolds();

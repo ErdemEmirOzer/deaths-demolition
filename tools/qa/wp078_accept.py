@@ -656,7 +656,10 @@ class Chain:
                 if not self.dry_run and not self.verify_tree():
                     head, lines = self.tree_detail()   # the whole list next to the evidence, the first lines in STOP
                     try:   # gt 07.10 SHOULD: a failed write never costs the STOP line
-                        (self.evidence / "stop-tree.txt").write_text("HEAD %s\nFINAL %s\n%s\n" % (head, self.final, "\n".join(lines)))
+                        tree = self.evidence / "stop-tree.txt"
+                        if tree.is_file():   # gt 07.10 NIT: a --resume's second stop keeps the first one's list
+                            self.move_aside(tree, "prev")
+                        tree.write_text("HEAD %s\nFINAL %s\n%s\n" % (head, self.final, "\n".join(lines)))
                         where = "all of it: stop-tree.txt"
                     except OSError as e:
                         where = "stop-tree.txt not written: %s" % e

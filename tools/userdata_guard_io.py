@@ -68,8 +68,8 @@ def lstart(pid):
 
 def window_owner(path):
     """G4 D7 R4 (WINDOW_LOST): the window's real owner — the slot holder of a re-entrant snapshot, else the snapshot's
-    caller — still alive with the start time recorded in the receipt. lstart() already asks ps 3 times; an empty answer
-    counts as lost (the safe direction). Returns (alive: bool, why)."""
+    caller — still alive with the start time recorded in the receipt. lstart() asks ps up to 3 times on an empty answer
+    and not again after a 10 s timeout (gt N-1r); no answer counts as lost (the safe direction). Returns (alive, why)."""
     with open(path, encoding="utf-8") as f:
         w = json.load(f)
     r = w.get("receipt") or {}
@@ -78,7 +78,7 @@ def window_owner(path):
         return False, "the receipt names no owner"
     now = lstart(who["pid"])
     if not now:
-        return False, "owner pid %s is gone (or ps gave no answer 3 times)" % who["pid"]
+        return False, "owner pid %s is gone (or ps gave no answer: 3 empty answers or a 10 s timeout)" % who["pid"]
     if now != who.get("lstart"):
         return False, "owner pid %s was reused (started %s, the receipt says %s)" % (who["pid"], now, who.get("lstart"))
     return True, "owner pid %s alive" % who["pid"]
@@ -530,13 +530,18 @@ def own_record(ledger, wid):
     return None
 
 
+BEING_RESTORED = "being restored now"   # _restore_blocker's verdict for a live restorer: transient — restore_begin → 75
+
+
 def _restore_blocker(ledger, own, areas, table):
     """(other record, hit areas, why it counts) of the first window that stops this restore, or None. A window opened
     AFTER this one (opened_after) that holds an area of `areas` now and can still be restored — its snapshot committed
     (before.txt; not a SNAPSHOT_MISSING mark), or a snapshot still being taken by a live guard — whatever its owner
     (P5 review MUST-1: an abandoned inner window restored after the outer one would put the outer run's bytes back).
     A window that can never be restored (SNAPSHOT_MISSING, an abandoned snapshotting record) has no base to protect
-    (S-5: else a 64 loop)."""
+    (S-5: else a 64 loop). One being restored right now by a live restorer is BEING_RESTORED (P5 gt N-4: wait, not 64)
+    — but only when no other window blocks: a 64 blocker wins whatever the ledger's file order (core gt SHOULD-1)."""
+    waiting = None
     for other in ledger_records(ledger):
         if other.get("id") == own.get("id") or other.get("state") not in LEDGER_LIVE + ("dirty",):
             continue
@@ -549,11 +554,14 @@ def _restore_blocker(ledger, own, areas, table):
         if not hit or str(other.get("why", "")).startswith("SNAPSHOT_MISSING"):
             continue
         if os.path.exists(os.path.join(other.get("dir") or "/nonexistent", "before.txt")):
+            if other.get("state") == "restoring" and alive(other.get("restorer") or {}, table):
+                waiting = waiting or (other, hit, BEING_RESTORED)
+                continue
             return other, hit, ("open" if alive(other.get("owner") or {}, table) else
                                 "its owner pid %s is gone — abandoned: C-00 restores it first" % (other.get("owner") or {}).get("pid"))
         if other.get("state") == "snapshotting" and alive(other.get("guard") or other.get("owner") or {}, table):
             return other, hit, "its snapshot is being taken"
-    return None
+    return waiting
 
 
 def restore_begin(ledger, wid, areas, restorer=None):
@@ -564,15 +572,23 @@ def restore_begin(ledger, wid, areas, restorer=None):
     window still open (the wrong restore order), an abandoned one, one an older guard let open over an area this window
     left with the run's bytes. Writing would land in its run; its own restore would put the run's bytes back. Nothing
     written, the record untouched.
+    75 wait — that window is being restored right now by a live restorer (P5 gt N-4, C-00 07.10: a transient state, not
+    a wrong order): nothing written, the record untouched; the caller retries with the same DIR once it has finished.
     0 yes — then, with `restorer` ({pid, lstart}), the record (still in windows/) is `restoring` by it. Also 0 when the
     other window was opened before this one (this one is nested in it: inner first), when the order is unknown (no record
-    of this window: WINDOW_LOST; an older guard's record of the same second), or no window holds them."""
+    of this window — one taken before D8, or an unreadable one: the guard then WARNs; an older guard's record of the same
+    second), or no window holds them."""
     with LedgerLock(ledger):
         own = own_record(ledger, wid)
         if own is not None and areas:
             hit = _restore_blocker(ledger, own, areas, ProcTable())
             if hit:
                 other, areas_hit, how = hit
+                if how == BEING_RESTORED:
+                    return 75, ("window %s (DIR=%s), opened after this one, holds the %s area and is being restored now by "
+                                "pid %s — nothing restored; retry with the same DIR when that restore has finished" % (
+                                    other.get("id"), other.get("dir"), " ".join(sorted(areas_hit)),
+                                    (other.get("restorer") or {}).get("pid")))
                 return 64, ("window %s (DIR=%s, owner pid %s, %s; %s), opened after this one, holds the %s area now — "
                             "this restore would write into it; restore that window first (nested: inner before outer); "
                             "if it stays dirty or cannot be restored: tell C-00" % (
@@ -713,12 +729,19 @@ def sample(directory, regex, owner, holder=None):
         parent[pid] = ppid
         rows.append((pid, ppid, start, command))
     roots = {str(owner)} | ({str(holder)} if holder else set())
+    # WP-099 (C-00 07.10): the window owner's own ANCESTORS (the shell that ran the snapshot, a tool or agent shell above
+    # it) are never writers of this window — a command line that merely mentions the Player pattern (e.g. a pgrep in the
+    # same shell) used to be logged owned=0 and turned into a false FOREIGN_WRITER at restore
+    above, p, steps = set(), parent.get(str(owner)), 0
+    while p and p not in ("0", "1") and steps < 64:
+        above.add(p)
+        p, steps = parent.get(p), steps + 1
     now = int(time.time())
     utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
     pat = re.compile(regex)
     log, lineage = [], []
     for pid, ppid, start, command in rows:
-        if not pat.search(command) or "userdata_guard_io.py" in command:
+        if not pat.search(command) or "userdata_guard_io.py" in command or pid in above:
             continue
         owned, p, steps = 0, pid, 0
         while p and p not in ("0", "1") and steps < 64:

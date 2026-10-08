@@ -20,17 +20,45 @@ namespace DD.Prototype.Tests.EditMode
 
         /// <summary>
         /// B1 (AD 8c, new for 12b) + B2 (AD R1-B SHOULD-4): a stamp over any head point on the canvas never meets an ink
-        /// cluster + 12 px or the player figure + 24 px, and it keeps its body's column (x unchanged). Top-down and third
-        /// person carry a figure, first person does not; the Special block counts as a cluster while it shows.
+        /// cluster + 12 px or the player figure + 24 px, and it keeps its body's column (x unchanged). Top-down carries a
+        /// figure at the centre; the Special block counts as a cluster while it shows. R3 (the user 06.10: top-down only - its
+        /// tests run alone): the top-down layouts here, the third / first-person ones in the FPTP twin below.
         /// </summary>
         [Test]
         public void DurumDamgasi_KumelereVeFigureGirmez_SutunuKorur()
+        {
+            DamgaYerlesimi(new[] { "td", "td-special" });
+
+            // The Mac case AD R1-B SHOULD-4 measured (SHOCK across the figure): the stamp lifts to the band above it, x unchanged.
+            var body = Rect.MinMaxRect(-30f, -45f, 30f, 46f);
+            Vector2 lifted = UiEnemyStatusMarkers.Resolve(new Vector2(5f, 30f), new Vector2(174f, 33f), new Rect[0], 0, true, body);
+            Assert.AreEqual(5f, lifted.x, 0.001f, "x stays over the body");
+            Assert.AreEqual(body.yMax + UiEnemyStatusMarkers.FigureClearance, lifted.y, 0.001f, "the band above the figure + 24");
+
+            // A stamp with nothing in the way stands where its body puts it.
+            var free = new Vector2(400f, 120f);
+            Assert.AreEqual(free, UiEnemyStatusMarkers.Resolve(free, new Vector2(110f, 28f), new Rect[0], 0, true, body), "no drift");
+        }
+
+        /// <summary>
+        /// The same rule on the third / first-person layouts (TP: the figure over the shoulder; FP: no figure, the weapon
+        /// cluster above the health block). Out of scope since 06.10, kept under FPTP.
+        /// </summary>
+        [Test]
+        [Category("FPTP")]
+        public void DurumDamgasi_FpTp_KumelereVeFigureGirmez_SutunuKorur()
+        {
+            DamgaYerlesimi(new[] { "tp", "tp-special", "fp", "fp-special" });
+        }
+
+        /// <summary>The stamp sweep over every canvas and chip size for <paramref name="variants"/> (td / tp / fp, ± the Special block).</summary>
+        private static void DamgaYerlesimi(string[] variants)
         {
             var failures = new List<string>();
             foreach (var c in Canvases)
             {
                 float hw = c.W * 0.5f, hh = c.H * 0.5f;
-                foreach (string variant in new[] { "td", "td-special", "tp", "tp-special", "fp", "fp-special" })
+                foreach (string variant in variants)
                 {
                     var rects = new List<Rect>
                     {
@@ -83,16 +111,6 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsEmpty(failures, failures.Count + " failures:\n" + string.Join("\n", failures.GetRange(0, Mathf.Min(20, failures.Count))));
-
-            // The Mac case AD R1-B SHOULD-4 measured (SHOCK across the figure): the stamp lifts to the band above it, x unchanged.
-            var body = Rect.MinMaxRect(-30f, -45f, 30f, 46f);
-            Vector2 lifted = UiEnemyStatusMarkers.Resolve(new Vector2(5f, 30f), new Vector2(174f, 33f), new Rect[0], 0, true, body);
-            Assert.AreEqual(5f, lifted.x, 0.001f, "x stays over the body");
-            Assert.AreEqual(body.yMax + UiEnemyStatusMarkers.FigureClearance, lifted.y, 0.001f, "the band above the figure + 24");
-
-            // A stamp with nothing in the way stands where its body puts it.
-            var free = new Vector2(400f, 120f);
-            Assert.AreEqual(free, UiEnemyStatusMarkers.Resolve(free, new Vector2(110f, 28f), new Rect[0], 0, true, body), "no drift");
         }
 
         /// <summary>
@@ -227,21 +245,36 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        /// <summary>
-        /// B5 (AD R1-A SHOULD-6, the shoulder half): the rear-edge arc wears ArcShouldered60, whose stroke holds ≥ 0.5 of its
-        /// peak out to 80 % of the chord (ArcSoft60 fell to ≈ 0.38 there); the E17 damage wedge keeps ArcSoft60.
-        /// </summary>
+        /// <summary>R3 (top-down only): the E17 damage wedge around the top-down figure keeps ArcSoft60.</summary>
         [Test]
-        public void KenarYayi_OmuzluSprite_Kirisin80inde_YariTepe_HasarKamasiEski()
+        public void HasarKamasi_Tepeden_ArcSoft60()
         {
             var host = new GameObject("ArcHost", typeof(RectTransform));
             try
             {
-                var layer = (RectTransform)host.transform;
-                var edge = new HudRearEdge(layer);
-                var arcs = new HudPlayerArcs(layer);
-                Assert.AreSame(UiSprites.ArcShouldered60, edge.Arc.sprite, "kenar yayı omuzlu sprite");
+                var arcs = new HudPlayerArcs((RectTransform)host.transform);
                 Assert.AreSame(UiSprites.ArcSoft60, arcs.DamageArc.sprite, "E17 hasar kaması ArcSoft60'ta kalır");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        /// <summary>
+        /// B5 (AD R1-A SHOULD-6, the shoulder half): the first / third-person rear-edge arc wears ArcShouldered60, whose stroke
+        /// holds ≥ 0.5 of its peak out to 80 % of the chord (ArcSoft60 fell to ≈ 0.38 there). Out of scope since 06.10, kept
+        /// under FPTP.
+        /// </summary>
+        [Test]
+        [Category("FPTP")]
+        public void KenarYayi_OmuzluSprite_Kirisin80inde_YariTepe()
+        {
+            var host = new GameObject("ArcHost", typeof(RectTransform));
+            try
+            {
+                var edge = new HudRearEdge((RectTransform)host.transform);
+                Assert.AreSame(UiSprites.ArcShouldered60, edge.Arc.sprite, "kenar yayı omuzlu sprite");
             }
             finally
             {

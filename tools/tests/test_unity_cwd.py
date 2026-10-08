@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 [ -n "$log" ] && echo "fake unity started in $(pwd)" >> "$log"
-[ -n "$proj" ] && cd "$proj"
+[ -n "$proj" ] && cd "$proj" && case "$log" in /*) echo "fake unity project $(pwd)" >> "$log" ;; esac
 : > mono_crash.mem.$$.1.blob
 [ -f "{stall}" ] && sleep 30
 exit 0
@@ -44,11 +44,11 @@ class UnityCwdTests(unittest.TestCase):
                 pass
         self.tmp.cleanup()
 
-    def watched(self, log, project=True, **env):
+    def watched(self, log, project=True, project_arg=None, exe=None, **env):
         e = dict(os.environ, DD_TIMELINE="", **env)
-        extra = ["-projectPath", str(self.project)] if project else []
+        extra = ["-projectPath", project_arg or str(self.project)] if project else []
         r = subprocess.run(["zsh", "-c", 'source "$1"; shift; log=$1; shift; dd_unity_watched "$log" 0 "$@" -logFile "$log"; echo "rc=$?"',
-                            "zsh", str(TOOLS / "dd-env.sh"), log, str(self.fake), "-batchmode", *extra],
+                            "zsh", str(TOOLS / "dd-env.sh"), log, exe or str(self.fake), "-batchmode", *extra],
                            cwd=self.caller, env=e, capture_output=True, text=True, timeout=90)
         return r.stdout + r.stderr
 
@@ -77,6 +77,27 @@ class UnityCwdTests(unittest.TestCase):
         self.assertIn("rc=0", out)
         self.assertEqual([], self.dumps(self.project), out)
         self.assertEqual(1, len(self.dumps(self.caller / "rel" / "mono-crash")), out)
+
+    def test_GoreliProjectPath_CagiraninCwdsineGoreAcilir(self):
+        """gt 07.10 SHOULD: a relative -projectPath (a relative DD_REPO) is made absolute against the CALLER's cwd before
+        Unity starts in the log's folder — the right project opens and its dump is swept from there."""
+        rel = self.caller / "relproj"; rel.mkdir()
+        out = self.watched(str(self.out / "playmode.log"), project_arg="relproj")
+        self.assertIn("rc=0", out)
+        self.assertIn("fake unity project %s" % rel, (self.out / "playmode.log").read_text())
+        self.assertEqual([], self.dumps(rel), out)
+        self.assertEqual(1, len(self.dumps(self.out / "mono-crash")), out)
+        self.assertEqual([], self.dumps(self.out))
+
+    def test_GoreliUnityYolu_CagiraninCwdsineGoreCalisir(self):
+        """gt 07.10 SHOULD: a relative executable (a relative DD_UNITY) still starts after the cd into the log's folder."""
+        (self.caller / "bin").mkdir()
+        exe = self.caller / "bin" / "Unity"
+        exe.write_text(self.fake.read_text()); exe.chmod(0o755)
+        out = self.watched(str(self.out / "playmode.log"), exe="bin/Unity")
+        self.assertIn("rc=0", out)
+        self.assertIn("fake unity project %s" % self.project, (self.out / "playmode.log").read_text())
+        self.assertEqual(1, len(self.dumps(self.out / "mono-crash")), out)
 
     def test_ProjeYok_DokumLogKlasorunde(self):
         out = self.watched(str(self.out / "playmode.log"), project=False)

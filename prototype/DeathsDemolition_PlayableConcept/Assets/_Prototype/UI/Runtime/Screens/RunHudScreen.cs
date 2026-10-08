@@ -780,6 +780,11 @@ namespace DD.Prototype.UI
             }
         }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>WP-099 (S-01 td-capture, dev only): seconds the centre banner (ROUND n, …) has left, 0 when none — a still waits for 0.</summary>
+        public float BannerSecondsLeftDev => _bannerRemaining;
+#endif
+
         /// <summary>
         /// Capture seam (12c, AD 12b SHOULD-2): raises a banner now and returns its box on the canvas (px, centre origin) -
         /// the band a status stamp sorts under.

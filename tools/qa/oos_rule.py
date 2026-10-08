@@ -9,6 +9,11 @@ when all three hold:
      lineage gives the start time; a pid seen only here is unattributed);
   3. each such owning window's restore is verified=1 (the last summary line of its restore.txt). A window still open
      is waited for (≤ --wait s, default 600), then counts as not verified.
+  2b. (WP-099, C-00 08.10) a changed path with NO live Player at its mtime ("no Player alive": the writer was gone
+     between samples, or it was another window's own restore putting the plist back) passes with a WARNING only when
+     its mtime lies inside the span of ANOTHER player-scope guard window (window.json utc → its restore summary,
+     ± SPAN_SLACK s) — that window's Player run or restore is the writer — and condition 3 holds for that window. The
+     mtime must also lie inside this window's own span. A change outside every such window still fails.
 Anything else → FAIL (the caller stops, tell C-00). Player stages never come here: there 32 is a failure.
 Owning windows are looked up in the guard's window ledger first (G4 D8: L/windows + L/closed records name their DIR;
 L = $DD_GUARD_ROOT/ledger, else ~/.dd-userdata-guard of the passwd home), then — windows taken before D8 have no record —
@@ -17,6 +22,7 @@ under the roots (default: the KADRO project; heavy folders pruned) by their wind
 usage: python3 tools/qa/oos_rule.py <ug dir> [--root DIR]… [--ledger L]… [--wait S]   exit 0 pass (reason on stdout) · 1 fail · 64 usage
 """
 import argparse
+import calendar
 import json
 import os
 import pwd
@@ -31,6 +37,9 @@ import dd_paths  # noqa: E402
 PRUNE = {"Library", "Temp", ".git", "Logs", "obj", "node_modules", "asset-production", "Packages", "Assets", "snap",
          "ProjectSettings", "ci-worktree", "driver"}
 PID = re.compile(r"\bpid (\d+)\b")
+MTIME = re.compile(r"\bmtime (\d\d:\d\d:\d\d)Z")
+SUMMARY_UTC = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ) userdata-guard restore scope=")
+SPAN_SLACK = 2   # s: the sampler / summary seconds are whole, the restore writes just before its summary line
 BAD_NL = "$'\\n'"   # guard 52b7a00f..: the file ended in this literal instead of a newline (C-00 05.10) — read it too
 
 
@@ -104,6 +113,59 @@ def verified(window):
     return bool(lines) and " verified=1" in lines[-1]
 
 
+def utc_epoch(text):
+    return calendar.timegm(time.strptime(text, "%Y-%m-%dT%H:%M:%SZ"))
+
+
+def span(window):
+    """(start, end) epoch of a guard window: window.json utc → the utc of its last restore summary line; end None while
+    not restored. None without a readable start."""
+    try:
+        start = utc_epoch(json.loads((window / "window.json").read_text(encoding="utf-8"))["utc"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    end = None
+    try:
+        for line in (window / "restore.txt").read_text(encoding="utf-8", errors="replace").splitlines():
+            m = SUMMARY_UTC.match(line)
+            if m:
+                end = utc_epoch(m.group(1))
+    except FileNotFoundError:
+        pass
+    return start, end
+
+
+def is_player_window(window):
+    try:
+        d = json.loads((window / "window.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return d.get("scope") == "player" or "player" in (d.get("windowAreas") or [])
+
+
+def full_mtime(hms, own):
+    """the attribution's HH:MM:SS (UTC) as an epoch inside this window's own span (start → restore summary, or now)."""
+    if own is None:
+        return None
+    start, end = own[0], own[1] if own[1] is not None else time.time()
+    day = start - start % 86400
+    h, m, sec = map(int, hms.split(":"))
+    for d in range(int((end - day) // 86400) + 1):
+        t = day + d * 86400 + h * 3600 + m * 60 + sec
+        if start - SPAN_SLACK <= t <= end + SPAN_SLACK:
+            return t
+    return None
+
+
+def window_at(t, roots, own, ledgers=()):
+    """another player-scope window whose span holds t (a window not restored yet counts while it is open)."""
+    for w in windows(roots, own, ledgers):
+        sp = span(w) if is_player_window(w) else None
+        if sp and sp[0] - SPAN_SLACK <= t and (sp[1] is None or t <= sp[1] + SPAN_SLACK):
+            return w
+    return None
+
+
 def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledgers=()):
     ug = Path(ug).resolve()
     rows = oos_rows(latest(ug / "out-of-scope-changed.txt").read_text(encoding="utf-8")) \
@@ -114,19 +176,29 @@ def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledger
     if off:
         return False, "condition 1: a change outside the player area: %s" % off[0]
     changed = {r.split("  ", 2)[2].replace(" (launch-counter keys excluded)", "") for r in rows}
-    attribution = {}
+    attribution, mtimes = {}, {}
     try:
         for line in (ug / "attribution.txt").read_text(encoding="utf-8", errors="replace").splitlines():
             path, _, rest = line.partition("\t")
             attribution[path] = PID.findall(rest)
+            m = MTIME.search(rest)
+            if m:
+                mtimes[path] = m.group(1)
     except FileNotFoundError:
         return False, "condition 2: no attribution.txt"
     starts = {p: s for p, s, _ in lineage(ug / "players-lineage.tsv")}
-    owners = {}
+    owners, by_time = {}, {}
+    own_span = span(ug)
     for path in sorted(changed):
         pids = attribution.get(path, [])
         if not pids:
-            return False, "condition 2: %s is not attributed to a Player" % path
+            t = full_mtime(mtimes[path], own_span) if path in mtimes else None
+            w = window_at(t, roots, ug, ledgers) if t is not None else None
+            if w is None:
+                return False, "condition 2: %s is not attributed to a Player (and its mtime lies in no other guarded player window)" % path
+            owners[w] = owners.get(w, "mtime %s" % mtimes[path])
+            by_time[w] = "%s mtime %sZ" % (path, mtimes[path])
+            continue
         for pid in pids:
             if pid not in starts:
                 return False, "condition 2: pid %s (writer of %s) is not in this window's lineage" % (pid, path)
@@ -143,8 +215,12 @@ def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledger
             sleep(10)
         if v is not True:
             return False, "condition 3: the writer window %s is %s" % (w, "not restored yet" if v is None else "not verified=1")
-    return True, "player area only, writers = guarded windows verified=1: " + ", ".join(
-        "pid %s → %s" % (pid, w) for w, pid in sorted(owners.items()))
+    why = "player area only, writers = guarded windows verified=1: " + ", ".join(
+        "%s → %s" % (pid if str(pid).startswith("mtime") else "pid %s" % pid, w) for w, pid in sorted(owners.items()))
+    if by_time:
+        why = "WARNING (2b, no Player alive at the change): " + "; ".join(
+            "%s inside player window %s" % (c, w) for w, c in sorted(by_time.items())) + " — " + why
+    return True, why
 
 
 def main(argv=None):

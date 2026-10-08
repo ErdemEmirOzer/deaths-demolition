@@ -13,12 +13,26 @@ import dd_paths  # noqa: E402
 ALLOWED = {"dd-env.sh", "dd_paths.py", "slot.sh", "README.md"}
 # C-00 06.10 (user: no iCloud work on this machine) + gt 06.10 SHOULD: Desktop / Documents as a PATH component — after a
 # quote or a slash, or as a join() / joinpath() argument — and the iCloud Drive folders themselves
-OLD_PLACE = re.compile(r"""(["'/]\s*|(?:join|joinpath)\([^)]*?["'])(Desktop|Documents)\b(?!\s*&)|Mobile Documents|CloudDocs""")
+# gt 07.10 NOTE: any case (APFS ignores it: ~/desktop is ~/Desktop), a bare `cd` / `pushd Desktop`, the glob `Desk*`
+OLD_PLACE = re.compile(r"""(["'/]\s*|(?:join|joinpath)\([^)]*?["']|\b(?:cd|pushd)\s+)(Desktop\b|Documents\b|Desk\*)(?!\s*&)"""
+                       r"""|Mobile Documents|CloudDocs""", re.I)
 
 
 def strip_comment(line, suffix):
-    """a shell comment starts at a # that opens the line or follows a blank — `$#` and `${#x}` are code."""
-    return re.sub(r"(^|\s)#.*$", "", line) if suffix in (".sh", ".zsh") else line
+    """a shell comment starts at a # outside quotes that opens the line or follows a blank — `$#`, `${#x}` and a quoted
+    "step #1" are code (gt 07.10 NOTE: `echo "step #1"; ls ~/Desktop` hid the path)."""
+    if suffix not in (".sh", ".zsh"):
+        return line
+    quote = None
+    for i, c in enumerate(line):
+        if quote:
+            if c == quote and (quote == "'" or line[i - 1] != "\\"):
+                quote = None
+        elif c in "'\"":
+            quote = c
+        elif c == "#" and (i == 0 or line[i - 1].isspace()):
+            return line[:i]
+    return line
 
 
 class DdKadroTests(unittest.TestCase):
@@ -66,9 +80,11 @@ class DdKadroTests(unittest.TestCase):
                 "os.path.join(HOME, 'Documents', 'Deaths Demolition')", 'Path.home() / "Desktop" / "KADRO"',
                 'p = home.joinpath("Desktop")', "p = HOME + '/Documents/x'", 'cd ~/Documents/x',
                 "/Users/Erdem/Desktop/KADRO", 'r = "Library/Mobile Documents/com~apple~CloudDocs"',
-                'echo "$#"; ls ~/Desktop']
+                'echo "$#"; ls ~/Desktop', 'ls ~/desktop/KADRO', 'cd Desktop', 'pushd Documents >/dev/null',
+                'echo "step #1"; ls ~/Desktop', 'ls ~/Desk*', "p = HOME + '/DOCUMENTS'"]
         misses = ['DD_KADRO_REL="Dev/KADRO"', 'echo "the Desktop & Documents folders are off"', 'n=$#',
-                  'log "a Desktop app"', 'x = "MyDocumentsTool"']
+                  'log "a Desktop app"', 'x = "MyDocumentsTool"', 'echo ok  # was ~/Desktop/KADRO', 'cd "$DD_KADRO"',
+                  "echo 'it is # not a comment'", 'cd desktop_tools_x']
         for line in hits:
             self.assertTrue(OLD_PLACE.search(strip_comment(line, ".sh")), line)
         for line in misses:

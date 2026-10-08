@@ -125,7 +125,9 @@ namespace DD.Prototype.Tests.PlayMode
             _kayit = null;
             if (_zemin != null) Object.Destroy(_zemin);
             _zemin = null;
-            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
             FootIkAdapter.ResetStatics();

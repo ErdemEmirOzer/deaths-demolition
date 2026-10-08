@@ -57,7 +57,9 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
             WeaponHoldIk.ResetStatics();
@@ -510,9 +512,14 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar()
+        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar() => KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The grasp rows against the LOD0 section from one game camera (R3, C-00 07.10: the top-down test above; the
+        /// third-person twin, the same lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            // the rows against the LOD0 section are camera-independent
+            DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
             Time.captureDeltaTime = 1f / 60f;
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
@@ -1234,6 +1241,7 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
+        [Category("FPTP")]   // R3 (C-00 07.10): the third-person over-the-shoulder before / after set — out of scope (user 06.10, top-down only)
         [Timeout(600000)]
         public IEnumerator Kare_TutusOnceSonra_TPOmuz_Ustten()
         {
@@ -1286,15 +1294,20 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-083 B2f / AP-024C2 AD MUST-1 (C-00 06.10): the weapon ↔ body frame set in game — every enabled classic weapon from the
-        /// third-person and the top-down game cameras, aiming, at the recoil's peak (one shot, three frames on) and mid-reload; then one
-        /// Special (the production RNG picks it; its id is logged). The verdict is the frames' (stock under the shoulder plate's edge,
+        /// top-down game camera, aiming, at the recoil's peak (one shot, three frames on) and mid-reload; then one Special (the
+        /// production RNG picks it; its id is logged). R3 (C-00 07.10): the top-down side only — the third-person frames are out of
+        /// scope (user 06.10). The verdict is the frames' (stock under the shoulder plate's edge,
         /// 0 px out, 0 px mask seam); PNGs to DD_B2D_COMPARE_DIR (the run names it; scratch).
         /// </summary>
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
         [Timeout(1800000)]
-        public IEnumerator Kare_M1_SilahGovde_TP_TD_NisanTepmeReload()
+        public IEnumerator Kare_M1_SilahGovde_TD_NisanTepmeReload() => KareM1(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The M1 frame set from one game camera (R3, C-00 07.10: the top-down test above; the third-person twin, the same
+        /// lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KareM1(DD.Prototype.CameraSystem.CameraMode camera)
         {
             string dir = System.Environment.GetEnvironmentVariable("DD_B2D_COMPARE_DIR");
             Assert.IsFalse(string.IsNullOrEmpty(dir), "DD_B2D_COMPARE_DIR yok (kare klasörü; tanı testi)");
@@ -1305,7 +1318,7 @@ namespace DD.Prototype.Tests.PlayMode
             var written = new List<string>();
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     string cam = mode == DD.Prototype.CameraSystem.CameraMode.TopDown ? "td" : "tp";
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
@@ -1338,7 +1351,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             // one Special: the production RNG picks it (sw_arc / sw_gel / …); the hold is the classic weapons' only, the Special keeps main's path
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            DD.Prototype.CameraSystem.CameraModeService.Request(camera, instant: true);
             yield return _s.SpawnEt(0.5f);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             string special = "none";
@@ -1347,7 +1360,7 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.PickupaGit(pickup);
                 yield return SpecialWeaponSahne.Kareler(90);
                 special = WeaponEvents.Special.WeaponId.ToString();
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
                     yield return SpecialWeaponSahne.Kareler(40);

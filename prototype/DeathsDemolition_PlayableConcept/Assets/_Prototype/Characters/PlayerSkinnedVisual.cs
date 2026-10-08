@@ -132,7 +132,13 @@ namespace DD.Prototype.Characters
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_0"), Animator.StringToHash(CharacterAnimatorContract.AimState + "_1"),
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_1"),
             Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_3"),
-            Animator.StringToHash(CharacterAnimatorContract.AimV3State)
+            Animator.StringToHash(CharacterAnimatorContract.AimV3State),
+            // WP-083 R3 (S-02 triage, C-00 07.10 option a): sr_1's bolt cycle keeps the hold and the support grip on — the clip's own
+            // rotation rides on the hold (WeaponMountAlignment.HoldDelta) instead of the gates closing and the weapon swinging to the
+            // clip's pose (~91 cm at the muzzle); the right hand's bolt stroke is not shown (top-down, accepted)
+            Animator.StringToHash(CharacterAnimatorContract.CycleV3State),
+            // ... and its focused variant (AdsWeight > 0.5 at the shot; top-down too, FocusHeld) — the same cycle, held the same way
+            Animator.StringToHash(CharacterAnimatorContract.CycleAdsV3State)
         };
         private static readonly SkinnedMeshRenderer[] s_noRenderers = new SkinnedMeshRenderer[0];
         private SkinnedMeshRenderer[] _headRenderers;
@@ -201,6 +207,17 @@ namespace DD.Prototype.Characters
 
         /// <summary>WP-071 (C-00 05.10): the TP fire additive's weight this visual last set (tests).</summary>
         public float TpAdditiveWeight => _additiveWeight;
+
+        private static readonly int s_cycleHash = Animator.StringToHash(CharacterAnimatorContract.CycleV3State);
+        private static readonly int s_cycleAdsHash = Animator.StringToHash(CharacterAnimatorContract.CycleAdsV3State);
+
+        /// <summary>WP-083 R3: the override layer is in (or entering) the v3 bolt cycle, focused or not.</summary>
+        private bool UpperInCycle()
+        {
+            if (ResolveOverrideLayer() < 0) return false;
+            int h = _animator.IsInTransition(_overrideLayer) ? _animator.GetNextAnimatorStateInfo(_overrideLayer).shortNameHash : _animator.GetCurrentAnimatorStateInfo(_overrideLayer).shortNameHash;
+            return h == s_cycleHash || h == s_cycleAdsHash;
+        }
 
         private bool UpperAtRest()
         {
@@ -450,7 +467,9 @@ namespace DD.Prototype.Characters
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
-            else if (e == CharacterAnimationEvent.LeftHandRelease) { if (_gripIk != null) _gripIk.SetReleased(true); }   // WP-071 B4 (AP-022)
+            // WP-071 B4 (AP-022); WP-083 R3 (C-00 07.10): not on sr_1's bolt cycle — the hold keeps the weapon at its pivot there, and a
+            // support hand following the clip's bolt stroke would work it in the air beside the held weapon; it stays on the handguard
+            else if (e == CharacterAnimationEvent.LeftHandRelease) { if (_gripIk != null && !UpperInCycle()) _gripIk.SetReleased(true); }
             else if (e == CharacterAnimationEvent.LeftHandGrab) { if (_gripIk != null) _gripIk.SetReleased(false); }
             else if (_footIk != null) FootLockEvent(_footIk, e);   // WP-071 B2
         }

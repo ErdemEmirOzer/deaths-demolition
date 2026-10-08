@@ -173,11 +173,21 @@ dd_unity_watched() {
   # log keeps the caller's cwd). The Editor's own mono_crash dumps land in the PROJECT folder (gt 07.10) — dd_crash_sweep
   # moves them next to the log after every attempt.
   local run_dir=""; [[ "$log" == /* ]] && [ -d "${log:h}" ] && run_dir="${log:h}"
-  local proj="" i; for (( i = 1; i < $#; i++ )); do [ "${argv[i]}" = -projectPath ] && proj="${argv[i+1]}"; done
+  local -a cmd; cmd=("$@")
+  local proj="" i
+  for (( i = 1; i < ${#cmd}; i++ )); do
+    if [ "${cmd[i]}" = -projectPath ]; then
+      # gt 07.10 SHOULD: the cd below moves every relative path — -projectPath (a relative DD_REPO) and the executable (a
+      # relative DD_UNITY) are made absolute against the caller's cwd first (:a — no symlink resolution)
+      [ -n "$run_dir" ] && [[ "${cmd[i+1]}" != /* ]] && cmd[i+1]=${cmd[i+1]:a}
+      proj="${cmd[i+1]}"
+    fi
+  done
+  [ -n "$run_dir" ] && [[ "${cmd[1]}" == */* && "${cmd[1]}" != /* ]] && cmd[1]=${cmd[1]:a}
   local crash="${log:h}/mono-crash"
   while :; do
-    if [ -n "$run_dir" ]; then ( cd "$run_dir" && exec "$@" ) >/dev/null 2>&1 &
-    else "$@" >/dev/null 2>&1 &
+    if [ -n "$run_dir" ]; then ( cd "$run_dir" && exec "${cmd[@]}" ) >/dev/null 2>&1 &
+    else "${cmd[@]}" >/dev/null 2>&1 &
     fi
     upid=$!; DD_UNITY_PID=$upid; t0=$(date +%s); last=-1; quiet=0
     while kill -0 $upid 2>/dev/null; do

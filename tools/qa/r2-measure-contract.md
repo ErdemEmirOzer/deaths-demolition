@@ -39,6 +39,17 @@ Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4a, H4b, U3) also req
 `Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
 name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
+## Coverage floor (C-00 07.10)
+
+A gate judged on a worst value or a count reads better on fewer samples, so it may name `minSamples` in `r2-gates.json`
+(a whole number > 0, only on a `kind: "gate"` entry with checks — the floor is applied to the checks).
+A measurement with fewer samples than that is BLOCKED ("kapsama eksik"), and one without a `samples` count is BLOCKED too
+("kapsama bilinmiyor"). A failing check still FAILs: more samples can only lower a minimum or raise a count.
+Values are for top down and the ten classics:
+- S1 66: shots 2–10 held, 6 automatics × 9 + rl_1 / sg_1 / sg_2 / sr_1 × 3.
+- S2 151: planned shots.
+Both are deterministic per roster and fire data (S-08 07.10).
+
 ## Camera scope (C-00 06.10: top down only, tests too)
 
 A gate may name the camera modes it is measured in (`modes` in `r2-gates.json`): fp — H4, H4a, H4b; tp — H1b, H1c, H6;
@@ -214,6 +225,25 @@ and build. Without `--r1-evidence`, or when the R1 build does not prove itself, 
 name. An R1 build that fails on its own (wp078_perf_report.classify "failed", not a host discard) in three consecutive
 windows stops the R1 side for the rest of the matrix (`wp078_perf.py --baseline-fail-stop`, KADRO test-engineer NOTE-4).
 That saves ~60 empty windows; FINAL's windows go on and P2 is BLOCKED.
+
+## S1 / S2 coverage (weapon kit, S-08 · C-00 07.10)
+
+Writer: `AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit` (top-down only since R3), from every enabled weapon's
+variant-A top-down stem take. Next to their sound keys, S1 and S2 carry the kit's coverage (S-10 proposal, C-00 07.10):
+
+- `weaponsMissing` (check `== 0`): `WeaponRoster.Enabled` count minus the weapons with a measured take. A weapon that is
+  enabled but has no Arsenal definition counts as missing. A run with `DD_KIT_WEAPONS` narrower than `all` fails on
+  purpose: the gate is the whole roster. The test asserts it too when `DD_R2_MEASURE_DIR` is set.
+- `weaponsMeasured`, `rosterEnabled` (report): the two counts behind it.
+
+S2 carries the same three keys. `samples` stays the shot count, and its floor is the coverage floor above (minSamples
+S1 66 / S2 151). That floor is written for today's roster; `weaponsMissing` checks the roster itself, so a weapon left out
+of the kit fails even when a changed roster or fire data still lands the shot count over the floor.
+
+## S2 fire voices (S-08 · S-10 07.10)
+
+`fireVoiceDeficit` sums each take's max(0, planned shots − fire voices): one take's extra voices never cancel another
+take's missing ones.
 
 ## S3 (Dense-40 loudness and peak, S-08 06.10)
 
