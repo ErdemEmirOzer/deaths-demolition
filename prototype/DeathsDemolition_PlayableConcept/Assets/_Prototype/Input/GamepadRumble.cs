@@ -18,7 +18,12 @@ namespace DD.Prototype.Inputs
     /// it further or switches it off in <see cref="InputPreferences"/>. Pause / scene
     /// change / disable stop the motors. Owned by the installer; nothing else creates one.
     /// </summary>
-    public sealed class GamepadRumble : IDisposable
+    /// <remarks>
+    /// WP-095 (R3, C-00 K3 08.10): top-down is driven by <see cref="FeelEvents"/> through <c>FeelProfileTD</c> rows
+    /// (GamepadRumble.TopDown.cs: ceiling 1.0 / 400 ms, the player's scale defaults to 0.7, one motor write per frame). The cue
+    /// path below is the first / third person path, unchanged at the player's default (<see cref="LegacyScale"/>).
+    /// </remarks>
+    public sealed partial class GamepadRumble : IDisposable
     {
         // PROTOTYPE-ONLY pulse table (fractions of the preference ceiling; durations in ms).
         [PrototypeOnly(PendingDecisions.None, "Classic weapon shot pulse when no weapon profile is known: 0.5 x intensity ceiling, 60 ms (WP-042: the equipped weapon's RumbleFraction / RumbleMilliseconds override it).", true)]
@@ -72,6 +77,7 @@ namespace DD.Prototype.Inputs
             DamageEvents.PlayerAttacked += OnPlayerAttacked;
             WeaponEvents.WeaponEquipped += OnWeaponEquipped;
             WeaponEvents.SpecialChanged += OnSpecialChanged;
+            SubscribeTopDown();
             _subscribed = true;
         }
 
@@ -130,6 +136,7 @@ namespace DD.Prototype.Inputs
             DamageEvents.PlayerAttacked -= OnPlayerAttacked;
             WeaponEvents.WeaponEquipped -= OnWeaponEquipped;
             WeaponEvents.SpecialChanged -= OnSpecialChanged;
+            UnsubscribeTopDown();
             _subscribed = false;
             StopMotors();
         }
@@ -138,6 +145,13 @@ namespace DD.Prototype.Inputs
         public void Tick()
         {
             if (_feelRevision != FeelRuntime.Current.Revision) RefreshClassicProfile();
+            if (IsTopDown)
+            {
+                TickTopDown();
+                return;
+            }
+
+            if (_tdWritten) StopTopDownMotors();
             if (!_motorsOn)
             {
                 return;
@@ -175,8 +189,10 @@ namespace DD.Prototype.Inputs
                 return;
             }
 
-            float intensity = Mathf.Clamp(prefs.RumbleIntensity * Mathf.Clamp01(fraction), 0f, InputPreferences.MaxRumbleIntensity);
-            int ms = Mathf.Clamp(milliseconds, 0, InputPreferences.MaxRumbleMilliseconds);
+            // WP-095 K3: the preference is now the player's 0..1 scale (default 0.7) over a 1.0 ceiling; this first / third person
+            // path keeps its WP-024 numbers — at the default scale exactly the old 0.3 ceiling and 120 ms.
+            float intensity = Mathf.Clamp(LegacyScale(prefs.RumbleIntensity) * Mathf.Clamp01(fraction), 0f, InputPreferences.LegacyRumbleCeiling);
+            int ms = Mathf.Clamp(milliseconds, 0, InputPreferences.LegacyRumbleMilliseconds);
             if (intensity <= 0f || ms <= 0)
             {
                 return;
@@ -225,8 +241,13 @@ namespace DD.Prototype.Inputs
             _disposed = true;
         }
 
+        /// <summary>The WP-024 ceiling the player's scale maps to on the first / third person path (default 0.7 → 0.3).</summary>
+        public static float LegacyScale(float playerScale) =>
+            InputPreferences.LegacyRumbleCeiling * Mathf.Clamp01(playerScale / InputPreferences.DefaultRumbleScale);
+
         private void OnCue(CombatAudioCue cue)
         {
+            if (IsTopDown) return;   // WP-095: top-down rumbles from FeelEvents (GamepadRumble.TopDown.cs)
             switch (cue.Event)
             {
                 case CombatAudioEvent.ClassicWeaponFire:
@@ -244,6 +265,7 @@ namespace DD.Prototype.Inputs
 
         private void OnPlayerAttacked(EnemyAttackLandedInfo info)
         {
+            if (IsTopDown) return;
             Pulse(HitTakenFraction, HitTakenMilliseconds);
         }
     }

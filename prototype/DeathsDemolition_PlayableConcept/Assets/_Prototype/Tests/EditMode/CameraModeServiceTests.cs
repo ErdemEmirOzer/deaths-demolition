@@ -172,7 +172,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             InputPreferences v2 = InputPreferences.FromJson("{\"Version\":2,\"StickDeadzone\":0.2,\"AimAssistLevel\":2}");
             Assert.AreEqual(InputPreferences.CurrentVersion, v2.Version);
-            Assert.AreEqual(3, InputPreferences.CurrentVersion);
+            Assert.AreEqual(4, InputPreferences.CurrentVersion);   // WP-095 K3 (C-00 08.10): v4 = the rumble scale over a 1.0 ceiling
             Assert.AreEqual(0.08f, v2.LookSensitivity, 1e-6f, "v2 dosyası bakış varsayılanını alır.");
             Assert.IsFalse(v2.LookInvertY);
             Assert.AreEqual(180f, v2.StickLookDegreesPerSecond, 1e-4f);

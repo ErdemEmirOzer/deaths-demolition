@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Core.Weapons;
@@ -46,7 +47,8 @@ namespace DD.Prototype.Tests.EditMode
                 string tag = a.Id + ": ";
                 // Ceilings from the WP-024 request (rumble ≤ 0.3 × 120 ms) and sanity bands.
                 Assert.That(a.RumbleFraction, Is.InRange(0f, 1f), tag + "RumbleFraction 0..1");
-                Assert.That(a.RumbleMilliseconds, Is.InRange(0, InputPreferences.MaxRumbleMilliseconds), tag + "RumbleMilliseconds ≤ 120");
+                // WP-095 K3: these rows feed the first / third person cue path, which keeps the WP-024 120 ms (the TD ceiling is 400 ms)
+                Assert.That(a.RumbleMilliseconds, Is.InRange(0, InputPreferences.LegacyRumbleMilliseconds), tag + "RumbleMilliseconds ≤ 120");
                 Assert.That(a.RecoilRecoverySeconds, Is.InRange(0.02f, 0.6f), tag + "RecoilRecoverySeconds bandı");
                 Assert.That(a.RecoilUpShare, Is.InRange(0f, 1f), tag + "RecoilUpShare 0..1");
                 Assert.That(a.PelletRingRadiusShare, Is.InRange(0f, 1f), tag + "PelletRingRadiusShare 0..1");
@@ -314,12 +316,24 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(b.RumbleFraction, rumble.WeaponFireFraction, 1e-4f, "B profili");
                 Assert.AreEqual(b.RumbleMilliseconds, rumble.WeaponFireMilliseconds);
 
+                // WP-095 K3 (C-00 08.10): the cue path is first / third person's (its WP-024 numbers unchanged); top-down rumbles
+                // from FeelEvents through the FeelProfileTD rows — one shot, one pulse there, and the cue stays silent
+                CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
                 int before = rumble.PulseCount;
                 AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, Vector3.zero, 0.75f, 50);
                 Assert.AreEqual(before + 1, rumble.PulseCount, "ateş cue'su bir darbe ister (gamepad olmasa da sayılır)");
+
+                CameraModeService.Request(CameraMode.TopDown, instant: true);
+                before = rumble.PulseCount;
+                AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, Vector3.zero, 0.75f, 50);
+                Assert.AreEqual(before, rumble.PulseCount, "TD: cue yolu susar (çift titreşim yok)");
+                FeelEvents.RaiseShot(new FeelShot(false, ClassicWeaponId.AutoSmg, default, WeaponFeelId.AutoSmg, Vector3.zero, Vector3.forward,
+                    1, 1, 1, 1f, 10, 30));
+                Assert.AreEqual(before + 1, rumble.PulseCount, "TD: bir atış, bir darbe (FeelEvents)");
             }
             finally
             {
+                CameraModeService.Request(CameraMode.TopDown, instant: true);
                 rumble.Unsubscribe();
                 rumble.Dispose();
             }

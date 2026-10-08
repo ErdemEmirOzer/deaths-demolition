@@ -16,8 +16,9 @@ namespace DD.Prototype.Core.InputAbstraction
     [Serializable]
     public sealed class InputPreferences
     {
-        /// <summary>v3 (WP-070): look sensitivity / invert-Y / stick look speed for the TP/FP camera.</summary>
-        public const int CurrentVersion = 3;
+        /// <summary>v3 (WP-070): look sensitivity / invert-Y / stick look speed for the TP/FP camera. v4 (WP-095, C-00 K3 08.10):
+        /// <see cref="RumbleIntensity"/> is the player's 0..1 scale over a 1.0 ceiling (was a 0..0.3 ceiling).</summary>
+        public const int CurrentVersion = 4;
 
         public int Version = CurrentVersion;
 
@@ -26,8 +27,8 @@ namespace DD.Prototype.Core.InputAbstraction
 
         public bool RumbleEnabled = true;
 
-        [PrototypeOnly(PendingDecisions.None, "Rumble intensity ceiling (0..1). The request caps it at 0.3.")]
-        [Range(0f, 1f)] public float RumbleIntensity = 0.3f;
+        [PrototypeOnly(PendingDecisions.None, "WP-095 K3: the player's rumble scale (0..1, default 0.7) over the 1.0 ceiling; a v3 file's 0..0.3 ceiling migrates proportionally (0.3 → 0.7).")]
+        [Range(0f, 1f)] public float RumbleIntensity = DefaultRumbleScale;
 
         public bool AimAssistEnabled = true;
 
@@ -71,8 +72,12 @@ namespace DD.Prototype.Core.InputAbstraction
         /// <summary>Hard ceilings from the request (ADR-024-1). Preferences can only narrow the assist, never widen it.</summary>
         public const float MaxAimAssistAngleDegrees = 6f;
         public const float MaxAimAssistDistance = 15f;
-        public const float MaxRumbleIntensity = 0.3f;
-        public const int MaxRumbleMilliseconds = 120;
+        public const float MaxRumbleIntensity = 1f;           // WP-095 K3 (was 0.3)
+        public const int MaxRumbleMilliseconds = 400;         // WP-095 K3 (was 120)
+        public const float DefaultRumbleScale = 0.7f;
+        /// <summary>The WP-024 ceiling / pulse length the first / third person cue path keeps (GamepadRumble.LegacyScale).</summary>
+        public const float LegacyRumbleCeiling = 0.3f;
+        public const int LegacyRumbleMilliseconds = 120;
         public const float MaxStickDeadzone = 0.5f;
 
         /// <summary>Clamp every field into its allowed range. Returns this.</summary>
@@ -86,6 +91,8 @@ namespace DD.Prototype.Core.InputAbstraction
                 AimAssistLevel = (int)AimAssistLevels.FromLegacy(AimAssistEnabled, AimAssistAngleDegrees);
             }
 
+            // WP-095 K3: before v4 the value was a 0..0.3 ceiling where 0.3 meant "full" — the same share of the new default scale
+            if (Version < 4) RumbleIntensity = Mathf.Clamp01(RumbleIntensity / LegacyRumbleCeiling) * DefaultRumbleScale;
             Version = CurrentVersion;
             StickDeadzone = Mathf.Clamp(StickDeadzone, 0f, MaxStickDeadzone);
             RumbleIntensity = Mathf.Clamp(RumbleIntensity, 0f, MaxRumbleIntensity);
