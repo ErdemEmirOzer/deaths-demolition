@@ -103,6 +103,21 @@ Shader "DD/GroundMoss"
         TEXTURE2D(_EarthNormal);
         TEXTURE2D(_PathMask);     SAMPLER(sampler_PathMask);
 
+        // WP-093 · grass cover from the vegetation system (VegetationDrawSet): 0..1 per 0.5 m, world-aligned. Principle 1 of the
+        // LOOK-BIBLE (soil under grass ≥ 8 L* darker than the grass) and P-05 08.10 §2 (specular occlusion ≈ ×0.45 under the grass):
+        // x albedo ×, y occlusion (indirect diffuse + specular), z smoothness × (direct back-lit specular), w on. Off (w 0) = unchanged.
+        TEXTURE2D(_DD_VegCoverTex); SAMPLER(sampler_DD_VegCoverTex);
+        float4 _DD_VegCoverRect;
+        float4 _DD_VegGround;
+
+        half DDVegGroundCover(float2 xz)
+        {
+            if (_DD_VegGround.w < 0.5) return 0.0h;
+            float2 uv = (xz - _DD_VegCoverRect.xy) * _DD_VegCoverRect.zw;
+            if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0h;
+            return (half)SAMPLE_TEXTURE2D_LOD(_DD_VegCoverTex, sampler_DD_VegCoverTex, uv, 0).r;
+        }
+
         float DDMossHash(float2 p)
         {
             float3 p3 = frac(float3(p.xyx) * 0.1031);
@@ -252,6 +267,9 @@ Shader "DD/GroundMoss"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 DDMossSurface s = DDMossSample(input.positionWS.xz);
+                half vegCover = DDVegGroundCover(input.positionWS.xz);   // WP-093
+                s.albedo *= lerp(1.0h, (half)_DD_VegGround.x, vegCover);
+                s.smoothness *= lerp(1.0h, (half)_DD_VegGround.z, vegCover);
                 // World-XZ texture space: tangent +X, bitangent +Z about the (flat, axis-aligned) ground normal.
                 half3 n = NormalizeNormalPerPixel(input.normalWS);
                 half3 normalWS = NormalizeNormalPerPixel(half3(1, 0, 0) * s.normalTS.x + half3(0, 0, 1) * s.normalTS.y + n * s.normalTS.z);
@@ -261,7 +279,7 @@ Shader "DD/GroundMoss"
                 surfaceData.alpha = 1.0h;
                 surfaceData.metallic = 0.0h;
                 surfaceData.smoothness = s.smoothness;
-                surfaceData.occlusion = 1.0h;
+                surfaceData.occlusion = lerp(1.0h, (half)_DD_VegGround.y, vegCover);
                 surfaceData.normalTS = s.normalTS;
 
                 InputData inputData = (InputData)0;

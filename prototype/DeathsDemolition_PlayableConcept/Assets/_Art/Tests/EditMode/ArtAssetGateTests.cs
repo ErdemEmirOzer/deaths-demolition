@@ -337,6 +337,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(3, classic, "AP-013 3 klasik silah FBX");
             // WP-047E: the AP-013C casings (S-07 builder, under VFX).
             beklenen.Add(ArtCasingBuilder.ModelPath);
+            // WP-093: the AP-031 v001 vegetation kit (P-05) — every FBX its manifest lists (ArtVegetationIntake).
+            int bitki = 0;
+            foreach (string f in ArtVegetationIntake.ModelFiles()) if (beklenen.Add(f)) bitki++;
+            if (ArtVegetationIntake.Active) Assert.AreEqual(ArtVegetationIntake.ExpectedFbx, bitki, "AP-031 v001: 19 bitki FBX (çim 7 + flora 12)");
 
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
@@ -542,6 +546,11 @@ namespace DD.Art.Tests.EditMode
                 beklenen.Add(zt + "/T_zombie_atlas_ORM.png");
                 beklenen.Add(zt + "/T_zombie_masks_Array.png");
             }
+
+            // WP-093: the AP-031 v001 grass / flora atlases (3 × 2) and ground-detail sets (4 × 3) from its manifest.
+            int bitkiDoku = 0;
+            foreach (string f in ArtVegetationIntake.TextureFiles()) if (beklenen.Add(f)) bitkiDoku++;
+            if (ArtVegetationIntake.Active) Assert.AreEqual(ArtVegetationIntake.ExpectedTextures, bitkiDoku, "AP-031 v001: 6 atlas + 12 zemin ayrıntı dokusu");
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();

@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 798f0e6a4e834c339c003fc4601a36a1, type: 3}
+  m_Name: DD_VegetationKit
+  m_EditorClassIdentifier: 
+  entries:
+  - type: 0
+    models:
+    - {fileID: 919132149155446097, guid: ff173abea27b4f7db458a3fdd027766c, type: 3}
+    - {fileID: 919132149155446097, guid: 8d28642c1b1d4b568247311b8c79f9e7, type: 3}
+    - {fileID: 919132149155446097, guid: 36b6d26504c14f188bce9e0ee935e935, type: 3}
+    material: {fileID: 2100000, guid: d01f24db6e1a483e856cbdc201b7bc02, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 1
+    models:
+    - {fileID: 919132149155446097, guid: 34b109d011c54f2da49066189ca3d8d9, type: 3}
+    - {fileID: 919132149155446097, guid: c2ba1cca108f4315aed39680b6d36048, type: 3}
+    material: {fileID: 2100000, guid: d01f24db6e1a483e856cbdc201b7bc02, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 2
+    models:
+    - {fileID: 919132149155446097, guid: c2f3dca49fbd43b7b965999f571af359, type: 3}
+    - {fileID: 919132149155446097, guid: df774d7042ba4b608240e222c3d378ea, type: 3}
+    material: {fileID: 2100000, guid: d01f24db6e1a483e856cbdc201b7bc02, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 3
+    models:
+    - {fileID: 919132149155446097, guid: 521b41526c314ec896d02cd1867fdc1d, type: 3}
+    - {fileID: 919132149155446097, guid: 47f52d4f4f2b43a5b98292f59874ff18, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 4
+    models:
+    - {fileID: 919132149155446097, guid: dd0454bbbaca40d08f43f7ea1a8ec35b, type: 3}
+    - {fileID: 919132149155446097, guid: 599a274140fd4a78b394dd91bf8657f7, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 5
+    models:
+    - {fileID: 919132149155446097, guid: 25f43bb84687461986a8ff2d7fc80e12, type: 3}
+    - {fileID: 919132149155446097, guid: d61148b729af4318aa79151d3048a15d, type: 3}
+    - {fileID: 919132149155446097, guid: e2445d474ec1479891e693d11ad32554, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 6
+    models:
+    - {fileID: 919132149155446097, guid: a6ebec54159b4d1a834b1cfa23d024a9, type: 3}
+    - {fileID: 919132149155446097, guid: 940ddb318e384fada088ae84a576b2a0, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 7
+    models:
+    - {fileID: 919132149155446097, guid: 646909bf250a46dfaf44af0eee78183a, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 8
+    models:
+    - {fileID: 919132149155446097, guid: eb40f3028d6e454ba045b44571372e3c, type: 3}
+    - {fileID: 919132149155446097, guid: a60a4ab0e3d44f8fb745bad5205654d3, type: 3}
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards: []
+  - type: 9
+    models: []
+    material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
+    atlasCarriesColour: 1
+    cards:
+    - uv: {x: 0.754395, y: 0.690918, z: 0.808105, w: 0.746582}
+      size: {x: 0.0611, y: 0.0634}
+      tag: fresh
+      cluster: 0
+    - uv: {x: 0.817383, y: 0.690918, z: 0.870117, w: 0.746094}
+      size: {x: 0.068, y: 0.0712}
+      tag: fresh
+      cluster: 0
+    - uv: {x: 0.879395, y: 0.691406, z: 0.933105, w: 0.746094}
+      size: {x: 0.0764, y: 0.0778}
+      tag: fresh
+      cluster: 0
+    - uv: {x: 0.941406, y: 0.691406, z: 0.996094, w: 0.746094}
+      size: {x: 0.0851, y: 0.0851}
+      tag: fresh
+      cluster: 0
+    - uv: {x: 0.753418, y: 0.628906, z: 0.809082, w: 0.683594}
+      size: {x: 0.0951, y: 0.0934}
+      tag: fresh
+      cluster: 0
+    - uv: {x: 0.816895, y: 0.629395, z: 0.870605, w: 0.683105}
+      size: {x: 0.0764, y: 0.0764}
+      tag: underside
+      cluster: 0
+    - uv: {x: 0.878418, y: 0.628906, z: 0.934082, w: 0.683594}
+      size: {x: 0.0898, y: 0.0882}
+      tag: underside
+      cluster: 0
+    - uv: {x: 0.942383, y: 0.628906, z: 0.995605, w: 0.683105}
+      size: {x: 0.0808, y: 0.0823}
+      tag: old
+      cluster: 0
+    - uv: {x: 0.766602, y: 0.507324, z: 0.854492, w: 0.612305}
+      size: {x: 0.1632, y: 0.1952}
+      tag: cluster
+      cluster: 1
+    - uv: {x: 0.878418, y: 0.503418, z: 0.984863, w: 0.615234}
+      size: {x: 0.198, y: 0.2081}
+      tag: cluster
+      cluster: 1
+    - uv: {x: 0.769531, y: 0.404785, z: 0.871582, w: 0.475586}
+      size: {x: 0.1897, y: 0.1311}
+      tag: cluster
+      cluster: 1
+    - uv: {x: 0.89502, y: 0.387207, z: 0.996582, w: 0.470703}
+      size: {x: 0.1888, y: 0.1549}
+      tag: cluster_wet
+      cluster: 1

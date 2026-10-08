@@ -34,6 +34,7 @@ namespace DD.Prototype.Rendering.EditorTools
         private const string VfxAtmoAd = "DD/VFX Atmo";
         private const string VfxGelAd = "DD/VFX Gel";
         private const string VfxPuddleAd = "DD/VFX Puddle";
+        private const string VegetationAd = "DD/World Vegetation";
 
         [MenuItem("Tools/Deaths Demolition/Rebuild Shader Library")]
         public static void Rebuild()
@@ -83,6 +84,7 @@ namespace DD.Prototype.Rendering.EditorTools
             Shader vfxAtmo = Bul(VfxAtmoAd, ref hata);
             Shader vfxGel = Bul(VfxGelAd, ref hata);
             Shader vfxPuddle = Bul(VfxPuddleAd, ref hata);
+            Shader vegetation = Bul(VegetationAd, ref hata);
             if (hata != null)
             {
                 return false;
@@ -91,7 +93,7 @@ namespace DD.Prototype.Rendering.EditorTools
             KlasorKur(Klasor);
             KlasorKur(PinKlasor);
 
-            Material[] pins = PinleriKur(lit, unlit, particles, vfxRibbon, vfxGel, vfxPuddle);
+            Material[] pins = PinleriKur(lit, unlit, particles, vfxRibbon, vfxGel, vfxPuddle, vegetation);
 
             var kitaplik = AssetDatabase.LoadAssetAtPath<PrototypeShaderLibrary>(Yol);
             if (kitaplik == null)
@@ -117,6 +119,7 @@ namespace DD.Prototype.Rendering.EditorTools
             so.FindProperty("_vfxAtmo").objectReferenceValue = vfxAtmo;
             so.FindProperty("_vfxGel").objectReferenceValue = vfxGel;
             so.FindProperty("_vfxPuddle").objectReferenceValue = vfxPuddle;
+            so.FindProperty("_vegetation").objectReferenceValue = vegetation;
 
             SerializedProperty dizi = so.FindProperty("_variantPins");
             dizi.arraySize = pins.Length;
@@ -175,7 +178,7 @@ namespace DD.Prototype.Rendering.EditorTools
         /// without these the shaders ship with their opaque variant alone and everything
         /// that should fade draws solid. Each pin below mirrors one runtime configuration.
         /// </summary>
-        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles, Shader vfxRibbon, Shader vfxGel, Shader vfxPuddle)
+        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles, Shader vfxRibbon, Shader vfxGel, Shader vfxPuddle, Shader vegetation)
         {
             var pins = new List<Material>(6);
 
@@ -196,6 +199,14 @@ namespace DD.Prototype.Rendering.EditorTools
             }));
 
             // FeedbackMaterials: opaque debris, alpha shapes, additive flashes.
+            // WP-093 (S-05 08.10): shoji transmission swaps M_ap023_washi / M_ap023_lantern_paper to runtime copies with _EMISSION on
+            // (ArtMaterialBuilder keeps the originals emission-off); pin both keyword sets so the Player keeps the Lit variants.
+            pins.Add(Pin("Pin_Lit_Emission_Washi", lit, m =>
+            {
+                m.EnableKeyword("_EMISSION"); m.EnableKeyword("_NORMALMAP"); m.EnableKeyword("_METALLICSPECGLOSSMAP"); m.EnableKeyword("_OCCLUSIONMAP");
+                m.SetColor("_EmissionColor", Color.white);
+            }));
+            pins.Add(Pin("Pin_Lit_Emission_Paper", lit, m => { m.EnableKeyword("_EMISSION"); m.SetColor("_EmissionColor", Color.white); }));
             pins.Add(Pin("Pin_Unlit_Opaque", unlit, m => { }));
             pins.Add(Pin("Pin_Unlit_Transparent", unlit, m =>
             {
@@ -239,6 +250,10 @@ namespace DD.Prototype.Rendering.EditorTools
             // instanced from runtime materials too.
             if (vfxGel != null) pins.Add(Pin("Pin_VfxGel_Instanced", vfxGel, m => { m.enableInstancing = true; }));
             if (vfxPuddle != null) pins.Add(Pin("Pin_VfxPuddle_Instanced", vfxPuddle, m => { m.enableInstancing = true; }));
+
+            // WP-093: the living ground is drawn with Graphics.RenderMeshInstanced from runtime materials — the instancing
+            // variant only survives the build through this pin.
+            if (vegetation != null) pins.Add(Pin("Pin_Vegetation_Instanced", vegetation, m => { m.enableInstancing = true; }));
 
             return pins.ToArray();
         }

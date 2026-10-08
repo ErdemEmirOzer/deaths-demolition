@@ -1,0 +1,2957 @@
+{
+ "schema": "AP031.manifest.v1",
+ "package": "AP-031",
+ "version": "v001",
+ "date": "2026-10-08",
+ "producer": "P-05 (Claude Opus 5.5 + KADRO)",
+ "axes": "FBX 7.4 binary, metre, Blender -Z forward / Y up (AP-023 recipe); bounds below are Blender space (Z up) after re-import",
+ "families": [
+  "VEG_Fern_A",
+  "VEG_Fern_B",
+  "VEG_GrassMid_A",
+  "VEG_GrassMid_B",
+  "VEG_GrassShort_A",
+  "VEG_GrassShort_B",
+  "VEG_GrassShort_C",
+  "VEG_GrassTall_A",
+  "VEG_GrassTall_B",
+  "VEG_Hydrangea_A",
+  "VEG_Hydrangea_B",
+  "VEG_Kumazasa_A",
+  "VEG_Kumazasa_B",
+  "VEG_LeafClump_A",
+  "VEG_LeafClump_B",
+  "VEG_MossPatch_A",
+  "VEG_MossPatch_B",
+  "VEG_MossPatch_C",
+  "VEG_SpiderLily_A"
+ ],
+ "fbx_count": 19,
+ "fbx": [
+  {
+   "file": "exports/v001/fbx/VEG_Fern_A.fbx",
+   "family": "VEG_Fern_A",
+   "variation": "",
+   "bytes": 41228,
+   "sha256": "9b262ea60026169a72f095ae6d60a550402622afd07a176e2ec2e1cfe70a4913",
+   "tris_lod": [
+    152,
+    48,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.4066,
+    -0.385,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.3765,
+    0.4074,
+    0.56
+   ],
+   "objects": [
+    {
+     "name": "VEG_Fern_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 152,
+     "verts": 144,
+     "bounds_min_m": [
+      -0.3607,
+      -0.3758,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.3745,
+      0.389,
+      0.56
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.56,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 10
+     }
+    },
+    {
+     "name": "VEG_Fern_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 48,
+     "verts": 54,
+     "bounds_min_m": [
+      -0.4066,
+      -0.385,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.3765,
+      0.4074,
+      0.56
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.56,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 6
+     }
+    },
+    {
+     "name": "VEG_Fern_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.2386,
+      -0.2386,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2386,
+      0.2386,
+      0.56
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.56,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_Fern_B.fbx",
+   "family": "VEG_Fern_B",
+   "variation": "",
+   "bytes": 40044,
+   "sha256": "56bfecf56d0c01abe08a920aa7151d56927e59a386e5d3623ced4ddca0e45259",
+   "tris_lod": [
+    136,
+    48,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.3118,
+    -0.3229,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2993,
+    0.3074,
+    0.45
+   ],
+   "objects": [
+    {
+     "name": "VEG_Fern_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 136,
+     "verts": 129,
+     "bounds_min_m": [
+      -0.2932,
+      -0.3109,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2923,
+      0.3036,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 9
+     }
+    },
+    {
+     "name": "VEG_Fern_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 48,
+     "verts": 54,
+     "bounds_min_m": [
+      -0.3118,
+      -0.3229,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2993,
+      0.3074,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 6
+     }
+    },
+    {
+     "name": "VEG_Fern_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.1909,
+      -0.1909,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1909,
+      0.1909,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.2159,
+       0.2159
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassMid_A.fbx",
+   "family": "VEG_GrassMid_A",
+   "variation": "",
+   "bytes": 40188,
+   "sha256": "24a4f34184887d09da61fd47e4e3e9ca56a31ec507a712fe90c15047e2354164",
+   "tris_lod": [
+    120,
+    36,
+    4
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.2811,
+    -0.2337,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2344,
+    0.2614,
+    0.36
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassMid_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 120,
+     "verts": 150,
+     "bounds_min_m": [
+      -0.2786,
+      -0.2325,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2275,
+      0.2614,
+      0.36
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.36,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 15
+     }
+    },
+    {
+     "name": "VEG_GrassMid_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 36,
+     "verts": 54,
+     "bounds_min_m": [
+      -0.2811,
+      -0.2337,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2344,
+      0.2204,
+      0.36
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.36,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 9
+     }
+    },
+    {
+     "name": "VEG_GrassMid_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.1591,
+      -0.1591,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1591,
+      0.1591,
+      0.36
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.36,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 2
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassMid_B.fbx",
+   "family": "VEG_GrassMid_B",
+   "variation": "",
+   "bytes": 40252,
+   "sha256": "325eaf4203675b9ff577214562a6eebbf2dc72d344619a99fe4ed7356e2b4300",
+   "tris_lod": [
+    120,
+    36,
+    4
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.2768,
+    -0.2344,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2597,
+    0.2348,
+    0.45
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassMid_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 120,
+     "verts": 150,
+     "bounds_min_m": [
+      -0.2729,
+      -0.2344,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.258,
+      0.2348,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 14
+     }
+    },
+    {
+     "name": "VEG_GrassMid_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 36,
+     "verts": 54,
+     "bounds_min_m": [
+      -0.2768,
+      -0.2139,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2597,
+      0.2164,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_GrassMid_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.1591,
+      -0.1591,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1591,
+      0.1591,
+      0.45
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.45,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 2
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassShort_A.fbx",
+   "family": "VEG_GrassShort_A",
+   "variation": "",
+   "bytes": 32556,
+   "sha256": "8b8c03b04ac94ccf00e893aaee5c6d8bbd3c92dd684dca314b2369ebc75bcb92",
+   "tris_lod": [
+    84,
+    32
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.1868,
+    -0.1608,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.1931,
+    0.1656,
+    0.15
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassShort_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 84,
+     "verts": 112,
+     "bounds_min_m": [
+      -0.1825,
+      -0.1608,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1912,
+      0.1656,
+      0.15
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.15,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 14
+     }
+    },
+    {
+     "name": "VEG_GrassShort_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 32,
+     "verts": 48,
+     "bounds_min_m": [
+      -0.1868,
+      -0.15,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1931,
+      0.1588,
+      0.15
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.15,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 8
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassShort_B.fbx",
+   "family": "VEG_GrassShort_B",
+   "variation": "",
+   "bytes": 33116,
+   "sha256": "4f27abed100dcf2e72ec316f1a0c0c466a53e70f230b02c6562322ae15947b3f",
+   "tris_lod": [
+    90,
+    32
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.1529,
+    -0.2017,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.1691,
+    0.1825,
+    0.19
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassShort_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 90,
+     "verts": 120,
+     "bounds_min_m": [
+      -0.1529,
+      -0.2017,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1691,
+      0.1763,
+      0.19
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.19,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.9301,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 15
+     }
+    },
+    {
+     "name": "VEG_GrassShort_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 32,
+     "verts": 48,
+     "bounds_min_m": [
+      -0.1497,
+      -0.1556,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1518,
+      0.1825,
+      0.19
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.19,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.9301,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 8
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassShort_C.fbx",
+   "family": "VEG_GrassShort_C",
+   "variation": "",
+   "bytes": 31852,
+   "sha256": "573cb9822b375c4aae632590c7aea9867faa80c7add3348a55c0a31d12d9bfb2",
+   "tris_lod": [
+    78,
+    32
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.1467,
+    -0.0455,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2179,
+    0.2034,
+    0.12
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassShort_C_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 78,
+     "verts": 104,
+     "bounds_min_m": [
+      -0.1394,
+      -0.0447,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2179,
+      0.1981,
+      0.12
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.12,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 12
+     }
+    },
+    {
+     "name": "VEG_GrassShort_C_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 32,
+     "verts": 48,
+     "bounds_min_m": [
+      -0.1467,
+      -0.0455,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2097,
+      0.2034,
+      0.12
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.12,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 8
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassTall_A.fbx",
+   "family": "VEG_GrassTall_A",
+   "variation": "",
+   "bytes": 47020,
+   "sha256": "ae1c282b6ce46ca8c5a3fc2a7f16572e47e902193e30bc73d2652e15787bf9e9",
+   "tris_lod": [
+    180,
+    54,
+    4
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.302,
+    -0.3025,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2999,
+    0.3142,
+    0.85
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassTall_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 180,
+     "verts": 216,
+     "bounds_min_m": [
+      -0.302,
+      -0.3023,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2999,
+      0.2959,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.8796,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 18
+     }
+    },
+    {
+     "name": "VEG_GrassTall_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 54,
+     "verts": 72,
+     "bounds_min_m": [
+      -0.2151,
+      -0.3025,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2879,
+      0.3142,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 9
+     }
+    },
+    {
+     "name": "VEG_GrassTall_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.1909,
+      -0.1909,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1909,
+      0.1909,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 2
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_GrassTall_B.fbx",
+   "family": "VEG_GrassTall_B",
+   "variation": "",
+   "bytes": 47820,
+   "sha256": "5d50748821e87e106ba8f39ed6f57cac3a4c489cf1ee3f672678fc44bcf205fd",
+   "tris_lod": [
+    180,
+    54,
+    4
+   ],
+   "materials": [
+    "M_VEG_Grass"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.3038,
+    -0.3476,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2885,
+    0.2807,
+    0.95
+   ],
+   "objects": [
+    {
+     "name": "VEG_GrassTall_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 180,
+     "verts": 224,
+     "bounds_min_m": [
+      -0.2954,
+      -0.3476,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2763,
+      0.2807,
+      0.95
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.95,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.8469,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0513
+      ],
+      "G_unique": 17
+     }
+    },
+    {
+     "name": "VEG_GrassTall_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 54,
+     "verts": 76,
+     "bounds_min_m": [
+      -0.3038,
+      -0.2618,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2885,
+      0.2488,
+      0.95
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.95,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.8469,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0513
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_GrassTall_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.1909,
+      -0.1909,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.1909,
+      0.1909,
+      0.95
+     ],
+     "materials": [
+      "M_VEG_Grass"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.95,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0,
+       0.0
+      ],
+      "G_unique": 2
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_Hydrangea_A.fbx",
+   "family": "VEG_Hydrangea_A",
+   "variation": "",
+   "bytes": 67964,
+   "sha256": "08aac6009c604ca6242ed4daef8bf4e46a860918c5685741c03191ad71d8342c",
+   "tris_lod": [
+    268,
+    94,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.5308,
+    -0.5598,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.4486,
+    0.4069,
+    0.85
+   ],
+   "objects": [
+    {
+     "name": "VEG_Hydrangea_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 268,
+     "verts": 396,
+     "bounds_min_m": [
+      -0.5206,
+      -0.5465,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4366,
+      0.3963,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       1.0
+      ],
+      "G_unique": 29
+     }
+    },
+    {
+     "name": "VEG_Hydrangea_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 94,
+     "verts": 162,
+     "bounds_min_m": [
+      -0.5308,
+      -0.5598,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4486,
+      0.4069,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       1.0
+      ],
+      "G_unique": 18
+     }
+    },
+    {
+     "name": "VEG_Hydrangea_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.3023,
+      -0.3023,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.3023,
+      0.3023,
+      0.85
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.85,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_Hydrangea_B.fbx",
+   "family": "VEG_Hydrangea_B",
+   "variation": "",
+   "bytes": 58444,
+   "sha256": "11ca68e02c8401d18c9741fbf9bd83a3de77aefdb9a3be45ddd39443586dc81d",
+   "tris_lod": [
+    196,
+    86,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.4361,
+    -0.3672,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.4271,
+    0.4043,
+    0.65
+   ],
+   "objects": [
+    {
+     "name": "VEG_Hydrangea_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 196,
+     "verts": 292,
+     "bounds_min_m": [
+      -0.4304,
+      -0.3544,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4221,
+      0.3931,
+      0.65
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.65,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       1.0
+      ],
+      "G_unique": 24
+     }
+    },
+    {
+     "name": "VEG_Hydrangea_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 86,
+     "verts": 144,
+     "bounds_min_m": [
+      -0.4361,
+      -0.3672,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4271,
+      0.4043,
+      0.65
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.65,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       1.0
+      ],
+      "G_unique": 19
+     }
+    },
+    {
+     "name": "VEG_Hydrangea_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.2546,
+      -0.2546,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2546,
+      0.2546,
+      0.65
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.65,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_Kumazasa_A.fbx",
+   "family": "VEG_Kumazasa_A",
+   "variation": "",
+   "bytes": 56924,
+   "sha256": "471a0d043b989afa4d0558dbe7bb1db1d4ef8094c0396f8057c702031a4027dd",
+   "tris_lod": [
+    210,
+    72,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.446,
+    -0.4472,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.4066,
+    0.4736,
+    0.5
+   ],
+   "objects": [
+    {
+     "name": "VEG_Kumazasa_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 210,
+     "verts": 285,
+     "bounds_min_m": [
+      -0.4047,
+      -0.3803,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4066,
+      0.4084,
+      0.5
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.5,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       1.0
+      ],
+      "G_unique": 25
+     }
+    },
+    {
+     "name": "VEG_Kumazasa_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 72,
+     "verts": 88,
+     "bounds_min_m": [
+      -0.446,
+      -0.4472,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.388,
+      0.4736,
+      0.5
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.5,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.807,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       1.0
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_Kumazasa_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.2546,
+      -0.2546,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2546,
+      0.2546,
+      0.5
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.5,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       0.6038
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_Kumazasa_B.fbx",
+   "family": "VEG_Kumazasa_B",
+   "variation": "",
+   "bytes": 55084,
+   "sha256": "0a393116b9b4689be6a8b18e89e1bb0464303de74cd661cfbfa4de7b860484d4",
+   "tris_lod": [
+    198,
+    72,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.4174,
+    -0.4602,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.3349,
+    0.5861,
+    0.8
+   ],
+   "objects": [
+    {
+     "name": "VEG_Kumazasa_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 198,
+     "verts": 262,
+     "bounds_min_m": [
+      -0.4095,
+      -0.3947,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2685,
+      0.5272,
+      0.8
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.8,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       1.0
+      ],
+      "G_unique": 19
+     }
+    },
+    {
+     "name": "VEG_Kumazasa_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 72,
+     "verts": 88,
+     "bounds_min_m": [
+      -0.4174,
+      -0.4602,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.3349,
+      0.5861,
+      0.8
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.8,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.9216,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       1.0
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_Kumazasa_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.2546,
+      -0.2546,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2546,
+      0.2546,
+      0.8
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.8,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.6038,
+       0.6038
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_LeafClump_A.fbx",
+   "family": "VEG_LeafClump_A",
+   "variation": "",
+   "bytes": 41308,
+   "sha256": "62d829d45a9751aa62d71881284b41ebf507c4a927ffe6bdb72b5d7bc08534c2",
+   "tris_lod": [
+    104,
+    40,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.2387,
+    -0.2496,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2343,
+    0.2774,
+    0.22
+   ],
+   "objects": [
+    {
+     "name": "VEG_LeafClump_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 104,
+     "verts": 131,
+     "bounds_min_m": [
+      -0.2387,
+      -0.2496,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2343,
+      0.2774,
+      0.22
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.22,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.8228,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_LeafClump_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 40,
+     "verts": 66,
+     "bounds_min_m": [
+      -0.2387,
+      -0.2496,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2343,
+      0.2774,
+      0.22
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.22,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.8228,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_LeafClump_A_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.225,
+      -0.154,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.225,
+      0.154,
+      0.22
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.22,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_LeafClump_B.fbx",
+   "family": "VEG_LeafClump_B",
+   "variation": "",
+   "bytes": 39036,
+   "sha256": "dd4e262b51157fe5dec3cd13fc81124fb984db578490e1c0ffcfcab6fbbd9454",
+   "tris_lod": [
+    92,
+    34,
+    4
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.251,
+    -0.2753,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2781,
+    0.2956,
+    0.32
+   ],
+   "objects": [
+    {
+     "name": "VEG_LeafClump_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 92,
+     "verts": 116,
+     "bounds_min_m": [
+      -0.251,
+      -0.2753,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2781,
+      0.2956,
+      0.32
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.32,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.7991,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 8
+     }
+    },
+    {
+     "name": "VEG_LeafClump_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 34,
+     "verts": 58,
+     "bounds_min_m": [
+      -0.2318,
+      -0.2753,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2781,
+      0.2956,
+      0.32
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.32,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.7991,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 7
+     }
+    },
+    {
+     "name": "VEG_LeafClump_B_LOD2",
+     "kind": "lod",
+     "part": "main",
+     "lod": 2,
+     "tris": 4,
+     "verts": 8,
+     "bounds_min_m": [
+      -0.2475,
+      -0.2241,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2475,
+      0.2241,
+      0.32
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.32,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.3185,
+       0.3185
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_MossPatch_A.fbx",
+   "family": "VEG_MossPatch_A",
+   "variation": "",
+   "bytes": 24300,
+   "sha256": "546ef30b510f2bbc931bf07659dcd176c06a50c6f74fae19126e7e4aaa8a9eb2",
+   "tris_lod": [
+    48,
+    16
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.6591,
+    -0.4346,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.5409,
+    0.4654,
+    0.05
+   ],
+   "objects": [
+    {
+     "name": "VEG_MossPatch_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 48,
+     "verts": 31,
+     "bounds_min_m": [
+      -0.6591,
+      -0.4346,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.5409,
+      0.4654,
+      0.05
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.05,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    },
+    {
+     "name": "VEG_MossPatch_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 16,
+     "verts": 13,
+     "bounds_min_m": [
+      -0.6409,
+      -0.4148,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.5248,
+      0.4201,
+      0.05
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.05,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_MossPatch_B.fbx",
+   "family": "VEG_MossPatch_B",
+   "variation": "",
+   "bytes": 23804,
+   "sha256": "e54c852a341a1d312d75f770870f2520feb067743d1451a1af001953ad1a6f90",
+   "tris_lod": [
+    40,
+    16
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.4864,
+    -0.3334,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.4136,
+    0.3666,
+    0.04
+   ],
+   "objects": [
+    {
+     "name": "VEG_MossPatch_B_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 40,
+     "verts": 26,
+     "bounds_min_m": [
+      -0.4864,
+      -0.3334,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4136,
+      0.3666,
+      0.04
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.04,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    },
+    {
+     "name": "VEG_MossPatch_B_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 16,
+     "verts": 13,
+     "bounds_min_m": [
+      -0.4635,
+      -0.2984,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.4023,
+      0.3509,
+      0.04
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.04,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_MossPatch_C.fbx",
+   "family": "VEG_MossPatch_C",
+   "variation": "",
+   "bytes": 23228,
+   "sha256": "c56edc26305e3d652ce7dcd1fcb387da968a3dec74528ec17a47db1e7fc6e2d9",
+   "tris_lod": [
+    32,
+    16
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.3154,
+    -0.2696,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2846,
+    0.2304,
+    0.025
+   ],
+   "objects": [
+    {
+     "name": "VEG_MossPatch_C_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 32,
+     "verts": 21,
+     "bounds_min_m": [
+      -0.3154,
+      -0.2696,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2846,
+      0.2304,
+      0.025
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.025,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    },
+    {
+     "name": "VEG_MossPatch_C_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 16,
+     "verts": 13,
+     "bounds_min_m": [
+      -0.2666,
+      -0.2195,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2445,
+      0.2024,
+      0.025
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.025,
+      "R_root_max": 0.0,
+      "R_tip_min": 0.0,
+      "R_tip_max": 0.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       1.0,
+       1.0
+      ],
+      "G_unique": 1
+     }
+    }
+   ]
+  },
+  {
+   "file": "exports/v001/fbx/VEG_SpiderLily_A.fbx",
+   "family": "VEG_SpiderLily_A",
+   "variation": "",
+   "bytes": 37324,
+   "sha256": "362c33300e73c01c8fb1f8062e1bc55ed22638724154a5dd6c538296c55ea97a",
+   "tris_lod": [
+    110,
+    40
+   ],
+   "materials": [
+    "M_VEG_Flora"
+   ],
+   "col": [],
+   "sockets": {},
+   "bounds_lod_min_m": [
+    -0.103,
+    -0.1564,
+    -0.0
+   ],
+   "bounds_lod_max_m": [
+    0.2107,
+    0.1527,
+    0.42
+   ],
+   "objects": [
+    {
+     "name": "VEG_SpiderLily_A_LOD0",
+     "kind": "lod",
+     "part": "main",
+     "lod": 0,
+     "tris": 110,
+     "verts": 152,
+     "bounds_min_m": [
+      -0.0971,
+      -0.1506,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.205,
+      0.1473,
+      0.42
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.42,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0999,
+       0.0999
+      ],
+      "G_unique": 6
+     }
+    },
+    {
+     "name": "VEG_SpiderLily_A_LOD1",
+     "kind": "lod",
+     "part": "main",
+     "lod": 1,
+     "tris": 40,
+     "verts": 80,
+     "bounds_min_m": [
+      -0.103,
+      -0.1564,
+      -0.0
+     ],
+     "bounds_max_m": [
+      0.2107,
+      0.1527,
+      0.42
+     ],
+     "materials": [
+      "M_VEG_Flora"
+     ],
+     "colour_layers": [
+      "vc1"
+     ],
+     "uv_layers": [
+      "UVMap"
+     ],
+     "vc1": {
+      "layers": [
+       "vc1"
+      ],
+      "height_m": 0.42,
+      "R_root_max": 0.0,
+      "R_tip_min": 1.0,
+      "R_tip_max": 1.0,
+      "A_min": 0.349,
+      "A_max": 1.0,
+      "A_root_mean": 0.349,
+      "B_range": [
+       0.0999,
+       0.0999
+      ],
+      "G_unique": 4
+     }
+    }
+   ]
+  }
+ ],
+ "sets": {
+  "textures": {
+   "count": 18,
+   "bytes": 79712715,
+   "files": [
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Gravel_BaseColor.png",
+     "bytes": 6159445,
+     "sha256": "6e126b60a33e6ce5e1deac37b290633969b8bc6c8036e4b8c8f351d594adaac9"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Gravel_Normal.png",
+     "bytes": 6538810,
+     "sha256": "733a50a659c0c0b34f332acd62d9ff9711caca10e3ff8d928abe92d8ce8f8805"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Gravel_ORM.png",
+     "bytes": 6552898,
+     "sha256": "a35b3c6111c48ca6c1f84eeeaf116e978453bc2115ae2a8e741ccaed146a7869"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Moss_BaseColor.png",
+     "bytes": 4053837,
+     "sha256": "20cad9750f8d4dad503ad3703de9a487d3961f987b3c8d28ecf60045e983c733"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Moss_Normal.png",
+     "bytes": 7873964,
+     "sha256": "9e07e13fcaea841941d3f3762d048861633e17323af146f251bbad43e4994164"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Moss_ORM.png",
+     "bytes": 6905621,
+     "sha256": "86630fe6da1dff1e707f2a5c7ab0cbbe9542ff69f65e5819c7950e39b87f849a"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Mud_BaseColor.png",
+     "bytes": 2477625,
+     "sha256": "947dbc676f156016d864685f5d68011ca8e65c9478acbada24e3332b35597fea"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Mud_Normal.png",
+     "bytes": 3772364,
+     "sha256": "e859dd84ed26ec7f618336c9d8b0ef1756f6292ea9ec4a753b3639cc8a3dcccb"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Mud_ORM.png",
+     "bytes": 4893351,
+     "sha256": "36a82506d05b16282b42c528107904f1fcbe1910c8c56af2bce8d6fb15a86424"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Soil_BaseColor.png",
+     "bytes": 4893285,
+     "sha256": "571f407cc636becd45a81103229795e329f2a287dc16a4d01d75e9df5ae6847d"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Soil_Normal.png",
+     "bytes": 8843235,
+     "sha256": "a0895cda11ca3203264b231c81a982fc9fc75039a8a26784d9c19103ea3d8641"
+    },
+    {
+     "file": "exports/v001/textures/T_GroundDetail_Soil_ORM.png",
+     "bytes": 7532284,
+     "sha256": "8b852b474ff4516756946aa64635cd0718b5ab1751ba8dccb7f66e9d08163815"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Flora_BaseColor.png",
+     "bytes": 2136918,
+     "sha256": "afbd209d25c6a227c36dc1f1f3b66a486b9db19235302463c0434a3bc9cf2b00"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Flora_Normal.png",
+     "bytes": 3116797,
+     "sha256": "d833d7f1c3166ebd92336e9d3350de6123e6eec3c8b574369ead31a06957cebf"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Flora_ORM.png",
+     "bytes": 1252603,
+     "sha256": "205b61c3b0102e757dbe607072921b9af203598932cd20c6470266f722ac9b51"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Grass_BaseColor.png",
+     "bytes": 1204755,
+     "sha256": "1d461367e6ebc73126fc018f0e7a08beef84f6ed76310d80bd56a9fb5fe2e02e"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Grass_Normal.png",
+     "bytes": 959234,
+     "sha256": "53f4393e52eaca81c1f7b1d1fef1adb3cebb1b29adc9f21145677444578451ec"
+    },
+    {
+     "file": "exports/v001/textures/T_VEG_Grass_ORM.png",
+     "bytes": 545689,
+     "sha256": "d3781496501519f0c63182bf9e87e9a6592b531beda9a2dfe5a3706bd7014ebc"
+    }
+   ]
+  },
+  "preview": {
+   "count": 13,
+   "files": [
+    {
+     "file": "exports/v001/preview/sheet_flora.png",
+     "bytes": 4174362,
+     "sha256": "5470606f32e03592ee034db21fbd6c1c10d00bc0e1727633a76610600807b42f"
+    },
+    {
+     "file": "exports/v001/preview/sheet_flora_atlas.png",
+     "bytes": 1894361,
+     "sha256": "d4f2bf85a36bece1e1a4a018fe5268eb244862befa1184cf884963cd71b646c4"
+    },
+    {
+     "file": "exports/v001/preview/sheet_flora_silhouette.png",
+     "bytes": 11006,
+     "sha256": "91c0187de4b9cb7622f0770ca298eaee99b4fd26ca3d4767f87a201f205a1d80"
+    },
+    {
+     "file": "exports/v001/preview/sheet_grass.png",
+     "bytes": 2562718,
+     "sha256": "cc14b8dcee2accf983079750530f771a418ff474947bac10cdeb39c5b7f32fb2"
+    },
+    {
+     "file": "exports/v001/preview/sheet_grass_atlas.png",
+     "bytes": 1420751,
+     "sha256": "f65743f279bc30f05ff3d1177bc8a2226add0b677bb51105f5140841dabfb1da"
+    },
+    {
+     "file": "exports/v001/preview/sheet_ground.png",
+     "bytes": 3416940,
+     "sha256": "c15670035a11183639de55a239597ec7439ecb097a9c955af6e3f6510761fc00"
+    },
+    {
+     "file": "exports/v001/preview/td_check.png",
+     "bytes": 1674532,
+     "sha256": "239fd2bb4d9b5e57e321d9bdc880ec61848c89d264fe6ce0a33215e7fad0a6d1"
+    },
+    {
+     "file": "exports/v001/preview/td_check_crop2x.png",
+     "bytes": 332981,
+     "sha256": "5906f86e01f13591b72a17f88904e9cd4193d3e02bf79db55af1d76725aa7a1d"
+    },
+    {
+     "file": "exports/v001/preview/td_check_flora.png",
+     "bytes": 1793310,
+     "sha256": "73672c73f8b3786601c95de65711337cbb4daae77de65c1c11bbacd731a6bf70"
+    },
+    {
+     "file": "exports/v001/preview/td_check_flora_crop2x.png",
+     "bytes": 367106,
+     "sha256": "6bddc6c096dc28584fde3ea9befde7a16e844eaeef605d71105c50aa6f50ac7a"
+    },
+    {
+     "file": "exports/v001/preview/td_check_flora_lod1.png",
+     "bytes": 1793870,
+     "sha256": "ed51fa76adfbd3e3525a94b1d6f53fd5ab4818354966e60076594cd9f41c4851"
+    },
+    {
+     "file": "exports/v001/preview/td_check_lod1.png",
+     "bytes": 1674328,
+     "sha256": "5a652114df2cad820b3b87d81c4d8b79a86054c86b55b562597ade34dd311133"
+    },
+    {
+     "file": "exports/v001/preview/td_check_moss.png",
+     "bytes": 1609871,
+     "sha256": "b45fc1c080cf6fa8f1b097002e5a01ca044ecb1e4601966f49c436014d1aec07"
+    }
+   ]
+  }
+ },
+ "sidecars": [
+  "validation/AP031-flora-receipt-v001.json",
+  "validation/AP031-grass-receipt-v001.json",
+  "validation/AP031-grass-receipt-v002.json",
+  "validation/AP031-ground-detail-receipt-v001.json",
+  "01-design/AP031-atlas-flora-v001.json",
+  "01-design/AP031-atlas-grass-v001.json"
+ ],
+ "licenses": "03-sources/LICENSES.csv",
+ "higgsfield_ledger": "03-higgsfield/ledger.csv",
+ "higgsfield_credits_spent": 4.0,
+ "roundtrip_issues": [],
+ "vertex_colour_contract": "vc1"
+}
