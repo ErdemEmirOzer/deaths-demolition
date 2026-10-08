@@ -29,6 +29,9 @@ namespace DD.Art.Pipeline.EditorTools
     /// contact = within <see cref="ContactHeight"/> and vertical speed ≤ <see cref="ContactVerticalSpeed"/> (P-06 B4 / ZL L1 mask);
     /// the speed = the mean backward speed of the contact point over contact (forward-moving contact samples — a drag — left out
     /// and reported), the two feet averaged. The event labels are checked against the geometric stance and reported.
+    /// Runner feral_A uses the fixed ankle over its original plant → lift event window, matching its authored fixed-ankle
+    /// correction and the IK-off Runner acceptance metric. Both neighbours of each central difference must lie in that window;
+    /// a changing ankle/toe marker or a height mask must not calibrate a different material point for this clip.
     ///
     /// AP-033 rows take the measurement (guard: 0.70–1.15 × spd, else spd + WARNING). AP-022 rows keep their contact spd (live-verified:
     /// zombie_run's PlayMode zero crossing 5.35 vs spd 5.30, WP-071 r24b) — their measurement is logged as the method check.
@@ -179,6 +182,7 @@ namespace DD.Art.Pipeline.EditorTools
             var backs = new List<float>[] { new List<float>(), new List<float>() };
             var label = new float[2];
             double backSum = 0d;
+            bool fixedAnkle = spec.name == C.ZombieRunFeralAV4;
             for (int f = 0; f < 2; f++)
             {
                 float minA = float.MaxValue, minT = float.MaxValue;
@@ -187,12 +191,26 @@ namespace DD.Art.Pipeline.EditorTools
                 int plant = f == 0 ? plantL : plantR, off = f == 0 ? offL : offR;
                 for (int i = 1; i < n - 1; i++)
                 {
-                    float hA = a[f, i].y - minA, hT = t[f, i].y - minT;
-                    bool useToe = hT < hA;
-                    float h = useToe ? hT : hA;
-                    Vector3 prev = useToe ? t[f, i - 1] : a[f, i - 1], next = useToe ? t[f, i + 1] : a[f, i + 1];
-                    float vy = (next.y - prev.y) / (2f * dt);
-                    if (h > ContactHeight || Mathf.Abs(vy) > ContactVerticalSpeed) continue;
+                    Vector3 prev, next;
+                    if (fixedAnkle)
+                    {
+                        if (plant < 0 || off < 0
+                            || !InWindow(phase[i - 1] * cycleFrames, plant, off, cycleFrames)
+                            || !InWindow(phase[i] * cycleFrames, plant, off, cycleFrames)
+                            || !InWindow(phase[i + 1] * cycleFrames, plant, off, cycleFrames)) continue;
+                        prev = a[f, i - 1];
+                        next = a[f, i + 1];
+                    }
+                    else
+                    {
+                        float hA = a[f, i].y - minA, hT = t[f, i].y - minT;
+                        bool useToe = hT < hA;
+                        float h = useToe ? hT : hA;
+                        prev = useToe ? t[f, i - 1] : a[f, i - 1];
+                        next = useToe ? t[f, i + 1] : a[f, i + 1];
+                        float vy = (next.y - prev.y) / (2f * dt);
+                        if (h > ContactHeight || Mathf.Abs(vy) > ContactVerticalSpeed) continue;
+                    }
                     float back = -(next.z - prev.z) / (2f * dt);
                     backs[f].Add(back);
                     backSum += back;
@@ -231,6 +249,7 @@ namespace DD.Art.Pipeline.EditorTools
             r.ok = count[0] >= MinContactSamples && count[1] >= MinContactSamples;
             r.speedMps = r.ok ? 0.5f * (speed[0] + speed[1]) : 0f;
             r.note = r.ok ? "Animator.Update " + SampleHz.ToString("F0", CultureInfo.InvariantCulture) + " Hz × " + MeasureCycles + " cycles" : "too few contact samples";
+            if (fixedAnkle) r.note += "; fixed ankle, original event window, no height mask";
             return r;
         }
 
