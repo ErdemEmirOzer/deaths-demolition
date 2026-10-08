@@ -177,11 +177,11 @@ namespace DD.Prototype.Tests.EditMode
         {
             var p = new InputPreferences
             {
-                StickDeadzone = 0.22f, RumbleEnabled = false, RumbleIntensity = 0.9f,
+                StickDeadzone = 0.22f, RumbleEnabled = false, RumbleIntensity = 1.5f,   // WP-095 K3 (C-00 08.10): the scale's ceiling is 1.0 (was 0.3)
                 AimAssistEnabled = true, AimAssistAngleDegrees = 12f, AimAssistDistance = 40f
             };
             p.Clamp();
-            Assert.AreEqual(InputPreferences.MaxRumbleIntensity, p.RumbleIntensity, 1e-5f, "Rumble tavanı 0.3.");
+            Assert.AreEqual(InputPreferences.MaxRumbleIntensity, p.RumbleIntensity, 1e-5f, "Rumble ölçeği tavanı 1.0 (K3).");
             Assert.AreEqual(InputPreferences.MaxAimAssistAngleDegrees, p.AimAssistAngleDegrees, 1e-5f, "Assist açısı tavanı 6°.");
             Assert.AreEqual(InputPreferences.MaxAimAssistDistance, p.AimAssistDistance, 1e-5f, "Assist mesafesi tavanı 15 m.");
 
@@ -228,6 +228,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(Resources.Load<InputSettingsAsset>(InputSettingsAsset.ResourcePath), "DD_InputSettings asset'i Resources'ta yok.");
             Assert.AreEqual(0.15f, d.StickDeadzone, 1e-5f, "Varsayılan ölü bölge 0.15 (istek).");
             Assert.LessOrEqual(d.RumbleIntensity, InputPreferences.MaxRumbleIntensity);
+            Assert.AreEqual(InputPreferences.DefaultRumbleScale, d.RumbleIntensity, 1e-5f, "WP-095 K3: varsayılan titreşim ölçeği 0.7.");
             Assert.LessOrEqual(d.AimAssistAngleDegrees, InputPreferences.MaxAimAssistAngleDegrees);
             Assert.LessOrEqual(d.AimAssistDistance, InputPreferences.MaxAimAssistDistance);
         }

@@ -167,6 +167,15 @@ namespace DD.Prototype.Feedback.Vfx
             _smoke.Play();
         }
 
+        /// <summary>WP-095: the TD profile's muzzle-light switch × the held classic's row scale (1 for a weapon without a row).</summary>
+        private static float TopDownLightScale()
+        {
+            DD.Prototype.Feedback.FeelProfileTD profile = DD.Prototype.Feedback.FeelProfileTD.Active;
+            if (!profile.muzzleLight) return 0f;
+            DD.Prototype.Feedback.WeaponFeelTD row = profile.Weapon(DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon);
+            return row.label != null ? row.muzzleLightScale : 1f;
+        }
+
         /// <summary>One shot's light and smoke.</summary>
         public void Play(Transform muzzle, VfxWeaponProfile p, bool firstPerson)
         {
@@ -212,7 +221,8 @@ namespace DD.Prototype.Feedback.Vfx
                     m.Fade = p.LightFadeSeconds;
                     // AD B1 SHOULD 11: top-down pools × 0.8 (the character's silhouette first).
                     bool topDown = CameraModeService.Current == CameraMode.TopDown;
-                    m.Intensity = p.LightIntensity * (reduceFlashes ? 0.8f : 1f) * (topDown ? p.LightTopDownScale : 1f) * (firstPerson ? p.LightFirstPersonScale : 1f);
+                    m.Intensity = p.LightIntensity * (reduceFlashes ? 0.8f : 1f) * (topDown ? p.LightTopDownScale : 1f) * (firstPerson ? p.LightFirstPersonScale : 1f)
+                        * (topDown ? TopDownLightScale() : 1f);   // WP-095 (his sözleşmesi §3): the TD profile's switch and row scale
                     if (fresh)
                     {
                         m.Start = now;
@@ -221,7 +231,8 @@ namespace DD.Prototype.Feedback.Vfx
 
                     Light l = m.Light;
                     l.color = p.LightColor;
-                    l.range = p.LightRange;
+                    // WP-095 §3: an automatic's light reaches ≤ 6 m top-down — the aim point (6–12 m out) stays unlit
+                    l.range = topDown && p.Sustained ? Mathf.Min(p.LightRange, DD.Prototype.Feedback.FeelProfileTD.Active.autoLightRangeCapMeters) : p.LightRange;
                     l.shadows = LightShadows.None;   // C-00 30.09: muzzle lights never cast shadows (perf); only the Cinematic explosion light does
                     l.intensity = m.Intensity;
                     l.transform.position = MuzzlePoint(muzzle, firstPerson);
@@ -380,6 +391,8 @@ namespace DD.Prototype.Feedback.Vfx
             using var marker = s_marker.Auto();   // WP-073 §5: per-tier ms, read by ProfilerRecorder (S-10 / tier-ms.md)
             float now = Time.time;
             bool reduceFlashes = GameFeelSettings.FlashScale < 0.99f;
+            // WP-095 §3: top-down sustained fire flickers 0.75–1.0 (less strobe); first / third person keep 0.6–1.0
+            float floor = CameraModeService.Current == CameraMode.TopDown ? DD.Prototype.Feedback.FeelProfileTD.Active.sustainedFlickerFloor : 0.6f;
             for (int i = 0; i < _lights.Length; i++)
             {
                 ref MuzzleLight m = ref _lights[i];
@@ -395,8 +408,8 @@ namespace DD.Prototype.Feedback.Vfx
                 float since = now - m.LastShot;
                 if (m.Sustained && since <= SustainGap)
                 {
-                    // Held trigger: a lit, living muzzle — flicker 0.6–1.0 at 10 Hz, steady 0.8 under reduce flashes.
-                    float flicker = reduceFlashes ? 1f : 0.8f + 0.2f * Mathf.Sin(now * Mathf.PI * 20f);
+                    // Held trigger: a lit, living muzzle — flicker floor–1.0 at 10 Hz, steady 0.8 under reduce flashes.
+                    float flicker = reduceFlashes ? 1f : floor + (1f - floor) * (0.5f + 0.5f * Mathf.Sin(now * Mathf.PI * 20f));
                     l.intensity = m.Intensity * flicker;
                     continue;
                 }
