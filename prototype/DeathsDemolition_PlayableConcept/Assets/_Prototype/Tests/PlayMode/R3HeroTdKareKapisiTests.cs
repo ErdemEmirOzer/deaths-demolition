@@ -38,8 +38,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// by the aim cursor to 0, 45 … 315° clockwise from the screen's up, the camera the game's own): (a) aim rest (the hold at full
     /// weight, facing settled); (b) the recoil's peak — the frame of the largest muzzle / model travel in the chest frame after one
     /// shot, learnt once per weapon from a first shot; (c) the reload's grasp window — every third frame while the magazine part is
-    /// in a hand (WeaponMagazineOwnership owner ≠ Weapon), or between 30 and 70 % of the reload for the shell / Special reloads (the
-    /// Specials have no reload clip in game: their pose is the aim pose, recorded). The frame's state is copied in the render
+    /// in a hand (WeaponMagazineOwnership owner ≠ Weapon), or between 30 and 70 % of the reload for the shell / Special reloads (E5 Specials use FeelEvents-driven v009 reload clips and the same presentation ownership). The frame's state is copied in the render
     /// pipeline's beginCameraRendering for the game camera — after LateUpdate, the state that frame draws — and drawn into the probe
     /// next frame.
     /// </para>
@@ -413,7 +412,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 Kayit k = _kayit[key];
                 if (ReloadPartCalibration.TryGet(key, out _)) Assert.IsTrue(k.PartInHandSeen, key + ": E5 kalibre parça hiçbir yaw'da ele gelmedi");
-                if (!k.PartInHandSeen) Debug.LogWarning("[DD-TEST] r3.g1td.part " + key + ": parça oyunda ele gelmiyor — el–parça ölçülemedi (" + (k.Special ? "Special: oyunda reload klibi / parça bağlama yok" : "klasik: part_mag ele bağlanmadı") + ")");
+                if (!k.PartInHandSeen) Debug.LogWarning("[DD-TEST] r3.g1td.part " + key + ": parça oyunda ele gelmiyor — el–parça ölçülemedi (" + (k.Special ? "Special: E5 reload sunumu / parça olayı gözlenmedi" : "klasik: part_mag ele bağlanmadı") + ")");
             }
 
             // the threshold (G1 = 0 px, K6 gap / exit = 0 px) is reported, not asserted (C-00 08.10: the gate decision is S-06's)
@@ -1561,7 +1560,7 @@ namespace DD.Prototype.Tests.PlayMode
                 written++;
             }
 
-            // the contact sheet: 4 columns, rows of 512 × 256 tiles (order: the 12 weapons, the 4 hand ↔ part, the 2 controls)
+            // the contact sheet: 4 columns, rows of 512 × 256 tiles (order: the 12 weapons, the 7 hand ↔ part, the 2 controls)
             const int cols = 4, half = 256, gap = 4;
             int rows = (sheet.Count + cols - 1) / cols, cw = half * 2 + gap, ch = half + gap, sw = cols * cw, shh = rows * ch;
             var px = new Color32[sw * shh];

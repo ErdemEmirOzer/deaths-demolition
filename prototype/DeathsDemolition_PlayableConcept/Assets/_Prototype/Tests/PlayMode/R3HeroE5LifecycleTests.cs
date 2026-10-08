@@ -58,6 +58,11 @@ namespace DD.Prototype.Tests.PlayMode
                     float t0 = Time.time;
                     while (!body.SpecialMagazineVisual.InHand && runtime.IsReloading && Time.time - t0 < 8f) yield return null;
                     Assert.IsTrue(body.SpecialMagazineVisual.InHand, "canister/cell detach reaches hand");
+                    int layer = body.Animator.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer);
+                    Assert.GreaterOrEqual(layer, 0);
+                    string expected = CharacterAnimatorContract.PlayerWeaponClipV3(body.WeaponAnimSet, "reload_tac");
+                    Assert.IsTrue(System.Array.Exists(body.Animator.GetCurrentAnimatorClipInfo(layer), c => c.clip != null && c.clip.name == expected),
+                        "part timer fallback must not hide a missing v009 reload clip: " + expected);
                     if (exit == 0)
                     {
                         while (runtime.IsReloading && Time.time - t0 < 12f) yield return null;
