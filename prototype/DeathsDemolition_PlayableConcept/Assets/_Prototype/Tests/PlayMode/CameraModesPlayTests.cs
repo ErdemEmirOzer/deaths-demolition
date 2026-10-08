@@ -126,6 +126,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator TP_OmuzUstuBumVeKameraYaw()
@@ -147,6 +148,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(CameraModeService.Settings.ThirdPersonFov, _rig.Camera.fieldOfView, 0.01f, "TP FOV ayardan.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator TP_OmuzDegistirme_TusIleSolaGecer()
@@ -164,6 +166,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(_rig.StablePosition.x, Kok.x, "Omuz değişince kamera -X tarafına geçmeli.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator TP_DuvarItmesi_KameraAslaDuvarIcindeDegil()
@@ -196,6 +199,7 @@ namespace DD.Prototype.Tests.PlayMode
                 "Duvar kalkınca bum yumuşakça geri açılmalı.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator FP_GozNoktasiYatayFovVeMerkezIsini()
@@ -230,6 +234,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(5f, kisa.Distance, 0.001f);
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator FP_GoruntuModeliOverlayKamerasi()
@@ -342,6 +347,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Bakis_FareDeltasiYawVeInvertY()
@@ -370,6 +376,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0f, _rig.ViewPitch, 0.1f, "Y-ters: aynı delta ters yönde.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Gecis_TepedenTPYumusakVeSureIcindeBiter()
@@ -393,6 +400,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(Vector3.Distance(_rig.StablePosition, Kok + Vector3.up * TpPivot), 4f, "Geçiş sonu TP pozu.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Tepkiler_RecoilNisanaGirerKickVeFovPunchGirmez()
@@ -418,6 +426,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(recoilSonra.Direction.y, once.Direction.y, "Recoil yukarı kaldırmalı.");
         }
 
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator R1A17_FPdenCikis_GovdeBasTarafinda20YuzdeGizliKalir()

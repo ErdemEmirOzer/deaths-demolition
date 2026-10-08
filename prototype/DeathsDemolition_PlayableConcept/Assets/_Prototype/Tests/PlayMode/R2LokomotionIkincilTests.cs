@@ -47,7 +47,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// DD_R2_MEASURE_DIR is set, after its source checks and before its threshold assert.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2LokomotionIkincilTests
     {
         public const string L4Name = "DD.Prototype.Tests.PlayMode.R2LokomotionIkincilTests.L4_IkincilHareket_DurusSonrasiOturma";
@@ -85,6 +84,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------------------ L4
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -256,6 +256,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------------------ L5
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

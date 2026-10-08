@@ -19,6 +19,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// WP-070K (C-00 25.09): only the WEAPON's pixels count — S-06's FP arms (FirstPersonArms, same layer) are switched off
     /// for the measurement; the arms may reach under the cluster (C-00 decision), the weapon may not.
     /// </summary>
+    [Category("FPTP")]
     public class CameraViewmodelHudPlayTests
     {
         private const float RefW = 1920f, RefH = 1080f;

@@ -12,7 +12,6 @@ namespace DD.Prototype.Tests.EditMode
     /// share window (8) and its penalty by mode. WP-089 R3 (user 06.10: only TopDown): the TopDown rows stand alone; the TP / FP
     /// rows carry [Category("FPTP")].
     /// </summary>
-    [Category("WP076")]
     public sealed class RearAwarenessTests
     {
         private ThreatSettings _s;
@@ -30,6 +29,7 @@ namespace DD.Prototype.Tests.EditMode
             return ThreatModel.Evaluate(_s, in c, _e, behind.Length, ref st, dt);
         }
 
+        [Category("WP076")]
         [Test]
         [Category("FPTP")]
         public void FP_Aware_Warn_Alert_Tutma()
@@ -46,6 +46,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(-1f, Eval(2, ref st, 0.1f).RearNearestDistance);
         }
 
+        [Category("WP076")]
         [Test]
         public void Tepeden_ArkaSeviyeAsla_OnUyariYok()
         {
@@ -54,6 +55,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0f, _s.RearWarnLeadSeconds[0], "tepeden ön uyarı süresi 0");
         }
 
+        [Category("WP076")]
         [Test]
         [Category("FPTP")]
         public void TP_Cift_ModDegisimiSifirlar()
@@ -66,6 +68,7 @@ namespace DD.Prototype.Tests.EditMode
             CollectionAssert.AreEqual(new[] { 0f, 0.5f, 0.8f }, _s.RearWarnLeadSeconds, "ön uyarı süresi");
         }
 
+        [Category("WP076")]
         [Test]
         public void ArkaDogusPayi_Pencere8_TepedenTavanYok()
         {
@@ -76,6 +79,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0f, RearSpawnShare.Share(8), "kayan pencere");
         }
 
+        [Category("WP076")]
         [Test]
         [Category("FPTP")]
         public void ArkaDogusPayi_TP_FP_Ceza()

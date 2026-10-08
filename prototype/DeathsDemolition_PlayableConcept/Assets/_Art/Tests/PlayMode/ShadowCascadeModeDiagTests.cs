@@ -49,7 +49,6 @@ namespace DD.Art.Tests.PlayMode
     /// contact are the <c>_TPFP</c> tests (<c>[Category("FPTP")]</c>), their TSVs with a <c>-tpfp</c> suffix.</para>
     /// </summary>
     [Explicit("WP-070 S-05 cascade diagnostic: run by full name")]
-    [Category("Diagnostics")]
     public sealed class ShadowCascadeModeDiagTests
     {
         public const string DirVariable = "DD_S05_CASCADE_DIR";
@@ -137,6 +136,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------ table
 
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Kaskad_KademeModTablosu_OlcumYazilir()
@@ -144,6 +144,7 @@ namespace DD.Art.Tests.PlayMode
             return TableRun(TdModes, "cascade-table.tsv");
         }
 
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(120000)]
         [Category("FPTP")]
@@ -210,6 +211,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------ V6 crowd
 
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(1800000)]
         public IEnumerator Kaskad_V6_40Zombi_SayaclarVeKareler()
@@ -218,6 +220,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>The TP / FP rows on the same crowd, then the TP orbit (MUST-2) and the High FP close contact (MUST-3).</summary>
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(1800000)]
         [Category("FPTP")]

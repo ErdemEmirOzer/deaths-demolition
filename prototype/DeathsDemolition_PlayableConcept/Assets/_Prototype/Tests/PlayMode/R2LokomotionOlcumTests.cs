@@ -49,7 +49,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// whose source is missing is not written (BLOCKED by name) and the test fails naming it, after every other gate was written.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2LokomotionOlcumTests
     {
         public const string TestName = "DD.Prototype.Tests.PlayMode.R2LokomotionOlcumTests.L1_L3_Lokomotion_8Yon_KalkisDurusDonus";
@@ -181,6 +180,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Sur(45, Vector2.zero, -1, null);
         }
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

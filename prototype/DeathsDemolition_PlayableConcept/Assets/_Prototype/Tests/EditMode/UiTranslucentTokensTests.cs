@@ -27,7 +27,6 @@ namespace DD.Prototype.Tests.EditMode
     /// Every ratio is logged as "[DD-TEST] d1.* / d2.*".
     /// </summary>
     [TestFixture]
-    [Category("WP068")]
     public sealed class UiTranslucentTokensTests
     {
         private const float Text = 4.5f;
@@ -137,6 +136,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== 0 · the pinned composite
 
+        [Category("WP068")]
         [Test]
         public void Kompozit_DogrusalIsikta_Sabitlendi()
         {
@@ -147,6 +147,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== (b) (c) (f) · surfaces
 
+        [Category("WP068")]
         [Test]
         public void Zarflar_Parilti_Washi_Kumiko_Tutma_DogrusalIsikta()
         {
@@ -200,6 +201,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== (e) · scrims under modal cards
 
+        [Category("WP068")]
         [Test]
         public void ModalPerdeleri_KartSinirindeGriRampaUstunde_3e1()
         {
@@ -242,6 +244,7 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== (d) · lantern
 
+        [Category("WP068")]
         [Test]
         public void FenerNefesi_AltinBandininDisinda()
         {
@@ -283,6 +286,7 @@ namespace DD.Prototype.Tests.EditMode
         // ================================================================== (a) · T10 on the menu plate
 
         /// <summary>S-05's clamp holds the third at the fixed 0.55 (AD §14 MUST-5): TextSecondary ≥ 4.5 on its brightest texel.</summary>
+        [Category("WP068")]
         [Test]
         public void T10_SolUcteBir_Sabit055_KenetliPlakada()
         {
@@ -323,6 +327,7 @@ namespace DD.Prototype.Tests.EditMode
         /// A spine caption whose texels reach past S-05's clamp band (menu_plates.json text_safe) is logged as pending the
         /// plate re-clamp - the fixed 0.55 cannot carry an unclamped plate - never counted as a pass.
         /// </summary>
+        [Category("WP068")]
         [Test]
         public void T10_MenuPlakasi_HerKelimeEnParlakTekselde_Matris()
         {
@@ -705,6 +710,7 @@ namespace DD.Prototype.Tests.EditMode
         /// R3 (the user 06.10: top-down only - its tests run alone): the top-down rear arc and the damage wedge in linear light;
         /// the first / third-person rows (HudRearEdge FP / TP, the reticle's Sumi twin) stand in the FPTP twin below.
         /// </summary>
+        [Category("WP068")]
         [Test]
         public void D2_ArkaKilCizgi_HasarKamasi_DogrusalIsikta()
         {
@@ -732,6 +738,7 @@ namespace DD.Prototype.Tests.EditMode
         /// D2 on the first / third-person HUD lines: the rear-edge arc at FP 0.6 / TP 0.45, and the reticle's Sumi twin (only
         /// those modes draw it). Out of scope since 06.10, kept under FPTP.
         /// </summary>
+        [Category("WP068")]
         [Test]
         [Category("FPTP")]
         public void D2_ArkaKilCizgi_NisangahIkizi_FpTp_DogrusalIsikta()

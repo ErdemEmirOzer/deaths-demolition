@@ -29,7 +29,6 @@ namespace DD.Art.Tests.PlayMode
     /// <c>[Category("FPTP")]</c> test, which main-ci's core leaves out.</para>
     /// </summary>
     [TestFixture]
-    [Category("WP070")]
     public sealed class QualityModeApplierPlayTests
     {
         private const float SahneZamanAsimi = 60f;
@@ -38,6 +37,7 @@ namespace DD.Art.Tests.PlayMode
         private static readonly Regex CascadeLine = new Regex(@"^\s*m_ShadowCascadeCount:\s*(\d+)\s*$", RegexOptions.Multiline);
         private static readonly Regex DistanceLine = new Regex(@"^\s*m_ShadowDistance:\s*([0-9.]+)\s*$", RegexOptions.Multiline);
 
+        [Category("WP070")]
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator Kaskad_KademeVeModOlaylari_ProfilKaskadiUygulanir_GeriYuklemeDosyaDegeri()
@@ -46,6 +46,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>The same matrix over TP and FP (the profile edit on FP), outside the Top Down suite.</summary>
+        [Category("WP070")]
         [UnityTest]
         [Timeout(180000)]
         [Category("FPTP")]
@@ -172,6 +173,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(modeBefore, CameraModeService.Current, "kamera modu eski hâline dönmedi");
         }
 
+        [Category("WP070")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Kaskad_MenuArkaPlani_WorldViewerAktif_VarlikDegerleriKalir()

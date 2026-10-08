@@ -18,7 +18,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// 1.5° cap and never moves the aim ray (J1), and every Arsenal weapon has a camera row (J7). Fixture: CameraModesPlayTests.
     /// </summary>
     [TestFixture]
-    [Category("WP073")]
     public sealed class Wp073CameraFeelTests
     {
         private static readonly Vector3 Kok = new Vector3(-360f, 0f, 360f);
@@ -89,6 +88,8 @@ namespace DD.Prototype.Tests.PlayMode
             return Mathf.Asin(Mathf.Clamp(ray.Direction.y, -1f, 1f)) * Mathf.Rad2Deg;
         }
 
+        [Category("WP073")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Recoil_KritikSonumluYay_SilahToparlanmasinda()
@@ -113,6 +114,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(sr, 0.5f, "sr_1 daha yavaş toparlanır (0,90 s)");
         }
 
+        [Category("WP073")]
+        [Category("FPTP")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator FP_DinlenmeSabit_YururkenAdimBob_AzaltilmisHareketSifir()
@@ -166,6 +169,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(fov0, _rig.GetComponentInChildren<Camera>().fieldOfView, 0.01f, "azaltılmış harekette FOV punch 0");
         }
 
+        [Category("WP073")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator J5_AyakTemasiBobCukuru_HitStopModTablosu()
@@ -191,6 +195,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0.05f, FeelEventRouter.ModeHitStop(ImpactFeelId.Death, 0.05f), 1e-4f, "tepeden: yazılan değer");
         }
 
+        [Category("WP073")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator Atis_RollTavaninda_NisanOynamaz_HerSilahaSatir()
