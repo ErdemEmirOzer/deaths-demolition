@@ -1210,21 +1210,28 @@ namespace DD.Prototype.Tests.PlayMode
             return m;
         }
 
-        /// <summary>Per-frame CSV of the cause / control segments (walk_fwd, run_fwd, run_back and the course K controls) when DD_LOKO_DUMP_DIR is set.</summary>
+        /// <summary>Diagnostic CSV: existing cause/control segments, aim swing, and every course B transition. Acceptance is unchanged.</summary>
         private void Dok(List<Parca> parcalar, int iIkOffRun, int iIkOffWalk, int iRate)
         {
             string dir = Environment.GetEnvironmentVariable("DD_LOKO_DUMP_DIR");
             if (string.IsNullOrEmpty(dir)) return;
             var sec = new HashSet<int> { 0, 8, 16, 20, iIkOffRun, iIkOffWalk, iRate };
+            for (int i = 0; i < parcalar.Count; i++)
+                if (parcalar[i].Tur == Tur.NisanSalinim || parcalar[i].Tur == Tur.Kalkis || parcalar[i].Tur == Tur.Durus ||
+                    parcalar[i].Tur == Tur.Pivot180 || parcalar[i].Tur == Tur.Kesme90) sec.Add(i);
             var sb = new StringBuilder("label,since,frame,valid,phaseL,phaseR,contactL,contactR,poseL,poseR,r2L,r2R,animSoleL,animSoleR,shownSoleL,shownSoleR,animVyL,animVyR," +
                                        "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed,ownerRate,ikForce,ikAdapterServed,ikWeight," +
                                        "unityFrame,rawGoalFrame,rawGoalSameFrameL,rawGoalSameFrameR,rawGoalVelocityValidL,rawGoalVelocityValidR," +
                                        "rawGoalLx,rawGoalLy,rawGoalLz,rawGoalRx,rawGoalRy,rawGoalRz,rawGoalVxL,rawGoalVyL,rawGoalVzL,rawGoalVxR,rawGoalVyR,rawGoalVzR," +
-                                       "rawGoalMinusShownBoneLx,rawGoalMinusShownBoneLy,rawGoalMinusShownBoneLz,rawGoalMinusShownBoneRx,rawGoalMinusShownBoneRy,rawGoalMinusShownBoneRz,oldEstimateVyL,oldEstimateVyR\n");
+                                       "rawGoalMinusShownBoneLx,rawGoalMinusShownBoneLy,rawGoalMinusShownBoneLz,rawGoalMinusShownBoneRx,rawGoalMinusShownBoneRy,rawGoalMinusShownBoneRz,oldEstimateVyL,oldEstimateVyR," +
+                                       "diagCaptured,dt,baseCurrentHash,baseCurrentNorm,baseNextHash,baseNextNorm,baseTransition,baseTransProgress,baseTransitionHash,layersJson," +
+                                       "v4Kind,v4Id,v4T,v4DeltaT,v4DeltaValid,v4EntryT,v4ClipParam,v4TimeParam,v4NaturalDeltaT,v4StopTD,v4AimDriven,locoSpeed,moveX,moveY," +
+                                       "rootQx,rootQy,rootQz,rootQw,worstLimbBone,worstLimbDeg,worstLimbPrevQx,worstLimbPrevQy,worstLimbPrevQz,worstLimbPrevQw,worstLimbQx,worstLimbQy,worstLimbQz,worstLimbQw," +
+                                       "worstTorsoBone,worstTorsoDeg,worstTorsoPrevQx,worstTorsoPrevQy,worstTorsoPrevQz,worstTorsoPrevQw,worstTorsoQx,worstTorsoQy,worstTorsoQz,worstTorsoQw,releaseStretch,releaseGate,releaseLift,releasePlant\n");
             foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
             {
                 if (!sec.Contains(k.Etiket)) continue;
-                sb.Append(parcalar[k.Etiket].Ad).Append(',').Append(k.Since).Append(',').Append(k.Frame).Append(',').Append(k.Gecerli ? 1 : 0).Append(',')
+                sb.Append(Csv(parcalar[k.Etiket].Ad)).Append(',').Append(k.Since).Append(',').Append(k.Frame).Append(',').Append(k.Gecerli ? 1 : 0).Append(',')
                   .Append(F3(k.FazL)).Append(',').Append(F3(k.FazR)).Append(',').Append(k.TemasL ? 1 : 0).Append(',').Append(k.TemasR ? 1 : 0).Append(',')
                   .Append(k.TemasPozL ? 1 : 0).Append(',').Append(k.TemasPozR ? 1 : 0).Append(',').Append(k.TemasEskiL ? 1 : 0).Append(',').Append(k.TemasEskiR ? 1 : 0).Append(',')
                   .Append(F(k.AnimGapL)).Append(',').Append(F(k.AnimGapR)).Append(',').Append(F(k.GapL)).Append(',').Append(F(k.GapR)).Append(',')
@@ -1240,13 +1247,36 @@ namespace DD.Prototype.Tests.PlayMode
                   .Append(F3(k.RawGoalVR.x)).Append(',').Append(F3(k.RawGoalVR.y)).Append(',').Append(F3(k.RawGoalVR.z)).Append(',')
                   .Append(F(k.RawGoalMinusShownBoneL.x)).Append(',').Append(F(k.RawGoalMinusShownBoneL.y)).Append(',').Append(F(k.RawGoalMinusShownBoneL.z)).Append(',')
                   .Append(F(k.RawGoalMinusShownBoneR.x)).Append(',').Append(F(k.RawGoalMinusShownBoneR.y)).Append(',').Append(F(k.RawGoalMinusShownBoneR.z)).Append(',')
-                  .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append('\n');
+                  .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append(',')
+                  .Append(k.DiagCaptured ? 1 : 0).Append(',').Append(DR(k.Dt)).Append(',').Append(k.BaseCurrentHash).Append(',').Append(DR(k.BaseCurrentNorm)).Append(',')
+                  .Append(k.BaseNextHash).Append(',').Append(DR(k.BaseNextNorm)).Append(',').Append(k.BaseTransition ? 1 : 0).Append(',').Append(DR(k.BaseTransProgress)).Append(',')
+                  .Append(k.BaseTransitionHash).Append(',').Append(Csv(k.LayersJson)).Append(',').Append(k.V4Kind).Append(',').Append(k.V4Id).Append(',').Append(DR(k.V4T)).Append(',')
+                  .Append(DR(k.V4DeltaT)).Append(',').Append(k.V4DeltaValid ? 1 : 0).Append(',').Append(DR(k.V4EntryT)).Append(',').Append(k.V4ClipParam).Append(',').Append(DR(k.V4TimeParam)).Append(',')
+                  .Append(DR(k.V4NaturalDeltaT)).Append(',').Append(DR(k.V4StopTD)).Append(',').Append(k.V4AimDriven ? 1 : 0).Append(',').Append(DR(k.LocoSpeed)).Append(',')
+                  .Append(DR(k.MoveX)).Append(',').Append(DR(k.MoveY)).Append(',');
+                AppendQ(sb, k.RootRotation);
+                AppendWorst(sb, k.WorstLimbBone, k.WorstLimbDeg, k.WorstLimbPrev, k.WorstLimbNow);
+                AppendWorst(sb, k.WorstTorsoBone, k.WorstTorsoDeg, k.WorstTorsoPrev, k.WorstTorsoNow);
+                sb.Append(',').Append(k.RelS).Append(',').Append(k.RelG).Append(',').Append(k.RelL).Append(',').Append(k.RelP).Append('\n');
             }
 
             System.IO.Directory.CreateDirectory(dir);
             string path = System.IO.Path.Combine(dir, "loko-frames.csv");
             System.IO.File.WriteAllText(path, sb.ToString());
             Debug.Log("[DD-TEST] wp082.dump " + path + " rows " + sb.Length);
+        }
+
+        // Compact layer JSON and asset/layer names are CSV-escaped; old simple labels retain their spelling.
+        private static string Csv(string value) => string.IsNullOrEmpty(value) ? "" :
+            value.IndexOf(',') < 0 && value.IndexOf('"') < 0 && value.IndexOf('\r') < 0 && value.IndexOf('\n') < 0
+                ? value : "\"" + value.Replace("\"", "\"\"") + "\"";
+        private static string DR(float value) => value.ToString("R", CultureInfo.InvariantCulture);
+        private static void AppendQ(StringBuilder sb, Quaternion q) =>
+            sb.Append(DR(q.x)).Append(',').Append(DR(q.y)).Append(',').Append(DR(q.z)).Append(',').Append(DR(q.w));
+        private static void AppendWorst(StringBuilder sb, int bone, float degrees, Quaternion previous, Quaternion current)
+        {
+            sb.Append(',').Append(Csv(bone >= 0 ? Kemikler[bone].ToString() : "")).Append(',').Append(DR(degrees)).Append(',');
+            AppendQ(sb, previous); sb.Append(','); AppendQ(sb, current);
         }
 
         // --------------------------------------------------------------------------------------------------- the "önce / sonra" table
@@ -1486,6 +1516,13 @@ namespace DD.Prototype.Tests.PlayMode
             public int UnityFrame, RawGoalFrame;
             public bool RawGoalL, RawGoalR, RawGoalVelocityL, RawGoalVelocityR;
             public Vector3 RawGoalPosL, RawGoalPosR, RawGoalVL, RawGoalVR, RawGoalMinusShownBoneL, RawGoalMinusShownBoneR;
+            // Diagnostic-only final-pose / Animator data; never used by acceptance calculations.
+            public bool DiagCaptured, BaseTransition, V4DeltaValid, V4AimDriven;
+            public int BaseCurrentHash, BaseNextHash, BaseTransitionHash, V4Kind, V4Id, V4ClipParam, WorstLimbBone, WorstTorsoBone;
+            public float BaseCurrentNorm, BaseNextNorm, BaseTransProgress, V4T, V4DeltaT, V4EntryT, V4TimeParam, V4NaturalDeltaT, V4StopTD;
+            public float LocoSpeed, MoveX, MoveY, WorstLimbDeg, WorstTorsoDeg;
+            public Quaternion RootRotation, WorstLimbPrev, WorstLimbNow, WorstTorsoPrev, WorstTorsoNow;
+            public string LayersJson;
             public bool IkServed;
             public int IkForce;                   // actual static override in this sampled frame (control b)
             public bool IkAdapterServed;          // raw Served, including a solve before its blend weight reaches 0.001
@@ -1523,6 +1560,17 @@ namespace DD.Prototype.Tests.PlayMode
         private sealed class FazKlip { public float P; public int PL, OL, PR, OR; public bool Ayakta; }
         private readonly Dictionary<AnimationClip, FazKlip> _faz = new Dictionary<AnimationClip, FazKlip>();
         private readonly List<AnimatorClipInfo> _ci = new List<AnimatorClipInfo>(16);
+        private readonly List<AnimatorClipInfo> _diagClips = new List<AnimatorClipInfo>(16);
+        private bool _diagEnabled;
+        [Serializable] private sealed class DiagClip { public string name; public int instanceId; public float weight; }
+        [Serializable] private sealed class DiagLayer
+        {
+            public int index, currentHash, nextHash;
+            public string name;
+            public float weight;
+            public DiagClip[] currentClips, nextClips;
+        }
+        [Serializable] private sealed class DiagLayers { public DiagLayer[] layers; }
 
         private Animator _anim;
         private Transform _govde;
@@ -1558,6 +1606,7 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
+            _diagEnabled = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DD_LOKO_DUMP_DIR"));
             _anim = anim;
             _govde = govde;
             _ik = ik;
@@ -1765,6 +1814,64 @@ namespace DD.Prototype.Tests.PlayMode
             return float.NaN;
         }
 
+        // Existing CSV opt-in only; allocating non-performance diagnostics, sampled in final LateUpdate.
+        // No assumption that GetBoneTransform in OnAnimatorIK is this frame's pre-solve pose.
+        private void CaptureDiagnostics(ref Kare k, Transform root)
+        {
+            k.DiagCaptured = true;
+            AnimatorStateInfo current = _anim.GetCurrentAnimatorStateInfo(0);
+            k.BaseCurrentHash = current.fullPathHash; k.BaseCurrentNorm = current.normalizedTime;
+            k.BaseTransition = _anim.IsInTransition(0);
+            k.BaseNextNorm = k.BaseTransProgress = float.NaN;
+            if (k.BaseTransition) {
+                AnimatorStateInfo next = _anim.GetNextAnimatorStateInfo(0);
+                AnimatorTransitionInfo transition = _anim.GetAnimatorTransitionInfo(0);
+                k.BaseNextHash = next.fullPathHash; k.BaseNextNorm = next.normalizedTime;
+                k.BaseTransProgress = transition.normalizedTime; k.BaseTransitionHash = transition.fullPathHash;
+            }
+            var layers = new DiagLayer[_anim.layerCount];
+            for (int layer = 0; layer < layers.Length; layer++) {
+                bool transitioning = _anim.IsInTransition(layer);
+                layers[layer] = new DiagLayer { index = layer, name = _anim.GetLayerName(layer), weight = _anim.GetLayerWeight(layer),
+                    currentHash = _anim.GetCurrentAnimatorStateInfo(layer).fullPathHash,
+                    nextHash = transitioning ? _anim.GetNextAnimatorStateInfo(layer).fullPathHash : 0,
+                    currentClips = ReadDiagnosticClips(layer, false), nextClips = transitioning ? ReadDiagnosticClips(layer, true) : new DiagClip[0] };
+            }
+            k.LayersJson = JsonUtility.ToJson(new DiagLayers { layers = layers });
+            k.LocoSpeed = _anim.GetFloat(C.LocoSpeed); k.MoveX = _anim.GetFloat(C.MoveX); k.MoveY = _anim.GetFloat(C.MoveY);
+            k.V4ClipParam = _anim.GetInteger(LocomotionV4.ClipParam); k.V4TimeParam = _anim.GetFloat(LocomotionV4.TimeParam);
+            k.V4Id = LocomotionV4.None; k.V4T = k.V4DeltaT = k.V4EntryT = k.V4NaturalDeltaT = k.V4StopTD = float.NaN;
+            if (_pv != null) {
+                LocomotionV4Clock clock = _pv.V4Clock;
+                k.V4Kind = (int)clock.Current; k.V4Id = clock.Id; k.V4T = clock.T;
+                k.V4EntryT = _pv.V4Events.EntryT; k.V4AimDriven = _pv.V4Events.AimDriven;
+                if (clock.Current != LocomotionV4Clock.Kind.None && _pv.V4Tables != null && _pv.V4Tables.Has(clock.Id)) {
+                    k.V4NaturalDeltaT = k.Dt / Mathf.Max(0.05f, _pv.V4Tables.Seconds(clock.Id));
+                    if (clock.Current == LocomotionV4Clock.Kind.Stop)
+                        k.V4StopTD = _pv.V4Tables.StopTimeAt(clock.Id, k.LocoSpeed * k.LocoSpeed / (2f * Mathf.Max(0.1f, _pv.V4Deceleration)));
+                    if (Kareler.Count > 0) {
+                        Kare previous = Kareler[Kareler.Count - 1];
+                        k.V4DeltaValid = previous.DiagCaptured && previous.UnityFrame == k.UnityFrame - 1 &&
+                            previous.V4Id == k.V4Id && previous.V4Kind == k.V4Kind && k.V4ClipParam == LocomotionV4.None;
+                        if (k.V4DeltaValid) k.V4DeltaT = k.V4T - previous.V4T;
+                    }
+                }
+            }
+            k.RootRotation = root.rotation;
+            k.WorstLimbBone = k.WorstTorsoBone = -1;
+            k.WorstLimbDeg = k.WorstTorsoDeg = float.NaN;
+        }
+        private DiagClip[] ReadDiagnosticClips(int layer, bool next)
+        {
+            if (next) _anim.GetNextAnimatorClipInfo(layer, _diagClips); else _anim.GetCurrentAnimatorClipInfo(layer, _diagClips);
+            var clips = new DiagClip[_diagClips.Count];
+            for (int i = 0; i < clips.Length; i++) {
+                AnimatorClipInfo info = _diagClips[i];
+                clips[i] = new DiagClip { name = info.clip != null ? info.clip.name : "", instanceId = info.clip != null ? info.clip.GetInstanceID() : 0, weight = info.weight };
+            }
+            return clips;
+        }
+
         private void LateUpdate()
         {
             if (!_bagli || _anim == null || _footL == null || _footR == null) return;
@@ -1854,6 +1961,8 @@ namespace DD.Prototype.Tests.PlayMode
                 if (k.BaslangicR) _onR++;
             }
 
+            if (_diagEnabled) CaptureDiagnostics(ref k, root);
+
             // bone rotation change in the root's space, °/frame at 60 fps
             float scale = dt > 1e-6f ? (1f / R2LokomotionOlcumTests.Fps) / dt : 0f;
             for (int b = 0; b < _bones.Length; b++)
@@ -1862,6 +1971,17 @@ namespace DD.Prototype.Tests.PlayMode
                 if (t == null) { Derece.Add(float.NaN); continue; }
                 Quaternion q = inv * t.rotation;
                 Derece.Add(k.Gecerli ? Quaternion.Angle(_prevRot[b], q) * scale : float.NaN);
+                if (_diagEnabled && k.Gecerli) {
+                    float degrees = Derece[Derece.Count - 1];   // exact existing acceptance sample
+                    if (!float.IsNaN(degrees)) {
+                        if (b < R2LokomotionOlcumTests.UzuvSayisi && (k.WorstLimbBone < 0 || degrees > k.WorstLimbDeg)) {
+                            k.WorstLimbBone = b; k.WorstLimbDeg = degrees; k.WorstLimbPrev = _prevRot[b]; k.WorstLimbNow = q;
+                        }
+                        else if (b >= R2LokomotionOlcumTests.UzuvSayisi && (k.WorstTorsoBone < 0 || degrees > k.WorstTorsoDeg)) {
+                            k.WorstTorsoBone = b; k.WorstTorsoDeg = degrees; k.WorstTorsoPrev = _prevRot[b]; k.WorstTorsoNow = q;
+                        }
+                    }
+                }
                 _prevRot[b] = q;
             }
 
