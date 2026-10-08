@@ -900,7 +900,19 @@ namespace DD.Prototype.Characters
             CharacterAnimationSet.Entry entry = _animation.Find(clip);
             float clipSeconds = entry?.seconds ?? 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
-            _animator.SetTrigger(ReloadId);
+            if (_specialReload && ResolveOverrideLayer() >= 0)
+            {
+                // A gameplay-started Special reload owns the upper layer. Pickup's exit
+                // transitions have interruption disabled and can still be latched while
+                // EquipSpecialV3 changes SwHold/AOC; a Reload trigger alone cannot replace
+                // that transition in time for the authored magazine beats. Select the
+                // same v3 reload state explicitly and clear any pending pickup request.
+                _animator.ResetTrigger(PickupId);
+                _animator.ResetTrigger(ReloadId);
+                _animator.CrossFadeInFixedTime(empty ? CharacterAnimatorContract.ReloadEmptyState : CharacterAnimatorContract.ReloadTacState,
+                    0.05f, _overrideLayer, 0f);
+            }
+            else _animator.SetTrigger(ReloadId);
             Matrix4x4? partMatrix = ReloadPartCalibration.TryGet(WeaponAnimSet, out Matrix4x4 m) ? m : (Matrix4x4?)null;
             if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip, partMatrix, _specialReload ? _specialMagazine : null);
         }
