@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -34,6 +35,7 @@ namespace DD.Prototype.Feedback.Vfx.Editor
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.textureType = TextureImporterType.Default; importer.sRGBTexture = false;
                 importer.alphaIsTransparency = false; importer.mipmapEnabled = true;
+                importer.streamingMipmaps = false; importer.anisoLevel = 1;
                 importer.wrapMode = TextureWrapMode.Clamp; importer.filterMode = FilterMode.Trilinear;
                 importer.maxTextureSize = 1024; importer.textureCompression = TextureImporterCompression.CompressedHQ;
                 bool time = Textures[i].EndsWith("_Time", StringComparison.Ordinal);
@@ -42,7 +44,12 @@ namespace DD.Prototype.Feedback.Vfx.Editor
                 importer.alphaTestReferenceValue = .5f;
                 var platform = importer.GetDefaultPlatformTextureSettings();
                 platform.format = time ? TextureImporterFormat.BC4 : TextureImporterFormat.BC7;
-                platform.maxTextureSize = 1024; importer.SetPlatformTextureSettings(platform);
+                platform.maxTextureSize = 1024; platform.textureCompression = TextureImporterCompression.CompressedHQ;
+                importer.SetPlatformTextureSettings(platform);
+                var standalone = importer.GetPlatformTextureSettings("Standalone");
+                standalone.overridden = true; standalone.maxTextureSize = 1024;
+                standalone.format = platform.format; standalone.textureCompression = TextureImporterCompression.CompressedHQ;
+                importer.SetPlatformTextureSettings(standalone);
                 importer.SaveAndReimport();
             }
             EnsureFolder(MaterialRoot);
@@ -66,6 +73,49 @@ namespace DD.Prototype.Feedback.Vfx.Editor
                 EditorUtility.SetDirty(material);
             }
             AssetDatabase.SaveAssets();
+            ValidateImports();
+        }
+        [Serializable] private sealed class ImportRow
+        {
+            public string path;
+            public bool linear, clamp, resident, alpha, mips, coverage, valid;
+            public int defaultFormat, standaloneFormat, compression;
+        }
+        [Serializable] private sealed class ImportEvidence
+        {
+            public string completedUtc;
+            public bool valid;
+            public ImportRow[] textures;
+        }
+        public static void ValidateImports()
+        {
+            var evidence = new ImportEvidence { completedUtc = DateTime.UtcNow.ToString("O"), valid = true,
+                textures = new ImportRow[Textures.Length] };
+            for (int i = 0; i < Textures.Length; i++)
+            {
+                string path = TextureRoot + "/" + Textures[i] + ".png";
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                bool time = Textures[i].EndsWith("_Time", StringComparison.Ordinal);
+                var standalone = importer.GetPlatformTextureSettings("Standalone");
+                var row = new ImportRow {
+                    path = path, linear = !importer.sRGBTexture,
+                    clamp = importer.wrapModeU == TextureWrapMode.Clamp && importer.wrapModeV == TextureWrapMode.Clamp,
+                    resident = !importer.streamingMipmaps, mips = importer.mipmapEnabled,
+                    alpha = importer.alphaSource == (time ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput),
+                    coverage = importer.mipMapsPreserveCoverage == (i == 7),
+                    defaultFormat = (int)importer.GetDefaultPlatformTextureSettings().format,
+                    standaloneFormat = (int)standalone.format, compression = (int)importer.textureCompression };
+                int format = (int)(time ? TextureImporterFormat.BC4 : TextureImporterFormat.BC7);
+                row.valid = row.linear && row.clamp && row.resident && row.mips && row.alpha && row.coverage
+                    && row.defaultFormat == format && standalone.overridden && row.standaloneFormat == format
+                    && importer.textureCompression == TextureImporterCompression.CompressedHQ;
+                evidence.textures[i] = row; evidence.valid &= row.valid;
+            }
+            string json = JsonUtility.ToJson(evidence, true);
+            string output = Environment.GetEnvironmentVariable("DD_AP037_VALIDATION_OUT");
+            if (!string.IsNullOrEmpty(output)) { Directory.CreateDirectory(Path.GetDirectoryName(output)); File.WriteAllText(output, json); }
+            Debug.Log("[AP037] import validation " + json);
+            if (!evidence.valid) throw new InvalidOperationException("AP037 actual importer contract failed; do not build.");
         }
         private static void EnsureFolder(string path)
         {

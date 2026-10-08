@@ -887,7 +887,13 @@ namespace DD.Prototype.Tests.PlayMode
         {
             int found = 0;
             foreach (MeshRenderer renderer in _renderers)
-                if (renderer.enabled && renderer.sharedMaterial == material) { Assert.That(Tint(renderer), Is.EqualTo(tint)); found++; }
+                if (renderer.enabled && renderer.sharedMaterial == material)
+                {
+                    Color actual = Tint(renderer);
+                    Assert.That(Vector4.Distance((Vector4)actual, (Vector4)tint), Is.LessThan(1e-6f),
+                        "MPB round-trip float precision; authored tint must remain within one millionth.");
+                    found++;
+                }
             Assert.That(found, Is.GreaterThan(0));
         }
 

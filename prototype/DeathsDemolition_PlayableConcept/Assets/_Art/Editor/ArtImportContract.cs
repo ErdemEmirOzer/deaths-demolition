@@ -840,7 +840,9 @@ namespace DD.Art.Pipeline.EditorTools
         {
             if (assetPath == null || !assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return false;
             string p = assetPath.Replace('\\', '/');
-            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal);
+            // AP037 brush RGBA/time masks own linear/clamp/BC7-BC4 imports via their explicit intake.
+            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal)
+                   || p.StartsWith(ArtRoot + "/VFX/AP037/v001.1/", StringComparison.Ordinal);
         }
 
         // ------------------------------------------------------------------ WP-075 light cookies

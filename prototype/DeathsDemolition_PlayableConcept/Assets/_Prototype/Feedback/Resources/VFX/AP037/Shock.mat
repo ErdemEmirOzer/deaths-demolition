@@ -33,11 +33,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _UseTime: 1
-    - _InkCap: 0
-    - _Soft: 0.06
     - _Alpha: 1
+    - _InkCap: 0
     - _Reveal: 1
+    - _Soft: 0.06
+    - _UseTime: 1
     - _WetScale: 1
     m_Colors:
     - _AtlasUV: {r: 1, g: 1, b: 0, a: 0}
