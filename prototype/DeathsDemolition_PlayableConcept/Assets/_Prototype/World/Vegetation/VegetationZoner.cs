@@ -326,10 +326,12 @@ namespace DD.Prototype.World.Vegetation
 
         // ------------------------------------------------------------------ zone helpers
 
-        /// <summary>A plaza cell a joint tuft may grow in: ground, not path / water / excluded / roofed, no solid obstacle (the plaza flag is allowed).</summary>
+        /// <summary>A zone-13 cell on the real plaza may retain the paving's Path flag; all safety exclusions still apply.</summary>
         private static bool JointGrowable(VegetationGrid grid, int i)
         {
-            const ushort blocked = (ushort)(VegetationGrid.Flag.Path | VegetationGrid.Flag.Water | VegetationGrid.Flag.Excluded | VegetationGrid.Flag.Roofed);
+            bool plazaJoint = grid.Zone[i] == (byte)VegetationZone.PlazaJoint && grid.Has(i, VegetationGrid.Flag.Plaza);
+            if (!plazaJoint) return false;
+            const ushort blocked = (ushort)(VegetationGrid.Flag.Water | VegetationGrid.Flag.Excluded | VegetationGrid.Flag.Roofed);
             if ((grid.Flags[i] & (ushort)VegetationGrid.Flag.Ground) == 0 || (grid.Flags[i] & blocked) != 0) return false;
             return !VegetationGrid.IsSolid((VegetationObstacle)grid.Obstacle[i]);
         }
