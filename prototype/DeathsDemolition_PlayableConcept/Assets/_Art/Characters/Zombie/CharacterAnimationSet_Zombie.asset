@@ -30,6 +30,20 @@ MonoBehaviour:
     frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_armorbreak_leg
@@ -43,6 +57,20 @@ MonoBehaviour:
     frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_armorbreak_torso
@@ -56,6 +84,20 @@ MonoBehaviour:
     frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_attack_lunge
@@ -69,6 +111,20 @@ MonoBehaviour:
     frames: 30
     events: hit_window_start=10;hit_window_end=13
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_attack_overhead
@@ -82,6 +138,20 @@ MonoBehaviour:
     frames: 73
     events: hit_window_start=35;hit_window_end=40
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_attack_sweep
@@ -95,6 +165,20 @@ MonoBehaviour:
     frames: 51
     events: hit_window_start=24;hit_window_end=30
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_attack_swipe
@@ -108,6 +192,20 @@ MonoBehaviour:
     frames: 34
     events: hit_window_start=16;hit_window_end=20
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_backward
@@ -121,6 +219,20 @@ MonoBehaviour:
     frames: 36
     events: death_end=35
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_forward
@@ -134,6 +246,20 @@ MonoBehaviour:
     frames: 36
     events: death_end=35
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_kneel
@@ -147,6 +273,20 @@ MonoBehaviour:
     frames: 44
     events: death_end=43
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_side
@@ -160,6 +300,20 @@ MonoBehaviour:
     frames: 40
     events: death_end=39
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_side_R
@@ -173,6 +327,20 @@ MonoBehaviour:
     frames: 44
     events: death_end=43
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_special_A
@@ -186,6 +354,20 @@ MonoBehaviour:
     frames: 36
     events: death_end=35
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_special_B
@@ -199,6 +381,20 @@ MonoBehaviour:
     frames: 40
     events: death_end=39
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_death_ultra
@@ -212,6 +408,20 @@ MonoBehaviour:
     frames: 60
     events: death_end=59
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_back_elite
@@ -225,6 +435,20 @@ MonoBehaviour:
     frames: 12
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_back_std
@@ -238,6 +462,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_back_ultra
@@ -251,6 +489,20 @@ MonoBehaviour:
     frames: 8
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_front_elite
@@ -264,6 +516,20 @@ MonoBehaviour:
     frames: 12
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_front_std
@@ -277,6 +543,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_front_ultra
@@ -290,6 +570,20 @@ MonoBehaviour:
     frames: 8
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_heavy_stagger
@@ -303,6 +597,20 @@ MonoBehaviour:
     frames: 30
     events: hit=0;stagger_end=29
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_left_elite
@@ -316,6 +624,20 @@ MonoBehaviour:
     frames: 12
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_left_std
@@ -329,6 +651,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_left_ultra
@@ -342,6 +678,20 @@ MonoBehaviour:
     frames: 8
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_light_L
@@ -355,6 +705,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_light_R
@@ -368,6 +732,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_region_head
@@ -381,6 +759,20 @@ MonoBehaviour:
     frames: 10
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_region_leg
@@ -394,6 +786,20 @@ MonoBehaviour:
     frames: 10
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_region_torso
@@ -407,6 +813,20 @@ MonoBehaviour:
     frames: 10
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_right_elite
@@ -420,6 +840,20 @@ MonoBehaviour:
     frames: 12
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_right_std
@@ -433,6 +867,20 @@ MonoBehaviour:
     frames: 14
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_right_ultra
@@ -446,6 +894,20 @@ MonoBehaviour:
     frames: 8
     events: hit=0
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_hit_special_stumble
@@ -459,6 +921,20 @@ MonoBehaviour:
     frames: 16
     events: hit=0;stagger_end=15
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_idle_queue
@@ -472,6 +948,20 @@ MonoBehaviour:
     frames: 91
     events: shift_l=22;shift_r=67
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_idle_sway
@@ -485,6 +975,20 @@ MonoBehaviour:
     frames: 61
     events: 
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_idle_twitch
@@ -498,6 +1002,20 @@ MonoBehaviour:
     frames: 61
     events: 
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_rise
@@ -511,6 +1029,20 @@ MonoBehaviour:
     frames: 48
     events: rise_end=47
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_rise_B
@@ -524,6 +1056,20 @@ MonoBehaviour:
     frames: 36
     events: spawn_rise=0;spawn_land=25;rise_end=35
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_rise_C
@@ -537,6 +1083,20 @@ MonoBehaviour:
     frames: 28
     events: spawn_rise=0;spawn_land=14;rise_end=27
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_run
@@ -550,6 +1110,20 @@ MonoBehaviour:
     frames: 13
     events: foot_l=0;foot_r=6
     stanceFrames: 5
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_shamble_A
@@ -563,6 +1137,20 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_shamble_B
@@ -576,6 +1164,20 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP009_zombie_shamble_C
@@ -589,6 +1191,20 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_bite_grab
@@ -602,6 +1218,20 @@ MonoBehaviour:
     frames: 40
     events: telegraph_start=0;attack_step=12;grab_start=13;hit_window_start=14;foot_r=15;hit_window_end=18;grab_end=20;attack_recover=32;foot_l=32
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_lunge
@@ -615,6 +1245,20 @@ MonoBehaviour:
     frames: 32
     events: telegraph_start=0;attack_step=9;hit_window_start=12;hit_window_end=15;foot_l=16;foot_r=17;attack_recover=26
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_overhead_slam
@@ -628,6 +1272,20 @@ MonoBehaviour:
     frames: 64
     events: telegraph_start=0;attack_step=28;hit_window_start=30;foot_l=31;ground_impact=33;hit_window_end=35;foot_r=39;attack_recover=52;foot_r=56
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_sweep
@@ -641,6 +1299,20 @@ MonoBehaviour:
     frames: 48
     events: telegraph_start=0;foot_r=11;attack_step=20;foot_l=22;hit_window_start=22;hit_window_end=27;foot_r=30;attack_recover=40;foot_l=43;foot_r=46
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_swipe_L
@@ -654,6 +1326,20 @@ MonoBehaviour:
     frames: 36
     events: telegraph_start=0;attack_step=13;hit_window_start=15;foot_r=16;hit_window_end=19;foot_l=21;attack_recover=30;foot_r=33
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_attack_swipe_R
@@ -667,6 +1353,20 @@ MonoBehaviour:
     frames: 36
     events: telegraph_start=0;attack_step=13;hit_window_start=15;foot_l=16;hit_window_end=19;foot_r=21;attack_recover=30;foot_r=33
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_death_arc_electro
@@ -680,6 +1380,20 @@ MonoBehaviour:
     frames: 36
     events: hit=0;fall_start=7;ragdoll_handoff=8;ground_impact=19;spasm=20;spasm=29;death_end=35
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_death_fall_back
@@ -693,6 +1407,20 @@ MonoBehaviour:
     frames: 42
     events: hit=0;fall_start=5;foot_r=6;ragdoll_handoff=8;ground_impact=16;death_end=41
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_death_fall_fwd
@@ -706,6 +1434,20 @@ MonoBehaviour:
     frames: 40
     events: hit=0;fall_start=4;foot_r=6;foot_l=9;ragdoll_handoff=9;ground_impact=15;death_end=39
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_death_legs_out
@@ -719,6 +1461,20 @@ MonoBehaviour:
     frames: 46
     events: hit=0;fall_start=3;foot_l=9;ragdoll_handoff=11;ground_impact=14;death_end=45
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_death_spin_side
@@ -732,6 +1488,20 @@ MonoBehaviour:
     frames: 44
     events: hit=0;fall_start=6;foot_l=6;ragdoll_handoff=10;ground_impact=17;death_end=43
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_hit_electro_loop
@@ -745,6 +1515,20 @@ MonoBehaviour:
     frames: 25
     events: spasm=5;spasm=16
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_hit_gel_slip
@@ -758,6 +1542,20 @@ MonoBehaviour:
     frames: 30
     events: hit=0;fall_start=1;ragdoll_handoff=9;ground_impact=12;death_end=29
     stanceFrames: 0
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_run
@@ -771,6 +1569,20 @@ MonoBehaviour:
     frames: 15
     events: foot_l=0;foot_l_off=6;foot_r=7;foot_r_off=13
     stanceFrames: 5
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_shamble_fast_A
@@ -784,6 +1596,20 @@ MonoBehaviour:
     frames: 25
     events: foot_l=0;foot_r_off=1;foot_r=12;foot_l_off=15
     stanceFrames: 12
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_shamble_fast_B
@@ -797,6 +1623,20 @@ MonoBehaviour:
     frames: 25
     events: foot_l=0;foot_r_off=1;foot_r=11;foot_l_off=14
     stanceFrames: 13
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_walk_heavy
@@ -810,6 +1650,20 @@ MonoBehaviour:
     frames: 29
     events: foot_l=0;foot_r_off=3;foot_r=14;foot_l_off=17
     stanceFrames: 16
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP022_zombie_walk_stomp
@@ -823,6 +1677,20 @@ MonoBehaviour:
     frames: 33
     events: foot_l=0;foot_r_off=4;foot_r=16;foot_l_off=20
     stanceFrames: 18
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0.6
     maxRate: 0
   - name: AP033_zombie_run_feral_A
@@ -836,6 +1704,20 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_l_off=5;foot_r=8;foot_r_off=14
     stanceFrames: 5
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_run_feral_B
@@ -849,6 +1731,20 @@ MonoBehaviour:
     frames: 19
     events: foot_l=0;foot_l_off=5;foot_r=9;foot_r_off=14
     stanceFrames: 4
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_run_stumble_A
@@ -862,6 +1758,1254 @@ MonoBehaviour:
     frames: 18
     events: foot_l=0;foot_l_off=4;foot_r=7;foot_r_off=13
     stanceFrames: 4
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_start_run
+    clip: {fileID: -6522559856643680707, guid: d8f211305a7f8901577be2bff906362d, type: 3}
+    loop: 0
+    seconds: 0.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 16
+    events: foot_l=0;foot_r=0;foot_l_off=1;foot_r_off=2;foot_r=7;foot_r_off=13
+    stanceFrames: 0
+    transition:
+      kind: start
+      attachInClip: AP009_zombie_idle_sway_v006_f0
+      attachOutClip: AP033_zombie_run_feral_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0
+        z: 0.000166
+        yaw: 0
+      - frame: 2
+        x: 0
+        z: 0.005435
+        yaw: 0
+      - frame: 3
+        x: 0
+        z: 0.029089
+        yaw: 0
+      - frame: 4
+        x: 0
+        z: 0.074434
+        yaw: 0
+      - frame: 5
+        x: 0
+        z: 0.142452
+        yaw: 0
+      - frame: 6
+        x: 0
+        z: 0.234101
+        yaw: 0
+      - frame: 7
+        x: 0
+        z: 0.348422
+        yaw: 0
+      - frame: 8
+        x: 0
+        z: 0.482542
+        yaw: 0
+      - frame: 9
+        x: 0
+        z: 0.631671
+        yaw: 0
+      - frame: 10
+        x: 0
+        z: 0.789102
+        yaw: 0
+      - frame: 11
+        x: 0
+        z: 0.948769
+        yaw: 0
+      - frame: 12
+        x: 0
+        z: 1.108436
+        yaw: 0
+      - frame: 13
+        x: 0
+        z: 1.268102
+        yaw: 0
+      - frame: 14
+        x: 0
+        z: 1.427769
+        yaw: 0
+      - frame: 15
+        x: 0
+        z: 1.587436
+        yaw: 0
+      translate: {x: 5, y: 15}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 3
+      blendOutStart: 12
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 4.79
+      turnAngle: 0
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_start_walk
+    clip: {fileID: -2490205504156849389, guid: 9aba445c7c86c154085e4d6929104741, type: 3}
+    loop: 0
+    seconds: 0.7
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 22
+    events: foot_l=0;foot_r=0;foot_r_off=4;foot_l_off=7;foot_r=9;foot_r_off=20
+    stanceFrames: 0
+    transition:
+      kind: start
+      attachInClip: AP009_zombie_idle_sway_v006_f0
+      attachOutClip: AP033_zombie_walk_lurch_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0
+        z: 0.000021
+        yaw: 0
+      - frame: 2
+        x: 0
+        z: 0.000804
+        yaw: 0
+      - frame: 3
+        x: 0
+        z: 0.00528
+        yaw: 0
+      - frame: 4
+        x: 0
+        z: 0.018014
+        yaw: 0
+      - frame: 5
+        x: 0
+        z: 0.042323
+        yaw: 0
+      - frame: 6
+        x: 0
+        z: 0.077082
+        yaw: 0
+      - frame: 7
+        x: 0
+        z: 0.122082
+        yaw: 0
+      - frame: 8
+        x: 0
+        z: 0.177323
+        yaw: 0
+      - frame: 9
+        x: 0
+        z: 0.242314
+        yaw: 0
+      - frame: 10
+        x: 0
+        z: 0.316071
+        yaw: 0
+      - frame: 11
+        x: 0
+        z: 0.39712
+        yaw: 0
+      - frame: 12
+        x: 0
+        z: 0.483495
+        yaw: 0
+      - frame: 13
+        x: 0
+        z: 0.572737
+        yaw: 0
+      - frame: 14
+        x: 0
+        z: 0.662737
+        yaw: 0
+      - frame: 15
+        x: 0
+        z: 0.752737
+        yaw: 0
+      - frame: 16
+        x: 0
+        z: 0.842737
+        yaw: 0
+      - frame: 17
+        x: 0
+        z: 0.932737
+        yaw: 0
+      - frame: 18
+        x: 0
+        z: 1.022737
+        yaw: 0
+      - frame: 19
+        x: 0
+        z: 1.112737
+        yaw: 0
+      - frame: 20
+        x: 0
+        z: 1.202737
+        yaw: 0
+      - frame: 21
+        x: 0
+        z: 1.292737
+        yaw: 0
+      translate: {x: 6, y: 21}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 5
+      blendOutStart: 16
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 2.7
+      turnAngle: 0
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_stop_run_l
+    clip: {fileID: -6191725179431248342, guid: 8b4c87d04a07eb85f28c012c6ca6de11, type: 3}
+    loop: 0
+    seconds: 0.6333333
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 20
+    events: foot_r=5;foot_l=8;foot_r_off=10;foot_l_off=14;stop_plant=17
+    stanceFrames: 0
+    transition:
+      kind: stop
+      attachInClip: AP033_zombie_run_feral_A
+      attachOutClip: AP009_zombie_idle_sway_v006_f0
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0.000022
+        z: 0.157563
+        yaw: -0.342005
+      - frame: 2
+        x: 0.001687
+        z: 0.300845
+        yaw: -2.165463
+      - frame: 3
+        x: 0.00724
+        z: 0.421753
+        yaw: -4.275057
+      - frame: 4
+        x: 0.017185
+        z: 0.520684
+        yaw: -6.316729
+      - frame: 5
+        x: 0.026723
+        z: 0.608509
+        yaw: -8.282645
+      - frame: 6
+        x: 0.034538
+        z: 0.686865
+        yaw: -10.173761
+      - frame: 7
+        x: 0.040523
+        z: 0.755207
+        yaw: -11.998396
+      - frame: 8
+        x: 0.044675
+        z: 0.813463
+        yaw: -13.769156
+      - frame: 9
+        x: 0.04708
+        z: 0.861961
+        yaw: -15.499234
+      - frame: 10
+        x: 0.047897
+        z: 0.90133
+        yaw: -17.19846
+      - frame: 11
+        x: 0.048317
+        z: 0.925356
+        yaw: -18.87308
+      - frame: 12
+        x: 0.046417
+        z: 0.925601
+        yaw: -20.521723
+      - frame: 13
+        x: 0.041398
+        z: 0.905034
+        yaw: -22.140047
+      - frame: 14
+        x: 0.034383
+        z: 0.869572
+        yaw: -23.725441
+      - frame: 15
+        x: 0.030985
+        z: 0.830444
+        yaw: -25.276442
+      - frame: 16
+        x: 0.027789
+        z: 0.793248
+        yaw: -26.792498
+      - frame: 17
+        x: 0.023794
+        z: 0.763024
+        yaw: -28.274427
+      - frame: 18
+        x: 0.01985
+        z: 0.743062
+        yaw: -29.501465
+      - frame: 19
+        x: 0.017423
+        z: 0.734352
+        yaw: -29.698042
+      translate: {x: 1, y: 17}
+      rotate: {x: 2, y: 17}
+      blendInEnd: 4
+      blendOutStart: 10
+      attachInPhase: 0.1875
+      attachOutPhase: 0
+      entrySpeed: 4.79
+      exitSpeed: 0
+      turnAngle: -29.698
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_stop_run_r
+    clip: {fileID: -8566793523774191509, guid: 680ab7e483b1a436cd2f3bd3610538a5, type: 3}
+    loop: 0
+    seconds: 0.6333333
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 20
+    events: foot_l=5;foot_r=8;foot_l_off=10;foot_r_off=14;stop_plant=17
+    stanceFrames: 0
+    transition:
+      kind: stop
+      attachInClip: AP033_zombie_run_feral_A
+      attachOutClip: AP009_zombie_idle_sway_v006_f0
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: -0.000022
+        z: 0.157563
+        yaw: 0.342005
+      - frame: 2
+        x: -0.001687
+        z: 0.300845
+        yaw: 2.165463
+      - frame: 3
+        x: -0.00724
+        z: 0.421753
+        yaw: 4.275057
+      - frame: 4
+        x: -0.017186
+        z: 0.520684
+        yaw: 6.316729
+      - frame: 5
+        x: -0.026722
+        z: 0.608509
+        yaw: 8.282645
+      - frame: 6
+        x: -0.034538
+        z: 0.686865
+        yaw: 10.173761
+      - frame: 7
+        x: -0.040523
+        z: 0.755208
+        yaw: 11.998396
+      - frame: 8
+        x: -0.044675
+        z: 0.813464
+        yaw: 13.769156
+      - frame: 9
+        x: -0.04708
+        z: 0.86196
+        yaw: 15.499234
+      - frame: 10
+        x: -0.047897
+        z: 0.901331
+        yaw: 17.19846
+      - frame: 11
+        x: -0.047641
+        z: 0.926983
+        yaw: 18.87308
+      - frame: 12
+        x: -0.043353
+        z: 0.931921
+        yaw: 20.521723
+      - frame: 13
+        x: -0.034246
+        z: 0.918264
+        yaw: 22.140047
+      - frame: 14
+        x: -0.022147
+        z: 0.89105
+        yaw: 23.725441
+      - frame: 15
+        x: -0.013568
+        z: 0.860436
+        yaw: 25.276442
+      - frame: 16
+        x: -0.005655
+        z: 0.831349
+        yaw: 26.792498
+      - frame: 17
+        x: 0.00224
+        z: 0.807985
+        yaw: 28.274427
+      - frame: 18
+        x: 0.008934
+        z: 0.792756
+        yaw: 29.501465
+      - frame: 19
+        x: 0.012146
+        z: 0.785971
+        yaw: 29.698042
+      translate: {x: 1, y: 16}
+      rotate: {x: 2, y: 17}
+      blendInEnd: 4
+      blendOutStart: 10
+      attachInPhase: 0.6875
+      attachOutPhase: 0
+      entrySpeed: 4.79
+      exitSpeed: 0
+      turnAngle: 29.698
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_stop_walk_l
+    clip: {fileID: -8792595195015600782, guid: f7b0f90a9aadf81f4e5e31d212f0c675, type: 3}
+    loop: 0
+    seconds: 0.76666665
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 24
+    events: foot_r=6;foot_l=10;foot_r_off=14;foot_l_off=18;stop_plant=22
+    stanceFrames: 0
+    transition:
+      kind: stop
+      attachInClip: AP033_zombie_walk_lurch_A
+      attachOutClip: AP009_zombie_idle_sway_v006_f0
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0.000078
+        z: 0.089843
+        yaw: -0.229933
+      - frame: 2
+        x: 0.001177
+        z: 0.178246
+        yaw: -1.45375
+      - frame: 3
+        x: 0.004245
+        z: 0.262948
+        yaw: -2.864839
+      - frame: 4
+        x: 0.009916
+        z: 0.341127
+        yaw: -4.225049
+      - frame: 5
+        x: 0.017285
+        z: 0.411086
+        yaw: -5.531296
+      - frame: 6
+        x: 0.023956
+        z: 0.474118
+        yaw: -6.78934
+      - frame: 7
+        x: 0.029383
+        z: 0.530328
+        yaw: -8.012966
+      - frame: 8
+        x: 0.033516
+        z: 0.579555
+        yaw: -9.220698
+      - frame: 9
+        x: 0.036361
+        z: 0.621905
+        yaw: -10.432697
+      - frame: 10
+        x: 0.037985
+        z: 0.657696
+        yaw: -11.668073
+      - frame: 11
+        x: 0.038502
+        z: 0.687394
+        yaw: -12.93863
+      - frame: 12
+        x: 0.038057
+        z: 0.711559
+        yaw: -14.248209
+      - frame: 13
+        x: 0.036816
+        z: 0.730793
+        yaw: -15.594701
+      - frame: 14
+        x: 0.034948
+        z: 0.745704
+        yaw: -16.968018
+      - frame: 15
+        x: 0.032851
+        z: 0.747155
+        yaw: -18.352245
+      - frame: 16
+        x: 0.029889
+        z: 0.727526
+        yaw: -19.727503
+      - frame: 17
+        x: 0.025638
+        z: 0.690451
+        yaw: -21.072502
+      - frame: 18
+        x: 0.023044
+        z: 0.644785
+        yaw: -22.369968
+      - frame: 19
+        x: 0.019644
+        z: 0.597058
+        yaw: -23.610657
+      - frame: 20
+        x: 0.014391
+        z: 0.553085
+        yaw: -24.793673
+      - frame: 21
+        x: 0.007382
+        z: 0.517667
+        yaw: -25.927956
+      - frame: 22
+        x: 0.000868
+        z: 0.49435
+        yaw: -26.855589
+      - frame: 23
+        x: -0.002558
+        z: 0.484877
+        yaw: -27.003443
+      translate: {x: 1, y: 21}
+      rotate: {x: 2, y: 21}
+      blendInEnd: 5
+      blendOutStart: 14
+      attachInPhase: 0.29166666
+      attachOutPhase: 0
+      entrySpeed: 2.7
+      exitSpeed: 0
+      turnAngle: -27.003
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_stop_walk_r
+    clip: {fileID: -7095833261917887000, guid: ec5f8a11d5ef4539864d1a4263666c73, type: 3}
+    loop: 0
+    seconds: 0.76666665
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 24
+    events: foot_l=6;foot_r=10;foot_l_off=14;foot_r_off=18;stop_plant=22
+    stanceFrames: 0
+    transition:
+      kind: stop
+      attachInClip: AP033_zombie_walk_lurch_A
+      attachOutClip: AP009_zombie_idle_sway_v006_f0
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: -0.000072
+        z: 0.089843
+        yaw: 0.23868
+      - frame: 2
+        x: -0.001138
+        z: 0.178245
+        yaw: 1.508394
+      - frame: 3
+        x: -0.004164
+        z: 0.262941
+        yaw: 2.970738
+      - frame: 4
+        x: -0.009826
+        z: 0.341114
+        yaw: 4.377625
+      - frame: 5
+        x: -0.017228
+        z: 0.411068
+        yaw: 5.724712
+      - frame: 6
+        x: -0.023942
+        z: 0.474096
+        yaw: 7.016712
+      - frame: 7
+        x: -0.029411
+        z: 0.530301
+        yaw: 8.266631
+      - frame: 8
+        x: -0.033583
+        z: 0.579525
+        yaw: 9.492504
+      - frame: 9
+        x: -0.036466
+        z: 0.621873
+        yaw: 10.71434
+      - frame: 10
+        x: -0.038124
+        z: 0.657661
+        yaw: 11.951428
+      - frame: 11
+        x: -0.038672
+        z: 0.687359
+        yaw: 13.216115
+      - frame: 12
+        x: -0.038253
+        z: 0.711525
+        yaw: 14.513162
+      - frame: 13
+        x: -0.037033
+        z: 0.730761
+        yaw: 15.841557
+      - frame: 14
+        x: -0.035183
+        z: 0.745674
+        yaw: 17.192528
+      - frame: 15
+        x: -0.032162
+        z: 0.748855
+        yaw: 18.551643
+      - frame: 16
+        x: -0.026354
+        z: 0.733916
+        yaw: 19.900446
+      - frame: 17
+        x: -0.017805
+        z: 0.703742
+        yaw: 21.218868
+      - frame: 18
+        x: -0.010362
+        z: 0.666273
+        yaw: 22.490631
+      - frame: 19
+        x: -0.002289
+        z: 0.627351
+        yaw: 23.707228
+      - frame: 20
+        x: 0.006949
+        z: 0.591934
+        yaw: 24.86812
+      - frame: 21
+        x: 0.017009
+        z: 0.56386
+        yaw: 25.982124
+      - frame: 22
+        x: 0.025551
+        z: 0.545658
+        yaw: 26.89385
+      - frame: 23
+        x: 0.029507
+        z: 0.538231
+        yaw: 27.039225
+      translate: {x: 1, y: 21}
+      rotate: {x: 2, y: 21}
+      blendInEnd: 5
+      blendOutStart: 14
+      attachInPhase: 0.75
+      attachOutPhase: 0
+      entrySpeed: 2.7
+      exitSpeed: 0
+      turnAngle: 27.039
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_stumble_recover
+    clip: {fileID: -296291978855304506, guid: a5c20552f04d7da1cfc281991069acb4, type: 3}
+    loop: 0
+    seconds: 1.1666666
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: foot_l=14;foot_l_off=19;foot_r=26;foot_r_off=27
+    stanceFrames: 0
+    transition:
+      kind: stumble
+      attachInClip: AP033_zombie_walk_lurch_A
+      attachOutClip: AP033_zombie_walk_lurch_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: -0.000216
+        z: 0.090199
+        yaw: 0.021253
+      - frame: 2
+        x: -0.001845
+        z: 0.181688
+        yaw: 0.254113
+      - frame: 3
+        x: -0.005463
+        z: 0.274847
+        yaw: 0.791944
+      - frame: 4
+        x: -0.011055
+        z: 0.369094
+        yaw: 1.676337
+      - frame: 5
+        x: -0.018247
+        z: 0.463192
+        yaw: 2.941598
+      - frame: 6
+        x: -0.026265
+        z: 0.555783
+        yaw: 4.55782
+      - frame: 7
+        x: -0.033819
+        z: 0.646044
+        yaw: 6.433316
+      - frame: 8
+        x: -0.040882
+        z: 0.733871
+        yaw: 8.433622
+      - frame: 9
+        x: -0.04774
+        z: 0.819323
+        yaw: 10.40023
+      - frame: 10
+        x: -0.05466
+        z: 0.902571
+        yaw: 12.167995
+      - frame: 11
+        x: -0.061857
+        z: 0.983873
+        yaw: 13.589857
+      - frame: 12
+        x: -0.069448
+        z: 1.063571
+        yaw: 14.555913
+      - frame: 13
+        x: -0.07743
+        z: 1.14209
+        yaw: 15.006983
+      - frame: 14
+        x: -0.085682
+        z: 1.219918
+        yaw: 14.941865
+      - frame: 15
+        x: -0.093976
+        z: 1.297604
+        yaw: 14.418184
+      - frame: 16
+        x: -0.102012
+        z: 1.375724
+        yaw: 13.545053
+      - frame: 17
+        x: -0.10946
+        z: 1.454843
+        yaw: 12.465639
+      - frame: 18
+        x: -0.116004
+        z: 1.535487
+        yaw: 11.335373
+      - frame: 19
+        x: -0.121397
+        z: 1.618113
+        yaw: 10.299175
+      - frame: 20
+        x: -0.125491
+        z: 1.703063
+        yaw: 9.472128
+      - frame: 21
+        x: -0.128248
+        z: 1.790542
+        yaw: 8.926389
+      - frame: 22
+        x: -0.129755
+        z: 1.880609
+        yaw: 8.685096
+      - frame: 23
+        x: -0.130215
+        z: 1.97317
+        yaw: 8.721992
+      - frame: 24
+        x: -0.12991
+        z: 2.067999
+        yaw: 8.96624
+      - frame: 25
+        x: -0.129186
+        z: 2.164749
+        yaw: 9.317245
+      - frame: 26
+        x: -0.128422
+        z: 2.262994
+        yaw: 9.656781
+      - frame: 27
+        x: -0.12798
+        z: 2.36227
+        yaw: 9.858505
+      - frame: 28
+        x: -0.12816
+        z: 2.462108
+        yaw: 9.809478
+      - frame: 29
+        x: -0.129183
+        z: 2.562107
+        yaw: 9.427574
+      - frame: 30
+        x: -0.130859
+        z: 2.661735
+        yaw: 8.665521
+      - frame: 31
+        x: -0.131406
+        z: 2.759572
+        yaw: 7.51293
+      - frame: 32
+        x: -0.129875
+        z: 2.854905
+        yaw: 5.997213
+      - frame: 33
+        x: -0.126663
+        z: 2.947838
+        yaw: 4.177629
+      - frame: 34
+        x: -0.123042
+        z: 3.038959
+        yaw: 2.460168
+      - frame: 35
+        x: -0.119538
+        z: 3.128801
+        yaw: 2.1677
+      translate: {x: 2, y: 34}
+      rotate: {x: 2, y: 5}
+      blendInEnd: 6
+      blendOutStart: 29
+      attachInPhase: 0.25
+      attachOutPhase: 0.25
+      entrySpeed: 2.7
+      exitSpeed: 2.7
+      turnAngle: 2.168
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_turn180_L
+    clip: {fileID: 5048075196282162130, guid: b33e7ab0002e75be27025d759b654478, type: 3}
+    loop: 0
+    seconds: 0.8
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 25
+    events: pivot_plant=14;foot_r_off=16
+    stanceFrames: 0
+    transition:
+      kind: turn
+      attachInClip: AP033_zombie_walk_lurch_A
+      attachOutClip: AP033_zombie_walk_lurch_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: -0.000527
+        z: 0.089803
+        yaw: -0.880695
+      - frame: 2
+        x: -0.003047
+        z: 0.177725
+        yaw: -5.651261
+      - frame: 3
+        x: -0.006817
+        z: 0.260806
+        yaw: -11.343352
+      - frame: 4
+        x: -0.007762
+        z: 0.335603
+        yaw: -17.097538
+      - frame: 5
+        x: -0.002882
+        z: 0.399325
+        yaw: -22.942286
+      - frame: 6
+        x: 0.007149
+        z: 0.451232
+        yaw: -28.911446
+      - frame: 7
+        x: 0.017525
+        z: 0.493303
+        yaw: -35.04432
+      - frame: 8
+        x: 0.027047
+        z: 0.525766
+        yaw: -41.382484
+      - frame: 9
+        x: 0.035484
+        z: 0.548584
+        yaw: -47.96621
+      - frame: 10
+        x: 0.042589
+        z: 0.561988
+        yaw: -54.833103
+      - frame: 11
+        x: 0.048106
+        z: 0.566409
+        yaw: -62.014927
+      - frame: 12
+        x: 0.051793
+        z: 0.562377
+        yaw: -69.53148
+      - frame: 13
+        x: 0.053439
+        z: 0.550433
+        yaw: -77.38549
+      - frame: 14
+        x: 0.05289
+        z: 0.531045
+        yaw: -85.56029
+      - frame: 15
+        x: 0.050059
+        z: 0.504604
+        yaw: -94.02046
+      - frame: 16
+        x: 0.044941
+        z: 0.471428
+        yaw: -102.7166
+      - frame: 17
+        x: 0.037613
+        z: 0.431799
+        yaw: -111.59036
+      - frame: 18
+        x: 0.028235
+        z: 0.386005
+        yaw: -120.58138
+      - frame: 19
+        x: 0.015806
+        z: 0.334401
+        yaw: -129.6333
+      - frame: 20
+        x: -0.00504
+        z: 0.27658
+        yaw: -138.70036
+      - frame: 21
+        x: -0.034036
+        z: 0.211077
+        yaw: -147.75204
+      - frame: 22
+        x: -0.065778
+        z: 0.136853
+        yaw: -156.77484
+      - frame: 23
+        x: -0.093594
+        z: 0.054687
+        yaw: -164.36496
+      - frame: 24
+        x: -0.116841
+        z: -0.031684
+        yaw: -165.5929
+      translate: {x: 1, y: 24}
+      rotate: {x: 3, y: 23}
+      blendInEnd: 6
+      blendOutStart: 18
+      attachInPhase: 0.29166666
+      attachOutPhase: 0.25
+      entrySpeed: 2.7
+      exitSpeed: 2.7
+      turnAngle: -165.593
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_turn45_run_L
+    clip: {fileID: 5387827852685600864, guid: 073b31c916e27c00a350b3e078977301, type: 3}
+    loop: 0
+    seconds: 0.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 16
+    events: foot_l=0;foot_l_off=5;pivot_plant=8;foot_r_off=14
+    stanceFrames: 0
+    transition:
+      kind: turn
+      attachInClip: AP033_zombie_run_feral_A
+      attachOutClip: AP033_zombie_run_feral_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0
+        z: 0.159579
+        yaw: 0
+      - frame: 2
+        x: 0
+        z: 0.317145
+        yaw: 0
+      - frame: 3
+        x: 0
+        z: 0.469483
+        yaw: 0
+      - frame: 4
+        x: -0.003257
+        z: 0.617581
+        yaw: -1.26
+      - frame: 5
+        x: -0.015089
+        z: 0.762108
+        yaw: -4.68
+      - frame: 6
+        x: -0.039169
+        z: 0.902688
+        yaw: -9.72
+      - frame: 7
+        x: -0.077693
+        z: 1.038468
+        yaw: -15.84
+      - frame: 8
+        x: -0.131512
+        z: 1.168397
+        yaw: -22.5
+      - frame: 9
+        x: -0.200282
+        z: 1.291649
+        yaw: -29.16
+      - frame: 10
+        x: -0.28266
+        z: 1.408081
+        yaw: -35.28
+      - frame: 11
+        x: -0.376489
+        z: 1.518643
+        yaw: -40.32
+      - frame: 12
+        x: -0.478907
+        z: 1.625667
+        yaw: -43.74
+      - frame: 13
+        x: -0.586534
+        z: 1.733478
+        yaw: -45
+      - frame: 14
+        x: -0.69795
+        z: 1.844894
+        yaw: -45
+      - frame: 15
+        x: -0.810789
+        z: 1.957733
+        yaw: -45
+      translate: {x: 1, y: 15}
+      rotate: {x: 5, y: 12}
+      blendInEnd: 3
+      blendOutStart: 12
+      attachInPhase: 0
+      attachOutPhase: 0.9375
+      entrySpeed: 4.79
+      exitSpeed: 4.79
+      turnAngle: -45
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_turn90_L
+    clip: {fileID: -2873307093275924459, guid: e82f19d7750ed0cccee6cb07395a672c, type: 3}
+    loop: 0
+    seconds: 1.2333333
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 38
+    events: pivot_plant=7;foot_l_off=13;foot_r=15;foot_r_off=20;foot_l=25;foot_l_off=29
+    stanceFrames: 0
+    transition:
+      kind: turn
+      attachInClip: AP033_zombie_walk_lurch_A
+      attachOutClip: AP033_zombie_walk_lurch_A
+      curve:
+      - frame: 0
+        x: 0
+        z: 0
+        yaw: 0
+      - frame: 1
+        x: 0.008061
+        z: 0.10202
+        yaw: -0.341514
+      - frame: 2
+        x: 0.022766
+        z: 0.217777
+        yaw: -2.231368
+      - frame: 3
+        x: 0.015572
+        z: 0.297796
+        yaw: -4.577896
+      - frame: 4
+        x: 0.004458
+        z: 0.37135
+        yaw: -7.068547
+      - frame: 5
+        x: -0.010179
+        z: 0.439455
+        yaw: -9.723076
+      - frame: 6
+        x: -0.028128
+        z: 0.504593
+        yaw: -12.544078
+      - frame: 7
+        x: -0.049455
+        z: 0.569835
+        yaw: -15.520097
+      - frame: 8
+        x: -0.074348
+        z: 0.635746
+        yaw: -18.62975
+      - frame: 9
+        x: -0.102888
+        z: 0.702371
+        yaw: -21.84115
+      - frame: 10
+        x: -0.135039
+        z: 0.769679
+        yaw: -25.117004
+      - frame: 11
+        x: -0.170674
+        z: 0.837538
+        yaw: -28.421797
+      - frame: 12
+        x: -0.209611
+        z: 0.905734
+        yaw: -31.727997
+      - frame: 13
+        x: -0.251628
+        z: 0.973999
+        yaw: -35.017532
+      - frame: 14
+        x: -0.296475
+        z: 1.042015
+        yaw: -38.280426
+      - frame: 15
+        x: -0.343896
+        z: 1.109448
+        yaw: -41.50946
+      - frame: 16
+        x: -0.393636
+        z: 1.175977
+        yaw: -44.695423
+      - frame: 17
+        x: -0.445442
+        z: 1.241306
+        yaw: -47.82672
+      - frame: 18
+        x: -0.499057
+        z: 1.305191
+        yaw: -50.886993
+      - frame: 19
+        x: -0.554215
+        z: 1.367443
+        yaw: -53.84982
+      - frame: 20
+        x: -0.610635
+        z: 1.427917
+        yaw: -56.685036
+      - frame: 21
+        x: -0.668034
+        z: 1.486518
+        yaw: -59.369007
+      - frame: 22
+        x: -0.726144
+        z: 1.543172
+        yaw: -61.882725
+      - frame: 23
+        x: -0.78471
+        z: 1.597827
+        yaw: -64.2139
+      - frame: 24
+        x: -0.84351
+        z: 1.650458
+        yaw: -66.3591
+      - frame: 25
+        x: -0.902371
+        z: 1.701067
+        yaw: -68.32121
+      - frame: 26
+        x: -0.961175
+        z: 1.749681
+        yaw: -70.11467
+      - frame: 27
+        x: -1.019862
+        z: 1.796347
+        yaw: -71.76646
+      - frame: 28
+        x: -1.078418
+        z: 1.841137
+        yaw: -73.301254
+      - frame: 29
+        x: -1.137117
+        z: 1.883986
+        yaw: -74.739525
+      - frame: 30
+        x: -1.197635
+        z: 1.92397
+        yaw: -76.1019
+      - frame: 31
+        x: -1.261529
+        z: 1.960215
+        yaw: -77.41064
+      - frame: 32
+        x: -1.329901
+        z: 1.992065
+        yaw: -78.68253
+      - frame: 33
+        x: -1.403354
+        z: 2.019101
+        yaw: -79.92895
+      - frame: 34
+        x: -1.481968
+        z: 2.041153
+        yaw: -81.158905
+      - frame: 35
+        x: -1.565292
+        z: 2.058334
+        yaw: -82.377785
+      - frame: 36
+        x: -1.626296
+        z: 2.071678
+        yaw: -83.40067
+      - frame: 37
+        x: -1.70704
+        z: 2.080375
+        yaw: -83.56609
+      translate: {x: 2, y: 35}
+      rotate: {x: 3, y: 33}
+      blendInEnd: 6
+      blendOutStart: 28
+      attachInPhase: 0.7083333
+      attachOutPhase: 0.7083333
+      entrySpeed: 2.7
+      exitSpeed: 2.7
+      turnAngle: -83.566
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_drag_A
@@ -875,6 +3019,20 @@ MonoBehaviour:
     frames: 28
     events: foot_l=0;foot_l_off=11;foot_r=15;foot_r_off=24
     stanceFrames: 9
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_drag_B
@@ -888,6 +3046,20 @@ MonoBehaviour:
     frames: 26
     events: foot_l=0;foot_l_off=8;foot_r=12;foot_r_off=21
     stanceFrames: 8
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_heavy_A
@@ -901,6 +3073,20 @@ MonoBehaviour:
     frames: 30
     events: foot_l=1;foot_r_off=1;foot_r=15;foot_l_off=16
     stanceFrames: 15
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_heavy_B
@@ -914,6 +3100,20 @@ MonoBehaviour:
     frames: 30
     events: foot_l=1;foot_r_off=1;foot_r=13;foot_l_off=14
     stanceFrames: 13
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_limp_A
@@ -927,6 +3127,20 @@ MonoBehaviour:
     frames: 24
     events: foot_l=1;foot_r_off=1;foot_l_off=11;foot_r=11
     stanceFrames: 10
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_lurch_A
@@ -940,6 +3154,20 @@ MonoBehaviour:
     frames: 25
     events: foot_l=0;foot_l_off=11;foot_r=12;foot_r_off=23
     stanceFrames: 11
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_lurch_B
@@ -953,6 +3181,20 @@ MonoBehaviour:
     frames: 27
     events: foot_l=0;foot_l_off=8;foot_r=13;foot_r_off=23
     stanceFrames: 8
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_stomp_A
@@ -966,6 +3208,20 @@ MonoBehaviour:
     frames: 45
     events: foot_l=0;foot_r_off=2;foot_r=22;foot_l_off=25
     stanceFrames: 24
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   - name: AP033_zombie_walk_stomp_B
@@ -979,6 +3235,20 @@ MonoBehaviour:
     frames: 43
     events: foot_l=0;foot_r_off=2;foot_r=21;foot_l_off=25
     stanceFrames: 23
+    transition:
+      kind: 
+      attachInClip: 
+      attachOutClip: 
+      curve: []
+      translate: {x: 0, y: 0}
+      rotate: {x: 0, y: 0}
+      blendInEnd: 0
+      blendOutStart: 0
+      attachInPhase: 0
+      attachOutPhase: 0
+      entrySpeed: 0
+      exitSpeed: 0
+      turnAngle: 0
     minRate: 0
     maxRate: 0
   _manifestSchema: AP009.clips-manifest.v008
