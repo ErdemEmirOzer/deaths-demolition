@@ -236,7 +236,7 @@ namespace DD.Prototype.Tests.EditMode
                 float run = HudRoundNumeral.MeasureGlyphs(letters, n, 44f);
                 float lsb = HudRoundNumeral.LeftBearing[HudRoundNumeral.KindOf(letters[0])];
                 float width, height, runRight, sealCentre, seal;
-                HudArt.LaySmear(44f, run, lsb, out width, out height, out runRight, out sealCentre, out seal);
+                HudArt.LaySmear(44f, run, lsb, out width, out height, out runRight, out sealCentre, out seal, HudArt.SealInkReserveForRound(round));
                 float texel = height / HudArt.SmearNativeHeight;
                 float texels = width / texel;
                 string name = RomanNumerals.Cached(round);
@@ -246,9 +246,10 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.GreaterOrEqual(inkStart, HudArt.SmearDenseLeft * texel - 0.01f, name + ": the first ink inside the dense zone");
                 Assert.AreEqual((HudArt.SmearNativeWidth - HudArt.SmearDenseRight) * texel + HudArt.SealFromDenseRight * seal, sealCentre, 1e-3f, name + ": the seal's place");
                 Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.60 em (AD MUST-2, S-09 08.10)");
-                Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f), runRight, 1e-3f, name + ": 0.22 em to the seal");
-                Assert.GreaterOrEqual(HudArt.SealGap(44f) - 0.075f * 44f, HudArt.SealGapMinPx,
-                    name + ": measured dry-ink overshoot (3 px at cap 40) leaves at least 9 ref px");
+                Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f, HudArt.SealInkReserveForRound(round)), runRight, 1e-3f, name + ": 0.22 em to the seal");
+                float dryPast = HudArt.SealInkReserveForRound(round) > 0f ? 0.075f * 44f : 0f;
+                Assert.GreaterOrEqual(HudArt.SealGap(44f, HudArt.SealInkReserveForRound(round)) - dryPast, HudArt.SealGapMinPx,
+                    name + ": measured dry-ink overshoot leaves at least 9 ref px");
             }
         }
 
@@ -271,7 +272,7 @@ namespace DD.Prototype.Tests.EditMode
             em = HudRoundNumeral.EmWidth(14, out lsb);
             Assert.AreEqual(cap, HudArt.FitCap(cap, em, lsb), 1e-4f, "XIV keeps the cap");
             em = HudRoundNumeral.EmWidth(38, out lsb);
-            float fitted = HudArt.FitCap(cap, em, lsb);
+            float fitted = HudArt.FitCap(cap, em, lsb, HudArt.SealInkReserveForRound(38));
             Assert.Less(fitted, cap, "XXXVIII shrinks the cap");
             Assert.GreaterOrEqual(fitted, HudArt.CapFloor, "never under 32 px");
             Assert.LessOrEqual(fitted, 34f, "XXXVIII: about 33 px");
@@ -281,9 +282,9 @@ namespace DD.Prototype.Tests.EditMode
             for (int round = 1; round <= 100; round++)
             {
                 em = HudRoundNumeral.EmWidth(round, out lsb);
-                fitted = HudArt.FitCap(cap, em, lsb);
+                fitted = HudArt.FitCap(cap, em, lsb, HudArt.SealInkReserveForRound(round));
                 float width, height, runRight, sealCentre, seal;
-                HudArt.LaySmear(fitted, em * fitted, lsb, out width, out height, out runRight, out sealCentre, out seal);
+                HudArt.LaySmear(fitted, em * fitted, lsb, out width, out height, out runRight, out sealCentre, out seal, HudArt.SealInkReserveForRound(round));
                 Assert.LessOrEqual(width, HudArt.PlateMaxWidth + 0.01f, RomanNumerals.Cached(round) + ": the plate ≤ 288");
                 // r3-w2 (08.10): the numeral never touches the seal - its clip box (8 px round the letters) ends before the ring.
                 Assert.Greater(runRight - HudArt.NumeralClipPad, sealCentre + seal * 0.5f + 0.5f,
@@ -370,9 +371,9 @@ namespace DD.Prototype.Tests.EditMode
                 {
                     float lsb;
                     float em = HudRoundNumeral.EmWidth(round, out lsb);
-                    float cap = HudArt.FitCap(RunHudScreen.RoundGlyphHeight, em, lsb);
+                    float cap = HudArt.FitCap(RunHudScreen.RoundGlyphHeight, em, lsb, HudArt.SealInkReserveForRound(round));
                     float width, height, runRight, sealCentre, seal;
-                    HudArt.LaySmear(cap, em * cap, lsb, out width, out height, out runRight, out sealCentre, out seal);
+                    HudArt.LaySmear(cap, em * cap, lsb, out width, out height, out runRight, out sealCentre, out seal, HudArt.SealInkReserveForRound(round));
                     Assert.LessOrEqual(width, HudArt.PlateMaxWidth + 0.01f, round + ": ≤ 288");
                     Assert.GreaterOrEqual(runRight - (sealCentre + seal * 0.5f), HudArt.SealGapMinPx - 1e-3f, round + ": the gap ≥ 9 px");
                     if (round <= 23)

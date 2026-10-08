@@ -25,6 +25,9 @@ namespace DD.Prototype.UI
         private TMP_Text _health, _ammo, _caption, _delta;
         private UiBar _healthBar;
         private UiFx _leaf;
+        private CanvasGroup _roundGroup;
+        private Image _weaponIcon;
+        private RectTransform _ladder;
         private bool _ended;
 
         internal void Begin(RunHudScreen hud, string folder)
@@ -41,10 +44,14 @@ namespace DD.Prototype.UI
             _delta = Field<TMP_Text>("_goldDelta");
             _healthBar = Field<UiBar>("_healthBar");
             _leaf = Field<UiFx>("_goldLeaf");
+            _roundGroup = Field<CanvasGroup>("_roundGroup");
+            _weaponIcon = Field<Image>("_weaponIcon");
+            Image ladderBack = Field<Image>("_ladderBack");
+            _ladder = ladderBack != null ? ladderBack.transform.parent as RectTransform : null;
             _events = new StreamWriter(Path.Combine(folder, "events.tsv"));
             _events.WriteLine("realtime\tunscaled\tframe\tdsp\tid\tdetail");
             _samples = new StreamWriter(Path.Combine(folder, "samples.tsv"));
-            _samples.WriteLine("realtime\tunscaled\tframe\tdsp\tcoinScale\tdeltaAlpha\tleafStart\tchunks\tghost\thealAlpha\tbeats\theartScale\tedge0\tedge1\tedge2\tedge3\twedges\taccents\tcasings\tammo\tpreview\tlandings\tlowAmmo\tshakes\tswaps\tpunches\tround\tclipWidth\tsealScale\tsealY\tsealHitAt\thealthX\thealthY\tammoX\tammoY\tcaptionX\tcaptionY");
+            _samples.WriteLine("realtime\tunscaled\tframe\tdsp\tcoinScale\tdeltaAlpha\tleafStart\tchunks\tghost\thealAlpha\tbeats\theartScale\tedge0\tedge1\tedge2\tedge3\twedges\taccents\tcasings\tammo\tpreview\tlandings\tlowAmmo\tshakes\tswaps\tpunches\tround\tclipWidth\tsealScale\tsealY\tsealHitAt\thealthX\thealthY\tammoX\tammoY\tcaptionX\tcaptionY\thealthFill\troundAlpha\tladderX\tladderY\tweaponScale\tweaponAlpha");
             UiEvents.Raised += OnUi;
             StartCoroutine(Sample());
         }
@@ -90,7 +97,9 @@ namespace DD.Prototype.UI
                     (weapon != null && weapon.Classic != null ? weapon.Classic.Ammo : -1).ToString(CI), _hud.ReloadPreviewRounds.ToString(CI), _hud.ReloadLandings.ToString(CI),
                     _hud.AmmoPulsing ? "1" : "0", _hud.DryFireShakes.ToString(CI), _hud.WeaponSwaps.ToString(CI), _hud.GoldPunches.ToString(CI),
                     _hud.RoundNumeral.Value.ToString(CI), N(_hud.RoundClip.sizeDelta.x), N(Scale(_hud.RoundSeal)), N(_hud.RoundSeal.anchoredPosition.y), N(_hud.RoundSealHitAt),
-                    N(X(_health)), N(Y(_health)), N(X(_ammo)), N(Y(_ammo)), N(X(_caption)), N(Y(_caption)) }));
+                    N(X(_health)), N(Y(_health)), N(X(_ammo)), N(Y(_ammo)), N(X(_caption)), N(Y(_caption)), N(_healthBar != null ? _healthBar.Value : -1f),
+                    N(_roundGroup != null ? _roundGroup.alpha : -1f), N(_ladder != null ? _ladder.anchoredPosition.x : -999f), N(_ladder != null ? _ladder.anchoredPosition.y : -999f),
+                    N(_weaponIcon != null ? _weaponIcon.rectTransform.localScale.x : -1f), N(_weaponIcon != null ? _weaponIcon.canvasRenderer.GetAlpha() : -1f) }));
             }
         }
 

@@ -505,7 +505,7 @@ namespace DD.Prototype.UI
                 // 08.10 (S-09): a long numeral's cap shrinks so its plate fits (HudArt.FitCap; floor 32).
                 float lsb;
                 float em = HudRoundNumeral.EmWidth(round, out lsb);
-                _roundNumeral.SetHeight(HudArt.FitCap(RoundGlyphHeight, em, lsb));
+                _roundNumeral.SetHeight(HudArt.FitCap(RoundGlyphHeight, em, lsb, HudArt.SealInkReserveForRound(round)));
             }
 
             float width = _roundNumeral.Set(round);
@@ -515,7 +515,7 @@ namespace DD.Prototype.UI
                 // the margin (AD note 4) - the cluster is the plate; the seal and the letters' end follow the cap.
                 float cap = _roundNumeral.Height;
                 float plateWidth, plateHeight, sealCentre, sealDiameter;
-                HudArt.LaySmear(cap, width, _roundNumeral.FirstBearingEm, out plateWidth, out plateHeight, out _roundRunRight, out sealCentre, out sealDiameter);
+                HudArt.LaySmear(cap, width, _roundNumeral.FirstBearingEm, out plateWidth, out plateHeight, out _roundRunRight, out sealCentre, out sealDiameter, HudArt.SealInkReserveForRound(round));
                 _roundSmear.rectTransform.sizeDelta = new Vector2(plateWidth, plateHeight);
                 _roundSmear.rectTransform.anchoredPosition = new Vector2(0f, -HudArt.SmearCapOffset(plateHeight));
                 _roundCluster.sizeDelta = new Vector2(plateWidth, _roundCluster.sizeDelta.y);

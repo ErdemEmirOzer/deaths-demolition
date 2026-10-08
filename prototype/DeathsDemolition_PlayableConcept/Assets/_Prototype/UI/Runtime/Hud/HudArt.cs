@@ -147,9 +147,18 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>Advance-to-ring gap: the visible clearance floor plus dry-ink/filter reserve; shared by layout and plate fit.</summary>
-        public static float SealGap(float cap)
+        public static float SealGap(float cap, float dryInkReserveEm = 0f)
         {
-            return Mathf.Max(SealGapEm * cap, SealGapMinPx) + SealDryInkReserveEm * cap;
+            return Mathf.Max(SealGapEm * cap, SealGapMinPx) + dryInkReserveEm * cap;
+        }
+
+        /// <summary>Exact alpha&gt;.001 atlas projection: I ends inside its advance; V/X/L overrun it, C overruns slightly.</summary>
+        public static float SealInkReserveForRound(int round)
+        {
+            if (round <= 0) return 0f;
+            string numeral = RomanNumerals.Cached(round);
+            char last = numeral[numeral.Length - 1];
+            return last == 'I' ? 0f : last == 'C' ? 0.04f : SealDryInkReserveEm;
         }
 
         private static readonly Sprite[] s_gold = new Sprite[2];
@@ -350,13 +359,13 @@ namespace DD.Prototype.UI
         /// seal; any spare dense width stays at the head (left). Distances from the plate's right edge, in the cap's units.
         /// </summary>
         public static void LaySmear(float cap, float runWidth, float firstLsbEm, out float width, out float height, out float runRight,
-            out float sealCentre, out float sealDiameter)
+            out float sealCentre, out float sealDiameter, float dryInkReserveEm = 0f)
         {
             height = cap / SmearCapRatio;
             float texel = height / SmearNativeHeight;   // ref px per x1 texel
             float capTexels = cap / texel;
             sealDiameter = SealEm * cap;
-            float gap = SealGap(cap);
+            float gap = SealGap(cap, dryInkReserveEm);
             // The plate holds seal + gap + numeral: the dense zone carries the run, the gap and the seal (+ 0.02 em).
             float required = (runWidth / Mathf.Max(1f, cap) + gap / Mathf.Max(1f, cap) + 1.05f * SealEm - firstLsbEm + 0.02f) * capTexels;
             float denseAtZero = SmearHead + SmearTail - SmearDenseLeft - (SmearNativeWidth - SmearDenseRight);
@@ -372,10 +381,10 @@ namespace DD.Prototype.UI
         /// unless the plate would pass <see cref="PlateMaxWidth"/>, then smaller in proportion (the plate's width is linear in the
         /// cap - its period count depends on em only), never under <see cref="CapFloor"/>.
         /// </summary>
-        public static float FitCap(float baseCap, float runEm, float firstLsbEm)
+        public static float FitCap(float baseCap, float runEm, float firstLsbEm, float dryInkReserveEm = 0f)
         {
             float width, height, runRight, sealCentre, seal;
-            LaySmear(baseCap, runEm * baseCap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal);
+            LaySmear(baseCap, runEm * baseCap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal, dryInkReserveEm);
             if (width <= PlateMaxWidth + 0.01f)
             {
                 return baseCap;
@@ -385,7 +394,7 @@ namespace DD.Prototype.UI
             float cap = Mathf.Max(CapFloor, baseCap * PlateMaxWidth / width);
             for (int i = 0; i < 4 && cap > CapFloor; i++)
             {
-                LaySmear(cap, runEm * cap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal);
+                LaySmear(cap, runEm * cap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal, dryInkReserveEm);
                 if (width <= PlateMaxWidth + 0.01f)
                 {
                     break;
