@@ -43,6 +43,9 @@ namespace DD.Prototype.World.Vegetation
             public VegetationDensityField Field;
             public byte[] FinalZone, Clear;
             public bool[] Corridor;
+            public VegetationRecipe AppliedRecipe;
+            public VegetationLayout AppliedLayout;
+            public int AppliedTier, AppliedSeed;
         }
 
         public static DiagnosticSnapshot LastDiagnostics { get; private set; }
@@ -119,6 +122,13 @@ namespace DD.Prototype.World.Vegetation
             if (field == null) return new Handle(null);
             var draw = new VegetationDrawSet(recipe, VegetationKit.Load());
             draw.Build(field, tier, VegetationSystem.Seed);
+            if (s_diagnosticsRequested && LastDiagnostics != null && ReferenceEquals(LastDiagnostics.Field, field))
+            {
+                LastDiagnostics.AppliedRecipe = recipe;
+                LastDiagnostics.AppliedLayout = draw.Layout;
+                LastDiagnostics.AppliedTier = tier;
+                LastDiagnostics.AppliedSeed = VegetationSystem.Seed;
+            }
             // Deterministic stills: calm wind (no lean, no gust tint), no interaction map.
             VegetationWindSettings.Load().ApplyGlobals(tier, false, 0f, 0f);
             Shader.SetGlobalVector(PushOnId, Vector4.zero);

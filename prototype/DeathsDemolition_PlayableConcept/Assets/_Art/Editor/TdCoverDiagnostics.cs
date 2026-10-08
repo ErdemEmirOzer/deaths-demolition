@@ -258,7 +258,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         [Serializable] private sealed class ArrayRecord
         {
-            public string file, owner, field, elementType;
+            public string file, owner, field, elementType, sha256;
             public int length;
         }
         [Serializable] private sealed class GridRecord
@@ -288,6 +288,7 @@ namespace DD.Art.Pipeline.EditorTools
                 height = (int)Field(grid, "Height"), cell = (float)Field(grid, "Cell"),
                 origin = (Vector2)Field(grid, "Origin"), gridDefaultGroundY = (float)Field(grid, "DefaultGroundY"),
                 fieldDefaultGroundY = (float)Field(field, "DefaultGroundY"), arrays = rows.ToArray() });
+            DumpProvenance(snapshot, rows);
             _dumped = true;
         }
 
@@ -318,7 +319,78 @@ namespace DD.Art.Pipeline.EditorTools
                     else if (value is float v) writer.Write(v);
                     else writer.Write((bool)value);
                 }
-            rows.Add(new ArrayRecord { file = file, owner = owner, field = field, elementType = type.Name, length = values.Length });
+            rows.Add(new ArrayRecord { file = file, owner = owner, field = field, elementType = type.Name, length = values.Length, sha256 = FileHash(Path.Combine(_dir, file)) });
+        }
+
+
+        [Serializable] private sealed class ProvenanceRecord
+        {
+            public string status = "ACTUAL_PREVIEW_METADATA; visible/submitted counts and coverage NOTRECORDED";
+            public string recipeName, recipeAssetPath, recipeGuid, recipeDependencyHash, recipeJsonFile;
+            public string recipeJsonSha256, fieldGridIdentitySha256, layoutIdentitySha256;
+            public bool recipePersistent, speciesCountMatchesTotal;
+            public int recipeInstanceId, appliedTier, appliedSeed, actualTotalPlaced;
+            public int[] actualPlacedPerSpecies;
+            public float actualTierDensity;
+            public string recipeIdentity = "Empty asset path/GUID means non-asset runtime recipe; recipeName and actual JSON identify it";
+            public string hashContract = "SHA256 field: vegetation-grid.json UTF8 plus ordered array filename+contentSHA; layout: LE chunks/origin/chunksize,total,group type/variant/count then row-major matrix floats; recipe: actual JsonUtility.ToJson";
+        }
+
+        private void DumpProvenance(object snapshot, List<ArrayRecord> arrays)
+        {
+            var recipe = Field(snapshot, "AppliedRecipe") as Object;
+            object layout = Field(snapshot, "AppliedLayout");
+            if (recipe == null || layout == null)
+            {
+                WriteJson("vegetation-provenance.json", new ProvenanceRecord { status = "NOTRECORDED: applied preview recipe/layout unavailable" });
+                return;
+            }
+            string recipeFile = "vegetation-applied-recipe.json";
+            File.WriteAllText(Path.Combine(_dir, recipeFile), JsonUtility.ToJson(recipe, true));
+            string assetPath = UnityEditor.AssetDatabase.GetAssetPath(recipe);
+            int[] counts = (int[])((int[])Field(layout, "InstancesPerType")).Clone();
+            int total = (int)Field(layout, "TotalInstances"), sum = 0;
+            foreach (int count in counts) sum += count;
+            string layoutHash;
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+                {
+                    writer.Write((int)Field(layout, "ChunksX")); writer.Write((int)Field(layout, "ChunksZ"));
+                    Vector2 origin = (Vector2)Field(layout, "Origin"); writer.Write(origin.x); writer.Write(origin.y);
+                    writer.Write((float)Field(layout, "ChunkSize")); writer.Write(total);
+                    foreach (object group in (Array)Field(layout, "Groups"))
+                    {
+                        writer.Write(Convert.ToInt32(Field(group, "Type"))); writer.Write((int)Field(group, "Variant"));
+                        Matrix4x4[] matrices = (Matrix4x4[])Field(group, "Matrices"); writer.Write(matrices.Length);
+                        foreach (Matrix4x4 matrix in matrices)
+                            for (int row = 0; row < 4; row++) for (int col = 0; col < 4; col++) writer.Write(matrix[row, col]);
+                    }
+                }
+                stream.Position = 0;
+                using (var sha = System.Security.Cryptography.SHA256.Create()) layoutHash = HexHash(sha.ComputeHash(stream));
+            }
+            string fieldIdentity = File.ReadAllText(Path.Combine(_dir, "vegetation-grid.json"));
+            foreach (ArrayRecord array in arrays) fieldIdentity += "\n" + array.file + ":" + array.sha256;
+            string fieldHash;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+                fieldHash = HexHash(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(fieldIdentity)));
+            int tier = (int)Field(snapshot, "AppliedTier");
+            WriteJson("vegetation-provenance.json", new ProvenanceRecord {
+                recipeName = recipe.name, recipeInstanceId = recipe.GetInstanceID(), recipePersistent = UnityEditor.AssetDatabase.Contains(recipe),
+                recipeAssetPath = assetPath, recipeGuid = string.IsNullOrEmpty(assetPath) ? "" : UnityEditor.AssetDatabase.AssetPathToGUID(assetPath),
+                recipeDependencyHash = string.IsNullOrEmpty(assetPath) ? "" : UnityEditor.AssetDatabase.GetAssetDependencyHash(assetPath).ToString(),
+                recipeJsonFile = recipeFile, recipeJsonSha256 = FileHash(Path.Combine(_dir, recipeFile)), fieldGridIdentitySha256 = fieldHash,
+                layoutIdentitySha256 = layoutHash, appliedTier = tier, appliedSeed = (int)Field(snapshot, "AppliedSeed"),
+                actualTierDensity = (float)recipe.GetType().GetMethod("TierDensity").Invoke(recipe, new object[] { tier }),
+                actualTotalPlaced = total, actualPlacedPerSpecies = counts, speciesCountMatchesTotal = sum == total });
+        }
+
+        private static string HexHash(byte[] bytes) => BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
+        private static string FileHash(string path)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            using (var stream = File.OpenRead(path)) return HexHash(sha.ComputeHash(stream));
         }
 
         private static object Field(object value, string name) => value.GetType().GetField(name).GetValue(value);
