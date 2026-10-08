@@ -722,6 +722,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayFleshHit(Vector3 point, Vector3 normal, Vector3 shotDirection, bool critical, bool killed)
         {
+            // AP037 owns the TD flesh layer only after its complete asset set is warmed.
+            if (FeelBrushVfxSystem.OwnsTdLayers) return true;
             if (!_ready || AuditMute)
             {
                 return false;
@@ -1040,7 +1042,7 @@ namespace DD.Prototype.Feedback.Vfx
             // the hit path draws the sheet at the impact and the splinter under the body.
             PlayDecal(VfxIds.DecalLacquerSplinter, groundPoint, Vector3.up, 0f, DecalSecondsSplinter, 0.7f, Color.white);
             // WP-019b: the flesh under the plate bleeds too — kept below the critical level so the plate loss still reads (brief 3).
-            if (_blood.IsReady)
+            if (_blood.IsReady && !FeelBrushVfxSystem.OwnsTdLayers)
             {
                 any |= _blood.PlayHit(point, normal, shotDirection, BloodSystem.HitClass.ArmorBreak);
             }
@@ -1097,6 +1099,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayZombieDeath(Vector3 feet, Vector3 hitDirection, bool heavy, Vector3 hitPoint, Vector3 normal, FeedbackWeight weight = FeedbackWeight.Standard)
         {
+            if (FeelBrushVfxSystem.OwnsTdLayers) return true;
             if (!_ready || AuditMute)
             {
                 return false;

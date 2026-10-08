@@ -104,7 +104,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Test seam (like <see cref="VfxTier.Override"/>): the guard's chest point instead of the primary player's (any camera mode). Null in play.</summary>
         public static Vector3? GuardChestOverride;
 
-        private struct Blast { public bool Active, Full, Rocket, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale, GroundFade, Guard; public int Stages, Mask; }
+        private struct Blast { public bool Active, Full, Rocket, Grounded, BrushOwned; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale, GroundFade, Guard; public int Stages, Mask; }
         private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
         private Texture2D _dot;
         private VfxDressing _owner;
@@ -173,12 +173,20 @@ namespace DD.Prototype.Feedback.Vfx
         {
             if (_owner == null || !_owner.IsReady || mask == 0) return false;
             bool rocket = source == ExplosionSource.Rocket;
+            bool brushOwned = FeelBrushVfxSystem.OwnsTdLayers;
+            if (brushOwned)
+            {
+                int active = 0;
+                for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].BrushOwned) active++;
+                // Keep debris/smoke lifetime in the eight-blast budget, not just the 0.25 s ring.
+                if (active >= FeelBrushVfxPolicy.ExplosionCapacity) return true;
+            }
             if (!rocket) mask &= 1 | 2 | 8;
             int full = 0;
             for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].Full) full++;
             ref Blast b = ref _blasts[_next];
             _next = (_next + 1) % _blasts.Length;
-            b = new Blast { Active = true, Rocket = rocket, Full = rocket && full < FullCapacity, At = at, Start = Time.time, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
+            b = new Blast { Active = true, Rocket = rocket, BrushOwned = brushOwned, Full = rocket && full < FullCapacity, At = at, Start = Time.time, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
             b.Guard = GuardAt(at, ColumnGuardRadius * b.Scale);   // M-60 §4.1: fireball card + column + steam at α × 0.5 over the player
             if (b.Guard < 1f) GuardedColumns++;
             int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
@@ -196,18 +204,18 @@ namespace DD.Prototype.Feedback.Vfx
             if (b.Full) FullPresentations++;
             else LightPresentations++;
             float alpha = GameFeelSettings.FlashScale;
-            if ((mask & 1) != 0)
+            if (!brushOwned && (mask & 1) != 0)
             {
                 Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha * b.Guard);
                 if (b.Full && alpha >= .99f && VfxTier.Current != VfxTierLevel.Performance
                     && Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FlashCardSize * b.Scale, 1f / 60f, new Color(1f, .75f, .45f) * 12f, 1f, true))
                     FlashCards++;
-                _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
+                if (!brushOwned) _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
                 // M-60 §1.5 l.105: rocket and small blasts alike; ReduceFlashes (the FlashScale test above) turns it off.
                 if (alpha >= .99f && NearViewer(at) && PlayEdgeSmear()) EdgeSmears++;
             }
 
-            if (b.Grounded && (mask & 2) != 0)
+            if (!brushOwned && b.Grounded && (mask & 2) != 0)
             {
                 FlipbookEffect ring = CardEffect(VfxIds.Shockwave, b.Ground + b.Normal * .05f, Quaternion.LookRotation(b.Normal), FlipbookEffect.Facing.Fixed, RingSize * b.Scale * b.GroundFade, RingSeconds, VfxDressing.ShockRingDustTint, RingAlpha * b.GroundFade);   // AD M6 dust tint
                 ring?.SetGrow(b.Scale * b.GroundFade, RingSeconds);
@@ -228,6 +236,35 @@ namespace DD.Prototype.Feedback.Vfx
             for(int i=0;i<_blasts.Length;i++)
             {
                 ref Blast b=ref _blasts[i];if(!b.Active)continue;float age=now-b.Start;
+                if (b.BrushOwned)
+                {
+                    // FeelEvents owns the new ring/light. Retain this prewarmed AP010 debris/smoke owner once.
+                    if (age >= .033f && (b.Stages & 2) == 0)
+                    {
+                        b.Stages |= 2;
+                        B3Particles.Emit(_column, b.At + Vector3.up * .2f, Vector3.up * .45f,
+                            1.8f * b.Scale, 1.0f, new Color(.56f, .58f, .60f, .35f * b.Guard));
+                        Columns++;
+                    }
+                    if (age >= .05f && (b.Stages & 4) == 0)
+                    {
+                        b.Stages |= 4;
+                        int count = VfxTier.Pick(6, 9, 12);
+                        Vector3 origin = b.Grounded ? b.Ground + b.Normal * .1f : b.At;
+                        var sheet = _debris.textureSheetAnimation;
+                        int cell = b.Surface == SurfaceKind.Wood ? 4 : b.Surface == SurfaceKind.Dirt ? 8 : 0;
+                        sheet.startFrame = new ParticleSystem.MinMaxCurve(cell / 16f, (cell + 1.999f) / 16f);
+                        for (int n = 0; n < count; n++)
+                        {
+                            float angle = n * 2.399963f;
+                            B3Particles.Emit(_debris, origin, new Vector3(Mathf.Cos(angle), 1.2f + (n % 3) * .3f, Mathf.Sin(angle)) * 2f,
+                                .05f + (n % 4) * .04f, .8f + (n % 3) * .2f, new Color(.25f, .27f, .29f, 1f));
+                        }
+                        Residues++;
+                    }
+                    if (age >= 1.2f) b.Active = false;
+                    continue;
+                }
                 if(age>=.016f && (b.Stages&1)==0)
                 {b.Stages|=1;if(b.Full && (b.Mask&4)!=0){int count=VfxTier.Pick(10,24,32);for(int n=0;n<count;n++){float a=n*2.399963f;B3Particles.Emit(_embers,b.At,new Vector3(Mathf.Cos(a),1.5f,Mathf.Sin(a))*3f,.035f,.8f,new Color(1f,.48f,.24f,1f));}EmberBursts++;}}
                 if(age>=.033f && (b.Stages&2)==0)
