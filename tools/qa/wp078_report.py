@@ -14,6 +14,8 @@ import zlib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import guard_receipt  # noqa: E402
 SCHEMA = "dd-wp078-acceptance-v1"
 AREAS = "projectile penetration launcher arsenal gel chain ragdoll zombieAttacks animation camera world aiFlags progression audio ui readability".split()
 MODES = {"topdown": "topdown", "TopDown": "topdown", "tp": "tp", "ThirdPerson": "tp", "fp": "fp", "FirstPerson": "fp"}
@@ -449,8 +451,12 @@ class Inspector:
             if field in data:
                 require(data[field] == self.commit, "mixed native " + field)
 
-    def guard(self, data):
+    def guard(self, data, allow_editor_oos=True):
         require(isinstance(data, dict), "missing guard receipt", "BLOCKED")
+        if "code" in data:
+            require(integer(data["code"]) and data["code"] == 0, "guard verdict code is not zero")
+        if allow_editor_oos and guard_receipt.receipt_ok(data) and guard_receipt.accepted_editor_oos(data):
+            return   # raw restoreExit/OOS remain bound to the execution proof, with the editor warning intact
         for field in ("snapshotExit", "restoreExit"):
             require(integer(data.get(field)) and data[field] == 0, "guard " + field + " is not verified zero")
         # wp078_bot writes outOfScopeChanged as a boolean, older receipts as integer 0.
@@ -606,7 +612,7 @@ class Inspector:
         only repeat it. kind/buildRole/mode in the attempt, when present, must match the step that uses the run."""
         receipt = proof.get("guard")
         require(isinstance(receipt, dict), "bot attempt.json has no guard receipt", "BLOCKED")
-        self.guard(receipt)
+        self.guard(receipt, allow_editor_oos=False)   # every bot is a Player; editor exceptions never apply
         copy = run.get("guard")
         if copy is not None:
             require(isinstance(copy, dict) and all(copy.get(field) == receipt.get(field) for field in ("snapshotExit", "restoreExit", "verified", "outOfScopeChanged")),
@@ -1040,7 +1046,7 @@ class Inspector:
                     for name, digest in mapping.items():
                         self.file({"path": str((directory / name).relative_to(self.root)), "artifactSha256": digest})
                 if discard == "host-contaminated":
-                    self.guard(attempt.get("guard"))
+                    self.guard(attempt.get("guard"), allow_editor_oos=False)   # discarded perf still ran a Player
                 cell["discarded"].append(dict(entry, discard=discard))
                 continue
             if not (row.get("status") == "complete" and row.get("hostClean") is True):
@@ -1050,7 +1056,7 @@ class Inspector:
             require(proof.get("status") == "complete" and proof.get("hostClean") is True, "incomplete perf or dirty host")
             variant = [flag for flag in VARIANT_FLAGS if flag in self.command_argv(attempt_path, proof)]
             require(not variant, "a gate perf window carries " + "/".join(variant) + " (a B9/Z3 measurement, never A4): " + directory.name)
-            self.guard(proof.get("guard"))
+            self.guard(proof.get("guard"), allow_editor_oos=False)   # perf windows are Players
             for field in ("resolution", "activeEnemies", "warmupSeconds", "windowSeconds"):
                 require(proof.get(field) == self.targets[field] and not isinstance(proof.get(field), bool), "perf scope missing or wrong: " + field, "BLOCKED")
             filename = keys["file"]

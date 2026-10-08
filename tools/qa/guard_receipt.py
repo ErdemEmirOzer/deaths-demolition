@@ -11,7 +11,8 @@ Every Player run of wp078_perf / wp078_bot goes: snapshot → run → (finally) 
   * restore always runs (try/finally in the callers; SIGTERM becomes SystemExit 143 so finally runs too);
     restore 75 (lock held) is retried a bounded number of times, then 7 and "VERİ GERİ YÜKLENMEDİ" is written;
     any other restore error → 7;
-  * verdict (C-00 25.09): verified=1, no out-of-scope change, and touched = 0 — or touched = 1 where the one changed
+  * verdict (C-00 25.09): verified=1, no out-of-scope change (editor-only exception: oos_rule accepts it with a warning),
+    and touched = 0 — or touched = 1 where the one changed
     file is the player PlayerPrefs plist (the guard's own before-player.txt / after-run-player.txt rows: touched is a
     per-area flag, not a count; gt 07.10) and every changed key is one the engine writes itself: the window state
     (Screenmanager* / UnitySelectMonitor) or the quality level (UnityGraphicsQuality — the Player saves it on every
@@ -285,6 +286,33 @@ def changed_rows(ug, area):
 OUT_OF_SCOPE = 32   # userdata-guard restore (G4 D7): verified in scope, another area changed
 
 
+def accepted_editor_oos(receipt):
+    """A recorded editor exception, never a replacement for the raw restore code or OOS flag."""
+    decision = receipt.get("oosRule")
+    return (receipt.get("scope") == "editor" and type(receipt.get("code")) is int and receipt["code"] == 0
+            and type(receipt.get("restoreExit")) is int and receipt["restoreExit"] in (0, OUT_OF_SCOPE)
+            and isinstance(decision, dict) and decision.get("rule") == "oos_rule"
+            and decision.get("accepted") is True and isinstance(decision.get("why"), str) and bool(decision["why"].strip()))
+
+
+def receipt_ok(receipt, allow_editor_oos=True):
+    """Shared chain/report rule. Legacy clean receipts remain valid; only an explicit editor rule decision admits OOS."""
+    if not isinstance(receipt, dict):
+        return False
+    if type(receipt.get("snapshotExit")) is not int or receipt["snapshotExit"] != 0:
+        return False
+    if "code" in receipt and (type(receipt["code"]) is not int or receipt["code"] != 0):
+        return False
+    verified = receipt.get("verified")
+    if not (verified is True or (type(verified) is int and verified == 1)):
+        return False
+    oos = receipt.get("outOfScopeChanged")
+    if oos is True or (type(oos) is int and oos == 1):
+        return allow_editor_oos and accepted_editor_oos(receipt)
+    return ((oos is False or (type(oos) is int and oos == 0))
+            and type(receipt.get("restoreExit")) is int and receipt["restoreExit"] == 0)
+
+
 def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep=time.sleep):
     """Restore with a bounded retry on 75 (a lock held); (code, CompletedProcess). Output appended to ug/restore.txt."""
     ug = Path(ug)
@@ -304,7 +332,7 @@ def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep
     with open(ug / "restore.txt", "a", encoding="utf-8") as f:
         f.write(text)
     # G4 D7: 32 = this window's area restored and verified, the other area changed — handed to verdict() like 0, which
-    # still stops on out-of-scope changes (the acceptance behaviour before D7, when this case exited 0)
+    # stops on out-of-scope changes except an editor window accepted by oos_rule (Y4)
     return (0 if result.returncode in (0, OUT_OF_SCOPE) else STOP), result
 
 
@@ -326,5 +354,7 @@ def close(ug, scope="player", **retry):
         else:
             ok, why = verdict(ug, result.stdout, ug / "prefs-after-run.plist", scope)
             receipt = dict(receipt, code=0 if ok else STOP, why=why)
+            if ok and scope == "editor" and receipt["outOfScopeChanged"]:
+                receipt.update(scope=scope, oosRule={"rule": "oos_rule", "accepted": True, "why": why})
     signals.reraise()   # a direct caller (wp078_accept): the signal lands only after the restore is complete
     return receipt

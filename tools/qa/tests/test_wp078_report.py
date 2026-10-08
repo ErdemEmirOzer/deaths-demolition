@@ -580,6 +580,12 @@ class K8LedgerTests(Fixture):
     def test_host_contaminated_discard(self):
         self.add_attempt('perf-sinematik-fp-4',status='failed',exitCode=0,hostClean=False,timedOut=False,missingArtifacts=[],guard=copy.deepcopy(GUARD))
         r=self.result();self.assertTrue(r['pass'],r['failures']);self.assertEqual(r['perf']['discards'][0]['discard'],'host-contaminated')
+    def test_host_contaminated_player_cannot_use_an_editor_exception(self):
+        guard = dict(GUARD, code=0, restoreExit=32, outOfScopeChanged=True, scope="editor",
+                     oosRule={"rule": "oos_rule", "accepted": True, "why": "editor fixture"})
+        self.add_attempt('perf-yuksek-topdown-4', status='failed', exitCode=0, hostClean=False,
+                         timedOut=False, missingArtifacts=[], guard=guard)
+        self.assert_step('A4', 'FAIL', 'guard')
     def test_non_discardable_attempts_fail(self):
         for n,fields in enumerate((dict(status='failed',exitCode=1,hostClean=False,timedOut=False,missingArtifacts=[]),
                                    dict(status='failed',exitCode=0,hostClean=False,timedOut=True,missingArtifacts=[]),

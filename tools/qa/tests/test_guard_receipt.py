@@ -236,6 +236,17 @@ class CodeMappingTests(unittest.TestCase):
             receipt = gr.close(ug, "editor")
         self.assertEqual((0, 32, True), (receipt["code"], receipt["restoreExit"], receipt["outOfScopeChanged"]))
         self.assertIn("WARNING out-of-scope change accepted by oos_rule: ok by rule", receipt["why"])
+        self.assertEqual("editor", receipt["scope"])
+        self.assertEqual({"rule": "oos_rule", "accepted": True, "why": receipt["why"]}, receipt["oosRule"])
+        self.assertTrue(gr.receipt_ok(dict(receipt, snapshotExit=0)))
+        self.assertFalse(gr.receipt_ok(dict(receipt, snapshotExit=0), allow_editor_oos=False))
+
+    def test_unverified_editor_oos_never_asks_the_rule(self):
+        ug = self.oos_ug()
+        with mock.patch.object(gr, "oos_decide") as rule:
+            self.assertEqual((False, "guard verified!=1"),
+                             gr.verdict(ug, self.LINE32.replace("verified=1", "verified=0"), ug / "after.plist", "editor"))
+        rule.assert_not_called()
 
     def test_editor_oos_real_rule_2b_end_to_end(self):
         """the real oos_rule on fixture windows (KPROJ and the ledger pointed at a temp root): S-03 before4's case — the
