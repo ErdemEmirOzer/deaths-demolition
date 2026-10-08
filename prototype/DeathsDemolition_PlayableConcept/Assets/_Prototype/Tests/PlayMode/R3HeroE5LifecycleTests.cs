@@ -30,6 +30,22 @@ namespace DD.Prototype.Tests.PlayMode
             if (_s != null) yield return _s.Bitir();
             WeaponRegistry.SelectedWeapon = _selected;
         }
+        private static void TraceReload(PlayerSkinnedVisual body, SpecialWeaponRuntime runtime, string beat)
+        {
+            Animator a = body.Animator;
+            int layer = a.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer);
+            if (layer < 0) { Debug.Log("[E5-RELOAD] " + beat + " layer-missing initialized=" + a.isInitialized); return; }
+            AnimatorStateInfo state = a.GetCurrentAnimatorStateInfo(layer), next = a.GetNextAnimatorStateInfo(layer);
+            string Clips(AnimatorClipInfo[] cs) => string.Join(",", System.Array.ConvertAll(cs, c => c.clip != null ? c.clip.name + "@" + c.weight + "/length=" + c.clip.length : "null"));
+            Debug.Log("[E5-RELOAD] " + beat + " frame=" + Time.frameCount + " time=" + Time.time + " dt=" + Time.deltaTime +
+                " initialized=" + a.isInitialized + " animatorSpeed=" + a.speed + " layer=" + layer + " transition=" + a.IsInTransition(layer) +
+                " current=" + state.fullPathHash + "/phase=" + state.normalizedTime + "/length=" + state.length + "/speed=" + state.speed + "/mult=" + state.speedMultiplier +
+                " next=" + next.fullPathHash + "/phase=" + next.normalizedTime + "/length=" + next.length + "/speed=" + next.speed + "/mult=" + next.speedMultiplier +
+                " clips=[" + Clips(a.GetCurrentAnimatorClipInfo(layer)) + "] nextClips=[" + Clips(a.GetNextAnimatorClipInfo(layer)) +
+                "] reloadRate=" + a.GetFloat(CharacterAnimatorContract.ReloadRate) + " set=" + body.WeaponAnimSet +
+                " presentation=" + body.SpecialReloadPresentationActive + " runtime=" + runtime.IsReloading + "/progress=" + runtime.ReloadProgress01);
+        }
+
         [UnityTest]
         [Timeout(240000)]
         public IEnumerator Special_ReloadCompletionCancellationDisable_ReleasesAllParts()
@@ -51,12 +67,26 @@ namespace DD.Prototype.Tests.PlayMode
                     while (runtime.Ammo >= beforeShot && Time.time - fireStart < 5f) yield return null;
                     _s.Girdi.AtesBasti = _s.Girdi.AtesBasili = false;
                     Assert.Less(runtime.Ammo, beforeShot, "real input must spend a round");
+                    TraceReload(body, runtime, "before-request");
                     Assert.IsTrue(runtime.IsReloading || runtime.TryBeginReload());
+                    TraceReload(body, runtime, "after-request");
                     yield return null;
+                    TraceReload(body, runtime, "first-evaluation");
                     Assert.IsTrue(body.SpecialReloadPresentationActive, "FeelEvents start must drive presentation");
                     int ammoBefore = runtime.Ammo;
                     float t0 = Time.time;
-                    while (!body.SpecialMagazineVisual.InHand && runtime.IsReloading && Time.time - t0 < 8f) yield return null;
+                    int traceFrames = 0, lastState = 0, lastNext = 0;
+                    while (!body.SpecialMagazineVisual.InHand && runtime.IsReloading && Time.time - t0 < 8f)
+                    {
+                        int traceLayer = body.Animator.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer);
+                        int state = traceLayer >= 0 ? body.Animator.GetCurrentAnimatorStateInfo(traceLayer).fullPathHash : 0;
+                        int nextState = traceLayer >= 0 ? body.Animator.GetNextAnimatorStateInfo(traceLayer).fullPathHash : 0;
+                        if (traceFrames < 12 || state != lastState || nextState != lastNext)
+                            TraceReload(body, runtime, "wait-" + traceFrames);
+                        traceFrames++; lastState = state; lastNext = nextState;
+                        yield return null;
+                    }
+                    TraceReload(body, runtime, "in-hand-check");
                     Assert.IsTrue(body.SpecialMagazineVisual.InHand, "canister/cell detach reaches hand");
                     int layer = body.Animator.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer);
                     Assert.GreaterOrEqual(layer, 0);
