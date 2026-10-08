@@ -9,9 +9,8 @@ int _UvStartsAtTop;
 void ReadMsaa4(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= 480 || id.y >= 270) return;
-    // Output index is ReadPixels lower-left. Match Blit.Vert/Common.hlsl, then CopyDepthPass scaleBias.
+    // Direct texel id is already raster-normalized; only actual CopyDepthPass scaleBias remains.
     float2 uv = (float2(id.xy) + 0.5) / float2(480.0, 270.0);
-    if (_UvStartsAtTop != 0) uv.y = 1.0 - uv.y;
     uv = uv * _ScaleBias.xy + _ScaleBias.zw;
     int2 coord = int2(uv * float2(480.0, 270.0));
     if (coord.x < 0 || coord.y < 0 || coord.x >= 480 || coord.y >= 270) return; // Sentinel retained: unsupported mapping.

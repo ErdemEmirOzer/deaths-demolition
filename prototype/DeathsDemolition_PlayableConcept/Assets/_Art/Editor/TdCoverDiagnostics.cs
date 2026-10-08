@@ -1128,7 +1128,7 @@ namespace DD.Art.Pipeline.EditorTools
             public float[] viewportScale;
             public bool yFlip, normalizedToReadPixelsLowerLeft = true;
             public float[] scaleBias;
-            public string lowerLeftToBlitUv = "pixel center / output size; invert UV.y iff graphicsUVStartsAtTop, as Common.hlsl GetFullScreenTriangleTexCoord; then actual CopyDepth scaleBias";
+            public string lowerLeftToBlitUv = "direct texel center / output size is raster-normalized; no extra platform UV flip; then actual CopyDepth scaleBias";
         }
         [Serializable] private sealed class SampleRecord
         {
