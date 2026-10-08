@@ -97,6 +97,32 @@ namespace DD.Prototype.Characters
         public float LeftLift => _leftLift;
         public float RightLift => _rightLift;
         public bool Served => _servedThisFrame;
+        /// <summary>
+        /// Diagnostic only: internal Humanoid foot IK goals, captured before this adapter writes either IK target or
+        /// bodyPosition. These are goal coordinates, not a claim about a scene bone Transform's current animation pose.
+        /// </summary>
+        public int AnimatedGoalSampleFrame { get; private set; } = -1;
+        public Vector3 AnimatedGoalLeft { get; private set; }
+        public Vector3 AnimatedGoalRight { get; private set; }
+
+        /// <summary>A finite internal goal sample from this Unity frame only. No acceptance metric consumes this readout.</summary>
+        public bool TryGetAnimatedFootGoal(int foot, out Vector3 position)
+        {
+            position = new Vector3(float.NaN, float.NaN, float.NaN);
+            if (!isActiveAndEnabled || _animator == null || !_animator.isActiveAndEnabled || AnimatedGoalSampleFrame != Time.frameCount) return false;
+            Vector3 sample = foot == 0 ? AnimatedGoalLeft : foot == 1 ? AnimatedGoalRight : position;
+            if (float.IsNaN(sample.x) || float.IsInfinity(sample.x) ||
+                float.IsNaN(sample.y) || float.IsInfinity(sample.y) ||
+                float.IsNaN(sample.z) || float.IsInfinity(sample.z)) return false;
+            position = sample;
+            return true;
+        }
+
+        private void ClearAnimatedGoalSample()
+        {
+            AnimatedGoalSampleFrame = -1;
+            AnimatedGoalLeft = AnimatedGoalRight = new Vector3(float.NaN, float.NaN, float.NaN);
+        }
         /// <summary>Tests: force the adapter on/off regardless of the near gate (-1 = automatic).</summary>
         public static int Force = -1;
         /// <summary>Tests only: every served body allocates once (proves the crowd allocation gate catches a per-body allocation).</summary>
@@ -122,6 +148,7 @@ namespace DD.Prototype.Characters
         public void Configure(Animator animator)
         {
             _animator = animator;
+            ClearAnimatedGoalSample();
         }
 
         /// <summary>Owner binding: allowed (alive, not dying/rising) and near (LOD0/1).</summary>
@@ -133,6 +160,7 @@ namespace DD.Prototype.Characters
             _enabled = enabledGate;
             _near = nearGate;
             _lockGate = lockGate;
+            ClearAnimatedGoalSample();
             ClearLock();
             _weight = 0f;
             _pelvisOffset = 0f;
@@ -158,6 +186,7 @@ namespace DD.Prototype.Characters
 
         private void OnDisable()
         {
+            ClearAnimatedGoalSample();
             _weight = 0f;
             _pelvisOffset = 0f;
             _commonDelta = 0f;
@@ -169,6 +198,10 @@ namespace DD.Prototype.Characters
             if (_animator == null || !_animator.isHuman) return;
             if (_ikFrame == Time.frameCount) return;
             _ikFrame = Time.frameCount;
+            // Read the internal animation pose even for Force=0, before budget/fade returns; no ray or IK work is added there.
+            AnimatedGoalLeft = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
+            AnimatedGoalRight = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+            AnimatedGoalSampleFrame = Time.frameCount;
             if (s_frame != Time.frameCount)
             {
                 s_frame = Time.frameCount;

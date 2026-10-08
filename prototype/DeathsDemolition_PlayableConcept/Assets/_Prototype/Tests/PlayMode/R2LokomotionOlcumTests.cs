@@ -1217,7 +1217,10 @@ namespace DD.Prototype.Tests.PlayMode
             if (string.IsNullOrEmpty(dir)) return;
             var sec = new HashSet<int> { 0, 8, 16, 20, iIkOffRun, iIkOffWalk, iRate };
             var sb = new StringBuilder("label,since,frame,valid,phaseL,phaseR,contactL,contactR,poseL,poseR,r2L,r2R,animSoleL,animSoleR,shownSoleL,shownSoleR,animVyL,animVyR," +
-                                       "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed,ownerRate,ikForce,ikAdapterServed,ikWeight\n");
+                                       "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed,ownerRate,ikForce,ikAdapterServed,ikWeight," +
+                                       "unityFrame,rawGoalFrame,rawGoalSameFrameL,rawGoalSameFrameR,rawGoalVelocityValidL,rawGoalVelocityValidR," +
+                                       "rawGoalLx,rawGoalLy,rawGoalLz,rawGoalRx,rawGoalRy,rawGoalRz,rawGoalVxL,rawGoalVyL,rawGoalVzL,rawGoalVxR,rawGoalVyR,rawGoalVzR," +
+                                       "rawGoalMinusShownBoneLx,rawGoalMinusShownBoneLy,rawGoalMinusShownBoneLz,rawGoalMinusShownBoneRx,rawGoalMinusShownBoneRy,rawGoalMinusShownBoneRz,oldEstimateVyL,oldEstimateVyR\n");
             foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
             {
                 if (!sec.Contains(k.Etiket)) continue;
@@ -1228,7 +1231,16 @@ namespace DD.Prototype.Tests.PlayMode
                   .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append(',').Append(F3(Yatay(k.FootVL).magnitude)).Append(',').Append(F3(Yatay(k.FootVR).magnitude)).Append(',')
                   .Append(F3(k.BodyV.magnitude)).Append(',').Append(F(k.Pelvis)).Append(',').Append(k.Locked).Append(',').Append(F3(k.Rate)).Append(',')
                   .Append(k.OlayL ? 1 : 0).Append(',').Append(k.OlayR ? 1 : 0).Append(',').Append(k.OffL ? 1 : 0).Append(',').Append(k.OffR ? 1 : 0).Append(',').Append(k.IkServed ? 1 : 0).Append(',')
-                  .Append(F(k.OwnerRate)).Append(',').Append(k.IkForce).Append(',').Append(k.IkAdapterServed ? 1 : 0).Append(',').Append(F(k.IkWeight)).Append('\n');
+                  .Append(F(k.OwnerRate)).Append(',').Append(k.IkForce).Append(',').Append(k.IkAdapterServed ? 1 : 0).Append(',').Append(F(k.IkWeight)).Append(',')
+                  .Append(k.UnityFrame).Append(',').Append(k.RawGoalFrame).Append(',').Append(k.RawGoalL ? 1 : 0).Append(',').Append(k.RawGoalR ? 1 : 0).Append(',')
+                  .Append(k.RawGoalVelocityL ? 1 : 0).Append(',').Append(k.RawGoalVelocityR ? 1 : 0).Append(',')
+                  .Append(F(k.RawGoalPosL.x)).Append(',').Append(F(k.RawGoalPosL.y)).Append(',').Append(F(k.RawGoalPosL.z)).Append(',')
+                  .Append(F(k.RawGoalPosR.x)).Append(',').Append(F(k.RawGoalPosR.y)).Append(',').Append(F(k.RawGoalPosR.z)).Append(',')
+                  .Append(F3(k.RawGoalVL.x)).Append(',').Append(F3(k.RawGoalVL.y)).Append(',').Append(F3(k.RawGoalVL.z)).Append(',')
+                  .Append(F3(k.RawGoalVR.x)).Append(',').Append(F3(k.RawGoalVR.y)).Append(',').Append(F3(k.RawGoalVR.z)).Append(',')
+                  .Append(F(k.RawGoalMinusShownBoneL.x)).Append(',').Append(F(k.RawGoalMinusShownBoneL.y)).Append(',').Append(F(k.RawGoalMinusShownBoneL.z)).Append(',')
+                  .Append(F(k.RawGoalMinusShownBoneR.x)).Append(',').Append(F(k.RawGoalMinusShownBoneR.y)).Append(',').Append(F(k.RawGoalMinusShownBoneR.z)).Append(',')
+                  .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append('\n');
             }
 
             System.IO.Directory.CreateDirectory(dir);
@@ -1470,6 +1482,10 @@ namespace DD.Prototype.Tests.PlayMode
             public float GapL, GapR;              // shown sole above the ground ray, m (NaN = no ground)
             public float AnimGapL, AnimGapR;      // animated sole (before the foot IK), m
             public float AnimVyL, AnimVyR;        // its vertical speed, m/s
+            // Diagnostic only. Acceptance AnimGap/AnimVy and phase classifiers continue using their existing source.
+            public int UnityFrame, RawGoalFrame;
+            public bool RawGoalL, RawGoalR, RawGoalVelocityL, RawGoalVelocityR;
+            public Vector3 RawGoalPosL, RawGoalPosR, RawGoalVL, RawGoalVR, RawGoalMinusShownBoneL, RawGoalMinusShownBoneR;
             public bool IkServed;
             public int IkForce;                   // actual static override in this sampled frame (control b)
             public bool IkAdapterServed;          // raw Served, including a solve before its blend weight reaches 0.001
@@ -1520,6 +1536,9 @@ namespace DD.Prototype.Tests.PlayMode
         private bool _hasPrev;
         private Vector3 _prevRoot, _prevL, _prevR;
         private float _prevAnimL, _prevAnimR;
+        private Vector3 _prevRawGoalL, _prevRawGoalR;
+        private int _prevRawGoalFrame = -1;
+        private bool _prevRawGoalValidL, _prevRawGoalValidR;
         private bool _prevTemasL, _prevTemasR;
         private int _lastEvL = -1000, _lastEvR = -1000, _lastOnL = -1000, _lastOnR = -1000;
         private int _pending;
@@ -1772,6 +1791,16 @@ namespace DD.Prototype.Tests.PlayMode
             k.IkServed = _ik != null && _ik.Served && _ik.Weight > 0.001f;
             k.AnimGapL = k.IkServed ? k.GapL - _ik.Weight * _ik.LeftLift : k.GapL;
             k.AnimGapR = k.IkServed ? k.GapR - _ik.Weight * _ik.RightLift : k.GapR;
+            // The raw goal is diagnostic until IK-off flat-floor geometry is measured. Never substitute it into AnimGap/AnimVy.
+            Vector3 missingGoal = new Vector3(float.NaN, float.NaN, float.NaN);
+            k.UnityFrame = Time.frameCount;
+            k.RawGoalFrame = _ik != null ? _ik.AnimatedGoalSampleFrame : -1;
+            k.RawGoalPosL = k.RawGoalPosR = k.RawGoalVL = k.RawGoalVR = missingGoal;
+            k.RawGoalL = _ik != null && _ik.TryGetAnimatedFootGoal(0, out k.RawGoalPosL);
+            k.RawGoalR = _ik != null && _ik.TryGetAnimatedFootGoal(1, out k.RawGoalPosR);
+            // With IK on this includes the IK/body correction. Only Force=0, weight=0, lock=0 frames isolate goal/bone geometry.
+            k.RawGoalMinusShownBoneL = k.RawGoalL ? k.RawGoalPosL - l : missingGoal;
+            k.RawGoalMinusShownBoneR = k.RawGoalR ? k.RawGoalPosR - r : missingGoal;
             k.Rate = _anim.GetFloat(RateId);
             k.Honest = _pv != null ? _pv.HonestSpeed : 0f;
             if (_ik != null)
@@ -1792,6 +1821,17 @@ namespace DD.Prototype.Tests.PlayMode
                 k.FootVR = (r - _prevR) / dt;
                 k.AnimVyL = (k.AnimGapL - _prevAnimL) / dt;
                 k.AnimVyR = (k.AnimGapR - _prevAnimR) / dt;
+                // Two consecutive Unity-frame samples are required; recorder Frame is a different counter.
+                if (k.RawGoalL && _prevRawGoalValidL && _prevRawGoalFrame == k.UnityFrame - 1)
+                {
+                    k.RawGoalVL = (k.RawGoalPosL - _prevRawGoalL) / dt;
+                    k.RawGoalVelocityL = true;
+                }
+                if (k.RawGoalR && _prevRawGoalValidR && _prevRawGoalFrame == k.UnityFrame - 1)
+                {
+                    k.RawGoalVR = (k.RawGoalPosR - _prevRawGoalR) / dt;
+                    k.RawGoalVelocityR = true;
+                }
                 k.TemasL = k.FazL >= 0.5f;   // online: the loop's cycle count only; Siniflandir rebuilds it
                 k.TemasR = k.FazR >= 0.5f;
                 k.TemasEskiL = !float.IsNaN(k.GapL) && k.GapL <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(k.FootVL.y) <= R2LokomotionOlcumTests.TemasDikeyHiz;
@@ -1831,6 +1871,11 @@ namespace DD.Prototype.Tests.PlayMode
             _prevR = r;
             _prevAnimL = k.AnimGapL;
             _prevAnimR = k.AnimGapR;
+            _prevRawGoalL = k.RawGoalPosL;
+            _prevRawGoalR = k.RawGoalPosR;
+            _prevRawGoalFrame = k.RawGoalFrame;
+            _prevRawGoalValidL = k.RawGoalL;
+            _prevRawGoalValidR = k.RawGoalR;
             _prevTemasL = k.TemasL;
             _prevTemasR = k.TemasR;
             _hasPrev = true;
