@@ -1263,7 +1263,330 @@ namespace DD.Prototype.Tests.PlayMode
             System.IO.Directory.CreateDirectory(dir);
             string path = System.IO.Path.Combine(dir, "loko-frames.csv");
             System.IO.File.WriteAllText(path, sb.ToString());
+            DokIkTrace(parcalar, sec, dir);
             Debug.Log("[DD-TEST] wp082.dump " + path + " rows " + sb.Length);
+        }
+
+        // Diagnostic sidecar. Internal goals and final bones keep distinct bases; no acceptance input is replaced.
+        private void DokIkTrace(List<Parca> parcalar, HashSet<int> selected, string dir)
+        {
+            if (_kayit.IkTraceSamples == null) return;
+            var trace = new StringBuilder("label,since,recorderFrame,unityFrame,adapterInstanceId,dt,goalAvailable,samePassBothFeet,goalFrame,goalLayerIndex,goalSequence,goalPairCaptured,goalOutcome,forceAtEntry,allowed,budget,internalEntryRootWorldQx,internalEntryRootWorldQy,internalEntryRootWorldQz,internalEntryRootWorldQw,internalEntryLeftWorldQx,internalEntryLeftWorldQy,internalEntryLeftWorldQz,internalEntryLeftWorldQw,internalEntryRightWorldQx,internalEntryRightWorldQy,internalEntryRightWorldQz,internalEntryRightWorldQw,internalEntryLeftWorldPosx,internalEntryLeftWorldPosy,internalEntryLeftWorldPosz,internalEntryRightWorldPosx,internalEntryRightWorldPosy,internalEntryRightWorldPosz,internalEntryLeftPositionWeight,internalEntryRightPositionWeight,internalEntryLeftRotationWeight,internalEntryRightRotationWeight,internalAfterPairRootWorldQx,internalAfterPairRootWorldQy,internalAfterPairRootWorldQz,internalAfterPairRootWorldQw,internalAfterPairLeftWorldQx,internalAfterPairLeftWorldQy,internalAfterPairLeftWorldQz,internalAfterPairLeftWorldQw,internalAfterPairRightWorldQx,internalAfterPairRightWorldQy,internalAfterPairRightWorldQz,internalAfterPairRightWorldQw,internalAfterPairLeftWorldPosx,internalAfterPairLeftWorldPosy,internalAfterPairLeftWorldPosz,internalAfterPairRightWorldPosx,internalAfterPairRightWorldPosy,internalAfterPairRightWorldPosz,internalAfterPairLeftPositionWeight,internalAfterPairRightPositionWeight,internalAfterPairLeftRotationWeight,internalAfterPairRightRotationWeight,prePairLLocked,prePairLReleasePending,prePairLGateOpenCached,prePairLGateEvaluatedThisPass,prePairLServed,prePairLSupportsZombieData,prePairLLockPositionx,prePairLLockPositiony,prePairLLockPositionz,prePairLLockWeight,prePairLAdapterWeight,prePairLPlantPending,prePairLZombiePlantPending,prePairLReleaseStretch,prePairLReleaseGate,prePairLReleaseLift,prePairLReleasePlant,prePairLReleaseOffset,prePairRLocked,prePairRReleasePending,prePairRGateOpenCached,prePairRGateEvaluatedThisPass,prePairRServed,prePairRSupportsZombieData,prePairRLockPositionx,prePairRLockPositiony,prePairRLockPositionz,prePairRLockWeight,prePairRAdapterWeight,prePairRPlantPending,prePairRZombiePlantPending,prePairRReleaseStretch,prePairRReleaseGate,prePairRReleaseLift,prePairRReleasePlant,prePairRReleaseOffset,prePairPelvisOffset,prePairCommonDelta,postPairLLocked,postPairLReleasePending,postPairLGateOpenCached,postPairLGateEvaluatedThisPass,postPairLServed,postPairLSupportsZombieData,postPairLLockPositionx,postPairLLockPositiony,postPairLLockPositionz,postPairLLockWeight,postPairLAdapterWeight,postPairLPlantPending,postPairLZombiePlantPending,postPairLReleaseStretch,postPairLReleaseGate,postPairLReleaseLift,postPairLReleasePlant,postPairLReleaseOffset,postPairRLocked,postPairRReleasePending,postPairRGateOpenCached,postPairRGateEvaluatedThisPass,postPairRServed,postPairRSupportsZombieData,postPairRLockPositionx,postPairRLockPositiony,postPairRLockPositionz,postPairRLockWeight,postPairRAdapterWeight,postPairRPlantPending,postPairRZombiePlantPending,postPairRReleaseStretch,postPairRReleaseGate,postPairRReleaseLift,postPairRReleasePlant,postPairRReleaseOffset,postPairPelvisOffset,postPairCommonDelta,adapterExitLLocked,adapterExitLReleasePending,adapterExitLGateOpenCached,adapterExitLGateEvaluatedThisPass,adapterExitLServed,adapterExitLSupportsZombieData,adapterExitLLockPositionx,adapterExitLLockPositiony,adapterExitLLockPositionz,adapterExitLLockWeight,adapterExitLAdapterWeight,adapterExitLPlantPending,adapterExitLZombiePlantPending,adapterExitLReleaseStretch,adapterExitLReleaseGate,adapterExitLReleaseLift,adapterExitLReleasePlant,adapterExitLReleaseOffset,adapterExitRLocked,adapterExitRReleasePending,adapterExitRGateOpenCached,adapterExitRGateEvaluatedThisPass,adapterExitRServed,adapterExitRSupportsZombieData,adapterExitRLockPositionx,adapterExitRLockPositiony,adapterExitRLockPositionz,adapterExitRLockWeight,adapterExitRAdapterWeight,adapterExitRPlantPending,adapterExitRZombiePlantPending,adapterExitRReleaseStretch,adapterExitRReleaseGate,adapterExitRReleaseLift,adapterExitRReleasePlant,adapterExitRReleaseOffset,adapterExitPelvisOffset,adapterExitCommonDelta,lockLAvailable,lockLFrame,lockLLayerIndex,lockLSequence,lockLFoot,lockLOffsetEvaluated,lockLAnimatedInputx,lockLAnimatedInputy,lockLAnimatedInputz,lockLTargetInputx,lockLTargetInputy,lockLTargetInputz,lockLOffXZx,lockLOffXZy,lockLOffXZz,lockLOffSquared,lockLReturnedTargetx,lockLReturnedTargety,lockLReturnedTargetz,lockLBranches,lockLBeforeLocked,lockLBeforeReleasePending,lockLBeforeGateOpenCached,lockLBeforeGateEvaluatedThisPass,lockLBeforeServed,lockLBeforeSupportsZombieData,lockLBeforeLockPositionx,lockLBeforeLockPositiony,lockLBeforeLockPositionz,lockLBeforeLockWeight,lockLBeforeAdapterWeight,lockLBeforePlantPending,lockLBeforeZombiePlantPending,lockLBeforeReleaseStretch,lockLBeforeReleaseGate,lockLBeforeReleaseLift,lockLBeforeReleasePlant,lockLBeforeReleaseOffset,lockLAfterLocked,lockLAfterReleasePending,lockLAfterGateOpenCached,lockLAfterGateEvaluatedThisPass,lockLAfterServed,lockLAfterSupportsZombieData,lockLAfterLockPositionx,lockLAfterLockPositiony,lockLAfterLockPositionz,lockLAfterLockWeight,lockLAfterAdapterWeight,lockLAfterPlantPending,lockLAfterZombiePlantPending,lockLAfterReleaseStretch,lockLAfterReleaseGate,lockLAfterReleaseLift,lockLAfterReleasePlant,lockLAfterReleaseOffset,lockRAvailable,lockRFrame,lockRLayerIndex,lockRSequence,lockRFoot,lockROffsetEvaluated,lockRAnimatedInputx,lockRAnimatedInputy,lockRAnimatedInputz,lockRTargetInputx,lockRTargetInputy,lockRTargetInputz,lockROffXZx,lockROffXZy,lockROffXZz,lockROffSquared,lockRReturnedTargetx,lockRReturnedTargety,lockRReturnedTargetz,lockRBranches,lockRBeforeLocked,lockRBeforeReleasePending,lockRBeforeGateOpenCached,lockRBeforeGateEvaluatedThisPass,lockRBeforeServed,lockRBeforeSupportsZombieData,lockRBeforeLockPositionx,lockRBeforeLockPositiony,lockRBeforeLockPositionz,lockRBeforeLockWeight,lockRBeforeAdapterWeight,lockRBeforePlantPending,lockRBeforeZombiePlantPending,lockRBeforeReleaseStretch,lockRBeforeReleaseGate,lockRBeforeReleaseLift,lockRBeforeReleasePlant,lockRBeforeReleaseOffset,lockRAfterLocked,lockRAfterReleasePending,lockRAfterGateOpenCached,lockRAfterGateEvaluatedThisPass,lockRAfterServed,lockRAfterSupportsZombieData,lockRAfterLockPositionx,lockRAfterLockPositiony,lockRAfterLockPositionz,lockRAfterLockWeight,lockRAfterAdapterWeight,lockRAfterPlantPending,lockRAfterZombiePlantPending,lockRAfterReleaseStretch,lockRAfterReleaseGate,lockRAfterReleaseLift,lockRAfterReleasePlant,lockRAfterReleaseOffset,lateRootWorldQx,lateRootWorldQy,lateRootWorldQz,lateRootWorldQw,lateLeftRootQx,lateLeftRootQy,lateLeftRootQz,lateLeftRootQw,lateRightRootQx,lateRightRootQy,lateRightRootQz,lateRightRootQw\n");
+            int traceWritten = 0;
+            foreach (LokomotionKaydedici.IkTraceSample t in _kayit.IkTraceSamples)
+            {
+                if (!selected.Contains(t.Label)) continue;
+                traceWritten++;
+                trace.Append(Csv(parcalar[t.Label].Ad)); trace.Append(',');
+                trace.Append(t.Since); trace.Append(',');
+                trace.Append(t.RecorderFrame); trace.Append(',');
+                trace.Append(t.UnityFrame); trace.Append(',');
+                trace.Append(t.AdapterInstanceId); trace.Append(',');
+                trace.Append(DR(t.Dt)); trace.Append(',');
+                trace.Append((t.GoalAvailable ? 1 : 0)); trace.Append(',');
+                trace.Append((t.SamePassBothFeet ? 1 : 0)); trace.Append(',');
+                trace.Append(t.Goal.Stamp.Frame); trace.Append(',');
+                trace.Append(t.Goal.Stamp.LayerIndex); trace.Append(',');
+                trace.Append(t.Goal.Stamp.Sequence); trace.Append(',');
+                trace.Append((t.Goal.PairCaptured ? 1 : 0)); trace.Append(',');
+                trace.Append((int)t.Goal.Outcome); trace.Append(',');
+                trace.Append(t.Goal.ForceAtEntry); trace.Append(',');
+                trace.Append((t.Goal.Allowed ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.Budget ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RootWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RootWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RootWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RootWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftWorldPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightWorldPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftPositionWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightPositionWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.LeftRotationWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalEntry.RightRotationWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RootWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RootWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RootWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RootWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldRotation.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldRotation.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldRotation.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldRotation.w)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftWorldPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightWorldPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftPositionWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightPositionWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.LeftRotationWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.InternalGoalAfterPair.RightRotationWeight)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Left.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Left.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Left.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Left.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Left.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Left.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Left.Releases.Offset); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.BeforePair.Right.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Right.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Right.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Right.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Right.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.Right.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.BeforePair.Right.Releases.Offset); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.PelvisOffset)); trace.Append(',');
+                trace.Append(DR(t.Goal.BeforePair.CommonDelta)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Left.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Left.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Left.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Left.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Left.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Left.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Left.Releases.Offset); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.AfterPair.Right.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Right.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Right.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Right.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Right.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.Right.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.AfterPair.Right.Releases.Offset); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.PelvisOffset)); trace.Append(',');
+                trace.Append(DR(t.Goal.AfterPair.CommonDelta)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Left.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Left.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Left.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Left.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Left.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Left.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Left.Releases.Offset); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Goal.ExitState.Right.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Right.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Right.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Right.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Right.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.Right.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.PlantPending); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.Releases.Gate); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.Releases.Lift); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.Releases.Plant); trace.Append(',');
+                trace.Append(t.Goal.ExitState.Right.Releases.Offset); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.PelvisOffset)); trace.Append(',');
+                trace.Append(DR(t.Goal.ExitState.CommonDelta)); trace.Append(',');
+                trace.Append((t.LeftAvailable ? 1 : 0)); trace.Append(',');
+                trace.Append(t.Left.Stamp.Frame); trace.Append(',');
+                trace.Append(t.Left.Stamp.LayerIndex); trace.Append(',');
+                trace.Append(t.Left.Stamp.Sequence); trace.Append(',');
+                trace.Append(t.Left.Foot); trace.Append(',');
+                trace.Append((t.Left.OffsetEvaluated ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Left.AnimatedInput.x)); trace.Append(',');
+                trace.Append(DR(t.Left.AnimatedInput.y)); trace.Append(',');
+                trace.Append(DR(t.Left.AnimatedInput.z)); trace.Append(',');
+                trace.Append(DR(t.Left.TargetInput.x)); trace.Append(',');
+                trace.Append(DR(t.Left.TargetInput.y)); trace.Append(',');
+                trace.Append(DR(t.Left.TargetInput.z)); trace.Append(',');
+                trace.Append(DR(t.Left.OffsetXZ.x)); trace.Append(',');
+                trace.Append(DR(t.Left.OffsetXZ.y)); trace.Append(',');
+                trace.Append(DR(t.Left.OffsetXZ.z)); trace.Append(',');
+                trace.Append(DR(t.Left.OffSquared)); trace.Append(',');
+                trace.Append(DR(t.Left.ReturnedTarget.x)); trace.Append(',');
+                trace.Append(DR(t.Left.ReturnedTarget.y)); trace.Append(',');
+                trace.Append(DR(t.Left.ReturnedTarget.z)); trace.Append(',');
+                trace.Append((int)t.Left.Branches); trace.Append(',');
+                trace.Append((t.Left.Before.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.Before.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.Before.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.Before.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.Before.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.Before.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Left.Before.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Left.Before.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Left.Before.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Left.Before.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Left.Before.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Left.Before.PlantPending); trace.Append(',');
+                trace.Append(t.Left.Before.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Left.Before.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Left.Before.Releases.Gate); trace.Append(',');
+                trace.Append(t.Left.Before.Releases.Lift); trace.Append(',');
+                trace.Append(t.Left.Before.Releases.Plant); trace.Append(',');
+                trace.Append(t.Left.Before.Releases.Offset); trace.Append(',');
+                trace.Append((t.Left.After.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.After.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.After.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.After.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.After.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Left.After.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Left.After.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Left.After.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Left.After.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Left.After.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Left.After.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Left.After.PlantPending); trace.Append(',');
+                trace.Append(t.Left.After.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Left.After.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Left.After.Releases.Gate); trace.Append(',');
+                trace.Append(t.Left.After.Releases.Lift); trace.Append(',');
+                trace.Append(t.Left.After.Releases.Plant); trace.Append(',');
+                trace.Append(t.Left.After.Releases.Offset); trace.Append(',');
+                trace.Append((t.RightAvailable ? 1 : 0)); trace.Append(',');
+                trace.Append(t.Right.Stamp.Frame); trace.Append(',');
+                trace.Append(t.Right.Stamp.LayerIndex); trace.Append(',');
+                trace.Append(t.Right.Stamp.Sequence); trace.Append(',');
+                trace.Append(t.Right.Foot); trace.Append(',');
+                trace.Append((t.Right.OffsetEvaluated ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Right.AnimatedInput.x)); trace.Append(',');
+                trace.Append(DR(t.Right.AnimatedInput.y)); trace.Append(',');
+                trace.Append(DR(t.Right.AnimatedInput.z)); trace.Append(',');
+                trace.Append(DR(t.Right.TargetInput.x)); trace.Append(',');
+                trace.Append(DR(t.Right.TargetInput.y)); trace.Append(',');
+                trace.Append(DR(t.Right.TargetInput.z)); trace.Append(',');
+                trace.Append(DR(t.Right.OffsetXZ.x)); trace.Append(',');
+                trace.Append(DR(t.Right.OffsetXZ.y)); trace.Append(',');
+                trace.Append(DR(t.Right.OffsetXZ.z)); trace.Append(',');
+                trace.Append(DR(t.Right.OffSquared)); trace.Append(',');
+                trace.Append(DR(t.Right.ReturnedTarget.x)); trace.Append(',');
+                trace.Append(DR(t.Right.ReturnedTarget.y)); trace.Append(',');
+                trace.Append(DR(t.Right.ReturnedTarget.z)); trace.Append(',');
+                trace.Append((int)t.Right.Branches); trace.Append(',');
+                trace.Append((t.Right.Before.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.Before.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.Before.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.Before.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.Before.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.Before.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Right.Before.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Right.Before.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Right.Before.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Right.Before.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Right.Before.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Right.Before.PlantPending); trace.Append(',');
+                trace.Append(t.Right.Before.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Right.Before.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Right.Before.Releases.Gate); trace.Append(',');
+                trace.Append(t.Right.Before.Releases.Lift); trace.Append(',');
+                trace.Append(t.Right.Before.Releases.Plant); trace.Append(',');
+                trace.Append(t.Right.Before.Releases.Offset); trace.Append(',');
+                trace.Append((t.Right.After.Locked ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.After.ReleasePending ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.After.GateOpenCached ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.After.GateEvaluatedThisPass ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.After.Served ? 1 : 0)); trace.Append(',');
+                trace.Append((t.Right.After.SupportsZombieData ? 1 : 0)); trace.Append(',');
+                trace.Append(DR(t.Right.After.LockPosition.x)); trace.Append(',');
+                trace.Append(DR(t.Right.After.LockPosition.y)); trace.Append(',');
+                trace.Append(DR(t.Right.After.LockPosition.z)); trace.Append(',');
+                trace.Append(DR(t.Right.After.LockWeight)); trace.Append(',');
+                trace.Append(DR(t.Right.After.AdapterWeight)); trace.Append(',');
+                trace.Append(t.Right.After.PlantPending); trace.Append(',');
+                trace.Append(t.Right.After.ZombiePlantPending); trace.Append(',');
+                trace.Append(t.Right.After.Releases.Stretch); trace.Append(',');
+                trace.Append(t.Right.After.Releases.Gate); trace.Append(',');
+                trace.Append(t.Right.After.Releases.Lift); trace.Append(',');
+                trace.Append(t.Right.After.Releases.Plant); trace.Append(',');
+                trace.Append(t.Right.After.Releases.Offset); trace.Append(',');
+                trace.Append(DR(t.RootWorld.x)); trace.Append(',');
+                trace.Append(DR(t.RootWorld.y)); trace.Append(',');
+                trace.Append(DR(t.RootWorld.z)); trace.Append(',');
+                trace.Append(DR(t.RootWorld.w)); trace.Append(',');
+                trace.Append(DR(t.LeftRoot.x)); trace.Append(',');
+                trace.Append(DR(t.LeftRoot.y)); trace.Append(',');
+                trace.Append(DR(t.LeftRoot.z)); trace.Append(',');
+                trace.Append(DR(t.LeftRoot.w)); trace.Append(',');
+                trace.Append(DR(t.RightRoot.x)); trace.Append(',');
+                trace.Append(DR(t.RightRoot.y)); trace.Append(',');
+                trace.Append(DR(t.RightRoot.z)); trace.Append(',');
+                trace.Append(DR(t.RightRoot.w)); trace.Append('\n');
+            }
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "loko-ik-trace.csv"), trace.ToString());
+            var capacity = new IkTraceCapacityMetadata { capacity = LokomotionKaydedici.MaxIkTraceSamples,
+                observed = _kayit.IkTraceObserved, stored = _kayit.IkTraceSamples.Count,
+                written = traceWritten, dropped = _kayit.IkTraceDropped,
+                scope = "observed/stored/dropped cover all diagnostic samples; written covers selected CSV segments" };
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "loko-ik-trace-capacity.json"), JsonUtility.ToJson(capacity, true));
+        }
+        [Serializable] private sealed class IkTraceCapacityMetadata
+        {
+            public int capacity, observed, stored, written, dropped;
+            public string scope;
         }
 
         // Compact layer JSON and asset/layer names are CSV-escaped; old simple labels retain their spelling.
@@ -1562,6 +1885,21 @@ namespace DD.Prototype.Tests.PlayMode
         private readonly List<AnimatorClipInfo> _ci = new List<AnimatorClipInfo>(16);
         private readonly List<AnimatorClipInfo> _diagClips = new List<AnimatorClipInfo>(16);
         private bool _diagEnabled;
+        public struct IkTraceSample
+        {
+            public int Label, Since, RecorderFrame, UnityFrame, AdapterInstanceId;
+            public float Dt;
+            public bool GoalAvailable, LeftAvailable, RightAvailable, SamePassBothFeet;
+            public FootIkAdapter.GoalPassTraceSnapshot Goal;
+            public FootIkAdapter.LockTraceSnapshot Left, Right;
+            public Quaternion RootWorld, LeftRoot, RightRoot;
+        }
+        public const int MaxIkTraceSamples = 16000;
+        public List<IkTraceSample> IkTraceSamples { get; private set; }
+        public int IkTraceObserved { get; private set; }
+        public int IkTraceDropped { get; private set; }
+        private bool _traceOptInApplied, _previousGoalTrace, _previousLockTrace;
+        private int _traceAdapterInstanceId;
         [Serializable] private sealed class DiagClip { public string name; public int instanceId; public float weight; }
         [Serializable] private sealed class DiagLayer
         {
@@ -1610,6 +1948,16 @@ namespace DD.Prototype.Tests.PlayMode
             _anim = anim;
             _govde = govde;
             _ik = ik;
+            if (_diagEnabled && _ik != null)
+            {
+                IkTraceSamples = new List<IkTraceSample>(MaxIkTraceSamples);
+                IkTraceObserved = IkTraceDropped = 0;
+                _previousGoalTrace = _ik.TraceFootIkGoals;
+                _previousLockTrace = _ik.TraceZombieLock;
+                _ik.TraceFootIkGoals = _ik.TraceZombieLock = true;
+                _traceOptInApplied = true;
+                _traceAdapterInstanceId = _ik.GetInstanceID();
+            }
             _zemin = zemin;
             _footL = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
             _footR = anim.GetBoneTransform(HumanBodyBones.RightFoot);
@@ -1623,6 +1971,11 @@ namespace DD.Prototype.Tests.PlayMode
         public void Birak()
         {
             if (_bagli) CharacterAnimationEvents.Any -= OnEvent;
+            if (_traceOptInApplied)
+            {
+                if (_ik != null) { _ik.TraceFootIkGoals = _previousGoalTrace; _ik.TraceZombieLock = _previousLockTrace; }
+                _traceOptInApplied = false;
+            }
             _bagli = false;
             enabled = false;
         }
@@ -1858,6 +2211,26 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
             k.RootRotation = root.rotation;
+            if (IkTraceSamples != null && _ik != null)
+            {
+                IkTraceObserved++;
+                if (IkTraceSamples.Count < MaxIkTraceSamples)
+                {
+                    var sample = new IkTraceSample { Label = k.Etiket, Since = k.Since, RecorderFrame = k.Frame,
+                        UnityFrame = k.UnityFrame, AdapterInstanceId = _traceAdapterInstanceId, Dt = k.Dt,
+                        RootWorld = root.rotation, LeftRoot = Quaternion.Inverse(root.rotation) * _footL.rotation,
+                        RightRoot = Quaternion.Inverse(root.rotation) * _footR.rotation };
+                    sample.GoalAvailable = _ik.TryReadGoalPassTrace(out sample.Goal);
+                    sample.LeftAvailable = _ik.TryReadLockTrace(0, out sample.Left);
+                    sample.RightAvailable = _ik.TryReadLockTrace(1, out sample.Right);
+                    sample.SamePassBothFeet = sample.GoalAvailable && sample.LeftAvailable && sample.RightAvailable &&
+                        sample.Goal.Stamp.Frame == sample.Left.Stamp.Frame && sample.Goal.Stamp.Frame == sample.Right.Stamp.Frame &&
+                        sample.Goal.Stamp.LayerIndex == sample.Left.Stamp.LayerIndex && sample.Goal.Stamp.LayerIndex == sample.Right.Stamp.LayerIndex &&
+                        sample.Goal.Stamp.Sequence == sample.Left.Stamp.Sequence && sample.Goal.Stamp.Sequence == sample.Right.Stamp.Sequence;
+                    IkTraceSamples.Add(sample);
+                }
+                else IkTraceDropped++;
+            }
             k.WorstLimbBone = k.WorstTorsoBone = -1;
             k.WorstLimbDeg = k.WorstTorsoDeg = float.NaN;
         }
