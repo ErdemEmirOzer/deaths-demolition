@@ -255,27 +255,96 @@ namespace DD.Prototype.Tests.PlayMode
         private readonly List<string> _wristSamples = new List<string>();
         private readonly List<string> _contactSamples = new List<string>();
         private int[] _wristIds;
-        private void SampleWrist(Meta meta)
+        private Animator _wristAnimator;
+        private Avatar _wristAvatar;
+        private string _wristAvatarJson, _wristLimitsJson;
+        private static string S1Number(float v) => float.IsNaN(v) || float.IsInfinity(v) ? "null" : v.ToString("R", CultureInfo.InvariantCulture);
+        private static string S1Bool(bool v) => v ? "true" : "false";
+        private static string S1Quote(string value)
+        {
+            if (value == null) return "null";
+            var b = new StringBuilder("\"");
+            foreach (char c in value) {
+                switch (c) {
+                    case '"': b.Append("\\\""); break;
+                    case '\\': b.Append("\\\\"); break;
+                    case '\b': b.Append("\\b"); break;
+                    case '\f': b.Append("\\f"); break;
+                    case '\n': b.Append("\\n"); break;
+                    case '\r': b.Append("\\r"); break;
+                    case '\t': b.Append("\\t"); break;
+                    default: if (c < 0x20) b.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture)); else b.Append(c); break;
+                }
+            }
+            return b.Append('"').ToString();
+        }
+        private static string S1Quaternion(Quaternion q) => "{\"x\":" + S1Number(q.x) + ",\"y\":" + S1Number(q.y) + ",\"z\":" + S1Number(q.z) + ",\"w\":" + S1Number(q.w) + "}";
+        private static string S1Bone(Transform bone)
+        {
+            if (bone == null) return "{\"mapped\":false,\"boneName\":null,\"parentName\":null,\"local_xyzw\":null,\"world_xyzw\":null}";
+            return "{\"mapped\":true,\"boneName\":" + S1Quote(bone.name) + ",\"parentName\":" + S1Quote(bone.parent != null ? bone.parent.name : null) +
+                ",\"local_xyzw\":" + S1Quaternion(bone.localRotation) + ",\"world_xyzw\":" + S1Quaternion(bone.rotation) + "}";
+        }
+        private static string S1AvatarLimits(Avatar avatar)
+        {
+            HumanDescription description = avatar.humanDescription;
+            var rows = new List<string>();
+            foreach (string humanName in new[] { "LeftHand", "LeftLowerArm", "LeftUpperArm" }) {
+                string probeName = humanName == "LeftHand" ? "Left Hand In-Out" :
+                    humanName == "LeftLowerArm" ? "Left Forearm Twist In-Out" : "Left Arm Down-Up";
+                int probe = System.Array.IndexOf(HumanTrait.MuscleName, probeName);
+                int boneIndex = probe >= 0 ? HumanTrait.BoneFromMuscle(probe) : -1;
+                HumanBone humanBone = default; bool found = false;
+                if (description.human != null) foreach (HumanBone candidate in description.human)
+                    if (candidate.humanName == humanName) { humanBone = candidate; found = true; break; }
+                for (int axis = 0; axis < 3; axis++) {
+                    int id = boneIndex >= 0 ? HumanTrait.MuscleFromBone(boneIndex, axis) : -1;
+                    bool hasMuscle = id >= 0 && id < HumanTrait.MuscleName.Length, known = found && hasMuscle;
+                    HumanLimit limit = humanBone.limit;
+                    float min = known ? (limit.useDefaultValues ? HumanTrait.GetMuscleDefaultMin(id) : limit.min[axis]) : 0f;
+                    float max = known ? (limit.useDefaultValues ? HumanTrait.GetMuscleDefaultMax(id) : limit.max[axis]) : 0f;
+                    string source = !found ? "HUMAN_MAPPING_MISSING" : boneIndex < 0 ? "HUMAN_TRAIT_BONE_UNRESOLVED" : !hasMuscle ? "NO_MUSCLE" : limit.useDefaultValues ? "HumanTrait default for actual muscle index" : "Avatar.humanDescription custom limit";
+                    rows.Add("{\"humanBoneName\":" + S1Quote(humanName) + ",\"rigBoneName\":" + S1Quote(found ? humanBone.boneName : null) +
+                        ",\"humanMappingFound\":" + S1Bool(found) + ",\"humanDofAxis\":" + axis + ",\"muscleIndex\":" + id +
+                        ",\"muscleName\":" + S1Quote(hasMuscle ? HumanTrait.MuscleName[id] : "NO_MUSCLE") +
+                        ",\"useDefaultValues\":" + (found ? S1Bool(limit.useDefaultValues) : "null") +
+                        ",\"serializedMinDeg\":" + (found ? S1Number(limit.min[axis]) : "null") +
+                        ",\"serializedMaxDeg\":" + (found ? S1Number(limit.max[axis]) : "null") +
+                        ",\"serializedCenterDeg\":" + (found ? S1Number(limit.center[axis]) : "null") +
+                        ",\"effectiveMinDeg\":" + (known ? S1Number(min) : "null") + ",\"effectiveMaxDeg\":" + (known ? S1Number(max) : "null") +
+                        ",\"effectiveLimitSource\":" + S1Quote(source) + "}");
+                }
+            }
+            return "[" + string.Join(",", rows) + "]";
+        }
+        private void SampleWrist(Meta meta, string source)
         {
             if (meta.Moment != "reload" || (meta.Key != "lmg_2" && meta.Key != "sw_arc")) return;
             Animator a = _body != null ? _body.Animator : null;
             if (a == null || a.avatar == null || !a.isHuman) return;
-            if (_wristPose == null)
-            {
+            if (_wristPose == null || _wristAnimator != a || _wristAvatar != a.avatar) {
+                _wristPose?.Dispose(); _wristAnimator = a; _wristAvatar = a.avatar;
                 _wristPose = new HumanPoseHandler(a.avatar, a.transform);
-                _wristIds = new[] { System.Array.IndexOf(HumanTrait.MuscleName, "Left Forearm Twist In-Out"),
-                    System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand Down-Up"), System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand In-Out") };
+                _wristIds = new[] { System.Array.IndexOf(HumanTrait.MuscleName, "Left Forearm Twist In-Out"), System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand Down-Up"), System.Array.IndexOf(HumanTrait.MuscleName, "Left Hand In-Out") };
+                _wristAvatarJson = "{\"name\":" + S1Quote(a.avatar.name) + ",\"instanceId\":" + a.avatar.GetInstanceID() + ",\"valid\":" + S1Bool(a.avatar.isValid) +
+                    ",\"human\":" + S1Bool(a.avatar.isHuman) + ",\"assetGuid\":null,\"assetGuidStatus\":\"UNAVAILABLE_RUNTIME_API\"}";
+                _wristLimitsJson = S1AvatarLimits(a.avatar);
             }
             _wristPose.GetHumanPose(ref _humanPose);
             var values = new List<string>();
-            foreach (int id in _wristIds)
-            {
+            foreach (int id in _wristIds) {
                 if (id < 0) continue;
                 float muscle = _humanPose.muscles[id];
                 float deg = muscle * (muscle >= 0f ? HumanTrait.GetMuscleDefaultMax(id) : -HumanTrait.GetMuscleDefaultMin(id));
                 values.Add(Q(HumanTrait.MuscleName[id]) + ": {\"muscle\": " + muscle.ToString("F4", CultureInfo.InvariantCulture) + ", \"degreesDefaultRange\": " + F1(deg) + ", \"nearLimit\": " + (Mathf.Abs(muscle) >= 0.999f ? "true" : "false") + "}");
             }
-            _wristSamples.Add("{\"key\": " + Q(meta.Key) + ", \"yaw\": " + meta.Yaw * 45 + ", \"frame\": " + meta.Frame + ", \"phase\": " + Q(meta.Phase) + ", \"muscles\": {" + string.Join(", ", values) + "}}");
+            Transform hand = a.GetBoneTransform(HumanBodyBones.LeftHand), lower = a.GetBoneTransform(HumanBodyBones.LeftLowerArm), upper = a.GetBoneTransform(HumanBodyBones.LeftUpperArm);
+            string relative = hand != null && lower != null ? S1Quaternion(Quaternion.Inverse(lower.rotation) * hand.rotation) : "null";
+            _wristSamples.Add("{\"key\": " + Q(meta.Key) + ", \"yaw\": " + meta.Yaw * 45 + ", \"frame\": " + meta.Frame + ", \"phase\": " + Q(meta.Phase) + ", \"muscles\": {" + string.Join(", ", values) + "}" +
+                ",\"unityFrame\":" + Time.frameCount + ",\"captureSource\":" + S1Quote(source) + ",\"avatarIdentity\":" + _wristAvatarJson + ",\"actualAvatarHumanLimits\":" + _wristLimitsJson +
+                ",\"LeftHand\":" + S1Bone(hand) + ",\"LeftLowerArm\":" + S1Bone(lower) + ",\"LeftUpperArm\":" + S1Bone(upper) +
+                ",\"directHandParentIsLowerArm\":" + (hand != null && lower != null ? S1Bool(hand.parent == lower) : "null") + ",\"forearm_to_hand_relative_xyzw\":" + relative +
+                ",\"nearLimitAloneIsFailure\":false,\"sourceAxisEquivalence\":\"NOT_ESTABLISHED\"}");
         }
 
         private WeaponController Ctl => _s.Controller;
@@ -384,7 +453,7 @@ namespace DD.Prototype.Tests.PlayMode
             Directory.CreateDirectory(outDir);
             string json = Path.Combine(outDir, "g1-td-gate.json");
             File.WriteAllText(json, Json(seconds));
-            File.WriteAllText(Path.Combine(outDir, "e5-wrist-samples.json"), "{\"definition\": \"Final rendered reload pose; normalized humanoid muscles + default-range degree estimate. nearLimit is a proxy, not proof of source curve clipping.\", \"samples\": [" + string.Join(",\n", _wristSamples) + "]}");
+            File.WriteAllText(Path.Combine(outDir, "e5-wrist-samples.json"), "{\"schema\":\"E5_WRIST_CAPTURE_POSE_V2\",\"definition\":\"Capture-time reload pose. captureSource=render identifies existing beginCameraRendering observation; coroutine is labelled. Quaternions are bone transforms; degreesDefaultRange preserves the original estimate.\",\"nearLimitAloneIsFailure\":false,\"sourceAxisEquivalence\":\"NOT_ESTABLISHED\",\"acceptance\":\"DIAGNOSTIC_ONLY\",\"calibrationReference\":{\"path\":\"asset-production/AP-024/04-tools/r3-s1-20261008/actual_avatar_limits_v001.json\",\"sha256\":\"8a987927285a94c65e38a046ed820a191703a85406a8202a37ceafb92091fe22\",\"referenceModelGuid\":\"96b52215e71f840c4a81e3b4bffddc89\",\"runtimeAssetIdentityMatch\":\"NOT_VERIFIED\"},\"samples\":[" + string.Join(",\n", _wristSamples) + "]}");
             File.WriteAllText(Path.Combine(outDir, "g1-td-gate.md"), Markdown(seconds));
             File.WriteAllText(Path.Combine(outDir, "e5-contact-samples.json"), "{\"target\": \"part home world matrix * inverse(socket-to-part-pivot calibration)\", \"samples\": [" + string.Join(",\n", _contactSamples) + "]}");
             int frames = !string.IsNullOrEmpty(frameDir) ? KareleriYaz(frameDir) : 0;
@@ -840,7 +909,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private Snap Capture(Meta meta, string source)
         {
-            SampleWrist(meta);
+            SampleWrist(meta, source);
             if (meta.Moment == "reload" && ReloadPartCalibration.TryGet(meta.Key, out _) && _body.ContactIk != null)
             {
                 MagazineContactIk ik = _body.ContactIk;
