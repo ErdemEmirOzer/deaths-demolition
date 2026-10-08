@@ -382,6 +382,15 @@ namespace DD.Art.Pipeline.EditorTools
             // atlas (1024², with its Emission map) Prop.
             { "ap030_interior", TextureClass.Structure },
             { "ap030_lamp", TextureClass.Prop },
+            // v002: road surfaces are ground (ishidatami 4K = 1016 px/m on the 2 m slab, gravel / dirt cutout strips, the puddle set); boardwalk,
+            // drain and the props atlas (yakuimon, yatai, ido, carts, barricades, clutter) Structure.
+            { "ap030_ishidatami", TextureClass.Ground },
+            { "ap030_gravel", TextureClass.Ground },
+            { "ap030_dirt", TextureClass.Ground },
+            { "ap030_puddle", TextureClass.Ground },
+            { "ap030_boardwalk", TextureClass.Structure },
+            { "ap030_drain", TextureClass.Structure },
+            { "ap030_props", TextureClass.Structure },
             // WP-074 B5 · AP-023 world v5 kit (2K sources, namako 1K). Hero = the karamon / torii / lantern-set / palace-plinth stone and
             // metal (ADR-015-1 v3 ≤ 24 sets); ground-cover surfaces Ground; bark, culms and card atlases Foliage; the rest Structure.
             { "ap023_copper", TextureClass.Hero },

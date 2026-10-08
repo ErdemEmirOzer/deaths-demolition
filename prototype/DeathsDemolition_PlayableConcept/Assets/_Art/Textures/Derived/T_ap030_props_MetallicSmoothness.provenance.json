@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_props_Packed.png",
+    "sourceSha256": "36f693af357e6a8676bf02ee749bb080c4dc179f0a162e096aee935d3a0c5245",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-08T02:25:28.4077420Z",
+    "outputSha256": "7c50b7176e8e35746199771d23ca4254ae9754eeb6d386664e0eecfbde36f1ca"
+}

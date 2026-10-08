@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_ishidatami_Packed.png",
+    "sourceSha256": "d40f92622ce05162ff61f0f3b87f0dfbfe5b1e5afcf4cce0b0fbd9b82e8f3376",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-08T02:25:25.0715780Z",
+    "outputSha256": "6ec47e491982ab65679c21dea88dc2a776b1d0631d097589a5a9de942be93642"
+}

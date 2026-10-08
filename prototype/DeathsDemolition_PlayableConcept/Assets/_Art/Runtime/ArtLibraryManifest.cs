@@ -78,9 +78,14 @@ namespace DD.Art
         {
             public string name;
             public float[] position;
+            /// <summary>AP-030 v002 · CCW yaw about Blender +Z in degrees (road corner / curve exits: the flow leaves along the socket's +Z); 0 = unrotated.</summary>
+            public float yawDeg;
 
             /// <summary>Prefab-root space (the AP world contract, <see cref="WorldPlacementAsset.ToUnity"/>).</summary>
             public Vector3 PrefabPosition => WorldPlacementAsset.ToUnity(position[0], position[1], position[2]);
+
+            /// <summary>Prefab-root space rotation (<see cref="WorldPlacementAsset.ToUnityYaw"/>): its +Z is the Blender-space flow direction.</summary>
+            public Quaternion PrefabRotation => WorldPlacementAsset.ToUnityYaw(yawDeg);
         }
 
         [Serializable]

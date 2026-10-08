@@ -18,7 +18,9 @@ namespace DD.Art.Tests.EditMode
     /// Emission (sRGB), _EmissionColor lineer = rol yoğunluğu, GI'ye pişer (BakedEmissive). Hiçbir prefabda Light bileşeni yok (ışıkları
     /// WP-092 lideri lamba başına pişmiş nokta ışığı olarak yerleştirir).
     /// Her AP-030 prefabında kök LODGroup (3 LOD) ve S-05 §6 kuralı: hiçbir collider üstü (0,30; 0,50) m bandında değil — ≤ 0,30
-    /// (üstünden adım atılır) ya da ≥ 0,50 (engel), 5 mm tolerans. Sayılar manifestten türetilir.
+    /// (üstünden adım atılır) ya da ≥ 0,50 (engel), 5 mm tolerans; v002: barikat ve yatai collider üstü ≤ 1,20 m (Y5: mermi ayak
+    /// + 1,39 m'den geçer). v002 soketleri (yol SOCKET_In / SOCKET_Out — köşe / kıvrım çıkışları dönük —, yatai SOCKET_Lamp, barikat
+    /// SOCKET_End_L/R, yakuimon SOCKET_Wall_L/R) da kökte, manifestin noktası ve yaw'ı ile (1 mm, 0,1°). Sayılar manifestten türetilir.
     /// </summary>
     [TestFixture]
     [Category("WP092")]
@@ -27,7 +29,11 @@ namespace DD.Art.Tests.EditMode
         private const string Ap = "AP-030";
         private static readonly string[] Lambalar = { "andon", "kerosene_lamp", "wall_sconce" };
         private static readonly string[] Soketler = { "SOCKET_Flame", "SOCKET_Light" };
-        private const float BantAlt = 0.30f, BantUst = 0.50f, BantTolerans = 0.005f, SoketTolerans = 0.001f;
+        private const float BantAlt = 0.30f, BantUst = 0.50f, BantTolerans = 0.005f, SoketTolerans = 0.001f, SoketAciTolerans = 0.1f;
+        /// <summary>v002 · "üstünden ateş edilen" engeller (S-05 Y5): collider üstü en çok 1,20 m.</summary>
+        private static readonly string[] AlcakEngeller = { "barricade", "yatai" };
+        private const float AlcakEngelUst = 1.20f;
+        private static readonly string[] YolAileleri = { "ishidatami", "gravel_path", "dirt_path", "boardwalk", "drain_channel" };
 
         private static ArtLibraryManifest Manifest()
         {
@@ -113,7 +119,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.AreEqual(Lambalar.Length, lambaAileleri.Count, "lamba aileleri manifestte: " + string.Join(", ", lambaAileleri));
-            Assert.AreEqual(6, lamba, "v001: andon ×2, kerosene_lamp ×2, wall_sconce ×2");
+            Assert.AreEqual(7, lamba, "v001: andon ×2, kerosene_lamp ×2, wall_sconce ×2; v002: + kerosene_lamp V03 (1,15×)");
             Assert.IsEmpty(hatalar, "AP-030 lamba ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp092.ap030.lamps prefabs=" + lamba + " sockets=" + soket + " glowMaterials=" + glow);
         }
@@ -168,14 +174,56 @@ namespace DD.Art.Tests.EditMode
                     ustler.Add(on + "/" + c.name + " " + F(ust));
                     if (ust > BantAlt + BantTolerans && ust < BantUst - BantTolerans)
                         hatalar.Add(on + "/" + c.name + ": collider üstü " + F(ust) + " m yasak bantta (S-05 §6: ≤ 0,30 ya da ≥ 0,50)");
+                    if (Array.IndexOf(AlcakEngeller, f.family) >= 0 && ust > AlcakEngelUst + BantTolerans)
+                        hatalar.Add(on + "/" + c.name + ": collider üstü " + F(ust) + " m > " + F(AlcakEngelUst) + " (S-05 Y5: üstünden ateş edilen engel)");
                 }
             }
 
             Assert.AreEqual(Manifest().VariationCount, prefabSayisi);
-            Assert.AreEqual(22, prefabSayisi, "AP-030 v001: 22 varyasyon");
+            Assert.AreEqual(62, prefabSayisi, "AP-030 v001 22 + v002 40 varyasyon");
             Assert.Greater(collider, 0, "Hiç collider yok; tarama yalanlanmıştır.");
             Assert.IsEmpty(hatalar, "AP-030 prefab ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp092.ap030.prefabs count=" + prefabSayisi + " colliders=" + collider + " tops: " + string.Join(", ", ustler));
+        }
+
+        [Test]
+        public void Ap030_HerSoket_KoktenManifestNoktasiVeYawIle_FbxDugumuIleAyni_YolModulleriSoketli()
+        {
+            var hatalar = new List<string>();
+            int soket = 0, donuk = 0, yol = 0;
+            foreach ((ArtLibraryManifest.Family f, ArtLibraryManifest.Variation v, GameObject prefab) in Prefablar())
+            {
+                string on = v.prefab;
+                if (Array.IndexOf(YolAileleri, f.family) >= 0 && v.sockets.Exists(s => s.name == "SOCKET_In")) yol++;
+                string fbxYolu = ArtLibraryPaths.Fbx(Ap, f.family, v.parts[0].lods[0].fbx);
+                var model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxYolu);
+                foreach (ArtLibraryManifest.Socket m in v.sockets)
+                {
+                    Transform t = prefab.transform.Find(m.name);
+                    if (t == null) { hatalar.Add(on + ": prefab kökünde " + m.name + " yok"); continue; }
+                    soket++;
+                    if (Mathf.Abs(m.yawDeg) > 0.01f) donuk++;
+                    if (Vector3.Distance(t.localPosition, m.PrefabPosition) > SoketTolerans)
+                        hatalar.Add(on + " " + m.name + ": prefab " + t.localPosition.ToString("F4") + " ≠ manifest " + m.PrefabPosition.ToString("F4"));
+                    if (Quaternion.Angle(t.localRotation, m.PrefabRotation) > SoketAciTolerans)
+                        hatalar.Add(on + " " + m.name + ": prefab dönüşü " + t.localRotation.eulerAngles.ToString("F2") + " ≠ manifest yaw " + F(m.yawDeg) + "°");
+                    // The flow direction: Blender (−sin yaw, cos yaw, 0) → Unity (x, z, y) is the socket's +Z.
+                    float r = m.yawDeg * Mathf.Deg2Rad;
+                    var akis = new Vector3(-Mathf.Sin(r), 0f, Mathf.Cos(r));
+                    if (Vector3.Angle(t.localRotation * Vector3.forward, akis) > SoketAciTolerans) hatalar.Add(on + " " + m.name + ": +Z akış yönü değil");
+                    Transform fbxSoket = null;
+                    if (model != null) foreach (Transform c in model.GetComponentsInChildren<Transform>(true)) if (c.name == m.name) { fbxSoket = c; break; }
+                    if (fbxSoket == null) { hatalar.Add(on + ": FBX importer " + m.name + " düğümünü düşürdü (" + fbxYolu + ")"); continue; }
+                    Vector3 fbxNokta = model.transform.InverseTransformPoint(fbxSoket.position);
+                    if (Vector3.Distance(fbxNokta, m.PrefabPosition) > SoketTolerans)
+                        hatalar.Add(on + " " + m.name + ": FBX düğümü model uzayında " + fbxNokta.ToString("F4") + " ≠ manifest " + m.PrefabPosition.ToString("F4"));
+                }
+            }
+
+            Assert.Greater(donuk, 0, "v002 köşe / kıvrım çıkışları dönük soket taşır; hiç yok: yaw okunmamış.");
+            Assert.GreaterOrEqual(yol, 18, "v002 yol modülleri SOCKET_In taşır (18)");
+            Assert.IsEmpty(hatalar, "AP-030 soket ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
+            Debug.Log("[DD-TEST] wp092.ap030.sockets count=" + soket + " yawed=" + donuk + " roadModules=" + yol);
         }
     }
 }

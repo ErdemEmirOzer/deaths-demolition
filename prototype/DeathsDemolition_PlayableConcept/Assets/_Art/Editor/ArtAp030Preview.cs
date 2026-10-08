@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -10,20 +11,30 @@ using UnityEngine.Rendering.Universal;
 namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
-    /// WP-092 C · TD check frames for an imported library (AP-030 by default): every variation of the package on a tight grid in an
+    /// WP-092 C · TD check frames for an imported library (AP-030 by default): the variations of a set of families on a grid in an
     /// unsaved scene with the showcase lighting (Run environment, sun, overcast volume), framed by the gameplay rig (focus = ground +
     /// <see cref="WorldTdCapture.FocusHeight"/>, camera at focus + <see cref="WorldTdCapture.RigOffset"/> — 49° down, ≈ 20 m — vertical FOV
-    /// <see cref="WorldTdCapture.RigFov"/>), 1920×1080, post-processing on (bloom reads the lamp glow). Three frames: <c>day</c>,
+    /// <see cref="WorldTdCapture.RigFov"/>), 1920×1080, post-processing on (bloom reads the lamp glow). Three frames per set: <c>day</c>,
     /// <c>dusk</c> (sun and ambient at a few per cent: the glow slots carry the frame) and <c>dusk-off</c> (the glow renderers' emission
     /// black through a property block — the materials are never touched). Hanging pieces (pivot at the ceiling: bounds top at 0) hang
     /// from 2.4 m, wall pieces (<c>wall_*</c>) sit 1.6 m up on a stand-in wall panel, turned to face the camera.
-    /// Batch: <c>-executeMethod …ArtAp030Preview.CaptureTd -ddOut &lt;folder&gt; [-ddAp AP-030]</c>. Nothing is saved.
+    /// Sets: <c>-ddSet &lt;tag&gt;:&lt;family+family…|*&gt;:&lt;columns&gt;:&lt;spacing m&gt;</c>, repeatable (v002: roads, clusters, lamps,
+    /// interior); none = every variation, 6 columns at 2.4 m, tag <c>ap030</c>. Files <c>&lt;tag&gt;-td-{day,dusk,dusk-off}.png</c>.
+    /// Batch: <c>-executeMethod …ArtAp030Preview.CaptureTd -ddOut &lt;folder&gt; [-ddAp AP-030] [-ddSet …]…</c>. Nothing is saved.
     /// </summary>
     public static class ArtAp030Preview
     {
-        public const int Width = 1920, Height = 1080, Columns = 6;
-        public const float Spacing = 2.4f, HangHeight = 2.4f, WallMountHeight = 1.6f;
+        public const int Width = 1920, Height = 1080, DefaultColumns = 6;
+        public const float DefaultSpacing = 2.4f, HangHeight = 2.4f, WallMountHeight = 1.6f;
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
+        private sealed class Set
+        {
+            public string Tag;
+            public HashSet<string> Families;   // null = every family
+            public int Columns = DefaultColumns;
+            public float Spacing = DefaultSpacing;
+        }
 
         public static void CaptureTd()
         {
@@ -36,6 +47,26 @@ namespace DD.Art.Pipeline.EditorTools
             if (index == null) throw new InvalidOperationException("[AP030PREVIEW] library index missing: " + ArtLibraryPaths.IndexAsset(ap));
             ArtLibraryManifest manifest = ArtLibraryPrefabBuilder.LoadManifest(ap);
 
+            var sets = new List<Set>();
+            foreach (string spec in Args("-ddSet"))
+            {
+                string[] p = spec.Split(':');
+                if (p.Length != 4) throw new ArgumentException("[AP030PREVIEW] -ddSet <tag>:<family+family…|*>:<columns>:<spacing> — got " + spec);
+                sets.Add(new Set
+                {
+                    Tag = p[0],
+                    Families = p[1] == "*" ? null : new HashSet<string>(p[1].Split('+'), StringComparer.Ordinal),
+                    Columns = int.Parse(p[2], CultureInfo.InvariantCulture),
+                    Spacing = float.Parse(p[3], CultureInfo.InvariantCulture)
+                });
+            }
+
+            if (sets.Count == 0) sets.Add(new Set { Tag = "ap030" });
+            foreach (Set set in sets) CaptureSet(ap, index, manifest, dir, set);
+        }
+
+        private static void CaptureSet(string ap, ArtLibraryAsset index, ArtLibraryManifest manifest, string dir, Set set)
+        {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             PilotSceneBuilder.ApplyEnvironment();
             PilotSceneBuilder.CreateSun();
@@ -45,26 +76,27 @@ namespace DD.Art.Pipeline.EditorTools
 
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground (stand-in)";
-            ground.transform.localScale = new Vector3(6f, 1f, 6f);
+            ground.transform.localScale = new Vector3(8f, 1f, 8f);
             var earth = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material("earth"));
             if (earth != null) ground.GetComponent<MeshRenderer>().sharedMaterial = earth;
 
-            // Lamps (variations with sockets) first, nearest the camera; then the rest, both in index order.
+            // Lamps (variations with a flame socket) first, nearest the camera; then the rest, both in index order.
             var items = new List<(ArtLibraryAsset.Item item, ArtLibraryManifest.Variation v)>();
             var rest = new List<(ArtLibraryAsset.Item item, ArtLibraryManifest.Variation v)>();
             foreach (ArtLibraryAsset.Item item in index.items)
             {
+                if (set.Families != null && !set.Families.Contains(item.family)) continue;
                 ArtLibraryManifest.Variation v = Find(manifest, item.family, item.variation);
-                if (item.prefab != null && v != null) (v.sockets.Count > 0 ? items : rest).Add((item, v));
+                if (item.prefab != null && v != null) (v.sockets.Exists(s => s.name == "SOCKET_Flame") ? items : rest).Add((item, v));
             }
 
             items.AddRange(rest);
             var glow = new List<Renderer>();
-            int rows = (items.Count + Columns - 1) / Columns;
+            int rows = (items.Count + set.Columns - 1) / set.Columns;
             for (int i = 0; i < items.Count; i++)
             {
-                int col = i % Columns, row = i / Columns;
-                var at = new Vector3((col - (Columns - 1) * 0.5f) * Spacing, 0f, (row - (rows - 1) * 0.5f) * Spacing);
+                int col = i % set.Columns, row = i / set.Columns;
+                var at = new Vector3((col - (set.Columns - 1) * 0.5f) * set.Spacing, 0f, (row - (rows - 1) * 0.5f) * set.Spacing);
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(items[i].item.prefab);
                 bool hanging = items[i].v.boundsMax != null && items[i].v.boundsMax[2] <= 0.01f;
                 bool wall = items[i].item.family.StartsWith("wall_", StringComparison.Ordinal);
@@ -100,7 +132,7 @@ namespace DD.Art.Pipeline.EditorTools
                 Vector3 focus = Vector3.up * WorldTdCapture.FocusHeight;
                 cam.transform.SetPositionAndRotation(focus + WorldTdCapture.RigOffset, Quaternion.LookRotation(-WorldTdCapture.RigOffset.normalized, Vector3.up));
 
-                Render(cam, Path.Combine(dir, "ap030-td-day.png"));
+                Render(cam, Path.Combine(dir, set.Tag + "-td-day.png"));
 
                 if (sun != null) sun.intensity *= 0.06f;
                 RenderSettings.ambientSkyColor *= 0.08f;
@@ -108,14 +140,14 @@ namespace DD.Art.Pipeline.EditorTools
                 RenderSettings.ambientGroundColor *= 0.08f;
                 RenderSettings.fogColor *= 0.15f;
                 RenderSettings.reflectionIntensity *= 0.1f;
-                Render(cam, Path.Combine(dir, "ap030-td-dusk.png"));
+                Render(cam, Path.Combine(dir, set.Tag + "-td-dusk.png"));
 
                 var block = new MaterialPropertyBlock();
                 block.SetColor(EmissionColorId, Color.black);
                 foreach (Renderer r in glow) r.SetPropertyBlock(block);
-                Render(cam, Path.Combine(dir, "ap030-td-dusk-off.png"));
+                Render(cam, Path.Combine(dir, set.Tag + "-td-dusk-off.png"));
                 foreach (Renderer r in glow) r.SetPropertyBlock(null);
-                Debug.Log("[AP030PREVIEW] " + ap + ": " + items.Count + " variations, " + glow.Count + " emissive renderers, frames in " + dir);
+                Debug.Log("[AP030PREVIEW] " + ap + " " + set.Tag + ": " + items.Count + " variations, " + glow.Count + " emissive renderers, frames in " + dir);
             }
             finally
             {
@@ -166,6 +198,15 @@ namespace DD.Art.Pipeline.EditorTools
             for (int i = 0; i + 1 < args.Length; i++)
                 if (string.Equals(args[i], flag, StringComparison.Ordinal)) return args[i + 1];
             return null;
+        }
+
+        private static List<string> Args(string flag)
+        {
+            var list = new List<string>();
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < args.Length; i++)
+                if (string.Equals(args[i], flag, StringComparison.Ordinal)) list.Add(args[i + 1]);
+            return list;
         }
     }
 }

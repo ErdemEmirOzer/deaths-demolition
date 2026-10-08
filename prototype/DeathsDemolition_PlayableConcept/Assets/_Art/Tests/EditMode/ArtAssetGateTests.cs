@@ -351,7 +351,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(425, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 192 (AP-023 dünya v5 kiti v007: v005 166 + 26) = 403; + 22 (AP-030 v001 P1 lamba + iç mekân, WP-092 C) = 425");
+            Assert.AreEqual(465, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 192 (AP-023 dünya v5 kiti v007: v005 166 + 26) = 403; + 22 (AP-030 v001 P1 lamba + iç mekân, WP-092 C) = 425; + 40 (AP-030 v002 yol + küme + clutter_item + kerosene V03; 6 v001 deltası aynı dosya) = 465");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -527,7 +527,7 @@ namespace DD.Art.Tests.EditMode
 
             foreach (string rol in ArtLibraryMaterialRoles.EmissionTextureRoles())
                 if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Emission"))) ap030++;
-            Assert.AreEqual(9, ap030, "AP-030 v001: 2 atlas × (BaseColor + Normal + Packed + türetilmiş maske) + lamba Emission = 9");
+            Assert.AreEqual(37, ap030, "AP-030 v001: 2 atlas × (BaseColor + Normal + Packed + türetilmiş maske) + lamba Emission = 9; v002: + 7 atlas (ishidatami, gravel, dirt, boardwalk, drain, puddle, props) × 4 = 37");
 
             // WP-074 B5b-2 · the AP-023 4K ground sets (plaza slate ×3, path granite ×2): BaseColor + Normal + packed Mask = 15.
             int zemin = 0;

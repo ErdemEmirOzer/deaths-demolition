@@ -50,6 +50,9 @@ MonoBehaviour:
   - family: kerosene_lamp
     variation: V02
     prefab: {fileID: 734590711964289173, guid: 886214c2cc1bf40cca68bf372460e4dc, type: 3}
+  - family: kerosene_lamp
+    variation: V03
+    prefab: {fileID: 3810644570452817590, guid: 1ce8fd3c14ff849a0b517929d7539407, type: 3}
   - family: tana_shelf
     variation: V01
     prefab: {fileID: 84959361399075812, guid: c0ceeb6b1e6c140018e4c47e0bb2a017, type: 3}
@@ -80,3 +83,120 @@ MonoBehaviour:
   - family: zabuton
     variation: V02
     prefab: {fileID: 3962066745853794775, guid: bacdd62f6488e49d3971bfe7480dbf9d, type: 3}
+  - family: barricade
+    variation: V01
+    prefab: {fileID: 6346736623694539595, guid: 877cd4fb8e9914ab5b70647364956d2f, type: 3}
+  - family: barricade
+    variation: V02
+    prefab: {fileID: 1886992841843237512, guid: 23c5da97a9dec4ada9740c503a2027c2, type: 3}
+  - family: boardwalk
+    variation: V01
+    prefab: {fileID: 4383050279227687656, guid: 07f36f0c4f1d74277be03c7cf751b228, type: 3}
+  - family: boardwalk
+    variation: V02
+    prefab: {fileID: 7109175297812234010, guid: b3588e64176584d058e52d21dc9b4640, type: 3}
+  - family: boardwalk
+    variation: V03
+    prefab: {fileID: 6223809890271937461, guid: 193ccb12528694a359e214ae61d42321, type: 3}
+  - family: boardwalk
+    variation: V04
+    prefab: {fileID: 5466695528269560967, guid: 5ea3ff487d24c4ff4ac40a6ad9a78778, type: 3}
+  - family: clutter_item
+    variation: V01
+    prefab: {fileID: 2834470418979946492, guid: 91bef67a6ab40437aa14411ab650eb57, type: 3}
+  - family: clutter_item
+    variation: V02
+    prefab: {fileID: 1100360625496214627, guid: dcb5ebed952c340c890ef4771e2d9e3f, type: 3}
+  - family: clutter_item
+    variation: V03
+    prefab: {fileID: 7901498469930714538, guid: 2e7bac63492c14f98ad07e7fec6f9bfb, type: 3}
+  - family: clutter_item
+    variation: V04
+    prefab: {fileID: 34601792485818266, guid: ac63f659e01ed4c82a01e56a505128e8, type: 3}
+  - family: clutter_item
+    variation: V05
+    prefab: {fileID: 6244843870219177589, guid: 89732b5b076af42c584a5d3b0807e7f9, type: 3}
+  - family: daihachiguruma
+    variation: V01
+    prefab: {fileID: 3845171188251868098, guid: 5cf1ad891695e491c8fad7a02c1ca2c2, type: 3}
+  - family: daihachiguruma
+    variation: V02
+    prefab: {fileID: 3802153374761132621, guid: 91a97e70b716d4c2e8d599e725544a24, type: 3}
+  - family: dirt_path
+    variation: V01
+    prefab: {fileID: 6679201851572217396, guid: 28f4371e801c94796a8538db7d921d09, type: 3}
+  - family: dirt_path
+    variation: V02
+    prefab: {fileID: 9004900168793591708, guid: 8c4b2494f00e046bdb7626f3b14582d7, type: 3}
+  - family: drain_channel
+    variation: V01
+    prefab: {fileID: 1774610602634853488, guid: ffe07155ac174445ab59fb3bc8933810, type: 3}
+  - family: drain_channel
+    variation: V02
+    prefab: {fileID: 568957299048090444, guid: 92e1d31ccb688458298c9f3d20e59b0e, type: 3}
+  - family: gravel_path
+    variation: V01
+    prefab: {fileID: 755089130404120004, guid: 63eda1c8968094735a05aca99d7298d1, type: 3}
+  - family: gravel_path
+    variation: V02
+    prefab: {fileID: 4080707639925592339, guid: 47e66b145ebf346c1a7cf42b6f0d733a, type: 3}
+  - family: gravel_path
+    variation: V03
+    prefab: {fileID: 6468383391761859848, guid: 9fe2acf3e00fb471db09ce6ade01fce5, type: 3}
+  - family: gravel_path
+    variation: V04
+    prefab: {fileID: 7839599904567237301, guid: 42aff26c4562b49d6b7d1a4cb590ece1, type: 3}
+  - family: gravel_path
+    variation: V05
+    prefab: {fileID: 456920868256276839, guid: 85c870316a4724c7a88f2294792f2cf3, type: 3}
+  - family: ido
+    variation: V01
+    prefab: {fileID: 4001275704052510056, guid: c51486a6a91e24805b9490ae7c4c4a0c, type: 3}
+  - family: ido
+    variation: V02
+    prefab: {fileID: 5689804637775004549, guid: def9e2a026d474a7e8e5345481690e41, type: 3}
+  - family: ishidatami
+    variation: V01
+    prefab: {fileID: 693229042069362253, guid: 3eb7ab6868060482198dd5d83e1d3064, type: 3}
+  - family: ishidatami
+    variation: V02
+    prefab: {fileID: 4688313706145373692, guid: 777394fb41de1474b80bb6fb923c6770, type: 3}
+  - family: ishidatami
+    variation: V03
+    prefab: {fileID: 2130959524587069182, guid: 85e50e2dd6cc6494892b53c3a13fd282, type: 3}
+  - family: ishidatami
+    variation: V04
+    prefab: {fileID: 3134680497833800319, guid: 3986d68e400184787b0c39c1e185cea2, type: 3}
+  - family: ishidatami
+    variation: V05
+    prefab: {fileID: 6513817951453671346, guid: 7df0c0fa4af784816bdc0ad257e001dd, type: 3}
+  - family: ishidatami
+    variation: V06
+    prefab: {fileID: 5023966635745942356, guid: cea435c7c276b4d62bf554b43ea87fa4, type: 3}
+  - family: ishidatami
+    variation: V07
+    prefab: {fileID: 1608205242584980515, guid: 659f51fc045c04503aa73f72e9a2aa6f, type: 3}
+  - family: laundry_line
+    variation: V01
+    prefab: {fileID: 8114152089270176961, guid: 1d48c994069d74237b90f59d69aa9739, type: 3}
+  - family: toppled_set
+    variation: V01
+    prefab: {fileID: 7851123230550330084, guid: e1e10a0391f684f4a84ba3b069e7369c, type: 3}
+  - family: toppled_set
+    variation: V02
+    prefab: {fileID: 7285820059931513764, guid: 7226a143cf63b4f2fab689ca2a43c6bb, type: 3}
+  - family: toppled_set
+    variation: V03
+    prefab: {fileID: 7760274330006603167, guid: 9f06167e7e993437f8f4fd91951e1303, type: 3}
+  - family: yakuimon
+    variation: V01
+    prefab: {fileID: 1231998991223868683, guid: 8c60438dacfa3461ea0ca36f8a9000b6, type: 3}
+  - family: yakuimon
+    variation: V02
+    prefab: {fileID: 3391086291731986983, guid: 46788f31798b746609db7431ddb26ad4, type: 3}
+  - family: yatai
+    variation: V01
+    prefab: {fileID: 1185408677475772186, guid: 5dd34f772777a43acb6d2defc095ba8a, type: 3}
+  - family: yatai
+    variation: V02
+    prefab: {fileID: 1266897512443419542, guid: e75aab5322ffb419e8fea624ef40bbdb, type: 3}

@@ -219,7 +219,7 @@ namespace DD.Art.Pipeline.EditorTools
                         var socketGo = new GameObject(socket.name);
                         socketGo.transform.SetParent(root.transform, false);
                         socketGo.transform.localPosition = socket.PrefabPosition;
-                        socketGo.transform.localRotation = Quaternion.identity;
+                        socketGo.transform.localRotation = socket.PrefabRotation;
                         socketGo.transform.localScale = Vector3.one;
                     }
                 }

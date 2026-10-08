@@ -1,6 +1,6 @@
 {
  "ap": "AP-030",
- "version": "v001 (11 families / 22 FBX)",
+ "version": "v001+v002 (24 families / 62 FBX)",
  "derived": "wp-092/tools/stage-ap030.py: source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap030_<atlas>, ap030_<family>_glow; sloped / rotated box shells carry obb; LOD0 bounds from the geometry, receipt-checked; sockets = FBX Null nodes in Blender space",
  "sources": [
   {
@@ -16,8 +16,8 @@
    "sha256": "97731a2034ea15902465daebf62ff5bbd405d66b21bdba7a0b58e87fe3967320"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_byobu_V02.fbx",
-   "sha256": "2782acc79cd63da65c3cd9d023c4d4fee0e85b55271c76c71628d08a9732016f"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_byobu_V02.fbx",
+   "sha256": "2b0d9e776bf00230af790e4ed9aa62f359a7c5684e43b0ab84f9a9c384f24773"
   },
   {
    "path": "asset-production/AP-030/exports/v001/fbx/AP030_chabudai_V01.fbx",
@@ -28,8 +28,8 @@
    "sha256": "c2ae8cb192b01dd0d300b083949e31b739ca53b16a2287f730f0e4a26b85e3ab"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_chabudai_V03.fbx",
-   "sha256": "740df714edb1c21ad969ceb7402c902073366bc27541259bc1b97b2f7ebf72c4"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_chabudai_V03.fbx",
+   "sha256": "f302490628a71c28486f81fff6896587d29614a5544d86e41ac0e20fe39df8ff"
   },
   {
    "path": "asset-production/AP-030/exports/v001/fbx/AP030_clutter_set_V01.fbx",
@@ -40,16 +40,16 @@
    "sha256": "b16f8d6b84cf14e2503225e6cbce7bf83dd33d0ccf316c6eafc3ff646c6a5b58"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_hibachi_V01.fbx",
-   "sha256": "7dd30816c19b5fd7d64e1557cb41ac769e0c0d4954a407991e2b0fd72b5b78e6"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_hibachi_V01.fbx",
+   "sha256": "9dc7acea72706b62a13ad382fdea8f5b24a779bd04b4a3cff8c6557d7e63ae34"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_kerosene_lamp_V01.fbx",
-   "sha256": "3675698081e90e7dcc3609d43a7ded55a392280781e4d5c3996ab024bbb48b89"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_kerosene_lamp_V01.fbx",
+   "sha256": "e1dc6f0d06c1a9bf53d3f2048c0ada05197b7362981c810f371aa08a69bd1573"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_kerosene_lamp_V02.fbx",
-   "sha256": "26685c6be3dd40e5e79705414d24aa8e9cb543c7b56bd54a61b8f88c1badde4d"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_kerosene_lamp_V02.fbx",
+   "sha256": "6244e0db8885e619c1c9d0479c2665bcdfed9373c4d2aed9fd0a635482caa646"
   },
   {
    "path": "asset-production/AP-030/exports/v001/fbx/AP030_tana_shelf_V01.fbx",
@@ -80,8 +80,8 @@
    "sha256": "12080aeca71208b118ca5f6533780f3d6b4fe53a238a007ef404b0c593692368"
   },
   {
-   "path": "asset-production/AP-030/exports/v001/fbx/AP030_wall_sconce_V02.fbx",
-   "sha256": "417c9705b791e073200a4542b613b607a70adc05273a07d9899b970913974eac"
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_wall_sconce_V02.fbx",
+   "sha256": "0d8617f00ef69c720116ad0f9f6bf5104eba37ea259954fa663dac42d19dd249"
   },
   {
    "path": "asset-production/AP-030/exports/v001/fbx/AP030_zabuton_V01.fbx",
@@ -90,6 +90,166 @@
   {
    "path": "asset-production/AP-030/exports/v001/fbx/AP030_zabuton_V02.fbx",
    "sha256": "85824f9e05698863e0f039db4fe47328b6e0734fe1d63dcc7f3506d91b1508bf"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_barricade_V01.fbx",
+   "sha256": "79e35f60b626b7cac0dd5791cee2a0f596e19157451dc8133b18422bc48fc86e"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_barricade_V02.fbx",
+   "sha256": "1d47dbb5c11da0f9e7ede448b6042a80f032b8ddbb2bac6ea9227339e1d58f1e"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_boardwalk_V01.fbx",
+   "sha256": "d0af90525353383db2c0445812883cd3118da11e8d53c94ec0b991826b0c378c"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_boardwalk_V02.fbx",
+   "sha256": "441fcdc4c817af3f5830d4849d21409d494ef29085f8e8909d0e8bca5d106ab2"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_boardwalk_V03.fbx",
+   "sha256": "ac3661f2ee0b4a53efcc10336782edd5e58e5a3c1fa6abc245f92ac2d26e5c44"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_boardwalk_V04.fbx",
+   "sha256": "0d6de0b64c3200df8de86318ac14645c8640fe6642c6f0698845cbfd7b966cc1"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_clutter_item_V01.fbx",
+   "sha256": "25474f40b4a0de539d2421c7106381d31335e4aeb20d3184c36ad0d96292486e"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_clutter_item_V02.fbx",
+   "sha256": "bae0f4de5b7a81e57e2337841c541bf39770b737f7207ddf0e3abd31dc48d6ba"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_clutter_item_V03.fbx",
+   "sha256": "a5c04802039e11dc1eee74202dfe90ed0944cfd9f6bc55c491a564f2b2be0e86"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_clutter_item_V04.fbx",
+   "sha256": "5735a05e1d406cb2ac93624cc02a4245185165ef31383944f1af906f337f53c7"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_clutter_item_V05.fbx",
+   "sha256": "15c7292883408540ecd50871198e8eaba63f8311f64a04fc0fdf6025e8e23741"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_daihachiguruma_V01.fbx",
+   "sha256": "71cca420bfafe51645d2bc83404dcea62363faeb975258509a6d466c8ddca1f4"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_daihachiguruma_V02.fbx",
+   "sha256": "4b6341db4fb70d4c2fb6113f85fb6445524e42e74b232fbbb923e3d752bf1a71"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_dirt_path_V01.fbx",
+   "sha256": "d21141e4b97817ac23c034c916bb2e2e0006a67324606277b870e1485839776d"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_dirt_path_V02.fbx",
+   "sha256": "c49e163f96a96bbec1ad2a1ba6353e696aefe679238a46d492f6bf74bf6d3c40"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_drain_channel_V01.fbx",
+   "sha256": "73af921d4b98c993ffe640959e5e126dc1499e30584e487313ea04d16facd910"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_drain_channel_V02.fbx",
+   "sha256": "1249e7e37fc6f5defb9dbc5ef1976b3b595909784cc2bb2909b4c5e853ecd258"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_gravel_path_V01.fbx",
+   "sha256": "dd3655fd2e801f6eaeb215d8411ca407836d47f163acd6518dea587165f8bcba"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_gravel_path_V02.fbx",
+   "sha256": "431482d6895fe4c195da62cfafc8a21587eda6be2d31a1adced5d702033391f5"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_gravel_path_V03.fbx",
+   "sha256": "69e692ac5f2d48120a2bd57db3551017a96f849df395b2ed4a301a961e580181"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_gravel_path_V04.fbx",
+   "sha256": "942f8f5d382de5c17013d1330e3a498880190d02320df771f5b237317ec4797c"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_gravel_path_V05.fbx",
+   "sha256": "e2afdeb0a8beb14bd5341b3abc6ea5174adcf4075da75b8faefec6a4a1a25b37"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ido_V01.fbx",
+   "sha256": "c91aab26892bc35c05f5cb8999bfaae8a6983325f85b90bf1d4e79bd0a527eb5"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ido_V02.fbx",
+   "sha256": "77611f2a04c5d895cd2cbf2cb125b0dc85e87dd168334374b435186b8327109c"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V01.fbx",
+   "sha256": "ba07d2676513dd3a037dfcc036189de0b53655c6fdaac40620af2728e3918f7c"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V02.fbx",
+   "sha256": "b1d2acda690d287dc7a11f16b112180c4b34e7e1163ec47491cb41993128224a"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V03.fbx",
+   "sha256": "604e89fdcd6507fd12067b06e88c1371c3f426f5b376902be990a72225706e85"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V04.fbx",
+   "sha256": "5a109abd5b430ea070fc2859844c6d2c4209f5ca9c27de838c0b4c17a497dcd7"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V05.fbx",
+   "sha256": "add906a00e780430801b547c2ac0fc690cf5799910ae0b92dc3d770cfb5fccfa"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V06.fbx",
+   "sha256": "b3257747d5181b3fd779e2cd3ccd15738aee7606e7bc53f195e49187a94042a6"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_ishidatami_V07.fbx",
+   "sha256": "e76bd7827a01774009638f79893401d6a37143ec326d9b18c086aae26a36f573"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_kerosene_lamp_V03.fbx",
+   "sha256": "a58de66a3f557adf26a99b9c8ed1820bfc09121a9494194194fd6057daf9f3f2"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_laundry_line_V01.fbx",
+   "sha256": "2f90261187c0a3c2646175f472472989443208d7b27259b8c63df08dbc61f8e1"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_toppled_set_V01.fbx",
+   "sha256": "e894152a16657923f5fb163272f579a8d5ac4dcae276e9a75618ec0e6a753fc4"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_toppled_set_V02.fbx",
+   "sha256": "0deab4ce647dcda8a1938acae4ebec6dd5d30fd2758df312c5d0af5e4132c80a"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_toppled_set_V03.fbx",
+   "sha256": "cd295a70c136adc8d6b42c2b373975b804fac8082a7087e18635951fc948200d"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_yakuimon_V01.fbx",
+   "sha256": "261d6dc50721d29f6290935e2b6fe02c387ec0c6d420081186ea8b9634234f81"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_yakuimon_V02.fbx",
+   "sha256": "a0ac58fecef9cdd60ac4b56e3919fb3bea06ed4fd3db9724492926d8b38bee58"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_yatai_V01.fbx",
+   "sha256": "f6d96d445a00877579034dbd4ee42452663d2f33ee3ef81ab64886f2a8504ca3"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v002/fbx/AP030_yatai_V02.fbx",
+   "sha256": "f45e19c3c6856f366b7e3e3184cf08093c4f5519a83b45c17f8fc07f4ca38fdf"
   }
  ],
  "families": [
@@ -238,7 +398,8 @@
         0.034,
         -0.0,
         0.302
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -246,7 +407,8 @@
         0.0,
         -0.0,
         0.399
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
      "deliveredIn": "v001",
@@ -399,7 +561,8 @@
         0.032,
         -0.0,
         0.267
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -407,7 +570,8 @@
         0.0,
         -0.0,
         0.355
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
      "deliveredIn": "v001",
@@ -863,8 +1027,8 @@
      "colliders": [
       {
        "fbx": "AP030_byobu_V02.fbx",
-       "object": "AP030_byobu_V02_flat_COL",
-       "class": "blocking",
+       "object": "AP030_byobu_V02_flat_COL_WALK",
+       "class": "walkable",
        "shells": 1,
        "shellBoxes": [
         {
@@ -883,12 +1047,12 @@
        ],
        "part": "flat",
        "broken": false,
-       "navmesh": "obstacle"
+       "navmesh": "walkable"
       },
       {
        "fbx": "AP030_byobu_V02.fbx",
-       "object": "AP030_byobu_V02_fold_COL",
-       "class": "blocking",
+       "object": "AP030_byobu_V02_fold_COL_WALK",
+       "class": "walkable",
        "shells": 1,
        "shellBoxes": [
         {
@@ -934,11 +1098,11 @@
        ],
        "part": "fold",
        "broken": false,
-       "navmesh": "obstacle"
+       "navmesh": "walkable"
       }
      ],
      "sockets": [],
-     "deliveredIn": "v001"
+     "deliveredIn": "v002"
     }
    ]
   },
@@ -1191,7 +1355,109 @@
      "colliders": [
       {
        "fbx": "AP030_chabudai_V03.fbx",
-       "object": "AP030_chabudai_V03_table_COL",
+       "object": "AP030_chabudai_V03_fold_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.11302,
+          -0.28,
+          0.07743
+         ],
+         "max": [
+          0.23938,
+          0.28,
+          0.53433
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.06318,
+           0.0,
+           0.30588
+          ],
+          "axisX": [
+           0.8549332,
+           0.0,
+           -0.5187381
+          ],
+          "axisY": [
+           0.5187508,
+           0.0,
+           0.8549255
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.139145,
+           0.450004,
+           0.56
+          ]
+         }
+        }
+       ],
+       "part": "fold",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_chabudai_V03.fbx",
+       "object": "AP030_chabudai_V03_legs_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.08529,
+          -0.221,
+          -0.0
+         ],
+         "max": [
+          0.16305,
+          0.221,
+          0.17338
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.038877,
+           0.0,
+           0.08669
+          ],
+          "axisX": [
+           0.5185866,
+           0.0,
+           0.8550251
+          ],
+          "axisY": [
+           0.8549184,
+           0.0,
+           -0.5187625
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.041999,
+           0.264996,
+           0.442
+          ]
+         }
+        }
+       ],
+       "part": "legs",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_chabudai_V03.fbx",
+       "object": "AP030_chabudai_V03_top_COL",
        "class": "blocking",
        "shells": 1,
        "shellBoxes": [
@@ -1199,24 +1465,24 @@
          "min": [
           -0.22517,
           -0.4,
-          -0.15303
+          -0.0
          ],
          "max": [
-          0.46341,
+          0.2112,
           0.4,
           0.69691
          ],
          "positions": 8,
          "obb": {
           "center": [
-           0.11912,
+           -0.006985,
            0.0,
-           0.27194
+           0.348455
           ],
           "axisX": [
-           0.8549291,
+           0.8548699,
            0.0,
-           -0.5187449
+           -0.5188424
           ],
           "axisY": [
            0.5187504,
@@ -1229,20 +1495,20 @@
            0.0
           ],
           "size": [
-           0.320003,
+           0.024998,
            0.799999,
            0.8
           ]
          }
         }
        ],
-       "part": "table",
+       "part": "top",
        "broken": false,
        "navmesh": "obstacle"
       }
      ],
      "sockets": [],
-     "deliveredIn": "v001"
+     "deliveredIn": "v002"
     }
    ]
   },
@@ -2009,7 +2275,7 @@
      "boundsMax": [
       0.225,
       0.225,
-      0.35
+      0.43856
      ],
      "parts": [
       {
@@ -2024,9 +2290,9 @@
           "ap030_lamp"
          ],
          "facesPerSlot": [
-          1672
+          1720
          ],
-         "triangles": 1672,
+         "triangles": 1720,
          "colourLayers": [],
          "windExpected": false
         },
@@ -2037,9 +2303,9 @@
           "ap030_lamp"
          ],
          "facesPerSlot": [
-          668
+          744
          ],
-         "triangles": 668,
+         "triangles": 744,
          "colourLayers": [],
          "windExpected": false
         },
@@ -2050,9 +2316,9 @@
           "ap030_lamp"
          ],
          "facesPerSlot": [
-          160
+          244
          ],
-         "triangles": 160,
+         "triangles": 244,
          "colourLayers": [],
          "windExpected": false
         }
@@ -2138,7 +2404,8 @@
         0.0,
         -0.0,
         0.315
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -2146,17 +2413,18 @@
         0.0,
         -0.0,
         0.3
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
-     "deliveredIn": "v001",
+     "deliveredIn": "v002",
      "emission": {
       "hex": "#FFB46B",
       "kelvin": 2200,
-      "strength": 1.0,
+      "strength": 2.5,
       "cells": "ember",
       "material": "AP030_M_hibachi_glow_v001",
-      "unity": "_EmissionColor = white x 1.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+      "unity": "_EmissionColor = white x 2.5, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
      }
     }
    ]
@@ -2306,7 +2574,8 @@
         0.0,
         -0.0,
         0.252
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -2314,15 +2583,16 @@
         0.0,
         -0.0,
         0.344
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
-     "deliveredIn": "v001",
+     "deliveredIn": "v002",
      "emission": {
       "hex": "#FFB46B",
       "kelvin": 2200,
       "strength": 3.0,
-      "cells": "glass + milk_glass",
+      "cells": "glass_flame + milk_glass",
       "material": "AP030_M_kerosene_lamp_glow_v001",
       "unity": "_EmissionColor = white x 3.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
      }
@@ -2442,7 +2712,8 @@
         0.0,
         -0.0,
         -0.867
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -2450,15 +2721,179 @@
         0.0,
         -0.0,
         -0.795
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
-     "deliveredIn": "v001",
+     "deliveredIn": "v002",
      "emission": {
       "hex": "#FFB46B",
       "kelvin": 2200,
       "strength": 3.0,
-      "cells": "glass",
+      "cells": "glass_flame",
+      "material": "AP030_M_kerosene_lamp_glow_v001",
+      "unity": "_EmissionColor = white x 3.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_kerosene_lamp_V03",
+     "boundsMin": [
+      -0.1035,
+      -0.1035,
+      0.0
+     ],
+     "boundsMax": [
+      0.1035,
+      0.1035,
+      0.5175
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          1312
+         ],
+         "triangles": 1312,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          448
+         ],
+         "triangles": 448,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          160
+         ],
+         "triangles": 160,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_glow_LOD0",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          1248
+         ],
+         "triangles": 1248,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_glow_LOD1",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          576
+         ],
+         "triangles": 576,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V03.fbx",
+         "object": "AP030_kerosene_lamp_V03_glow_LOD2",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          128
+         ],
+         "triangles": 128,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_kerosene_lamp_V03.fbx",
+       "object": "AP030_kerosene_lamp_V03_body_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.1035,
+          -0.1035,
+          0.0
+         ],
+         "max": [
+          0.1035,
+          0.1035,
+          0.5175
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.0,
+        -0.0,
+        0.2898
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        0.3956
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002",
+     "emission": {
+      "hex": "#FFB46B",
+      "kelvin": 2200,
+      "strength": 3.0,
+      "cells": "glass_flame + milk_glass",
       "material": "AP030_M_kerosene_lamp_glow_v001",
       "unity": "_EmissionColor = white x 3.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
      }
@@ -3218,7 +3653,8 @@
         0.016,
         0.105,
         -0.114
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -3226,7 +3662,8 @@
         0.0,
         0.107,
         0.0
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
      "deliveredIn": "v001",
@@ -3354,7 +3791,8 @@
         0.0,
         0.135,
         -0.048
-       ]
+       ],
+       "yawDeg": 0.0
       },
       {
        "name": "SOCKET_Light",
@@ -3362,15 +3800,16 @@
         0.0,
         0.135,
         0.077
-       ]
+       ],
+       "yawDeg": 0.0
       }
      ],
-     "deliveredIn": "v001",
+     "deliveredIn": "v002",
      "emission": {
       "hex": "#FFB46B",
       "kelvin": 2200,
       "strength": 2.5,
-      "cells": "glass",
+      "cells": "glass_flame",
       "material": "AP030_M_wall_sconce_glow_v001",
       "unity": "_EmissionColor = white x 2.5, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
      }
@@ -3561,6 +4000,5518 @@
      ],
      "sockets": [],
      "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "barricade",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_barricade_V01",
+     "boundsMin": [
+      -1.60267,
+      -1.08,
+      0.0
+     ],
+     "boundsMax": [
+      1.60267,
+      0.43469,
+      1.28512
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_barricade_V01.fbx",
+         "object": "AP030_barricade_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          1098
+         ],
+         "triangles": 1098,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_barricade_V01.fbx",
+         "object": "AP030_barricade_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          378
+         ],
+         "triangles": 378,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_barricade_V01.fbx",
+         "object": "AP030_barricade_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          170
+         ],
+         "triangles": 170,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_barricade_V01.fbx",
+       "object": "AP030_barricade_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.60267,
+          -0.905,
+          0.0
+         ],
+         "max": [
+          1.60267,
+          0.43469,
+          1.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_End_L",
+       "position": [
+        -1.5,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_End_R",
+       "position": [
+        1.5,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_barricade_V02",
+     "boundsMin": [
+      -1.67789,
+      -0.83093,
+      0.0
+     ],
+     "boundsMax": [
+      1.69037,
+      0.45,
+      1.13017
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_barricade_V02.fbx",
+         "object": "AP030_barricade_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          1132
+         ],
+         "triangles": 1132,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_barricade_V02.fbx",
+         "object": "AP030_barricade_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          388
+         ],
+         "triangles": 388,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_barricade_V02.fbx",
+         "object": "AP030_barricade_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          136
+         ],
+         "triangles": 136,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_barricade_V02.fbx",
+       "object": "AP030_barricade_V02_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.67789,
+          -0.83093,
+          0.0
+         ],
+         "max": [
+          1.69037,
+          0.45,
+          1.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_End_L",
+       "position": [
+        -1.7,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_End_R",
+       "position": [
+        1.7,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "boardwalk",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_boardwalk_V01",
+     "boundsMin": [
+      -0.81429,
+      -1.0,
+      0.0
+     ],
+     "boundsMax": [
+      0.81429,
+      1.0,
+      0.29991
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_boardwalk_V01.fbx",
+         "object": "AP030_boardwalk_V01_body_LOD0",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          248
+         ],
+         "triangles": 248,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V01.fbx",
+         "object": "AP030_boardwalk_V01_body_LOD1",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          98
+         ],
+         "triangles": 98,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V01.fbx",
+         "object": "AP030_boardwalk_V01_body_LOD2",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          20
+         ],
+         "triangles": 20,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_boardwalk_V01.fbx",
+       "object": "AP030_boardwalk_V01_deck_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -1.0,
+          0.25
+         ],
+         "max": [
+          0.8,
+          1.0,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "deck",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_boardwalk_V02",
+     "boundsMin": [
+      -0.81507,
+      -1.0,
+      0.0
+     ],
+     "boundsMax": [
+      1.0,
+      0.8,
+      0.29917
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_boardwalk_V02.fbx",
+         "object": "AP030_boardwalk_V02_body_LOD0",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          272
+         ],
+         "triangles": 272,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V02.fbx",
+         "object": "AP030_boardwalk_V02_body_LOD1",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V02.fbx",
+         "object": "AP030_boardwalk_V02_body_LOD2",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          30
+         ],
+         "triangles": 30,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_boardwalk_V02.fbx",
+       "object": "AP030_boardwalk_V02_deck_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -1.0,
+          0.25
+         ],
+         "max": [
+          0.8,
+          0.8,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "deck",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP030_boardwalk_V02.fbx",
+       "object": "AP030_boardwalk_V02_exit_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.8,
+          -0.8,
+          0.25
+         ],
+         "max": [
+          1.0,
+          0.8,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "exit",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        1.0,
+        -0.0,
+        0.3
+       ],
+       "yawDeg": -90.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_boardwalk_V03",
+     "boundsMin": [
+      -0.80426,
+      -1.0,
+      0.0
+     ],
+     "boundsMax": [
+      0.80426,
+      1.0,
+      0.29841
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_boardwalk_V03.fbx",
+         "object": "AP030_boardwalk_V03_body_LOD0",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          318
+         ],
+         "triangles": 318,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V03.fbx",
+         "object": "AP030_boardwalk_V03_body_LOD1",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          148
+         ],
+         "triangles": 148,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V03.fbx",
+         "object": "AP030_boardwalk_V03_body_LOD2",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          30
+         ],
+         "triangles": 30,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_boardwalk_V03.fbx",
+       "object": "AP030_boardwalk_V03_deck_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -1.0,
+          0.25
+         ],
+         "max": [
+          0.8,
+          0.25,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "deck",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP030_boardwalk_V03.fbx",
+       "object": "AP030_boardwalk_V03_ramp_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          0.23514,
+          -0.03714
+         ],
+         "max": [
+          0.8,
+          1.0,
+          0.3
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.0,
+           0.61757,
+           0.13143
+          ],
+          "axisX": [
+           0.0,
+           0.3714769,
+           0.9284422
+          ],
+          "axisY": [
+           0.0,
+           0.9284767,
+           -0.3713907
+          ],
+          "axisZ": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "size": [
+           0.040002,
+           0.807775,
+           1.6
+          ]
+         }
+        }
+       ],
+       "part": "ramp",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_boardwalk_V04",
+     "boundsMin": [
+      -0.80892,
+      -1.0,
+      0.0
+     ],
+     "boundsMax": [
+      0.80892,
+      1.0,
+      0.29947
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_boardwalk_V04.fbx",
+         "object": "AP030_boardwalk_V04_body_LOD0",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          284
+         ],
+         "triangles": 284,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V04.fbx",
+         "object": "AP030_boardwalk_V04_body_LOD1",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          118
+         ],
+         "triangles": 118,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_boardwalk_V04.fbx",
+         "object": "AP030_boardwalk_V04_body_LOD2",
+         "materials": [
+          "ap030_boardwalk"
+         ],
+         "facesPerSlot": [
+          20
+         ],
+         "triangles": 20,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_boardwalk_V04.fbx",
+       "object": "AP030_boardwalk_V04_deck_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -1.0,
+          0.25
+         ],
+         "max": [
+          0.8,
+          1.0,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "deck",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.3
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "clutter_item",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_clutter_item_V01",
+     "boundsMin": [
+      -0.18596,
+      -0.16894,
+      0.0
+     ],
+     "boundsMax": [
+      0.18596,
+      0.16894,
+      0.11974
+     ],
+     "parts": [
+      {
+       "name": "bowls",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_item_V01.fbx",
+         "object": "AP030_clutter_item_V01_bowls_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          360
+         ],
+         "triangles": 360,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V01.fbx",
+         "object": "AP030_clutter_item_V01_bowls_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V01.fbx",
+         "object": "AP030_clutter_item_V01_bowls_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_clutter_item_V02",
+     "boundsMin": [
+      -0.07143,
+      -0.09646,
+      0.0
+     ],
+     "boundsMax": [
+      0.07143,
+      0.09646,
+      0.10338
+     ],
+     "parts": [
+      {
+       "name": "tokkuri",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_item_V02.fbx",
+         "object": "AP030_clutter_item_V02_tokkuri_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V02.fbx",
+         "object": "AP030_clutter_item_V02_tokkuri_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V02.fbx",
+         "object": "AP030_clutter_item_V02_tokkuri_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          50
+         ],
+         "triangles": 50,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_clutter_item_V03",
+     "boundsMin": [
+      -0.24105,
+      -0.25645,
+      0.0
+     ],
+     "boundsMax": [
+      0.24105,
+      0.25645,
+      0.09543
+     ],
+     "parts": [
+      {
+       "name": "pottery",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_item_V03.fbx",
+         "object": "AP030_clutter_item_V03_pottery_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          408
+         ],
+         "triangles": 408,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V03.fbx",
+         "object": "AP030_clutter_item_V03_pottery_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V03.fbx",
+         "object": "AP030_clutter_item_V03_pottery_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          66
+         ],
+         "triangles": 66,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_clutter_item_V04",
+     "boundsMin": [
+      -0.38052,
+      -0.29278,
+      0.0
+     ],
+     "boundsMax": [
+      0.38052,
+      0.29278,
+      0.08838
+     ],
+     "parts": [
+      {
+       "name": "paper",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_item_V04.fbx",
+         "object": "AP030_clutter_item_V04_paper_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V04.fbx",
+         "object": "AP030_clutter_item_V04_paper_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V04.fbx",
+         "object": "AP030_clutter_item_V04_paper_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_clutter_item_V05",
+     "boundsMin": [
+      -0.18859,
+      -0.20711,
+      0.0
+     ],
+     "boundsMax": [
+      0.18859,
+      0.20711,
+      0.03747
+     ],
+     "parts": [
+      {
+       "name": "sandals",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_item_V05.fbx",
+         "object": "AP030_clutter_item_V05_sandals_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          124
+         ],
+         "triangles": 124,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V05.fbx",
+         "object": "AP030_clutter_item_V05_sandals_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          92
+         ],
+         "triangles": 92,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_item_V05.fbx",
+         "object": "AP030_clutter_item_V05_sandals_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          40
+         ],
+         "triangles": 40,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "daihachiguruma",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_daihachiguruma_V01",
+     "boundsMin": [
+      -1.2613,
+      -0.65,
+      0.0
+     ],
+     "boundsMax": [
+      1.2613,
+      0.65,
+      1.60206
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_daihachiguruma_V01.fbx",
+         "object": "AP030_daihachiguruma_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          1836
+         ],
+         "triangles": 1836,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_daihachiguruma_V01.fbx",
+         "object": "AP030_daihachiguruma_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          560
+         ],
+         "triangles": 560,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_daihachiguruma_V01.fbx",
+         "object": "AP030_daihachiguruma_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          148
+         ],
+         "triangles": 148,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_daihachiguruma_V01.fbx",
+       "object": "AP030_daihachiguruma_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.2613,
+          -0.47,
+          -0.00025
+         ],
+         "max": [
+          1.2613,
+          0.47,
+          1.19975
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_daihachiguruma_V01.fbx",
+       "object": "AP030_daihachiguruma_V01_wheell_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.71803,
+          0.45,
+          -0.00025
+         ],
+         "max": [
+          0.18148,
+          0.65,
+          0.89975
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "wheell",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_daihachiguruma_V01.fbx",
+       "object": "AP030_daihachiguruma_V01_wheelr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.71803,
+          -0.65,
+          -0.00025
+         ],
+         "max": [
+          0.18148,
+          -0.45,
+          0.89975
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "wheelr",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_daihachiguruma_V02",
+     "boundsMin": [
+      -1.44829,
+      -1.38063,
+      0.0
+     ],
+     "boundsMax": [
+      1.44829,
+      1.38063,
+      1.131
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_daihachiguruma_V02.fbx",
+         "object": "AP030_daihachiguruma_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          1528
+         ],
+         "triangles": 1528,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_daihachiguruma_V02.fbx",
+         "object": "AP030_daihachiguruma_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          480
+         ],
+         "triangles": 480,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_daihachiguruma_V02.fbx",
+         "object": "AP030_daihachiguruma_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          200
+         ],
+         "triangles": 200,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_daihachiguruma_V02.fbx",
+       "object": "AP030_daihachiguruma_V02_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.27804,
+          -0.53314,
+          0.011
+         ],
+         "max": [
+          1.45545,
+          0.95861,
+          1.131
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.088707,
+           0.212735,
+           0.571
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           0.1391756,
+           -0.9902677,
+           0.0
+          ],
+          "axisZ": [
+           0.9902681,
+           0.1391729,
+           0.0
+          ],
+          "size": [
+           1.12,
+           1.141005,
+           2.600003
+          ]
+         }
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_daihachiguruma_V02.fbx",
+       "object": "AP030_daihachiguruma_V02_spilla_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.49449,
+          -1.08488,
+          0.011
+         ],
+         "max": [
+          -0.6719,
+          -0.49435,
+          0.511
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.083195,
+           -0.789615,
+           0.261
+          ],
+          "axisX": [
+           0.1391718,
+           -0.9902682,
+           0.0
+          ],
+          "axisY": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisZ": [
+           0.9902677,
+           0.1391756,
+           0.0
+          ],
+          "size": [
+           0.489251,
+           0.5,
+           0.761915
+          ]
+         }
+        }
+       ],
+       "part": "spilla",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_daihachiguruma_V02.fbx",
+       "object": "AP030_daihachiguruma_V02_spillb_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.43502,
+          -1.42246,
+          0.011
+         ],
+         "max": [
+          0.79717,
+          -0.01406,
+          0.511
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.181075,
+           -0.718263,
+           0.261
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           0.9902672,
+           0.1391793,
+           0.0
+          ],
+          "axisZ": [
+           0.1391755,
+           -0.9902677,
+           0.0
+          ],
+          "size": [
+           0.5,
+           1.06546,
+           1.272494
+          ]
+         }
+        }
+       ],
+       "part": "spillb",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "dirt_path",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_dirt_path_V01",
+     "boundsMin": [
+      -1.0,
+      -2.0,
+      0.006
+     ],
+     "boundsMax": [
+      1.0,
+      2.0,
+      0.02
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_dirt_path_V01.fbx",
+         "object": "AP030_dirt_path_V01_path_LOD0",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          160
+         ],
+         "triangles": 160,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_dirt_path_V01.fbx",
+         "object": "AP030_dirt_path_V01_path_LOD1",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          56
+         ],
+         "triangles": 56,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_dirt_path_V01.fbx",
+         "object": "AP030_dirt_path_V01_path_LOD2",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_dirt_path_V02",
+     "boundsMin": [
+      -1.0,
+      -2.0,
+      0.00464
+     ],
+     "boundsMax": [
+      1.0,
+      2.0,
+      0.02
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_dirt_path_V02.fbx",
+         "object": "AP030_dirt_path_V02_path_LOD0",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          300
+         ],
+         "triangles": 300,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_dirt_path_V02.fbx",
+         "object": "AP030_dirt_path_V02_path_LOD1",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          70
+         ],
+         "triangles": 70,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_dirt_path_V02.fbx",
+         "object": "AP030_dirt_path_V02_path_LOD2",
+         "materials": [
+          "ap030_dirt"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "puddle",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_dirt_path_V02.fbx",
+         "object": "AP030_dirt_path_V02_puddle_LOD0",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          18
+         ],
+         "triangles": 18,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_dirt_path_V02.fbx",
+         "object": "AP030_dirt_path_V02_puddle_LOD1",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "drain_channel",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_drain_channel_V01",
+     "boundsMin": [
+      -0.15,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      0.15,
+      1.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_body_LOD0",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          88
+         ],
+         "triangles": 88,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_body_LOD1",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          40
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_body_LOD2",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          14
+         ],
+         "triangles": 14,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "water",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_water_LOD0",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          8
+         ],
+         "triangles": 8,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_water_LOD1",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V01.fbx",
+         "object": "AP030_drain_channel_V01_water_LOD2",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_drain_channel_V01.fbx",
+       "object": "AP030_drain_channel_V01_body_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -1.0,
+          0.04
+         ],
+         "max": [
+          0.15,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_drain_channel_V02",
+     "boundsMin": [
+      -0.15,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      0.15,
+      1.0,
+      0.09843
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_body_LOD0",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          568
+         ],
+         "triangles": 568,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_body_LOD1",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_body_LOD2",
+         "materials": [
+          "ap030_drain"
+         ],
+         "facesPerSlot": [
+          38
+         ],
+         "triangles": 38,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "water",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_water_LOD0",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          8
+         ],
+         "triangles": 8,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_water_LOD1",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_drain_channel_V02.fbx",
+         "object": "AP030_drain_channel_V02_water_LOD2",
+         "materials": [
+          "ap030_puddle"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_drain_channel_V02.fbx",
+       "object": "AP030_drain_channel_V02_body_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -1.0,
+          0.04
+         ],
+         "max": [
+          0.15,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "gravel_path",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_gravel_path_V01",
+     "boundsMin": [
+      -1.0,
+      -2.0,
+      0.01
+     ],
+     "boundsMax": [
+      1.0,
+      2.0,
+      0.03
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_gravel_path_V01.fbx",
+         "object": "AP030_gravel_path_V01_path_LOD0",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V01.fbx",
+         "object": "AP030_gravel_path_V01_path_LOD1",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V01.fbx",
+         "object": "AP030_gravel_path_V01_path_LOD2",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          4
+         ],
+         "triangles": 4,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_gravel_path_V02",
+     "boundsMin": [
+      -1.0,
+      -2.0,
+      0.01
+     ],
+     "boundsMax": [
+      1.0,
+      2.0,
+      0.03
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_gravel_path_V02.fbx",
+         "object": "AP030_gravel_path_V02_path_LOD0",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V02.fbx",
+         "object": "AP030_gravel_path_V02_path_LOD1",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V02.fbx",
+         "object": "AP030_gravel_path_V02_path_LOD2",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          4
+         ],
+         "triangles": 4,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_gravel_path_V03",
+     "boundsMin": [
+      -1.0,
+      -2.0,
+      0.0
+     ],
+     "boundsMax": [
+      1.0,
+      2.0,
+      0.045
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_gravel_path_V03.fbx",
+         "object": "AP030_gravel_path_V03_path_LOD0",
+         "materials": [
+          "ap030_gravel",
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          96,
+          144
+         ],
+         "triangles": 240,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V03.fbx",
+         "object": "AP030_gravel_path_V03_path_LOD1",
+         "materials": [
+          "ap030_gravel",
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          32,
+          66
+         ],
+         "triangles": 98,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V03.fbx",
+         "object": "AP030_gravel_path_V03_path_LOD2",
+         "materials": [
+          "ap030_gravel",
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          4,
+          12
+         ],
+         "triangles": 16,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        2.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_gravel_path_V04",
+     "boundsMin": [
+      -1.43934,
+      -1.76777,
+      0.01
+     ],
+     "boundsMax": [
+      1.43934,
+      1.76777,
+      0.03
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_gravel_path_V04.fbx",
+         "object": "AP030_gravel_path_V04_path_LOD0",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V04.fbx",
+         "object": "AP030_gravel_path_V04_path_LOD1",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V04.fbx",
+         "object": "AP030_gravel_path_V04_path_LOD2",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        -0.43934,
+        -1.767767,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.732233,
+        1.06066,
+        0.0
+       ],
+       "yawDeg": -45.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_gravel_path_V05",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      0.01
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.03
+     ],
+     "parts": [
+      {
+       "name": "path",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_gravel_path_V05.fbx",
+         "object": "AP030_gravel_path_V05_path_LOD0",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V05.fbx",
+         "object": "AP030_gravel_path_V05_path_LOD1",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          26
+         ],
+         "triangles": 26,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_gravel_path_V05.fbx",
+         "object": "AP030_gravel_path_V05_path_LOD2",
+         "materials": [
+          "ap030_gravel"
+         ],
+         "facesPerSlot": [
+          8
+         ],
+         "triangles": 8,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "ido",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ido_V01",
+     "boundsMin": [
+      -0.99,
+      -1.25,
+      0.0
+     ],
+     "boundsMax": [
+      1.1254,
+      0.80514,
+      2.66
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          968
+         ],
+         "triangles": 968,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          548
+         ],
+         "triangles": 548,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          268
+         ],
+         "triangles": 268,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_roof_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_roof_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          108
+         ],
+         "triangles": 108,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_roof_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "water",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_water_LOD0",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          22
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_water_LOD1",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          14
+         ],
+         "triangles": 14,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V01.fbx",
+         "object": "AP030_ido_V01_water_LOD2",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ido_V01.fbx",
+       "object": "AP030_ido_V01_bucket_COL",
+       "class": "step",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.6601,
+          -0.62892,
+          0.0
+         ],
+         "max": [
+          1.1254,
+          -0.25376,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "bucket",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP030_ido_V01.fbx",
+       "object": "AP030_ido_V01_postl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.875,
+          -0.075,
+          0.0
+         ],
+         "max": [
+          -0.725,
+          0.075,
+          2.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_ido_V01.fbx",
+       "object": "AP030_ido_V01_postr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.725,
+          -0.075,
+          0.0
+         ],
+         "max": [
+          0.875,
+          0.075,
+          2.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postr",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_ido_V01.fbx",
+       "object": "AP030_ido_V01_ring_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.57,
+          -0.57,
+          0.0
+         ],
+         "max": [
+          0.57,
+          0.57,
+          0.9
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "ring",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_ido_V02",
+     "boundsMin": [
+      -0.925,
+      -1.25,
+      0.0
+     ],
+     "boundsMax": [
+      1.1254,
+      0.8151,
+      0.99584
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          878
+         ],
+         "triangles": 878,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          534
+         ],
+         "triangles": 534,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          260
+         ],
+         "triangles": 260,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "water",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_water_LOD0",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          22
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_water_LOD1",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          14
+         ],
+         "triangles": 14,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ido_V02.fbx",
+         "object": "AP030_ido_V02_water_LOD2",
+         "materials": [
+          "ap030_water"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ido_V02.fbx",
+       "object": "AP030_ido_V02_bucket_COL",
+       "class": "step",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.6601,
+          -0.62892,
+          0.0
+         ],
+         "max": [
+          1.1254,
+          -0.25376,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "bucket",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP030_ido_V02.fbx",
+       "object": "AP030_ido_V02_ring_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.57,
+          -0.57,
+          0.0
+         ],
+         "max": [
+          0.57,
+          0.57,
+          0.93
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "ring",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_ido_V02.fbx",
+       "object": "AP030_ido_V02_stump_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.725,
+          -0.075,
+          0.0
+         ],
+         "max": [
+          0.875,
+          0.075,
+          0.99
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "stump",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "ishidatami",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ishidatami_V01",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "slab",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V01.fbx",
+         "object": "AP030_ishidatami_V01_slab_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V01.fbx",
+         "object": "AP030_ishidatami_V01_slab_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V01.fbx",
+         "object": "AP030_ishidatami_V01_slab_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V01.fbx",
+       "object": "AP030_ishidatami_V01_slab_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          -0.02
+         ],
+         "max": [
+          1.0,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "slab",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_ishidatami_V02",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "slab",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V02.fbx",
+         "object": "AP030_ishidatami_V02_slab_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          76
+         ],
+         "triangles": 76,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V02.fbx",
+         "object": "AP030_ishidatami_V02_slab_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V02.fbx",
+         "object": "AP030_ishidatami_V02_slab_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V02.fbx",
+       "object": "AP030_ishidatami_V02_slab_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          -0.02
+         ],
+         "max": [
+          1.0,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "slab",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_ishidatami_V03",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.09219
+     ],
+     "parts": [
+      {
+       "name": "infill",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V03.fbx",
+         "object": "AP030_ishidatami_V03_infill_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          56
+         ],
+         "triangles": 56,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V03.fbx",
+         "object": "AP030_ishidatami_V03_infill_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "slab",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V03.fbx",
+         "object": "AP030_ishidatami_V03_slab_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          94
+         ],
+         "triangles": 94,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V03.fbx",
+         "object": "AP030_ishidatami_V03_slab_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          42
+         ],
+         "triangles": 42,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V03.fbx",
+         "object": "AP030_ishidatami_V03_slab_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V03.fbx",
+       "object": "AP030_ishidatami_V03_slab_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          -0.02
+         ],
+         "max": [
+          1.0,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "slab",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_ishidatami_V04",
+     "boundsMin": [
+      -1.0,
+      -0.4,
+      0.0
+     ],
+     "boundsMax": [
+      1.0,
+      0.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "edge",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V04.fbx",
+         "object": "AP030_ishidatami_V04_edge_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          46
+         ],
+         "triangles": 46,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V04.fbx",
+         "object": "AP030_ishidatami_V04_edge_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          16
+         ],
+         "triangles": 16,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V04.fbx",
+         "object": "AP030_ishidatami_V04_edge_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          4
+         ],
+         "triangles": 4,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V04.fbx",
+       "object": "AP030_ishidatami_V04_edge_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -0.4,
+          -0.03922
+         ],
+         "max": [
+          1.0,
+          0.00784,
+          0.08
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -0.19608,
+           0.02039
+          ],
+          "axisX": [
+           0.0,
+           0.19602,
+           -0.9805999
+          ],
+          "axisY": [
+           0.0,
+           0.9805807,
+           0.1961161
+          ],
+          "axisZ": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "size": [
+           0.039996,
+           0.407922,
+           2.0
+          ]
+         }
+        }
+       ],
+       "part": "edge",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_ishidatami_V05",
+     "boundsMin": [
+      0.0,
+      -0.4,
+      0.003
+     ],
+     "boundsMax": [
+      0.4,
+      0.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "corner",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V05.fbx",
+         "object": "AP030_ishidatami_V05_corner_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          18
+         ],
+         "triangles": 18,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V05.fbx",
+         "object": "AP030_ishidatami_V05_corner_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          6
+         ],
+         "triangles": 6,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V05.fbx",
+         "object": "AP030_ishidatami_V05_corner_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V05.fbx",
+       "object": "AP030_ishidatami_V05_corner_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.0,
+          -0.4,
+          0.0
+         ],
+         "max": [
+          0.4,
+          0.0,
+          0.04
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "corner",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_ishidatami_V06",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "slab",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V06.fbx",
+         "object": "AP030_ishidatami_V06_slab_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V06.fbx",
+         "object": "AP030_ishidatami_V06_slab_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V06.fbx",
+         "object": "AP030_ishidatami_V06_slab_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V06.fbx",
+       "object": "AP030_ishidatami_V06_slab_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          -0.02
+         ],
+         "max": [
+          1.0,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "slab",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_ishidatami_V07",
+     "boundsMin": [
+      -1.0,
+      -1.0,
+      -0.04
+     ],
+     "boundsMax": [
+      1.0,
+      1.0,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "slab",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_ishidatami_V07.fbx",
+         "object": "AP030_ishidatami_V07_slab_LOD0",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          76
+         ],
+         "triangles": 76,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V07.fbx",
+         "object": "AP030_ishidatami_V07_slab_LOD1",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_ishidatami_V07.fbx",
+         "object": "AP030_ishidatami_V07_slab_LOD2",
+         "materials": [
+          "ap030_ishidatami"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_ishidatami_V07.fbx",
+       "object": "AP030_ishidatami_V07_slab_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          -0.02
+         ],
+         "max": [
+          1.0,
+          1.0,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "slab",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_In",
+       "position": [
+        0.0,
+        -1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Out",
+       "position": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "laundry_line",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_laundry_line_V01",
+     "boundsMin": [
+      -1.74462,
+      -0.125,
+      0.0
+     ],
+     "boundsMax": [
+      1.74462,
+      0.125,
+      2.07935
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          164
+         ],
+         "triangles": 164,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          112
+         ],
+         "triangles": 112,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "cloth",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_cloth_LOD0",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          204
+         ],
+         "triangles": 204,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_cloth_LOD1",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          56
+         ],
+         "triangles": 56,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_laundry_line_V01.fbx",
+         "object": "AP030_laundry_line_V01_cloth_LOD2",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          20
+         ],
+         "triangles": 20,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_laundry_line_V01.fbx",
+       "object": "AP030_laundry_line_V01_postl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.74462,
+          -0.125,
+          0.0
+         ],
+         "max": [
+          -1.475,
+          0.125,
+          2.07935
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_laundry_line_V01.fbx",
+       "object": "AP030_laundry_line_V01_postr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.475,
+          -0.125,
+          0.0
+         ],
+         "max": [
+          1.74462,
+          0.125,
+          2.07935
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postr",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "toppled_set",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_toppled_set_V01",
+     "boundsMin": [
+      -0.8367,
+      -0.49628,
+      0.0
+     ],
+     "boundsMax": [
+      0.8367,
+      0.49628,
+      0.564
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          414
+         ],
+         "triangles": 414,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          254
+         ],
+         "triangles": 254,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          78
+         ],
+         "triangles": 78,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "decal",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_decal_LOD0",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_decal_LOD1",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V01.fbx",
+         "object": "AP030_toppled_set_V01_decal_LOD2",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_toppled_set_V01.fbx",
+       "object": "AP030_toppled_set_V01_barrel_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.85404,
+          -0.54392,
+          0.007
+         ],
+         "max": [
+          -0.08337,
+          0.18483,
+          0.557
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.468705,
+           -0.179542,
+           0.282
+          ],
+          "axisX": [
+           0.3420147,
+           -0.9396946,
+           0.0
+          ],
+          "axisY": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisZ": [
+           0.939694,
+           0.3420163,
+           0.0
+          ],
+          "size": [
+           0.549859,
+           0.55,
+           0.62
+          ]
+         }
+        }
+       ],
+       "part": "barrel",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_toppled_set_V02",
+     "boundsMin": [
+      -0.76721,
+      -0.63265,
+      0.0
+     ],
+     "boundsMax": [
+      0.76721,
+      0.63265,
+      0.452
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          512
+         ],
+         "triangles": 512,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          172
+         ],
+         "triangles": 172,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          76
+         ],
+         "triangles": 76,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "decal",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_decal_LOD0",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_decal_LOD1",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V02.fbx",
+         "object": "AP030_toppled_set_V02_decal_LOD2",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_toppled_set_V02.fbx",
+       "object": "AP030_toppled_set_V02_sacks_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.76721,
+          -0.57392,
+          0.011
+         ],
+         "max": [
+          0.56589,
+          0.63265,
+          0.511
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "sacks",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_toppled_set_V03",
+     "boundsMin": [
+      -0.47452,
+      -0.34724,
+      0.0
+     ],
+     "boundsMax": [
+      0.47452,
+      0.34724,
+      0.24124
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          236
+         ],
+         "triangles": 236,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          68
+         ],
+         "triangles": 68,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "decal",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_decal_LOD0",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_decal_LOD1",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_toppled_set_V03.fbx",
+         "object": "AP030_toppled_set_V03_decal_LOD2",
+         "materials": [
+          "ap030_props_decal"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "yakuimon",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_yakuimon_V01",
+     "boundsMin": [
+      -2.04,
+      -0.79583,
+      0.0
+     ],
+     "boundsMax": [
+      2.04,
+      1.69583,
+      3.5
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          456
+         ],
+         "triangles": 456,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_roof_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_roof_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V01.fbx",
+         "object": "AP030_yakuimon_V01_roof_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_yakuimon_V01.fbx",
+       "object": "AP030_yakuimon_V01_doors_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.33,
+          -0.04,
+          0.0
+         ],
+         "max": [
+          1.33,
+          0.21,
+          2.4
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "doors",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V01.fbx",
+       "object": "AP030_yakuimon_V01_postbl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.6,
+          0.75,
+          0.0
+         ],
+         "max": [
+          -1.3,
+          1.05,
+          2.55
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postbl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V01.fbx",
+       "object": "AP030_yakuimon_V01_postbr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.3,
+          0.75,
+          0.0
+         ],
+         "max": [
+          1.6,
+          1.05,
+          2.55
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postbr",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V01.fbx",
+       "object": "AP030_yakuimon_V01_postl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.65,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          -1.25,
+          0.2,
+          2.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V01.fbx",
+       "object": "AP030_yakuimon_V01_postr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.25,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          1.65,
+          0.2,
+          2.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postr",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Wall_L",
+       "position": [
+        -1.57,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Wall_R",
+       "position": [
+        1.57,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_yakuimon_V02",
+     "boundsMin": [
+      -2.04,
+      -0.79583,
+      0.0
+     ],
+     "boundsMax": [
+      2.04,
+      2.53818,
+      3.5
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          432
+         ],
+         "triangles": 432,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_roof_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_roof_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yakuimon_V02.fbx",
+         "object": "AP030_yakuimon_V02_roof_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_doorl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.39894,
+          -0.00695,
+          0.0
+         ],
+         "max": [
+          -1.05966,
+          1.32195,
+          2.4
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.229297,
+           0.657503,
+           1.2
+          ],
+          "axisX": [
+           0.9847945,
+           -0.1737231,
+           0.0
+          ],
+          "axisY": [
+           0.1736545,
+           0.9848066,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.110003,
+           1.329997,
+           2.4
+          ]
+         }
+        }
+       ],
+       "part": "doorl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_leaf_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.34298,
+          -0.01844,
+          -0.01
+         ],
+         "max": [
+          1.44282,
+          2.53921,
+          0.16096
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.549919,
+           1.260385,
+           0.075482
+          ],
+          "axisX": [
+           0.0054542,
+           -0.0255437,
+           -0.9996588
+          ],
+          "axisY": [
+           0.9781463,
+           0.207918,
+           0.0
+          ],
+          "axisZ": [
+           0.2078414,
+           -0.9778122,
+           0.026176
+          ],
+          "size": [
+           0.110008,
+           1.329995,
+           2.329997
+          ]
+         }
+        }
+       ],
+       "part": "leaf",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_postbl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.6,
+          0.75,
+          0.0
+         ],
+         "max": [
+          -1.3,
+          1.05,
+          2.55
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postbl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_postbr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.3,
+          0.75,
+          0.0
+         ],
+         "max": [
+          1.6,
+          1.05,
+          2.55
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postbr",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_postl_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.65,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          -1.25,
+          0.2,
+          2.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postl",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yakuimon_V02.fbx",
+       "object": "AP030_yakuimon_V02_postr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.25,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          1.65,
+          0.2,
+          2.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "postr",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Wall_L",
+       "position": [
+        -1.57,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      },
+      {
+       "name": "SOCKET_Wall_R",
+       "position": [
+        1.57,
+        -0.0,
+        0.0
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    }
+   ]
+  },
+  {
+   "family": "yatai",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_yatai_V01",
+     "boundsMin": [
+      -1.25,
+      -1.01942,
+      0.0
+     ],
+     "boundsMax": [
+      1.25,
+      0.70926,
+      2.4357
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          700
+         ],
+         "triangles": 700,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          472
+         ],
+         "triangles": 472,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          182
+         ],
+         "triangles": 182,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "cloth",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_cloth_LOD0",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_cloth_LOD1",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_cloth_LOD2",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_roof_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          136
+         ],
+         "triangles": 136,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_roof_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V01.fbx",
+         "object": "AP030_yatai_V01_roof_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_yatai_V01.fbx",
+       "object": "AP030_yatai_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.1,
+          -0.55,
+          0.0
+         ],
+         "max": [
+          1.1,
+          0.62,
+          1.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yatai_V01.fbx",
+       "object": "AP030_yatai_V01_stooll_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.7,
+          -1.0,
+          0.0
+         ],
+         "max": [
+          -0.4,
+          -0.7,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "stooll",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yatai_V01.fbx",
+       "object": "AP030_yatai_V01_stoolr_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.4,
+          -1.0,
+          0.0
+         ],
+         "max": [
+          0.7,
+          -0.7,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "stoolr",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Lamp",
+       "position": [
+        1.05,
+        -0.56,
+        2.05
+       ],
+       "yawDeg": 0.0
+      }
+     ],
+     "deliveredIn": "v002"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_yatai_V02",
+     "boundsMin": [
+      -1.4323,
+      -1.80184,
+      0.0
+     ],
+     "boundsMax": [
+      1.68486,
+      0.675,
+      2.4
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_body_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          494
+         ],
+         "triangles": 494,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_body_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          334
+         ],
+         "triangles": 334,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_body_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          168
+         ],
+         "triangles": 168,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "cloth",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_cloth_LOD0",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_cloth_LOD1",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_cloth_LOD2",
+         "materials": [
+          "ap030_props_cloth"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_roof_LOD0",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          72
+         ],
+         "triangles": 72,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_roof_LOD1",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_yatai_V02.fbx",
+         "object": "AP030_yatai_V02_roof_LOD2",
+         "materials": [
+          "ap030_props"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_yatai_V02.fbx",
+       "object": "AP030_yatai_V02_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.3,
+          -1.21,
+          0.0
+         ],
+         "max": [
+          1.3,
+          0.62,
+          1.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_yatai_V02.fbx",
+       "object": "AP030_yatai_V02_stool_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.37,
+          -1.0,
+          0.0
+         ],
+         "max": [
+          1.67,
+          -0.7,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "stool",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v002"
     }
    ]
   }

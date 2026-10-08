@@ -190,7 +190,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
             Assert.AreEqual(22, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel); v007 + trim = 21; v016 (B9) + bark_maple (momiji gövdesi) = 22");
             Assert.AreEqual(1, ap023Wind, "WP-074 B5: AP-023 bamboo_culm rüzgâr gölgelendiricisinde");
-            Assert.AreEqual(2, ap030, "WP-092 C: AP-030 iç mekân + lamba atlası (ORM AO'lu)");
+            Assert.AreEqual(9, ap030, "WP-092 C: AP-030 iç mekân + lamba atlası (ORM AO'lu); v002 + ishidatami, gravel, dirt, boardwalk, drain, puddle, props = 9");
         }
     }
 }

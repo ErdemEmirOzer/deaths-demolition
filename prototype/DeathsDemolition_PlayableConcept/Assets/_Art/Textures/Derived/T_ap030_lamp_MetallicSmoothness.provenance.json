@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_ap030_lamp_Packed.png",
-    "sourceSha256": "ef954e315bede81fa70675773bada6cad56c71f74cfe958038df5de1090b61dd",
+    "sourceSha256": "56da8484d5f78d83f119a1e928b05cf24c28ed864bd1dab50216d9efd99abbbf",
     "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
-    "utc": "2026-10-07T21:35:02.7127290Z",
-    "outputSha256": "403b41cc0618e632f12cf3256406e7b0da173a461932460bce052fbe741b0d53"
+    "utc": "2026-10-08T02:25:23.5018280Z",
+    "outputSha256": "9d087ed769bfca78f9a8b6608c3b07a7f8dd2ef9a841e5f68b3cd123924ef612"
 }

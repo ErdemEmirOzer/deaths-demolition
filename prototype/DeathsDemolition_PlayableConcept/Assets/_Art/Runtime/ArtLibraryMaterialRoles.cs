@@ -327,12 +327,26 @@ namespace DD.Art
             // Each lamp's lit area is its own slot AP030_M_<family>_glow_v001: the lamp atlas + T_ap030_lamp_Emission (sRGB, the 2200–2700 K
             // colour is in the map), _EmissionColor = white × the receipt's AP030_emission_strength, baked into GI; the slot is what the
             // flicker drives (S-07). No Light component in any prefab: the baked point lights are placed per lamp (WP-092 lead).
-            foreach (string atlas in new[] { "interior", "lamp" })
+            // v002 (P2 road kit + P3 clusters): one atlas per road surface (ishidatami 4K, the rest 2K) and the props atlas (clusters, clutter
+            // items). Gravel / dirt edges are an alpha cutout (BaseColor A, 0.5), single-sided ground strips. The props atlas also carries the
+            // cloth (laundry, noren: AP003_Wind carriers → DD/Foliage Wind, two-sided cutout hem), the stain decals (single-sided cutout) and
+            // the well / drain water square (Lit; DD/Water later). Their AP023_Mask vertex colour (R streak, G moss, A edge) is not read by
+            // URP/Lit. hibachi: v002 ember glow ×2.5 (was 1.0).
+            foreach (string atlas in new[] { "interior", "lamp", "ishidatami", "boardwalk", "drain", "puddle", "props" })
             {
                 rows.Add(new Spec { Role = Ap030RolePrefix + atlas, Kind = Kind.Textured, TextureRole = Ap030RolePrefix + atlas });
             }
 
-            foreach ((string family, float strength) in new[] { ("andon", 2.0f), ("kerosene_lamp", 3.0f), ("wall_sconce", 2.5f), ("hibachi", 1.0f) })
+            foreach (string atlas in new[] { "gravel", "dirt" })
+            {
+                rows.Add(new Spec { Role = Ap030RolePrefix + atlas, Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + atlas, Cutoff = 0.5f, SingleSided = true });
+            }
+
+            rows.Add(new Spec { Role = Ap030RolePrefix + "props_cloth", Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + "props", Shader = ShaderKind.FoliageWind, Cutoff = 0.5f });
+            rows.Add(new Spec { Role = Ap030RolePrefix + "props_decal", Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + "props", Cutoff = 0.5f, SingleSided = true });
+            rows.Add(new Spec { Role = Ap030RolePrefix + "water", Kind = Kind.Textured, TextureRole = Ap030RolePrefix + "props" });
+
+            foreach ((string family, float strength) in new[] { ("andon", 2.0f), ("kerosene_lamp", 3.0f), ("wall_sconce", 2.5f), ("hibachi", 2.5f) })
             {
                 rows.Add(new Spec { Role = Ap030RolePrefix + family + "_glow", Kind = Kind.Textured, TextureRole = Ap030RolePrefix + "lamp", EmissionTextureRole = Ap030RolePrefix + "lamp", EmissionIntensity = strength });
             }
