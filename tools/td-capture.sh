@@ -172,13 +172,8 @@ fi
 # --- record (always: what was asked, what came out) -------------------------------------------------------------------
 python3 "$HERE/td-capture/manifest.py" "$OUT" --app "$APP" --seed "$SEED" --poses "$POSES" --size "$SIZE" --tier "$TIER" \
   --hold "$HOLD" --guard "$GR" --rc "$RC" --signal "$SIG" > "$OUT/logs/manifest.out" 2>&1 || true
-python3 -c 'import json, sys; q = json.load(open(sys.argv[1])).get("videoQuality") or {}
-v = (q.get("verdict") or "").split("+"); d = q.get("avDrift") or {}
-ph = ", ".join("%s %.1f fps/longest %.2f s/av %s" % (p["name"], p["fps"], p["longestFrame"] or 0, p["avError"]) for p in q.get("phases") or [])
-ph and print("td-capture: video phases (judged on %s): %s" % ("+".join(q.get("judgedOn") or []), ph))
-"phase-missing" in v and print("WARNING td-capture: the boot clip never reached the menu and/or the run — judged phases missing (exit 1)")
-"low-fps" in v and print("WARNING td-capture: the MP4 stutters — effective %.1f fps < %d (load at launch %s); retake on a quieter machine" % (q["effectiveFps"], q["minFps"], q.get("loadAtLaunch")))
-"av-drift" in v and print("WARNING td-capture: sound and picture are up to %.3f s apart in the MP4 (> %.2f; audio clock %+.3f s by the stop) — retake on a quieter machine" % (q["avError"], q["maxAvDrift"], d.get("atStop", 0.0)))' "$OUT/capture.json" 2>&1 | tee -a "$DD_TIMELINE" >&2
+python3 -c 'import json, sys; sys.path.insert(0, sys.argv[2]); import manifest
+[print(l) for l in manifest.warning_lines(json.load(open(sys.argv[1])).get("videoQuality") or {})]' "$OUT/capture.json" "$HERE/td-capture" 2>&1 | tee -a "$DD_TIMELINE" >&2
 [ $SIG -ne 0 ] && exit $SIG
 [ $GR -ne 0 ] && exit $GR
 # gt SHOULD-2 (08.10): a boot clip that never reached the menu or the run is no evidence

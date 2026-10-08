@@ -157,7 +157,9 @@ def video_quality(out):
         if any((p["avError"] or 0) > MAX_AV_DRIFT for p in judged) or (not align and av_err is not None and av_err > MAX_AV_DRIFT):
             issues.append("av-drift")
     else:
-        if fps is not None and fps < MIN_FPS:
+        # gt SHOULD-3 (08.10): no summary.json → the measured stretch's fps, not a free "ok"
+        measured = fps if fps is not None else (phases[0]["fps"] if phases else None)
+        if measured is not None and measured < MIN_FPS:
             issues.append("low-fps")
         if av_err is not None and av_err > MAX_AV_DRIFT:
             issues.append("av-drift")
@@ -165,6 +167,35 @@ def video_quality(out):
     return {"effectiveFps": fps, "minFps": MIN_FPS, "avDrift": drift, "avAlign": {k: v for k, v in (align or {}).items()
             if k != "perSecond"} or None, "avError": av_err, "maxAvDrift": MAX_AV_DRIFT, "phases": phases,
             "judgedOn": list(JUDGED_BOOT) if boot else ["whole clip"], "verdict": verdict, "loadAtLaunch": loads}
+
+
+def warning_lines(q):
+    """the timeline lines for a videoQuality record — every number from what the verdict was judged on (boot: the menu
+    and fighting phases; else the whole clip). gt SHOULD-2 (08.10): no line may contradict its verdict or crash."""
+    v = (q.get("verdict") or "").split("+")
+    phases = q.get("phases") or []
+    lines = []
+    if phases:
+        lines.append("td-capture: video phases (judged on %s): %s" % ("+".join(q.get("judgedOn") or []), ", ".join(
+            "%s %.1f fps/longest %s s/av %s" % (p["name"], p["fps"], p["longestFrame"], p["avError"]) for p in phases)))
+    judged = [p for p in phases if p["name"] in (q.get("judgedOn") or [])] or phases
+    if "phase-missing" in v:
+        lines.append("WARNING td-capture: the boot clip never reached the menu and/or the run — judged phases missing (exit 1)")
+    if "low-fps" in v:
+        if q.get("judgedOn") == ["whole clip"] and q.get("effectiveFps") is not None:   # what the verdict used
+            what = "effective %.1f fps" % q["effectiveFps"]
+        else:
+            slow = [p for p in judged if p["fps"] < q.get("minFps", MIN_FPS)] or judged
+            what = ", ".join("%s %.1f fps" % (p["name"], p["fps"]) for p in slow) or "fps unknown"
+        lines.append("WARNING td-capture: the MP4 stutters — %s < %d (load at launch %s); retake on a quieter machine"
+                     % (what, q.get("minFps", MIN_FPS), q.get("loadAtLaunch")))
+    if "av-drift" in v:
+        errs = [(p["avError"], p["name"]) for p in judged if p.get("avError") is not None]
+        err, where = max(errs) if errs and q.get("judgedOn") != ["whole clip"] else (q.get("avError"), "the clip")
+        clock = (q.get("avDrift") or {}).get("atStop")
+        lines.append("WARNING td-capture: sound and picture are up to %s s apart in %s (> %.2f%s) — retake on a quieter machine"
+                     % ("%.3f" % err if isinstance(err, (int, float)) else err, where, q.get("maxAvDrift", MAX_AV_DRIFT), "" if clock is None else "; audio clock %+.3f s by the stop" % clock))
+    return lines
 
 
 def main(argv):

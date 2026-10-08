@@ -339,5 +339,65 @@ class TdCaptureTests(unittest.TestCase):
                 self.assertEqual(64, self.run_cap(*extra).returncode)
 
 
+
+class VideoQualityTests(unittest.TestCase):
+    """gt SHOULD-1 (08.10): the per-phase rule itself, on synthetic folders — loading never decides; menu and fighting do."""
+    BOOT = {"loadingStart": 0.0, "loadingEnd": 4.0, "menu": 4.0, "selectionRequested": 8.0, "selection": 8.5,
+            "runRequested": 9.0, "fighting": 10.0}
+
+    def setUp(self):
+        sys.path.insert(0, str(TOOLS / "td-capture"))
+        import manifest
+        self.m = manifest
+        self.tmp = tempfile.TemporaryDirectory(prefix="dd-vq-"); self.out = Path(self.tmp.name)
+        (self.out / "video").mkdir(); (self.out / "logs").mkdir()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def make(self, fps_at, end=20.0, phases=BOOT, per_second=(), summary=True):
+        """frames at fps_at(t) per second from 0 to end; align.json perSecond = [[t, err]]."""
+        t, times = 0.0, []
+        while t <= end:
+            times.append(t); t += 1.0 / fps_at(t)
+        (self.out / "video" / "frames.tsv").write_text("".join("%d\t%.4f\n" % (i, x) for i, x in enumerate(times)))
+        (self.out / "video" / "sync.json").write_text(json.dumps({"audio": {}, "phases": phases}))
+        (self.out / "video" / "align.json").write_text(json.dumps({"maxSecondErr": max([e for _, e in per_second] or [0.0]),
+                                                                  "perSecond": [list(x) for x in per_second]}))
+        if summary:
+            (self.out / "video" / "summary.json").write_text(json.dumps({"mode": "boot" if phases else "video",
+                                                                         "effectiveFps": len(times) / end}))
+        return self.m.video_quality(self.out)
+
+    def test_YuklemeYavasVeSesKayik_HukmeGirmez_Ok(self):
+        q = self.make(lambda t: 5 if t < 4 else 30, per_second=[(1.0, 0.5), (12.0, 0.02)])
+        self.assertEqual("ok", q["verdict"], q["phases"])
+        self.assertEqual(5, round(q["phases"][0]["fps"]))
+
+    def test_FightingYavas_LowFps_UyariFightingiAdlandirir(self):
+        q = self.make(lambda t: 10 if t >= 10 else 30)
+        self.assertEqual("low-fps", q["verdict"])
+        w = "\n".join(self.m.warning_lines(q))
+        self.assertIn("fighting 10.", w); self.assertNotIn("loading", w.split("WARNING", 1)[1])
+
+    def test_FightingSesKayik_AvDrift_UyariFightingiAdlandirir(self):
+        q = self.make(lambda t: 30, per_second=[(2.0, 0.9), (14.0, 0.3)])
+        self.assertEqual("av-drift", q["verdict"])
+        self.assertIn("up to 0.300 s apart in fighting", "\n".join(self.m.warning_lines(q)))
+
+    def test_MenuYavas_LowFps(self):
+        self.assertEqual("low-fps", self.make(lambda t: 12 if 4 <= t < 8 else 30)["verdict"])
+
+    def test_SummaryYok_OynanisVideosu_OlculenFps(self):
+        """gt SHOULD-3 (08.10): no summary.json → the measured fps judges (it was a free "ok")."""
+        q = self.make(lambda t: 10, phases=None, summary=False)
+        self.assertEqual("low-fps", q["verdict"]); self.assertEqual(["whole clip"], q["judgedOn"])
+
+    def test_UyariSatirlari_EksikDegerdeCokmez(self):
+        for q in ({"verdict": "low-fps"}, {"verdict": "av-drift"}, {"verdict": "low-fps+av-drift+phase-missing", "phases": []}):
+            with self.subTest(q=q):
+                self.assertTrue(self.m.warning_lines(q))
+
+
 if __name__ == "__main__":
     unittest.main()
