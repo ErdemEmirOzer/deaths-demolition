@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_drain_Packed.png",
+    "sourceSha256": "a59b00ba56c483db99bc6c0508488f3cb495495a79e53bcc2a0f25834fcac0ca",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-08T02:25:27.1737070Z",
+    "outputSha256": "3c8c19647175f7fa30feca781ea48364a8393c1484786adcd6ec02ca22550a20"
+}

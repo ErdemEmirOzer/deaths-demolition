@@ -312,9 +312,28 @@ namespace DD.Art.Pipeline.EditorTools
                 ApplyDetailNormal(material, spec);
             }
 
+            if (spec.HasEmission)
+            {
+                ApplyEmission(material, spec);
+            }
+
             EditorUtility.SetDirty(material);
-            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + "/" + spec.Shader + (spec.HasDetailNormal ? "/detail-normal " + spec.DetailNormalTextureRole : string.Empty) + ")");
+            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + "/" + spec.Shader + (spec.HasDetailNormal ? "/detail-normal " + spec.DetailNormalTextureRole : string.Empty) + (spec.HasEmission ? "/emission " + spec.EmissionTextureRole + " ×" + spec.EmissionIntensity : string.Empty) + ")");
             return material;
+        }
+
+        /// <summary>
+        /// WP-092 C · The AP-030 lamp glow slots: the sRGB emission map (the warm colour is in the map) × a linear intensity, baked into
+        /// GI (<see cref="MaterialGlobalIlluminationFlags.BakedEmissive"/>: a lamp lights the lightmapped room around it when its renderer
+        /// contributes GI). After <see cref="ApplyCommon"/>, which switches _EMISSION off; URP's material validation keeps the keyword on
+        /// as long as the flag is not EmissiveIsBlack and the colour is not black.
+        /// </summary>
+        private static void ApplyEmission(Material m, ArtLibraryMaterialRoles.Spec spec)
+        {
+            m.SetTexture("_EmissionMap", LoadTexture(ArtPipelinePaths.SourceTexture(spec.EmissionTextureRole, "Emission")));
+            m.SetColor("_EmissionColor", EncodeForColorProperty(new Color(spec.EmissionIntensity, spec.EmissionIntensity, spec.EmissionIntensity, 1f)));
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
         }
 
         /// <summary>

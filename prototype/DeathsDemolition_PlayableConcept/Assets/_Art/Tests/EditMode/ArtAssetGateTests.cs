@@ -40,6 +40,7 @@ namespace DD.Art.Tests.EditMode
         private static readonly string[] PbrRoller = { "stone", "wood", "bark", "earth" };
         private static readonly string[] YalnizBaseColorRoller = { "plaster", "roof" };
         private const string Ap023RolOnEki = "ap023_";   // WP-074 B5 · AP-023 dünya v5 kiti rolleri
+        private const string Ap030RolOnEki = ArtLibraryMaterialRoles.Ap030RolePrefix;   // WP-092 C · AP-030 lamba + iç mekân kiti rolleri
 
         // ------------------------------------------------------------------ yardımcılar
 
@@ -52,6 +53,7 @@ namespace DD.Art.Tests.EditMode
                 if (ArtImportContract.IsLutTexture(p)) continue;   // WP-029: LUT strips have their own contract (LutTests)
                 if (ArtImportContract.IsMenuPlateTexture(p)) continue;   // WP-068: menu plates have their own contract (MenuPlateTests)
                 if (ArtImportContract.IsLightCookieTexture(p)) continue;   // WP-075 C2: the cloud cookie has its own contract (ApplyLightCookie, CloudShadowTests)
+                if (ArtImportContract.IsDataMaskTexture(p)) continue;   // WP-092 B5: ground / vegetation data masks have their own contract (WorldV5TerrainTests)
                 sonuc.Add(p);
             }
 
@@ -349,7 +351,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(403, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 192 (AP-023 dünya v5 kiti v007: v005 166 + 26) = 403");
+            Assert.AreEqual(465, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 192 (AP-023 dünya v5 kiti v007: v005 166 + 26) = 403; + 22 (AP-030 v001 P1 lamba + iç mekân, WP-092 C) = 425; + 40 (AP-030 v002 yol + küme + clutter_item + kerosene V03; 6 v001 deltası aynı dosya) = 465");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -423,6 +425,7 @@ namespace DD.Art.Tests.EditMode
             {
                 if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue; // stone (weathered) WP-011 dokularını paylaşır
                 if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal)) continue;   // WP-074 B5: aşağıda kendi bloğu
+                if (rol.StartsWith(Ap030RolOnEki, StringComparison.Ordinal)) continue;   // WP-092 C: aşağıda kendi bloğu
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"));
             }
 
@@ -430,6 +433,7 @@ namespace DD.Art.Tests.EditMode
             {
                 if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue;
                 if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal)) continue;
+                if (rol.StartsWith(Ap030RolOnEki, StringComparison.Ordinal)) continue;
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"));
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Packed"));
                 beklenen.Add(ArtPipelinePaths.DerivedMask(rol));
@@ -508,6 +512,22 @@ namespace DD.Art.Tests.EditMode
                 if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap023++;
             // v016 (WP-074 B9, P-05 30.09): + bark_maple karo (momiji gövdesi: BaseColor + Normal + Packed + maske) → 33 + 69 + 10 = 112.
             Assert.AreEqual(112, ap023, "AP-023 v016: 33 BaseColor + 23 × (Normal + Packed + türetilmiş maske) + 10 atlas Normal = 112");
+
+            // WP-092 C · AP-030 (P-05 v001 P1): iç mekân + lamba atlası BaseColor + Normal + Packed (ORM) + türetilmiş maske; lamba Emission.
+            int ap030 = 0;
+            foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
+                if (rol.StartsWith(Ap030RolOnEki, StringComparison.Ordinal) && beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"))) ap030++;
+            foreach (string rol in ArtLibraryMaterialRoles.PackedTextureRoles())
+            {
+                if (!rol.StartsWith(Ap030RolOnEki, StringComparison.Ordinal)) continue;
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap030++;
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Packed"))) ap030++;
+                if (beklenen.Add(ArtPipelinePaths.DerivedMask(rol))) ap030++;
+            }
+
+            foreach (string rol in ArtLibraryMaterialRoles.EmissionTextureRoles())
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Emission"))) ap030++;
+            Assert.AreEqual(37, ap030, "AP-030 v001: 2 atlas × (BaseColor + Normal + Packed + türetilmiş maske) + lamba Emission = 9; v002: + 7 atlas (ishidatami, gravel, dirt, boardwalk, drain, puddle, props) × 4 = 37");
 
             // WP-074 B5b-2 · the AP-023 4K ground sets (plaza slate ×3, path granite ×2): BaseColor + Normal + packed Mask = 15.
             int zemin = 0;

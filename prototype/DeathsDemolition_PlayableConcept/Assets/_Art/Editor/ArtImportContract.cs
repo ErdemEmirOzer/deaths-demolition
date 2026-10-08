@@ -161,7 +161,9 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-084 · AP-025 O1 skin atlas ORM (R AO, G roughness, B metallic), read directly by Tier Lit _ZOMBIE_MASKS. Linear, 1024² cap.</summary>
             Orm = 8,
             /// <summary>WP-084 · AP-025 mask flipbook (3×3 sheet of 1024² single-channel slices) imported as a Texture2DArray, BC4, linear.</summary>
-            Array = 9
+            Array = 9,
+            /// <summary>WP-092 C · AP-030 lamp emission map (<c>_EmissionMap</c>): sRGB colour, no alpha, the colour format; its role's class.</summary>
+            Emission = 10
         }
 
         /// <summary>WP-084 · the AP-025 mask array: a 3×3 flipbook sheet → 9 slices (Skin 0-2, Dirt 3-5, Blood 6-8), 1024² each.</summary>
@@ -376,6 +378,19 @@ namespace DD.Art.Pipeline.EditorTools
             { "prop_hishaku_ladle_rack", TextureClass.Prop },
             { "prop_koi_shoal", TextureClass.Prop },
             { "roof_courses", TextureClass.Structure },
+            // WP-092 C · AP-030 world kit (P-05): the interior atlas (2048², furniture read at the TD / TP cameras) is Structure, the lamp
+            // atlas (1024², with its Emission map) Prop.
+            { "ap030_interior", TextureClass.Structure },
+            { "ap030_lamp", TextureClass.Prop },
+            // v002: road surfaces are ground (ishidatami 4K = 1016 px/m on the 2 m slab, gravel / dirt cutout strips, the puddle set); boardwalk,
+            // drain and the props atlas (yakuimon, yatai, ido, carts, barricades, clutter) Structure.
+            { "ap030_ishidatami", TextureClass.Ground },
+            { "ap030_gravel", TextureClass.Ground },
+            { "ap030_dirt", TextureClass.Ground },
+            { "ap030_puddle", TextureClass.Ground },
+            { "ap030_boardwalk", TextureClass.Structure },
+            { "ap030_drain", TextureClass.Structure },
+            { "ap030_props", TextureClass.Structure },
             // WP-074 B5 · AP-023 world v5 kit (2K sources, namako 1K). Hero = the karamon / torii / lantern-set / palace-plinth stone and
             // metal (ADR-015-1 v3 ≤ 24 sets); ground-cover surfaces Ground; bark, culms and card atlases Foliage; the rest Structure.
             { "ap023_copper", TextureClass.Hero },
@@ -676,6 +691,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case "Sheet": return TextureRole.Sheet;
                 case "ORM": return TextureRole.Orm;
                 case "Array": return TextureRole.Array;
+                case "Emission": return TextureRole.Emission;
                 default: return TextureRole.Unknown;
             }
         }
@@ -748,7 +764,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             return role == TextureRole.Array ? StandaloneArrayFormat
                 : role == TextureRole.Normal ? StandaloneNormalFormat
-                : role == TextureRole.BaseColor || role == TextureRole.Unknown || role == TextureRole.Sheet ? StandaloneColorFormat
+                : role == TextureRole.BaseColor || role == TextureRole.Unknown || role == TextureRole.Sheet || role == TextureRole.Emission ? StandaloneColorFormat
                 : StandaloneMaskFormat;
         }
 
@@ -764,7 +780,26 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsContractTexture(string assetPath)
         {
-            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath) && !IsLightCookieTexture(assetPath);
+            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath) && !IsLightCookieTexture(assetPath)
+                   && !IsDataMaskTexture(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-092 B5 data masks
+
+        /// <summary>
+        /// WP-092 B5: data masks — the V6 ground's world masks (WorldV5Terrain, T_V6_GroundMask*) and the WP-093 vegetation masks
+        /// (Resources/VegetationMasks, K/wp-093/MASK-CONTRACT.md) — hold values, not colour: their writer sets the import (linear,
+        /// exact, clamped) and the T_&lt;role&gt;_&lt;Map&gt; contract leaves them alone (the LUT / menu plate / cookie precedent). Their own
+        /// import contract is WorldV5TerrainTests'.
+        /// </summary>
+        public const string VegetationMaskRoot = ArtRoot + "/Resources/VegetationMasks/";
+        public const string GroundMaskPrefix = ArtRoot + "/Environment/World/V6/Ground/T_V6_GroundMask";
+
+        public static bool IsDataMaskTexture(string assetPath)
+        {
+            if (assetPath == null || !assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return false;
+            string p = assetPath.Replace('\\', '/');
+            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal);
         }
 
         // ------------------------------------------------------------------ WP-075 light cookies
@@ -1126,7 +1161,7 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             if (role == TextureRole.Unknown)
             {
-                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet|ORM|Array>.png)");
+                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet|ORM|Array|Emission>.png)");
             }
 
             bool linear = IsLinearRole(role);

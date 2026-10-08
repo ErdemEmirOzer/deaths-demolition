@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_puddle_Packed.png",
+    "sourceSha256": "b0f31551df2eb550e04259932861f264d1d67c03f1cdccc16bc97d9c7ecbc0d1",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-08T02:25:27.7121490Z",
+    "outputSha256": "5f99c16fa1bdbe2cc68eecbdc973011ca63eee5efcf5a8bafc951b004715c2f9"
+}

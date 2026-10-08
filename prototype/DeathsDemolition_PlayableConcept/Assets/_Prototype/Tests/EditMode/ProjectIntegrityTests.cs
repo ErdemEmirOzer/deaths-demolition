@@ -154,19 +154,22 @@ namespace DD.Prototype.Tests.EditMode
                 PrototypeScenes.Run,
                 PrototypeScenes.Results,
                 "World_AP005",
-                "World_V6_Greybox"
+                "World_V6_Greybox",
+                "World_FPTPOnly"   // WP-092 A: World v5's TP / FP-only visuals, loaded additively only in those modes
             };
             string[] beklenenDev = { "AP001_GoldenSlice", "AP_LibraryShowcase" };
 
             EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
             Assert.AreEqual(beklenenRelease.Length + beklenenDev.Length, sahneler.Length,
-                "Build Settings'te tam olarak dokuz giriş olmalı (yedi release sahnesi + iki dev-only sahne), " + sahneler.Length + " var.");
+                "Build Settings'te tam olarak on giriş olmalı (sekiz release sahnesi + iki dev-only sahne), " + sahneler.Length + " var.");
             Assert.AreEqual("Assets/_Art/Scenes/World_AP005.unity", sahneler[5].path,
                 "Altıncı sahne WP-014 AP-005 dünya sahnesi olmalı (Run'a additive yüklenir).");
             Assert.AreEqual("Assets/_Art/Scenes/World_V6_Greybox.unity", sahneler[6].path,
                 "Yedinci sahne World v5 (V6) olmalı — varsayılan dünya (C-00 25.09).");
-            Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[7].path,
-                "Sekizinci giriş WP-011 pilot sahnesi olmalı (dev-only, kapalı).");
+            Assert.AreEqual("Assets/_Art/Scenes/World_FPTPOnly.unity", sahneler[7].path,
+                "Sekizinci sahne World_FPTPOnly olmalı — WP-092 A: yalnız TP / FP'de additive yüklenir.");
+            Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[8].path,
+                "Dokuzuncu giriş WP-011 pilot sahnesi olmalı (dev-only, kapalı).");
 
             for (int i = 0; i < beklenenRelease.Length; i++)
             {
