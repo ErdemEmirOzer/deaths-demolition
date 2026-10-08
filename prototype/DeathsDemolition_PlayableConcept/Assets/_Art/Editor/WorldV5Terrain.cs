@@ -1538,7 +1538,10 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Vector4 r in inputs.Paved)
             {
                 bool karesansui = Mathf.Approximately(r.x, 12f) && Mathf.Approximately(r.y, -30f);
-                if (!karesansui) VegRect(exclusion, r, 0f);   // the rock garden is Z12 (moss collars round its rocks)
+                // Plaza paving stays Path, but must not itself exclude its zone-13 joint tufts.
+                // Exact source-rectangle match only: kerbs, decks, stairs and overlapping physical exclusions stay blocked.
+                bool plazaPaving = Array.IndexOf(WorldV5Ground.PlazaRects, r) >= 0;
+                if (!karesansui && !plazaPaving) VegRect(exclusion, r, 0f);   // the rock garden is Z12 (moss collars round its rocks)
             }
 
             foreach ((Vector2[] line, float half) in inputs.Corridors)
