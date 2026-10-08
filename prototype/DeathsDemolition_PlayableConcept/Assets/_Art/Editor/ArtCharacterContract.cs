@@ -249,7 +249,9 @@ namespace DD.Art.Pipeline.EditorTools
             string path = importer.assetPath;
             bool copyHero = UsesPinnedHeroCopyAvatar(path);
             Avatar pinnedHero = copyHero ? ExplicitPinnedHeroAvatar() : null;
-            bool changed = ArtImportContract.Apply(importer);   // v1 first; the lines below override its animation/blend-shape defaults
+            bool changed = copyHero
+                ? ArtImportContract.ApplyModelPreservingAnimationState(importer)
+                : ArtImportContract.Apply(importer);   // Default assets retain v1 animation defaults.
             bool clip = IsClip(path);
             bool fragment = IsRigFragment(path);   // WP-084: Generic, no avatar
 
