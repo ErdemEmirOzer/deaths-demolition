@@ -1162,10 +1162,12 @@ namespace DD.Prototype.Characters
                 else _hemiHold = 0f;
 
                 // θ_eff: the fore hemisphere never weighs a back_* child (and the aft never a fwd_*); at its edge only left / right.
-                // On the clamped edge the side is kept (a straight-back travel in the fore hemisphere would flip ±90 every frame).
+                // Keep the cached side only near the front/back centre, where the sign can jitter across 0/180.
+                // Reuse the existing angular dead band; lateral and diagonal travel keep their actual left/right sign.
                 bool clamped = _fore ? a >= HipCenterDegrees : a <= HipCenterDegrees;
                 int side = theta > 0f ? 1 : theta < 0f ? -1 : _clampSide;
-                if (clamped) side = _clampSide; else _clampSide = side;
+                bool atHeadingCenter = a <= HipDeadBandDegrees || a >= 180f - HipDeadBandDegrees;
+                if (clamped && atHeadingCenter) side = _clampSide; else _clampSide = side;
                 float eff = side * (_fore ? Mathf.Min(a, HipCenterDegrees) : Mathf.Max(a, HipCenterDegrees));
                 if (!_hasHeading || dt <= 0f) _treeAngle = eff;
                 else _treeAngle = Mathf.DeltaAngle(0f, Mathf.MoveTowardsAngle(_treeAngle, eff, DirectionDegreesPerSecond * dt));
