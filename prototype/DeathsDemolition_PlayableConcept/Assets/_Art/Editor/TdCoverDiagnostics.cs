@@ -267,8 +267,9 @@ namespace DD.Art.Pipeline.EditorTools
                 int fullChanged = 0, bareChanged = 0;
                 for (int p = 0; p < ids.Length; p++)
                 {
-                    bool stable = Equal(full[p], fullAgain[p]) && SameRgb(originalFull[p], fullRgb[p]);
-                    if (!stable) fullChanged++;
+                    bool depthStable = Equal(full[p], fullAgain[p]);
+                    if (!depthStable) fullChanged++;
+                    bool stable = depthStable && SameRgb(originalFull[p], fullRgb[p]);
                     if (!Equal(bare[p], bareAgain[p])) bareChanged++;
                     int id = 255;
                     if (stable && ClearDepth(full[p])) id = 0;
