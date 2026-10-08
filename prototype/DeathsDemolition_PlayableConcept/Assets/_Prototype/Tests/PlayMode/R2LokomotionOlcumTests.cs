@@ -26,10 +26,10 @@ namespace DD.Prototype.Tests.PlayMode
     /// aim is held on one world direction (the camera's planar forward, pointer input), so the eight stick directions are the eight
     /// strafe directions in the body's space.
     /// <list type="bullet">
-    /// <item>Course A, steady gait: 8 directions × walk / run. Walk = the stick tilt that puts the motor on the walk ring's own speed in
-    /// that direction (no run-ring weight); run = full tilt. Each segment: 1 s warm-up (excluded), then until both feet show ≥ 6 cycles
-    /// (and ≥ 3 s), bounded at 12 s (walk) / 10 s (run).</item>
-    /// <item>Course K, the writer's positive controls (WP-082 R3 PLAN §5.1): run_fwd and walk_fwd with the foot IK off, run_fwd with the
+    /// <item>Course A, steady gait (WP-082 R3: the AP-026 8-way tree): 8 directions × walk / run / sprint. Walk and run = the stick tilt
+    /// that puts the motor on the ring's threshold speed (the 1-D blend's pure ring); sprint = full tilt. Each segment: 1 s warm-up
+    /// (excluded), then until both feet show ≥ 6 cycles (and ≥ 3 s), bounded at 12 s (walk) / 10 s (run, sprint).</item>
+    /// <item>Course K, the writer's positive controls (WP-082 R3 PLAN §5.1): sprint_fwd and walk_fwd with the foot IK off, sprint_fwd with the
     /// Animator's LocoRate forced to ×0.5 (a known slide of ≈ 0.5).</item>
     /// <item>Course S: run forward with the aim swung ±100° (PLAN §4.3; L1 / L3 reported, not gated).</item>
     /// <item>Course B, transitions × 5: start (still → run), stop (run → still), pivot 180° (run → run reversed), 90° cut
@@ -96,6 +96,9 @@ namespace DD.Prototype.Tests.PlayMode
         // ---- WP-082 R3 PLAN §5.1 positive controls
         /// <summary>S-10 08.10: the contact definition, written as the top-level "l1Def" of r2-L1 / L1t / L2.json (clip phase ∧ |vy| ≤ 0.15 m/s).</summary>
         public const string L1Tanim = "clipPhase+vy0.15";
+        /// <summary>WP-082 R3: the AP-026 8-way rings (walk, run, sprint) × 8 directions = the steady segments.</summary>
+        public const int GaitSayisi = 3, NKararli = GaitSayisi * 8;
+        private static readonly string[] GaitAd = { "walk", "run", "sprint" };
         public const double TemasPayiTolerans = 0.10;   // (a1) ±10 points
         public const float PozAyrim = 0.02f;            // (a2) animated sole: swing median − stance median ≥ 2 cm
         public const float KontrolRate = 0.5f;          // (b) LocoRate ×0.5
@@ -157,6 +160,7 @@ namespace DD.Prototype.Tests.PlayMode
             public List<double> KaymaFaz = new List<double>();                     // every phase-contact foot-frame (before the |vy| rule), reported
             public double L1FazAvg = double.NaN;
             public double Rate = double.NaN;
+            public double Honest = double.NaN;                                     // PlayerSkinnedVisual.HonestSpeed (m/s), mean
             public int Kabul, BirakS, BirakG, BirakL, BirakP, KilitliKare;
             public double PostGapMed = double.NaN, AnimGapMed = double.NaN, PimMed = double.NaN;
             public int RayDiger;
@@ -353,50 +357,56 @@ namespace DD.Prototype.Tests.PlayMode
             var go = new GameObject("R2Loko_Kaydedici");
             _kayit = go.AddComponent<LokomotionKaydedici>();
             _kayit.Bagla(body.Animator, body.transform, ik, _zemin.GetComponent<Collider>(), anim);
+            _kayit.Govde(body);
             _carpan = new GameObject("R2Loko_LocoRateCarpani").AddComponent<LocoRateCarpani>();
             _carpan.Bagla(body.Animator);
 
             // course definition: steady segments first (index = gait × 8 + direction), the controls, the aim swing, then the transitions
             var parcalar = new List<Parca>();
-            for (int g = 0; g < 2; g++)
+            // WP-082 R3 (sonra): the AP-026 8-way tree — walk / run / sprint rings × 8 directions; walk and run at their ring threshold
+            // speed (the 1-D blend's pure ring), sprint at full tilt (the motor's top speed in that direction)
+            Assert.IsTrue(body.Locomotion8, "oyuncu controller'ı 8 yönlü ağaç değil (LocoSpeed yok) — bu yazıcı AP-026 halkalarını ölçer");
+            float[] esik = anim.Locomotion.ringThresholdMps;
+            Assert.GreaterOrEqual(esik.Length, 4, "set halka eşikleri eksik");
+            for (int g = 0; g < GaitSayisi; g++)
                 for (int k = 0; k < 8; k++)
-                    parcalar.Add(new Parca { Ad = (g == 0 ? "walk_" : "run_") + YonAd[k], Tur = Tur.Kararli, Yuruyus = g, Yon = k });
-            const int iIkOffRun = 16, iIkOffWalk = 17, iRate = 18, iSalinim = 19;
-            parcalar.Add(new Parca { Ad = "K_ikOff_run_fwd", Tur = Tur.Kontrol, Yuruyus = 1, Yon = 0 });
+                    parcalar.Add(new Parca { Ad = GaitAd[g] + "_" + YonAd[k], Tur = Tur.Kararli, Yuruyus = g, Yon = k });
+            const int iIkOffRun = NKararli, iIkOffWalk = NKararli + 1, iRate = NKararli + 2, iSalinim = NKararli + 3;
+            parcalar.Add(new Parca { Ad = "K_ikOff_sprint_fwd", Tur = Tur.Kontrol, Yuruyus = 2, Yon = 0 });
             parcalar.Add(new Parca { Ad = "K_ikOff_walk_fwd", Tur = Tur.Kontrol, Yuruyus = 0, Yon = 0 });
-            parcalar.Add(new Parca { Ad = "K_rate05_run_fwd", Tur = Tur.Kontrol, Yuruyus = 1, Yon = 0 });
-            parcalar.Add(new Parca { Ad = "S_aimSwing100_run_fwd", Tur = Tur.NisanSalinim, Yuruyus = 1, Yon = 0 });
+            parcalar.Add(new Parca { Ad = "K_rate05_sprint_fwd", Tur = Tur.Kontrol, Yuruyus = 2, Yon = 0 });
+            parcalar.Add(new Parca { Ad = "S_aimSwing100_sprint_fwd", Tur = Tur.NisanSalinim, Yuruyus = 2, Yon = 0 });
             _gecisBasi = parcalar.Count;
             int[] tabanlar = { 0, 2, 4, 6, 1 };
 
             float maxSpeed = _s.Rig.Motor.MaxSpeed;
             float reference = anim.LocomotionReferenceSpeed;
-            float[] walkSpeeds = { anim.SpeedOf(C.PlayerWalkFwd), anim.SpeedOf(C.PlayerWalkBack), anim.SpeedOf(C.PlayerStrafeLeft), anim.SpeedOf(C.PlayerStrafeRight) };
             int[] sira = { 0, 4, 2, 6, 1, 5, 3, 7 };   // opposite pairs keep the course near the centre
-            var cubuk = new float[2, 8];
+            var cubuk = new float[GaitSayisi, 8];
             for (int k = 0; k < 8; k++)
             {
                 Vector2 d = Yon8(k, 1f);
-                float ring = HalkaHizi(d, walkSpeeds);
-                float bs = PlayerMotor.BackwardScale(Dunya(d), _nisan);
-                cubuk[0, k] = maxSpeed > 0.1f && ring > 0.1f ? Mathf.Clamp(ring / (maxSpeed * Mathf.Max(0.1f, bs)), 0.1f, 0.95f) : 0.42f;
-                cubuk[1, k] = 1f;
-                parcalar[k].Cubuk = cubuk[0, k];
-                parcalar[8 + k].Cubuk = 1f;
+                float bs = Mathf.Max(0.1f, PlayerMotor.BackwardScale(Dunya(d), _nisan));
+                for (int g = 0; g < GaitSayisi; g++)
+                {
+                    float hedef = g < 2 ? esik[g + 1] : float.MaxValue;   // walk / run: the ring threshold; sprint: full tilt
+                    cubuk[g, k] = maxSpeed > 0.1f ? Mathf.Clamp(hedef / (maxSpeed * bs), 0.1f, 1f) : 1f;
+                    parcalar[g * 8 + k].Cubuk = cubuk[g, k];
+                }
             }
 
             yield return Merkezle(merkez, true);
             yield return Sur(60, Vector2.zero, -1, null);
             bool zeminde = _s.Rig.Motor.IsGrounded && Mathf.Abs(_s.Rig.transform.position.y - merkez.y) < 0.25f;
             Debug.Log("[DD-TEST] wp083.loco setup floor=" + zeminde + " y=" + F2(_s.Rig.transform.position.y) + " floorY=" + F2(merkez.y) + " v4=" + body.HasLocomotionV4 +
-                      " footIk=" + (body.FootIk != null) + " maxSpeed=" + F2(maxSpeed) + " ref=" + F2(reference) + " walkSpeeds(f/b/l/r)=" + F2(walkSpeeds[0]) + "/" + F2(walkSpeeds[1]) + "/" +
-                      F2(walkSpeeds[2]) + "/" + F2(walkSpeeds[3]) + " walkSticks=" + string.Join(",", Sticks(cubuk)) + " bones=" + _kayit.BulunanKemikler() + " camera=" + CameraModeService.Current +
+                      " footIk=" + (body.FootIk != null) + " maxSpeed=" + F2(maxSpeed) + " ref=" + F2(reference) + " k=" + F(anim.Locomotion.heroStrideScale) + " thresholds=" + F3(esik[1]) + "/" + F3(esik[2]) + "/" + F3(esik[3]) +
+                      " loco8=" + body.Locomotion8 + " sticks=" + string.Join(",", Sticks(cubuk)) + " bones=" + _kayit.BulunanKemikler() + " camera=" + CameraModeService.Current +
                       " aim=" + V(_nisan) + " basisFwd=" + V(_ileri) + " basisRight=" + V(_sag) + " feetBottomL/R=" + F(body.Animator.leftFeetBottomHeight) + "/" + F(body.Animator.rightFeetBottomHeight) +
                       " humanScale=" + F(body.Animator.humanScale) + " legLength=" + F(ik.LegLength));
             Assert.IsTrue(zeminde, "oyuncu test zeminine oturmadı (y " + _s.Rig.transform.position.y + " / zemin " + merkez.y + ")");
 
             // ---- course A: steady gait (the aim held on one world direction, the stick in eight)
-            for (int g = 0; g < 2 && _iptal == null; g++)
+            for (int g = 0; g < GaitSayisi && _iptal == null; g++)
             {
                 int cap = Isinma + (g == 0 ? 720 : 600);
                 for (int j = 0; j < sira.Length && _iptal == null; j++)
@@ -411,11 +421,11 @@ namespace DD.Prototype.Tests.PlayMode
             if (_iptal == null)
             {
                 FootIkAdapter.Force = 0;
-                yield return Kararli(merkez, parcalar[iIkOffRun], iIkOffRun, Yon8(0, 1f), Isinma + 600);
+                yield return Kararli(merkez, parcalar[iIkOffRun], iIkOffRun, Yon8(0, cubuk[2, 0]), Isinma + 600);
                 yield return Kararli(merkez, parcalar[iIkOffWalk], iIkOffWalk, Yon8(0, cubuk[0, 0]), Isinma + 720);
                 FootIkAdapter.Force = -1;
                 _carpan.Carpan = KontrolRate;
-                yield return Kararli(merkez, parcalar[iRate], iRate, Yon8(0, 1f), Isinma + 600);
+                yield return Kararli(merkez, parcalar[iRate], iRate, Yon8(0, cubuk[2, 0]), Isinma + 600);
                 _carpan.Carpan = 1f;
             }
 
@@ -443,10 +453,10 @@ namespace DD.Prototype.Tests.PlayMode
             for (int r = 0; r < Tekrar && _iptal == null; r++)
             {
                 int b = tabanlar[r], ters = (b + 4) & 7, yan = (ters + ((r & 1) == 0 ? 2 : 6)) & 7;
-                var start = new Parca { Ad = "start_" + YonAd[b] + "#" + r, Tur = Tur.Kalkis, Yuruyus = 1, Yon = b, Ref = new[] { 8 + b } };
-                var stop = new Parca { Ad = "stop_" + YonAd[b] + "#" + r, Tur = Tur.Durus, Yuruyus = 1, Yon = b, Ref = new[] { 8 + b } };
-                var pivot = new Parca { Ad = "pivot180_" + YonAd[b] + ">" + YonAd[ters] + "#" + r, Tur = Tur.Pivot180, Yuruyus = 1, Yon = ters, Ref = new[] { 8 + b, 8 + ters } };
-                var cut = new Parca { Ad = "cut90_" + YonAd[ters] + ">" + YonAd[yan] + "#" + r, Tur = Tur.Kesme90, Yuruyus = 1, Yon = yan, Ref = new[] { 8 + ters, 8 + yan } };
+                var start = new Parca { Ad = "start_" + YonAd[b] + "#" + r, Tur = Tur.Kalkis, Yuruyus = 2, Yon = b, Ref = new[] { 16 + b } };
+                var stop = new Parca { Ad = "stop_" + YonAd[b] + "#" + r, Tur = Tur.Durus, Yuruyus = 2, Yon = b, Ref = new[] { 16 + b } };
+                var pivot = new Parca { Ad = "pivot180_" + YonAd[b] + ">" + YonAd[ters] + "#" + r, Tur = Tur.Pivot180, Yuruyus = 2, Yon = ters, Ref = new[] { 16 + b, 16 + ters } };
+                var cut = new Parca { Ad = "cut90_" + YonAd[ters] + ">" + YonAd[yan] + "#" + r, Tur = Tur.Kesme90, Yuruyus = 2, Yon = yan, Ref = new[] { 16 + ters, 16 + yan } };
                 int iStart = parcalar.Count; parcalar.Add(start);
                 int iStop = parcalar.Count; parcalar.Add(stop);
                 int iPivot = parcalar.Count; parcalar.Add(pivot);
@@ -468,11 +478,11 @@ namespace DD.Prototype.Tests.PlayMode
             _carpan.Carpan = 1f;
 
             // ---- the classifier: the animated sole's floor per foot over course A, then every frame's contact
-            _kayit.TabanHesapla(16, Isinma, TabanYuzdelik, out float tabanL, out float tabanR);
+            _kayit.TabanHesapla(NKararli, Isinma, TabanYuzdelik, out float tabanL, out float tabanR);
             _kayit.Siniflandir(Isinma, TabanYuzdelik);
             Dok(parcalar, iIkOffRun, iIkOffWalk, iRate);
             float nisanHata = 0f;
-            for (int i = 0; i < 16; i++) nisanHata = Mathf.Max(nisanHata, parcalar[i].NisanHataMax);
+            for (int i = 0; i < NKararli; i++) nisanHata = Mathf.Max(nisanHata, parcalar[i].NisanHataMax);
             Debug.Log("[DD-TEST] wp083.loco course frames=" + _kayit.Kareler.Count + " plantEvents=" + _kayit.OlaySayisi + " aborted=" + (_iptal ?? "no") +
                       " facingVsAimMaxDeg=" + F2(nisanHata) + " animSoleFloorL/R(course A p" + (TabanYuzdelik * 100f).ToString("F0", CultureInfo.InvariantCulture) + ")=" + F(tabanL) + "/" + F(tabanR) + " m" +
                       " phaseClips=" + _kayit.FazKlipSayisi + " rayOtherFirst=" + (_kayit.RayDigerAd ?? "-") +
@@ -489,7 +499,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (nisanHata > NisanHataSiniri) hatalar.Add("gövde nişana dönmedi: kararlı karelerde en çok " + F2(nisanHata) + "° > " + NisanHataSiniri + "° (yön etiketleri geçersiz)");
             bool kontrolA = KontrolA(anim, parcalar, ist, hatalar);
             bool kontrolB = KontrolB(ist, iRate, hatalar);
-            bool kontrolC = KontrolC(anim, reference, ist, hatalar);
+            bool kontrolC = KontrolC(parcalar, ist, hatalar);
             bool yonGecerli = nisanHata <= NisanHataSiniri;
             KaynakKaniti(anim, parcalar, ist, iIkOffRun, iIkOffWalk);
 
@@ -679,7 +689,7 @@ namespace DD.Prototype.Tests.PlayMode
             var s = new Istat();
             List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
             Vector3 sum = Vector3.zero;
-            double vs = 0, rate = 0;
+            double vs = 0, rate = 0, honest = 0;
             int nL = 0, nR = 0, nEL = 0, nER = 0, first = -1, last = -1;
             double bekL = 0, bekR = 0, fazL = 0, fazR = 0;
             var post = new List<double>(); var animG = new List<double>(); var pin = new List<double>(); var swA = new List<double>(); var swP = new List<double>();
@@ -702,6 +712,7 @@ namespace DD.Prototype.Tests.PlayMode
                 sum += k.BodyV;
                 vs += k.BodyV.magnitude;
                 rate += k.Rate;
+                honest += k.Honest;
                 // L1 sample (S-06 08.10): phase contact ∧ the animated foot's |vertical speed| ≤ 0.15 m/s (R2's vertical rule)
                 if (k.TemasL) { nL++; s.KaymaFaz.Add(Oran(k.FootVL, k.BodyV)); if (Mathf.Abs(k.AnimVyL) <= TemasDikeyHiz) s.Kayma.Add(Oran(k.FootVL, k.BodyV)); }
                 if (k.TemasR) { nR++; s.KaymaFaz.Add(Oran(k.FootVR, k.BodyV)); if (Mathf.Abs(k.AnimVyR) <= TemasDikeyHiz) s.Kayma.Add(Oran(k.FootVR, k.BodyV)); }
@@ -735,6 +746,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Vector3 dir = sum.sqrMagnitude > 1e-8f ? sum.normalized : Vector3.zero;
                 s.VYon = Vector3.Dot(sum / s.N, dir);
                 s.Rate = rate / s.N;
+                s.Honest = honest / s.N;
                 s.PayL = (double)nL / s.N; s.PayR = (double)nR / s.N;
                 s.PayEskiL = (double)nEL / s.N; s.PayEskiR = (double)nER / s.N;
                 s.L1Avg = Ort(s.Kayma); s.L1P95 = P95(s.Kayma); s.L1FazAvg = Ort(s.KaymaFaz);
@@ -791,22 +803,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         // --------------------------------------------------------------------------------------------------- positive controls
 
-        private static readonly string[][] YonKlipleri =
-        {
-            // body-space direction → the 4-way ring children it blends (the AP-022 v008 loco; diagonals sit between two)
-            new[] { "F" }, new[] { "F", "R" }, new[] { "R" }, new[] { "B", "R" }, new[] { "B" }, new[] { "B", "L" }, new[] { "L" }, new[] { "F", "L" },
-        };
-
-        private static string KlipAdi(int gait, string yon)
-        {
-            switch (yon)
-            {
-                case "F": return gait == 0 ? C.PlayerWalkFwd : C.PlayerRunFwd;
-                case "B": return gait == 0 ? C.PlayerWalkBack : C.PlayerRunBack;
-                case "L": return gait == 0 ? C.PlayerStrafeLeft : C.PlayerRunStrafeLeft;
-                default: return gait == 0 ? C.PlayerStrafeRight : C.PlayerRunStrafeRight;
-            }
-        }
+        /// <summary>WP-082 R3: the AP-026 loop of a ring and a body-space direction (one clip per direction on the 8-way tree).</summary>
+        private static string KlipAdi(int gait, int yon) => (gait == 0 ? C.PlayerWalk : gait == 1 ? C.PlayerRun : C.PlayerSprint)[yon & 7];
 
         /// <summary>One clip's stance share per foot from its events (foot_x → foot_x_off over the loop period); the manifest stance frames for the record.</summary>
         private static bool OlayPayi(CharacterAnimationSet anim, string clip, out double l, out double r, out double stance, out int period)
@@ -842,15 +840,10 @@ namespace DD.Prototype.Tests.PlayMode
         {
             l = r = stance = 0;
             klipler = "";
-            string[] ys = YonKlipleri[yon & 7];
-            foreach (string y in ys)
-            {
-                string c = KlipAdi(gait, y);
-                klipler += (klipler.Length > 0 ? "+" : "") + c;
-                if (!OlayPayi(anim, c, out double cl, out double cr, out double st, out _)) { l = r = stance = double.NaN; return false; }
-                l += cl / ys.Length; r += cr / ys.Length; stance += st / ys.Length;
-            }
-
+            string c = KlipAdi(gait, yon);
+            klipler = c;
+            if (!OlayPayi(anim, c, out double cl, out double cr, out double st, out _)) { l = r = stance = double.NaN; return false; }
+            l = cl; r = cr; stance = st;
             return true;
         }
 
@@ -859,7 +852,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             bool ok = true;
             var rows = new List<string>();
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < NKararli; i++)
             {
                 Parca p = parcalar[i];
                 Istat s = ist[i];
@@ -889,7 +882,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>(b) LocoRate forced ×0.5 on run_fwd: L1 there reads 0.5 ± 0.1.</summary>
         private bool KontrolB(Istat[] ist, int iRate, List<string> hatalar)
         {
-            Istat s = ist[iRate], b = ist[8];
+            Istat s = ist[iRate], b = ist[16];
             bool ok = s.Kayma.Count > 0 && Math.Abs(s.L1Avg - KontrolKayma) <= KontrolKaymaTolerans;
             Debug.Log("[DD-TEST] wp082.controlB knownSlide rate×" + KontrolRate + " L1 avg " + F(s.L1Avg) + " p95 " + F(s.L1P95) + " n " + s.Kayma.Count + " (expected " + KontrolKayma + " ± " + KontrolKaymaTolerans +
                       ") LocoRate " + F3(s.Rate) + " v " + F2(s.V) + " — base run_fwd L1 " + F(b.L1Avg) + " LocoRate " + F3(b.Rate) + " pass=" + ok);
@@ -898,30 +891,22 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>(c) StrideEslemesi on the pure run directions: the stride-match slide at the measured speed and clip rate vs the segment's L1 avg.</summary>
-        private bool KontrolC(CharacterAnimationSet anim, float reference, Istat[] ist, List<string> hatalar)
+        private bool KontrolC(List<Parca> parcalar, Istat[] ist, List<string> hatalar)
         {
             bool ok = true;
             var rows = new List<string>();
-            (int idx, string clip, float radius)[] dirs =
-            {
-                (8, C.PlayerRunFwd, 1f), (12, C.PlayerRunBack, DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier),
-                (10, C.PlayerRunStrafeRight, 1f), (14, C.PlayerRunStrafeLeft, 1f),
-            };
-            foreach ((int idx, string clip, float radius) d in dirs)
-            {
-                Istat s = ist[d.idx];
-                float speed = anim.SpeedOf(d.clip);
-                float scale = d.radius < 0.999f ? PlayerSkinnedVisual.RunChildTimeScale(reference, speed, d.radius) : PlayerSkinnedVisual.RunChildTimeScale(reference, speed);
-                double clipRate = s.Rate * scale;
-                double slide = CadenceBand.SlideFraction((float)s.VYon, speed, (float)clipRate);
-                CharacterAnimationSet.Entry e = anim.Find(d.clip);
-                double cadRate = e != null && !double.IsNaN(s.T) && s.T > 0 ? e.seconds / s.T : double.NaN;
-                double diff = Math.Abs(s.L1Avg - slide);
-                bool satir = s.Kayma.Count > 0 && diff <= StrideFarkSiniri;
-                ok &= satir;
-                rows.Add(YonAd[d.idx - 8] + " L1 " + F(s.L1Avg) + " strideSlide " + F(slide) + " diff " + F(diff) + (satir ? " ok" : " OUT") + " (v " + F2(s.VYon) + " clip " + F2(speed) + " m/s, rate LocoRate " + F3(s.Rate) +
-                         " × scale " + F3(scale) + " = " + F3(clipRate) + ", cadence-rate " + F3(cadRate) + ")");
-            }
+            // WP-082 R3: the 8-way tree's own model — the honest speed (Σ w·stride×k / Σ w·cycle) × LocoRate carries the body; the rest slides
+            for (int g = 0; g < GaitSayisi; g++)
+                foreach (int k in new[] { 0, 2, 4, 6 })
+                {
+                    int idx = g * 8 + k;
+                    Istat s = ist[idx];
+                    double slide = CadenceBand.SlideFraction((float)s.VYon, (float)s.Honest, (float)s.Rate);
+                    double diff = Math.Abs(s.L1Avg - slide);
+                    bool satir = s.Kayma.Count > 0 && diff <= StrideFarkSiniri;
+                    ok &= satir;
+                    rows.Add(parcalar[idx].Ad + " L1 " + F(s.L1Avg) + " modelSlide " + F(slide) + " diff " + F(diff) + (satir ? " ok" : " OUT") + " (v " + F2(s.VYon) + " honest " + F3(s.Honest) + " m/s, LocoRate " + F3(s.Rate) + ")");
+                }
 
             Debug.Log("[DD-TEST] wp082.controlC strideMatch tol=" + StrideFarkSiniri + " pass=" + ok + " :: " + string.Join(" | ", rows));
             // S-06 08.10: information row — no failure
@@ -932,7 +917,7 @@ namespace DD.Prototype.Tests.PlayMode
         private void KaynakKaniti(CharacterAnimationSet anim, List<Parca> parcalar, Istat[] ist, int iIkOffRun, int iIkOffWalk)
         {
             var rows = new List<string>();
-            foreach (int i in new[] { 0, 8, iIkOffWalk, iIkOffRun })
+            foreach (int i in new[] { 0, 8, 16, iIkOffWalk, iIkOffRun })
             {
                 Istat s = ist[i];
                 Beklenen(anim, parcalar[i].Yuruyus, 0, out double el, out double er, out _, out _);
@@ -966,7 +951,7 @@ namespace DD.Prototype.Tests.PlayMode
             var all = new List<double>();
             var rows = new List<string>();
             string eksik = null;
-            for (int idx = 0; idx < 16; idx++)
+            for (int idx = 0; idx < NKararli; idx++)
             {
                 Parca p = parcalar[idx];
                 Istat s = ist[idx];
@@ -1020,7 +1005,7 @@ namespace DD.Prototype.Tests.PlayMode
             int toplamDongu = 0;
             var rows = new List<string>();
             string eksik = null;
-            for (int idx = 0; idx < 16; idx++)
+            for (int idx = 0; idx < NKararli; idx++)
             {
                 Parca p = parcalar[idx];
                 Istat s = ist[idx];
@@ -1098,7 +1083,7 @@ namespace DD.Prototype.Tests.PlayMode
                 rows.Add(p.Ad + " limb " + F2(pl) + " torso " + F2(pt) + " ratio " + F2(pr) + " (" + prAt + ")");
             }
 
-            for (int r = 8; r < 16; r++)
+            for (int r = 16; r < NKararli; r++)
                 if (pencereKare[r] == 0) eksik = (eksik == null ? "" : eksik + "; ") + parcalar[r].Ad + ": kararlı koşu tepesi yok (oran tabanı)";
             if (gecis < 4 * Tekrar) eksik = (eksik == null ? "" : eksik + "; ") + "geçiş " + gecis + "/" + (4 * Tekrar);
             if (!_kayit.KemikVar(0) || !_kayit.KemikVar(12)) eksik = (eksik == null ? "" : eksik + "; ") + "uzuv/gövde kemiği yok: " + _kayit.BulunanKemikler();
@@ -1199,7 +1184,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             string dir = Environment.GetEnvironmentVariable("DD_LOKO_DUMP_DIR");
             if (string.IsNullOrEmpty(dir)) return;
-            var sec = new HashSet<int> { 0, 8, 12, iIkOffRun, iIkOffWalk, iRate };
+            var sec = new HashSet<int> { 0, 8, 16, 20, iIkOffRun, iIkOffWalk, iRate };
             var sb = new StringBuilder("label,since,frame,valid,phaseL,phaseR,contactL,contactR,poseL,poseR,r2L,r2R,animSoleL,animSoleR,shownSoleL,shownSoleR,animVyL,animVyR," +
                                        "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed\n");
             foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
@@ -1455,6 +1440,7 @@ namespace DD.Prototype.Tests.PlayMode
             public float AnimVyL, AnimVyR;        // its vertical speed, m/s
             public bool IkServed;
             public float Rate;                    // the Animator's LocoRate this frame
+            public float Honest;                  // PlayerSkinnedVisual.HonestSpeed this frame (m/s)
             public byte Locked;                   // FootIkAdapter.LockedFeet
             public int Acc, RelS, RelG, RelL, RelP;   // FootIkAdapter counters (cumulative)
             public bool RayDigerL, RayDigerR;     // the gap ray hit a collider other than the test floor
@@ -1489,6 +1475,8 @@ namespace DD.Prototype.Tests.PlayMode
         private Animator _anim;
         private Transform _govde;
         private FootIkAdapter _ik;
+        private PlayerSkinnedVisual _pv;
+        public void Govde(PlayerSkinnedVisual pv) => _pv = pv;
         private Collider _zemin;
         private Transform _footL, _footR;
         private Transform[] _bones;
@@ -1745,6 +1733,7 @@ namespace DD.Prototype.Tests.PlayMode
             k.AnimGapL = k.IkServed ? k.GapL - _ik.Weight * _ik.LeftLift : k.GapL;
             k.AnimGapR = k.IkServed ? k.GapR - _ik.Weight * _ik.RightLift : k.GapR;
             k.Rate = _anim.GetFloat(RateId);
+            k.Honest = _pv != null ? _pv.HonestSpeed : 0f;
             if (_ik != null)
             {
                 k.Locked = (byte)_ik.LockedFeet;

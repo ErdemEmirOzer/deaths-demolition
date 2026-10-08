@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _idle: {fileID: -7189820238339631145, guid: e3a52578f7b7240a8b8d5952bea3f537, type: 3}
   _walk: {fileID: -4289703994852660584, guid: bb239847607c1498ca2726d7bd3712b3, type: 3}
-  _walkSpeedMetersPerSecond: 1.8268
+  _walkSpeedMetersPerSecond: 1.8096
   _controller: {fileID: 9100000, guid: b245a12937d084f689f339a22d4e41f8, type: 2}
   _source: "AP-009D v004 (85 clips, AP009-clips-manifest.json) \u2014 WP-018/032B/032C
     generated controller"
@@ -3370,12 +3370,12 @@ MonoBehaviour:
     hasCycle: 0
     hasFireLoop: 0
   _locomotion:
-    heroStrideScale: 1.06452
+    heroStrideScale: 1.0545
     ringThresholdMps:
     - 0
-    - 1.8268
-    - 4.2847
-    - 6.6
+    - 1.8096
+    - 4.2444
+    - 6.5379
     v4GaitSpeedsMpsTemplate:
     - 1.4
     - 0

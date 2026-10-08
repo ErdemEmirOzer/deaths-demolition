@@ -151,14 +151,17 @@
  },
  "schema": "WP082R3.loco-constants.v1",
  "hero_stride_scale": {
-  "default": 1.06452,
+  "default": 1.0545,
   "k_hips_height": 1.06452,
   "k_leg_length": 1.04806,
   "hero_hips_m": 0.9900000095367432,
   "template_hips_m": 0.9300000071525574,
   "hero_leg_m": 0.85527,
   "template_leg_m": 0.81604,
-  "flag": "hesap (kemik dosyaları); kahramanda StrideCalibrator ile ölçülüp yerine konacak: k = v_hero(sprint_fwd) / natural_speed_mps_template(sprint_fwd)"
+  "flag": "hesap (kemik dosyaları); kahramanda StrideCalibrator ile ölçülüp yerine konacak: k = v_hero(sprint_fwd) / natural_speed_mps_template(sprint_fwd)",
+  "k_measured": 1.0545,
+  "k_measured_source": "E3 08.10 AnimationLiveCalibrationTests zero crossing (t-e3-s1 wp082.k): sprint_fwd 1.0545 (contract), walk median 1.0598, run median 1.0575, all-24 median 1.0668",
+  "k_previous_estimate": 1.06452
  },
  "tree": {
   "root": {
@@ -179,7 +182,7 @@
     "slot": 1,
     "motion": "BlendTree Walk8 (SimpleDirectional2D, MoveX/MoveY)",
     "threshold_mps_template": 1.7161,
-    "threshold_mps_hero_est": 1.8268,
+    "threshold_mps_hero_est": 1.8096,
     "children": [
      {
       "clip": "AP026_tp_walk_fwd",
@@ -251,7 +254,7 @@
     "slot": 2,
     "motion": "BlendTree Run8 (SimpleDirectional2D, MoveX/MoveY)",
     "threshold_mps_template": 4.025,
-    "threshold_mps_hero_est": 4.2847,
+    "threshold_mps_hero_est": 4.2444,
     "children": [
      {
       "clip": "AP026_tp_run_fwd",
@@ -323,7 +326,7 @@
     "slot": 3,
     "motion": "BlendTree Sprint8 (SimpleDirectional2D, MoveX/MoveY)",
     "threshold_mps_template": 6.2,
-    "threshold_mps_hero_est": 6.6,
+    "threshold_mps_hero_est": 6.5379,
     "children": [
      {
       "clip": "AP026_tp_sprint_fwd",
