@@ -758,6 +758,46 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Less(step, 0.2f * peak, "soft: under a fifth of its peak a frame (the pulses jumped 0 → peak)");
         }
 
+        /// <summary>
+        /// AD SHOULD-1 (08.10): the damage edge is a dry brush laid along the screen edge, not a smooth gradient - full at the
+        /// edge, nothing past its reach, the reach ragged along the edge, dry streaks / breaks toward its inner end (the depth
+        /// profile is not monotone everywhere), soft ends; the quiet corner's peak is 0.35.
+        /// </summary>
+        [Test]
+        public void HasarKenari_FircaRampasi_KuruDuzensizIc_UcYumusak_SessizKose035()
+        {
+            Assert.AreEqual(1f, UiSprites.BrushEdgeAlpha(0.5f, 0f), 1e-4f, "full at the screen edge");
+            Assert.AreEqual(0f, UiSprites.BrushEdgeAlpha(0.5f, 1f), 1e-4f, "nothing past the reach");
+            Assert.AreEqual(0f, UiSprites.BrushEdgeAlpha(0f, 0f), 1e-4f, "soft ends along the edge");
+            float minReach = 1f, maxReach = 0f;
+            int rises = 0;
+            for (int a = 0; a < 64; a++)
+            {
+                float along = 0.1f + 0.8f * a / 63f;
+                float reach = 0f, last = 2f;
+                for (int d = 0; d < 64; d++)
+                {
+                    float depth = d / 63f;
+                    float alpha = UiSprites.BrushEdgeAlpha(along, depth);
+                    if (alpha > 0.05f) reach = depth;
+                    if (alpha > last + 1e-3f) rises++;
+                    last = alpha;
+                }
+
+                minReach = Mathf.Min(minReach, reach);
+                maxReach = Mathf.Max(maxReach, reach);
+            }
+
+            Assert.Greater(maxReach - minReach, 0.15f, "a ragged inner reach (the brush's pressure), not a straight band");
+            Assert.Greater(rises, 8, "dry streaks / breaks: the profile is not a smooth monotone gradient");
+            Assert.AreEqual(0.35f, UiHitDirectionLayer.QuietCornerAlpha, 1e-6f);
+            Assert.LessOrEqual(UiTokens.DamageEdgePeakAlpha * (UiHitDirectionLayer.QuietCornerAlpha / UiTokens.DamageEdgePeakAlpha), 0.35f + 1e-6f, "the quiet segment's peak");
+            Sprite left = UiSprites.BrushEdge(UiScreenEdge.Left), top = UiSprites.BrushEdge(UiScreenEdge.Top);
+            Assert.AreEqual(UiSprites.BrushEdgeDepth, (int)left.rect.width, "left: depth across");
+            Assert.AreEqual(UiSprites.BrushEdgeDepth, (int)top.rect.height, "top: depth down");
+            Debug.Log("[DD-TEST] wp094.brushEdge reach=" + minReach.ToString("0.00") + "…" + maxReach.ToString("0.00") + " rises=" + rises);
+        }
+
         [Test]
         public void SifirAyirma_Kurallar_Havuzlar_ZamanCizelgesi_Presetler()
         {

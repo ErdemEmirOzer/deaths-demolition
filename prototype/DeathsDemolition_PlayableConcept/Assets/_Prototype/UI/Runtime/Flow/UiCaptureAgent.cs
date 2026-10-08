@@ -2,6 +2,7 @@
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
+using System.Globalization;
 using System.IO;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
@@ -1698,7 +1699,8 @@ namespace DD.Prototype.UI
             /// through RunHudScreen.CaptureRound - so every motion in a frame is the production path's (HAREKET-HUD §7 "Çekim").
             /// Frames (<c>v4-*.png</c> in the capture folder): idle; gold-punch (mid-punch) / gold-rest; health-full /
             /// health-damaged (the chunk falling, the trail held) / health-two-hits (two wedges, two edges) / health-low (on a lub)
-            /// / health-heal (the moss glow); round-I / IV / IX / XIV / XXIII (each landed) and round-reveal-XIV (mid-brush);
+            /// / health-heal (the moss glow); round-I / IV / IX / XIV / XXIII / XXXVIII / LXXXVIII (each landed; the log line carries
+            /// cap, plate, seal and core) and round-reveal-XIV (mid-brush);
             /// mag-full / mag-shot (spark, casing, lean) / mag-low (the LOW pulse) / mag-empty (after an empty trigger) /
             /// mag-reloading (the preview) / mag-reloaded (the slide) / mag-switch (mid-swap) / mag-switched. Add
             /// <c>-ddUiReducedMotion 1</c> for the reduced-motion set, <c>-ddUiReduceFlashes 1</c> for the flash-reduced one.
@@ -1840,7 +1842,8 @@ namespace DD.Prototype.UI
             }
 
             /// <summary>The rounds the acceptance asks for (I / IV / IX / XIV / XXIII).</summary>
-            private static readonly int[] HudV4Rounds = { 1, 4, 9, 14, 23 };
+            // 08.10 (AD SHOULD-3): XXXVIII and LXXXVIII too - the plate fitted to 288 at a shrunk cap (≥ 32), never seen at runtime.
+            private static readonly int[] HudV4Rounds = { 1, 4, 9, 14, 23, 38, 88 };
 
             /// <summary>
             /// WP-094 (<c>-ddUiCapture hudv4demo</c>): HAREKET-HUD §7's 30 s top-down scenario on a live run with real events and
@@ -1954,7 +1957,15 @@ namespace DD.Prototype.UI
                 yield return Frame(folder, name);
                 Debug.Log("[UiCapture] hudv4 " + name + " chunks=" + hud.HealthChunksLive + " beats=" + hud.HeartBeats + " glows=" + hud.HealGlows +
                           " accents=" + hud.ShotAccents + " casings=" + hud.CasingsLive + " shakes=" + hud.DryFireShakes + " swaps=" + hud.WeaponSwaps +
-                          " punches=" + hud.GoldPunches + " round=" + hud.RoundNumeral.Value + " danger=" + hud.InDangerPosture);
+                          " punches=" + hud.GoldPunches + " round=" + hud.RoundNumeral.Value + " danger=" + hud.InDangerPosture +
+                          // 08.10 (AD MUST-1 / MUST-2 / SHOULD-3): the plate's numbers for the crops' table - cap, plate width, seal
+                          // ring diameter, the ink core's alpha and rect (ref px) under the letters.
+                          " cap=" + hud.RoundCap.ToString("0.00", CultureInfo.InvariantCulture) +
+                          " plate=" + hud.RoundPlateWidth.ToString("0.0", CultureInfo.InvariantCulture) +
+                          " seal=" + (hud.RoundSeal != null ? hud.RoundSeal.sizeDelta.x : 0f).ToString("0.0", CultureInfo.InvariantCulture) +
+                          " core=" + (hud.RoundCore != null && hud.RoundCore.enabled
+                              ? HudArt.CoreAlpha.ToString("0.00", CultureInfo.InvariantCulture) + "@" + hud.RoundCore.rectTransform.sizeDelta.x.ToString("0", CultureInfo.InvariantCulture) + "x" + hud.RoundCore.rectTransform.sizeDelta.y.ToString("0", CultureInfo.InvariantCulture)
+                              : "off"));
             }
 
             /// <summary>

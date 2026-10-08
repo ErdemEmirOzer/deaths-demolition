@@ -53,6 +53,45 @@ namespace DD.Prototype.UI
         public static readonly float[] LeftBearing = { 0.05f, 0.0121f, 0.0121f, 0.0528f, 0.0295f };
 
         /// <summary>
+        /// 08.10 (AD MUST-1, the ink core under the letters): each letter's ink extent in em from its baseline, the widest of its
+        /// alternates - measured off AP-032 v001's 1024 atlas (α &gt; 0.1; HudAp032Tests re-measures them): the top (V reaches
+        /// 1.069 em), the foot below the baseline (L 0.031 em) and the ink's reach past the advance on the right (L 0.049 em).
+        /// </summary>
+        public static readonly float[] InkTopEm = { 1.007f, 1.07f, 1.026f, 1.0f, 1.02f };
+        public static readonly float[] InkBelowEm = { 0f, 0f, 0.019f, 0.032f, 0f };
+        public static readonly float[] InkPastAdvanceEm = { 0f, 0.049f, 0.033f, 0.05f, 0.003f };
+
+        /// <summary>
+        /// The ink band of <paramref name="round"/>'s letters, in em from the cap's centre (the box's middle - the baseline is
+        /// 0.5 em under it): <paramref name="topEm"/> up, <paramref name="bottomEm"/> down (both ≥ 0), and how far the last
+        /// letter's ink reaches past the run's end. No allocation (the shared scratch).
+        /// </summary>
+        public static void InkBand(int round, out float topEm, out float bottomEm, out float pastEndEm)
+        {
+            topEm = 0.5f;
+            bottomEm = 0.5f;
+            pastEndEm = 0f;
+            int length = RomanNumerals.Length(round);
+            if (length <= 0 || length > Capacity)
+            {
+                return;
+            }
+
+            int n = RomanNumerals.Write(round, s_measure, 0);
+            float top = 0f, below = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                int kind = KindOf(s_measure[i]);
+                top = Mathf.Max(top, InkTopEm[kind]);
+                below = Mathf.Max(below, InkBelowEm[kind]);
+            }
+
+            topEm = top - 0.5f;
+            bottomEm = 0.5f + below;
+            pastEndEm = InkPastAdvanceEm[KindOf(s_measure[n - 1])];
+        }
+
+        /// <summary>
         /// Pair kerning in em, [left × 5 + right] in I V X L C order - AP-032 v001's `kerning_table_em` (all 25 pairs, P-07's
         /// optical pass held to its core-gap constraint ≥ 0.07 em: LV takes the foot's room, XX / CV / CX open up).
         /// </summary>

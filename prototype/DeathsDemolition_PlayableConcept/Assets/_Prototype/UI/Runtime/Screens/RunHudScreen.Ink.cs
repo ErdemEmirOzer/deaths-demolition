@@ -129,8 +129,12 @@ namespace DD.Prototype.UI
         /// </summary>
         private const float RoundClipPad = HudArt.NumeralClipPad;
 
+        /// <summary>The gold counter's type, and the "+N" size as a share of it (AD SHOULD-2: the cap ≥ 0.75 × the counter's).</summary>
+        public const UiType GoldCounterType = UiType.NumericM;
+        public const float GoldDeltaCapShare = 0.8f;
+
         /// <summary>AP-032's smear plate takes the HUD ink at this alpha (§3.3 "kodda ink, α ≤ 0,90"), level (it is laid out, not leaned).</summary>
-        public const float RoundSmearAuthoredAlpha = 0.9f;
+        public const float RoundSmearAuthoredAlpha = HudArt.PlateAlpha;
 
         /// <summary>The one brush channel the HUD's strokes draw with (the brush census counts this site once).</summary>
         private const UiInkChannel BrushChannel = UiInkChannel.Underline;
@@ -162,6 +166,7 @@ namespace DD.Prototype.UI
         private Vector2 _roundClusterHome;
         private Image _roundSmear;
         private UiFx _roundSmearFx;
+        private Image _roundCore;   // 08.10 (AD MUST-1): the letters' solid ink bed, riding their clip
         private RectTransform _roundSeal;
         private Image _roundSealImage;
         private UiFx _roundSealFx;
@@ -311,17 +316,21 @@ namespace DD.Prototype.UI
             // coin) never moves the point HudGoldTarget reports.
             _goldTarget = Place(UiFactory.NewRect("FlightTarget", root), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(24f, 24f));
 
-            _goldCounter = UiCounter.Create("Value", root, UiCounterStyle.Currency, 0, UiType.NumericM, UiColor.StateGold);
+            _goldCounter = UiCounter.Create("Value", root, UiCounterStyle.Currency, 0, GoldCounterType, UiColor.StateGold);
             RectTransform valueRect = UiFactory.Fill((RectTransform)_goldCounter.transform);
             valueRect.offsetMin = new Vector2(44f, 0f);
             _goldValue = _goldCounter.ValueText;
             InkAll(_goldCounter.gameObject);
 
-            _goldDelta = InkText("Delta", root, string.Empty, UiType.Label, UiColor.StateGold, TextAnchor.MiddleLeft);   // AD 8-R · A SHOULD-1: the 14 px floor
+            // 08.10 (AD SHOULD-2: "+25" read small and faint): the counter's own numeric face at GoldDeltaCapShare of its size
+            // (18 of 22 - the cap ≥ 0.75 × the counter's), bold, in the HUD ink outline - its contrast is UiKitContrast's
+            // "HUD currency counter" pair (StateGold on the ink over a white world).
+            _goldDelta = InkText("Delta", root, string.Empty, UiType.NumericS, UiColor.StateGold, TextAnchor.MiddleLeft);
+            _goldDelta.fontSize = Mathf.Round(UiTokens.FontSize(GoldCounterType) * GoldDeltaCapShare);
             _goldDelta.fontStyle = FontStyles.Bold;
             UiHudInk.Apply(_goldDelta);
             _goldDeltaHome = new Vector2(112f, 0f);
-            Place(_goldDelta.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _goldDeltaHome, new Vector2(72f, UiFactory.LineHeight(UiType.Label)));
+            Place(_goldDelta.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _goldDeltaHome, new Vector2(72f, UiFactory.LineHeight(GoldCounterType)));
             _goldDelta.canvasRenderer.SetAlpha(0f);
         }
 
@@ -386,6 +395,19 @@ namespace DD.Prototype.UI
             Place(_roundClip, new Vector2(1f, 0.5f), new Vector2(0f, 0.5f), new Vector2(-letters, 0f), new Vector2(0f, height + 2f * RoundClipPad));
             UiFactory.ClipContent(_roundClip);
             _roundGroup = UiFactory.Group(_roundClip.gameObject);
+            // 08.10 (AD MUST-1, the Mac's bonsai behind XIV): a dry plate lets the world through the letters, so they lie on a
+            // solid ink core - HudInk at HudArt.CoreAlpha 0.92 over their ink band (+1 px), a 4 px soft edge (the kit's
+            // Gaussian 9-slice), under the letters inside their clip: it opens with them (R2) and leaves with them (R1). The
+            // plate stays the texture round it - head, tail and the band's margins. Laid by LayRound to each numeral's ink.
+            _roundCore = UiFactory.NewImage("InkCore", _roundClip, UiColor.HudInk, UiSprites.SoftShadow);
+            _roundCore.type = Image.Type.Sliced;
+            _roundCore.pixelsPerUnitMultiplier = UiSprites.SoftShadowReach / HudArt.CoreFalloffPx;
+            _roundCore.raycastTarget = false;
+            Fade(_roundCore, HudArt.CoreAlpha);
+            _roundCore.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            _roundCore.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            _roundCore.rectTransform.pivot = new Vector2(0f, 0.5f);
+            _roundCore.enabled = false;
             _roundBox = UiFactory.NewRect("Numeral", _roundClip);
             Place(_roundBox, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(RoundClipPad, 0f), new Vector2(0f, height));
             _roundValue = InkText("RoundValue", _roundBox, RunHudViewModel.Placeholder, RoundNumeralType, UiColor.TextPrimary, TextAnchor.MiddleRight);
@@ -509,8 +531,43 @@ namespace DD.Prototype.UI
 
             _roundClip.anchoredPosition = new Vector2(-(_roundRunRight + width + RoundClipPad), 0f);
             _roundClip.sizeDelta = new Vector2(width + 2f * RoundClipPad, _roundClip.sizeDelta.y);
+            LayRoundCore(round, width);
             return width;
         }
+
+        /// <summary>
+        /// AD MUST-1 (08.10): the core under <paramref name="round"/>'s letters - their ink band (HudRoundNumeral.InkBand: the
+        /// tallest letter's top, the deepest foot, the last letter's reach past the run) plus HudArt.CorePadPx solid and
+        /// HudArt.CoreFalloffPx soft on every side, in the clip's frame (the box starts RoundClipPad in, the cap centred). On the
+        /// AP-032 plate with the glyph letters only; the AP-012 fallback keeps its look.
+        /// </summary>
+        private void LayRoundCore(int round, float width)
+        {
+            bool on = _roundSmearAuthored && _roundNumeral.DrawsGlyphsFor(round);
+            if (_roundCore.enabled != on)
+            {
+                _roundCore.enabled = on;
+            }
+
+            if (!on)
+            {
+                return;
+            }
+
+            float h = _roundNumeral.Height;
+            float topEm, bottomEm, pastEndEm;
+            HudRoundNumeral.InkBand(round, out topEm, out bottomEm, out pastEndEm);
+            float reach = HudArt.CorePadPx + HudArt.CoreFalloffPx;
+            RectTransform core = _roundCore.rectTransform;
+            core.sizeDelta = new Vector2(width + pastEndEm * h + 2f * reach, (topEm + bottomEm) * h + 2f * reach);
+            core.anchoredPosition = new Vector2(RoundClipPad - reach, 0.5f * (topEm - bottomEm) * h);
+        }
+
+        /// <summary>The letters' ink core (tests, captures; disabled off the AP-032 plate).</summary>
+        public Image RoundCore => _roundCore;
+
+        /// <summary>The plate's width now (the round cluster's; tests, captures).</summary>
+        public float RoundPlateWidth => _roundCluster != null ? _roundCluster.sizeDelta.x : 0f;
 
         /// <summary>
         /// WP-094 · the round transition (HAREKET-HUD R1 → R3; S-09 decision (c)), one UiMotion timeline with cues:

@@ -316,6 +316,89 @@ namespace DD.Prototype.UI
 
         // ------------------------------------------------------------------ plumbing
 
+        // ---- WP-094 (AD SHOULD-1, 08.10): the damage edge in the brush language
+
+        /// <summary>The brush edge's texture: its length along the screen edge and its depth into the screen (texels).</summary>
+        public const int BrushEdgeLength = 512;
+        public const int BrushEdgeDepth = 64;
+
+        /// <summary>
+        /// The damage edge's dry-brush ramp for <paramref name="edge"/> (opaque at that screen edge): a stroke laid along the edge
+        /// - a ragged inner reach (the brush's pressure, low frequency along the edge), bristle streaks parallel to it that dry
+        /// toward the inner end, short dry breaks in its inner third and soft ends - instead of the generic smooth gradient
+        /// (HIS-SOZLESMESI principle 7). Procedural (0 credits), one 512 × 64 texture per edge, built once.
+        /// </summary>
+        public static Sprite BrushEdge(UiScreenEdge edge)
+        {
+            switch (edge)
+            {
+                case UiScreenEdge.Left: return GetOrCreate("brushEdgeLeft", () => CreateBrushEdge(UiScreenEdge.Left));
+                case UiScreenEdge.Right: return GetOrCreate("brushEdgeRight", () => CreateBrushEdge(UiScreenEdge.Right));
+                case UiScreenEdge.Top: return GetOrCreate("brushEdgeTop", () => CreateBrushEdge(UiScreenEdge.Top));
+                default: return GetOrCreate("brushEdgeBottom", () => CreateBrushEdge(UiScreenEdge.Bottom));
+            }
+        }
+
+        /// <summary>
+        /// The brush edge's α at <paramref name="along"/> (0..1 along the screen edge) and <paramref name="depth"/> (0 at the
+        /// screen edge, 1 at the texture's inner end). Public for the tests: full at the edge, nothing past the reach.
+        /// </summary>
+        public static float BrushEdgeAlpha(float along, float depth)
+        {
+            float wave = 0.6f * Mathf.Sin(2f * Mathf.PI * (along * 2.3f + 0.17f)) + 0.4f * Mathf.Sin(2f * Mathf.PI * (along * 5.1f + 0.6f));
+            float reach = 0.68f + 0.2f * wave;                       // 0.48 … 0.88 of the depth
+            float k = Mathf.Clamp01(depth / reach);
+            float body = 1f - k * k * (3f - 2f * k);
+            int band = Mathf.FloorToInt(depth * 40f);
+            float streak = 1f - 0.45f * Hash01(band) * k;            // bristle streaks, drier toward the inner end
+            int segment = Mathf.FloorToInt(along * 24f);
+            float dry = k > 0.55f && Hash01(band * 31 + segment * 7 + 3) > 0.72f ? 0.25f : 1f;
+            float ends = Smooth01(along / 0.06f) * Smooth01((1f - along) / 0.06f);
+            return Mathf.Clamp01(body * streak * dry * ends);
+        }
+
+        private static float Smooth01(float x)
+        {
+            x = Mathf.Clamp01(x);
+            return x * x * (3f - 2f * x);
+        }
+
+        private static float Hash01(int n)
+        {
+            float v = Mathf.Sin(n * 12.9898f + 78.233f) * 43758.5453f;
+            return v - Mathf.Floor(v);
+        }
+
+        private static Sprite CreateBrushEdge(UiScreenEdge edge)
+        {
+            bool vertical = edge == UiScreenEdge.Left || edge == UiScreenEdge.Right;
+            int width = vertical ? BrushEdgeDepth : BrushEdgeLength;
+            int height = vertical ? BrushEdgeLength : BrushEdgeDepth;
+            Texture2D texture = NewTexture(width, height);
+            var pixels = new Color32[width * height];
+            for (int a = 0; a < BrushEdgeLength; a++)
+            {
+                float along = a / (BrushEdgeLength - 1f);
+                for (int d = 0; d < BrushEdgeDepth; d++)
+                {
+                    byte alpha = (byte)Mathf.RoundToInt(BrushEdgeAlpha(along, d / (BrushEdgeDepth - 1f)) * 255f);
+                    int x, y;
+                    switch (edge)
+                    {
+                        case UiScreenEdge.Left: x = d; y = a; break;
+                        case UiScreenEdge.Right: x = width - 1 - d; y = a; break;
+                        case UiScreenEdge.Top: x = a; y = height - 1 - d; break;
+                        default: x = a; y = d; break;
+                    }
+
+                    pixels[y * width + x] = new Color32(255, 255, 255, alpha);
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
         private static Sprite GetOrCreate(string key, System.Func<Sprite> factory)
         {
             Sprite sprite;

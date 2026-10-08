@@ -215,6 +215,24 @@ namespace DD.Prototype.UI
 
         private readonly Image[] _edges = new Image[EdgeCount];
 
+        /// <summary>
+        /// WP-094 (AD SHOULD-1, 08.10): the left and bottom edges' quiet segments - the stretch beside the gold and health
+        /// clusters (bottom-left), drawn at <see cref="QuietCornerAlpha"/> at most so the edge never paints the numbers; the
+        /// main edge stops where the quiet segment starts. Null for the top and right edges.
+        /// </summary>
+        private readonly Image[] _quiet = new Image[EdgeCount];
+        private readonly float[] _quietShown = { -1f, -1f, -1f, -1f };
+        private RectTransform _quietA;
+        private RectTransform _quietB;
+        private Vector2 _quietSize = new Vector2(-1f, -1f);
+        private static readonly Vector3[] s_corners = new Vector3[4];
+
+        /// <summary>AD SHOULD-1: the edge layer's α at its peak over the gold / health clusters' box.</summary>
+        public const float QuietCornerAlpha = 0.35f;
+
+        /// <summary>The quiet corner's reach past the clusters' box (ref px).</summary>
+        public const float QuietCornerMargin = 8f;
+
         /// <summary>Peak this edge was raised to, 0..1 before the peak-alpha scale.</summary>
         private readonly float[] _amplitude = new float[EdgeCount];
 
@@ -276,25 +294,107 @@ namespace DD.Prototype.UI
 
             // Anchored to the boundary and stretched along it, so the band is a fixed
             // depth at every aspect ratio while the canvas scaler handles the rest.
+            // WP-094 (AD SHOULD-1, 08.10): a dry brush laid along each edge (UiSprites.BrushEdge), in the vermilion token -
+            // not a smooth gradient.
             _edges[(int)UiScreenEdge.Left] = BuildEdge(
-                "Left", UiSprites.FadeLeft,
+                "Left", UiSprites.BrushEdge(UiScreenEdge.Left),
                 new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
                 new Vector2(UiTokens.DamageEdgeDepth, 0f));
 
             _edges[(int)UiScreenEdge.Right] = BuildEdge(
-                "Right", UiSprites.FadeRight,
+                "Right", UiSprites.BrushEdge(UiScreenEdge.Right),
                 new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
                 new Vector2(UiTokens.DamageEdgeDepth, 0f));
 
             _edges[(int)UiScreenEdge.Top] = BuildEdge(
-                "Top", UiSprites.FadeDown,
+                "Top", UiSprites.BrushEdge(UiScreenEdge.Top),
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, UiTokens.DamageEdgeDepth));
 
             _edges[(int)UiScreenEdge.Bottom] = BuildEdge(
-                "Bottom", UiSprites.FadeUp,
+                "Bottom", UiSprites.BrushEdge(UiScreenEdge.Bottom),
                 new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, UiTokens.DamageEdgeDepth));
+
+            // The quiet segments, empty until SetQuietCorner names the clusters.
+            _quiet[(int)UiScreenEdge.Left] = BuildEdge(
+                "LeftQuiet", UiSprites.BrushEdge(UiScreenEdge.Left),
+                Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            _quiet[(int)UiScreenEdge.Bottom] = BuildEdge(
+                "BottomQuiet", UiSprites.BrushEdge(UiScreenEdge.Bottom),
+                Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+        }
+
+        /// <summary>
+        /// WP-094 (AD SHOULD-1): the clusters the edge must not paint - the gold and the health at the bottom-left. Their box
+        /// (+ <see cref="QuietCornerMargin"/>) is re-measured at each onset (the gold moves in the danger posture; a 16:9 frame
+        /// on an ultra-wide moves both); no allocation.
+        /// </summary>
+        public void SetQuietCorner(RectTransform a, RectTransform b)
+        {
+            _quietA = a;
+            _quietB = b;
+            LayQuiet();
+        }
+
+        /// <summary>The quiet corner's size from the layer's bottom-left (ref px; −1 before it is set). Tests.</summary>
+        public Vector2 QuietCorner => _quietSize;
+
+        /// <summary>The quiet segment of an edge (the left and bottom ones; null otherwise). Tests.</summary>
+        public Graphic QuietGraphic(UiScreenEdge edge)
+        {
+            return _quiet[(int)edge];
+        }
+
+        private void LayQuiet()
+        {
+            if (_quietA == null && _quietB == null)
+            {
+                return;
+            }
+
+            var self = (RectTransform)transform;
+            Rect frame = self.rect;
+            float right = 0f, top = 0f;
+            for (int c = 0; c < 2; c++)
+            {
+                RectTransform cluster = c == 0 ? _quietA : _quietB;
+                if (cluster == null)
+                {
+                    continue;
+                }
+
+                cluster.GetWorldCorners(s_corners);
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 local = self.InverseTransformPoint(s_corners[i]);
+                    right = Mathf.Max(right, local.x - frame.xMin);
+                    top = Mathf.Max(top, local.y - frame.yMin);
+                }
+            }
+
+            var size = new Vector2(right + QuietCornerMargin, top + QuietCornerMargin);
+            if ((size - _quietSize).sqrMagnitude < 0.25f)
+            {
+                return;
+            }
+
+            _quietSize = size;
+            float depth = UiTokens.DamageEdgeDepth;
+
+            // The left edge stops at the quiet corner's top; its quiet segment runs under it, from the bottom.
+            RectTransform left = _edges[(int)UiScreenEdge.Left].rectTransform;
+            left.offsetMin = new Vector2(left.offsetMin.x, size.y);
+            RectTransform leftQuiet = _quiet[(int)UiScreenEdge.Left].rectTransform;
+            leftQuiet.sizeDelta = new Vector2(depth, size.y);
+
+            // The bottom edge starts at the quiet corner's right; its quiet segment runs from the left edge's depth (the corner
+            // square is the left segment's alone - two quiet layers never stack over the clusters).
+            RectTransform bottom = _edges[(int)UiScreenEdge.Bottom].rectTransform;
+            bottom.offsetMin = new Vector2(size.x, bottom.offsetMin.y);
+            RectTransform bottomQuiet = _quiet[(int)UiScreenEdge.Bottom].rectTransform;
+            bottomQuiet.anchoredPosition = new Vector2(depth, 0f);
+            bottomQuiet.sizeDelta = new Vector2(Mathf.Max(0f, size.x - depth), depth);
         }
 
         private Image BuildEdge(string name, Sprite ramp, Vector2 anchorMin, Vector2 anchorMax,
@@ -353,6 +453,7 @@ namespace DD.Prototype.UI
 
             float now = UiFxGlobals.Now;
             bool raised = false;
+            LayQuiet();   // AD SHOULD-1: the clusters may have moved since the last hit (no allocation; a no-op when not)
 
             for (int i = 0; i < EdgeCount; i++)
             {
@@ -504,6 +605,33 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// AD SHOULD-1: the quiet segment beside the gold and health takes the edge's α scaled so its peak is
+        /// <see cref="QuietCornerAlpha"/> (0.35 of 0.92) - written only when the 8-bit value moves, like the edge.
+        /// </summary>
+        private void DrawQuiet(int index, float alpha)
+        {
+            Image quiet = _quiet[index];
+            if (quiet == null)
+            {
+                return;
+            }
+
+            float scaled = alpha * (QuietCornerAlpha / UiTokens.DamageEdgePeakAlpha);
+            bool on = scaled > 0.001f && _quietSize.x > 0f;
+            if (quiet.enabled != on)
+            {
+                quiet.enabled = on;
+                _quietShown[index] = -1f;
+            }
+
+            if (on && (_quietShown[index] < 0f || Mathf.Abs(scaled - _quietShown[index]) >= 1f / 255f))
+            {
+                _quietShown[index] = scaled;
+                quiet.canvasRenderer.SetAlpha(scaled);
+            }
+        }
+
         private void Draw(int index, float level)
         {
             Image image = _edges[index];
@@ -517,6 +645,7 @@ namespace DD.Prototype.UI
             // value and not a fade floor.
             float alpha = Mathf.Clamp01(level) * UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale; // WP-022G reduce flashes
             bool on = alpha > 0.001f;
+            DrawQuiet(index, alpha);
 
             if (image.enabled != on)
             {

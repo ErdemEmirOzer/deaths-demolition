@@ -245,7 +245,7 @@ namespace DD.Prototype.Tests.EditMode
                 float inkStart = width - runRight - run + lsb * 44f;
                 Assert.GreaterOrEqual(inkStart, HudArt.SmearDenseLeft * texel - 0.01f, name + ": the first ink inside the dense zone");
                 Assert.AreEqual((HudArt.SmearNativeWidth - HudArt.SmearDenseRight) * texel + HudArt.SealFromDenseRight * seal, sealCentre, 1e-3f, name + ": the seal's place");
-                Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.45 em");
+                Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.55 em (AD MUST-2)");
                 Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f), runRight, 1e-3f, name + ": 0.22 em to the seal");
                 Assert.AreEqual(HudArt.SealGapEm * 44f, HudArt.SealGap(44f), 1e-4f, name + ": at cap 44 the 0.22 em rules (9.68 ≥ 9 px)");
             }
@@ -294,6 +294,216 @@ namespace DD.Prototype.Tests.EditMode
 
             Debug.Log("[DD-TEST] wp094.plateFit worst=" + worst.ToString("F1", CultureInfo.InvariantCulture) + " xxxviiiCap="
                 + HudArt.FitCap(cap, HudRoundNumeral.EmWidth(38, out lsb), lsb).ToString("F2", CultureInfo.InvariantCulture));
+        }
+
+        // ------------------------------------------------------------------ 08.10 AD MUST-1 / MUST-2
+
+        private static Texture2D LoadAtlas1024()
+        {
+            string path = Path.Combine(Application.dataPath, "_Prototype", "UI", "Art", "Resources", "UI", "Hud", HudArt.RomanLarge + ".png");
+            Assert.IsTrue(File.Exists(path), path);
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            Assert.IsTrue(texture.LoadImage(File.ReadAllBytes(path)), "the 1024 atlas decodes");
+            return texture;
+        }
+
+        /// <summary>A 256 cell's alpha at (x, y from the cell's TOP-left) - the atlas is read bottom-up.</summary>
+        private static float CellAlpha(Color32[] pixels, int width, int cell, int x, int y)
+        {
+            int row = cell / 4, col = cell % 4;
+            int px = col * 256 + x, py = width - 1 - (row * 256 + y);
+            return pixels[py * width + px].a / 255f;
+        }
+
+        /// <summary>
+        /// AD MUST-2 (08.10): the seal reads as a hanko, not an "o" - 0.55 em across (22 ref px at cap 40), its ring ≥ 0.08 em
+        /// thick. The ring is AP-032's own (the atlas' seal cell, measured here): its outer diameter is SealRingShareOfCell of the
+        /// cell and its stroke, at its chipped thinnest over 24 rays, keeps the floor at 0.55 em; the plate still fits ≤ 288
+        /// with cap 40 kept through XXIII.
+        /// </summary>
+        [Test]
+        public void Muhur_055em_HalkaKalinligi008emUstu_AtlastanOlculur_Plaka288()
+        {
+            Assert.AreEqual(0.55f, HudArt.SealEm, 1e-6f, "MUST-2: 0.55 em");
+            Texture2D atlas = LoadAtlas1024();
+            try
+            {
+                Color32[] pixels = atlas.GetPixels32();
+                int w = atlas.width;
+                int minX = 256, maxX = -1, minY = 256, maxY = -1;
+                for (int y = 0; y < 256; y++)
+                {
+                    for (int x = 0; x < 256; x++)
+                    {
+                        if (CellAlpha(pixels, w, HudArt.RomanSealCell, x, y) > 0.5f)
+                        {
+                            minX = Mathf.Min(minX, x); maxX = Mathf.Max(maxX, x); minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y);
+                        }
+                    }
+                }
+
+                float outer = 0.5f * ((maxX - minX + 1) + (maxY - minY + 1));
+                Assert.AreEqual(HudArt.SealRingShareOfCell * 256f, outer, 3f, "the ring's outer diameter is SealRingShareOfCell of the cell");
+                float cx = 0.5f * (minX + maxX + 1), cy = 0.5f * (minY + maxY + 1);
+                float thinnest = float.MaxValue, sum = 0f;
+                for (int ray = 0; ray < 24; ray++)
+                {
+                    float angle = ray * Mathf.PI / 12f, inside = 0f;
+                    for (float r = 0f; r < outer * 0.6f; r += 0.25f)
+                    {
+                        int x = Mathf.FloorToInt(cx + r * Mathf.Cos(angle)), y = Mathf.FloorToInt(cy + r * Mathf.Sin(angle));
+                        if (x >= 0 && x < 256 && y >= 0 && y < 256 && CellAlpha(pixels, w, HudArt.RomanSealCell, x, y) > 0.5f) inside += 0.25f;
+                    }
+
+                    thinnest = Mathf.Min(thinnest, inside);
+                    sum += inside;
+                }
+
+                float thinEm = thinnest / outer * HudArt.SealEm, meanEm = sum / 24f / outer * HudArt.SealEm;
+                Assert.GreaterOrEqual(thinEm, 0.08f, "MUST-2: the ring ≥ 0.08 em at its thinnest (" + thinnest + " of " + outer + " px)");
+                Assert.GreaterOrEqual(meanEm * RunHudScreen.RoundGlyphHeight, 3f, "≥ 3 px at 1080 (cap 40)");
+                Assert.AreEqual(22f, HudArt.SealEm * RunHudScreen.RoundGlyphHeight, 1e-3f, "22 ref px at cap 40");
+
+                var letters = new char[16];
+                foreach (int round in new[] { 1, 4, 9, 14, 23, 38, 88 })
+                {
+                    float lsb;
+                    float em = HudRoundNumeral.EmWidth(round, out lsb);
+                    float cap = HudArt.FitCap(RunHudScreen.RoundGlyphHeight, em, lsb);
+                    float width, height, runRight, sealCentre, seal;
+                    HudArt.LaySmear(cap, em * cap, lsb, out width, out height, out runRight, out sealCentre, out seal);
+                    Assert.LessOrEqual(width, HudArt.PlateMaxWidth + 0.01f, round + ": ≤ 288");
+                    Assert.GreaterOrEqual(runRight - (sealCentre + seal * 0.5f), HudArt.SealGapMinPx - 1e-3f, round + ": the gap ≥ 9 px");
+                    if (round <= 23)
+                    {
+                        Assert.AreEqual(RunHudScreen.RoundGlyphHeight, cap, 1e-4f, round + ": cap 40 kept through XXIII");
+                    }
+
+                    Debug.Log("[DD-TEST] wp094.seal round=" + RomanNumerals.Cached(round) + " cap=" + cap.ToString("0.00", CultureInfo.InvariantCulture)
+                        + " plate=" + width.ToString("0.0", CultureInfo.InvariantCulture) + " seal=" + seal.ToString("0.0", CultureInfo.InvariantCulture)
+                        + " stroke=" + (meanEm * cap).ToString("0.0", CultureInfo.InvariantCulture) + "px thinEm=" + thinEm.ToString("0.000", CultureInfo.InvariantCulture));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(atlas);
+            }
+        }
+
+        /// <summary>
+        /// AD MUST-1 (08.10): the letters' ink extents the core is laid to ARE the atlas' - per letter, the widest of its
+        /// alternates: the top over the baseline, the foot under it and the reach past the advance (α &gt; 0.1, 160 px per em,
+        /// the baseline 48 px over the cell's bottom). A table under the measure would leave ink off the core.
+        /// </summary>
+        [Test]
+        public void MurekkepBandi_TablolarAtlasinMurekkebiniKapsar()
+        {
+            Texture2D atlas = LoadAtlas1024();
+            try
+            {
+                Color32[] pixels = atlas.GetPixels32();
+                int w = atlas.width;
+                int[] kinds = { 0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4 };
+                var top = new float[5];
+                var below = new float[5];
+                var past = new float[5];
+                for (int cell = 0; cell < 12; cell++)
+                {
+                    int kind = kinds[cell];
+                    int minY = 256, maxY = -1, maxX = -1;
+                    for (int y = 0; y < 256; y++)
+                    {
+                        for (int x = 0; x < 256; x++)
+                        {
+                            if (CellAlpha(pixels, w, cell, x, y) > 0.1f)
+                            {
+                                minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y); maxX = Mathf.Max(maxX, x);
+                            }
+                        }
+                    }
+
+                    top[kind] = Mathf.Max(top[kind], (208f - minY) / 160f);
+                    below[kind] = Mathf.Max(below[kind], (maxY - 208f) / 160f);
+                    past[kind] = Mathf.Max(past[kind], (maxX + 1) / 160f - HudRoundNumeral.OriginX[kind] - HudRoundNumeral.Advance[kind]);
+                }
+
+                for (int kind = 0; kind < 5; kind++)
+                {
+                    string letter = HudRoundNumeral.Letters[kind].ToString();
+                    Assert.GreaterOrEqual(HudRoundNumeral.InkTopEm[kind], top[kind] - 0.002f, letter + ": the ink's top");
+                    Assert.GreaterOrEqual(HudRoundNumeral.InkBelowEm[kind], below[kind] - 0.002f, letter + ": the foot under the baseline");
+                    Assert.GreaterOrEqual(HudRoundNumeral.InkPastAdvanceEm[kind], past[kind] - 0.002f, letter + ": the reach past the advance");
+                    Assert.Less(HudRoundNumeral.InkTopEm[kind], top[kind] + 0.01f, letter + ": the table no taller than the ink (the core stays in the plate)");
+                }
+
+                float t, b, e;
+                HudRoundNumeral.InkBand(14, out t, out b, out e);
+                Assert.AreEqual(1.07f - 0.5f, t, 1e-4f, "XIV: V's top");
+                Assert.AreEqual(0.5f + 0.019f, b, 1e-4f, "XIV: X's foot");
+                Assert.AreEqual(HudRoundNumeral.InkPastAdvanceEm[1], e, 1e-4f, "XIV ends on V");
+            }
+            finally
+            {
+                Object.DestroyImmediate(atlas);
+            }
+        }
+
+        /// <summary>
+        /// AD MUST-1 (08.10) · the composite under the letters, in linear light: the solid ink core (0.92) with the plate (0.9 ×
+        /// mask) over it holds ≥ 0.87 at every mask value - the dry plate's gaps included - so a cream glyph pixel, at its full
+        /// face and at a soft core α 0.8, reads ≥ 4.5:1 over a pure white world and over B1 #D8D2C4. The model reproduces the
+        /// AD's arithmetic (ink 0.85 over white: under 4.5; 0.87: over), and the core's soft edge stays inside the round's
+        /// cluster (the plate's top margin ≥ 32).
+        /// </summary>
+        [Test]
+        public void MurekkepCekirdegi_BilesikAlfa_DogrusalIsikta_BeyazDunyadaKontrast45Ustu()
+        {
+            Color cream = UiTokens.Get(UiColor.TextPrimary);
+            Color ink = UiTokens.Get(UiColor.HudInk);
+            ink.a = 1f;
+            Color white = Color.white;
+            Color b1 = new Color(0xD8 / 255f, 0xD2 / 255f, 0xC4 / 255f, 1f);
+            Assert.AreEqual(0xF3, Mathf.RoundToInt(cream.r * 255f), "cream #F3EEE3");
+            Assert.AreEqual(0x12, Mathf.RoundToInt(ink.r * 255f), "ink #12100F");
+
+            // The AD's anchors: 0.85 fails 4.5 over white, 0.87 clears it.
+            Assert.Less(HudArt.GlyphContrast(cream, 1f, ink, 0.85f, white), 4.5f, "ink 0.85 over white < 4.5 (AD: 4.39)");
+            Assert.GreaterOrEqual(HudArt.GlyphContrast(cream, 1f, ink, 0.87f, white), 4.5f, "ink 0.87 over white ≥ 4.5 (AD: ≈ 4.86)");
+
+            var opacities = new List<float>();
+            float worst = float.MaxValue;
+            for (int i = 0; i <= 20; i++)
+            {
+                float mask = i / 20f;
+                float opacity = HudArt.UnderGlyphOpacity(mask);
+                opacities.Add(opacity);
+                Assert.GreaterOrEqual(opacity, 0.87f, "under the letters ≥ 0.87 at plate mask " + mask);
+                foreach (Color world in new[] { white, b1 })
+                {
+                    foreach (float glyphAlpha in new[] { 1f, 0.8f })
+                    {
+                        float ratio = HudArt.GlyphContrast(cream, glyphAlpha, ink, opacity, world);
+                        worst = Mathf.Min(worst, ratio);
+                        Assert.GreaterOrEqual(ratio, 4.5f, "mask " + mask + " glyph α " + glyphAlpha + " world " + world);
+                    }
+                }
+            }
+
+            opacities.Sort();
+            float median = opacities[opacities.Count / 2];
+            Assert.GreaterOrEqual(median, 0.85f, "the effective opacity's median under the letters ≥ 0.85");
+            Assert.AreEqual(HudArt.CoreAlpha, HudArt.UnderGlyphOpacity(0f), 1e-6f, "a dry gap: the core alone");
+
+            // The core's soft edge stays in the cluster (cap 40, the tallest letter): the plate's top margin holds 32.
+            float reach = HudArt.CorePadPx + HudArt.CoreFalloffPx;
+            float coreTop = (HudRoundNumeral.InkTopEm[1] - 0.5f) * RunHudScreen.RoundGlyphHeight + reach;
+            Assert.LessOrEqual(coreTop, RunHudScreen.RoundClusterHeight * 0.5f, "the core's top inside the cluster (margin ≥ 32 ref)");
+            Debug.Log("[DD-TEST] wp094.plateInk core=" + HudArt.CoreAlpha.ToString("0.00", CultureInfo.InvariantCulture)
+                + " white1=" + HudArt.GlyphContrast(cream, 1f, ink, HudArt.CoreAlpha, white).ToString("0.00", CultureInfo.InvariantCulture)
+                + " white08=" + HudArt.GlyphContrast(cream, 0.8f, ink, HudArt.CoreAlpha, white).ToString("0.00", CultureInfo.InvariantCulture)
+                + " b1=" + HudArt.GlyphContrast(cream, 0.8f, ink, HudArt.CoreAlpha, b1).ToString("0.00", CultureInfo.InvariantCulture)
+                + " worst=" + worst.ToString("0.00", CultureInfo.InvariantCulture) + " opacityMedian=" + median.ToString("0.000", CultureInfo.InvariantCulture)
+                + " coreTop=" + coreTop.ToString("0.0", CultureInfo.InvariantCulture));
         }
     }
 }

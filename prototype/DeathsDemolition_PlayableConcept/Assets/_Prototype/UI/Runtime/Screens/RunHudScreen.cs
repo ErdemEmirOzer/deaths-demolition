@@ -374,6 +374,12 @@ namespace DD.Prototype.UI
             // WP-068 8-R (user decision 24.09, concept A "Mühür ve Fırça"): no panels - each readout is one ink object
             // at its corner (RunHudScreen.Ink.cs).
             BuildInkClusters();
+            if (_damageEdges != null)
+            {
+                // WP-094 (AD SHOULD-1, 08.10): the edge never paints the gold and the health - its bottom-left stretch is quiet.
+                _damageEdges.SetQuietCorner(_goldCluster, _healthPanel);
+            }
+
             BuildCentreChannel();
             BuildMarker();
             BuildReticle();

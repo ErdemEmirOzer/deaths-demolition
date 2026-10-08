@@ -106,6 +106,10 @@ namespace DD.Prototype.UI
                 {
                     C("Counter", UiColor.TextPrimary, UiColor.SurfacePanel, Text),
                     C("Currency counter", UiColor.StateGold, UiColor.SurfacePanel, Text),
+                    // WP-094 (AD SHOULD-5, 08.10): the HUD gold counter and its "+N" carry the HUD ink outline (UiHudInk, HudInk
+                    // α 0.98) and no panel - measured on that ink over the brightest world (03's cloud reflection) and the darkest.
+                    Over("HUD currency counter / its +N on the ink outline over a white world", UiColor.StateGold, UiColor.HudInk, UiColor.TextPrimary, Text),
+                    Over("HUD currency counter / its +N on the ink outline over a black world", UiColor.StateGold, UiColor.HudInk, UiColor.SurfaceInset, Text),
                     C("Fraction maximum", UiColor.TextSecondary, UiColor.SurfacePanel, Text),
                 }
             },

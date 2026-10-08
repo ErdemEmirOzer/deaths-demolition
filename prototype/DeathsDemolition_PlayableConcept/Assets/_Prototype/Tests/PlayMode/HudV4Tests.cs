@@ -331,6 +331,28 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.AreEqual(sealDiameter / HudArt.SealRingShareOfCell, cell.width, 0.5f, where + ": the cell drawn round the ring");
                     Assert.AreEqual(seal.center.x, cell.center.x, 0.5f, where + ": the cell centred on the ring");
                 }
+
+                // 08.10 (AD MUST-1): the letters lie on their ink core - their ink band + 1 px solid + 4 px soft on every side,
+                // inside their clip (never cut by its mask), clear of the seal, and inside the cluster (the top margin ≥ 32).
+                if (hud.RoundNumeral.DrawsGlyphs)
+                {
+                    Assert.IsTrue(hud.RoundCore.enabled, where + ": the ink core under the letters");
+                    Rect core = CanvasRectOf(screen, hud.RoundCore.rectTransform);
+                    float inkTop, inkBottom, pastEnd;
+                    HudRoundNumeral.InkBand(hud.RoundNumeral.Value, out inkTop, out inkBottom, out pastEnd);
+                    float cap = hud.RoundCap, reach = HudArt.CorePadPx + HudArt.CoreFalloffPx;
+                    float inkLeft = letters.xMin + HudArt.NumeralClipPad;
+                    Assert.AreEqual(inkLeft - reach, core.xMin, 0.5f, where + ": the core's left");
+                    Assert.AreEqual(inkLeft + hud.RoundNumeral.Width + pastEnd * cap + reach, core.xMax, 0.5f, where + ": the core's right");
+                    Assert.AreEqual(round.center.y + inkTop * cap + reach, core.yMax, 0.5f, where + ": the core's top");
+                    Assert.AreEqual(round.center.y - inkBottom * cap - reach, core.yMin, 0.5f, where + ": the core's bottom");
+                    Assert.GreaterOrEqual(core.xMin, letters.xMin - 0.01f, where + ": inside the clip");
+                    Assert.LessOrEqual(core.xMax, letters.xMax + 0.01f, where + ": inside the clip");
+                    Assert.LessOrEqual(core.yMax, letters.yMax + 0.01f, where + ": inside the clip");
+                    Assert.LessOrEqual(core.yMax, round.yMax + 0.01f, where + ": inside the cluster - the plate's top margin ≥ 32");
+                    Assert.Less(core.xMax, seal.xMin, where + ": the core clear of the seal");
+                    Assert.AreEqual(HudArt.CoreAlpha, hud.RoundCore.color.a, 1e-3f, where + ": the core at 0.92");
+                }
                 Assert.Greater(round.xMin, canvasRect.center.x, where + ": the plate in the right half");
             }
             else
@@ -542,6 +564,17 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return new WaitForSecondsRealtime(UiTokens.DamageEdgeRiseSeconds + 0.04f);
                 Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Left), 0.3f, "D1: left edge");
                 Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Right), 0.3f, "D1: right edge");
+                // AD SHOULD-1 (08.10): beside the gold and the health the left edge is quiet (≤ 0.35) and its main stroke stops
+                // above them - the edge never paints the numbers.
+                Assert.Greater(hud.DamageEdges.QuietCorner.y, 0f, "the quiet corner is laid");
+                Graphic leftQuiet = hud.DamageEdges.QuietGraphic(UiScreenEdge.Left);
+                Assert.IsTrue(leftQuiet.enabled, "the quiet segment lights with its edge");
+                Assert.LessOrEqual(leftQuiet.canvasRenderer.GetAlpha(), UiHitDirectionLayer.QuietCornerAlpha + 1e-3f, "≤ 0.35 over the gold and the health");
+                var mainCorners = new Vector3[4];
+                var goldCorners = new Vector3[4];
+                hud.DamageEdges.EdgeGraphic(UiScreenEdge.Left).rectTransform.GetWorldCorners(mainCorners);
+                ClusterNamed(hud, "Gold").GetWorldCorners(goldCorners);
+                Assert.GreaterOrEqual(mainCorners[0].y, goldCorners[1].y - 0.01f, "the main left stroke starts above the gold");
 
                 // H5: LOW - the heart beats ≤ 1.1 Hz and the coral rim breathes; the words never pulse.
                 yield return new WaitForSecondsRealtime(0.6f);

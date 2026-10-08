@@ -84,8 +84,13 @@ namespace DD.Prototype.UI
         public const float PlateCeiling = 320f;
         public const float CapFloor = 32f;
 
-        /// <summary>The seal: 0.45 em, its left edge 0.22 em after the last glyph's advance, its centre 0.55 diameters left of the dense zone's right end.</summary>
-        public const float SealEm = 0.45f;
+        /// <summary>
+        /// The seal: its ring's outer diameter, its left edge the gap after the last glyph's advance, its centre 0.55 diameters
+        /// left of the dense zone's right end. 08.10 (AD MUST-2, P-07 AD note 3's fallback): 0.45 → 0.55 em - at 0.45 the ring
+        /// read as a typographic "o" (XIV°); 22 ref px at cap 40, its stroke (AP-032's ring, 15.5 of 72 cell px - ≥ 11.25 at its
+        /// chipped thinnest) then ≥ 0.086 em, over the 0.08 em floor (HudAp032Tests measures the atlas).
+        /// </summary>
+        public const float SealEm = 0.55f;
         public const float SealGapEm = 0.22f;
         public const float SealFromDenseRight = 0.55f;
 
@@ -98,6 +103,44 @@ namespace DD.Prototype.UI
         /// any cap. 0.22 em is 7.3 px at XXXVIII's fitted cap 33; from cap 41 up the 0.22 em rules.
         /// </summary>
         public const float SealGapMinPx = NumeralClipPad + 1f;
+
+        // ---- 08.10 (AD MUST-1): the ink core under the letters - the plate's legibility on any world
+
+        /// <summary>AP-032's smear plate takes the HUD ink at this alpha (§3.3 "kodda ink, α ≤ 0,90").</summary>
+        public const float PlateAlpha = 0.9f;
+
+        /// <summary>
+        /// The solid ink core under the letters' band (HudInk at this α, soft-edged, under the glyphs and riding their clip): a
+        /// dry plate lets the world through (the Mac's bonsai behind XIV), so the letters carry their own ground. At 0.92 over a
+        /// white world the cream face reads 6.73:1 and a glyph core pixel at α 0.8 still 5.58:1 (≥ 4.5); 0.85 gave 4.44, 0.87
+        /// 4.91 - the AD's floor - so 0.92 keeps headroom for the glyphs' soft cores (<see cref="GlyphContrast"/>).
+        /// </summary>
+        public const float CoreAlpha = 0.92f;
+
+        /// <summary>The core's solid part reaches this far past the letters' ink; its soft falloff this much further (ref px).</summary>
+        public const float CorePadPx = 1f;
+        public const float CoreFalloffPx = 4f;
+
+        /// <summary>The ink's opacity under a glyph where the plate's mask is <paramref name="plateMask"/>: the core, with the plate over it.</summary>
+        public static float UnderGlyphOpacity(float plateMask)
+        {
+            return 1f - (1f - CoreAlpha) * (1f - PlateAlpha * Mathf.Clamp01(plateMask));
+        }
+
+        /// <summary>
+        /// WCAG contrast of a <paramref name="glyph"/> pixel at <paramref name="glyphAlpha"/> against its ground - the
+        /// <paramref name="ink"/> at <paramref name="inkOpacity"/> over the <paramref name="world"/> - composited in LINEAR light
+        /// (the project's colour space: the GPU blends after the sRGB decode), whatever the editor's setting.
+        /// </summary>
+        public static float GlyphContrast(Color glyph, float glyphAlpha, Color ink, float inkOpacity, Color world)
+        {
+            Color w = world.linear, k = ink.linear, g = glyph.linear;
+            float a = Mathf.Clamp01(inkOpacity), ga = Mathf.Clamp01(glyphAlpha);
+            float groundR = k.r * a + w.r * (1f - a), groundG = k.g * a + w.g * (1f - a), groundB = k.b * a + w.b * (1f - a);
+            float ground = 0.2126f * groundR + 0.7152f * groundG + 0.0722f * groundB;
+            float face = 0.2126f * (g.r * ga + groundR * (1f - ga)) + 0.7152f * (g.g * ga + groundG * (1f - ga)) + 0.0722f * (g.b * ga + groundB * (1f - ga));
+            return (Mathf.Max(face, ground) + 0.05f) / (Mathf.Min(face, ground) + 0.05f);
+        }
 
         /// <summary>The run-to-ring gap at <paramref name="cap"/>: 0.22 em, never under <see cref="SealGapMinPx"/>.</summary>
         public static float SealGap(float cap)
