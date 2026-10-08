@@ -47,7 +47,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// DD_R2_MEASURE_DIR is set, after its source checks and before its threshold assert.
     /// </summary>
     [TestFixture]
-    [Category("WP083")]
     public sealed class R2LokomotionIkincilTests
     {
         public const string L4Name = "DD.Prototype.Tests.PlayMode.R2LokomotionIkincilTests.L4_IkincilHareket_DurusSonrasiOturma";
@@ -76,12 +75,16 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator TearDown()
         {
             Time.captureDeltaTime = 0f;
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();   // input zeroed, crowd cleared (EnemyFactory.ClearAll), config restored
             _s = null;
         }
 
         // ------------------------------------------------------------------------------------------------------------ L4
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
@@ -253,6 +256,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------------------------------------------------ L5
 
+        [Category("WP083")]
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]

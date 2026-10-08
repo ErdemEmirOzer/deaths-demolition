@@ -30,7 +30,6 @@ namespace DD.Art.Tests.PlayMode
     /// </summary>
     [TestFixture]
     [Explicit("S-06 diagnostic — shotgun muzzle pitch after the shot (AD r4 M3)")]
-    [Category("Diagnostics")]
     public sealed class ShotgunMuzzleDiagTests
     {
         private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -68,10 +67,12 @@ namespace DD.Art.Tests.PlayMode
 
         // User 06.10: the game and its tests are top-down only — the top-down side runs uncategorised, the FP / TP side keeps its rows
         // under FPTP (main-ci leaves that category out); both stay Explicit diagnostics like the fixture.
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(900000)]
         public IEnumerator Tani_Pompali_NamluAcisi_AtesSonrasi_Ustten() => Calis(new[] { CameraMode.TopDown });
 
+        [Category("Diagnostics")]
         [UnityTest]
         [Timeout(900000)]
         [Category("FPTP")]

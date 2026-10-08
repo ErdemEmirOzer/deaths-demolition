@@ -108,7 +108,7 @@ snapshot() { for f in "$F1" "$F2" "${UIFILES[@]}"; do echo "$(dd_sha "$f")  $f";
 #    command lines, so a queued player-run.sh or a codesign of the .app is no Player; a failed ps counts as a live Player
 #    (review NIT: fail closed). DD_GUARD_PLAYER_RE: the guard's own pattern knob, fixtures only — logged when set.
 trap 'dd_slot_release smoke; dd_slot_release player' EXIT
-dd_slot_acquire player || exit $?  # WP-043D: every Player launch holds the 'player' slot (never during main-ci)
+dd_slot_acquire player || exit $?  # WP-043D: every Player launch holds the 'player' slot
 dd_slot_acquire smoke || exit $?   # slot.sh v4 'smoke' kind (limit 1): only one player smoke at a time — release smokes write the real profile
 [ -n "${DD_GUARD_PLAYER_RE:-}" ] && dd_log "smoke: DD_GUARD_PLAYER_RE is set ('$DD_GUARD_PLAYER_RE') — fixture Player pattern in use"
 if PS=$(ps -Ao pid=,comm= 2>/dev/null) && [ -n "$PS" ]; then

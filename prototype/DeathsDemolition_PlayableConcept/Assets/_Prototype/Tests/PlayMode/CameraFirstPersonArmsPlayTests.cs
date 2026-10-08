@@ -17,6 +17,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// copy, so a visible world body would double the arms; the FP arms copy is shown, draws at least one renderer and none of
     /// them is a head. Evidence frames (ahead, 60° up, 60° down) go to temporaryCachePath for the art review.
     /// </summary>
+    [Category("FPTP")]
     public class CameraFirstPersonArmsPlayTests
     {
         private bool _armsBefore;

@@ -23,7 +23,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// alone and with three zombies round the player — the drift. Reports; asserts only that the record has the motion in it.
     /// </summary>
     [TestFixture]
-    [Category("Diagnostics")]
     public sealed class Wp087HareketOlcumTests
     {
         private SpecialWeaponSahne _s;
@@ -47,11 +46,13 @@ namespace DD.Prototype.Tests.PlayMode
 
         // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps_Ustten is the top-down run;
         // Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps keeps its original rows under FPTP (main-ci leaves that category out).
+        [Category("Diagnostics")]
         [UnityTest]
         [Explicit]
         [Timeout(1800000)]
         public IEnumerator Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps_Ustten() => Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20FpsCore(new[] { CameraMode.TopDown });
 
+        [Category("Diagnostics")]
         [UnityTest]
         [Explicit]
         [Timeout(1800000)]

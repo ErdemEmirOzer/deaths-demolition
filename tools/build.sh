@@ -70,7 +70,7 @@ fi
 if [ "$NOWAIT" -eq 1 ] && [ "$(dd_unity_count)" -ge "$DD_MAX_UNITY" ]; then dd_log "busy: $(dd_unity_count) Unity batch processes (limit $DD_MAX_UNITY)"; exit 75; fi
 trap 'dd_slot_release' EXIT
 dd_slot_acquire || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
-dd_disk_gate || exit $?   # C-00 30.09: no Unity below 15 GiB free disk / above 12 GiB swap
+dd_disk_gate || exit $?   # C-00 30.09: no Unity below 15 GiB free disk / under swap pressure (dd-env.sh dd_disk_gate, WP-099 08.10)
 
 T0=$(date +%s)
 # WP-051D: log-stall watchdog (20 min silent → stop that pid, retry once; second stall → exit 124)

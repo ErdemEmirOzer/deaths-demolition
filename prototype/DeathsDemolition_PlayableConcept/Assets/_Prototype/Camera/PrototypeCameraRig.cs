@@ -301,6 +301,24 @@ namespace DD.Prototype.CameraSystem
             _lookAheadProviderBehaviour = provider as MonoBehaviour;
         }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>
+        /// WP-099 (S-01 td-capture, dev only): while true the top-down pose ignores the aim look-ahead (pointer or stick), so a
+        /// capture frames the player dead centre whatever the OS cursor does. Off by default; reset with the other statics.
+        /// TP/FP never read it.
+        /// </summary>
+        public static bool SuppressLookAheadDev { get; set; }
+
+        /// <summary>
+        /// WP-099 (dev only): the next top-down LateUpdate lands the focus on the follow target with no SmoothDamp lag (the same
+        /// re-seed a mode entry does), e.g. right after a capture agent teleported the player.
+        /// </summary>
+        public void SnapTopDownDev()
+        {
+            _warmedUp = false;
+        }
+#endif
+
         /// <summary>
         /// Pause-menu hook. Writes the shake intensity into the live config so every
         /// rig, current and future, picks it up. 0 disables shake entirely, 1 is normal.
@@ -427,6 +445,9 @@ namespace DD.Prototype.CameraSystem
         private static void ResetStatics()
         {
             Active = null;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            SuppressLookAheadDev = false;   // WP-099
+#endif
         }
 
         // -------------------------------------------------------------------- config
@@ -1169,6 +1190,12 @@ namespace DD.Prototype.CameraSystem
             {
                 return Vector3.zero;
             }
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (SuppressLookAheadDev)
+            {
+                return Vector3.zero;   // WP-099 td-capture stills
+            }
+#endif
 
             Vector3 offset;
             if (!_lookAheadProvider.TryGetLookAheadOffset(

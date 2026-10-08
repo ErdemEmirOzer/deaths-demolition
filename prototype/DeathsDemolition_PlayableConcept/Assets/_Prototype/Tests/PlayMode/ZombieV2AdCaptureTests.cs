@@ -28,8 +28,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// </summary>
     [TestFixture]
     [Explicit("WP-084 AD frames: run by full name")]
-    [Category("Diagnostics")]
-    [Category("WP084")]
     public sealed class ZombieV2AdCaptureTests
     {
         private static readonly EnemyTier[] Tiers = { EnemyTier.Standard, EnemyTier.Special, EnemyTier.Elite, EnemyTier.Ultra };
@@ -51,6 +49,8 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = false;
         }
 
+        [Category("Diagnostics")]
+        [Category("WP084")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator AD_Kalabalik_Tepeden_Yuzler_Maskeler_Versiyonlar_Kareler()
@@ -216,6 +216,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// Standard, one look seed stream, the gameplay sun): top-down at 15 m, third person at 3 m, first person close (eye 1.65 m,
         /// 1.6 m from the front figure). PNGs to DD_WP084_AD_DIR with the DD_WP084_AD_TAG prefix (before / after).
         /// </summary>
+        [Category("Diagnostics")]
+        [Category("WP084")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator AD_TD15_Kare()
@@ -224,6 +226,8 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-089 R3 (user 06.10: only TopDown): the third-person 3 m and first-person frames of the same group — FPTP.</summary>
+        [Category("Diagnostics")]
+        [Category("WP084")]
         [UnityTest]
         [Category("FPTP")]
         [Timeout(300000)]
@@ -294,6 +298,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// keeps (T8 × B6, T1 × B1, T2 × B4), LOD1 forced, walking toward the player (a real step, ~1 s), then one TP 3/4 frame per
         /// body from behind-left at ~2.7 m on the waist. PNGs to DD_WP084_AD_DIR as {tag}-belt-{i}.png — one look for the AD, no gate.
         /// </summary>
+        [Category("Diagnostics")]
+        [Category("WP084")]
         [UnityTest]
         [Category("FPTP")]   // WP-089 R3: a third-person 3/4 look (user 06.10: only TopDown)
         [Timeout(300000)]
@@ -385,6 +391,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// sample frames to DD_WP084_AD_DIR); ASSERTED ≤ MaxClothOverPlateShare per view on fit A / B; fit C is REPORTED as the known
         /// open list — no top is clean on the H2 bodies (r8e 06.10), so the interim rule cannot fix it; AP-008D refits the armour.
         /// </summary>
+        [Category("Diagnostics")]
+        [Category("WP084")]
         [UnityTest]
         [Timeout(900000)]
         public IEnumerator MD2_ZirhUstundeKumas_HerFitVaryantUstGiysi()
