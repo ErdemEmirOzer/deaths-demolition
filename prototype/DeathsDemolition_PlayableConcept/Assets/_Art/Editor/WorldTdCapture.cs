@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using DD.Prototype.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -278,14 +280,41 @@ namespace DD.Art.Pipeline.EditorTools
             cam.farClipPlane = 600f;
             cam.enabled = false;
             WorldAtmosphere.ConfigureCamera(cam);
+            IDisposable vegetation = VegetationPreview(SceneManager.GetActiveScene());
             try { body(cam); }
             finally
             {
+                vegetation?.Dispose();
                 if (grain != null) grain.active = grainWas;
                 UnityEngine.Object.DestroyImmediate(go);
                 UnityEngine.Object.DestroyImmediate(root);
                 WorldLayout.SetCurrent(previous);
             }
+        }
+
+        /// <summary>
+        /// WP-092 / WP-093 (C-00 08.10 (b)) · S-07's editor-only vegetation preview, when the project has it: the runtime's deterministic
+        /// population (same seed, same masks) drawn for the capture camera, so the frames and the bare-ground share see the grass. Found by
+        /// reflection (this branch builds without WP-093); absent → the frames are as before and the log says so.
+        /// </summary>
+        public const string VegetationPreviewType = "DD.Prototype.World.Vegetation.VegetationPreview";
+
+        private static IDisposable VegetationPreview(Scene world)
+        {
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type type = assembly.GetType(VegetationPreviewType, false);
+                if (type == null) continue;
+                FieldInfo tier = type.GetField("TierHigh", BindingFlags.Public | BindingFlags.Static);
+                MethodInfo populate = type.GetMethod("Populate", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Scene), typeof(int) }, null);
+                if (populate == null) { Debug.LogWarning("[TDCAP] vegetation preview: " + VegetationPreviewType + " has no Populate(Scene, int)"); return null; }
+                int high = tier != null ? Convert.ToInt32(tier.GetValue(null)) : 1;
+                Debug.Log("[TDCAP] vegetation preview: on (tier " + high + ")");
+                return populate.Invoke(null, new object[] { world, high }) as IDisposable;
+            }
+
+            Debug.Log("[TDCAP] vegetation preview: absent (WP-093 not in this project) — ground cover without the grass");
+            return null;
         }
 
         private static Vector3 Ground(Vector2 xz)

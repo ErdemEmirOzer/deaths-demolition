@@ -540,8 +540,25 @@ namespace DD.Art.Tests.EditMode
                 if (light.color.b > warm.b + 0.02f || light.color.b < hot.b - 0.02f) fails.Add(light.transform.parent.name + " renk sıcaklığı dışında");
             }
 
+            // S-07 08.10: what LanternFlames moves (hanging lamps, the floating tōrō) is not static-batched.
+            var swinging = new HashSet<string>();
+            foreach (WorldV5Layout.Lamp lamp in plan.Lamps) if (WorldV5Layout.Swings(lamp)) swinging.Add(WorldV5Layout.LampPrefix + lamp.Id + "_");
+            int moving = 0;
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                bool lamp = false;
+                foreach (string prefix in swinging) if (t.name.StartsWith(prefix, System.StringComparison.Ordinal)) lamp = true;
+                bool toro = t.parent != null && System.Array.IndexOf(WorldV5Layout.MovingGroups, t.parent.name) >= 0;
+                if (!lamp && !toro) continue;
+                moving++;
+                foreach (Transform c in t.GetComponentsInChildren<Transform>(true))
+                    if ((GameObjectUtility.GetStaticEditorFlags(c.gameObject) & StaticEditorFlags.BatchingStatic) != 0) { fails.Add(t.name + " statik batch'te (sallanamaz)"); break; }
+            }
+
+            Assert.Greater(moving, 20, "sallanan lambalar + tōrō");
+
             int wantLit = 0;
-            foreach (WorldV5Layout.Lamp lamp in plan.Lamps) if (lamp.Light != "emissive") wantLit++;
+            foreach (WorldV5Layout.Lamp lamp in plan.Lamps) if (lamp.Light != "emissive" && lamp.Lit) wantLit++;
             // S-03 08.10 (b)4: every kit door (the nagaya doors, K1 west) has no collider at its lintel — the Executioner (2.66 m) walks under.
             int doorsChecked = 0;
             foreach (Transform t in Object.FindObjectsOfType<Transform>(true))

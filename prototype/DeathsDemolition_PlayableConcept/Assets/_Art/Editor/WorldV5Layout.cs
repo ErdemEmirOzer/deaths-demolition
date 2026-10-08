@@ -88,12 +88,14 @@ namespace DD.Art.Pipeline.EditorTools
             public string Id, Group, Family, Source, Role;
             public int Variation = 1;
             public float X, Z, Y, Yaw, Scale = 1f, ColTop, Footprint;
+            public Vector2 ModScale = Vector2.one;   // a road module stretched along / across its axis to fit its run (0.8–1.25)
+            public string[] PartsOff = new string[0];   // kit collider parts switched off (a well's bucket, a stall's stools)
             public bool Collider = true;
         }
 
         public sealed class Lamp
         {
-            public string Id, Group, Family, Source, Light;
+            public string Id, Group, Family, Source, Light, Mount;
             public bool Lit = true;
             public int Variation = 1;
             public float X, Z, Y, Yaw, Kelvin = DefaultKelvin, Range = DefaultLampRange, Intensity = DefaultLampIntensity;
@@ -125,11 +127,12 @@ namespace DD.Art.Pipeline.EditorTools
             public readonly SortedSet<string> SkippedFamilies = new SortedSet<string>(StringComparer.Ordinal);
             public int Skipped;
             public readonly List<string> BannedTops = new List<string>(), Warnings = new List<string>(), RaisedTops = new List<string>();
-            public int InnerFadesRemoved;
+            public int InnerFadesRemoved, WalkColliders, PartsOff;
             public override string ToString() => "layout v5: " + Buildings + " buildings (" + Bays + " bays), " + Items + " items, " + Lamps + " lamps (" + BakedLights + " baked lights, "
                                                  + PoolLamps + " pool, " + Emissive + " emissive, " + Unlit + " unlit), " + Ropes + " ropes, " + Cleared + " plants cleared, " + Skipped + " skipped"
                                                  + (SkippedFamilies.Count > 0 ? " [" + string.Join(", ", SkippedFamilies) + "]" : "") + ", " + RaisedTops.Count + " collider tops raised over the banned band, "
-                                                 + BannedTops.Count + " banned collider tops, " + InnerFadesRemoved + " inner fade states folded into shells, " + Warnings.Count + " warnings";
+                                                 + BannedTops.Count + " banned collider tops, " + InnerFadesRemoved + " inner fade states folded into shells, " + WalkColliders + " road walk colliders, "
+                                                 + PartsOff + " kit collider parts off, " + Warnings.Count + " warnings";
 
             /// <summary>Every warning and collider note, one per line (the builder logs it after the report line).</summary>
             public string Details()
@@ -194,7 +197,7 @@ namespace DD.Art.Pipeline.EditorTools
                     Id = Str(p, "id", ""), Group = Str(p, "group", ""), Family = ArtJson.AsString(ArtJson.Require(p, "family"), "family"), Source = Str(p, "source", Ap023),
                     Role = Str(p, "role", "dressing"), Variation = (int)Num(p, "variation", 1f), X = Num(p, "x", 0f), Z = Num(p, "z", 0f), Y = Num(p, "y", 0f),
                     Yaw = Num(p, "yaw", 0f), Scale = Num(p, "scale", 1f), Collider = Bool(p, "collider", true), ColTop = Num(p, "colTop", 0f),
-                    Footprint = MaxOf(List(p, "footprint")),
+                    Footprint = MaxOf(List(p, "footprint")), ModScale = Vec2(ArtJson.Get(p, "modScale"), Vector2.one), PartsOff = Strings(List(p, "colliderPartsOff")),
                 });
             }
 
@@ -204,7 +207,7 @@ namespace DD.Art.Pipeline.EditorTools
                 plan.Lamps.Add(new Lamp
                 {
                     Id = Str(l, "id", ""), Group = Str(l, "group", ""), Family = ArtJson.AsString(ArtJson.Require(l, "family"), "family"), Source = Str(l, "source", Ap030),
-                    Light = Str(l, "light", "baked"), Lit = Bool(l, "lit", true), Variation = (int)Num(l, "variation", 1f), X = Num(l, "x", 0f), Z = Num(l, "z", 0f), Y = Num(l, "y", 0f),
+                    Light = Str(l, "light", "baked"), Lit = Bool(l, "lit", true), Mount = Str(l, "mount", ""), Variation = (int)Num(l, "variation", 1f), X = Num(l, "x", 0f), Z = Num(l, "z", 0f), Y = Num(l, "y", 0f),
                     Yaw = Num(l, "yaw", 0f), Kelvin = Num(l, "kelvin", DefaultKelvin), Range = Num(l, "range", DefaultLampRange), Intensity = Num(l, "intensity", DefaultLampIntensity),
                 });
             }
@@ -284,6 +287,7 @@ namespace DD.Art.Pipeline.EditorTools
         public static Report Apply(Transform worldRoot, Plan plan)
         {
             var report = new Report();
+            s_report = report;
             if (plan == null) return report;
             var root = new GameObject(RootName).transform;
             root.SetParent(worldRoot, false);
@@ -319,11 +323,17 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Item item in plan.Items)
             {
                 Transform parent = Group(clusters, interiors, item.Group);
-                GameObject go = TryPlace(parent, item.Source, item.Family, item.Variation, item.X, item.Z, item.Y, item.Yaw, item.Scale, RoleOf(item), report);
+                GameObject go = TryPlace(parent, item.Source, item.Family, item.Variation, item.X, item.Z, item.Y, item.Yaw, item.Scale, RoleOf(item), report, item.ModScale);
                 if (go == null) continue;
                 go.name = string.IsNullOrEmpty(item.Id) ? go.name : item.Id + "_" + item.Family;
-                if (!item.Collider) WorldV5Dress.Visual(go);
-                else AuditTop(go, item, report);
+                if (Array.IndexOf(MovingGroups, item.Group) >= 0) Unbatch(go);   // S-07 08.10: the floating tōrō bob and drift
+                if (item.Role == "road") report.WalkColliders += KeepWalkable(go, item);   // the stones and decks walk, nothing on them blocks
+                else if (!item.Collider) WorldV5Dress.Visual(go);
+                else
+                {
+                    if (item.PartsOff.Length > 0) report.PartsOff += PartsOff(go, item);
+                    AuditTop(go, item, report);
+                }
                 report.Items++;
             }
 
@@ -334,6 +344,7 @@ namespace DD.Art.Pipeline.EditorTools
                 if (go == null) continue;
                 go.name = LampPrefix + lamp.Id + "_" + (lamp.Lit ? lamp.Light : "unlit");
                 WorldV5Dress.Visual(go);   // lamps are not obstacles (hanging, on furniture, by a door)
+                if (Swings(lamp)) Unbatch(go);   // S-07 08.10: a hanging chōchin / tsuri sways (LanternFlames' pendulum)
                 LampLight(go, lamp, report);
                 report.Lamps++;
             }
@@ -363,7 +374,7 @@ namespace DD.Art.Pipeline.EditorTools
         private static readonly string[] PlantFamilies = { "satsuki", "groundcover", "pond_reeds", "lotus", "bamboo_fallen" };
 
         /// <summary>A plan piece, or null (counted) when its AP-030 kit is not in the project yet. An AP-023 piece that does not exist throws.</summary>
-        private static GameObject TryPlace(Transform parent, string source, string family, int variation, float x, float z, float y, float yaw, float scale, string role, Report report)
+        private static GameObject TryPlace(Transform parent, string source, string family, int variation, float x, float z, float y, float yaw, float scale, string role, Report report, Vector2? modScale = null)
         {
             string ap = string.IsNullOrEmpty(source) ? Ap023 : source;
             string prefab = ArtLibraryPaths.Prefab(ap, family, "SM_" + family + "_V" + variation.ToString("00"));
@@ -374,7 +385,24 @@ namespace DD.Art.Pipeline.EditorTools
                 return null;
             }
 
-            return WorldV5Dress.Place(parent, ap, family, variation, Mz(x, z, y, -yaw) * Matrix4x4.Scale(Vector3.one * scale), Vector3.zero, role);
+            Vector2 m = modScale ?? Vector2.one;   // Blender space: the module's +X along its run, +Y across, +Z up
+            return WorldV5Dress.Place(parent, ap, family, variation, Mz(x, z, y, -yaw) * Matrix4x4.Scale(new Vector3(scale * m.x, scale * m.y, scale)), Vector3.zero, role);
+        }
+
+        /// <summary>
+        /// S-07 (08.10) · Pieces its LanternFlames / tōrō code moves at runtime must not be static-batched (Unity merges them and they can no
+        /// longer move): the hanging lamps and the floating tōrō group. Their other static flags stay (the baked light is the LampLight's).
+        /// </summary>
+        public static readonly string[] MovingGroups = { "M8_toro" };
+
+        public static readonly string[] SwingingFamilies = { "lantern_chochin", "lantern_tsuri" };
+
+        public static bool Swings(Lamp lamp) => lamp.Mount == "hang" || Array.IndexOf(SwingingFamilies, lamp.Family) >= 0;
+
+        private static void Unbatch(GameObject go)
+        {
+            foreach (Transform t in go.GetComponentsInChildren<Transform>(true))
+                GameObjectUtility.SetStaticEditorFlags(t.gameObject, GameObjectUtility.GetStaticEditorFlags(t.gameObject) & ~StaticEditorFlags.BatchingStatic);
         }
 
         /// <summary>Blender-space placement matrix (x, y = Unity z, z = height; a counter-clockwise yaw about Blender +Z).</summary>
@@ -402,7 +430,12 @@ namespace DD.Art.Pipeline.EditorTools
                 Bay bay = b.Bays[i];
                 float yaw = BlenderYaw(bay.LocalX);
                 if (bay.Door != '\0' && bay.Piece == "kairo_door" && Vector2.Dot(-KitY(yaw), Facing(bay.Door)) < 0.5f)
-                    report.Warnings.Add(b.Id + " bay " + i + ": kairo_door −Y does not face " + bay.Door);
+                {
+                    // the plan's localX left the opening on the far side: the door piece is symmetric along its axis (joints ±1.8), so a half turn
+                    // puts its −Y opening on the plan's door side in the same span
+                    yaw += 180f;
+                    report.Warnings.Add(b.Id + " bay " + i + ": kairo_door turned 180° so its opening faces the plan's door " + bay.Door + " (plan localX " + bay.LocalX + ")");
+                }
                 GameObject piece = WorldV5Dress.Place(shell, Ap023, bay.Piece, bay.Variation, Mz(bay.X, bay.Z, 0f, yaw), Vector3.zero, "structure");
                 piece.name = b.Id + "_" + i.ToString("00") + "_" + bay.Piece + "_V" + bay.Variation.ToString("00");
                 if (bay.Piece == "kairo_bay" && (bay.Variation == 2 || bay.Variation == 3)) WorldV5Dress.RailsOff(piece);
@@ -747,7 +780,105 @@ namespace DD.Art.Pipeline.EditorTools
             return null;
         }
 
+        // ---------------------------------------------------------------- kit colliders by the manifest's class / part
+
+        private static readonly Dictionary<string, ArtLibraryManifest> s_manifests = new Dictionary<string, ArtLibraryManifest>(StringComparer.Ordinal);
+
+        /// <summary>
+        /// The manifest classes and parts of a prefab's Geometry/COL_i colliders, in ArtLibraryPrefabBuilder's own order (a "none" proxy builds
+        /// nothing; broken pieces and roof parts sit elsewhere; one COL per shell).
+        /// </summary>
+        private static List<(string cls, string part)> GeometryColliders(string ap, string family, int variation)
+        {
+            if (!s_manifests.TryGetValue(ap, out ArtLibraryManifest manifest))
+            {
+                manifest = ArtLibraryManifest.FromJson(File.ReadAllText(ArtLibraryPaths.ManifestJson(ap)));
+                s_manifests[ap] = manifest;
+            }
+
+            string prefab = "SM_" + family + "_V" + variation.ToString("00");
+            var list = new List<(string, string)>();
+            foreach (ArtLibraryManifest.Family f in manifest.families)
+            foreach (ArtLibraryManifest.Variation v in f.variations)
+            {
+                if (v.prefab != prefab) continue;
+                foreach (ArtLibraryManifest.Collider c in v.colliders)
+                {
+                    if (c.IsNone || c.broken || c.part == "roof") continue;
+                    int shells = c.shellBoxes != null && c.shellBoxes.Count > 0 ? c.shellBoxes.Count : c.shells;
+                    for (int s = 0; s < shells; s++) list.Add((c.@class, c.part));
+                }
+
+                return list;
+            }
+
+            return list;
+        }
+
+        private static Collider GeometryCollider(GameObject go, int index)
+        {
+            Transform t = go.transform.Find(ArtLibraryPrefabBuilder.GeometryName + "/COL_" + index);
+            return t != null ? t.GetComponent<Collider>() : null;
+        }
+
+        /// <summary>A road module (stone, deck, drain, stepping stone): its walkable colliders stay — a foot on a 0.30 m boardwalk stands on it —
+        /// every other class goes (nothing on a path blocks). Returns the walk colliders kept.</summary>
+        private static int KeepWalkable(GameObject go, Item item)
+        {
+            List<(string cls, string part)> cols = GeometryColliders(item.Source, item.Family, item.Variation);
+            int kept = 0;
+            for (int i = 0; i < cols.Count; i++)
+            {
+                Collider c = GeometryCollider(go, i);
+                if (c == null) continue;
+                if (cols[i].cls == "walkable") kept++;
+                else c.gameObject.SetActive(false);
+            }
+
+            foreach (Collider c in go.GetComponentsInChildren<Collider>(true))   // anything not in the manifest's geometry list (roof, broken)
+                if (c.transform.parent == null || c.transform.parent.name != ArtLibraryPrefabBuilder.GeometryName) c.gameObject.SetActive(false);
+            return kept;
+        }
+
+        /// <summary>The plan's colliderPartsOff: the kit colliders of those manifest parts go (a well's bucket under 0.30 m, a stall's stools).</summary>
+        private static int PartsOff(GameObject go, Item item)
+        {
+            List<(string cls, string part)> cols = GeometryColliders(item.Source, item.Family, item.Variation);
+            int n = 0;
+            for (int i = 0; i < cols.Count; i++)
+            {
+                if (cols[i].part == null || Array.FindIndex(item.PartsOff, t => cols[i].part.IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) < 0) continue;
+                Collider c = GeometryCollider(go, i);
+                if (c == null) continue;
+                c.gameObject.SetActive(false);
+                n++;
+            }
+
+            if (n == 0) Warnings(item, "colliderPartsOff " + string.Join(",", item.PartsOff) + " matched no kit collider part");
+            return n;
+        }
+
+        private static Report s_report;
+
+        private static void Warnings(Item item, string what)
+        {
+            s_report?.Warnings.Add(item.Id + " " + item.Family + ": " + what);
+        }
+
         // ---------------------------------------------------------------- json helpers
+
+        private static Vector2 Vec2(object v, Vector2 fallback)
+        {
+            if (!(v is List<object> l) || l.Count < 2) return fallback;
+            return new Vector2(ArtJson.AsFloat(l[0], "modScale"), ArtJson.AsFloat(l[1], "modScale"));
+        }
+
+        private static string[] Strings(List<object> values)
+        {
+            var list = new List<string>();
+            foreach (object v in values) list.Add(ArtJson.AsString(v, "colliderPartsOff"));
+            return list.ToArray();
+        }
 
         private static float MaxOf(List<object> values)
         {
