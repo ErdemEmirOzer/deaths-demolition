@@ -59,14 +59,20 @@ namespace DD.Art.Pipeline.EditorTools
         public void Observe(Camera camera)
         {
             if (_observedCamera != null) throw new InvalidOperationException("UNKNOWN: diagnostic observer already bound");
-            _entropyBinding = new SsaoEntropyBinding(camera.GetUniversalAdditionalCameraData().scriptableRenderer);
+            // Camera.Render may create the pipeline and dispose pre-existing renderers.
+            // Bind inside its first beginCameraRendering, after pipeline creation, never in Observe.
             _observedCamera = camera;
             RenderPipelineManager.beginCameraRendering += BeforeCamera;
             RenderPipelineManager.endCameraRendering += AfterCamera;
         }
 
         public void Label(string label) => _renderLabel = label;
-        public void MarkBareEntropy() => _bareEntropy = _entropyBinding.Snapshot();
+        public void MarkBareEntropy()
+        {
+            if (_entropyBinding == null) throw new InvalidOperationException("UNKNOWN: camera bootstrap did not bind SSAO");
+            _entropyBinding.AssertCurrent(_observedCamera.GetUniversalAdditionalCameraData().scriptableRenderer);
+            _bareEntropy = _entropyBinding.Snapshot();
+        }
 
         [Serializable] private sealed class FrameState
         {
@@ -100,8 +106,11 @@ namespace DD.Art.Pipeline.EditorTools
         };
         private void BeforeCamera(ScriptableRenderContext context, Camera camera)
         {
-            if (camera == _observedCamera)
-                _pendingFrame = new FrameRecord { label = _renderLabel, before = FrameStateNow() };
+            if (camera != _observedCamera) return;
+            ScriptableRenderer renderer = camera.GetUniversalAdditionalCameraData().scriptableRenderer;
+            if (_entropyBinding == null) _entropyBinding = new SsaoEntropyBinding(renderer);
+            _entropyBinding.AssertCurrent(renderer);
+            _pendingFrame = new FrameRecord { label = _renderLabel, before = FrameStateNow() };
         }
         private void AfterCamera(ScriptableRenderContext context, Camera camera)
         {
@@ -115,6 +124,8 @@ namespace DD.Art.Pipeline.EditorTools
         private sealed class SsaoEntropyBinding
         {
             private readonly ScriptableRendererFeature _feature;
+            private readonly ScriptableRenderer _renderer;
+            private readonly FieldInfo _activePass;
             private readonly object _pass;
             private readonly FieldInfo _index, _x, _y, _passMaterial, _featureMaterial;
             public int Index => (int)_index.GetValue(_pass);
@@ -126,6 +137,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             public SsaoEntropyBinding(ScriptableRenderer renderer)
             {
+                _renderer = renderer;
                 Assembly assembly = typeof(UniversalRenderPipelineAsset).Assembly;
                 Type featureType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion", true);
                 Type passType = assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion+ScreenSpaceAmbientOcclusionPass", true);
@@ -145,7 +157,8 @@ namespace DD.Art.Pipeline.EditorTools
                 object method = ExactField(settingsType, "AOMethod", methodType).GetValue(settings);
                 if (!methodType.IsEnum || Convert.ToInt32(method) != 0)
                     throw new InvalidOperationException("UNKNOWN: runtime SSAO is not pinned BlueNoise method");
-                _pass = ExactField(featureType, "m_SSAOPass", passType).GetValue(_feature);
+                _activePass = ExactField(featureType, "m_SSAOPass", passType);
+                _pass = _activePass.GetValue(_feature);
                 if (_pass == null || _pass.GetType() != passType) throw new InvalidOperationException("UNKNOWN: SSAO runtime pass missing");
                 _index = ExactField(passType, "m_BlueNoiseTextureIndex", typeof(int));
                 _x = ExactField(passType, "m_BlurRandomOffsetX", typeof(float));
@@ -162,13 +175,30 @@ namespace DD.Art.Pipeline.EditorTools
                 return field;
             }
 
+            public void AssertCurrent(ScriptableRenderer renderer)
+            {
+                if (!ReferenceEquals(renderer, _renderer))
+                    throw new InvalidOperationException("UNKNOWN: actual renderer identity changed since SSAO binding");
+                if (!_feature.isActive || !ReferenceEquals(_activePass.GetValue(_feature), _pass))
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO pass identity changed since binding");
+            }
+
             private Material RuntimeMaterial()
             {
+                AssertCurrent(_renderer);
                 Material material = _passMaterial.GetValue(_pass) as Material;
-                if (material == null || material != (_featureMaterial.GetValue(_feature) as Material) ||
-                    UnityEditor.AssetDatabase.Contains(material) || material.shader == null ||
-                    material.shader.name != "Hidden/Universal Render Pipeline/ScreenSpaceAmbientOcclusion")
-                    throw new InvalidOperationException("UNKNOWN: SSAO material is missing, changed, persistent or unsupported");
+                Material featureMaterial = _featureMaterial.GetValue(_feature) as Material;
+                if (material == null)
+                    throw new InvalidOperationException("UNKNOWN: active SSAO pass material=null; featureMaterialId=" +
+                        (featureMaterial != null ? featureMaterial.GetInstanceID() : 0));
+                if (material != featureMaterial)
+                    throw new InvalidOperationException("UNKNOWN: SSAO pass/feature material identity differs; passId=" +
+                        material.GetInstanceID() + "; featureId=" + (featureMaterial != null ? featureMaterial.GetInstanceID() : 0));
+                if (UnityEditor.AssetDatabase.Contains(material))
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO material is persistent; id=" + material.GetInstanceID());
+                if (material.shader == null || material.shader.name != "Hidden/Universal Render Pipeline/ScreenSpaceAmbientOcclusion")
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO shader unsupported: " +
+                        (material.shader != null ? material.shader.name : "<null>"));
                 return material;
             }
 
