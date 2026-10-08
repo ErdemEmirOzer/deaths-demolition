@@ -145,9 +145,140 @@ namespace DD.Prototype.Characters
         /// <summary>WP-096 readout: the common correction of the last PreserveSwingLift solve (metres).</summary>
         public float CommonDelta => _commonDelta;
 
+
+        // Read-only diagnostics. Both switches default to false and never take part in an IK/lock decision.
+        public bool TraceZombieLock;
+        public bool TraceFootIkGoals;
+
+        public readonly struct TracePassStamp
+        {
+            public readonly int Frame, LayerIndex;
+            public readonly uint Sequence;
+            internal TracePassStamp(int frame, int layer, uint sequence) { Frame = frame; LayerIndex = layer; Sequence = sequence; }
+        }
+
+        public readonly struct TraceReleaseCounters
+        {
+            public readonly int Stretch, Gate, Lift, Plant, Offset;
+            internal TraceReleaseCounters(int stretch, int gate, int lift, int plant, int offset)
+            { Stretch = stretch; Gate = gate; Lift = lift; Plant = plant; Offset = offset; }
+        }
+
+        public readonly struct TraceLockState
+        {
+            public readonly bool Locked, ReleasePending, GateOpenCached, GateEvaluatedThisPass, Served, SupportsZombieData;
+            public readonly Vector3 LockPosition;
+            public readonly float LockWeight, AdapterWeight;
+            public readonly int PlantPending, ZombiePlantPending;
+            public readonly TraceReleaseCounters Releases;
+            internal TraceLockState(bool locked, Vector3 position, float lockWeight, bool releasePending, int plantPending,
+                int zombiePlantPending, bool gate, bool gateEvaluated, bool served, float weight, bool zombieData, TraceReleaseCounters releases)
+            {
+                Locked = locked; LockPosition = position; LockWeight = lockWeight; ReleasePending = releasePending;
+                PlantPending = plantPending; ZombiePlantPending = zombiePlantPending; GateOpenCached = gate;
+                GateEvaluatedThisPass = gateEvaluated; Served = served; AdapterWeight = weight;
+                SupportsZombieData = zombieData; Releases = releases;
+            }
+        }
+
+        [Flags]
+        public enum TraceLockBranches : byte
+        {
+            None = 0, UnlockedAtEntry = 1, GateRelease = 2, OffsetRelease = 4, StretchRelease = 8,
+            HeldReturn = 16, RawTargetReturn = 32, LiftRelease = 64, PlantRelease = 128
+        }
+
+        public readonly struct LockTraceSnapshot
+        {
+            public readonly bool Captured, OffsetEvaluated;
+            public readonly TracePassStamp Stamp;
+            public readonly int Foot;
+            public readonly Vector3 AnimatedInput, TargetInput, OffsetXZ, ReturnedTarget;
+            public readonly float OffSquared;
+            public readonly TraceLockState Before, After;
+            public readonly TraceLockBranches Branches;
+            internal LockTraceSnapshot(TracePassStamp stamp, int foot, Vector3 animated, Vector3 target, TraceLockState before,
+                TraceLockState after, bool offsetEvaluated, Vector3 offsetXZ, float offSquared, Vector3 returned, TraceLockBranches branches)
+            {
+                Captured = true; Stamp = stamp; Foot = foot; AnimatedInput = animated; TargetInput = target;
+                Before = before; After = after; OffsetEvaluated = offsetEvaluated; OffsetXZ = offsetXZ;
+                OffSquared = offSquared; ReturnedTarget = returned; Branches = branches;
+            }
+        }
+
+        /// <summary>Internal Humanoid goal/request readback, never a solved scene-bone pose.</summary>
+        public readonly struct GoalTraceReadback
+        {
+            public readonly Quaternion RootWorldRotation, LeftWorldRotation, RightWorldRotation;
+            public readonly Vector3 LeftWorldPosition, RightWorldPosition;
+            public readonly float LeftPositionWeight, RightPositionWeight, LeftRotationWeight, RightRotationWeight;
+            internal GoalTraceReadback(Quaternion root, Vector3 leftPosition, Vector3 rightPosition, Quaternion leftRotation,
+                Quaternion rightRotation, float leftPW, float rightPW, float leftRW, float rightRW)
+            {
+                RootWorldRotation = root; LeftWorldPosition = leftPosition; RightWorldPosition = rightPosition;
+                LeftWorldRotation = leftRotation; RightWorldRotation = rightRotation;
+                LeftPositionWeight = leftPW; RightPositionWeight = rightPW; LeftRotationWeight = leftRW; RightRotationWeight = rightRW;
+            }
+        }
+
+        public readonly struct PairTraceState
+        {
+            public readonly TraceLockState Left, Right;
+            public readonly float PelvisOffset, CommonDelta;
+            internal PairTraceState(TraceLockState left, TraceLockState right, float pelvis, float common)
+            { Left = left; Right = right; PelvisOffset = pelvis; CommonDelta = common; }
+        }
+
+        public enum GoalTraceOutcome : byte { NotCaptured, WeightZero, BudgetFade, PairCompleted, IndividualCompleted }
+
+        public readonly struct GoalPassTraceSnapshot
+        {
+            public readonly bool Captured, PairCaptured, Allowed, Budget;
+            public readonly TracePassStamp Stamp;
+            public readonly int ForceAtEntry;
+            public readonly GoalTraceOutcome Outcome;
+            public readonly GoalTraceReadback InternalGoalEntry, InternalGoalAfterPair;
+            public readonly PairTraceState BeforePair, AfterPair, ExitState;
+            internal GoalPassTraceSnapshot(TracePassStamp stamp, int force, bool allowed, bool budget, GoalTraceOutcome outcome,
+                GoalTraceReadback entry, bool pairCaptured, PairTraceState before, PairTraceState after,
+                GoalTraceReadback afterGoal, PairTraceState exitState)
+            {
+                Captured = true; Stamp = stamp; ForceAtEntry = force; Allowed = allowed; Budget = budget; Outcome = outcome;
+                InternalGoalEntry = entry; PairCaptured = pairCaptured; BeforePair = before; AfterPair = after;
+                InternalGoalAfterPair = afterGoal; ExitState = exitState;
+            }
+        }
+
+        private uint _tracePassSequence;
+        private TracePassStamp _traceStamp;
+        private bool _traceGateEvaluated, _tracePairCaptured;
+        private int _traceForceAtEntry;
+        private LockTraceSnapshot _traceLockLeft, _traceLockRight;
+        private GoalPassTraceSnapshot _traceGoals;
+        private GoalTraceReadback _traceGoalEntry, _traceGoalAfterPair;
+        private PairTraceState _traceBeforePair, _traceAfterPair;
+        public LockTraceSnapshot LeftLockTrace => TraceZombieLock ? _traceLockLeft : default;
+        public LockTraceSnapshot RightLockTrace => TraceZombieLock ? _traceLockRight : default;
+        public GoalPassTraceSnapshot GoalPassTrace => TraceFootIkGoals ? _traceGoals : default;
+
+        public bool TryReadLockTrace(int foot, out LockTraceSnapshot snapshot)
+        {
+            snapshot = foot == 0 ? LeftLockTrace : foot == 1 ? RightLockTrace : default;
+            return isActiveAndEnabled && snapshot.Captured && snapshot.Stamp.Frame == Time.frameCount &&
+                   snapshot.Stamp.Sequence == _tracePassSequence && snapshot.Stamp.LayerIndex == _traceStamp.LayerIndex;
+        }
+
+        public bool TryReadGoalPassTrace(out GoalPassTraceSnapshot snapshot)
+        {
+            snapshot = GoalPassTrace;
+            return isActiveAndEnabled && snapshot.Captured && snapshot.Stamp.Frame == Time.frameCount &&
+                   snapshot.Stamp.Sequence == _tracePassSequence && snapshot.Stamp.LayerIndex == _traceStamp.LayerIndex;
+        }
+
         public void Configure(Animator animator)
         {
             _animator = animator;
+            ClearTraceSnapshots();
             ClearAnimatedGoalSample();
         }
 
@@ -160,6 +291,7 @@ namespace DD.Prototype.Characters
             _enabled = enabledGate;
             _near = nearGate;
             _lockGate = lockGate;
+            ClearTraceSnapshots();
             ClearAnimatedGoalSample();
             ClearLock();
             _weight = 0f;
@@ -186,11 +318,77 @@ namespace DD.Prototype.Characters
 
         private void OnDisable()
         {
+            ClearTraceSnapshots();
             ClearAnimatedGoalSample();
             _weight = 0f;
             _pelvisOffset = 0f;
             _commonDelta = 0f;
             ClearLock();
+        }
+
+
+        private void ClearTraceSnapshots()
+        {
+            _traceLockLeft = _traceLockRight = default;
+            _traceGoals = default;
+            _traceStamp = default;
+        }
+
+        private void BeginTracePass(int layerIndex)
+        {
+            if (!TraceZombieLock && !TraceFootIkGoals) return;
+            unchecked { _tracePassSequence++; }
+            _traceStamp = new TracePassStamp(Time.frameCount, layerIndex, _tracePassSequence);
+            _traceLockLeft = _traceLockRight = default;
+            _traceGoals = default;
+            _traceGateEvaluated = _tracePairCaptured = false;
+            _traceForceAtEntry = Force;
+            _traceBeforePair = _traceAfterPair = default;
+            _traceGoalAfterPair = default;
+            if (TraceFootIkGoals) _traceGoalEntry = ReadGoalTraceReadback(AnimatedGoalLeft, AnimatedGoalRight);
+        }
+
+        private TraceLockState ReadTraceLockState(int foot) =>
+            new TraceLockState(_locked[foot], _lockPos[foot], _lockWeight[foot], _releasePending[foot],
+                _plantPending, 0, _lockThisFrame, _traceGateEvaluated, _servedThisFrame, _weight, false,
+                new TraceReleaseCounters(ReleasedByStretch, ReleasedByGate, ReleasedByLift, ReleasedByPlant, 0));
+
+        private PairTraceState ReadTracePairState() =>
+            new PairTraceState(ReadTraceLockState(0), ReadTraceLockState(1), _pelvisOffset, _commonDelta);
+
+        private GoalTraceReadback ReadGoalTraceReadback(Vector3 left, Vector3 right) =>
+            new GoalTraceReadback(_animator.transform.rotation, left, right,
+                _animator.GetIKRotation(AvatarIKGoal.LeftFoot), _animator.GetIKRotation(AvatarIKGoal.RightFoot),
+                _animator.GetIKPositionWeight(AvatarIKGoal.LeftFoot), _animator.GetIKPositionWeight(AvatarIKGoal.RightFoot),
+                _animator.GetIKRotationWeight(AvatarIKGoal.LeftFoot), _animator.GetIKRotationWeight(AvatarIKGoal.RightFoot));
+
+        private void TracePairBefore()
+        {
+            if (TraceFootIkGoals) _traceBeforePair = ReadTracePairState();
+        }
+
+        private void TracePairAfter()
+        {
+            if (!TraceFootIkGoals) return;
+            _traceAfterPair = ReadTracePairState();
+            _traceGoalAfterPair = ReadGoalTraceReadback(_animator.GetIKPosition(AvatarIKGoal.LeftFoot), _animator.GetIKPosition(AvatarIKGoal.RightFoot));
+            _tracePairCaptured = true;
+        }
+
+        private void PublishGoalTrace(bool allowed, bool budget, GoalTraceOutcome outcome)
+        {
+            if (!TraceFootIkGoals) return;
+            _traceGoals = new GoalPassTraceSnapshot(_traceStamp, _traceForceAtEntry, allowed, budget, outcome, _traceGoalEntry,
+                _tracePairCaptured, _traceBeforePair, _traceAfterPair, _traceGoalAfterPair, ReadTracePairState());
+        }
+
+        private void PublishLockTrace(int foot, Vector3 animated, Vector3 target, TraceLockState before,
+            bool offEvaluated, Vector3 off, float offSquared, Vector3 returned, TraceLockBranches branches)
+        {
+            var snapshot = new LockTraceSnapshot(_traceStamp, foot, animated, target, before, ReadTraceLockState(foot),
+                offEvaluated, off, offSquared, returned, branches);
+            if (foot == 0) _traceLockLeft = snapshot;
+            else _traceLockRight = snapshot;
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -202,6 +400,7 @@ namespace DD.Prototype.Characters
             AnimatedGoalLeft = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
             AnimatedGoalRight = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
             AnimatedGoalSampleFrame = Time.frameCount;
+            BeginTracePass(layerIndex);
             if (s_frame != Time.frameCount)
             {
                 s_frame = Time.frameCount;
@@ -227,6 +426,7 @@ namespace DD.Prototype.Characters
                 _animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 0f);
                 _animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 0f);
                 _animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 0f);
+                PublishGoalTrace(allowed, budget, GoalTraceOutcome.WeightZero);
                 return;
             }
 
@@ -237,6 +437,7 @@ namespace DD.Prototype.Characters
                 _animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, _weight);
                 _animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, _weight * _rotationWeight);
                 _animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, _weight * _rotationWeight);
+                PublishGoalTrace(allowed, budget, GoalTraceOutcome.BudgetFade);
                 return;
             }
 
@@ -244,6 +445,7 @@ namespace DD.Prototype.Characters
             if (ProbeAllocPerServe) s_probeSink = new byte[16];   // tests: the positive control for the crowd allocation gate
             _lockThisFrame = _lockGate != null && _lockGate() && s_locked < MaxLockBodiesPerFrame;
             if (_lockThisFrame) s_locked++;
+            if (TraceZombieLock || TraceFootIkGoals) _traceGateEvaluated = true;
             if (_legLength <= 0f)
             {
                 Transform up = _animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), lo = _animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), ft = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
@@ -251,7 +453,9 @@ namespace DD.Prototype.Characters
             }
 
             float footHeight = _animator.leftFeetBottomHeight;
+            TracePairBefore();
             SolvePair(footHeight, k, out float leftDelta, out float rightDelta);
+            TracePairAfter();
             _leftLift = leftDelta;
             _rightLift = rightDelta;
 
@@ -265,6 +469,7 @@ namespace DD.Prototype.Characters
                 body.y += _pelvisOffset * _weight;
                 _animator.bodyPosition = body;
             }
+            PublishGoalTrace(allowed, budget, _tracePairCaptured ? GoalTraceOutcome.PairCompleted : GoalTraceOutcome.IndividualCompleted);
         }
 
         /// <summary>
@@ -274,25 +479,51 @@ namespace DD.Prototype.Characters
         /// </summary>
         private Vector3 Lock(int foot, Vector3 animated, Vector3 target, float groundFootY)
         {
+            bool trace = TraceZombieLock;
+            TraceLockState traceBefore = trace ? ReadTraceLockState(foot) : default;
+            TraceLockBranches traceBranches = trace && !_locked[foot] ? TraceLockBranches.UnlockedAtEntry : TraceLockBranches.None;
+            bool traceOffEvaluated = false;
+            Vector3 traceOff = default;
+            float traceOffSquared = float.NaN;
             float gap = animated.y - groundFootY;
             if (foot == 0) LastHeightGap = gap;
-            if (_releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
-            if (!_lockThisFrame) { if (_locked[foot]) ReleasedByGate++; _locked[foot] = false; }
+            if (_releasePending[foot])
+            {
+                if (_locked[foot]) { ReleasedByLift++; if (trace) traceBranches |= TraceLockBranches.LiftRelease; }
+                _locked[foot] = false; _releasePending[foot] = false;
+            }
+            if (!_lockThisFrame)
+            {
+                if (_locked[foot]) { ReleasedByGate++; if (trace) traceBranches |= TraceLockBranches.GateRelease; }
+                _locked[foot] = false;
+            }
             if (_locked[foot] && _legLength > 0f)
             {
                 Transform hip = _animator.GetBoneTransform(foot == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
                 float reach = hip != null ? Vector3.Distance(hip.position, _lockPos[foot]) : 0f;
                 // r25: relative to the reach at the lock frame (same metric) — the body passes over the held foot and lets it go past its landing reach
                 float limit = Mathf.Max(_legLength * LockMaxStretch, _lockReach[foot] + _legLength * LockStretchSlack);
-                if (hip != null && reach > limit) { _locked[foot] = false; ReleasedByStretch++; LastReleaseRatio = reach / _legLength; }   // the slide wins
+                if (hip != null && reach > limit)
+                {
+                    _locked[foot] = false; ReleasedByStretch++; LastReleaseRatio = reach / _legLength;   // the slide wins
+                    if (trace) traceBranches |= TraceLockBranches.StretchRelease;
+                }
             }
 
             float step = Time.deltaTime / LockBlendSeconds;
             _lockWeight[foot] = Mathf.MoveTowards(_lockWeight[foot], _locked[foot] ? 1f : 0f, step);
-            if (_lockWeight[foot] <= 0f) return target;
+            if (_lockWeight[foot] <= 0f)
+            {
+                if (trace) PublishLockTrace(foot, animated, target, traceBefore, traceOffEvaluated, traceOff, traceOffSquared,
+                    target, traceBranches | TraceLockBranches.RawTargetReturn);
+                return target;
+            }
             Vector3 held = _lockPos[foot];
             held.y = target.y;
-            return Vector3.Lerp(target, held, _lockWeight[foot]);
+            Vector3 returned = Vector3.Lerp(target, held, _lockWeight[foot]);
+            if (trace) PublishLockTrace(foot, animated, target, traceBefore, traceOffEvaluated, traceOff, traceOffSquared,
+                returned, traceBranches | TraceLockBranches.HeldReturn);
+            return returned;
         }
 
         /// <summary>WP-071: the clip's foot_l / foot_r contact (owner forwards the event; the lower foot is taken, names aside).</summary>
