@@ -113,6 +113,54 @@ namespace DD.Prototype.Characters
         /// </summary>
         public bool PreserveSwingLift;
         private float _commonDelta;
+
+        // ------------------------------------------------------------------ WP-096 zombie lock (S-03 08.10, zombie owner only)
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-096 ZombieLock: a held foot may sit at most this far (horizontal, m) from where the clip puts it — a SAFETY bound only " +
+            "(a missed lift event); the stance ends on the clip's own foot_*_off. ik1 (08.10): at 0.08 m the heel-to-toe roll of the " +
+            "ankle (the IK goal) released 84/85 feral_A and 57/60 lurch_A locks mid-stance and the release blend WAS the slide. Tune.", true)]
+        public const float ZombieLockMaxOffset = 0.25f;
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-096 ZombieLock: a body served / locked last frame keeps its slot while it is within this factor of last frame's " +
+            "budget cut distance (hysteresis — the near-first ranking does not flicker a body in and out). Invented.", true)]
+        public const float ZombiePriorityHysteresis = 1.15f;
+
+        /// <summary>
+        /// WP-096 (S-03 08.10, zombie owner sets it, false for the player): (1) a plant event locks the foot its event names (the
+        /// AP-033 labels are verified against the geometric stance by the intake calibration: 0.93–1.00) instead of the lower
+        /// animated foot; (2) the held foot is released once it would sit more than <see cref="ZombieLockMaxOffset"/> from its
+        /// animated position (<see cref="ReleasedByOffset"/>) instead of the leg-stretch rule; (3) the IK and lock budgets go to the
+        /// NEAREST zombies (camera distance, one-frame-lagged cut with hysteresis) instead of the Animator update order.
+        /// </summary>
+        public bool ZombieLock;
+        /// <summary>WP-096 diagnostics: locks released by <see cref="ZombieLockMaxOffset"/>.</summary>
+        public int ReleasedByOffset { get; private set; }
+        /// <summary>WP-096 diagnostics: frames this body wanted the IK / the lock and the budget refused it.</summary>
+        public int BudgetDeniedServe { get; private set; }
+        public int BudgetDeniedLock { get; private set; }
+        private int _plantFoot = -1;
+        private int _lastLockFrame = -2;
+        private const int RankCapacity = 32;
+        private static readonly float[] s_serveRank = new float[RankCapacity], s_lockRank = new float[RankCapacity];
+        private static int s_serveRankN, s_lockRankN, s_otherServed, s_otherLocked;
+        private static float s_serveCut = float.MaxValue, s_lockCut = float.MaxValue;
+        private static Vector3 s_rankOrigin;
+        private static bool s_rankOriginValid;
+
+        /// <summary>Insert a distance into a sorted fixed-size rank (the nearest <paramref name="keep"/> kept), zero allocation.</summary>
+        private static void Rank(float[] rank, ref int n, int keep, float d)
+        {
+            keep = Mathf.Clamp(keep, 0, rank.Length);
+            if (keep == 0) return;
+            if (n >= keep && d >= rank[keep - 1]) return;
+            int i = Mathf.Min(n, keep - 1);
+            while (i > 0 && rank[i - 1] > d) { rank[i] = rank[i - 1]; i--; }
+            rank[i] = d;
+            if (n < keep) n++;
+        }
+
+        /// <summary>Last frame's cut: the distance of the last body that fitted the budget (MaxValue when the budget was not full).</summary>
+        private static float Cut(float[] rank, int n, int keep) => keep <= 0 ? -1f : n >= keep ? rank[keep - 1] : float.MaxValue;
         /// <summary>WP-096 readout: the common correction of the last PreserveSwingLift solve (metres).</summary>
         public float CommonDelta => _commonDelta;
 
@@ -145,6 +193,8 @@ namespace DD.Prototype.Characters
             ProbeAllocPerServe = false;
             MaxLockBodiesPerFrame = 9;
             PlantDebounceSeconds = 0.1f;
+            s_serveRankN = s_lockRankN = s_otherServed = s_otherLocked = 0;   // WP-096 ZombieLock ranking
+            s_serveCut = s_lockCut = float.MaxValue;
         }
 
         private void ClearLock()
@@ -172,10 +222,29 @@ namespace DD.Prototype.Characters
                 s_served = 0;
                 s_raycasts = 0;
                 s_locked = 0;
+                // WP-096 ZombieLock: last frame's near-first cuts (the slots the non-zombie bodies took stay theirs)
+                s_serveCut = Cut(s_serveRank, s_serveRankN, MaxBodiesPerFrame - s_otherServed);
+                s_lockCut = Cut(s_lockRank, s_lockRankN, MaxLockBodiesPerFrame - s_otherLocked);
+                s_serveRankN = s_lockRankN = s_otherServed = s_otherLocked = 0;
+                Camera cam = Camera.main;
+                s_rankOriginValid = cam != null;
+                if (s_rankOriginValid) s_rankOrigin = cam.transform.position;
             }
 
             bool allowed = Force == 1 || (Force != 0 && (_enabled == null || _enabled()) && (_near == null || _near()));
             bool budget = allowed && s_served < MaxBodiesPerFrame;
+            float rankDistance = 0f;
+            if (ZombieLock && allowed && s_rankOriginValid)
+            {
+                // near-first: rank every zombie that wants the IK; admit it when it was inside last frame's cut (+ hysteresis if it was served)
+                rankDistance = Vector3.Distance(_animator.transform.position, s_rankOrigin);
+                Rank(s_serveRank, ref s_serveRankN, MaxBodiesPerFrame, rankDistance);
+                float cut = _lastServedFrame == Time.frameCount - 1 ? s_serveCut * ZombiePriorityHysteresis : s_serveCut;
+                if (rankDistance > cut) budget = false;
+            }
+
+            if (allowed && !budget) BudgetDeniedServe++;
+            if (budget && !ZombieLock) s_otherServed++;
             _servedThisFrame = budget;
             // R1-B AI3 (C-00 30.09): the foot lock lives only while the IK is served every frame — a gap (budget, LOD / manual
             // step, rise, disabled Animator) would otherwise blend the foot back toward a stale world point (a pop up to ~0.4 m).
@@ -206,8 +275,18 @@ namespace DD.Prototype.Characters
 
             s_served++;
             if (ProbeAllocPerServe) s_probeSink = new byte[16];   // tests: the positive control for the crowd allocation gate
-            _lockThisFrame = _lockGate != null && _lockGate() && s_locked < MaxLockBodiesPerFrame;
-            if (_lockThisFrame) s_locked++;
+            bool wantsLock = _lockGate != null && _lockGate();
+            _lockThisFrame = wantsLock && s_locked < MaxLockBodiesPerFrame;
+            if (wantsLock && ZombieLock && s_rankOriginValid)
+            {
+                // WP-096: the lock slots go to the nearest zombies too (a body holding a lock keeps it inside the hysteresis band)
+                Rank(s_lockRank, ref s_lockRankN, MaxLockBodiesPerFrame, rankDistance);
+                float cut = _lastLockFrame == Time.frameCount - 1 ? s_lockCut * ZombiePriorityHysteresis : s_lockCut;
+                if (rankDistance > cut) _lockThisFrame = false;
+            }
+
+            if (wantsLock && !_lockThisFrame) BudgetDeniedLock++;
+            if (_lockThisFrame) { s_locked++; _lastLockFrame = Time.frameCount; if (!ZombieLock) s_otherLocked++; }
             if (_legLength <= 0f)
             {
                 Transform up = _animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), lo = _animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), ft = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
@@ -253,12 +332,15 @@ namespace DD.Prototype.Characters
             // window "own contact → the other foot's contact", as the AP-009 slip gates define it); foot_*_off frees one foot.
             if (_plantPending == 1 && foot == 1)
             {
-                // both feet solved this frame: decide which one landed
-                int lower = _gapThisFrame[0] <= gap ? 0 : 1;
+                // both feet solved this frame: decide which one landed (WP-096 ZombieLock: the event's own foot)
+                int lower = ZombieLock && _plantFoot >= 0 ? _plantFoot : _gapThisFrame[0] <= gap ? 0 : 1;
                 if (_lockThisFrame)
                 {
                     _locked[lower] = true;
                     _lockPos[lower] = lower == 1 ? target : _targetThisFrame[0];
+                    // WP-096 ZombieLock: the held point IS the foot's position at the plant, so the lock takes full weight at once — the
+                    // 0.06 s blend-in let a run's stance foot (≈ 0.17 s on the ground) slide for a share of its contact
+                    if (ZombieLock) _lockWeight[lower] = 1f;
                     Transform lockHip = _animator.GetBoneTransform(lower == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
                     _lockReach[lower] = lockHip != null ? Vector3.Distance(lockHip.position, _lockPos[lower]) : 0f;   // same metric as the release
                 }
@@ -271,7 +353,14 @@ namespace DD.Prototype.Characters
             if (foot == 0) { _gapThisFrame[0] = gap; _targetThisFrame[0] = target; }
             if (_releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
             if (!_lockThisFrame) { if (_locked[foot]) ReleasedByGate++; _locked[foot] = false; }
-            if (_locked[foot] && _legLength > 0f)
+            if (_locked[foot] && ZombieLock)
+            {
+                // WP-096: never hold the foot far from where the (honest) clip puts it — no over-stretched leg dragged with the body
+                Vector3 off = _lockPos[foot] - animated;
+                off.y = 0f;
+                if (off.sqrMagnitude > ZombieLockMaxOffset * ZombieLockMaxOffset) { _locked[foot] = false; ReleasedByOffset++; }
+            }
+            else if (_locked[foot] && _legLength > 0f)
             {
                 Transform hip = _animator.GetBoneTransform(foot == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
                 float reach = hip != null ? Vector3.Distance(hip.position, _lockPos[foot]) : 0f;
@@ -289,13 +378,17 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>WP-071: the clip's foot_l / foot_r contact (owner forwards the event; the lower foot is taken, names aside).</summary>
-        public void NotifyPlant()
+        public void NotifyPlant() => NotifyPlant(-1);
+
+        /// <summary>WP-096: the plant names its foot (0 left, 1 right; −1 = the lower animated foot) — used while <see cref="ZombieLock"/>.</summary>
+        public void NotifyPlant(int foot)
         {
             // WP-071 (C-00 01.10, 4a): one footfall, one plant — the blend's other clips fire the same contact 1–2 frames later
             if (_lastPlantTime >= 0f && Time.time - _lastPlantTime < PlantDebounceSeconds) { PlantsDebounced++; return; }
             _lastPlantTime = Time.time;
             PlantsAccepted++;
             _plantPending = 1;
+            _plantFoot = foot;
         }
 
         /// <summary>WP-071: foot_l_off / foot_r_off (AP-022) — free that foot now (0 left, 1 right).</summary>

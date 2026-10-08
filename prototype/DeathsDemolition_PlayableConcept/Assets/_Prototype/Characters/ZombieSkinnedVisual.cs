@@ -422,6 +422,7 @@ namespace DD.Prototype.Characters
             }
 
             if (_footIk != null) _footIk.PreserveSwingLift = true;   // WP-096: the swing foot keeps its lift (one common correction)
+            if (_footIk != null) _footIk.ZombieLock = true;          // WP-096 (08.10): plant by the event's foot, offset-bounded hold, near-first budgets
             if (_footIk != null)
             {
                 _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far,
@@ -982,7 +983,7 @@ namespace DD.Prototype.Characters
                 case CharacterAnimationEvent.FootRight:
                 case CharacterAnimationEvent.FootLOff:
                 case CharacterAnimationEvent.FootROff:
-                    if (_footIk != null) PlayerSkinnedVisual.FootLockEvent(_footIk, e);   // WP-071 B2 foot lock
+                    if (_footIk != null) ZombieFootLockEvent(_footIk, e);   // WP-071 B2 foot lock; WP-096: the plant names its foot
                     break;
                 case CharacterAnimationEvent.RagdollHandoff:
                     if (_dying) _handoffNow = true;   // WP-071: an AP-022 onset clip names its own hand-off frame
@@ -994,6 +995,19 @@ namespace DD.Prototype.Characters
                     _heavyStaggerUntil = -1f;   // WP-040
                     break;
             }
+        }
+
+        /// <summary>
+        /// WP-096 (08.10): the zombie's plant / lift events drive its foot lock by the foot they NAME (the AP-033 labels match the
+        /// geometric stance — intake calibration "labels L/R" 0.93–1.00; the mirrored limp's events are swapped at the source), unlike
+        /// the player's shared rule (PlayerSkinnedVisual.FootLockEvent: the lower animated foot), which stays as it is.
+        /// </summary>
+        private static void ZombieFootLockEvent(FootIkAdapter ik, CharacterAnimationEvent e)
+        {
+            if (e == CharacterAnimationEvent.FootLeft) ik.NotifyPlant(0);
+            else if (e == CharacterAnimationEvent.FootRight) ik.NotifyPlant(1);
+            else if (e == CharacterAnimationEvent.FootLOff) ik.NotifyLift(0);
+            else if (e == CharacterAnimationEvent.FootROff) ik.NotifyLift(1);
         }
 
         // ---------------------------------------------------- IZombieAnimationDriver

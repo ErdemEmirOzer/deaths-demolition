@@ -260,6 +260,20 @@ namespace DD.Prototype.Tests.PlayMode
             r.Hedef("slideAvgWorst", enKotuOrt, false, HedefKaymaOrt, enKotuOrtAd + " (oyun pozu, IK açık, temas = klip olayları)");
             r.Hedef("slideP95Worst", enKotuP95, false, HedefKaymaP95, enKotuP95Ad);
             r.Bilgi("slideAvg", Ort(hepsi));
+            double temasKotu = double.NaN, servisMin = double.NaN, kilitMin = double.NaN;
+            string temasAd = "-", servisAd = "-", kilitAd = "-";
+            foreach (Grup g in oyun)
+            {
+                if (g.Engel.Count > 0) continue;
+                double tk = Ort(g.KaymaTemas);
+                if (!double.IsNaN(tk) && (double.IsNaN(temasKotu) || tk > temasKotu)) { temasKotu = tk; temasAd = g.Ad; }
+                if (g.IkKare > 0) { double sv = (double)g.IkServis / g.IkKare; if (double.IsNaN(servisMin) || sv < servisMin) { servisMin = sv; servisAd = g.Ad; } }
+                if (g.DurusKare > 0) { double kl = (double)g.DurusKilitli / g.DurusKare; if (double.IsNaN(kilitMin) || kl < kilitMin) { kilitMin = kl; kilitAd = g.Ad; } }
+            }
+
+            r.Bilgi("contactSlideAvgWorst", temasKotu, temasAd + " (temas noktası = ayak bileği / parmak işaretçilerinin alçak olanı; IK açık)");
+            r.Bilgi("ikServedShareMin", servisMin, servisAd + " (yürüyüş karelerinde FootIkAdapter.Served)");
+            r.Bilgi("ikLockedInStanceShareMin", kilitMin, kilitAd + " (durus ayak-karelerinde IsLocked)");
             r.Bilgi("slideP95", Yuzdelik(hepsi, 0.95));
             foreach (EnemyTier t in Kademeler)
                 r.Bilgi("slideAvg" + t, kademeKayma.TryGetValue(t, out List<double> x) ? Ort(x) : double.NaN);
@@ -379,6 +393,24 @@ namespace DD.Prototype.Tests.PlayMode
             public int OlayL, OlayR, KalkL, KalkR;
             public List<ZombiKaydedici.Kare> Kareler;
             public TemasSonuc Secilen, Olay, Yukseklik;
+            public int[] IkOnce = new int[IkSayacAdlari.Length], IkFark = new int[IkSayacAdlari.Length];   // WP-096: FootIkAdapter counters, start / delta
+        }
+
+        /// <summary>WP-096: the FootIkAdapter counters a lane reports (read by name — main's adapter has the first five; ZombieLock adds the rest).</summary>
+        private static readonly string[] IkSayacAdlari = { "ReleasedByStretch", "ReleasedByGate", "ReleasedByLift", "ReleasedByPlant", "PlantsAccepted", "ReleasedByOffset", "BudgetDeniedServe", "BudgetDeniedLock" };
+        private static readonly string[] IkSayacKisa = { "S", "G", "L", "P", "plants", "O", "deniedServe", "deniedLock" };
+
+        private static int[] IkSayac(FootIkAdapter ik)
+        {
+            var r = new int[IkSayacAdlari.Length];
+            if (ik == null) return r;
+            for (int i = 0; i < IkSayacAdlari.Length; i++)
+            {
+                PropertyInfo p = typeof(FootIkAdapter).GetProperty(IkSayacAdlari[i], Ornek);
+                r[i] = p != null && p.PropertyType == typeof(int) ? (int)p.GetValue(ik) : -1;
+            }
+
+            return r;
         }
 
         private sealed class KademeKaydi
@@ -463,11 +495,25 @@ namespace DD.Prototype.Tests.PlayMode
             return seritler;
         }
 
-        /// <summary>One pass: one lane per clip of every tier pool (<see cref="Seritler"/>) side by side, 1 s still (the idle control), then
-        /// 8 s straight at the tier speed (1 s warm-up excluded).</summary>
+        /// <summary>
+        /// WP-096 (C-00 08.10): lanes per sub-pass — FootIkAdapter serves ≤ MaxBodiesPerFrame (12) bodies and locks ≤ MaxLockBodiesPerFrame
+        /// (9) per frame, the player included; 14 lanes at once left ~5 lanes unlocked (their slide read as "IK-on slide"). Each sub-pass
+        /// stays inside both budgets, so every lane is measured with the production IK; the per-lane served / locked shares are logged.
+        /// </summary>
+        private static int SeritParcasi => Math.Max(1, Math.Min(FootIkAdapter.MaxLockBodiesPerFrame, FootIkAdapter.MaxBodiesPerFrame) - 2);
+
+        /// <summary>One pass: every lane of <see cref="Seritler"/> (one per clip of every tier pool), in sub-passes of <see cref="SeritParcasi"/>.</summary>
         private IEnumerator KademeGecisi(Vector3 merkez, uint tohum, int tur, MethodInfo hizMetodu, List<Govde> into)
         {
-            List<(EnemyTier tier, string key, int gait)> seritler = Seritler();
+            List<(EnemyTier tier, string key, int gait)> hepsi = Seritler();
+            for (int bas = 0; bas < hepsi.Count; bas += SeritParcasi)
+                yield return KademeAltGecisi(merkez, tohum, tur, hizMetodu, into, hepsi.GetRange(bas, Math.Min(SeritParcasi, hepsi.Count - bas)));
+        }
+
+        /// <summary>One sub-pass: the given lanes side by side, 1 s still (the idle control), then 8 s straight at the tier speed (1 s
+        /// warm-up excluded).</summary>
+        private IEnumerator KademeAltGecisi(Vector3 merkez, uint tohum, int tur, MethodInfo hizMetodu, List<Govde> into, List<(EnemyTier tier, string key, int gait)> seritler)
+        {
             MethodInfo zorla = Metot(typeof(ZombieSkinnedVisual), "ForceGaitForTest", typeof(int));
             int n = seritler.Count;
             var govdeler = new List<Govde>(n);
@@ -496,6 +542,7 @@ namespace DD.Prototype.Tests.PlayMode
                 b.Hiz = z.Stats.MoveSpeed * b.Jitter;
                 v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 ZombiKaydedici k = KaydediciEkle(v.Animator, 1 << PrototypeLayers.Environment, b.Ad);
+                b.IkOnce = IkSayac(v.FootIk);   // WP-096: the lock's release / budget counters at the start of the pass
                 govdeler.Add(b);
                 zler.Add(z);
                 kayitlar.Add(k);
@@ -524,6 +571,9 @@ namespace DD.Prototype.Tests.PlayMode
 
             for (int i = 0; i < n; i++)
             {
+                int[] son = IkSayac(zler[i].Skinned.FootIk);
+                govdeler[i].IkFark = new int[son.Length];
+                for (int c = 0; c < son.Length; c++) govdeler[i].IkFark[c] = son[c] - govdeler[i].IkOnce[c];
                 GovdeBitir(govdeler[i], zler[i].Skinned, kayitlar[i]);
                 into.Add(govdeler[i]);
                 zler[i].Remove();
@@ -586,6 +636,10 @@ namespace DD.Prototype.Tests.PlayMode
             public double YuruTaban = double.NaN;                       // IK-off: worst foot's 5th-percentile sole height while walking, m
             public readonly List<string> Engel = new List<string>();   // why this group is left out (empty = valid)
             public double USum, VSum;
+            // WP-096: the IK as each lane got it (stance foot-frames by the chosen stance; walk frames for the service) and the contact slide
+            public int IkKare, IkServis, DurusKare, DurusKilitli;
+            public readonly List<double> KaymaTemas = new List<double>();
+            public readonly int[] IkFark = new int[IkSayacAdlari.Length];
             public double TemasPayi => AyakKare > 0 ? (double)TemasKare / AyakKare : double.NaN;
         }
 
@@ -678,11 +732,22 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (ZombiKaydedici.Kare k in ks) if (Olculen(k) && k.Gecerli) { toplam += k.KokV; n++; }
             Vector3 yon = n > 0 && toplam.sqrMagnitude > 1e-8f ? toplam.normalized : Vector3.forward;
             float sonL = -1f, sonR = -1f;
+            // WP-096: the contact point = the lower of the ankle / toe markers relative to its own lowest point while walking (the intake
+            // calibration's definition) — the ankle alone moves during the heel-to-toe roll inside an event stance without any slide
+            float minAL = float.MaxValue, minTL = float.MaxValue, minAR = float.MaxValue, minTR = float.MaxValue;
+            foreach (ZombiKaydedici.Kare k in ks)
+            {
+                if (!Olculen(k)) continue;
+                minAL = Mathf.Min(minAL, k.AyakYL); minTL = Mathf.Min(minTL, k.ParmakYL); minAR = Mathf.Min(minAR, k.AyakYR); minTR = Mathf.Min(minTR, k.ParmakYR);
+            }
+
+            for (int c = 0; c < g.IkFark.Length && c < b.IkFark.Length; c++) g.IkFark[c] += b.IkFark[c];
             for (int i = 0; i < ks.Count; i++)
             {
                 ZombiKaydedici.Kare k = ks[i];
                 if (!Olculen(k)) continue;
                 g.OlcumKare++;
+                if (k.IkVar) { g.IkKare++; if (k.IkServis) g.IkServis++; }
                 if (k.Loko) g.LokoKare++;
                 if (s.BasL[i]) { g.BasL++; if (sonL >= 0f && k.Zaman - sonL < AralikTavan) g.Araliklar.Add(k.Zaman - sonL); sonL = k.Zaman; }
                 if (s.BasR[i]) { g.BasR++; if (sonR >= 0f && k.Zaman - sonR < AralikTavan) g.Araliklar.Add(k.Zaman - sonR); sonR = k.Zaman; }
@@ -692,6 +757,17 @@ namespace DD.Prototype.Tests.PlayMode
                 g.VN++;
                 if (s.L[i]) { g.Kayma.Add(Oran(k.AyakVL, k.KalcaV)); g.KaymaKok.Add(Oran(k.AyakVL, k.KokV)); g.USum += -Vector3.Dot(Yatay(k.AyakVL - k.KokV), yon); g.UN++; g.TemasKare++; }
                 if (s.R[i]) { g.Kayma.Add(Oran(k.AyakVR, k.KalcaV)); g.KaymaKok.Add(Oran(k.AyakVR, k.KokV)); g.USum += -Vector3.Dot(Yatay(k.AyakVR - k.KokV), yon); g.UN++; g.TemasKare++; }
+                if (s.L[i])
+                {
+                    g.KaymaTemas.Add(Oran(k.ParmakYL - minTL < k.AyakYL - minAL ? k.ParmakVL : k.AyakVL, k.KalcaV));
+                    if (k.IkVar) { g.DurusKare++; if (k.KilitL) g.DurusKilitli++; }
+                }
+
+                if (s.R[i])
+                {
+                    g.KaymaTemas.Add(Oran(k.ParmakYR - minTR < k.AyakYR - minAR ? k.ParmakVR : k.AyakVR, k.KalcaV));
+                    if (k.IkVar) { g.DurusKare++; if (k.KilitR) g.DurusKilitli++; }
+                }
             }
         }
 
@@ -853,7 +929,17 @@ namespace DD.Prototype.Tests.PlayMode
                       + " events L/R " + x.OlayL + "/" + x.OlayR + " off " + x.KalkL + "/" + x.KalkR + ")");
             return g.Ad + " [" + g.Kaynak + "] avg " + F(Ort(g.Kayma)) + " p95 " + F(Yuzdelik(g.Kayma, 0.95)) + " rootAvg " + F(Ort(g.KaymaKok)) + " n " + g.Kayma.Count
                    + " share " + F(g.TemasPayi, 2) + " onsets L/R " + g.BasL + "/" + g.BasR + " swingGrounded " + (g.SalinimKare > 0 ? F((double)g.SalinimYerde / g.SalinimKare, 2) : "n/a")
-                   + " swingLiftMed " + F(Medyan(g.SalinimBosluk) * 100.0, 1) + "cm gap " + TabanOzeti(g) + " :: " + string.Join(" ", b);
+                   + " swingLiftMed " + F(Medyan(g.SalinimBosluk) * 100.0, 1) + "cm gap " + TabanOzeti(g) + " " + IkOzeti(g) + " :: " + string.Join(" ", b);
+        }
+
+        /// <summary>WP-096: the lane's IK as it got it — served share of the walk frames, locked share of the stance foot-frames, the
+        /// contact-point slide next to the ankle slide, and the release / budget counters over the pass.</summary>
+        private static string IkOzeti(Grup g)
+        {
+            var c = new List<string>();
+            for (int i = 0; i < IkSayacAdlari.Length; i++) c.Add(IkSayacKisa[i] + " " + g.IkFark[i]);
+            return "ik served " + (g.IkKare > 0 ? F((double)g.IkServis / g.IkKare, 2) : "n/a") + " lockedInStance " + (g.DurusKare > 0 ? F((double)g.DurusKilitli / g.DurusKare, 2) : "n/a")
+                   + " contactSlide avg " + F(Ort(g.KaymaTemas)) + " p95 " + F(Yuzdelik(g.KaymaTemas, 0.95)) + " release " + string.Join(" ", c);
         }
 
         private static string TabanOzeti(Grup g)
@@ -2289,6 +2375,10 @@ namespace DD.Prototype.Tests.PlayMode
             public float Hiz, Faz;                     // state speed × multiplier, normalizedTime mod 1
             public float KokYaw, KalcaYaw, Egilme, Ek; // unwrapped yaw (°), torso roll in the root frame (°), extra reading
             public bool OlayL, OlayR, KalkL, KalkR;    // clip events this frame: foot_l / foot_r plant, foot_l_off / foot_r_off lift
+            // WP-096: the toe markers (the contact point with the ankle) and the foot IK as this body got it this frame
+            public Vector3 ParmakVL, ParmakVR;         // m/s
+            public float AyakYL, AyakYR, ParmakYL, ParmakYR;   // world height, m
+            public bool IkVar, IkServis, KilitL, KilitR;
         }
 
         public static readonly Dictionary<int, string> KlipAdlari = new Dictionary<int, string>();
@@ -2302,7 +2392,9 @@ namespace DD.Prototype.Tests.PlayMode
         public int Since { get; private set; }
 
         private Animator _anim;
-        private Transform _kok, _kalca, _gogus, _ayakL, _ayakR;
+        private Transform _kok, _kalca, _gogus, _ayakL, _ayakR, _parmakL, _parmakR;
+        private FootIkAdapter _ik;
+        private Vector3 _onceTL, _onceTR;
         private Transform[] _kemik;
         private Quaternion[] _onceRot;
         private Vector3 _kalcaEksen, _onceKok, _onceKalca, _onceL, _onceR;
@@ -2325,6 +2417,11 @@ namespace DD.Prototype.Tests.PlayMode
             if (_gogus == null) _gogus = anim.GetBoneTransform(HumanBodyBones.Spine);
             _ayakL = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
             _ayakR = anim.GetBoneTransform(HumanBodyBones.RightFoot);
+            _parmakL = anim.GetBoneTransform(HumanBodyBones.LeftToes);
+            _parmakR = anim.GetBoneTransform(HumanBodyBones.RightToes);
+            if (_parmakL == null) _parmakL = _ayakL;
+            if (_parmakR == null) _parmakR = _ayakR;
+            _ik = anim.GetComponent<FootIkAdapter>();
             HumanBodyBones[] kemikler = R2LokomotionOlcumTests.Kemikler;
             _kemik = new Transform[kemikler.Length];
             _onceRot = new Quaternion[kemikler.Length];
@@ -2411,7 +2508,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             float dt = Time.deltaTime;
             Vector3 kok = _kok.position, kalca = _kalca.position, l = _ayakL.position, r = _ayakR.position;
+            Vector3 tl = _parmakL.position, tr = _parmakR.position;
             var k = new Kare { Etiket = Etiket, Since = Since, Zaman = Time.time, Dt = dt };
+            k.AyakYL = l.y; k.AyakYR = r.y; k.ParmakYL = tl.y; k.ParmakYR = tr.y;
+            if (_ik != null) { k.IkVar = true; k.IkServis = _ik.Served; k.KilitL = _ik.IsLocked(0); k.KilitR = _ik.IsLocked(1); }
             _kare++;
             int bekleyen = _bekleyen;
             _bekleyen = 0;
@@ -2437,6 +2537,8 @@ namespace DD.Prototype.Tests.PlayMode
                 k.KalcaV = hv;
                 k.AyakVL = (l - _onceL) / dt;
                 k.AyakVR = (r - _onceR) / dt;
+                k.ParmakVL = (tl - _onceTL) / dt;
+                k.ParmakVR = (tr - _onceTR) / dt;
             }
 
             float ky = Yaw(_kok.forward), hy = Yaw(_kalca.rotation * _kalcaEksen);
@@ -2475,6 +2577,8 @@ namespace DD.Prototype.Tests.PlayMode
             _onceKalca = kalca;
             _onceL = l;
             _onceR = r;
+            _onceTL = tl;
+            _onceTR = tr;
             _onceVar = true;
         }
     }

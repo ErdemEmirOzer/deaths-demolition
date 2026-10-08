@@ -380,12 +380,25 @@ namespace DD.Art.Tests.PlayMode
             v.ResetForSpawn(EnemyTier.Special, 4.6f, "A", 0, false);
             v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             Transform lf = v.Animator.GetBoneTransform(HumanBodyBones.LeftFoot), rf = v.Animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            Transform lt = v.Animator.GetBoneTransform(HumanBodyBones.LeftToes) ?? lf, rt = v.Animator.GetBoneTransform(HumanBodyBones.RightToes) ?? rf;
             const float speed = 4.6f;
             Time.captureDeltaTime = 1f / 60f;
-            for (int i = 0; i < 30; i++) { v.SetSpeed(speed, Time.deltaTime); yield return null; }
+            // WP-096 (08.10): the contact point = the lower of the ankle / toe markers relative to its own lowest point (the intake
+            // calibration's and ZL1's definition); its lowest heights are read over one warm-up second
+            float[] minAnkle = { float.MaxValue, float.MaxValue }, minToe = { float.MaxValue, float.MaxValue };
+            for (int i = 0; i < 60; i++)
+            {
+                v.SetSpeed(speed, Time.deltaTime);
+                yield return null;
+                minAnkle[0] = Mathf.Min(minAnkle[0], lf.position.y); minAnkle[1] = Mathf.Min(minAnkle[1], rf.position.y);
+                minToe[0] = Mathf.Min(minToe[0], lt.position.y); minToe[1] = Mathf.Min(minToe[1], rt.position.y);
+            }
             // contact-frame metric (manifest stance 5 of 13): the landed foot's world travel over its stance frames only
             const int stanceFrames = 5;
             var slips = new List<float>();
+            var contactSlips = new List<float>();
+            float contactTravel = 0f;
+            Vector3[] lastContact = new Vector3[2];
             float[] sampleX = { float.NaN, float.NaN };
             float sampleTime = -1f;
             bool pending = false;
@@ -394,6 +407,9 @@ namespace DD.Art.Tests.PlayMode
             {
                 if (e != CharacterAnimationEvent.FootLeft && e != CharacterAnimationEvent.FootRight) return;
                 sampleX[0] = lf.position.x; sampleX[1] = rf.position.x; sampleTime = Time.time; landed = e; pending = true;
+                contactTravel = 0f;
+                int f0 = e == CharacterAnimationEvent.FootLeft ? 0 : 1;
+                lastContact[f0] = ContactPoint(f0 == 0 ? lf : rf, f0 == 0 ? lt : rt, minAnkle[f0], minToe[f0]);
             };
             v.Events.Raised += onEvent;
             float t0 = Time.time;
@@ -405,9 +421,19 @@ namespace DD.Art.Tests.PlayMode
                     v.SetSpeed(speed, Time.deltaTime);
                     yield return null;
                     float contactSeconds = stanceFrames / 30f / Mathf.Max(0.1f, v.Animator.GetFloat(C.GaitRate));
+                    if (pending)
+                    {
+                        // the landed foot's contact point, frame by frame (the instantaneous lower marker — a rolling sole has no one material point)
+                        int f1 = landed == CharacterAnimationEvent.FootLeft ? 0 : 1;
+                        Vector3 cp = ContactPoint(f1 == 0 ? lf : rf, f1 == 0 ? lt : rt, minAnkle[f1], minToe[f1]);
+                        contactTravel += cp.x - lastContact[f1].x;
+                        lastContact[f1] = cp;
+                    }
+
                     if (pending && Time.time - sampleTime >= contactSeconds)
                     {
                         slips.Add(landed == CharacterAnimationEvent.FootLeft ? lf.position.x - sampleX[0] : rf.position.x - sampleX[1]);
+                        contactSlips.Add(contactTravel);
                         pending = false;
                     }
                 }
@@ -416,12 +442,24 @@ namespace DD.Art.Tests.PlayMode
 
             var perCycle = new List<float>();
             for (int i = 0; i + 1 < slips.Count; i += 2) perCycle.Add(Mathf.Abs(0.5f * (slips[i] + slips[i + 1])));
+            var contactCycle = new List<float>();
+            for (int i = 0; i + 1 < contactSlips.Count; i += 2) contactCycle.Add(Mathf.Abs(0.5f * (contactSlips[i] + contactSlips[i + 1])));
+            contactCycle.Sort();
+            float contactMedian = contactCycle.Count > 0 ? contactCycle[contactCycle.Count / 2] : 0f;
             float windowMean = 0f; foreach (float w in slips) windowMean += w; windowMean = slips.Count > 0 ? windowMean / slips.Count : 0f;
             perCycle.Sort();
             float median = perCycle.Count > 0 ? perCycle[perCycle.Count / 2] : 0f;
-            Debug.Log("[DD-TEST] wp032b.zrunslip steps=" + slips.Count + " cycleMedian=" + (median * 100f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " cm windowMeanSigned=" + (windowMean * 100f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " cm rate=" + v.Animator.GetFloat(C.GaitRate).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " runSpeed=" + v.AnimationSet.SpeedOf(C.ZombieRun).ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+            Debug.Log("[DD-TEST] wp032b.zrunslip steps=" + slips.Count + " cycleMedian=" + (median * 100f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " cm windowMeanSigned=" + (windowMean * 100f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " cm rate=" + v.Animator.GetFloat(C.GaitRate).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " runSpeed=" + v.AnimationSet.SpeedOf(C.ZombieRun).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                      + " gaitClip=" + C.ZombieGaitClips[v.Gait] + " clipSpeed=" + v.AnimationSet.SpeedOf(C.ZombieGaitClips[v.Gait]).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                      + " contactCycleMedian=" + (contactMedian * 100f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " cm");
             Assert.GreaterOrEqual(slips.Count, 8, "yeterli adım ölçülmedi");
+            // WP-096 (08.10): the gate stays the ankle (S-06's metric) until C-00 / S-06 decide; the contact point (lower of ankle / toe,
+            // the intake calibration's definition) is only logged — a heel-strike run rolls the ankle while the sole holds.
             Assert.LessOrEqual(median, 0.02f, "Runner koşusunda basan ayağın döngü kayması > 2 cm/adım");
         }
+
+        /// <summary>WP-096: the foot's contact point — the ankle or the toe marker, whichever is nearer its own lowest height.</summary>
+        private static Vector3 ContactPoint(Transform ankle, Transform toe, float minAnkle, float minToe)
+            => toe.position.y - minToe < ankle.position.y - minAnkle ? toe.position : ankle.position;
     }
 }
