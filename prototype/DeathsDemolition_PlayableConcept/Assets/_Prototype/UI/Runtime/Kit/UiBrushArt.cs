@@ -18,7 +18,16 @@ namespace DD.Prototype.UI
         SealRing,
         TooltipWash,
         TooltipPointer,
-        ScrollThumb
+        ScrollThumb,
+
+        /// <summary>WP-098A (HAREKET-MENU M7 / M8) · AP-034 M1, the hover ink wave's ring (cream, α ≤ 0.06).</summary>
+        InkRipple,
+
+        /// <summary>WP-098A (M10) · AP-034 M2, the click splash: a blot, six arms and their droplets.</summary>
+        InkSplash,
+
+        /// <summary>WP-098A (M17) · AP-034 P1, the ambient motes sheet: row 1 four ash flakes, row 2 maple / petal leaves (4 × 4 cells).</summary>
+        Motes
     }
 
     /// <summary>
@@ -32,7 +41,7 @@ namespace DD.Prototype.UI
     {
         public const string Folder = "UI/Brush/";   // Assets/_Prototype/UI/Art/Resources/UI/Brush/ (S-09 07.10, S6)
 
-        private const int Count = (int)UiBrushSprite.ScrollThumb + 1;
+        private const int Count = (int)UiBrushSprite.Motes + 1;
 
         private static readonly string[] s_files =
         {
@@ -49,8 +58,40 @@ namespace DD.Prototype.UI
             "ap034_kit_c23ring_128_mask",
             "ap034_kit_c27tip_128x64_mask",
             "ap034_kit_c27ptr_32x16_mask",
-            "ap034_kit_c35thumb_16x64_mask"
+            "ap034_kit_c35thumb_16x64_mask",
+            "ap034_kit_m1ripple_256_mask",
+            "ap034_kit_m2splash_256_mask",
+            "ap034_kit_p1motes_256_mask"
         };
+
+        /// <summary>WP-098A (M17) · the P1 sheet's cells in its texture (uv, bottom-left): ash = row 1, leaves = row 2, four each.</summary>
+        public static readonly Rect AshCell = new Rect(0f, 0.75f, 0.25f, 0.25f);
+
+        public static readonly Rect LeafCell = new Rect(0f, 0.5f, 0.25f, 0.25f);
+        public const int MoteCellsPerRow = 4;
+
+        /// <summary>
+        /// WP-098A (M17) · a cell of <see cref="UiBrushSprite.Motes"/> in its texture's uv (the sprite's own rect when it is packed);
+        /// the code fallback (a disc) is one cell - the whole sprite.
+        /// </summary>
+        public static Rect MoteCell(Rect cell)
+        {
+            Sprite sprite = Get(UiBrushSprite.Motes);
+            Texture texture = sprite != null ? sprite.texture : null;
+            if (texture == null || !IsAuthored(UiBrushSprite.Motes))
+            {
+                return sprite != null && texture != null ? SpriteUv(sprite, texture) : new Rect(0f, 0f, 1f, 1f);
+            }
+
+            Rect uv = SpriteUv(sprite, texture);
+            return new Rect(uv.x + cell.x * uv.width, uv.y + cell.y * uv.height, cell.width * uv.width, cell.height * uv.height);
+        }
+
+        private static Rect SpriteUv(Sprite sprite, Texture texture)
+        {
+            Rect r = sprite.textureRect;
+            return new Rect(r.x / texture.width, r.y / texture.height, r.width / texture.width, r.height / texture.height);
+        }
 
         private static readonly Sprite[] s_sprites = new Sprite[Count];
         private static readonly bool[] s_authored = new bool[Count];
@@ -160,6 +201,15 @@ namespace DD.Prototype.UI
                     break;
                 case UiBrushSprite.TooltipPointer:
                     sprite = UiSprites.Chevron;
+                    break;
+                case UiBrushSprite.InkRipple:
+                    sprite = UiSprites.RingThin;
+                    break;
+                case UiBrushSprite.InkSplash:
+                    sprite = UiFxGlobals.InkMask(UiInkChannel.Blot);
+                    break;
+                case UiBrushSprite.Motes:
+                    sprite = UiSprites.Disc;
                     break;
             }
 

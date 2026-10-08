@@ -361,10 +361,21 @@ namespace DD.Prototype.UI
             if (_lifted != lifted)
             {
                 _lifted = lifted;
+                if (_variant == UiButtonVariant.Brush)
+                {
+                    BrushLift(lifted);   // WP-098A M8: the face's 2 px and the ink wave behind it (UiButtonMotion.cs)
+                }
+
                 if (LiftChanged != null)
                 {
                     LiftChanged(lifted);
                 }
+            }
+
+            if (_pressShown != pressed)
+            {
+                _pressShown = pressed;
+                PressChanged?.Invoke(pressed);   // WP-098A M9: pointer down or a Submit pulse - the icon's press track
             }
 
             // WP-098A: a Brush control's press is its depth (UiButtonBrush.cs), never the bevel.

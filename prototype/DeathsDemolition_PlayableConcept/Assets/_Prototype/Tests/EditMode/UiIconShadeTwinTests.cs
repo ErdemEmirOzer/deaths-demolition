@@ -11,9 +11,12 @@ namespace DD.Prototype.Tests.EditMode
     /// <summary>
     /// WP-081 ikon v2 B5b · T5: the icon material's maths without a GPU. <see cref="UiIconShade"/> - the C# twin of
     /// DD_IconShade - reproduces AP-028-B's reference render() (the code is the source, C-00 06.10) within its 8-bit
-    /// truncation, never falls under its tint (IK-M5), keeps the outer layers out of every pixel the glyph covers (T2),
-    /// holds the sheen to the glint token × FlashScale (D6, IK-M15), and shares every constant with DD_UiFx.hlsl and the
-    /// exported UiTokens.hlsl - so a change on one side fails here, not on the AD's screen.
+    /// truncation, its light never takes a channel under the tint (IK-M5), keeps the outer layers out of every pixel the
+    /// glyph covers (T2), holds the sheen to the glint token × FlashScale (D6, IK-M15), and shares every constant with
+    /// DD_UiFx.hlsl and the exported UiTokens.hlsl - so a change on one side fails here, not on the AD's screen.
+    /// WP-098A (C-00 08.10) · AP-034 v002.1 row d, the AD default: the twin lands on AP-034's own Twin pixel for pixel
+    /// (embedded rows), the lit glyph's floor is tint × (1 − (0.06 + 0.06 s)) (AD §5-2), the tokens are AP-034's rows.d,
+    /// and I1 / I2 import as the constants assume. B5b's D3 / D7 (glow 0.017, cold lob #293B46 0.083) retired with row a.
     /// </summary>
     [TestFixture]
     [Category("WP081")]
@@ -126,7 +129,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsEmpty(failures, "render() paritesi:\n" + string.Join("\n", failures));
         }
 
-        /// <summary>T5 · the floor: on a tint × boost grid (linear, every corner and mid tone) no channel ever falls under its tint.</summary>
+        /// <summary>
+        /// T5 · the light alone: on a tint × boost grid (linear, every corner and mid tone) no channel ever falls under its tint
+        /// and more boost never darkens. Row d's ink comes after it, within its ceiling (<see cref="RowD_Taban_TintCarpiTavan_IhlalSifir"/>).
+        /// </summary>
         [Test]
         public void T5_RenkTabani_TintBoostIzgarasi_IhlalSifir()
         {
@@ -186,10 +192,17 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0.25f * UiSettings.ReducedFlashScale, reduced, 1e-4f, "flaşı azalt: × 0,4 (IK-M15)");
             Assert.AreEqual(0.45f, raw, 1e-4f, "render() tepesi 0,45 (tavansız ikiz)");
 
-            float glow = UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, -0.5f, 0f);
-            Assert.AreEqual(UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, -0.5f, 0f, UiSettings.ReducedFlashScale), glow * UiSettings.ReducedFlashScale, 1e-6f,
-                "glow × FlashScale (IK-M15)");
-            Assert.LessOrEqual(glow, UiMaterialSpec.IconGlowAlpha + 1e-6f, "glow tavanı = D3 token'ı");
+            foreach (float s in new[] { 0f, 0.5f, 1f })
+            {
+                float glow = UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, -0.5f, 0f, s);
+                Assert.AreEqual(UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, -0.5f, 0f, s, UiSettings.ReducedFlashScale), glow * UiSettings.ReducedFlashScale, 1e-6f,
+                    "glow × FlashScale (IK-M15)");
+                Assert.LessOrEqual(glow, UiMaterialSpec.IconGlowAlpha + UiMaterialSpec.IconGlowAlphaRamp * s + 1e-6f, "glow tavanı = d satırı 0,07 + 0,05 s");
+            }
+
+            // WP-098A row d: the glow's α at its peak ramps with the size, 0.07 at 24 px → 0.12 from 40 (AD §2).
+            Assert.AreEqual(0.07f, UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, 0f, 0f, UiIconShade.SizeRamp(24f)), 1e-6f);
+            Assert.AreEqual(0.12f, UiIconShade.GlowAlpha(UiIconShade.GlowChannelMax, 0f, 0f, UiIconShade.SizeRamp(40f)), 1e-6f);
         }
 
         /// <summary>
@@ -225,9 +238,9 @@ namespace DD.Prototype.Tests.EditMode
 
         /// <summary>
         /// The twin, the shader and the exported tokens agree: every DD_ICON_* define of DD_UiFx.hlsl, DD_FX_ICON = 8, the
-        /// three DD_UI_ICON_* tokens of UiTokens.hlsl; the frame's units (direction §1.2: 64 / 52 = the B5a manifest's
-        /// ddIconSdAp, S / M / L = 2.667 / 2.0 / 1.6 AP per px, at S a 2.00 px stroke and a 0.75 px bevel, the lob 0.542 G1
-        /// px) and the G1 page the shader assumes (1024²).
+        /// DD_UI_ICON_* tokens of UiTokens.hlsl (WP-098A: row d's twelve); the frame's units (direction §1.2: 64 / 52 = the
+        /// O1 merges' ddIconSdAp, S / M / L = 2.667 / 2.0 / 1.6 AP per px, at S a 2.00 px stroke and a 0.75 px bevel, the lob
+        /// (1.3, −1.95) G1 px) and the G1 page the shader assumes (1024²).
         /// </summary>
         [Test]
         public void Sabitler_HlslTokenVeManifestIleAyni()
@@ -254,14 +267,36 @@ namespace DD.Prototype.Tests.EditMode
             Same(hlsl, "DD_ICON_DRAW", UiIconShade.Draw.x, UiIconShade.Draw.y, UiIconShade.Draw.z);
             Same(hlsl, "DD_ICON_SPREAD", UiIconShade.Spread.x, UiIconShade.Spread.y, UiIconShade.Spread.z, UiIconShade.Spread.w);
             Same(hlsl, "DD_ICON_GLOW_MAX", UiIconShade.GlowChannelMax);
-            Same(hlsl, "DD_ICON_LOB_AP", UiIconShade.LobOffsetAp);
+            Same(hlsl, "DD_ICON_GRAIN_TILE", UiIconShade.GrainTile);
+            Same(hlsl, "DD_ICON_CAVITY_NORM", UiIconShade.CavityNorm);
+            Same(hlsl, "DD_ICON_GRAIN_CUT", UiIconShade.GrainCut);
+            Same(hlsl, "DD_ICON_INK_GAIN", UiIconShade.InkGain);
+            Same(hlsl, "DD_ICON_BEVEL_BAND", UiIconShade.BevelBand.x, UiIconShade.BevelBand.y, UiIconShade.BevelBand.z);
+            Same(hlsl, "DD_ICON_KEY_DIR", UiIconShade.KeyDirection.x, UiIconShade.KeyDirection.y);
             StringAssert.Contains("DD_UI_GLINT_MAX_BRIGHTNESS", hlsl, "D6: sheen tavanı token'dan");
+            StringAssert.DoesNotContain("DD_ICON_LOB_AP", hlsl, "B5b'nin 0,667 AP soğuk lobu emekli (d: DD_UI_ICON_LOB_OFFSET)");
+            foreach (string token in new[] { "DD_UI_ICON_LOB_OFFSET", "DD_UI_ICON_LOB_SOFT", "DD_UI_ICON_GLOW_RAMP", "DD_UI_ICON_SIZE_RAMP",
+                         "DD_UI_ICON_CAVITY", "DD_UI_ICON_GRAIN", "DD_UI_ICON_DRY", "DD_UI_ICON_BEVEL_SHADOW", "DD_UI_ICON_CEILING", "_DD_IconCavity", "_DD_IconGrain" })
+            {
+                StringAssert.Contains(token, hlsl, "d satırı shader'da: " + token);
+            }
 
             // The exported tokens (F() keeps 4 decimals).
             Color lob = UiMaterialSpec.IconLobColour;
-            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGlowAlpha }, Define(tokens, "DD_UI_ICON_GLOW_ALPHA"), new Near(1e-4f));
-            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGlowRadiusAp }, Define(tokens, "DD_UI_ICON_GLOW_RADIUS"), new Near(1e-4f));
-            CollectionAssert.AreEqual(new[] { lob.r, lob.g, lob.b, UiMaterialSpec.IconLobAlpha }, Define(tokens, "DD_UI_ICON_LOB"), new Near(1e-4f));
+            Vector2 offset = UiMaterialSpec.IconLobOffsetAp;
+            var near = new Near(1e-4f);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGlowAlpha }, Define(tokens, "DD_UI_ICON_GLOW_ALPHA"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGlowAlphaRamp }, Define(tokens, "DD_UI_ICON_GLOW_RAMP"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGlowRadiusAp }, Define(tokens, "DD_UI_ICON_GLOW_RADIUS"), near);
+            CollectionAssert.AreEqual(new[] { lob.r, lob.g, lob.b, UiMaterialSpec.IconLobAlpha }, Define(tokens, "DD_UI_ICON_LOB"), near);
+            CollectionAssert.AreEqual(new[] { offset.x, offset.y }, Define(tokens, "DD_UI_ICON_LOB_OFFSET"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconLobSoftAp }, Define(tokens, "DD_UI_ICON_LOB_SOFT"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconRampStartPx, UiMaterialSpec.IconRampSpanPx }, Define(tokens, "DD_UI_ICON_SIZE_RAMP"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconCavity }, Define(tokens, "DD_UI_ICON_CAVITY"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconGrain }, Define(tokens, "DD_UI_ICON_GRAIN"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconDryTail }, Define(tokens, "DD_UI_ICON_DRY"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconBevelShadow }, Define(tokens, "DD_UI_ICON_BEVEL_SHADOW"), near);
+            CollectionAssert.AreEqual(new[] { UiMaterialSpec.IconCeiling, UiMaterialSpec.IconCeilingRamp }, Define(tokens, "DD_UI_ICON_CEILING"), near);
 
             // Units (WP-081-ICON-V2-DIRECTION §1.2).
             Assert.AreEqual(64f / 52f, UiIconShade.SdAp, 1e-6f);
@@ -273,7 +308,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1.6f, UiIconShade.ApPerPixel((int)UiIconSize.L), 1e-3f, "L");
             Assert.AreEqual(2.0f, (64f / 12f) / UiIconShade.ApPerPixel((int)UiIconSize.S), 1e-3f, "S'de çizgi 2,00 px (README)");
             Assert.AreEqual(0.75f, UiIconShade.BevelAp / UiIconShade.ApPerPixel((int)UiIconSize.S), 1e-3f, "S'de bevel 0,75 px (README)");
-            Assert.AreEqual(0.5417f, UiIconShade.LobOffsetAp / UiIconShade.SdAp, 1e-4f, "lob ötelemesi 0,542 G1 px");
+            Assert.AreEqual(1.3f, UiMaterialSpec.IconLobOffsetAp.x / UiIconShade.SdAp, 1e-4f, "lob ötelemesi x 1,3 G1 px");
+            Assert.AreEqual(-1.95f, UiMaterialSpec.IconLobOffsetAp.y / UiIconShade.SdAp, 1e-4f, "lob ötelemesi y −1,95 G1 px (aşağı)");
+            Assert.AreEqual(-UiMaterialSpec.IconLobOffsetAp.x / UiIconShade.SdAp / UiIconShade.AtlasSize, UiIconShade.LobTapUv.x, 1e-9f, "lob tap'ı sol üstte");
 
             var g1 = Resources.Load<Texture2D>(UiTheme.GlyphAtlas);
             Assert.IsNotNull(g1, "G1");
@@ -281,46 +318,364 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual((int)UiIconShade.AtlasSize, g1.height);
         }
 
+        // ------------------------------------------------------------------ WP-098A · AP-034 v002.1 row d (AD default)
+
         /// <summary>
-        /// D3 / D7 (C-00 06.10): the two outer-layer alphas are AP-028's sRGB-blend values re-expressed for this pipeline's
-        /// linear blend - the α whose linear composite over the #161D21 measuring ground has the same relative luminance as
-        /// AP-028's sRGB composite. Glow 0.08 of Cream100 → 0.0170 (C-00's band 0.015-0.02); lob 0.12 of #293B46 → 0.0834.
+        /// One pixel of AP-034's Twin (row d): the tint (sRGB bytes), the glyph's physical px, the light channels (sheen, glow,
+        /// spread) and parameters (draw, lit, opacity), render()'s pixel index, and what the shader samples there - the G1
+        /// distance (AP) and its unit gradient, the distance at the lob's tap, I1's cavity (R) and ink density (G), I2's grain -
+        /// with the Twin's premultiplied linear output (rgb · α, α).
+        /// </summary>
+        private readonly struct TwinRow
+        {
+            public readonly string Name;
+            public readonly byte R, G, B;
+            public readonly int Px;
+            public readonly Vector3 Light, Params;
+            public readonly float Ix, Iy, Sd, Gx, Gy, SdLob, Cavity, Ink, Grain;
+            public readonly float OutR, OutG, OutB, OutA;
+
+            public TwinRow(string name, byte r, byte g, byte b, int px, Vector3 light, Vector3 parameters,
+                float ix, float iy, float sd, float gx, float gy, float sdLob, float cavity, float ink, float grain,
+                float outR, float outG, float outB, float outA)
+            {
+                Name = name; R = r; G = g; B = b; Px = px; Light = light; Params = parameters;
+                Ix = ix; Iy = iy; Sd = sd; Gx = gx; Gy = gy; SdLob = sdLob; Cavity = cavity; Ink = ink; Grain = grain;
+                OutR = outR; OutG = outG; OutB = outB; OutA = outA;
+            }
+        }
+
+        /// <summary>
+        /// AP-034 v002.1's Twin, row d - K/asset-production/AP-034/04-tools/build_ap034_v002_icons.py Twin.shade(..., 'd', Q),
+        /// sha256 87a8b7535d03aa195475f9ca9d7bc5ea3a46b4fbb20417660b5337d6790c12d5, Q = ap034_v002_build_params.json i5 (rows.d),
+        /// run (08.10, unity-specialist) on THIS branch's G1 (manifest a1f6e561…, PNG 0c863d98…) and I1 (f14cbccd…, AP-034's
+        /// I1 with the I6 data cells pasted), I2 ap034_tile_inkgrain_256 (04d2459e…), grain origin (37, 11). The inputs are
+        /// the Twin's own per-pixel values (a replay of shade() asserted equal to it, max |Δ| 8e-7 over 11 glyphs × 5 sizes ×
+        /// 5 states); 24 / 32 / 40 / 45 / 76 px - s = 0 / 0.5 / 1 / 1 / 1 - plateau, bevel shadow and light, cavity, dry tail,
+        /// grain pit, the ceiling clamp (24 and 40 px), AA edge, lob, glow (24 / 32 / 40), pressed spread, a 0.75 ink front,
+        /// sheen + glow, and disabled (the flat token).
+        /// </summary>
+        private static readonly TwinRow[] TwinD =
+        {
+            new TwinRow("Menu.Settings 40 idle plateau", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                14.7f, 30.7f, 3.3721629f, 0.745979414f, 0.665969004f, 3.76238914f, 1f, 0.558539216f, 0.529411765f,
+                0.904813318f, 0.864771737f, 0.781298582f, 1f),
+            new TwinRow("Menu.Settings 40 idle bevel shadow", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                48.3f, 38.7f, 1.57552941f, -0.440833873f, 0.897588712f, 4.42323982f, 0.997460784f, 0.445294118f, 0.521568627f,
+                0.818119106f, 0.783789741f, 0.713171952f, 1f),
+            new TwinRow("Menu.Settings 40 idle bevel light", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                16.3f, 22.7f, 1.35529412f, 0.808991361f, -0.587820531f, -1.23945701f, 0.996666667f, 0.595901961f, 0.505882353f,
+                0.916121004f, 0.877986821f, 0.799708663f, 1f),
+            new TwinRow("Menu.Settings 40 idle grain pit", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                27.5f, 53.1f, 0.897737557f, 0.122544969f, 0.992462962f, 2.07058824f, 1f, 0.477254902f, 0.37254902f,
+                0.842473091f, 0.807456131f, 0.735604909f, 1f),
+            new TwinRow("Menu.Settings 40 idle edge AA", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                9.9f, 30.7f, -0.0690678733f, 0.741601236f, 0.670840969f, -0.477828054f, 1f, 0.601509804f, 0.501960784f,
+                0.427782014f, 0.409426127f, 0.37144904f, 0.469437744f),
+            new TwinRow("Menu.Settings 40 idle lob", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                48.3f, 48.3f, -2.18063348f, -0.999713835f, 0.0239217239f, -0.590769231f, 1f, 0.501960784f, 0.498039216f,
+                0.000722192777f, 0.000618640641f, 0.000570338326f, 0.119393737f),
+            new TwinRow("Menu.Settings 24 idle bevel shadow", 243, 238, 227, 24, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                48.8333333f, 38.1666667f, 1.84655606f, -0.407088938f, 0.913388524f, 4.68039819f, 1f, 0.440985839f, 0.568627451f,
+                0.874550733f, 0.837342524f, 0.760527804f, 1f),
+            new TwinRow("Menu.Settings 24 idle edge AA", 243, 238, 227, 24, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                8.83333333f, 30.1666667f, -0.490296631f, 0.810217188f, 0.58612977f, -1.62648165f, 1f, 0.579248366f, 0.474509804f,
+                0.334973132f, 0.320473012f, 0.290407302f, 0.368326969f),
+            new TwinRow("Menu.Settings 24 idle lob", 243, 238, 227, 24, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                27.5f, 30.1666667f, -3.20844646f, -0.954426049f, 0.298447511f, -0.708343891f, 1f, 0.501960784f, 0.509803922f,
+                0.00035719172f, 0.000305975526f, 0.000282085524f, 0.0590513441f),
+            new TwinRow("Menu.Display 40 idle dry tail", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                11.5f, 29.1f, 1.1438914f, -1f, 0f, 0.141900452f, 1f, 0.382794118f, 0.490196078f,
+                0.81535601f, 0.778714454f, 0.702052356f, 1f),
+            new TwinRow("Menu.Display 40 idle lob", 243, 238, 227, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                54.7f, 33.9f, -1.43927602f, -1f, 0f, 0.141900452f, 1f, 0.496862745f, 0.478431373f,
+                0.00059194951f, 0.000507072399f, 0.000467481126f, 0.0978617707f),
+            new TwinRow("Menu.Profile 76 idle bevel shadow", 243, 238, 227, 76, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                31.0789474f, 48.7631579f, 1.73298404f, 0f, 1f, 4.1352322f, 1f, 0.505176253f, 0.537254902f,
+                0.851884007f, 0.816287834f, 0.743145242f, 1f),
+            new TwinRow("Menu.Profile 76 idle grain pit", 243, 238, 227, 76, new Vector3(-1f, 0f, 0f), new Vector3(1f, 1f, 1f),
+                42.0263158f, 37.8157895f, 2.36399143f, -0.798514638f, -0.601975392f, 1.39750327f, 1f, 0.498734452f, 0.388235294f,
+                0.893613308f, 0.854293842f, 0.772438938f, 1f),
+            new TwinRow("Menu.Achievements 40 hover cavity", 243, 238, 227, 40, new Vector3(0.35f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                19.5f, 19.5f, 1.1800905f, 0.610545496f, 0.791981185f, 2.09665158f, 0.774509804f, 0.728921569f, 0.517647059f,
+                0.827445692f, 0.795599302f, 0.731673785f, 1f),
+            new TwinRow("Menu.Achievements 40 hover ceiling", 243, 238, 227, 40, new Vector3(0.35f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                43.5f, 30.7f, 1.36108597f, -0.397474006f, 0.917613434f, 2.84756561f, 0.904558824f, 0.494019608f, 0.501960784f,
+                0.805879908f, 0.772051281f, 0.702456613f, 1f),
+            new TwinRow("Menu.Achievements 40 hover glow", 243, 238, 227, 40, new Vector3(0.35f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                57.9f, 25.9f, -4.42497738f, -0.999073286f, -0.0430414712f, -2.78877828f, 1f, 0.501960784f, 0.482352941f,
+                0.0206961942f, 0.0197430527f, 0.017737754f, 0.0230914894f),
+            new TwinRow("Menu.Save 24 hover cavity", 243, 238, 227, 24, new Vector3(0.35f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                40.8333333f, 51.5f, 1.86425339f, -0.156893916f, 0.987615461f, 0.828235294f, 0.798202614f, 0.577205882f, 0.509803922f,
+                0.856379576f, 0.819593266f, 0.743464246f, 1f),
+            new TwinRow("Menu.Save 24 hover glow", 243, 238, 227, 24, new Vector3(0.35f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                6.16666667f, 22.1666667f, -4.24736048f, 1f, 0f, -5.88162896f, 1f, 0.501960784f, 0.396078431f,
+                0.0143333034f, 0.0136731982f, 0.0122844136f, 0.0159921829f),
+            new TwinRow("Menu.CycleLeft 32 selected bevel shadow", 243, 238, 227, 32, new Vector3(0.7f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                24.5f, 28.5f, 1.57330317f, -0.685449514f, 0.728120158f, -0.222262443f, 0.990824142f, 0.514659926f, 0.552941176f,
+                0.840799386f, 0.804841359f, 0.730509449f, 1f),
+            new TwinRow("Menu.CycleLeft 32 selected dry tail", 243, 238, 227, 32, new Vector3(0.7f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                36.5f, 48.5f, 1.90995475f, -0.714072839f, -0.700071411f, 1.6741267f, 1f, 0.294623162f, 0.48627451f,
+                0.902727462f, 0.86622335f, 0.791881638f, 1f),
+            new TwinRow("Menu.CycleLeft 32 selected glow", 243, 238, 227, 32, new Vector3(0.7f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                16.5f, 32.5f, -2.60882353f, 0.947982744f, 0.31832172f, -4.23259729f, 1f, 0.501960784f, 0.51372549f,
+                0.0276774959f, 0.0264028379f, 0.0237211059f, 0.0308807791f),
+            new TwinRow("Menu.Graphics 40 pressed edge AA", 243, 238, 227, 40, new Vector3(-1f, 0f, 0.4f), new Vector3(1f, 1f, 1f),
+                53.1f, 27.5f, -0.0897737557f, -1f, 0f, 1.0280543f, 0.997205882f, 0.485f, 0.509803922f,
+                0.453261212f, 0.433075675f, 0.390932609f, 0.512641403f),
+            new TwinRow("Menu.Keyboard 40 disabled flat inside", 185, 178, 166, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 0f, 1f),
+                33.9f, 37.1f, 1.30606335f, 0f, -1f, -1.12361991f, 0.865215686f, 0.525882353f, 0.509803922f,
+                0.48514994f, 0.445201195f, 0.381326011f, 1f),
+            new TwinRow("Menu.Keyboard 40 disabled flat edge", 185, 178, 166, 40, new Vector3(-1f, 0f, 0f), new Vector3(1f, 0f, 1f),
+                8.3f, 24.3f, 0.240361991f, 1f, 0f, -1.34081448f, 0.998215686f, 0.400872549f, 0.525490196f,
+                0.315457223f, 0.289481501f, 0.24794818f, 0.650226244f),
+            new TwinRow("Settings.Data 45 draw.75 edge AA", 243, 238, 227, 45, new Vector3(-1f, 0f, 0f), new Vector3(0.75f, 1f, 1f),
+                11.5888889f, 30.0777778f, -0.216229261f, 1f, 0f, -1.79740573f, 0.900478819f, 0.550021786f, 0.51372549f,
+                0.300877862f, 0.287555542f, 0.259779388f, 0.347963801f),
+            new TwinRow("Settings.Data 45 draw.75 lob", 243, 238, 227, 45, new Vector3(-1f, 0f, 0f), new Vector3(0.75f, 1f, 1f),
+                41.4555556f, 40.0333333f, -1.87014714f, -0.187944627f, 0.982179626f, 0.764203117f, 1f, 0.501047204f, 0.490196078f,
+                0.00124071179f, 0.00106281143f, 0.000979829082f, 0.205115894f),
+            new TwinRow("Menu.Back 40 sheen.5glow bevel light", 243, 238, 227, 40, new Vector3(0.5f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                17.9f, 37.1f, 1.55931222f, -0.68429398f, -0.729206245f, 1.00170136f, 0.883509804f, 0.48627451f, 0.545098039f,
+                0.866169296f, 0.82987091f, 0.755228228f, 1f),
+            new TwinRow("Menu.Back 40 sheen.5glow glow", 243, 238, 227, 40, new Vector3(0.5f, 0.08f, 0f), new Vector3(1f, 1f, 1f),
+                56.3f, 29.1f, -4.56441629f, -0.942915131f, -0.333033115f, -4.41165611f, 1f, 0.501960784f, 0.482352941f,
+                0.0178174417f, 0.0169968781f, 0.015270508f, 0.0198795615f),
+        };
+
+        /// <summary>
+        /// Row d parity: <see cref="UiIconShade.Shade"/> - the shader's steps in its order - lands on AP-034's Twin at every
+        /// sampled pixel, premultiplied linear rgb and α within 1e-4 (float32 against the Twin's float64).
         /// </summary>
         [Test]
-        public void D3D7_DogrusalAlfalar_SrgbHarmaniylaAyniParlaklik()
+        public void RowD_AP034Ikizi_PikselPikselAyni()
         {
-            Color ground = new Color32(0x16, 0x1D, 0x21, 0xFF);
-            Color cream = new Color32(243, 238, 227, 255);
-            float glow = LinearAlphaOf(cream, ground, 0.08f);
-            float lob = LinearAlphaOf(UiMaterialSpec.IconLobColour, ground, 0.12f);
-            Debug.Log("[DD-TEST] wp081.b5b.alpha glow " + glow.ToString("0.00000", CultureInfo.InvariantCulture)
-                + " lob " + lob.ToString("0.00000", CultureInfo.InvariantCulture));
+            var failures = new List<string>();
+            float worst = 0f;
+            foreach (TwinRow r in TwinD)
+            {
+                Color tint = new Color(UiIconShade.SrgbToLinear(r.R / 255f), UiIconShade.SrgbToLinear(r.G / 255f), UiIconShade.SrgbToLinear(r.B / 255f), 1f);
+                Color c = UiIconShade.Shade(tint, r.Px, r.Light, r.Params, new Vector2(r.Ix, r.Iy), r.Sd, new Vector2(r.Gx, r.Gy), r.SdLob,
+                    r.Cavity, r.Ink, r.Grain);
+                float[] got = { c.r, c.g, c.b, c.a };
+                float[] want = { r.OutR, r.OutG, r.OutB, r.OutA };
+                for (int i = 0; i < 4; i++)
+                {
+                    float d = Mathf.Abs(got[i] - want[i]);
+                    worst = Mathf.Max(worst, d);
+                    if (d > 1e-4f)
+                    {
+                        failures.Add(r.Name + " ch" + i + ": twin " + got[i].ToString("0.000000", CultureInfo.InvariantCulture)
+                            + " AP-034 " + want[i].ToString("0.000000", CultureInfo.InvariantCulture));
+                    }
+                }
+            }
 
-            Assert.AreEqual(glow, UiMaterialSpec.IconGlowAlpha, 1e-3f, "D3 glow token = doğrusal karşılık (3 hane)");
-            Assert.That(UiMaterialSpec.IconGlowAlpha, Is.InRange(0.015f, 0.02f), "C-00 bandı 0,015-0,02");
-            Assert.AreEqual(lob, UiMaterialSpec.IconLobAlpha, 1e-3f, "D7 lob α = doğrusal karşılık (3 hane)");
-            Assert.AreEqual((Color32)UiMaterialSpec.IconLobColour, new Color32(0x29, 0x3B, 0x46, 0xFF), "D7: AP-028 #293B46 (AD kararına kadar)");
-            Assert.AreEqual(new Color32(243, 238, 227, 255), (Color32)UiTokens.Get(UiColor.TextPrimary), "ölçüm kremi = TextPrimary");
+            Debug.Log("[DD-TEST] wp098a.rowd.parity rows " + TwinD.Length + " worst " + worst.ToString("0.0000000", CultureInfo.InvariantCulture));
+            Assert.AreEqual(28, TwinD.Length);
+            Assert.IsEmpty(failures, "AP-034 Twin (d) paritesi:\n" + string.Join("\n", failures));
         }
 
-        private static float LinearAlphaOf(Color fg, Color bg, float srgbAlpha)
+        /// <summary>
+        /// Row d's floor (AP034-v002-AD §5-2): over a tint × boost × I1 / I2 × size grid the lit-and-inked colour never falls
+        /// under tint × (1 − (0.06 + 0.06 s)) - 0.94 at 24 px, 0.88 from 40 - never above the light alone (the ink only
+        /// darkens), the ceiling is reached somewhere (the clamp is live), and the light off (disabled, Performance) is the
+        /// flat token exactly.
+        /// </summary>
+        [Test]
+        public void RowD_Taban_TintCarpiTavan_IhlalSifir()
         {
-            float target = Luminance(new Color(
-                UiIconShade.SrgbToLinear(fg.r * srgbAlpha + bg.r * (1f - srgbAlpha)),
-                UiIconShade.SrgbToLinear(fg.g * srgbAlpha + bg.g * (1f - srgbAlpha)),
-                UiIconShade.SrgbToLinear(fg.b * srgbAlpha + bg.b * (1f - srgbAlpha))));
-            float f = Luminance(Linear(fg)), b = Luminance(Linear(bg));
-            return (target - b) / (f - b);
+            Assert.AreEqual(0.06f, UiIconShade.Ceiling(UiIconShade.SizeRamp(24f)), 1e-6f, "24 px: taban × 0,94");
+            Assert.AreEqual(0.09f, UiIconShade.Ceiling(UiIconShade.SizeRamp(32f)), 1e-6f, "32 px");
+            Assert.AreEqual(0.12f, UiIconShade.Ceiling(UiIconShade.SizeRamp(40f)), 1e-6f, "40 px: taban × 0,88");
+            Assert.AreEqual(1f, UiIconShade.SizeRamp(45f), 1e-6f, "Mac UI 1.2: 24 ref px = 45 fiziksel px, s = 1");
+            Assert.AreEqual(0f, UiIconShade.SizeRamp(18f), 1e-6f);
+
+            float[] levels = { 0.02f, 0.25f, 0.5f, 0.75f, 0.9f, 1f };
+            float[] boosts = { 0f, 0.1f, 0.5f, 1f };
+            float[] cavities = { 0.55f, 0.8f, 1f };
+            float[] inks = { 0.25f, 0.5f, 0.75f };
+            float[] grains = { 0.2f, 0.5f, 0.8f };
+            float[] sizes = { 24f, 32f, 40f, 76f };
+            int cases = 0, violations = 0, clamped = 0;
+            string first = null;
+            foreach (float level in levels)
+            {
+                var tint = new Color(level, level * 0.97f, level * 0.9f, 1f);
+                foreach (float boost in boosts)
+                {
+                    Color lit = UiIconShade.Lit(tint, boost);
+                    foreach (float cavity in cavities)
+                    {
+                        foreach (float ink in inks)
+                        {
+                            foreach (float grain in grains)
+                            {
+                                foreach (float px in sizes)
+                                {
+                                    float s = UiIconShade.SizeRamp(px);
+                                    // the deepest bevel shadow: g toward the key, sd in the band's core
+                                    float darken = UiIconShade.Ink(1f, UiIconShade.KeyDirection, cavity, ink, grain, s);
+                                    float f = UiIconShade.InkFactor(darken, s);
+                                    float floor = 1f - UiIconShade.Ceiling(s);
+                                    cases++;
+                                    clamped += darken > UiIconShade.Ceiling(s) ? 1 : 0;
+                                    for (int c = 0; c < 3; c++)
+                                    {
+                                        float v = lit[c] * f;
+                                        if (v < tint[c] * floor - 1e-6f || v > lit[c] + 1e-6f)
+                                        {
+                                            violations++;
+                                            first = first ?? ("tint " + tint + " boost " + boost + " R " + cavity + " G " + ink + " grain " + grain + " px " + px + " ch" + c);
+                                        }
+                                    }
+
+                                    Assert.AreEqual(1f, UiIconShade.InkFactor(darken, s, 0f), 0f, "ışık kapalı: mürekkep yok (düz token)");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Assert.Greater(cases, 2500);
+            Assert.Greater(clamped, 0, "tavan bir yerde devrede (kelepçe canlı)");
+            Assert.AreEqual(0, violations, "d tabanı tint × (1 − tavan), mürekkep yalnız koyulaştırır: " + first);
+
+            // The flat token: lit 0 (disabled) or tier 0 (Performance) - no light, no ink, no lob, no glow.
+            Color srgb = UiTokens.Get(UiColor.TextPrimary);
+            var cream = new Color(UiIconShade.SrgbToLinear(srgb.r), UiIconShade.SrgbToLinear(srgb.g), UiIconShade.SrgbToLinear(srgb.b), 1f);
+            foreach (Vector2 off in new[] { new Vector2(0f, 1f), new Vector2(1f, 0f) })
+            {
+                Color flat = UiIconShade.Shade(cream, 40f, new Vector3(0.5f, UiIconShade.GlowChannelMax, 0f), new Vector3(1f, off.x, 1f),
+                    new Vector2(20f, 20f), 1.2f, UiIconShade.KeyDirection, 3f, 0.6f, 0.3f, 0.1f, off.y == 1f ? 1f : 0f);
+                Assert.AreEqual(cream.r, flat.r, 1e-6f, "düz token (ışık / kademe kapalı)");
+                Assert.AreEqual(cream.g, flat.g, 1e-6f);
+                Assert.AreEqual(cream.b, flat.b, 1e-6f);
+                Assert.AreEqual(1f, flat.a, 1e-6f);
+            }
         }
 
-        private static Color Linear(Color c)
+        /// <summary>
+        /// The AD's numbers are AP-034's: UiMaterialSpec = ap034_icons_params.json rows.d (v002.1, AP034-v002-AD §2) - copied
+        /// here from the delivery (K/asset-production/AP-034/exports/v002.1, SHA256SUMS rc 0, 08.10) so a token edit that
+        /// leaves the AD's row fails; the lob ink is Sumi900 = SurfaceInset.
+        /// </summary>
+        [Test]
+        public void RowD_Tokenlari_AP034ParametreleriyleAyni()
         {
-            return new Color(UiIconShade.SrgbToLinear(c.r), UiIconShade.SrgbToLinear(c.g), UiIconShade.SrgbToLinear(c.b));
+            Assert.AreEqual(24f, UiMaterialSpec.IconRampStartPx, "ramp_px[0]");
+            Assert.AreEqual(16f, UiMaterialSpec.IconRampSpanPx, "ramp_px[1]");
+            Assert.AreEqual(0.2f, UiMaterialSpec.IconCavity, 1e-6f, "k_cavity");
+            Assert.AreEqual(0.06f, UiMaterialSpec.IconGrain, 1e-6f, "k_grain");
+            Assert.AreEqual(0.05f, UiMaterialSpec.IconDryTail, 1e-6f, "k_dry");
+            Assert.AreEqual(0.1f, UiMaterialSpec.IconBevelShadow, 1e-6f, "k_bevel");
+            Assert.AreEqual(0.06f, UiMaterialSpec.IconCeiling, 1e-6f, "ceil_base");
+            Assert.AreEqual(0.06f, UiMaterialSpec.IconCeilingRamp, 1e-6f, "ceil_s");
+            Assert.AreEqual(0.07f, UiMaterialSpec.IconGlowAlpha, 1e-6f, "glow_base");
+            Assert.AreEqual(0.05f, UiMaterialSpec.IconGlowAlphaRamp, 1e-6f, "glow_s");
+            Assert.AreEqual(6.1538f, UiMaterialSpec.IconGlowRadiusAp, 1e-4f, "glow_radius_ap");
+            Assert.AreEqual(0.45f, UiMaterialSpec.IconLobAlpha, 1e-6f, "lob_alpha");
+            Assert.AreEqual(new Vector2(1.6f, -2.4f), UiMaterialSpec.IconLobOffsetAp, "lob_ap");
+            Assert.AreEqual(2.4f, UiMaterialSpec.IconLobSoftAp, 1e-6f, "lob_soft_ap");
+            Assert.AreEqual(new Color32(0x12, 0x10, 0x0F, 0xFF), (Color32)UiMaterialSpec.IconLobColour, "lob_color ink #12100F");
+            Assert.AreEqual((Color32)UiTokens.Get(UiColor.SurfaceInset), (Color32)UiMaterialSpec.IconLobColour, "lob = Sumi900 = SurfaceInset");
+            Assert.AreEqual(0.45f, UiIconShade.CavityNorm, 1e-6f, "(1 − R) / 0,45");
+            Assert.AreEqual(0.6f, UiIconShade.GrainCut, 1e-6f, "rows.b grain_amp");
+            Assert.AreEqual(2f, UiIconShade.InkGain, 1e-6f, "rows.b grain_g_gain");
+            Assert.AreEqual(new Vector3(0f, 2f, 0.25f), UiIconShade.BevelBand, "bevel_band_ap 0..2, ±0,25");
+            Assert.AreEqual(1f, UiIconShade.KeyDirection.magnitude, 1e-6f, "bevel_light (−0,5; 0,5) birim");
+            Assert.AreEqual(-1f, Mathf.Sign(UiIconShade.KeyDirection.x));
+            Assert.AreEqual(1f, Mathf.Sign(UiIconShade.KeyDirection.y));
+
+            // At 40 px (1.6 AP / px) the lob sits 1 px right, 1.5 px down with a 1.5 px soft edge (rows.d comment).
+            float apx = UiIconShade.ApPerPixel((int)UiIconSize.L);
+            Assert.AreEqual(1f, UiMaterialSpec.IconLobOffsetAp.x / apx, 1e-4f);
+            Assert.AreEqual(-1.5f, UiMaterialSpec.IconLobOffsetAp.y / apx, 1e-4f);
+            Assert.AreEqual(1.5f, UiMaterialSpec.IconLobSoftAp / apx, 1e-4f);
         }
 
-        private static float Luminance(Color linear)
+        /// <summary>
+        /// I1 / I2 (AP-034 v002.1 import, README "İçe alım") as the twin's constants assume them: I1 linear, clamp, no mips, the
+        /// G1 page's size (its UVs are G1's); I2 one linear channel, repeat, point, no mips, <see cref="UiIconShade.GrainTile"/>
+        /// wide; both load from Resources (the Player) and UiFxGlobals binds them; I1 carries the I6 cells' data (non-neutral)
+        /// and the re-aliased Settings.Display cell equals Menu.Display's.
+        /// </summary>
+        [Test]
+        public void I1I2_IceAlim_IkizSabitleri_I6Hucreleri()
         {
-            return 0.2126f * linear.r + 0.7152f * linear.g + 0.0722f * linear.b;
+            const string root = "Assets/_Prototype/UI/Resources/Fx/";
+            var cavity = (UnityEditor.TextureImporter)UnityEditor.AssetImporter.GetAtPath(root + "ap034_icons_g1cavity_1024.png");
+            var grain = (UnityEditor.TextureImporter)UnityEditor.AssetImporter.GetAtPath(root + "ap034_tile_inkgrain_256.png");
+            var ramp = (UnityEditor.TextureImporter)UnityEditor.AssetImporter.GetAtPath(root + "ap034_ramp_sheen_256x16.png");
+            Assert.IsNotNull(cavity, "I1");
+            Assert.IsNotNull(grain, "I2");
+            Assert.IsNotNull(ramp, "I3");
+            Assert.IsFalse(cavity.sRGBTexture, "I1 doğrusal");
+            Assert.IsFalse(cavity.mipmapEnabled, "I1 mip yok");
+            Assert.AreEqual(TextureWrapMode.Clamp, cavity.wrapMode);
+            Assert.AreEqual(UnityEditor.TextureImporterType.SingleChannel, grain.textureType, "I2 tek kanal");
+            Assert.IsFalse(grain.sRGBTexture, "I2 doğrusal");
+            Assert.IsFalse(grain.mipmapEnabled, "I2 mip yok");
+            Assert.AreEqual(TextureWrapMode.Repeat, grain.wrapMode, "I2 tekrar");
+            Assert.AreEqual(FilterMode.Point, grain.filterMode, "I2 piksel uzayında 1:1");
+            Assert.IsTrue(ramp.sRGBTexture, "I3 sRGB");
+
+            UiFxGlobals.EnsureInstalled();
+            Texture i1 = Resources.Load<Texture2D>(UiFxGlobals.IconCavityResource);
+            Texture i2 = Resources.Load<Texture2D>(UiFxGlobals.IconGrainResource);
+            Assert.IsNotNull(i1, "I1 Resources'tan");
+            Assert.IsNotNull(i2, "I2 Resources'tan");
+            Assert.AreEqual((int)UiIconShade.AtlasSize, i1.width, "I1 = G1 sayfası (aynı UV)");
+            Assert.AreEqual((int)UiIconShade.AtlasSize, i1.height);
+            Assert.AreEqual((int)UiIconShade.GrainTile, i2.width, "DD_ICON_GRAIN_TILE = I2");
+            Assert.AreEqual(i1, UiFxGlobals.IconCavity, "UiFxGlobals I1'i bağlar");
+            Assert.AreEqual(i2, UiFxGlobals.IconGrain, "UiFxGlobals I2'yi bağlar");
+
+            string manifest = File.ReadAllText(G1ManifestPath);
+            var png = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            try
+            {
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(root + "ap034_icons_g1cavity_1024.png")));
+                Color32[] px = png.GetPixels32();
+                foreach (string key in new[] { "Menu.CycleLeft", "Menu.CycleRight", "Menu.Display" })
+                {
+                    RectInt rect = SpriteRect(manifest, key);
+                    int inked = 0;
+                    for (int y = 0; y < rect.height; y++)
+                    {
+                        for (int x = 0; x < rect.width; x++)
+                        {
+                            Color32 p = px[(rect.y + y) * png.width + rect.x + x];
+                            inked += p.r < 255 || p.g != 128 ? 1 : 0;
+                        }
+                    }
+
+                    Assert.Greater(inked, 100, key + ": I1 hücresinde I6 _data (nötr değil)");
+                }
+
+                RectInt display = SpriteRect(manifest, "Menu.Display"), alias = SpriteRect(manifest, "Settings.Display");
+                for (int y = -6; y < 58; y++)
+                {
+                    for (int x = -6; x < 58; x++)
+                    {
+                        Assert.AreEqual(px[(display.y + y) * png.width + display.x + x], px[(alias.y + y) * png.width + alias.x + x],
+                            "I1: Settings.Display = Menu.Display (G2) at " + x + "," + y);
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(png);
+            }
+        }
+
+        /// <summary>A G1 manifest sprite's rect (x, y, w, h; bottom-left) by name.</summary>
+        private static RectInt SpriteRect(string manifest, string name)
+        {
+            Match m = Regex.Match(manifest, "\"name\":\\s*\"" + Regex.Escape(name) + "\",\\s*\"pivot\":\\s*\\[[^\\]]*\\],\\s*\"x\":\\s*(\\d+),\\s*\"y\":\\s*(\\d+),\\s*\"w\":\\s*(\\d+),\\s*\"h\":\\s*(\\d+)");
+            Assert.IsTrue(m.Success, name + ": manifestte");
+            return new RectInt(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), int.Parse(m.Groups[3].Value), int.Parse(m.Groups[4].Value));
         }
 
         private static void Same(string text, string name, params float[] expected)

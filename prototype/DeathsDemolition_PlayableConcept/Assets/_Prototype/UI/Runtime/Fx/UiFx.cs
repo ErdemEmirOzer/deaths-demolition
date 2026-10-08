@@ -22,12 +22,15 @@ namespace DD.Prototype.UI
         /// <summary>Quads built once, moved in the vertex stage (<see cref="UiFxParticles"/>).</summary>
         Particles = 7,
         /// <summary>
-        /// WP-081 ikon v2 B5b · AP-028-B's O1 glyph material: the SDF's own light-only relief (warm upper-left key, the
-        /// vertical bevel, the sheen band) never under its tint, the cold lob and the glow outside the ink only. No clock:
+        /// WP-081 ikon v2 B5b · AP-028-B's O1 glyph material: the SDF's own relief (warm upper-left key, the vertical bevel,
+        /// the sheen band); WP-098A: AP-034 v002.1 row d (AD default) - I1 cavity / I2 grain, the ink within its ceiling
+        /// (never under tint × (1 − (0.06 + 0.06 s))), the ink lob and the size-ramped glow outside the ink only. No clock:
         /// uv1 = (8, sheen −1 off | 0..1, glow 0..0.08, spread px24), uv2 = (stroke draw, lit 0|1, opacity, −)
         /// (<see cref="UiFx.ConfigureIcon"/>, <see cref="UiFx.SetIcon"/>). UiIconButton's O1 keys only (<see cref="UiArt.IsO1Glyph"/>).
         /// </summary>
-        Icon = 8
+        Icon = 8,
+        /// <summary>AP-035 A8 time-map reveal; Icon remains mode 8.</summary>
+        LogoInk = 9
     }
 
     /// <summary>Which ink-kit mark a mode reads (AP-012 v004 A8: one mark per channel, each in its own rect; the static
@@ -41,7 +44,9 @@ namespace DD.Prototype.UI
         /// <summary>B · Ink.Hanko — the seal, centre out, the faint rim last.</summary>
         Hanko = 2,
         /// <summary>A · Ink.Blot — seeps from its deepest point outward (death bleed, curtain).</summary>
-        Blot = 3
+        Blot = 3,
+        /// <summary>WP-098A · AP-034 M3, its own map over the whole rect, top-left → bottom-right (the brush curtain; wipe mode only).</summary>
+        Wipe = 4
     }
 
     /// <summary>
@@ -69,6 +74,7 @@ namespace DD.Prototype.UI
 
         // Icon (8): uv1.yzw - sheen (−1 = off), glow, spread. Written by the icon's state, never by a clock.
         [SerializeField] private Vector3 _iconLight = new Vector3(-1f, 0f, 0f);
+        [SerializeField] private float _iconLift;   // WP-098A M7: Icon uv2.w - the lob's Elev1 → Elev2 (0..1)
 
         // Before the first Play the element shows its end state (start far in the past), so a static layout never
         // renders half-revealed.
@@ -163,6 +169,18 @@ namespace DD.Prototype.UI
             SetIcon(_iconLight, new Vector3(_params.x, lit ? 1f : 0f, _params.z));
         }
 
+        /// <summary>WP-098A (HAREKET-MENU §3) · the Icon channels with the lift (uv2.w 0..1, the lob Elev1 → Elev2); one rebuild, none unchanged.</summary>
+        public void SetIcon(Vector3 light, Vector3 parameters, float lift)
+        {
+            if (lift == _iconLift) { SetIcon(light, parameters); return; }
+            _iconLift = lift;
+            _iconLight = light;
+            _params = parameters;
+            Dirty();
+        }
+
+        public float IconLift => _iconLift;
+
         /// <summary>The §2.5 motion class each mode obeys (the shader applies it: Decor → end state under RM, Flash × FlashScale, Data untouched).</summary>
         public static UiMotionClass ClassOf(UiFxMode mode)
         {
@@ -186,6 +204,18 @@ namespace DD.Prototype.UI
             Dirty();
         }
 
+        /// <summary>
+        /// WP-098A (KIT-API §3) · start the one-shot <paramref name="delay"/> s from now on the unscaled clock (one vertex
+        /// rebuild): a pane's marks ink in after its scrim without a timer of their own. Until then the shader shows the start
+        /// state (nothing inked; Reduced Motion: the end state). A negative delay starts it in the past - −<see cref="Duration"/>
+        /// lands it drawn at once (a cut), with no wet front.
+        /// </summary>
+        public void Play(float delay)
+        {
+            _start = UiFxGlobals.Now + delay;
+            Dirty();
+        }
+
         /// <summary>WP-094: the one-shot starts <paramref name="delay"/> s from now (a banner drawn after a beat; nothing inked before).</summary>
         public void PlayDelayed(float delay)
         {
@@ -199,18 +229,6 @@ namespace DD.Prototype.UI
             _duration = Mathf.Max(0.01f, seconds);
             Dirty();
             return this;
-        }
-
-        /// <summary>
-        /// WP-098A (KIT-API §3) · start the one-shot <paramref name="delay"/> s from now on the unscaled clock (one vertex
-        /// rebuild): a pane's marks ink in after its scrim without a timer of their own. Until then the shader shows the start
-        /// state (nothing inked; Reduced Motion: the end state). A negative delay starts it in the past - −<see cref="Duration"/>
-        /// lands it drawn at once (a cut), with no wet front.
-        /// </summary>
-        public void Play(float delay)
-        {
-            _start = UiFxGlobals.Now + delay;
-            Dirty();
         }
 
         /// <summary>Show the start state (nothing inked yet) until <see cref="Play"/>.</summary>
@@ -276,7 +294,7 @@ namespace DD.Prototype.UI
             var fx = _mode == UiFxMode.Icon
                 ? new Vector4((float)_mode, _iconLight.x, _iconLight.y, _iconLight.z)
                 : new Vector4((float)_mode, _start, _duration, _loopPeriod);
-            var prm = new Vector4(_params.x, _params.y, _params.z, (float)_channel);
+            var prm = new Vector4(_params.x, _params.y, _params.z, _mode == UiFxMode.Icon ? _iconLift : (float)_channel);
             UIVertex v = default;
             int n = vh.currentVertCount;
             for (int i = 0; i < n; i++)

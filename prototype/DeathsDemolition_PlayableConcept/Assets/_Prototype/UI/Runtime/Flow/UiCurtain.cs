@@ -9,6 +9,13 @@ using UnityEngine.UI;
 
 namespace DD.Prototype.UI
 {
+    /// <summary>WP-098A (HAREKET-MENU M1 / M14, C-00 08.10) · how the CURTAIN depth covers: the lacquer doors, or the full-screen brush.</summary>
+    public enum UiCurtainStyle
+    {
+        Doors = 0,
+        Brush = 1
+    }
+
     /// <summary>
     /// WP-068 slice 10 · the loading curtain (UI v3 direction §15). One overlay canvas on the
     /// flow runner (UiLayer.Curtain 400, survives scene loads) with two depths:
@@ -23,6 +30,12 @@ namespace DD.Prototype.UI
     /// the 10 s stall notice, the Reduced Motion percent line, the load error modal and the
     /// S-08 cues (CurtainClosed from the flow, CurtainOpened here). The InkReveal ring stroke,
     /// the seal device, the ink variant and the boot hand-off are 10b-2.
+    /// WP-098A (HAREKET-MENU M1 / M14 / §5-5, C-00 08.10) · <see cref="UiCurtainStyle.Brush"/>: the CURTAIN depth covers with one
+    /// full-screen Sumi900 brush instead of the doors - AP-034's M3 wipe map (<see cref="UiInkChannel.Wipe"/>) inks it top-left
+    /// → bottom-right over Emphasis 400 (the screen × 1.25 at least, turned −8°), and the open erases it in the same direction
+    /// (InkReveal's erase flag), Revealed at half way as before. Reduced Motion: a cut both ways (the shader's end state). The
+    /// ink (Results) and boot variants keep their own looks; without the wipe map the doors stand (the kit degrades).
+    /// <see cref="Shut"/> says when the cover is whole (the menu's world camera stops drawing under it, §5-5).
     /// </summary>
     public sealed class UiCurtain : MonoBehaviour
     {
@@ -76,6 +89,14 @@ namespace DD.Prototype.UI
 
         private static UiCurtain s_instance;
         private static bool s_covering;
+        private static float s_shutAt = float.MaxValue;
+
+        /// <summary>WP-098A: the brush style when the wipe map is in the build (tests and captures may turn it off: the doors).</summary>
+        public static bool BrushEnabled = true;
+
+        private Image _brush;
+        private UiFx _brushFx;
+        private UiCurtainStyle _style;
 
         private Canvas _canvas;
         private RectTransform _root;
@@ -149,6 +170,33 @@ namespace DD.Prototype.UI
         public static bool IsCovering
         {
             get { return s_covering; }
+        }
+
+        /// <summary>
+        /// WP-098A (HAREKET-MENU §5-5) · the cover is whole: the doors / brush have finished closing (or cut shut) and the open has
+        /// not begun. Nothing under the curtain is seen - the menu's world camera stops drawing until the open starts.
+        /// </summary>
+        public static bool Shut
+        {
+            get { return s_covering && Time.unscaledTime >= s_shutAt; }
+        }
+
+        /// <summary>WP-098A · how the last close covered (Doors before any).</summary>
+        public UiCurtainStyle Style
+        {
+            get { return _style; }
+        }
+
+        /// <summary>WP-098A · the brush cover is on screen (tests: the ink variant never shows it).</summary>
+        public bool BrushVisible
+        {
+            get { return _brush != null && _brush.enabled; }
+        }
+
+        /// <summary>WP-098A · the brush's wipe driver (tests: its mode, channel and erase flag).</summary>
+        public UiFx BrushFx
+        {
+            get { return _brushFx; }
         }
 
         /// <summary>Yield until the curtain no longer covers the screen (immediately when it never did).</summary>
@@ -341,6 +389,7 @@ namespace DD.Prototype.UI
 
             _leftDoor = Door("DoorLeft", 0f, 0.5f);
             _rightDoor = Door("DoorRight", 0.5f, 1f);
+            BuildBrushLayer();
             BuildInkLayer();
 
             var groupRect = UiFactory.NewRect("Group", _root);
@@ -398,10 +447,91 @@ namespace DD.Prototype.UI
             PlaceText(_subline, RingLift - RingSize * 0.5f - (int)UiSpace.XL - UiFactory.LineHeight(UiType.Label) - (int)UiSpace.S - UiFactory.LineHeight(UiType.H2), UiFactory.LineHeight(UiType.Label));
 
             BuildTipStrip(groupRect);
+            BuildLogo();   // AP-035 R3
 
             _group.gameObject.SetActive(false);
             SetDoorsOpen(true);
             _canvas.enabled = false;
+        }
+
+        /// <summary>
+        /// WP-098A (M14) · the brush cover: one Sumi900 rect over the doors, under the ink layer and the group, wiped by the M3 map.
+        /// Off until a brush close; it takes every click while it shows.
+        /// </summary>
+        private void BuildBrushLayer()
+        {
+            _brush = UiFactory.NewImage("Brush", _root, UiColor.SurfaceInset, UiSprites.Solid);
+            _brush.raycastTarget = true;
+            RectTransform rect = _brush.rectTransform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.localRotation = Quaternion.Euler(0f, 0f, UiMenuMotionTokens.BrushWipeTiltDeg);
+            _brushFx = _brush.gameObject.AddComponent<UiFx>();
+            _brushFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, new Vector3(0f, 1f, 0f), UiInkChannel.Wipe);
+            _brush.enabled = false;
+        }
+
+        /// <summary>The brush's size for the canvas now: the screen × 1.25, never less than the tilted rect that covers every corner.</summary>
+        private void FitBrush()
+        {
+            Rect r = _root.rect;
+            float w = Mathf.Max(1f, r.width), h = Mathf.Max(1f, r.height);
+            float a = Mathf.Abs(UiMenuMotionTokens.BrushWipeTiltDeg) * Mathf.Deg2Rad;
+            float cos = Mathf.Cos(a), sin = Mathf.Sin(a);
+            float k = UiMenuMotionTokens.BrushWipeOverscan;
+            var size = new Vector2(Mathf.Max(w * k, w * cos + h * sin), Mathf.Max(h * k, w * sin + h * cos)) + new Vector2((int)UiSpace.L, (int)UiSpace.L);
+            if (_brush.rectTransform.sizeDelta != size)
+            {
+                _brush.rectTransform.sizeDelta = size;
+            }
+        }
+
+        /// <summary>The brush inks in (cover) or erases (uncover) over Emphasis; <paramref name="cut"/> lands it at once (shown / gone).</summary>
+        private void PlayBrush(bool cover, bool cut)
+        {
+            if (_brush == null)
+            {
+                return;
+            }
+
+            if (!cover && cut)
+            {
+                _brush.enabled = false;
+                return;
+            }
+
+            FitBrush();
+            _brush.enabled = true;
+            _brushFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, new Vector3(0f, 1f, cover ? 0f : 1f), UiInkChannel.Wipe);
+            if (cut)
+            {
+                _brushFx.Play(-(_brushFx.Duration + 1f));   // drawn whole now (no wet front)
+            }
+            else
+            {
+                _brushFx.Play();
+            }
+        }
+
+        private bool BrushAvailable
+        {
+            get { return BrushEnabled && _brush != null && UiFxGlobals.InkWipe != null; }
+        }
+
+        /// <summary>The cover cut shut in the current style (a load superseding the ink, an instant close).</summary>
+        private void CoverCut()
+        {
+            UiMotion.KillTarget(_leftDoor, false);
+            UiMotion.KillTarget(_rightDoor, false);
+            if (_style == UiCurtainStyle.Brush)
+            {
+                SetDoorsOpen(true);
+                PlayBrush(true, true);
+                return;
+            }
+
+            SetDoorsOpen(false);
         }
 
         /// <summary>
@@ -451,10 +581,12 @@ namespace DD.Prototype.UI
             }
 
             s_covering = true;
+            s_shutAt = Time.unscaledTime + InkBleedSeconds;
             _ink = true;
             _inkReceding = false;
             _canvas.enabled = true;
             SetDoorsOpen(true);
+            PlayBrush(false, true);
             _group.gameObject.SetActive(false);
             _inkLayer.gameObject.SetActive(true);
             for (int i = 0; i < _inkFx.Length; i++)
@@ -518,9 +650,7 @@ namespace DD.Prototype.UI
             }
 
             _ink = false;
-            UiMotion.KillTarget(_leftDoor, false);
-            UiMotion.KillTarget(_rightDoor, false);
-            SetDoorsOpen(false);
+            CoverCut();
             UiMotion.KillTarget(_inkField, false);
             _inkLayer.gameObject.SetActive(false);
         }
@@ -606,10 +736,12 @@ namespace DD.Prototype.UI
         {
             _cursorWasVisible = UiCursor.ContextVisible;
             s_covering = true;
+            s_shutAt = Time.unscaledTime;
             s_bootSkip = false;
             _canvas.enabled = true;
             UiCursor.SetContextVisible(false);
             SetDoorsOpen(true);
+            PlayBrush(false, true);
             _boot = true;
             _bootHandedOff = false;
             _bootStart = UiFxGlobals.Now;
@@ -918,8 +1050,11 @@ namespace DD.Prototype.UI
             _rightDoor.anchoredPosition = new Vector2(away, 0f);
         }
 
-        /// <summary>Doors close (Move 280; RM or <paramref name="instant"/>: cut). Hides the pointer and clears focus while covered.</summary>
-        public void Close(bool instant)
+        /// <summary>
+        /// Doors close (Move 280; RM or <paramref name="instant"/>: cut) - WP-098A: or the brush inks over (Emphasis 400). Hides the
+        /// pointer and clears focus while covered. Returns the seconds until the cover is whole (0 for a cut).
+        /// </summary>
+        public float Close(bool instant)
         {
             // A load that supersedes a reveal closes doors that are still shut: keep the cursor state from the first close.
             if (!s_covering)
@@ -928,6 +1063,7 @@ namespace DD.Prototype.UI
             }
 
             s_covering = true;
+            _style = BrushAvailable ? UiCurtainStyle.Brush : UiCurtainStyle.Doors;
             EndBootMode();
             bool inkWasDown = _ink;
             EndInk();
@@ -939,16 +1075,30 @@ namespace DD.Prototype.UI
                 EventSystem.current.SetSelectedGameObject(null);
             }
 
-            if (instant || inkWasDown)
+            if (instant || inkWasDown || UiMotion.ReducedMotion)
+            {
+                CoverCut();
+                s_shutAt = Time.unscaledTime;
+                return 0f;
+            }
+
+            if (_style == UiCurtainStyle.Brush)
             {
                 UiMotion.KillTarget(_leftDoor, false);
                 UiMotion.KillTarget(_rightDoor, false);
-                SetDoorsOpen(false);
-                return;
+                SetDoorsOpen(true);
+                PlayBrush(true, false);
+                float brush = UiMotionTokens.Seconds(UiDuration.Emphasis);
+                s_shutAt = Time.unscaledTime + brush;
+                return brush;
             }
 
+            PlayBrush(false, true);
             UiMotion.Move(_leftDoor, Vector2.zero, UiDuration.Screen, UiEase.Move, UiMotionClass.Decor);
             UiMotion.Move(_rightDoor, Vector2.zero, UiDuration.Screen, UiEase.Move, UiMotionClass.Decor);
+            float doors = UiMotionTokens.Seconds(UiDuration.Screen);
+            s_shutAt = Time.unscaledTime + doors;
+            return doors;
         }
 
         /// <summary>SCREEN depth: the loading group enters (PaneIn, Base 220) with the destination labels.</summary>
@@ -991,6 +1141,7 @@ namespace DD.Prototype.UI
             }
 
             UiPresets.PaneIn(_group, null, 0f);
+            ShowLogoForGroup();   // AP-035 R3: the logo when the flow asked for it (LogoNext), never otherwise
         }
 
         /// <summary>
@@ -1070,6 +1221,7 @@ namespace DD.Prototype.UI
         {
             _eyebrowState = "LOADING";
             EndBootMode();
+            HideLogo();   // AP-035 R3
             ResetRing();
             SetRingOnly(true);
             if (destination != null)
@@ -1270,11 +1422,12 @@ namespace DD.Prototype.UI
             }
         }
 
-        private readonly bool[] _deviceShown = new bool[4];
+        private readonly bool[] _deviceShown = new bool[5];
 
         private void HideDevice()
         {
-            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject };
+            // AP-035 R3 (S3-18): the logo steps out under the modal with the ring and its labels.
+            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject, _logo.Root.gameObject };
             for (int i = 0; i < parts.Length; i++)
             {
                 _deviceShown[i] = parts[i].activeSelf;
@@ -1284,11 +1437,196 @@ namespace DD.Prototype.UI
 
         private void RestoreDevice()
         {
-            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject };
+            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject, _logo.Root.gameObject };
             for (int i = 0; i < parts.Length; i++)
             {
                 parts[i].SetActive(_deviceShown[i]);
             }
+        }
+
+        // ================================================================== AP-035 R3 · the loading logo (S-11 O2, C-00 08.10)
+        // One isolated block (S-09 menu v5 edits Close / BeginInk / EndInk / Open / OpenDoors: none of them is touched here).
+        // The logo lives on its own canvas just above the curtain's, so the curtain's canvas lifetime (OpenDoors switches it
+        // off half way through the outro) needs no change; the hooks elsewhere are one line each: Build (BuildLogo),
+        // ShowGroup's end (ShowLogoForGroup), ShowRingOnly (HideLogo), Hide/RestoreDevice (the logo's root in the list).
+
+        /// <summary>
+        /// K1 layout B: the canonical composition stands whole over the ring (seal over wordmark, <see cref="LogoWidth"/> =
+        /// 0.34 of the spec's 960), its foot <see cref="LogoGap"/> over the ring; the ring and its labels keep their validated
+        /// place (<see cref="LogoRingLift"/> = <see cref="RingLift"/>). Measured limits (LoadingKeyArtTests.AnahtarSanat_LogoDuzeni_*,
+        /// five rotation arts x 1080 / Mac UI 1.2 + text 1.25 / 16:10 / 21:9): any lower and the Mac labels fall on L02's bright
+        /// gate (TextSecondary 2.45:1 at lift 0, < 4.5) - below -65 onto the tip strip too; a logo wider than 0.34 x 960 leaves
+        /// the Mac canvas's top margin. A larger logo needs a label backing or a darker L02 (AD decision). The ring's own small
+        /// seal hides while the logo shows (one emblem per screen).
+        /// </summary>
+        public const float LogoRingLift = RingLift;
+        public const float LogoWidth = 960f * 0.34f;
+        public const float LogoGap = 24f;
+        public const float LogoBottom = LogoRingLift + RingSize * 0.5f + LogoGap;
+
+        /// <summary>The logo's canvas: just above the curtain's (the error modal hides it - HideDevice).</summary>
+        public const int LogoSortingOrder = UiLayer.Curtain + 1;
+
+        /// <summary>Seconds the warm draw waits for the boot seal (the curtain's canvas up) before it gives up on the draw (the loads stay).</summary>
+        public const float LogoWarmWindowSeconds = 5f;
+
+        /// <summary>
+        /// K4: set by <see cref="PrototypeUiFlow"/> for each load (<see cref="PrototypeUiFlow.ShowsLogo"/>); the next
+        /// <see cref="ShowGroup(string, string, string, bool, string)"/> plays the logo and clears it. A direct ShowGroup
+        /// (tests, captures) shows none.
+        /// </summary>
+        public static bool LogoNext;
+
+        private UiLogoAnimator _logo;
+        private CanvasGroup _sealHide;
+        private bool _logoRevealed;
+
+        private void BuildLogo()
+        {
+            Canvas canvas = UiFactory.CreateCanvas("UiCurtain.Logo", LogoSortingOrder, transform);
+            _logo = UiLogoAnimator.Create((RectTransform)canvas.transform, LogoWidth);
+            _logo.Root.anchoredPosition = new Vector2(0f, LogoBottom);
+            _sealHide = _seal.gameObject.AddComponent<CanvasGroup>();
+            _sealHide.blocksRaycasts = false;
+            UiEvents.Raised += OnLogoCue;
+            StartCoroutine(WarmLogo());
+        }
+
+        /// <summary>
+        /// Textures load asynchronously from Build (UiLogoAssets.Preload, behind the boot seal) and the whole logo is drawn
+        /// once, invisibly (alpha 1/255), while the boot seal shows - the first loading screen never loads or uploads them.
+        /// </summary>
+        private IEnumerator WarmLogo()
+        {
+            float until = Time.realtimeSinceStartup + LogoWarmWindowSeconds;
+            while (!UiLogoAssets.Ready && Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+            }
+
+            while (!_canvas.enabled && Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+            }
+
+            if (!_canvas.enabled)
+            {
+                yield break;
+            }
+
+            _logo.WarmDraw();
+            yield return null;
+            yield return null;
+            _logo.EndWarmDraw();
+            LogoWarmed = true;
+        }
+
+        /// <summary>True once the logo has been drawn once behind the boot seal (tests, captures).</summary>
+        public bool LogoWarmed { get; private set; }
+
+        /// <summary>The loading logo (tests, captures).</summary>
+        public UiLogoAnimator Logo => _logo;
+
+        /// <summary>The logo is on screen.</summary>
+        public bool LogoVisible => _logo != null && _logo.Visible;
+
+        public UiLogoPhase LogoPhase => _logo != null ? _logo.Phase : UiLogoPhase.Hidden;
+
+        /// <summary>K3: the load may activate (always true without a logo).</summary>
+        public bool LogoCanLeave => _logo == null || !_logo.Visible || _logo.CanLeave;
+
+        /// <summary>The ring's own small seal draws (false while the logo shows, K1).</summary>
+        public bool RingSealVisible => _seal != null && _seal.enabled && _seal.gameObject.activeInHierarchy && (_sealHide == null || _sealHide.alpha > 0f);
+
+        /// <summary>
+        /// K1/K2: the loading logo on the SCREEN depth - intro once, loop while the load runs, outro when the doors part.
+        /// The ring's small seal hides while it shows.
+        /// </summary>
+        public void PlayLoadingLogo()
+        {
+            if (_logo == null || !GroupVisible || _ringOnly || _boot)
+            {
+                return;
+            }
+
+            _sealHide.alpha = 0f;
+            _logoRevealed = false;
+            _logo.PlayLoading();
+        }
+
+        /// <summary>The load is ready: from now the logo may hold it ≤ 0.5 s (K3).</summary>
+        public void NotifyLogoReady()
+        {
+            if (_logo != null)
+            {
+                _logo.NotifyReady();
+            }
+        }
+
+        private void ShowLogoForGroup()
+        {
+            HideLogo();
+            if (LogoNext)
+            {
+                LogoNext = false;
+                PlayLoadingLogo();
+            }
+        }
+
+        private void HideLogo()
+        {
+            if (_logo == null)
+            {
+                return;
+            }
+
+            _logo.HideNow();
+            _sealHide.alpha = 1f;
+        }
+
+        /// <summary>
+        /// The doors part (the S-08 CurtainOpened cue, raised in OpenDoors before they move): the outro over them. An instant
+        /// open (the doors already apart when the cue is raised) cuts the logo instead.
+        /// </summary>
+        private void OnLogoCue(UiEvent cue, string detail)
+        {
+            if (cue != UiEvent.CurtainOpened || _logo == null || !_logo.Visible)
+            {
+                return;
+            }
+
+            if (DoorsShut || (_style == UiCurtainStyle.Brush && BrushVisible))
+            {
+                _logoRevealed = false;
+                _logo.BeginOutro();
+            }
+            else
+            {
+                HideLogo();
+            }
+        }
+
+        /// <summary>A new cover (a load asked for during the outro: Close / the ink) cuts the outro once the reveal has happened.</summary>
+        private void LateUpdate()
+        {
+            if (_logo == null || !_logo.Root.gameObject.activeSelf || _logo.Timeline.Phase != UiLogoPhase.Outro)
+            {
+                return;
+            }
+
+            if (!s_covering)
+            {
+                _logoRevealed = true;
+            }
+            else if (_logoRevealed)
+            {
+                HideLogo();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            UiEvents.Raised -= OnLogoCue;
         }
 
         /// <summary>The destination in sentence case for the error body.</summary>
@@ -1377,6 +1715,7 @@ namespace DD.Prototype.UI
         /// <summary>Group out (Exit 140), then the doors part (Settle 280); <see cref="Revealed"/> fires half way. Returns the seconds it takes.</summary>
         public float Open(bool instant)
         {
+            s_shutAt = float.MaxValue;   // WP-098A §5-5: the world under it draws again from this frame (the first one still under the cover)
             if (_ink && !instant)
             {
                 float groupOutSeconds = 0f;
@@ -1396,6 +1735,7 @@ namespace DD.Prototype.UI
                 _inkLayer.gameObject.SetActive(false);
                 _group.gameObject.SetActive(false);
                 SetDoorsOpen(true);
+                PlayBrush(false, true);
                 RaiseOpened();
                 FinishReveal();
                 _canvas.enabled = false;
@@ -1410,7 +1750,13 @@ namespace DD.Prototype.UI
             }
 
             StartCoroutine(OpenDoors(groupOut));
-            return groupOut + UiMotionTokens.Seconds(UiDuration.Screen);
+            return groupOut + UiMotionTokens.Seconds(OpenDuration);
+        }
+
+        /// <summary>WP-098A: the open's length in the current style (doors Screen 280, brush Emphasis 400).</summary>
+        private UiDuration OpenDuration
+        {
+            get { return _style == UiCurtainStyle.Brush && BrushVisible ? UiDuration.Emphasis : UiDuration.Screen; }
         }
 
         private IEnumerator RecedeAfter(float delay)
@@ -1439,21 +1785,35 @@ namespace DD.Prototype.UI
 
             _group.gameObject.SetActive(false);
             RaiseOpened();
-            float away = HalfWidth + (int)UiSpace.S;
-            UiMotion.Move(_leftDoor, new Vector2(-away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
-            UiMotion.Move(_rightDoor, new Vector2(away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
+            UiDuration open = OpenDuration;
+            if (open == UiDuration.Emphasis)
+            {
+                // WP-098A M1 / M14: the brush erases in the direction it came; Revealed at half way, as the doors.
+                PlayBrush(false, UiMotion.ReducedMotion);
+            }
+            else
+            {
+                float away = HalfWidth + (int)UiSpace.S;
+                UiMotion.Move(_leftDoor, new Vector2(-away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
+                UiMotion.Move(_rightDoor, new Vector2(away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
+            }
+
             if (!UiMotion.ReducedMotion)
             {
-                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen) * 0.5f);
+                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(open) * 0.5f);
             }
 
             FinishReveal();
             if (!UiMotion.ReducedMotion)
             {
-                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen) * 0.5f);
+                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(open) * 0.5f);
             }
 
-            _canvas.enabled = false;
+            if (!s_covering)
+            {
+                PlayBrush(false, true);   // erased whole by now: the image goes (a newer close keeps it)
+                _canvas.enabled = false;
+            }
         }
 
         private void FinishReveal()
@@ -1482,6 +1842,9 @@ namespace DD.Prototype.UI
         {
             s_instance = null;
             s_covering = false;
+            LogoNext = false;
+            s_shutAt = float.MaxValue;
+            BrushEnabled = true;
             s_rotation = null;
             Revealed = null;
         }

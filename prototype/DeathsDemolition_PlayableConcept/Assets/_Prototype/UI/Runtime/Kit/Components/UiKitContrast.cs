@@ -223,9 +223,11 @@ namespace DD.Prototype.UI
             },
             { typeof(UiButtons), new UiContrastCase[0] }, // factory for UiButton (declared above)
             {
-                // WP-081 ikon v2 B5b: an O1 glyph's material only adds light - max(lit, tint) per channel (UiIconMaterialTests
-                // T1, T3) - so the four flat glyph pairs stay its floor. Its outer layers sit outside the ink: the glow below
-                // (a halo, not a boundary); the cold lob (#293B46, UiMaterialSpec.IconLobColour) is no token yet - AD D7.
+                // WP-081 ikon v2 B5b / WP-098A AP-034 v002.1 row d (AD default): an O1 glyph's material lights the token, then its
+                // ink darkens it within the ceiling - the lit glyph never falls under tint × (1 − (0.06 + 0.06 s)), 0.88 at the
+                // most (UiIconMaterialTests T1); the four flat pairs below are the token, the B3 guard holds the lit core ≥ 7:1
+                // (T3; AP-034 measured ≥ 10.73:1). Its outer layers sit outside the ink: the glow below (a halo, not a boundary)
+                // and the ink lob (SurfaceInset α 0.45 down-right, a shadow - the glyph carries the boundary).
                 typeof(UiIconButton), new[]
                 {
                     C("Icon glyph, plain button", UiColor.TextPrimary, UiColor.SurfaceBase, Boundary),
@@ -236,8 +238,10 @@ namespace DD.Prototype.UI
                     C("Tab word, other", UiColor.TextSecondary, UiColor.SurfaceBase, Text),
                     C("Tab word, unavailable", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
                     C("Chosen bar under the word", UiColor.TextPrimary, UiColor.SurfaceRaised, Boundary),
-                    C("Icon glow at its hover / focus peak (linear α 0.017 = AP-028's sRGB 0.08; a halo - the glyph carries the boundary)",
-                        UiColor.TextPrimary, UiColor.SurfaceBase, Decorative, UiMaterialSpec.IconGlowAlpha),
+                    C("Icon glow at its hover / focus peak (row d: linear α 0.07 + 0.05 s, 0.12 from 40 physical px; a halo - the glyph carries the boundary)",
+                        UiColor.TextPrimary, UiColor.SurfaceBase, Decorative, UiMaterialSpec.IconGlowAlpha + UiMaterialSpec.IconGlowAlphaRamp),
+                    C("Icon ink lob (SurfaceInset α 0.45 under the glyph, down-right; a shadow - the glyph carries the boundary)",
+                        UiColor.SurfaceInset, UiColor.SurfaceBase, Decorative, UiMaterialSpec.IconLobAlpha),
                     // WP-098A P0b · C12 Brush tab: frameless, the choice is the group's C8 + the tone (no fill, no bar).
                     C("Brush tab glyph, chosen", UiColor.TextPrimary, UiColor.SurfaceInset, Boundary),
                     C("Brush tab glyph, other / unavailable", UiColor.TextSecondary, UiColor.SurfaceInset, Boundary),
@@ -315,6 +319,29 @@ namespace DD.Prototype.UI
                     OnInk("Other item word in a pane's wash", UiColor.TextSecondary, PaneWash, Text),
                     OnInk("Chosen tab glyph on the Window ink", UiColor.TextPrimary, Window, Boundary),
                     OnInk("Other tab glyph on the Window ink", UiColor.TextSecondary, Window, Boundary),
+                }
+            },
+
+            // WP-098A (HAREKET-MENU §1, C-00 08.10) · menu v5 motion: the icon tracks draw nothing of their own (UiIconButton's pairs);
+            // the wave, the splash and the motes are decoration in tokened tones, never carrying text or state.
+            { typeof(UiIconMotion), new UiContrastCase[0] },
+            {
+                typeof(UiInkWave), new[]
+                {
+                    C("Ink wave: cream α 0.06 behind a lifted control (decoration, under the 0.08 hover wash)", UiColor.TextPrimary, UiColor.SurfaceInset, Decorative, UiMenuMotionTokens.InkWaveAlpha),
+                }
+            },
+            {
+                typeof(UiInkSplashLayer), new[]
+                {
+                    C("Click splash: cream α 0.14 (decoration, × FlashScale)", UiColor.TextPrimary, UiColor.SurfaceBase, Decorative, UiMenuMotionTokens.SplashAlpha),
+                    C("PLAY's splash: vermilion α 0.5 (decoration, a gated large flash)", UiColor.AccentPrimary, UiColor.SurfaceBase, Decorative, UiMenuMotionTokens.SplashAlphaHero),
+                }
+            },
+            {
+                typeof(UiMenuAmbient), new[]
+                {
+                    C("Ash and leaves: the muted tone ≤ α 0.35, right of the spine (decoration)", UiColor.TextMuted, UiColor.SurfaceBase, Decorative, UiMenuMotionTokens.LeafAlpha),
                 }
             },
         };

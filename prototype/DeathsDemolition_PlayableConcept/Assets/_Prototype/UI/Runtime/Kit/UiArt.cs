@@ -235,22 +235,24 @@ namespace DD.Prototype.UI
         // ------------------------------------------------------- O1 icon material
 
         /// <summary>
-        /// WP-081 ikon v2 B5b · the G1 cells AP-028-B's O1 family drew - the G1 manifest's last merge (B5a r2): 20 replaced in
-        /// place + 30 added. Only these sit in the SVG viewBox frame the icon material's constants assume (DD_ICON_SD_AP =
-        /// 64 / 52); every other G1 cell has its own frame and stays on SdfGlyph. Ordinal order; UiIconMaterialKeysTests
-        /// holds the list to the manifest (a new merge that changes the set fails there first).
+        /// WP-081 ikon v2 B5b · the G1 cells AP-028-B's O1 family drew - the G1 manifest's O1 merges (family frame [0, 256]):
+        /// B5a r2's 20 replaced in place + 30 added, and WP-098A's AP-034 v002.1 I6 three (Menu.CycleLeft / CycleRight - C16,
+        /// Menu.Display - G2; drawn to AP-028's rule). Only these sit in the SVG viewBox frame the icon material's constants
+        /// assume (DD_ICON_SD_AP = 64 / 52); every other G1 cell has its own frame and stays on SdfGlyph. Ordinal order;
+        /// UiIconMaterialKeysTests holds the list to the manifest (a new merge that changes the set fails there first).
         /// </summary>
         public static readonly string[] O1IconKeys =
         {
             "FireMode.Auto", "FireMode.Charge", "FireMode.Lob", "FireMode.Semi", "Menu.Accessibility",
-            "Menu.Achievements", "Menu.Audio", "Menu.Back", "Menu.Confirm", "Menu.Controls", "Menu.EndRun",
-            "Menu.Gamepad", "Menu.Graphics", "Menu.Home", "Menu.Keyboard", "Menu.Next", "Menu.Palette", "Menu.Path",
-            "Menu.Pause", "Menu.Play", "Menu.Previous", "Menu.Profile", "Menu.Quit", "Menu.ReduceFlashes",
-            "Menu.Resume", "Menu.Retry", "Menu.Save", "Menu.Settings", "Menu.Statistics", "Menu.TextScale",
-            "Menu.Upgrade", "Notice.Info", "Notice.Notification", "Profile.Level", "Profile.Progress", "Profile.Xp",
-            "Selection.Selected", "Selection.Skin", "Selection.Weapon", "Settings.Camera", "Settings.Data",
-            "Settings.Display", "Settings.Hints", "Settings.Language", "Stat.Damage", "Stat.FireRate", "Stat.Magazine",
-            "Stat.Range", "State.Locked", "State.Unlocked"
+            "Menu.Achievements", "Menu.Audio", "Menu.Back", "Menu.Confirm", "Menu.Controls", "Menu.CycleLeft",
+            "Menu.CycleRight", "Menu.Display", "Menu.EndRun", "Menu.Gamepad", "Menu.Graphics", "Menu.Home",
+            "Menu.Keyboard", "Menu.Next", "Menu.Palette", "Menu.Path", "Menu.Pause", "Menu.Play", "Menu.Previous",
+            "Menu.Profile", "Menu.Quit", "Menu.ReduceFlashes", "Menu.Resume", "Menu.Retry", "Menu.Save",
+            "Menu.Settings", "Menu.Statistics", "Menu.TextScale", "Menu.Upgrade", "Notice.Info", "Notice.Notification",
+            "Profile.Level", "Profile.Progress", "Profile.Xp", "Selection.Selected", "Selection.Skin",
+            "Selection.Weapon", "Settings.Camera", "Settings.Data", "Settings.Display", "Settings.Hints",
+            "Settings.Language", "Stat.Damage", "Stat.FireRate", "Stat.Magazine", "Stat.Range", "State.Locked",
+            "State.Unlocked"
         };
 
         private static readonly System.Collections.Generic.HashSet<string> s_o1IconKeys =
@@ -264,7 +266,7 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-081 ikon v2 B5b · an icon control's glyph (UiIconButton only, C-00 06.10): an O1 key draws through DD/UI/Fx
-        /// Icon (8) at rest - the light-only relief, sheen off, no glow, drawn - lit, or flat when <paramref name="lit"/> is
+        /// Icon (8) at rest - the relief and row d's ink (WP-098A), sheen off, no glow, drawn - lit, or flat when <paramref name="lit"/> is
         /// false (disabled). Any other key, a missing sprite or a non-glyph sprite keeps what <see cref="ApplyGlyph"/> gave
         /// it; the HUD and every other glyph never come here (IK-M18). Returns the Icon driver, or null.
         /// </summary>

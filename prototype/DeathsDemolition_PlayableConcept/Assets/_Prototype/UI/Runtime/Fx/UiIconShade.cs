@@ -10,7 +10,13 @@ namespace DD.Prototype.UI
     /// Units: AP = AP-028's 64-unit SVG viewBox = the G1 52² sprite box (B5a family frame [0, 256]); 1 G1 px = 64 / 52 AP;
     /// S / M / L (24 / 32 / 40 px) draw 2.667 / 2.0 / 1.6 AP per screen pixel (WP-081-ICON-V2-DIRECTION §1.2).
     /// Colours: the tint comes in linear (the vertex colour; Canvas.vertexColorAlwaysGammaSpace stays off), the relief is
-    /// lit in sRGB-encoded space as render() lights it, and the result never falls under the tint, per channel (IK-M5).
+    /// lit in sRGB-encoded space as render() lights it, and the light alone never takes a channel under the tint (IK-M5).
+    /// WP-098A (C-00 08.10) · AP-034 v002.1 row d, the AD default (AP034-v002-AD §2; the reference is AP-034's
+    /// build_ap034_v002_icons.py Twin.shade, variant 'd' - UiIconShadeTwinTests embeds its per-pixel output): the light cut
+    /// by I1's cavity and I2's grain, the ink (cavity, grain, dry tail, bevel shadow) darkening the lit colour within the
+    /// ceiling 0.06 + 0.06 s - so the floor of a lit glyph is tint × (1 − ceiling), the Twin's order: max(lit, tint) first,
+    /// then the ink - the ink lob and the size-ramped glow (<see cref="Shade"/> is the whole pixel). The AD numbers are
+    /// <see cref="UiMaterialSpec"/>'s; the Twin's structural constants are here and in DD_UiFx.hlsl's DD_ICON_* defines.
     /// </summary>
     public static class UiIconShade
     {
@@ -62,11 +68,28 @@ namespace DD.Prototype.UI
         /// <summary>D2 (C-00 06.10, render()'s effect): above 0.2, spread / 0.4 × 0.22 of a 0.5 AP dilation (1 px at 128).</summary>
         public static readonly Vector4 Spread = new Vector4(0.2f, 0.4f, 0.22f, 0.5f);
 
-        /// <summary>The glow channel's AP-028 scale (README "dış glow ≤ 0,08"); the shader maps it onto <see cref="UiMaterialSpec.IconGlowAlpha"/>.</summary>
+        /// <summary>The glow channel's AP-028 scale (README "dış glow ≤ 0,08"); the shader maps it onto the row d glow α (<see cref="GlowAlpha"/>).</summary>
         public const float GlowChannelMax = 0.08f;
 
-        /// <summary>The cold lob's offset: 0.25 px24 = 0.667 AP = 0.542 G1 px (down-right).</summary>
-        public const float LobOffsetAp = 0.25f * 64f / 24f;
+        // ---------------------------------------------------------------- AP-034 v002.1 row d (the Twin's structure)
+
+        /// <summary>I2's size, px: the grain is read 1:1 in screen pixels (uv = screen px / 256, repeat; DD_ICON_GRAIN_TILE).</summary>
+        public const float GrainTile = 256f;
+
+        /// <summary>I1 R's deepest cut (1 − 0.55): the cavity term is (1 − R) / 0.45 (DD_ICON_CAVITY_NORM).</summary>
+        public const float CavityNorm = 0.45f;
+
+        /// <summary>Row b: the grain cuts the added light by 0.6 · amp · (0.5 − grain) · 2 (DD_ICON_GRAIN_CUT).</summary>
+        public const float GrainCut = 0.6f;
+
+        /// <summary>amp = clamp(1 + 2 · (0.5 − G), 0, 3): dense ink (low G) grains more (DD_ICON_INK_GAIN).</summary>
+        public const float InkGain = 2f;
+
+        /// <summary>The bevel band 0 ≤ sd ≤ 2 AP, each edge eased over ±0.25 AP (DD_ICON_BEVEL_BAND: from, to, ease).</summary>
+        public static readonly Vector3 BevelBand = new Vector3(0f, 2f, 0.25f);
+
+        /// <summary>The key (−0.5, 0.5) normalised: θ is the angle between the outward normal (−g) and it (DD_ICON_KEY_DIR).</summary>
+        public static readonly Vector2 KeyDirection = new Vector2(-0.70710678f, 0.70710678f);
 
         // ---------------------------------------------------------------- the shader's steps
 
@@ -169,12 +192,111 @@ namespace DD.Prototype.UI
             return Mathf.Clamp01((draw * Draw.x - (index.x + index.y) / Draw.y) * Draw.z);
         }
 
-        /// <summary>The glow's α before the outside mask: the channel (0..0.08) onto the linear token, × FlashScale, falling off over the radius.</summary>
-        public static float GlowAlpha(float glow, float sdAp, float spread, float flash = 1f)
+        /// <summary>
+        /// The glow's α before the outside mask: the channel (0..0.08) onto row d's α 0.07 + 0.05 s (<paramref name="sizeRamp"/>
+        /// = s), × FlashScale, falling off over the 6.15 AP radius.
+        /// </summary>
+        public static float GlowAlpha(float glow, float sdAp, float spread, float sizeRamp, float flash = 1f)
         {
             float edge = -(sdAp + SpreadDilation(spread));
-            return Mathf.Clamp01(glow / GlowChannelMax) * UiMaterialSpec.IconGlowAlpha * flash
+            return Mathf.Clamp01(glow / GlowChannelMax) * (UiMaterialSpec.IconGlowAlpha + UiMaterialSpec.IconGlowAlphaRamp * sizeRamp) * flash
                 * (1f - SmoothStep(0f, UiMaterialSpec.IconGlowRadiusAp, edge));
+        }
+
+        // ---------------------------------------------------------------- row d (DD_IconRamp, DD_IconInk, DD_IconShade)
+
+        /// <summary>s = sat((P − 24) / 16) on the glyph's physical px (the shader: 64 AP over the footprint's AP per pixel).</summary>
+        public static float SizeRamp(float glyphPixels)
+        {
+            return Mathf.Clamp01((glyphPixels - UiMaterialSpec.IconRampStartPx) / UiMaterialSpec.IconRampSpanPx);
+        }
+
+        /// <summary>The ink's grain gain at an I1 ink density (G): clamp(1 + 2 · (0.5 − G), 0, 3).</summary>
+        public static float InkAmp(float ink)
+        {
+            return Mathf.Clamp(1f + InkGain * (0.5f - ink), 0f, 3f);
+        }
+
+        /// <summary>Row b: the share of the boost that survives the cavity (R) and the grain - cavity · sat(1 − 0.6 · amp · sat(0.5 − grain) · 2).</summary>
+        public static float LightCut(float cavity, float ink, float grain)
+        {
+            return cavity * Mathf.Clamp01(1f - GrainCut * InkAmp(ink) * Mathf.Clamp01(0.5f - grain) * 2f);
+        }
+
+        /// <summary>The bevel's shadow side: sat(−cos θ) (θ = outward normal −g vs the key) in the 0..2 AP band.</summary>
+        public static float BevelShadow(float sdAp, Vector2 g)
+        {
+            float band = SmoothStep(BevelBand.x - BevelBand.z, BevelBand.x + BevelBand.z, sdAp)
+                * (1f - SmoothStep(BevelBand.y - BevelBand.z, BevelBand.y + BevelBand.z, sdAp));
+            return Mathf.Clamp01(Vector2.Dot(g, KeyDirection)) * band;
+        }
+
+        /// <summary>DD_IconInk: how much the lit colour darkens (before the ceiling) - cavity, grain, dry tail, bevel shadow.</summary>
+        public static float Ink(float sdAp, Vector2 g, float cavity, float ink, float grain, float sizeRamp)
+        {
+            float wide = 0.5f + 0.5f * sizeRamp;
+            return UiMaterialSpec.IconCavity * wide * (1f - cavity) / CavityNorm
+                + UiMaterialSpec.IconGrain * sizeRamp * InkAmp(ink) * Mathf.Clamp01(0.5f - grain) * 2f
+                + UiMaterialSpec.IconDryTail * sizeRamp * Mathf.Clamp01(0.5f - ink) * 4f
+                + UiMaterialSpec.IconBevelShadow * wide * BevelShadow(sdAp, g);
+        }
+
+        /// <summary>The darkening's ceiling 0.06 + 0.06 s: a lit glyph never falls under tint × (1 − ceiling).</summary>
+        public static float Ceiling(float sizeRamp)
+        {
+            return UiMaterialSpec.IconCeiling + UiMaterialSpec.IconCeilingRamp * sizeRamp;
+        }
+
+        /// <summary>The factor on the lit colour: clamp(1 − ink · on, 1 − ceiling, 1) (<paramref name="on"/> = lit × tier).</summary>
+        public static float InkFactor(float ink, float sizeRamp, float on = 1f)
+        {
+            return Mathf.Clamp(1f - ink * on, 1f - Ceiling(sizeRamp), 1f);
+        }
+
+        /// <summary>The lob tap's uv offset from the pixel's atlas uv: −offset / (64 / 52) / 1024 (the glyph moves down-right).</summary>
+        public static Vector2 LobTapUv
+        {
+            get { return -UiMaterialSpec.IconLobOffsetAp / SdAp / AtlasSize; }
+        }
+
+        /// <summary>The lob's α before the outside mask, from the distance at its tap: smoothstep(−2.4, 2.4, sd) · 0.45.</summary>
+        public static float LobAlpha(float sdLobAp)
+        {
+            return SmoothStep(-UiMaterialSpec.IconLobSoftAp, UiMaterialSpec.IconLobSoftAp, sdLobAp) * UiMaterialSpec.IconLobAlpha;
+        }
+
+        /// <summary>
+        /// DD_IconShade at one pixel, premultiplied (rgb · α, α) - what the frag writes after its premultiply. The inputs are what
+        /// the shader samples there: the G1 distance <paramref name="sdAp"/> and its unit gradient <paramref name="g"/>, the
+        /// distance at the lob's tap (<see cref="LobTapUv"/>), I1's cavity (R) and ink density (G) at the glyph uv, I2's grain at
+        /// the screen pixel. <paramref name="light"/> = uv1.yzw (sheen −1 | 0..1, glow 0..0.08, spread), <paramref name="parameters"/>
+        /// = uv2.xyz (draw, lit, opacity), <paramref name="index"/> = render()'s pixel index, <paramref name="tier"/> = _DD_IconTier.
+        /// </summary>
+        public static Color Shade(Color tintLinear, float glyphPixels, Vector3 light, Vector3 parameters, Vector2 index, float sdAp, Vector2 g,
+            float sdLobAp, float cavity, float ink, float grain, float tier = 1f, float flash = 1f)
+        {
+            float w = Footprint(ApPerPixel(glyphPixels), g);
+            float s = SizeRamp(glyphPixels);
+            float on = Mathf.Clamp01(parameters.y) * tier;
+            float drawn = Drawn(parameters.x, index);
+            float a = Coverage(sdAp, w, light.z) * drawn * parameters.z;
+
+            float boost = Mathf.Clamp01(Boost(sdAp, g, w, index, light.x, flash) * on * LightCut(cavity, ink, grain));
+            Color lit = Lit(tintLinear, boost);
+            float f = InkFactor(Ink(sdAp, g, cavity, ink, grain, s), s, on);
+
+            float outside = Outside(sdAp, w, light.z) * drawn * parameters.z * on;
+            float lobA = LobAlpha(sdLobAp) * outside;
+            float glowA = GlowAlpha(light.y, sdAp, light.z, s, flash) * outside;
+            Color lob = UiMaterialSpec.IconLobColour;
+            float outerA = glowA + (1f - glowA) * lobA;
+            float k = lobA * (1f - glowA);
+            float outA = a + (1f - a) * outerA;
+            return new Color(
+                (lit.r * f * a + (tintLinear.r * glowA + SrgbToLinear(lob.r) * k) * (1f - a)) * tintLinear.a,
+                (lit.g * f * a + (tintLinear.g * glowA + SrgbToLinear(lob.g) * k) * (1f - a)) * tintLinear.a,
+                (lit.b * f * a + (tintLinear.b * glowA + SrgbToLinear(lob.b) * k) * (1f - a)) * tintLinear.a,
+                outA * tintLinear.a);
         }
 
         // ---------------------------------------------------------------- helpers (HLSL semantics)

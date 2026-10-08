@@ -1,6 +1,6 @@
 {
  "schema": "AP012-ui-manifest-v1",
- "package": "WP-068 \u00a77.1 G1 SDF glyph atlas (S-09 build_g1.py) + WP-081 B5a O1 (AP-028-B, merge_o1_g1_v2a.py)",
+ "package": "WP-068 \u00a77.1 G1 SDF glyph atlas (S-09 build_g1.py) + WP-081 B5a O1 (AP-028-B, merge_o1_g1_v2a.py) + WP-098A AP-034 v002.1 I6 (merge_ap034_i6_g1.py)",
  "sdf": {
   "cell": 64,
   "spread_px": 6,
@@ -2162,7 +2162,7 @@
      "y": 198,
      "w": 52,
      "h": 52,
-     "aliasOf": "Menu.Graphics"
+     "aliasOf": "Menu.Display"
     },
     {
      "name": "Menu.Previous",
@@ -2175,6 +2175,39 @@
      "w": 52,
      "h": 52,
      "aliasOf": "Menu.Back"
+    },
+    {
+     "name": "Menu.CycleLeft",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 262,
+     "y": 198,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.CycleRight",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 326,
+     "y": 198,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Display",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 390,
+     "y": 198,
+     "w": 52,
+     "h": 52
     }
    ]
   }
@@ -3010,15 +3043,30 @@
   },
   {
    "name": "Settings.Display",
-   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_display.svg",
-   "sha256": "6d3a5c80bcd4c0a9f50129d2c169698f363e19a1f8f05ba306514643c01a837d",
-   "aliasOf": "Menu.Graphics"
+   "source": "asset-production/AP-034/exports/v002.1/icons/glyphs/ap034_glyph_display.svg",
+   "sha256": "28f323450ed85b30038f91788b385f16d3a7910ba87fda88cbb35dc3d6e445e3",
+   "aliasOf": "Menu.Display"
   },
   {
    "name": "Menu.Previous",
    "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_previous.svg",
    "sha256": "cad2b0422ef23e2ed1f949d3ce9f9e8c81a1472e08dc8421d350e24bce81bdce",
    "aliasOf": "Menu.Back"
+  },
+  {
+   "name": "Menu.CycleLeft",
+   "source": "asset-production/AP-034/exports/v002.1/icons/glyphs/ap034_glyph_cycleleft.svg",
+   "sha256": "a451dbde72dbc1f300faf18201263c79002f36c64a3d3237c6f2bbe8b43a4a48"
+  },
+  {
+   "name": "Menu.CycleRight",
+   "source": "asset-production/AP-034/exports/v002.1/icons/glyphs/ap034_glyph_cycleright.svg",
+   "sha256": "795545ef9d3cdf4b1fb4b1e5560972d497554d0f9e2f5c19af3fbb50a4f89a88"
+  },
+  {
+   "name": "Menu.Display",
+   "source": "asset-production/AP-034/exports/v002.1/icons/glyphs/ap034_glyph_display.svg",
+   "sha256": "28f323450ed85b30038f91788b385f16d3a7910ba87fda88cbb35dc3d6e445e3"
   }
  ],
  "merges": [
@@ -3111,6 +3159,40 @@
     "Menu.Confirm": "Selection.Selected",
     "Menu.Gamepad": "Menu.Controls",
     "Menu.Previous": "Menu.Back"
+   }
+  },
+  {
+   "tool": "wp-098/tools/merge_ap034_i6_g1.py",
+   "toolSha256": "acd54800b56553cec1bab12c5e4ed0e046755ce5f57d9469947cc21f38c12fcc",
+   "toolRevision": "r1",
+   "slice": "WP-098A AP-034 I6",
+   "from": "AP-034 v002.1 icons/glyphs (I6)",
+   "i6JsonSha256": "40f310b3148c20bed799eaed720a0af2740dcec5d87866189697341119dc1722",
+   "familyFrame256": [
+    0,
+    256
+   ],
+   "source": "svg",
+   "ddIconSdAp": 1.230769,
+   "replaced": [],
+   "added": [
+    "Menu.CycleLeft",
+    "Menu.CycleRight",
+    "Menu.Display"
+   ],
+   "realiased": {
+    "Settings.Display": "Menu.Display"
+   },
+   "i1": {
+    "file": "UI/Resources/Fx/ap034_icons_g1cavity_1024.png",
+    "from": "asset-production/AP-034/exports/v002.1/icons/ap034_icons_g1cavity_1024.png",
+    "fromSha256": "be95d6a23642651f2cdd14d18e77a55889c86f6f8add60fc98c6d93c69203579",
+    "pasted": [
+     "Menu.CycleLeft",
+     "Menu.CycleRight",
+     "Menu.Display",
+     "Settings.Display"
+    ]
    }
   }
  ]

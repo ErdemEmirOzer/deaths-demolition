@@ -21,6 +21,14 @@ namespace DD.Prototype.UI
     /// the camera simply stops. The menu canvas goes over the live image as an overlay (no bloom or grain on words); the
     /// plates step aside, the spine's text-safe scrim (α 0.55, C-00 05.10 decision b) stays. If the world cannot load,
     /// the plates simply stay.
+    ///
+    /// WP-098A (C-00 08.10; HAREKET-MENU §5) · the freeze is render-free too: on the frame the still begins the camera stays where
+    /// it stood and draws that frame into the held target instead of the screen, the held image covers it at weight 1, and the
+    /// next frame the camera is back on the screen at S01's start under the fading held frame (Faz 0's cut method, b31: the
+    /// pane open's ~85 ms second world render gone). Reduced Motion stays a cut; the curtain-covering rule stays. §5-5: while
+    /// the curtain's cover is whole (<see cref="UiCurtain.Shut"/>) the camera does not draw at all; it draws again from the
+    /// open's first frame (still under the cover). M16 (SHOULD): the camera sways ±0.6° yaw / ±0.4° pitch toward the menu's
+    /// look target, the sway held while a held frame shows or the image is still (no misregistration in a crossfade).
     /// </summary>
     public sealed class MenuCinematic : MonoBehaviour
     {
@@ -194,6 +202,14 @@ namespace DD.Prototype.UI
 
         /// <summary>Tests and logs: the cuts whose held frame was the cut frame itself (no second render) since the menu came up.</summary>
         public int CutCaptures { get; private set; }
+
+        /// <summary>WP-098A · tests and logs: the freezes whose held frame was the freeze frame itself (no second render).</summary>
+        public int FreezeCaptures { get; private set; }
+
+        /// <summary>WP-098A (M16) · the camera's sway now (degrees: yaw, pitch).</summary>
+        public Vector2 SwayDegrees => _sway;
+
+        private Vector2 _sway;
 
         private static string Arg(string flag)
         {
@@ -385,6 +401,13 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // WP-098A §5-5: under a whole cover nothing of the world is seen - no draw until the open begins.
+            bool shut = UiCurtain.Shut && !_capturing;
+            if (_camera.enabled == shut)
+            {
+                _camera.enabled = !shut;
+            }
+
             bool still = false;
             if (TimeOverride.HasValue)
             {
@@ -398,8 +421,13 @@ namespace DD.Prototype.UI
                     // Into the still: the view so far crossfades to S01's start (RM: a cut - nothing moves).
                     if (!UiMotion.ReducedMotion && !UiCurtain.IsCovering && _clock > 0f)
                     {
-                        HoldFrame(null);
+                        // WP-098A (C-00 08.10): the freeze's held frame is this frame - the camera stays where it stood and draws
+                        // into the held target, which covers the screen at weight 1; the next Apply hands it back at S01's start.
+                        CaptureFreeze();
                         _freezeFadeAt = Time.unscaledTime;
+                        _clock = 0f;
+                        _wasStill = true;
+                        return;
                     }
 
                     _clock = 0f;
@@ -448,6 +476,7 @@ namespace DD.Prototype.UI
             }
 
             Place(_camera, LivePose(time));
+            Sway(blending || _freezeFadeAt >= 0f || _wasStill);
             float weight = blending ? HeldWeight(local) : 0f;
             if (_freezeFadeAt >= 0f)
             {
@@ -464,6 +493,50 @@ namespace DD.Prototype.UI
                 _heldImage.enabled = !first && weight > 0.001f;
                 _heldImage.color = new Color(1f, 1f, 1f, weight);
             }
+        }
+
+        /// <summary>
+        /// M16 (SHOULD) · the camera turns toward the menu's look (UiBackdrop's follow): yaw about world up, pitch about its own
+        /// right - the horizon stays level. <paramref name="hold"/> keeps the last sway (a held frame shows, or the image is still);
+        /// Reduced Motion: none.
+        /// </summary>
+        private void Sway(bool hold)
+        {
+            if (UiMotion.ReducedMotion)
+            {
+                _sway = Vector2.zero;
+                return;
+            }
+
+            if (!hold)
+            {
+                Vector2 look = UiBackdrop.ActiveLook;
+                _sway = new Vector2(look.x * UiMenuMotionTokens.CameraParallaxDeg, look.y * UiMenuMotionTokens.CameraParallaxPitchDeg);
+            }
+
+            if (_sway != Vector2.zero)
+            {
+                Transform t = _camera.transform;
+                t.rotation = Quaternion.AngleAxis(_sway.x, Vector3.up) * t.rotation * Quaternion.AngleAxis(-_sway.y, Vector3.right);
+            }
+        }
+
+        /// <summary>
+        /// WP-098A · the freeze's frame into the held target: the camera, where it stood last frame, draws <see cref="_held"/> this
+        /// frame and the held image covers the screen at weight 1; the next <see cref="Apply"/> hands the camera back to the screen.
+        /// </summary>
+        private void CaptureFreeze()
+        {
+            EnsureHeldTarget();
+            _camera.enabled = true;
+            _camera.targetTexture = _held;
+            EnsureHeldImage();
+            _heldImage.texture = _held;
+            _heldImage.enabled = true;
+            _heldImage.color = Color.white;
+            _heldSlice = -1;
+            _capturing = true;
+            FreezeCaptures++;
         }
 
         /// <summary>Renders a pose (null = where the camera stands now) once into the held frame shown over the live camera.</summary>

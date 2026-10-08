@@ -45,8 +45,23 @@ namespace DD.Prototype.UI
     /// shows its word beside it (PLAY adds "CHOOSE SKIN & WEAPON"); every icon carries its reader name from the string
     /// table. The rest of the page is the world. A pane opens on the right when its icon is chosen and closes on Cancel;
     /// none is open on arrival (the G5 decision: Profile closed). The profile level stands top-right with its XP bar.
+    ///
+    /// MENU v5 MOTION (WP-098A, C-00 08.10; HAREKET-MENU §1–§6, the user's "menüde motion design yüksek seviyede olsun"). The
+    /// session's first arrival is one hero choreography from the curtain's reveal (M1, the brush curtain wiping open): the
+    /// <see cref="OnMenuIntro"/> hook (S-11's logo, once per session) and, when it ends, the title typed open with its dry
+    /// stroke under it (M2); the rail's eight icons in a 40 ms stagger (M3); the level readout and its XP fill (M4); then PLAY's
+    /// focus - the brackets, its word typed in, its sub-line (M5) - all inside 1.2 s, skipped by any Submit / Cancel / click
+    /// (the input still acts in that frame). Later arrivals rise in with EnterScreen (M6). Hover: the icon's lift track, its
+    /// ink wave behind, the word typed in again (M7); press and Submit: the icon's press (M9); confirm: the ink splash at the
+    /// pointer or the icon's centre, vermilion on PLAY (M10). Panes: the heavy build on one frame at α 0, the motion from the
+    /// next - the card, its frame wiped in, the content rising, its rows staggered (M11 / M13, the presets S-04's windows
+    /// share); a change cross-fades the old content out (M12); Cancel fades it all out and wipes the frame off. The world
+    /// freezes Screen 280 after a pane opens (§5-3). Idle: the ash and leaves drift right of the spine (M17), the title and
+    /// the motes follow the look 4 / 12 px (M16), the focused icon's one sheen pass (M18, DEC-114). Reduced Motion: every
+    /// part at rest at once; Reduce Flashes: the shader and the splash scale their light. GC 0 per frame: tweens, timelines and
+    /// GPU clocks, nothing allocated after the build.
     /// </summary>
-    public sealed class MainMenuScreen : UiScreen
+    public sealed class MainMenuScreen : UiScreen, IUiMotionListener
     {
         // Element measures. Every one is a multiple of the 8pt base, and every GAP on
         // this screen is a UiSpace member - the two together are the whole spacing spec.
@@ -127,6 +142,84 @@ namespace DD.Prototype.UI
         private UiBar _xp;
         private UiStepper _languageRow;
 
+        // ------------------------------------------------------------ WP-098A · menu v5 motion
+        private const int CueFocus = 2;
+        private const int CueIntroDone = 3;
+
+        /// <summary>The hero arrival plays once a session (M6: later arrivals rise in). Tests reset it.</summary>
+        private static bool s_introPlayed;
+
+        private TMP_Text _title;
+        private RectTransform _titleClip;
+        private float _titleWidth;
+        private UiBrushMark _titleStroke;
+        private RectTransform _nav;
+        private RectTransform _railWordClip;
+        private readonly List<CanvasGroup> _railGroups = new List<CanvasGroup>(RailItems);
+        private readonly List<UiInkWave> _railWaves = new List<UiInkWave>(RailItems);
+        private CanvasGroup _progressGroup;
+        private UiMenuAmbient _ambient;
+        private UiInkSplashLayer _splash;
+        private UiTimeline _intro;
+        private bool _introPending;
+        private bool _logoIntroSkipped;
+        private bool _introRunning;
+        private bool _titleShown = true;
+        private bool _focusShown;
+        private System.Action _onIntroDone;
+        private bool _windowFocused = true;
+        private bool _paneStagger = true;   // S04 row collection uses the menu v5 quick-change rule
+        private float _paneOpenedAt = -10f;
+        private float _lastPaneChangeAt = -10f;
+
+        /// <summary>Tests: forget that the session's arrival has played (the next menu plays it again).</summary>
+        public static void ResetIntroForTests()
+        {
+            s_introPlayed = false;
+        }
+
+        /// <summary>The hero arrival is running (M1–M5): input still acts; Submit / Cancel / click skip it.</summary>
+        public bool IntroRunning
+        {
+            get { return _introRunning; }
+        }
+
+        /// <summary>The menu's title is shown (S-11: the hook's onDone shows it - never two titles at once).</summary>
+        public bool TitleShown
+        {
+            get { return _titleShown; }
+        }
+
+        /// <summary>The ambient motes layer (M17).</summary>
+        public UiMenuAmbient Ambient
+        {
+            get { return _ambient; }
+        }
+
+        /// <summary>The splash layer (M10).</summary>
+        public UiInkSplashLayer Splash
+        {
+            get { return _splash; }
+        }
+
+        /// <summary>The title's dry stroke (M2).</summary>
+        public UiBrushMark TitleStrokeMark
+        {
+            get { return _titleStroke; }
+        }
+
+        /// <summary>The frameless carrier's content fade group (legacy M11 / M12 diagnostic alias; no separate card).</summary>
+        public CanvasGroup PaneCardGroup
+        {
+            get { return _brushPane != null ? _brushPane.Group : null; }
+        }
+
+        /// <summary>The pane content's fade group (two-phase build: α 0 on the build frame).</summary>
+        public CanvasGroup PaneContentGroup
+        {
+            get { return _brushPane != null ? _brushPane.Group : null; }
+        }
+
         /// <summary>The rail's icon controls, top to bottom (tests).</summary>
         public IReadOnlyList<UiIconButton> Rail
         {
@@ -163,11 +256,20 @@ namespace DD.Prototype.UI
 
         protected override void Build()
         {
+            _onIntroDone = OnIntroHookDone;
             BuildMenuPlate();
+
+            // WP-098A (M17): the ash and leaves drift over the backdrop, right of the spine, under the page.
+            Transform backdrop = ScreenRect.Find("Backdrop");
+            if (backdrop != null)
+            {
+                _ambient = UiMenuAmbient.Create((RectTransform)backdrop);
+            }
 
             float top = BuildTitle() + (int)UiSpace.XXL;
 
             RectTransform nav = Column("Nav", 0f, 0.26f, top);
+            _nav = nav;
             BuildRail(nav);
             CoverColumn(nav);   // 12b · D1: the text-safe scrim reaches the spine's right edge (the title stands in it too)
             BuildProgressReadout();
@@ -177,8 +279,22 @@ namespace DD.Prototype.UI
 
             ProfileService.Changed += OnProfileChanged;
 
+            // WP-098A (M10): the splash layer over the page; (M16) the title 4 px and the motes 12 px follow the look.
+            _splash = UiInkSplashLayer.Create(ScreenRect);
+            if (_plates != null)
+            {
+                _plates.Follow(_titleClip, UiBackdrop.FarParallax);
+                if (_ambient != null)
+                {
+                    _plates.Follow((RectTransform)_ambient.transform, UiBackdrop.NearParallax);
+                }
+            }
+
+            PrepareArrival();
+
             // WP-081 (the user's G5 addition, AP-028's five shots): the real world as the backdrop; the plates until it shows.
-            MenuCinematic.Begin(gameObject, OnWorldLive, () => PaneOpen);
+            // WP-098A (§5-3): the world freezes Screen 280 after a pane opens - the freeze frame falls outside the pane's motion.
+            MenuCinematic.Begin(gameObject, OnWorldLive, () => PaneOpen && Time.unscaledTime - _paneOpenedAt >= UiMenuMotionTokens.FreezeDelay);
         }
 
         /// <summary>
@@ -201,7 +317,7 @@ namespace DD.Prototype.UI
             }
 
             // The spine over the world: the scrim and the words' ink as the menu look says (C-00 05.10 options).
-            Transform title = Content.Find("Title");
+            Transform title = _title != null ? _title.transform : null;   // WP-098A: the title stands in its reveal clip
             Transform nav = Content.Find("Nav");
             MenuLook.Current.ApplyUi(nav, _plates);
             MenuLook.Current.ApplyUi(title, null);
@@ -235,7 +351,10 @@ namespace DD.Prototype.UI
         /// <summary>v4: the name alone at the top of the spine, on as many lines as the spine's width needs (two at 1080).</summary>
         private float BuildTitle()
         {
-            TMP_Text title = UiFactory.Label("Title", Content, HeaderTitle, UiType.Display, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            // WP-098A (M2): the title stands in a clip that types it open (its width 0 → full); the clip takes the title's place.
+            _titleClip = UiFactory.ClipContent(UiFactory.NewRect("TitleClip", Content));
+            TMP_Text title = UiFactory.Label("Title", _titleClip, HeaderTitle, UiType.Display, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            _title = title;
             title.enableWordWrapping = true;
             RectTransform rect = title.rectTransform;
             rect.anchorMin = new Vector2(0f, 1f);
@@ -248,6 +367,22 @@ namespace DD.Prototype.UI
             float height = width > 1f ? Mathf.Max(line, Mathf.Ceil(title.GetPreferredValues(HeaderTitle, width, 0f).y)) : line * 2f;
             rect.sizeDelta = new Vector2(width, height);
             rect.anchoredPosition = Vector2.zero;
+
+            _titleClip.anchorMin = new Vector2(0f, 1f);
+            _titleClip.anchorMax = new Vector2(0f, 1f);
+            _titleClip.pivot = new Vector2(0f, 1f);
+            _titleClip.sizeDelta = new Vector2(width, height);
+            _titleClip.anchoredPosition = Vector2.zero;
+            _titleWidth = width;
+
+            // M2's dry stroke under the name: the longest line + 48, from the title's x, in the gap above the rail.
+            float measured = width > 1f ? Mathf.Min(width, title.GetPreferredValues(HeaderTitle, width, 0f).x) : UiBrushTokens.TitleStrokeMin;
+            _titleStroke = UiBrushKit.TitleStroke(Content, measured + (int)UiSpace.XXXL);
+            RectTransform stroke = _titleStroke.Rect;
+            stroke.anchorMin = new Vector2(0f, 1f);
+            stroke.anchorMax = new Vector2(0f, 1f);
+            stroke.pivot = new Vector2(0f, 1f);
+            stroke.anchoredPosition = new Vector2(0f, -(height + UiBrushTokens.TitleRuleGap));
             return height;
         }
 
@@ -255,6 +390,13 @@ namespace DD.Prototype.UI
         {
             base.OnDestroy();
             ProfileService.Changed -= OnProfileChanged;
+            UiCurtain.Revealed -= OnRevealed;
+            if (_introRunning)
+            {
+                UiIconMotion.HeroActive = false;   // the arrival ends with the menu
+            }
+
+            UiIconMotion.IdleScope = null;
         }
 
         /// <summary>
@@ -263,6 +405,22 @@ namespace DD.Prototype.UI
         /// </summary>
         private void Update()
         {
+            // WP-098A (M17): the motes rest while the window is away (polled - Unity raises no focus event to a screen).
+            bool focused = MenuCinematic.FocusForTests ?? Application.isFocused;   // the menu's one window-focus seam (tests)
+            if (focused != _windowFocused)
+            {
+                _windowFocused = focused;
+                RefreshAmbient();
+            }
+
+            // WP-098A (§6 "Girdi asla kilitlenmez"): any Submit / Cancel / click skips the arrival (and the logo, S-11) - and still
+            // acts below in this same frame.
+            if ((_introRunning || (UiLogoMenuIntro.Current != null && UiLogoMenuIntro.Current.Running))
+                && (Input.anyKeyDown || UiInput.SubmitPressed() || UiInput.CancelPressed() || Input.GetMouseButtonDown(0)))
+            {
+                SkipIntro();
+            }
+
             if (!UiInput.CancelPressed())
             {
                 return;
@@ -428,9 +586,13 @@ namespace DD.Prototype.UI
             _railWordRect.anchorMin = new Vector2(0f, 1f);
             _railWordRect.anchorMax = new Vector2(1f, 1f);
             _railWordRect.pivot = new Vector2(0f, 0.5f);
-            _railWord = UiFactory.Label("Word", _railWordRect, string.Empty, UiType.H2, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            // WP-098A (M5 / M7): the word and its sub-line stand in a clip that types them in from the left (Base, Brush).
+            _railWordClip = UiFactory.ClipContent(UiFactory.NewRect("Clip", _railWordRect));
+            UiFactory.Fill(_railWordClip);
+            _railWordClip.pivot = new Vector2(0f, 0.5f);
+            _railWord = UiFactory.Label("Word", _railWordClip, string.Empty, UiType.H2, UiColor.TextPrimary, TextAnchor.LowerLeft);
             _railWord.enableWordWrapping = false;
-            _railSub = UiFactory.Label("Sub", _railWordRect, string.Empty, UiType.Caption, PlateCaption, TextAnchor.UpperLeft);
+            _railSub = UiFactory.Label("Sub", _railWordClip, string.Empty, UiType.Caption, PlateCaption, TextAnchor.UpperLeft);
             _railSub.enableWordWrapping = false;
             float wordLine = UiFactory.LineHeight(UiType.H2);
             float subLine = captionLine;
@@ -463,22 +625,50 @@ namespace DD.Prototype.UI
         private UiButton AddRail(RectTransform column, int index, float pitch, string id, string icon, string nameKey, string fallback, System.Action onClick)
         {
             // O1: bare brush glyphs - no plate at rest (Ghost); focus brings the hollow ring and the travelling brackets.
-            UiIconButton item = UiIconControls.Button(column, icon, nameKey, fallback, onClick, RailIcon, null, null, UiIconLabel.Beside, UiButtonVariant.Ghost);
+            // WP-098A (M10): a confirm splashes first - at the pointer, or the icon's centre for pad / keyboard; PLAY in vermilion.
+            UiIconButton item = null;
+            bool hero = index == 0;
+            item = UiIconControls.Button(column, icon, nameKey, fallback, () =>
+            {
+                SplashFor(item, hero);
+                onClick?.Invoke();
+            }, RailIcon, null, null, UiIconLabel.Beside, UiButtonVariant.Ghost);
             item.PinObjectName(id);
             var rect = (RectTransform)item.transform;
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 0.5f);
             rect.anchoredPosition = new Vector2(0f, -(index * pitch + pitch * 0.5f));
+            UiInkWave wave = UiInkWave.Attach(rect);   // WP-098A (M7): the ink wave behind the glyph, built once
             item.Button.LiftChanged += lifted =>
             {
                 if (lifted)
                 {
                     MoveRailWord(item);
                 }
+
+                UiPresets.InkWave(wave, lifted);
             };
             _rail.Add(item);
+            _railWaves.Add(wave);
+            _railGroups.Add(UiFactory.Group(item.gameObject));   // M3: the stagger's fade (alpha only; input stays on)
             return item.Button;
+        }
+
+        /// <summary>WP-098A (M10): the confirm's ink splash for a rail item - the pointer's point, or the icon's centre.</summary>
+        private void SplashFor(UiIconButton item, bool hero)
+        {
+            if (_splash == null || item == null)
+            {
+                return;
+            }
+
+            UiButton button = item.Button;
+            Camera eventCamera = Canvas != null && Canvas.renderMode != RenderMode.ScreenSpaceOverlay ? Canvas.worldCamera : null;
+            Vector2 at = button.LastActivationFromPointer
+                ? _splash.LocalPoint(button.LastPointerPosition, eventCamera)
+                : _splash.CentreOf((RectTransform)item.transform);
+            UiPresets.InkSplash(_splash, at, item.GetInstanceID(), hero);
         }
 
         /// <summary>The focused rail item's word (and PLAY's sub-line) beside its icon.</summary>
@@ -489,6 +679,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            bool moved = _railFocus != item;
             _railFocus = item;
             var icon = (RectTransform)item.transform;
             float hit = icon.sizeDelta.x;
@@ -496,6 +687,31 @@ namespace DD.Prototype.UI
             _railWord.text = item.ShortLabel;
             _railSub.text = item.Button == _playButton ? PlaySubline : string.Empty;
             SizeRailPad();
+            if (moved && !_introRunning)
+            {
+                TypeRailWord(0f);   // WP-098A (M7): the word types in beside its icon
+            }
+        }
+
+        /// <summary>
+        /// WP-098A (M5 / M7) · the rail word types in from the left (its clip 0 → full width, Base 220, Brush) and PLAY's sub-line
+        /// fades in 60 ms behind it; Decor - at once under Reduced Motion.
+        /// </summary>
+        private void TypeRailWord(float delay)
+        {
+            if (_railWordClip == null)
+            {
+                return;
+            }
+
+            float width = Mathf.Max(1f, _railWordRect.rect.width);
+            _railWordClip.sizeDelta = new Vector2(-width, 0f);
+            UiMotion.Resize(_railWordClip, Vector2.zero, UiDuration.Base, UiEase.Brush, UiMotionClass.Decor, delay, UiClock.Unscaled, GetInstanceID());
+            if (!string.IsNullOrEmpty(_railSub.text))
+            {
+                _railSub.canvasRenderer.SetAlpha(0f);
+                UiMotion.TintAlpha(_railSub, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, delay + UiMenuMotionTokens.SublineLag, UiClock.Unscaled, GetInstanceID());
+            }
         }
 
         /// <summary>The focused word's pad hugs the words (the wider of the word and its sub-line), not the column.</summary>
@@ -547,6 +763,7 @@ namespace DD.Prototype.UI
             const float BarHeight = 8f;
             root.sizeDelta = new Vector2(240f, line + (int)UiSpace.S + BarHeight);
             root.anchoredPosition = Vector2.zero;
+            _progressGroup = UiFactory.Group(root.gameObject);   // WP-098A (M4): the readout's fade
             _level = UiFactory.Label("Level", root, string.Empty, UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.UpperRight);
             Band(_level.rectTransform, 0f, line);
             UiHudInk.Apply(_level);   // over the world: the HUD's ink halo, no panel
@@ -1205,10 +1422,19 @@ namespace DD.Prototype.UI
             // in another scene). The pane is drawn anyway; the model is simply not
             // tracking this screen.
             UiContext from = _pane;
+            float now = Time.unscaledTime;
+            if (from == UiContext.MainMenu || !PaneOpen)
+            {
+                _paneOpenedAt = now;   // freeze starts only after this carrier has had its opening beat
+            }
+
+            _paneStagger = now - _lastPaneChangeAt >= UiMenuMotionTokens.QuickChangeWindow;
+            _lastPaneChangeAt = now;
             _pane = pane;
             _focusPaneOnOpen = true;
             RedrawPane(from);
             _focusPaneOnOpen = false;
+            RefreshPaneMotionState();
             UiEvents.Raise(UiEvent.PaneOpened, pane.ToString());
         }
 
@@ -1220,9 +1446,9 @@ namespace DD.Prototype.UI
             {
                 UiNavigation.ExitLayer(_pane);
             }
-
             _pane = UiContext.MainMenu;
             RedrawPane(from);
+            RefreshPaneMotionState();
         }
 
         /// <summary>Cancel on an open pane: the kit's HandleCancel (Close + the Back sound) through the same close path.</summary>
@@ -1343,7 +1569,7 @@ namespace DD.Prototype.UI
 
             _paneRows.Clear();
             _paneMarks.Clear();
-            _paneRowsEnter = entering || _paneTurn;
+            _paneRowsEnter = (entering && _paneStagger) || _paneTurn;   // quick tab travel skips only the new rows' stagger
             _paneTurn = false;
             _settingsTabs = null;
 
@@ -1696,6 +1922,274 @@ namespace DD.Prototype.UI
                 {
                     Owner.MarkSettingsSection(Section, false);
                 }
+            }
+        }
+
+        /// <summary>The pane's open state reaches the idle arbiter (rail only while a pane is open) and the motes (gone under a pane).</summary>
+        private void RefreshPaneMotionState()
+        {
+            UiIconMotion.IdleScope = PaneOpen ? _nav : null;
+            RefreshAmbient();
+        }
+
+        /// <summary>M17 · the motes show with no pane open and the window focused (Base out, Emphasis back).</summary>
+        private void RefreshAmbient()
+        {
+            if (_ambient != null)
+            {
+                _ambient.SetShown(!PaneOpen && _windowFocused);
+            }
+        }
+
+        // ============================================================ WP-098A · the arrival (M1 – M6)
+
+        /// <summary>
+        /// Build time: the session's first arrival (not under Reduced Motion) sets its start state - the title clipped shut, its
+        /// stroke un-inked, the rail and the level readout transparent, PLAY's word clipped - and waits for the reveal; a later
+        /// arrival rises in (M6). Both wait for the curtain: the motion is never spent unseen behind it.
+        /// </summary>
+        private void PrepareArrival()
+        {
+            _logoIntroSkipped = false;
+            bool hero = !s_introPlayed && !UiMotion.ReducedMotion;
+            s_introPlayed = true;
+            _introPending = hero;
+            if (hero)
+            {
+                _titleShown = false;
+                _titleClip.sizeDelta = new Vector2(0f, _titleClip.sizeDelta.y);
+                _titleStroke.Hold();
+                for (int i = 0; i < _railGroups.Count; i++)
+                {
+                    _railGroups[i].alpha = 0f;
+                }
+
+                if (_progressGroup != null)
+                {
+                    _progressGroup.alpha = 0f;
+                }
+
+                if (_railWordClip != null)
+                {
+                    _railWordClip.sizeDelta = new Vector2(-Mathf.Max(1f, _railWordRect.rect.width), 0f);
+                }
+            }
+
+            if (UiCurtain.IsCovering)
+            {
+                UiCurtain.Revealed += OnRevealed;
+            }
+            else
+            {
+                StartArrival();
+            }
+        }
+
+        private void OnRevealed()
+        {
+            UiCurtain.Revealed -= OnRevealed;
+            if (this != null)
+            {
+                StartArrival();
+            }
+        }
+
+        private void StartArrival()
+        {
+            if (_introPending && !UiMotion.ReducedMotion)
+            {
+                _introPending = false;
+                StartIntro();
+                return;
+            }
+
+            if (_introPending)
+            {
+                // Reduced Motion turned on behind the curtain: the arrival is at rest at once.
+                _introPending = false;
+                OnIntroHookDone();
+                FinishIntro();
+                return;
+            }
+
+            // M6 · a later arrival: the spine rises in (EnterScreen, Screen 280), the rail at rest; then PLAY's word (M5).
+            if (_nav != null)
+            {
+                UiPresets.EnterScreen(UiFactory.Group(_nav.gameObject), _nav, GetInstanceID());
+            }
+
+            TypeRailWord(0f);
+        }
+
+        /// <summary>
+        /// M1 – M5 · the hero arrival, from the reveal (M1 is the curtain's brush): the logo hook (S-11), then the title (M2 at
+        /// +120 ms); the rail's stagger (M3 at +400, 40 ms apart); the level readout and its fill (M4 at +600); PLAY's focus at the
+        /// stagger's end (M5); done by MenuIntroMax (1.2 s). One timeline: a skip lands every step.
+        /// </summary>
+        private void StartIntro()
+        {
+            _introRunning = true;
+            _focusShown = false;
+            UiIconMotion.HeroActive = true;
+            int owner = GetInstanceID();
+            _intro = UiMotion.Timeline(owner, this);
+            if (!_intro.IsValid)
+            {
+                OnIntroHookDone();
+                FinishIntro();
+                return;
+            }
+
+            // The brackets wait for M5 (PLAY is already the focus; they show when the stagger has brought it in).
+            if (UiFocusBrackets.Arms != null) UiFocusBrackets.Arms.canvasRenderer.SetAlpha(0f);
+            if (UiFocusBrackets.Halo != null) UiFocusBrackets.Halo.canvasRenderer.SetAlpha(0f);
+
+            float railEnd = UiMenuMotionTokens.RailAt;
+            for (int i = 0; i < _rail.Count; i++)
+            {
+                float at = UiMenuMotionTokens.RailAt + Mathf.Min(i, UiMotionTokens.StaggerRowMaxItems - 1) * UiMotionTokens.StaggerRow;
+                var rect = (RectTransform)_rail[i].transform;
+                Vector2 rest = rect.anchoredPosition;
+                rect.anchoredPosition = rest - new Vector2(UiPresets.Travel, 0f);
+                _intro.Add(UiMotion.Alpha(_railGroups[i], 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, at, UiClock.Unscaled, owner));
+                _intro.Add(UiMotion.Move(rect, rest, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, at, UiClock.Unscaled, owner));
+                railEnd = Mathf.Max(railEnd, at + UiMotionTokens.Seconds(UiDuration.Base));
+            }
+
+            if (_progressGroup != null)
+            {
+                _intro.Add(UiMotion.Alpha(_progressGroup, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, UiMenuMotionTokens.ProgressAt, UiClock.Unscaled, owner));
+            }
+
+            if (_xp != null)
+            {
+                _intro.Add(_xp.Reveal(0f, UiDuration.Reveal, UiMenuMotionTokens.ProgressAt, owner));
+            }
+
+            _intro.Callback(railEnd, CueFocus);
+            _intro.Callback(UiMenuMotionTokens.MenuIntroMax, CueIntroDone);
+            OnMenuIntro(_onIntroDone);
+        }
+
+        /// <summary>
+        /// The S-11 hook: <c>UiLogoAnimator.PlayMenuIntro(onDone)</c> goes here (once a session, ≤ 2 s, none under Reduced Motion;
+        /// the component reads no input - the menu calls <see cref="OnMenuIntroSkip"/>). The component completes the hook once the logo is gone.
+        /// The title shows on <paramref name="onDone"/> - never two titles (the logo and the name) on screen together.
+        /// </summary>
+        private void OnMenuIntro(System.Action onDone)
+        {
+            UiLogoMenuIntro intro = FindObjectOfType<UiLogoMenuIntro>();
+            if (intro != null) intro.Play(onDone);
+            else onDone?.Invoke();
+        }
+
+        /// <summary>The S-11 skip: <c>UiLogoAnimator.Skip()</c> goes here (its onDone then shows the title). The same press keeps its existing menu action.</summary>
+        private void OnMenuIntroSkip()
+        {
+            _logoIntroSkipped = true;
+            UiLogoMenuIntro.Current?.RequestSkip();
+        }
+
+        /// <summary>M2 · the hook ended: the title types open (Reveal 600, Brush; at the earliest +120 ms after the reveal) and its stroke inks in under it (+80).</summary>
+        private void OnIntroHookDone()
+        {
+            if (_titleShown)
+            {
+                return;
+            }
+
+            _titleShown = true;
+            if (_logoIntroSkipped)
+            {
+                // The logo's brief skip fade has ended: land the title and its mark, with no second arrival.
+                UiMotion.KillTarget(_titleClip, true);
+                _titleClip.sizeDelta = new Vector2(_titleWidth, _titleClip.sizeDelta.y);
+                _titleStroke.Draw(UiDuration.Emphasis, -UiMotionTokens.Seconds(UiDuration.Emphasis) - 1f);
+                return;
+            }
+
+            float at = _introRunning && _intro.IsAlive ? Mathf.Max(0f, UiMenuMotionTokens.TitleAt - _intro.Elapsed) : 0f;
+            var size = new Vector2(_titleWidth, _titleClip.sizeDelta.y);
+            UiTweenHandle open = UiMotion.Resize(_titleClip, size, UiDuration.Reveal, UiEase.Brush, UiMotionClass.Decor, at, UiClock.Unscaled, GetInstanceID());
+            if (_introRunning && _intro.IsAlive)
+            {
+                _intro.Add(open);
+            }
+
+            _titleStroke.Draw(UiDuration.Emphasis, at + UiMenuMotionTokens.TitleRuleLag);
+        }
+
+        /// <summary>Any Submit / Cancel / click during the arrival: the logo skips (S-11), every step lands, the cues collapse to Done.</summary>
+        private void SkipIntro()
+        {
+            OnMenuIntroSkip();
+            UiEvents.Raise(UiEvent.TimelineSkipped, "MainMenu");
+            if (_intro.IsAlive)
+            {
+                _intro.Complete();
+            }
+            else
+            {
+                FinishIntro();
+            }
+        }
+
+        /// <summary>The arrival's end state (its last cue, a skip, Reduced Motion): everything at rest, the brackets on PLAY's focus.</summary>
+        private void FinishIntro()
+        {
+            for (int i = 0; i < _railGroups.Count; i++)
+            {
+                UiMotion.KillTarget(_railGroups[i], true);
+                _railGroups[i].alpha = 1f;
+            }
+
+            if (_progressGroup != null)
+            {
+                UiMotion.KillTarget(_progressGroup, true);
+                _progressGroup.alpha = 1f;
+            }
+
+            if (_titleShown)
+            {
+                UiMotion.KillTarget(_titleClip, true);
+                _titleClip.sizeDelta = new Vector2(_titleWidth, _titleClip.sizeDelta.y);
+            }
+
+            bool wasRunning = _introRunning;
+            _introRunning = false;
+            UiIconMotion.HeroActive = false;
+            if ((wasRunning || UiMotion.ReducedMotion) && !_focusShown)
+            {
+                ShowFocus();
+            }
+        }
+
+        /// <summary>M5 · PLAY's focus shows: the brackets (opaque on their first frame), the word typed in, the sub-line after it.</summary>
+        private void ShowFocus()
+        {
+            _focusShown = true;
+            UnityEngine.EventSystems.EventSystem events = UnityEngine.EventSystems.EventSystem.current;
+            GameObject current = events != null ? events.currentSelectedGameObject : null;
+            UiButton focused = current != null ? current.GetComponent<UiButton>() : null;
+            UiFocusBrackets.Follow((RectTransform)(focused != null ? focused.transform : _playButton.transform));
+            TypeRailWord(0f);
+        }
+
+        void IUiMotionListener.OnCue(int cueId)
+        {
+            if (this == null)
+            {
+                return;
+            }
+
+            switch (cueId)
+            {
+                case CueFocus:
+                    ShowFocus();
+                    break;
+                case CueIntroDone:
+                    FinishIntro();
+                    break;
             }
         }
 

@@ -1,0 +1,880 @@
+{
+ "bake_script_sha256": "5a4d9e5cf1500e29a9862f006e53e31003c948384f6504ed50ca46b407b6f888",
+ "checks": {
+  "halo": {
+   "alpha_beyond_dilate": 0.0,
+   "alpha_within_4_texels_min": 1.0,
+   "halo_1024_vs_2048": {
+    "max_abs_alpha": 0.05490196078431375,
+    "mean_abs_alpha": 0.0005976633308759696,
+    "p999_abs_alpha": 0.027450980392156876
+   }
+  },
+  "owner_covers_master_alpha": true,
+  "owner_from_masks_equals_owner_map": true,
+  "plateaus": {
+   "repaired_progress": true,
+   "used": {
+    "inked_pixels_4096": 2521593,
+    "largest_pixels_4096": 3629,
+    "min_px": 145,
+    "pixels_4096": 87610,
+    "regions": 236
+   },
+   "v002_progress": {
+    "inked_pixels_4096": 2521593,
+    "largest_pixels_4096": 14857,
+    "min_px": 145,
+    "pixels_4096": 503655,
+    "regions": 324
+   }
+  },
+  "readability": {
+   "1080_loading_846": {
+    "alpha_mae": 0.003297979817919964,
+    "edge_sharpness_ratio": 0.9831333836626521,
+    "iou_at_0_5": 0.9986558872140027
+   },
+   "1080_menu_960": {
+    "alpha_mae": 0.002978678740014524,
+    "edge_sharpness_ratio": 0.9825801638267289,
+    "iou_at_0_5": 0.9985772499168774
+   },
+   "mac_menu_1814": {
+    "alpha_mae": 0.001467711087288538,
+    "edge_sharpness_ratio": 0.9770765262244558,
+    "iou_at_0_5": 0.9986233855624315
+   }
+  },
+  "reveal_frames": [
+   3.0000000000005143,
+   45.671335759743464
+  ],
+  "reveal_vs_intro_png": [
+   {
+    "frame": 4,
+    "iou_a011": 0.8461137193531559,
+    "iou_a050": 0.8493813878429263,
+    "ours_px_a011": 3783,
+    "ours_px_a050": 3581,
+    "truth_px": 3295
+   },
+   {
+    "frame": 6,
+    "iou_a011": 0.9491258240183433,
+    "iou_a050": 0.9395700174317257,
+    "ours_px_a011": 13475,
+    "ours_px_a050": 12977,
+    "truth_px": 13727
+   },
+   {
+    "frame": 8,
+    "iou_a011": 0.9708407671721677,
+    "iou_a050": 0.9518568687210747,
+    "ours_px_a011": 17743,
+    "ours_px_a050": 16977,
+    "truth_px": 17606
+   },
+   {
+    "frame": 12,
+    "iou_a011": 0.9718495864321958,
+    "iou_a050": 0.9535244543178533,
+    "ours_px_a011": 28489,
+    "ours_px_a050": 27151,
+    "truth_px": 28249
+   },
+   {
+    "frame": 16,
+    "iou_a011": 0.971322462431442,
+    "iou_a050": 0.950861056262341,
+    "ours_px_a011": 40233,
+    "ours_px_a050": 38133,
+    "truth_px": 39919
+   },
+   {
+    "frame": 20,
+    "iou_a011": 0.9596406927959265,
+    "iou_a050": 0.941577747378021,
+    "ours_px_a011": 55218,
+    "ours_px_a050": 52368,
+    "truth_px": 54079
+   },
+   {
+    "frame": 24,
+    "iou_a011": 0.9695572590523114,
+    "iou_a050": 0.9518632019366665,
+    "ours_px_a011": 71913,
+    "ours_px_a050": 68289,
+    "truth_px": 71197
+   },
+   {
+    "frame": 28,
+    "iou_a011": 0.9688215455060191,
+    "iou_a050": 0.9492759971465402,
+    "ours_px_a011": 80398,
+    "ours_px_a050": 76200,
+    "truth_px": 79553
+   },
+   {
+    "frame": 32,
+    "iou_a011": 0.9675400412388312,
+    "iou_a050": 0.9499491439226988,
+    "ours_px_a011": 95001,
+    "ours_px_a050": 90110,
+    "truth_px": 93934
+   },
+   {
+    "frame": 36,
+    "iou_a011": 0.9653664205257716,
+    "iou_a050": 0.9474664159304393,
+    "ours_px_a011": 108073,
+    "ours_px_a050": 102475,
+    "truth_px": 106716
+   },
+   {
+    "frame": 40,
+    "iou_a011": 0.9669416233570146,
+    "iou_a050": 0.949044070648964,
+    "ours_px_a011": 124397,
+    "ours_px_a050": 117777,
+    "truth_px": 123119
+   },
+   {
+    "frame": 44,
+    "iou_a011": 0.9680280587843126,
+    "iou_a050": 0.9508928571428571,
+    "ours_px_a011": 136348,
+    "ours_px_a050": 129153,
+    "truth_px": 135232
+   },
+   {
+    "frame": 46,
+    "iou_a011": 0.9680885728560981,
+    "iou_a050": 0.9510110470347045,
+    "ours_px_a011": 136453,
+    "ours_px_a050": 129219,
+    "truth_px": 135342
+   }
+  ],
+  "seal_backing": {
+   "filled_fraction": 0.6953684488932291,
+   "inside_ring_filled": true
+  },
+  "timemap": {
+   "alpha_mismatch_texels": 0,
+   "border_all_255": true,
+   "first_ink_frame": 3.0000000000005143,
+   "ink_neighbours_le_254": true,
+   "ink_texels_le_254": true,
+   "last_ink_frame": 45.671335759743464,
+   "max_inked": 246,
+   "min": 0,
+   "never_fraction": 0.2945016225179036,
+   "never_texels_255": 463211,
+   "size": [
+    2048,
+    768
+   ]
+  }
+ },
+ "inputs": {
+  "ash_atlas": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/03-higgsfield/v003/loading_ring_ash_atlas.png",
+   "sha256": "6e5a2be1e28788220323d705aca833790e5fad4d25bde23e6f3e6f70cff38075"
+  },
+  "emblem_4096": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/emblem/dark_safe/emblem_dark_safe_4096.png",
+   "sha256": "fd5f0223e126f40b8591d4d64e8439e0117ee4cf7b3926d2e06d4048116d5082"
+  },
+  "master_4096": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/wordmark_stacked/full/wordmark_stacked_full_4096.png",
+   "sha256": "23530e8945af933ec100c2109cf84e7f8ac63fe00bbdda33c9122090bc78c2e6"
+  },
+  "motion_spec": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v003/LoadingLogo/motion-spec.json",
+   "sha256": "10b563de9a4d361f97d5fc88573142f133bc686abc9a84d79d106234814e0a48"
+  },
+  "owner": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_owner_ids.png",
+   "sha256": "82ae2753e3a37d552a617fc8d3e588752a83cab3bd2d3fa9fec278701604fa3d"
+  },
+  "owner_960": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_owner_ids_960x360.png",
+   "sha256": "935566ca81e872c950bd27b223eae2b3c6c371fbd6c12df7225aef4ccb235b87"
+  },
+  "progress": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_progress_u16.png",
+   "sha256": "cb442732ce1f23db9655fb3814c3fa3a77573791bacc1cac51c3c1394e579d64"
+  },
+  "progress_repaired_960": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/04-tools/v004/a1_stroke_progress_repaired_u16_960x360.png",
+   "sha256": "21b63e88a917a8a8dafb4e365391c3adea7ec6c6ccd6305b7902e445b9ab8161"
+  },
+  "seal_body": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_body_black.png",
+   "sha256": "85ccd4b74e3925ce4fea8696baca07cbb16c526822505dc6c65a9800a15cc305"
+  },
+  "seal_glow": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_glow_fx.png",
+   "sha256": "1dc3f7fa05f5085c23a2ed4ace82222d84fab0ce0b0ab78910d56a22641ea444"
+  },
+  "seal_ink_leak": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_ink_leak_fx.png",
+   "sha256": "1c4d2d148e603405ceaecef4dd5ded67a930e17b06a9604e13b1c5f98c195773"
+  },
+  "seal_ring": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_red_broken_ring.png",
+   "sha256": "8c1fb974aa054f8c2250e9418dfb104ce6a718392c535bd3807f3c9703260822"
+  },
+  "stroke_masks": [
+   {
+    "mask": "stroke_01_d_stem.png",
+    "owned": 77671,
+    "sha256": "d17b86913cf28a1babed167a448ba1df9207a66544684975ce8b0bf7f4ef905c"
+   },
+   {
+    "mask": "stroke_02_d_bowl.png",
+    "owned": 148140,
+    "sha256": "8ee8277e4d2f78ee8fc2ee72b40690f720ced685801d75fa4b63b55e9578006c"
+   },
+   {
+    "mask": "stroke_03_e_stem.png",
+    "owned": 76419,
+    "sha256": "59efb869f641b7f99f03fbc88b09ed81ad21448f2586d9af76eb5aee41bab931"
+   },
+   {
+    "mask": "stroke_04_e_top_bar.png",
+    "owned": 30438,
+    "sha256": "4f563586aa13162cdba55a6286938d41ff2205a2a43e07c36fff5c5d8ea7500e"
+   },
+   {
+    "mask": "stroke_05_e_middle_bar.png",
+    "owned": 14340,
+    "sha256": "782176f0bd593d987616c1de7eb580ae4d4009b20f68c6a6c047fbb59d5effda"
+   },
+   {
+    "mask": "stroke_06_e_bottom_bar.png",
+    "owned": 33248,
+    "sha256": "721ac8447551f9dd9aa0240827b7deffd3286b64a741acde8c1e6a769230f561"
+   },
+   {
+    "mask": "stroke_07_a_left_diagonal.png",
+    "owned": 87586,
+    "sha256": "ddc8ba2ca0b763703d0a023f57dd1469893535047b1b28aa45e94f55ff0a8f75"
+   },
+   {
+    "mask": "stroke_08_a_right_diagonal.png",
+    "owned": 64115,
+    "sha256": "26076a5927412850dba7747773271d2c506d6f68c51988b1f24bff7648c60ccc"
+   },
+   {
+    "mask": "stroke_09_a_crossbar.png",
+    "owned": 12677,
+    "sha256": "c1d667906494418eb75bea83d499eba274a52d4c9b03bb411b8c2cf3d6a2c69d"
+   },
+   {
+    "mask": "stroke_10_t_top_bar.png",
+    "owned": 78200,
+    "sha256": "67bbdecfd24202ea937d511b713984e20362f72dcfa4e19d64d60e1ac6691961"
+   },
+   {
+    "mask": "stroke_11_t_stem.png",
+    "owned": 66997,
+    "sha256": "28d2934b136b95ba7727e9032b1e276852de540bb9aa8e2c880d7292de072c74"
+   },
+   {
+    "mask": "stroke_12_h_left_stem.png",
+    "owned": 78806,
+    "sha256": "d41232416e78bffd63ef18ffcef7a27ad9e84563a954ba646838745bd14e6081"
+   },
+   {
+    "mask": "stroke_13_h_right_stem.png",
+    "owned": 93525,
+    "sha256": "420f5e57d840600e88a4415a520e29a5721290477a0401c1018440cb91bc8220"
+   },
+   {
+    "mask": "stroke_14_h_crossbar.png",
+    "owned": 13109,
+    "sha256": "ac180abe847217d399ad124e4ee2e1a2ad7935e65c8247011b1ed25d84197c62"
+   },
+   {
+    "mask": "stroke_15_s_serpentine.png",
+    "owned": 147996,
+    "sha256": "7ccdd49c6a9af05a72b983202398409617860d4dc9869986c600af8bbda261ad"
+   },
+   {
+    "mask": "stroke_16_d_stem.png",
+    "owned": 70993,
+    "sha256": "06fad5b20fe1acdc426eabdb197f1060d533b4a829446d9ec9993ad647ed870f"
+   },
+   {
+    "mask": "stroke_17_d_bowl.png",
+    "owned": 164806,
+    "sha256": "8b3690abe308b8244a855985fbc508d3b3ef7053dbdd04ac31fc2f1c29893b1c"
+   },
+   {
+    "mask": "stroke_18_e_stem.png",
+    "owned": 76138,
+    "sha256": "cc000b4e62eb766086cb01c18ce97c6172ec4bcd5729e1089c8a242b74240196"
+   },
+   {
+    "mask": "stroke_19_e_top_bar.png",
+    "owned": 30115,
+    "sha256": "3d469843dad01535a262f42ddd0f9eefbd5c2cf9077e7ac7437c8a37be608c46"
+   },
+   {
+    "mask": "stroke_20_e_middle_bar.png",
+    "owned": 15728,
+    "sha256": "fcf3739d2d52cb678e4d53c0c3d0ba1f48edfb18b516aa02a8e233395dd28a90"
+   },
+   {
+    "mask": "stroke_21_e_bottom_bar.png",
+    "owned": 33382,
+    "sha256": "602dd961e4da76ca7667cc9950ae5bed3c81e8dd56fb50912c136d1c7d34e7a7"
+   },
+   {
+    "mask": "stroke_22_m_left_stem.png",
+    "owned": 76748,
+    "sha256": "2267467b72598d72b59b346dda519e2bd7bd1e4d8caad04c30609f8d6b3090ce"
+   },
+   {
+    "mask": "stroke_23_m_inner_down.png",
+    "owned": 34000,
+    "sha256": "7858a5fc410182fb8794e875fc59f9fda91a6a182dbf08c872f9813dce23b7b7"
+   },
+   {
+    "mask": "stroke_24_m_inner_up.png",
+    "owned": 45424,
+    "sha256": "0040b6c88a7153eee62e0b8b0d6a6b6c26911fa9a2c1b79b0175afbbb7ad774e"
+   },
+   {
+    "mask": "stroke_25_m_right_stem.png",
+    "owned": 56410,
+    "sha256": "0f21f09470678513c752b1efa5de161f193b9335cfdbff0ec2cab77375403f0c"
+   },
+   {
+    "mask": "stroke_26_o_bowl_loop.png",
+    "owned": 147578,
+    "sha256": "08d2649bbb51917d641f185ed45241a10e9f59887be095e7d581fe024fbd44c2"
+   },
+   {
+    "mask": "stroke_27_l_stem.png",
+    "owned": 81558,
+    "sha256": "8c542a3e89588244157b3163472a4e0beffcecc0b02a53828e73184198c14ab1"
+   },
+   {
+    "mask": "stroke_28_l_foot.png",
+    "owned": 40917,
+    "sha256": "378ff5a0db385985cf2fb357762dfd74a32921bc740ee1e437f5b8548fc82230"
+   },
+   {
+    "mask": "stroke_29_i_stem.png",
+    "owned": 81314,
+    "sha256": "e9cc487661db6d567f3da1a1abfb47c3a9243b4586d0c2a011ce2a7005f0a3f8"
+   },
+   {
+    "mask": "stroke_30_t_top_bar.png",
+    "owned": 61114,
+    "sha256": "ba3906f7e7d9dafc95b9628b2b6b60ebb43049b9f29beef8ad8f81c280527b93"
+   },
+   {
+    "mask": "stroke_31_t_stem.png",
+    "owned": 60346,
+    "sha256": "ff16e23ee53f3091ea579154e71ee60074fc595c05596c1e022b3bb70c420632"
+   },
+   {
+    "mask": "stroke_32_i_stem.png",
+    "owned": 72666,
+    "sha256": "925ebcaf0c86ecd8409d2ce0a5b8f25ad7da92ad54164733bf99668ff774bcd9"
+   },
+   {
+    "mask": "stroke_33_o_bowl_loop.png",
+    "owned": 147959,
+    "sha256": "a8c5052934a2c460052b8947d11cc095ef02f7d5bc38b70fd034414519b6a38c"
+   },
+   {
+    "mask": "stroke_34_n_left_stem.png",
+    "owned": 81791,
+    "sha256": "d2847475e52c4f606ee2f1be316576cf0debed3039107675f5d0facc61d94263"
+   },
+   {
+    "mask": "stroke_35_n_diagonal.png",
+    "owned": 57415,
+    "sha256": "17712eeb5e5e437ada1c1e00e30f9413078846be21e4bb5e95752261aa117529"
+   },
+   {
+    "mask": "stroke_36_n_right_stem.png",
+    "owned": 61924,
+    "sha256": "c8764403757c568df5768ad136c52fae2f9f16af0adc98139160e1d3391371de"
+   }
+  ],
+  "sync_points": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v003/LoadingLogo/sync-points.json",
+   "sha256": "894b6725e385e8fde7dc229229989d3674beb98a67bb22e18ddfb40916e263b8"
+  },
+  "timeline": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke-timeline.json",
+   "sha256": "1d52cb193c9ccc2a82d8ed31a6b722c967c7ac2d081e60554cf37978454953eb"
+  },
+  "wordmark_8192": {
+   "path": "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-035/exports/v004/Logo/wordmark_stacked/full/wordmark_stacked_full_8192.png",
+   "sha256": "ec912a6dec2c6b9af2636664a5b99ec31f3e63a419de4ae9b9cb7987e21b2ff1"
+  }
+ },
+ "motion": {
+  "ash_loop_drift_y": -65,
+  "ash_sprites": 10,
+  "camera_shake_frame_dx_dy": [
+   [
+    48,
+    2.0,
+    -1.0
+   ],
+   [
+    49,
+    -1.0,
+    1.0
+   ],
+   [
+    50,
+    1.0,
+    0.0
+   ]
+  ],
+  "canonical_hold": [
+   55,
+   67
+  ],
+  "composition_spec_px": {
+   "canvas": [
+    1920,
+    1080
+   ],
+   "seal_layer": [
+    675,
+    78,
+    570,
+    570
+   ],
+   "wordmark_rect": [
+    480,
+    638,
+    960,
+    360
+   ]
+  },
+  "fps": 24,
+  "frame_base": 1,
+  "front_softness": 0.012,
+  "ink_alpha": "0.35*sin(pi*(frame-47)/7)^0.7",
+  "ink_frames": [
+   47,
+   54
+  ],
+  "ink_scale": "0.58+0.52*smoothstep((frame-47)/7)",
+  "intro_frames": 67,
+  "last_stroke_end_frame": 45.6713571836934,
+  "loop_frames": 96,
+  "loop_glow_peak_alpha": 0.28,
+  "ring_alpha": "0.72*sin(pi*t)",
+  "ring_frames": [
+   47,
+   54
+  ],
+  "ring_loop_breath_alpha_peak": 0.045,
+  "ring_size_end": [
+   625,
+   653
+  ],
+  "ring_size_start": [
+   510,
+   533
+  ],
+  "seal_drop_end_frame": 47,
+  "seal_first_frame": 39,
+  "seal_rest_bottom_y": 648.0,
+  "seal_samples_frame_y_sx_sy_glow": [
+   [
+    39,
+    -610.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    40,
+    -602.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    41,
+    -577.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    42,
+    -534.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    43,
+    -470.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    44,
+    -384.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    45,
+    -270.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    46,
+    -122.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    47,
+    78.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    48,
+    124.0,
+    1.04,
+    0.92,
+    0.65
+   ],
+   [
+    49,
+    101.0,
+    1.025,
+    0.96,
+    0.4
+   ],
+   [
+    50,
+    64.0,
+    0.985,
+    1.025,
+    0.2
+   ],
+   [
+    51,
+    69.0,
+    0.99,
+    1.015,
+    0.08
+   ],
+   [
+    52,
+    81.0,
+    1.006,
+    0.994,
+    0.0
+   ],
+   [
+    53,
+    80.0,
+    1.003,
+    0.997,
+    0.0
+   ],
+   [
+    54,
+    78.0,
+    1.0,
+    1.0,
+    0.0
+   ]
+  ],
+  "sparks": 5,
+  "window": [
+   3,
+   47
+  ]
+ },
+ "outputs": {
+  "backing": {
+   "bytes": 6352,
+   "file": "ap035_logo_seal_backing_256.png",
+   "mode": "RGBA",
+   "sha256": "4b840eed25e1ac3abdbee0d2e064c186d13ac6d9f78fd548b5bd45569bdcc87f",
+   "size": [
+    256,
+    256
+   ]
+  },
+  "blot": {
+   "bytes": 19440,
+   "file": "ap035_logo_seal_blot.png",
+   "mode": "RGBA",
+   "sha256": "09c9db2946161d3b315d485149ee29656413018dbd3494585fb435e2175cd41e",
+   "size": [
+    384,
+    384
+   ]
+  },
+  "glow": {
+   "bytes": 42535,
+   "file": "ap035_logo_seal_glow.png",
+   "mode": "RGBA",
+   "sha256": "1210d3a658a7b4232323171a372ffe8a319f8dff17eeee3880aa9f45e2fa72e9",
+   "size": [
+    384,
+    384
+   ]
+  },
+  "halo": {
+   "bytes": 63410,
+   "file": "ap035_logo_wordmark_halo_1024x384.png",
+   "mode": "RGBA",
+   "sha256": "90613eb2ff343f9e5fe525542a77d79c767d071f4ecab2074a7af5a00af2e4fc",
+   "size": [
+    1024,
+    384
+   ]
+  },
+  "ring": {
+   "bytes": 266972,
+   "file": "ap035_logo_impact_ring.png",
+   "mode": "RGBA",
+   "sha256": "7dc19f67cddc3d56470df4b84b6e6efe3899ce2c39d210074a5d942261d87de5",
+   "size": [
+    492,
+    512
+   ]
+  },
+  "seal": {
+   "bytes": 425571,
+   "file": "ap035_logo_seal_768.png",
+   "mode": "RGBA",
+   "sha256": "fb224cb6b85b79eef3d9784cd14197b27591d5a8bccd0670ad3110fbb7f9dd13",
+   "size": [
+    768,
+    768
+   ]
+  },
+  "timemap": {
+   "bytes": 69079,
+   "file": "ap035_logo_wordmark_timemap_2048x768.png",
+   "mode": "LA",
+   "sha256": "2c90fc1586061b17641230add79f57f4068243f7169ca6374c1d582935e71b06",
+   "size": [
+    2048,
+    768
+   ]
+  },
+  "total_bytes": 2041495,
+  "wordmark": {
+   "bytes": 1148136,
+   "file": "ap035_logo_wordmark_2048x768.png",
+   "mode": "RGBA",
+   "sha256": "50ff69fb8a1a1579b586d3b2ede14320d2e7c049093d2a99f5b2e7d1132e91e0",
+   "size": [
+    2048,
+    768
+   ]
+  }
+ },
+ "parameters": {
+  "dilate_texels": 32,
+  "encode": "floor((T - 3) / 44 * 254), 255 never; shader vis = saturate(p * 255 - code)",
+  "factor": 2,
+  "front_softness_spec": 0.012,
+  "fx_pad": "transparent to a multiple of 4 per edge",
+  "fx_tex": 384,
+  "halo_full_zero_texels_2048": [
+   6.0,
+   28.0
+  ],
+  "halo_size": [
+   1024,
+   384
+  ],
+  "out": [
+   2048,
+   768
+  ],
+  "repaired_progress_960": true,
+  "resample": "premultiplied LANCZOS, RGB bled 8 (wordmark 16) texels into alpha 0",
+  "ring_box": [
+   0,
+   0,
+   720,
+   752
+  ],
+  "ring_tex": 512,
+  "seal_backing_full_zero_texels_768": [
+   2.0,
+   12.0
+  ],
+  "seal_backing_size": [
+   256,
+   256
+  ],
+  "seal_crop_pad": 1.04,
+  "seal_tex": 768,
+  "src": [
+   4096,
+   1536
+  ],
+  "v003_shift_x_4096": 3,
+  "window_frames": [
+   3.0,
+   47.0
+  ],
+  "window_seconds": [
+   0.08333333333333333,
+   1.9166666666666667
+  ]
+ },
+ "placement": {
+  "blot": {
+   "art_size": [
+    382,
+    384
+   ],
+   "centre_offset_spec_px": [
+    -44.349277845171784,
+    5.993145654752944
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "size_spec_px": [
+    574.4383043491785,
+    574.4383043491785
+   ],
+   "source_box": [
+    947,
+    112,
+    2854,
+    2028
+   ],
+   "sprite_size": [
+    384,
+    384
+   ]
+  },
+  "glow": {
+   "art_size": [
+    381,
+    384
+   ],
+   "centre_offset_spec_px": [
+    -1.3492442743738415,
+    0.0
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    2,
+    0
+   ],
+   "size_spec_px": [
+    574.7379492784808,
+    574.7379492784808
+   ],
+   "source_box": [
+    1090,
+    132,
+    2993,
+    2048
+   ],
+   "sprite_size": [
+    384,
+    384
+   ]
+  },
+  "layers_seal_ink_box": [
+   1301,
+   318,
+   2796,
+   1862
+  ],
+  "layers_to_spec_px": 0.2996572827376472,
+  "ring": {
+   "art_size": [
+    490,
+    512
+   ],
+   "centre_offset_art": [
+    0.0,
+    0.0
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "size_end_spec_px": [
+    625,
+    653
+   ],
+   "size_start_spec_px": [
+    510,
+    533
+   ],
+   "source_box": [
+    0,
+    0,
+    720,
+    752
+   ],
+   "sprite_per_art": [
+    1.0040816326530613,
+    1.0
+   ],
+   "sprite_size": [
+    492,
+    512
+   ]
+  },
+  "seal": {
+   "crop_box": [
+    318,
+    318,
+    3778,
+    3778
+   ],
+   "emblem_ink_box": [
+    439,
+    385,
+    3657,
+    3711
+   ],
+   "ink_height_spec_px": 462.8466796875,
+   "ink_width_spec_px": 447.8173828125,
+   "layer_bottom_below_centre_spec_px": 285.0,
+   "sprite_centre_offset_spec_px": [
+    0.0,
+    -0.0
+   ],
+   "sprite_spec_px": 481.494140625
+  }
+ }
+}

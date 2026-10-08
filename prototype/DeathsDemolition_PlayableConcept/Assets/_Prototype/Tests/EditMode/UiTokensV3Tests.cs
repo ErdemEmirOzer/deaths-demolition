@@ -258,10 +258,11 @@ namespace DD.Prototype.Tests.EditMode
             // PauseScreen: the END RUN dialog frame - reviewed in slice 9 (modal v3).
             // UiFxCaptureAgent (slice 4): capture-only ink bleed / hanko stamp samples.
             // UiCurtain (10b-2): the boot logo seal - the one vermilion at boot, ink before loading (§15.3).
+            // WP-094: the round seal in RunHudScreen.Ink.cs is the HUD round's one vermilion accent.
             // WP-098A: the brush kit's C8 core (UiBrushMark, the only vermilion of a brush window) and its declaration.
-            // WP-094 (S-09 decision (a), C-00 07.10; the user's note 3: "kırmızı mühür aksanı"): RunHudScreen.Ink.cs - the
-            // HUD round's one seal accent (AP-032 tints its seal cell #C4362B; UiOrnamentCensusTests names it).
-            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs", "UiBrushMark.cs", "UiKitContrast.cs", "RunHudScreen.Ink.cs" } },
+            // WP-098A (HAREKET-MENU M10, C-00 08.10): the hero splash - the vermilion ink of the screen's one primary (PLAY) on its
+            // confirm, a gated large flash (UiInkFeedback.cs, UiInkSplashLayer).
+            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs", "UiBrushMark.cs", "UiKitContrast.cs", "UiInkFeedback.cs", "RunHudScreen.Ink.cs" } },
             // M4-R1 N19: the glyph identity tints are named in one place; every consumer asks UiGlyphTints.
             { "GlyphIwa", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
             { "GlyphNami", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },

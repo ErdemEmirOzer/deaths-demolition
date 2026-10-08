@@ -240,6 +240,13 @@ namespace DD.Prototype.UI
             return Play(rect, UiChannel.Position, new Vector4(from.x, from.y, 0f, 0f), new Vector4(to.x, to.y, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
         }
 
+        /// <summary>WP-098A: a CanvasGroup fade from an explicit value (a delayed envelope - the ink wave / splash - holds its rest until it starts).</summary>
+        internal static UiTweenHandle AlphaSeconds(CanvasGroup group, float from, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (group == null) return default(UiTweenHandle);
+            return Play(group, UiChannel.Alpha, new Vector4(from, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
+        }
+
         internal static UiTweenHandle FillSeconds(Image image, float from, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
         {
             if (image == null) return default(UiTweenHandle);
@@ -385,6 +392,7 @@ namespace DD.Prototype.UI
         /// <summary>Advance every tween and timeline. The driver calls this once per frame from LateUpdate; EditMode tests call it with <see cref="TestNow"/> set.</summary>
         public static void Tick()
         {
+            UiIconMotion.Tick(Now(UiClock.Unscaled));   // WP-098A (DEC-114): the icon tracks and the idle arbiter ride the same tick (T6)
             if (s_active == 0 && s_timelinesActive == 0) return;
 
             for (int i = 0; i < Capacity; i++)
@@ -814,6 +822,7 @@ namespace DD.Prototype.UI
             s_timelinesActive = 0;
             s_flashHead = 0;
             EnsureFreeList();
+            UiIconMotion.ResetForTests();   // WP-098A: the icon tracks ride this core - one seam drops both
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

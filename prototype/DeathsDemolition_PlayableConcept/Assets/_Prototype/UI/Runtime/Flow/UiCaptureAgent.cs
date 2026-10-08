@@ -115,7 +115,7 @@ namespace DD.Prototype.UI
             ApplyCaptureSettings();
             // WP-081: a still frame needs a still world - the menu's cinematic held at S01's start (or -ddMenuWorldTime s);
             // the cinematic modes drive the clock themselves.
-            if (!screen.ToLowerInvariant().StartsWith("cinematic", StringComparison.Ordinal))
+            if (!screen.ToLowerInvariant().StartsWith("cinematic", StringComparison.Ordinal) && screen.ToLowerInvariant() != UiMenuDemoAgent.Mode)
             {
                 float worldTime;
                 MenuCinematic.TimeOverride = float.TryParse(Arg("-ddMenuWorldTime"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out worldTime) ? worldTime : 0f;
@@ -125,6 +125,14 @@ namespace DD.Prototype.UI
             if (screen.ToLowerInvariant() == "hud")
             {
                 carrier.AddComponent<HudObserver>().Configure(Arg(OutFlag), Arg(RoundsFlag), Arg(DelayFlag), Arg(BotFlag) != null);
+                return;
+            }
+
+            // WP-098A (HAREKET-MENU §8): the 30 s menu v5 demo - the script and its real-time frames (UiMenuDemoAgent).
+            if (screen.ToLowerInvariant() == UiMenuDemoAgent.Mode)
+            {
+                MenuCinematic.TimeOverride = null;   // the live loop: the freeze and the cuts as a player sees them
+                carrier.AddComponent<UiMenuDemoAgent>().Configure(Arg(OutFlag), Arg("-ddUiCaptureFlip"));
                 return;
             }
 
@@ -852,6 +860,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "menuintro")
+                {
+                    yield return MenuIntroFrames();
+                    yield break;
+                }
+
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.MainMenu, 20f);
                 yield return new WaitForSecondsRealtime(1f);
 
@@ -1393,8 +1407,18 @@ namespace DD.Prototype.UI
                 Debug.Log("[UiCapture] loading-run-t0 keyArtScale=" + curtain.KeyArtScale.ToString("F4") + " t=" + (Time.realtimeSinceStartup - groupAt).ToString("F2"));
                 yield return new WaitForSecondsRealtime(0.25f);
                 yield return Frame(folder, "loading-run");
+                // AP-035 R3 (S3-32): the logo's intro over the key art - wordmark inking, the seal falling, the impact, the
+                // canonical frame (x 1.33: impact 1.44 s, canonical 1.69 s), later the loop; the pose each frame shows is logged.
+                foreach (float at in LogoIntroShots)
+                {
+                    yield return WaitFor(() => Time.realtimeSinceStartup - groupAt >= at, 10f);
+                    yield return LogoFrame(folder, "loading-logo-t" + Mathf.RoundToInt(at * 100f).ToString("000"), curtain.Logo);
+                }
+
                 yield return WaitFor(() => curtain.WetFill >= 0.45f, 10f);
                 yield return Frame(folder, "loading-run-05");
+                yield return WaitFor(() => Time.realtimeSinceStartup - groupAt >= 3f, 10f);
+                yield return LogoFrame(folder, "loading-logo-loop", curtain.Logo);
                 yield return WaitFor(() => Time.realtimeSinceStartup - groupAt >= 4f, 10f);
                 yield return Frame(folder, "loading-run-t4");
                 Debug.Log("[UiCapture] loading-run-t4 keyArtScale=" + curtain.KeyArtScale.ToString("F4") + " t=" + (Time.realtimeSinceStartup - groupAt).ToString("F2")
@@ -1403,6 +1427,11 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.1f);
                 yield return Frame(folder, "loading-run-entering");
                 PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+                // AP-035 R3: the outro over the parting doors (hold, the wordmark wiped, the seal under ink).
+                yield return WaitFor(() => curtain.LogoPhase == UiLogoPhase.Outro || curtain.LogoPhase == UiLogoPhase.FadeOut, 30f);
+                float outroAt = Time.realtimeSinceStartup;
+                yield return WaitFor(() => Time.realtimeSinceStartup - outroAt >= 0.40f, 2f);
+                yield return LogoFrame(folder, "loading-logo-outro", curtain.Logo);
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
                 yield return new WaitForSecondsRealtime(1f);
@@ -3406,6 +3435,55 @@ namespace DD.Prototype.UI
             {
                 yield return new WaitForEndOfFrame();
                 WritePng(Path.Combine(folder, name + ".png"));
+            }
+
+            /// <summary>AP-035 R3: the loading logo's intro shots, seconds after the loading group shows.</summary>
+            private static readonly float[] LogoIntroShots = { 0.5f, 1.0f, 1.2f, 1.44f, 1.75f };
+
+            /// <summary>A frame with the logo's state at the capture (phase, spec time, alpha) in the log.</summary>
+            private static IEnumerator LogoFrame(string folder, string name, UiLogoAnimator logo)
+            {
+                yield return new WaitForEndOfFrame();
+                if (logo != null)
+                {
+                    float now = UiFxGlobals.Now;
+                    Debug.Log("[UiCapture] " + name + " logo phase=" + logo.Phase + " spec=" + logo.Timeline.SpecTime(now).ToString("F3")
+                              + " frame=" + UiLogoTimeline.Frame(logo.Timeline.SpecTime(now)).ToString("F1") + " alpha=" + logo.Alpha.ToString("F2"));
+                }
+
+                WritePng(Path.Combine(folder, name + ".png"));
+            }
+
+            /// <summary>
+            /// AP-035 R3 (K7): <c>-ddUiCapture menuintro</c> - the main menu's logo intro after the boot (once per session):
+            /// shots at 0.5 / 1.0 / 1.44 (impact) / 1.75 / 1.9 s of the intro, then the menu with its title after it.
+            /// </summary>
+            private IEnumerator MenuIntroFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                yield return WaitFor(() => UiLogoMenuIntro.Current != null && UiLogoMenuIntro.Current.Running, 40f);
+                UiLogoMenuIntro intro = UiLogoMenuIntro.Current;
+                if (intro == null)
+                {
+                    Debug.Log("[UiCapture] menuintro: no intro ran (batch / reduced motion / FastTransitions?)");
+                    Application.Quit();
+                    yield break;
+                }
+
+                float t0 = intro.Logo.Timeline.IntroStart;
+                foreach (float at in new[] { 0.5f, 1.0f, 1.44f, 1.75f, 1.9f })
+                {
+                    yield return WaitFor(() => UiFxGlobals.Now - t0 >= at, 5f);
+                    yield return LogoFrame(folder, "menu-intro-t" + Mathf.RoundToInt(at * 100f).ToString("000"), intro.Logo);
+                    Debug.Log("[UiCapture] menu-intro-t" + Mathf.RoundToInt(at * 100f).ToString("000") + " title=" + intro.TitleAlpha.ToString("F2"));
+                }
+
+                yield return WaitFor(() => UiLogoMenuIntro.Current == null, 5f);
+                yield return new WaitForSecondsRealtime(0.8f);
+                yield return Frame(folder, "menu-intro-after");
+                Debug.Log("[UiCapture] menuintro done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
             }
 
             /// <summary>

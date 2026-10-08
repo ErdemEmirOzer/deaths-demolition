@@ -4225,6 +4225,69 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Menu.CycleLeft
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f8b67af5af669a70800000000000000
+      internalID: 8833370477796178160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.CycleRight
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da45d2df797f88520800000000000000
+      internalID: 2704683808395711661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Display
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ad56028a91cf9ae0800000000000000
+      internalID: -1540299678186840665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -4288,6 +4351,9 @@ TextureImporter:
       Menu.Back: -5724424276071283644
       Menu.Confirm: 1221050695471490317
       Menu.Controls: -7791906619513945541
+      Menu.CycleLeft: 8833370477796178160
+      Menu.CycleRight: 2704683808395711661
+      Menu.Display: -1540299678186840665
       Menu.EndRun: 967201107043964545
       Menu.Gamepad: -5672638532897503310
       Menu.Graphics: -7285087910145960454

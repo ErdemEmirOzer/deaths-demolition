@@ -9,7 +9,9 @@ namespace DD.Prototype.UI
     /// and hover wash exist (the state code keeps one shape) but stay disabled - no overdraw. What the state matrix becomes:
     ///   rest / hover   the word (MenuBody) and glyph in TextPrimary - TextSecondary for a choice row's other items;
     ///   focused        the cream brackets (<see cref="UiFocusBrackets"/>, opaque on frame 1) - never a ring, never an underline;
-    ///   pressed        <see cref="UiPresets.PressDepth"/> 0.98 (pointer: while held; Submit: 80 ms, then the release);
+    ///   pressed        <see cref="UiPresets.PressDepth"/> 0.98 (pointer: while held; Submit: <see cref="PressPulse"/>, 80 ms, then the release);
+    ///   lifted         WP-098A (HAREKET-MENU M8): the word and glyph rise 2 px (<see cref="UiPresets.HoverLift"/>) and the ink wave
+    ///                  ripples behind (<see cref="UiInkWave"/>) - neither under Reduced Motion;
     ///   disabled       TextSecondary word and glyph + a 1 px hairline in the line tone under them ("DisabledRule", built the
     ///                  first time the control is disabled); the reason belongs in the tooltip.
     ///
@@ -98,19 +100,6 @@ namespace DD.Prototype.UI
             {
                 _brushGlyph.color = _labelTarget;   // one rebuild per state change, never per frame
             }
-        }
-
-        /// <summary>Submit on keyboard / pad: the 80 ms depth, then the release (Decor; nothing under Reduced Motion).</summary>
-        private void BrushSubmitDepth()
-        {
-            if (UiMotion.ReducedMotion)
-            {
-                return;
-            }
-
-            var rect = (RectTransform)transform;
-            rect.localScale = new Vector3(UiPresets.PressScale, UiPresets.PressScale, 1f);
-            UiMotion.Scale(rect, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor, UiMotionTokens.Seconds(UiDuration.Instant));
         }
     }
 }

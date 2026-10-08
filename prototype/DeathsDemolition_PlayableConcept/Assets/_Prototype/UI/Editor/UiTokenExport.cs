@@ -26,7 +26,7 @@ namespace DD.Prototype.UI.EditorTools
             { UiDuration.Instant, UiDuration.Fast, UiDuration.Base, UiDuration.Screen, UiDuration.Emphasis, UiDuration.Reveal };
 
         private static readonly UiEase[] Eases =
-            { UiEase.Settle, UiEase.SettleLong, UiEase.Exit, UiEase.Move, UiEase.Brush };
+            { UiEase.Settle, UiEase.SettleLong, UiEase.Exit, UiEase.Move, UiEase.Brush, UiEase.Sweep };
 
         // ------------------------------------------------------------------ HLSL
 
@@ -69,12 +69,29 @@ namespace DD.Prototype.UI.EditorTools
             sb.Append("#define DD_UI_GLINT_MAX_BRIGHTNESS ").Append(F(UiMaterialSpec.GlintMaxBrightness)).Append('\n');
             sb.Append("#define DD_UI_SHEEN_FIELD_ALPHA_MAX ").Append(F(UiMaterialSpec.SheenFieldAlphaMax)).Append('\n');
             sb.Append("#define DD_UI_WASHI_ALPHA_MAX ").Append(F(UiMaterialSpec.WashiAlphaMax)).Append('\n');
-            // WP-081 ikon v2 B5b: the icon material's AD-owned numbers (D3 glow, D7 lob: sRGB colour, linear-blend alpha in w).
+            // WP-081 ikon v2 B5b: the icon material's AD-owned numbers; WP-098A: AP-034 v002.1 row d, the AD default (glow α at
+            // s = 0 and its ramp, the ink lob: sRGB colour + linear-blend alpha in w, its offset and soft edge, the size ramp, the
+            // ink weights and the darkening ceiling).
             sb.Append("#define DD_UI_ICON_GLOW_ALPHA ").Append(F(UiMaterialSpec.IconGlowAlpha)).Append('\n');
+            sb.Append("#define DD_UI_ICON_GLOW_RAMP ").Append(F(UiMaterialSpec.IconGlowAlphaRamp)).Append('\n');
             sb.Append("#define DD_UI_ICON_GLOW_RADIUS ").Append(F(UiMaterialSpec.IconGlowRadiusAp)).Append('\n');
             Color lob = UiMaterialSpec.IconLobColour;
             sb.Append("#define DD_UI_ICON_LOB float4(").Append(F(lob.r)).Append(", ").Append(F(lob.g)).Append(", ").Append(F(lob.b))
               .Append(", ").Append(F(UiMaterialSpec.IconLobAlpha)).Append(")\n");
+            Vector2 lobOffset = UiMaterialSpec.IconLobOffsetAp;
+            sb.Append("#define DD_UI_ICON_LOB_OFFSET float2(").Append(F(lobOffset.x)).Append(", ").Append(F(lobOffset.y)).Append(")\n");
+            sb.Append("#define DD_UI_ICON_LOB_SOFT ").Append(F(UiMaterialSpec.IconLobSoftAp)).Append('\n');
+            sb.Append("#define DD_UI_ICON_SIZE_RAMP float2(").Append(F(UiMaterialSpec.IconRampStartPx)).Append(", ")
+              .Append(F(UiMaterialSpec.IconRampSpanPx)).Append(")\n");
+            sb.Append("#define DD_UI_ICON_CAVITY ").Append(F(UiMaterialSpec.IconCavity)).Append('\n');
+            sb.Append("#define DD_UI_ICON_GRAIN ").Append(F(UiMaterialSpec.IconGrain)).Append('\n');
+            sb.Append("#define DD_UI_ICON_DRY ").Append(F(UiMaterialSpec.IconDryTail)).Append('\n');
+            sb.Append("#define DD_UI_ICON_BEVEL_SHADOW ").Append(F(UiMaterialSpec.IconBevelShadow)).Append('\n');
+            sb.Append("#define DD_UI_ICON_CEILING float2(").Append(F(UiMaterialSpec.IconCeiling)).Append(", ")
+              .Append(F(UiMaterialSpec.IconCeilingRamp)).Append(")\n");
+            // WP-098A (HAREKET-MENU §3, C-00 08.10): the lifted icon's lob at full lift - offset gain, alpha gain (Elev1 → Elev2).
+            sb.Append("#define DD_UI_ICON_LIFT float2(").Append(F(UiMaterialSpec.IconLiftOffsetGain)).Append(", ")
+              .Append(F(UiMaterialSpec.IconLiftLobGain)).Append(")\n");
             sb.Append("\n#endif // DD_UI_TOKENS_INCLUDED\n");
             return sb.ToString();
         }

@@ -9,7 +9,8 @@ namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
     /// WP-081 ikon v2 B5b · the icon material's reach (C-00 06.10): DD/UI/Fx Icon (8) only on a UiIconButton glyph whose key
-    /// is AP-028-B O1 - the G1 manifest's last merge, replaced + added. Every other G1 key, the raw <see cref="UiArt.IconImage"/>
+    /// is O1 - the G1 manifest's O1 merges (the SVG viewBox family frame [0, 256]: B5a's AP-028-B 50 and, WP-098A, AP-034
+    /// v002.1's I6 three), replaced + added. Every other G1 key, the raw <see cref="UiArt.IconImage"/>
     /// path and the HUD's glyphs keep SdfGlyph (IK-M18). At rest the Icon channels are B5b's static values; a disabled
     /// control turns the light off (the flat token) and back on, and nothing else moves.
     /// </summary>
@@ -64,23 +65,46 @@ namespace DD.Prototype.Tests.EditMode
             public string slice;
             public string[] replaced;
             public string[] added;
+            public float[] familyFrame256;
         }
 
-        /// <summary>The O1 set in code is the manifest's last merge, read from the file (no hand copy can drift from it).</summary>
+        /// <summary>
+        /// The O1 set in code is the manifest's O1 merges - every merge drawn in the SVG viewBox frame [0, 256] - read from the
+        /// file (no hand copy can drift from it): B5a (20 + 30) and WP-098A's AP-034 I6 (Menu.CycleLeft / CycleRight /
+        /// Display) = 53.
+        /// </summary>
         [Test]
-        public void O1Anahtarlari_ManifestinSonBirlesimiyleAyni()
+        public void O1Anahtarlari_ManifestinO1BirlesimleriyleAyni()
         {
             G1Manifest manifest = JsonUtility.FromJson<G1Manifest>(File.ReadAllText(G1ManifestPath));
             Assert.IsNotNull(manifest?.merges, "G1 manifest merges");
             Assert.IsNotEmpty(manifest.merges);
-            G1Merge last = manifest.merges[manifest.merges.Length - 1];
             var expected = new SortedSet<string>(System.StringComparer.Ordinal);
-            expected.UnionWith(last.replaced);
-            expected.UnionWith(last.added);
+            var slices = new List<string>();
+            foreach (G1Merge merge in manifest.merges)
+            {
+                bool o1 = merge.familyFrame256 != null && merge.familyFrame256.Length == 2 && merge.familyFrame256[0] == 0f && merge.familyFrame256[1] == 256f;
+                if (!o1)
+                {
+                    continue;
+                }
+
+                slices.Add(merge.slice);
+                expected.UnionWith(merge.replaced ?? new string[0]);
+                expected.UnionWith(merge.added ?? new string[0]);
+            }
+
+            CollectionAssert.AreEqual(new[] { "WP-081 B5a", "WP-098A AP-034 I6" }, slices, "O1 birleşimleri (aile çerçevesi [0, 256])");
             var actual = new SortedSet<string>(UiArt.O1IconKeys, System.StringComparer.Ordinal);
 
             Assert.AreEqual(UiArt.O1IconKeys.Length, actual.Count, "O1IconKeys tekrar içermez");
-            CollectionAssert.AreEqual(expected, actual, "UiArt.O1IconKeys = merges[-1].replaced + added (" + last.slice + ")");
+            Assert.AreEqual(53, actual.Count, "B5a 50 + AP-034 I6 3");
+            foreach (string key in new[] { "Menu.CycleLeft", "Menu.CycleRight", "Menu.Display" })
+            {
+                Assert.IsTrue(actual.Contains(key), key + ": AP-034 I6 O1 anahtarı");
+            }
+
+            CollectionAssert.AreEqual(expected, actual, "UiArt.O1IconKeys = O1 birleşimlerinin replaced + added'ı (" + string.Join(", ", slices) + ")");
             for (int i = 1; i < UiArt.O1IconKeys.Length; i++)
             {
                 Assert.Less(string.CompareOrdinal(UiArt.O1IconKeys[i - 1], UiArt.O1IconKeys[i]), 0, "ordinal sıra: " + UiArt.O1IconKeys[i]);
@@ -180,7 +204,10 @@ namespace DD.Prototype.Tests.EditMode
             UiIconButton tab = UiIconControls.Tab(_root, "Menu.Profile", "menu.tab.profile", "PROFILE", null);
             Assert.IsNotNull(tab.IconMaterial);
             tab.SetSelected(true);
-            Assert.AreEqual(UiFx.IconRestLight, tab.IconMaterial.IconLight, "seçim malzeme kanalına dokunmaz (B5b)");
+            // WP-098A (DEC-114 / HAREKET-MENU §3, C-00 08.10): B5b left the choice off the material; the selected rest now lights it -
+            // sheen 1 (the band passed, AP-028 selected's last key), glow 0.04 - drawn, lit, opaque as before. The bind frame lands
+            // it at once (no track on screen open).
+            Assert.AreEqual(new Vector3(UiIconPose.Chosen.Sheen, UiIconPose.Chosen.Glow, 0f), tab.IconMaterial.IconLight, "seçili dinlenme: sheen 1, glow 0,04 (§3)");
             Assert.AreEqual(UiFx.IconRestParams, tab.IconMaterial.Parameters);
         }
     }

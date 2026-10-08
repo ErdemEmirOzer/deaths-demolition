@@ -88,32 +88,62 @@ namespace DD.Prototype.UI
         public const float GlintMinIntervalSeconds = 1f;
         public const int GlintMaxPerFrame = 2;
 
-        /// <summary>
-        /// WP-081 ikon v2 B5b · D3 (C-00 06.10): the icon glow at its peak, in this pipeline's linear blend. AP-028-B's
-        /// glow 0.08 is an sRGB-space blend (its previews composite with PIL); the α whose LINEAR composite of the cream
-        /// glyph over the #161D21 measuring ground has the same relative luminance is 0.0170 (per channel 0.0145 /
-        /// 0.0175 / 0.0199). The Icon glow channel keeps AP-028's 0..0.08 scale; the shader maps 0.08 onto this. Hover /
-        /// focus drive it (B5c); at rest it is 0.
-        /// </summary>
-        public const float IconGlowAlpha = 0.017f;
+        // ------------------------------------------------------------------------------------------------------------------
+        // WP-098A (C-00 08.10) · the O1 icon material's AD numbers: AP-034 v002.1 row d, the AD default (AP034-v002-AD §2,
+        // ap034_icons_params.json rows.d, AD ACCEPT, MUST 3/3). They replace B5b's D3 / D7 (glow 0.017, cold lob #293B46
+        // 0.083 at 0.667 AP: "a retires", AD §1-2). Every value is a LINEAR-blend value - AP-034's Twin composites in linear
+        // light, as this pipeline does. s = the size ramp below, on the glyph's physical px. Exported to UiTokens.hlsl.
+        // ------------------------------------------------------------------------------------------------------------------
 
-        /// <summary>
-        /// D3 radius - AD round (AP-028 never defines it; render() draws no glow): provisionally the widest the direction
-        /// allows without growing the quad (§1.2: E = 0 holds up to ~5 G1 px of outer layer), 5 G1 px = 6.15 AP from the edge.
-        /// </summary>
+        /// <summary>The size ramp s = sat((P − <see cref="IconRampStartPx"/>) / <see cref="IconRampSpanPx"/>): 0 at 24 physical px, 1 from 40 (Mac UI 1.2: 24 ref = 45 px).</summary>
+        public const float IconRampStartPx = 24f;
+
+        public const float IconRampSpanPx = 16f;
+
+        /// <summary>Hover / selected glow α at its peak, at s = 0; + <see cref="IconGlowAlphaRamp"/> · s (0.07 at 24 px, 0.12 from 40 px). At rest 0; × FlashScale.</summary>
+        public const float IconGlowAlpha = 0.07f;
+
+        public const float IconGlowAlphaRamp = 0.05f;
+
+        /// <summary>The glow's reach from the edge: 5 G1 px = 6.15 AP, the cell pad's ceiling (direction §1.2: E = 0 up to ~5 G1 px).</summary>
         public const float IconGlowRadiusAp = 5f * 64f / 52f;
 
         /// <summary>
-        /// D7 - AD round: the cold lob's colour, AP-028's #293B46 as given. It is LIGHTER than the #161D21 measuring ground,
-        /// so on a dark ground it lifts instead of shading (C-00 06.10: the AD decides; this line is the change).
+        /// The lob: ink (Sumi900 = SurfaceInset, the kit's carrier language - C7 halo, C8 bed), not AP-028's #293B46, which is
+        /// lighter than the #161D21 ground and lifted instead of shading (AD §1-3; #293B46 stays O1's cold scene token).
         /// </summary>
-        public static readonly Color IconLobColour = new Color32(0x29, 0x3B, 0x46, 0xFF);
+        public static readonly Color IconLobColour = new Color32(0x12, 0x10, 0x0F, 0xFF);
+
+        public const float IconLobAlpha = 0.45f;
+
+        /// <summary>The lob's offset, AP: (1.6, −2.4) - down-right (y up); 1 px / 1.5 px at 40 px.</summary>
+        public static readonly Vector2 IconLobOffsetAp = new Vector2(1.6f, -2.4f);
+
+        /// <summary>The lob's soft edge, ±AP around the shifted glyph's edge (smoothstep(−2.4, 2.4, sd)).</summary>
+        public const float IconLobSoftAp = 2.4f;
+
+        /// <summary>The ink darkening's weights: cavity 0.20 · (0.5 + 0.5 s), grain 0.06 · s, dry tail 0.05 · s, bevel shadow 0.10 · (0.5 + 0.5 s).</summary>
+        public const float IconCavity = 0.2f;
+
+        public const float IconGrain = 0.06f;
+        public const float IconDryTail = 0.05f;
+        public const float IconBevelShadow = 0.1f;
 
         /// <summary>
-        /// D7: the lob's α in the linear blend - AP-028's 0.12 (sRGB blend) of #293B46 over #161D21 matched by relative
-        /// luminance, 0.083 (per channel 0.090 / 0.083 / 0.080; unity-material §2.5 "≈ 0.08-0.09").
+        /// The darkening's ceiling 0.06 + 0.06 · s: the lit glyph never falls under tint × (1 − ceiling) - 0.94 at 24 px, 0.88
+        /// from 40 px (AD §5-2; the B3 ≥ 7:1 guard, AP-034 measured ≥ 10.73:1, body / token ≥ 0.945 / 0.883).
         /// </summary>
-        public const float IconLobAlpha = 0.083f;
+        public const float IconCeiling = 0.06f;
+
+        public const float IconCeilingRamp = 0.06f;
+
+        /// <summary>
+        /// WP-098A (HAREKET-MENU §3 "Kalkış", C-00 08.10) · the lifted icon's lob: Elev1 → Elev2 - the offset × 2 ((2, −3) → (4, −6))
+        /// and the alpha × Elev2 / Elev1 shadow alpha (0.55 / 0.35), at full lift (uv2.w = 1). Exported as DD_UI_ICON_LIFT.
+        /// </summary>
+        public const float IconLiftOffsetGain = 2f;
+
+        public const float IconLiftLobGain = 0.55f / 0.35f;
     }
 
     public static class UiRadius
@@ -316,6 +346,140 @@ namespace DD.Prototype.UI
 
         /// <summary>R2: the round's brush reveal waits this long after the banner starts (= Emphasis) - the banner reads first.</summary>
         public const float SealHandoffDelay = 0.4f;
+
+        // ------------------------------------------------------------------------------------------------------------------
+        // WP-098A (C-00 08.10; DEC-114, ikon v2 B5c; HAREKET-MENU §3 / §7) · the "Icon" duration family. AP-028 v002 motion.json's
+        // own lengths, registered as a family (O1: tokened, not ad hoc) beside the six UiDuration steps; every icon track's
+        // transform part ends inside Emphasis (400), the longer tails are light only. DEC-114 approved: IconNotify, IconIdle,
+        // IconIdleDelay and UiEase.Sweep; the rest are the family's record (HAREKET-MENU §9 S7).
+        // ------------------------------------------------------------------------------------------------------------------
+
+        /// <summary>pressed: 120 ms Sweep, the contact (0.94, +0.5 px24) at <see cref="IconPressContact"/>.</summary>
+        public const float IconPress = 0.12f;
+
+        public const float IconPressContact = 0.05f;
+
+        /// <summary>hover / focus (lifted 0 → 1): 180 ms SettleLong to 1.025, −0.25 px24, sheen 1, glow 0.04.</summary>
+        public const float IconLift = 0.18f;
+
+        /// <summary>disabled: 160 ms Sweep, flat shading at t0.</summary>
+        public const float IconDisable = 0.16f;
+
+        /// <summary>selected (a user's choice): 420 ms SettleLong; the stroke front 0.75 → 1, the transform done at <see cref="IconChooseTransform"/>.</summary>
+        public const float IconChoose = 0.42f;
+
+        public const float IconChooseTransform = 0.26f;
+
+        /// <summary>unlock: 560 ms SettleLong, the glyph swap at <see cref="IconUnlockSwap"/>.</summary>
+        public const float IconUnlock = 0.56f;
+
+        public const float IconUnlockSwap = 0.13f;
+
+        /// <summary>DEC-114 · notify: 600 ms Sweep (the draft's 640 cut where the last 40 ms move sheen ≤ 0.005).</summary>
+        public const float IconNotify = 0.6f;
+
+        /// <summary>DEC-114 · the idle sweep: one 3.6 s sheen pass (≈ 0.28 Hz) on the one focused icon - the single exception to MaxDecorativeSeconds.</summary>
+        public const float IconIdle = 3.6f;
+
+        /// <summary>DEC-114 · the idle sweep starts this long after focus arrives ([PrototypeOnly]: the number comes from play-testing).</summary>
+        public const float IconIdleDelay = 2.4f;
+
+        /// <summary>settle (an exit event): 120 ms Sweep from the pose on screen to the composite rest; the sheen jumps at t0.</summary>
+        public const float IconSettle = 0.12f;
+    }
+
+    /// <summary>
+    /// WP-098A (C-00 08.10; HAREKET-MENU §7, the menu v5 motion language shared with S-04's windows) · the menu's motion numbers
+    /// beyond the duration steps. Every one is the motion lead's; changing one is a direction change, not a tweak.
+    /// </summary>
+    public static class UiMenuMotionTokens
+    {
+        /// <summary>M8 · a kit text control on lift: −2 px, a whole pixel (no scale - the kit's rule).</summary>
+        public const float HoverLiftPx = 2f;
+
+        /// <summary>M7 · a focus held shorter than Instant (80 ms) starts no ink wave (fast travel stays quiet).</summary>
+        public const float HoverDwellGate = 0.08f;
+
+        /// <summary>M7 / M8 · the cream ink wave behind a lifted control: α ≤ 0.06 (under the 0.08 hover wash), Ø 56 → 96 px.</summary>
+        public const float InkWaveAlpha = 0.06f;
+
+        public const float InkWaveFrom = 56f;
+        public const float InkWaveTo = 96f;
+
+        /// <summary>M7 · one wave per control per Emphasis (400 ms) at most; at most three hover traces at once.</summary>
+        public const float InkWaveMinInterval = 0.4f;
+
+        public const int MaxHoverTraces = 3;
+
+        /// <summary>M10 · the click splash: Ø 160 cream α 0.14; on PLAY Ø 240 vermilion α 0.5 (a large flash: through the FlashGate).</summary>
+        public const float SplashAlpha = 0.14f;
+
+        public const float SplashAlphaHero = 0.5f;
+        public const float SplashSize = 160f;
+        public const float SplashSizeHero = 240f;
+
+        /// <summary>M10 · the splash's droplets: six, 160 px/s, 400 px/s² gravity, over Base 220.</summary>
+        public const int SplashDroplets = 6;
+
+        public const float SplashDropletSpeed = 160f;
+        public const float SplashDropletGravity = 400f;
+        public const float SplashDropletSize = 8f;
+
+        /// <summary>M10 · one splash per control per Screen (280 ms) at most; two in the pool.</summary>
+        public const float SplashMinInterval = 0.28f;
+
+        public const int SplashPool = 2;
+
+        /// <summary>M2 · the AP-035 logo's whole intro at most (the boot seal's 1.6 s hold, the one written exception to MaxDecorativeSeconds).</summary>
+        public const float LogoIntroMax = 1.6f;
+
+        /// <summary>M1–M5 · the menu's arrival in total, aligned with the cinematic's 1.2 s opening hold.</summary>
+        public const float MenuIntroMax = 1.2f;
+
+        /// <summary>M2 / M3 / M4 · the intro's beats after the reveal (M1): the title, the rail's stagger, the level readout.</summary>
+        public const float TitleAt = 0.12f;
+
+        public const float TitleRuleLag = 0.08f;
+        public const float RailAt = 0.4f;
+        public const float ProgressAt = 0.6f;
+
+        /// <summary>M5 · PLAY's sub-line follows its word by this much.</summary>
+        public const float SublineLag = 0.06f;
+
+        /// <summary>M14 / M1 · the full-screen brush: the screen × 1.25 at least (the tilt's corners covered), turned −8°.</summary>
+        public const float BrushWipeOverscan = 1.25f;
+
+        public const float BrushWipeTiltDeg = -8f;
+
+        /// <summary>M16 (SHOULD) · the world camera's parallax: ±0.6° yaw, ±0.4° pitch toward the look target.</summary>
+        public const float CameraParallaxDeg = 0.6f;
+
+        public const float CameraParallaxPitchDeg = 0.4f;
+
+        /// <summary>M17 · the ambient motes: 16 ash (4–8 px, α ≤ 0.22, 14–24 px/s), 6 leaves (12–18 px, α ≤ 0.35), x ∈ [0.32 W, W].</summary>
+        public const int AmbientAsh = 16;
+
+        public const int AmbientLeaf = 6;
+        public const float AshSize = 6f;
+        public const float AshAlpha = 0.22f;
+        public const float AshSpeed = 19f;
+        public const float AshPeriod = 14f;
+        public const float LeafSize = 15f;
+        public const float LeafAlpha = 0.35f;
+        public const float LeafSpeed = 24f;
+        public const float LeafPeriod = 11f;
+        public const float AmbientRegionStart = 0.32f;
+
+        /// <summary>M12 · a second pane change within this window skips the row stagger (fast travel).</summary>
+        public const float QuickChangeWindow = 1f;
+
+        /// <summary>M11 / §5 · the world freezes this long after a pane opens (Screen 280): the freeze frame falls outside the pane's motion.</summary>
+        public const float FreezeDelay = 0.28f;
+
+        /// <summary>M15 (SHOULD) · the logo glow's breath: 4.0 s, α 0.85 ↔ 1.0 (≤ 0.25 Hz).</summary>
+        public const float BreathPeriod = 4f;
+
+        public const float BreathAlpha = 0.075f;
     }
 
     /// <summary>
@@ -330,7 +494,10 @@ namespace DD.Prototype.UI
         SettleLong = 2,
         Exit = 3,
         Move = 4,
-        Brush = 5
+        Brush = 5,
+
+        /// <summary>DEC-114 (WP-098A, C-00 08.10) · in_out (.4, 0, .2, 1): a light passing over a glyph - the icon tracks' press / settle / notify / idle.</summary>
+        Sweep = 6
     }
 
     public static class UiEaseCurve
@@ -345,6 +512,7 @@ namespace DD.Prototype.UI
                 case UiEase.Exit: return new Vector4(0.32f, 0.00f, 0.67f, 0.00f);
                 case UiEase.Move: return new Vector4(0.65f, 0.00f, 0.35f, 1.00f);
                 case UiEase.Brush: return new Vector4(0.25f, 0.10f, 0.25f, 1.00f);
+                case UiEase.Sweep: return new Vector4(0.40f, 0.00f, 0.20f, 1.00f);
                 default: return new Vector4(0f, 0f, 1f, 1f);
             }
         }

@@ -1,0 +1,565 @@
+{
+ "bake": {
+  "inputs": {
+   "ash_atlas": {
+    "path": "K/asset-production/AP-035/03-higgsfield/v003/loading_ring_ash_atlas.png",
+    "sha256": "6e5a2be1e28788220323d705aca833790e5fad4d25bde23e6f3e6f70cff38075"
+   },
+   "emblem_4096": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/emblem/dark_safe/emblem_dark_safe_4096.png",
+    "sha256": "fd5f0223e126f40b8591d4d64e8439e0117ee4cf7b3926d2e06d4048116d5082"
+   },
+   "master_4096": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/wordmark_stacked/full/wordmark_stacked_full_4096.png",
+    "sha256": "23530e8945af933ec100c2109cf84e7f8ac63fe00bbdda33c9122090bc78c2e6"
+   },
+   "motion_spec": {
+    "path": "K/asset-production/AP-035/exports/v003/LoadingLogo/motion-spec.json",
+    "sha256": "10b563de9a4d361f97d5fc88573142f133bc686abc9a84d79d106234814e0a48"
+   },
+   "owner": {
+    "path": "K/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_owner_ids.png",
+    "sha256": "82ae2753e3a37d552a617fc8d3e588752a83cab3bd2d3fa9fec278701604fa3d"
+   },
+   "owner_960": {
+    "path": "K/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_owner_ids_960x360.png",
+    "sha256": "935566ca81e872c950bd27b223eae2b3c6c371fbd6c12df7225aef4ccb235b87"
+   },
+   "progress": {
+    "path": "K/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke_progress_u16.png",
+    "sha256": "cb442732ce1f23db9655fb3814c3fa3a77573791bacc1cac51c3c1394e579d64"
+   },
+   "progress_repaired_960": {
+    "path": "K/asset-production/AP-035/04-tools/v004/a1_stroke_progress_repaired_u16_960x360.png",
+    "sha256": "21b63e88a917a8a8dafb4e365391c3adea7ec6c6ccd6305b7902e445b9ab8161"
+   },
+   "seal_body": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_body_black.png",
+    "sha256": "85ccd4b74e3925ce4fea8696baca07cbb16c526822505dc6c65a9800a15cc305"
+   },
+   "seal_glow": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_glow_fx.png",
+    "sha256": "1dc3f7fa05f5085c23a2ed4ace82222d84fab0ce0b0ab78910d56a22641ea444"
+   },
+   "seal_ink_leak": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_ink_leak_fx.png",
+    "sha256": "1c4d2d148e603405ceaecef4dd5ded67a930e17b06a9604e13b1c5f98c195773"
+   },
+   "seal_ring": {
+    "path": "K/asset-production/AP-035/exports/v001/Logo/LogoLayers/seal_red_broken_ring.png",
+    "sha256": "8c1fb974aa054f8c2250e9418dfb104ce6a718392c535bd3807f3c9703260822"
+   },
+   "sync_points": {
+    "path": "K/asset-production/AP-035/exports/v003/LoadingLogo/sync-points.json",
+    "sha256": "894b6725e385e8fde7dc229229989d3674beb98a67bb22e18ddfb40916e263b8"
+   },
+   "timeline": {
+    "path": "K/asset-production/AP-035/exports/v002/Logo/StrokeMasks/stroke-timeline.json",
+    "sha256": "1d52cb193c9ccc2a82d8ed31a6b722c967c7ac2d081e60554cf37978454953eb"
+   },
+   "wordmark_8192": {
+    "path": "K/asset-production/AP-035/exports/v004/Logo/wordmark_stacked/full/wordmark_stacked_full_8192.png",
+    "sha256": "ec912a6dec2c6b9af2636664a5b99ec31f3e63a419de4ae9b9cb7987e21b2ff1"
+   }
+  },
+  "parameters": {
+   "dilate_texels": 32,
+   "encode": "floor((T - 3) / 44 * 254), 255 never; shader vis = saturate(p * 255 - code)",
+   "factor": 2,
+   "front_softness_spec": 0.012,
+   "fx_pad": "transparent to a multiple of 4 per edge",
+   "fx_tex": 384,
+   "halo_full_zero_texels_2048": [
+    6.0,
+    28.0
+   ],
+   "halo_size": [
+    1024,
+    384
+   ],
+   "out": [
+    2048,
+    768
+   ],
+   "repaired_progress_960": true,
+   "resample": "premultiplied LANCZOS, RGB bled 8 (wordmark 16) texels into alpha 0",
+   "ring_box": [
+    0,
+    0,
+    720,
+    752
+   ],
+   "ring_tex": 512,
+   "seal_backing_full_zero_texels_768": [
+    2.0,
+    12.0
+   ],
+   "seal_backing_size": [
+    256,
+    256
+   ],
+   "seal_crop_pad": 1.04,
+   "seal_tex": 768,
+   "src": [
+    4096,
+    1536
+   ],
+   "v003_shift_x_4096": 3,
+   "window_frames": [
+    3.0,
+    47.0
+   ],
+   "window_seconds": [
+    0.08333333333333333,
+    1.9166666666666667
+   ]
+  },
+  "script": "tools/art/ap035-intake/bake_ap035_logo.py",
+  "sha256": "5a4d9e5cf1500e29a9862f006e53e31003c948384f6504ed50ca46b407b6f888"
+ },
+ "files": [
+  {
+   "bytes": 1148136,
+   "class": "Logo",
+   "file": "ap035_logo_wordmark_2048x768.png",
+   "folder": "UI/Logo",
+   "mode": "RGBA",
+   "role": "wordmark",
+   "sha256": "50ff69fb8a1a1579b586d3b2ede14320d2e7c049093d2a99f5b2e7d1132e91e0",
+   "size": [
+    2048,
+    768
+   ]
+  },
+  {
+   "bytes": 69079,
+   "class": "Logo",
+   "file": "ap035_logo_wordmark_timemap_2048x768.png",
+   "folder": "UI/Logo",
+   "mode": "LA",
+   "role": "timemap",
+   "sha256": "2c90fc1586061b17641230add79f57f4068243f7169ca6374c1d582935e71b06",
+   "size": [
+    2048,
+    768
+   ]
+  },
+  {
+   "bytes": 63410,
+   "class": "Logo",
+   "file": "ap035_logo_wordmark_halo_1024x384.png",
+   "folder": "UI/Logo",
+   "mode": "RGBA",
+   "role": "halo",
+   "sha256": "90613eb2ff343f9e5fe525542a77d79c767d071f4ecab2074a7af5a00af2e4fc",
+   "size": [
+    1024,
+    384
+   ]
+  },
+  {
+   "bytes": 425571,
+   "class": "UI1024",
+   "file": "ap035_logo_seal_768.png",
+   "folder": "UI/LogoMark",
+   "mode": "RGBA",
+   "role": "seal",
+   "sha256": "fb224cb6b85b79eef3d9784cd14197b27591d5a8bccd0670ad3110fbb7f9dd13",
+   "size": [
+    768,
+    768
+   ]
+  },
+  {
+   "bytes": 42535,
+   "class": "UI1024",
+   "file": "ap035_logo_seal_glow.png",
+   "folder": "UI/LogoMark",
+   "mode": "RGBA",
+   "role": "glow",
+   "sha256": "1210d3a658a7b4232323171a372ffe8a319f8dff17eeee3880aa9f45e2fa72e9",
+   "size": [
+    384,
+    384
+   ]
+  },
+  {
+   "bytes": 19440,
+   "class": "UI1024",
+   "file": "ap035_logo_seal_blot.png",
+   "folder": "UI/LogoMark",
+   "mode": "RGBA",
+   "role": "blot",
+   "sha256": "09c9db2946161d3b315d485149ee29656413018dbd3494585fb435e2175cd41e",
+   "size": [
+    384,
+    384
+   ]
+  },
+  {
+   "bytes": 266972,
+   "class": "UI1024",
+   "file": "ap035_logo_impact_ring.png",
+   "folder": "UI/LogoMark",
+   "mode": "RGBA",
+   "role": "ring",
+   "sha256": "7dc19f67cddc3d56470df4b84b6e6efe3899ce2c39d210074a5d942261d87de5",
+   "size": [
+    492,
+    512
+   ]
+  },
+  {
+   "bytes": 6352,
+   "class": "UI1024",
+   "file": "ap035_logo_seal_backing_256.png",
+   "folder": "UI/LogoMark",
+   "mode": "RGBA",
+   "role": "backing",
+   "sha256": "4b840eed25e1ac3abdbee0d2e064c186d13ac6d9f78fd548b5bd45569bdcc87f",
+   "size": [
+    256,
+    256
+   ]
+  }
+ ],
+ "motion": {
+  "ash_loop_drift_y": -65,
+  "ash_sprites": 10,
+  "camera_shake_frame_dx_dy": [
+   [
+    48,
+    2.0,
+    -1.0
+   ],
+   [
+    49,
+    -1.0,
+    1.0
+   ],
+   [
+    50,
+    1.0,
+    0.0
+   ]
+  ],
+  "canonical_hold": [
+   55,
+   67
+  ],
+  "composition_spec_px": {
+   "canvas": [
+    1920,
+    1080
+   ],
+   "seal_layer": [
+    675,
+    78,
+    570,
+    570
+   ],
+   "wordmark_rect": [
+    480,
+    638,
+    960,
+    360
+   ]
+  },
+  "fps": 24,
+  "frame_base": 1,
+  "front_softness": 0.012,
+  "ink_alpha": "0.35*sin(pi*(frame-47)/7)^0.7",
+  "ink_frames": [
+   47,
+   54
+  ],
+  "ink_scale": "0.58+0.52*smoothstep((frame-47)/7)",
+  "intro_frames": 67,
+  "last_stroke_end_frame": 45.6713571836934,
+  "loop_frames": 96,
+  "loop_glow_peak_alpha": 0.28,
+  "ring_alpha": "0.72*sin(pi*t)",
+  "ring_frames": [
+   47,
+   54
+  ],
+  "ring_loop_breath_alpha_peak": 0.045,
+  "ring_size_end": [
+   625,
+   653
+  ],
+  "ring_size_start": [
+   510,
+   533
+  ],
+  "seal_drop_end_frame": 47,
+  "seal_first_frame": 39,
+  "seal_rest_bottom_y": 648.0,
+  "seal_samples_frame_y_sx_sy_glow": [
+   [
+    39,
+    -610.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    40,
+    -602.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    41,
+    -577.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    42,
+    -534.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    43,
+    -470.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    44,
+    -384.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    45,
+    -270.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    46,
+    -122.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    47,
+    78.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   [
+    48,
+    124.0,
+    1.04,
+    0.92,
+    0.65
+   ],
+   [
+    49,
+    101.0,
+    1.025,
+    0.96,
+    0.4
+   ],
+   [
+    50,
+    64.0,
+    0.985,
+    1.025,
+    0.2
+   ],
+   [
+    51,
+    69.0,
+    0.99,
+    1.015,
+    0.08
+   ],
+   [
+    52,
+    81.0,
+    1.006,
+    0.994,
+    0.0
+   ],
+   [
+    53,
+    80.0,
+    1.003,
+    0.997,
+    0.0
+   ],
+   [
+    54,
+    78.0,
+    1.0,
+    1.0,
+    0.0
+   ]
+  ],
+  "sparks": 5,
+  "window": [
+   3,
+   47
+  ]
+ },
+ "package": "AP-035",
+ "placement": {
+  "blot": {
+   "art_size": [
+    382,
+    384
+   ],
+   "centre_offset_spec_px": [
+    -44.349277845171784,
+    5.993145654752944
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "size_spec_px": [
+    574.4383043491785,
+    574.4383043491785
+   ],
+   "source_box": [
+    947,
+    112,
+    2854,
+    2028
+   ],
+   "sprite_size": [
+    384,
+    384
+   ]
+  },
+  "glow": {
+   "art_size": [
+    381,
+    384
+   ],
+   "centre_offset_spec_px": [
+    -1.3492442743738415,
+    0.0
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    2,
+    0
+   ],
+   "size_spec_px": [
+    574.7379492784808,
+    574.7379492784808
+   ],
+   "source_box": [
+    1090,
+    132,
+    2993,
+    2048
+   ],
+   "sprite_size": [
+    384,
+    384
+   ]
+  },
+  "layers_seal_ink_box": [
+   1301,
+   318,
+   2796,
+   1862
+  ],
+  "layers_to_spec_px": 0.2996572827376472,
+  "ring": {
+   "art_size": [
+    490,
+    512
+   ],
+   "centre_offset_art": [
+    0.0,
+    0.0
+   ],
+   "pad_ltrb": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "size_end_spec_px": [
+    625,
+    653
+   ],
+   "size_start_spec_px": [
+    510,
+    533
+   ],
+   "source_box": [
+    0,
+    0,
+    720,
+    752
+   ],
+   "sprite_per_art": [
+    1.0040816326530613,
+    1.0
+   ],
+   "sprite_size": [
+    492,
+    512
+   ]
+  },
+  "seal": {
+   "crop_box": [
+    318,
+    318,
+    3778,
+    3778
+   ],
+   "emblem_ink_box": [
+    439,
+    385,
+    3657,
+    3711
+   ],
+   "ink_height_spec_px": 462.8466796875,
+   "ink_width_spec_px": 447.8173828125,
+   "layer_bottom_below_centre_spec_px": 285.0,
+   "sprite_centre_offset_spec_px": [
+    0.0,
+    -0.0
+   ],
+   "sprite_spec_px": 481.494140625
+  }
+ },
+ "schema": "dd-logo-intake-v1",
+ "timemap": {
+  "alpha_mismatch_texels": 0,
+  "border_all_255": true,
+  "first_ink_frame": 3.0000000000005143,
+  "ink_neighbours_le_254": true,
+  "ink_texels_le_254": true,
+  "last_ink_frame": 45.671335759743464,
+  "max_inked": 246,
+  "min": 0,
+  "never_fraction": 0.2945016225179036,
+  "never_texels_255": 463211,
+  "size": [
+   2048,
+   768
+  ]
+ }
+}

@@ -328,6 +328,16 @@ namespace DD.Prototype.UI
 
             return !(from == PrototypeScenes.Run && to == PrototypeScenes.MainMenu);
         }
+
+        /// <summary>
+        /// AP-035 R3 (S-11 O2, C-00 08.10, K4): the AP-035 logo plays on every SCREEN-depth loading screen except the way to
+        /// the Results (the ink variant and its short key-art screen). The boot keeps its own seal (K5).
+        /// </summary>
+        public static bool ShowsLogo(string from, string to)
+        {
+            return to != PrototypeScenes.Results && from != PrototypeScenes.Boot;
+        }
+
         private static string s_loadingScene;
         private static int s_loadGeneration;
 
@@ -415,6 +425,7 @@ namespace DD.Prototype.UI
             // after quitting). The mid plate (lanterns lit) and the weapon sub-line go into the run.
             bool intoRun = sceneName == PrototypeScenes.Run;
             bool tipped = ShowsTip(from, sceneName);
+            UiCurtain.LogoNext = !FastTransitions && ShowsLogo(from, sceneName);   // AP-035 R3 K4: the next ShowGroup plays it
             string subline = intoRun ? UiStrings.Upper(ProfileService.WeaponDisplayName(SelectedWeapon)) : string.Empty;
             string tip = null;
             bool fast = FastTransitions;
@@ -426,13 +437,17 @@ namespace DD.Prototype.UI
             float ringShownAt = -1f;
 
             float t0 = Time.unscaledTime;
+            float closeSeconds = 0f;
             if (ink)
             {
                 curtain.CoverWithInk();
             }
             else
             {
-                curtain.Close(fast);
+                // WP-098A (HAREKET-MENU M14): ScreenExiting at t0, CurtainClosed once the cover is whole (below). The close's own
+                // length - the doors' Screen 280 or the brush's Emphasis 400 - is what the load waits for.
+                UiEvents.Raise(UiEvent.ScreenExiting, sceneName);
+                closeSeconds = curtain.Close(fast);
             }
 
             float groupShownAt = -1f;
@@ -445,9 +460,9 @@ namespace DD.Prototype.UI
                 curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tip, intoRun, UiCurtain.KeyArtFor(sceneName));
                 groupShownAt = t0;
             }
-            if (!fast && !ink && !UiMotion.ReducedMotion)
+            if (!fast && !ink && !UiMotion.ReducedMotion && closeSeconds > 0f)
             {
-                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen));
+                yield return new WaitForSecondsRealtime(closeSeconds);
             }
 
             // Two frames with the doors fully shut before the load starts (batchmode rule),
@@ -549,7 +564,12 @@ namespace DD.Prototype.UI
                             : !screen && now - t0 >= MinimumClosedSeconds);
                 if (loaded && shownLongEnough)
                 {
-                    break;
+                    // AP-035 R3 K3: the logo's intro may hold a ready load until its canonical frame - at most 0.5 s.
+                    curtain.NotifyLogoReady();
+                    if (fast || curtain.LogoCanLeave)
+                    {
+                        break;
+                    }
                 }
 
                 yield return null;

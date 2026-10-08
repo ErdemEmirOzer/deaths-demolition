@@ -10,12 +10,18 @@ namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
     /// WP-081 ikon v2 B5b · the O1 icon material (DD/UI/Fx Icon, 8) drawn by the GPU and read back (the UiGlyphAtlasTests
-    /// pattern: cam.Render into a target texture). Every O1 glyph at S / M / L (24 / 32 / 40) in one grid:
+    /// pattern: cam.Render into a target texture). Every O1 glyph at S / M / L (24 / 32 / 40) in one grid. WP-098A (C-00 08.10):
+    /// the material is AP-034 v002.1 row d, the AD default - its ink darkens the lit glyph within a ceiling, so T1 / T3's
+    /// floors are the AD's (AP034-v002-AD §2, §3 MUST-1, §5-2), and its lob / glow are AP-034's (T2's reach):
     ///   T1  the colour floor - on every pixel the glyph covers, no channel of the lit glyph is under the same pose drawn
-    ///       flat (light off), for both tints, on transparent / #161D21 / white, in a linear half-float target: 0 violations;
-    ///   T2  the outer layers (glow at its peak, the cold lob) change no pixel the glyph covers;
-    ///   T3  contrast in the 8-bit sRGB target: every core pixel (α ≥ 0.8) of the lit glyph is at least the flat one's
-    ///       ratio to #161D21 (AP-028's min_delta_vs_flat ≥ 0, in Unity's linear runtime);
+    ///       flat (light off) × (1 − (0.06 + 0.06 s)), s = sat((px − 24) / 16) - 0.94 at 24, 0.91 at 32, 0.88 at 40 (B5b:
+    ///       × 1, light only) - for both tints, on transparent / #161D21 / white, in a linear half-float target: 0
+    ///       violations, and the ink is live (some pixel darker than flat);
+    ///   T2  the outer layers (glow at its peak, the ink lob) change no pixel the glyph covers; the lob is a real shadow
+    ///       (on white ≥ 0.1, AP-034's Twin 0.24 at 40 px; B5b's cold sliver was 2e-4) and the glow a real halo (≥ 0.03 on
+    ///       #161D21, the Twin 0.067; B5b 1e-3);
+    ///   T3  contrast in the 8-bit sRGB target: every core pixel (α ≥ 0.8) of the lit glyph against #161D21 holds the AD's
+    ///       guard - TextPrimary ≥ 7:1 (MUST-1 §1; AP-034 measured ≥ 10.73:1), TextSecondary ≥ 4.5:1 (B5b: ≥ the flat ratio);
     ///   T4  reduced motion: whatever the light channels hold, the frame is the rest frame (sheen off, no glow, no spread,
     ///       drawn) - and the relief itself, not being motion, stays;
     ///   plus the channel layout at rest (uv1 / uv2 / uv3).
@@ -92,7 +98,7 @@ namespace DD.Prototype.Tests.PlayMode
             Color[] grounds = { Clear, Ground, Color.white };
 
             int covered = 0, violations = 0;
-            float lift = 0f;
+            float lift = 0f, inkMin = 1f;
             string first = null;
             foreach (IconPose pose in poses)
             {
@@ -118,14 +124,21 @@ namespace DD.Prototype.Tests.PlayMode
                             }
 
                             covered++;
+                            // Row d's floor at this glyph's size (the grid's cells are laid size by size).
+                            float floor = 1f - UiIconShade.Ceiling(UiIconShade.SizeRamp(SizeAt(i, rt.width)));
                             for (int c = 0; c < 3; c++)
                             {
                                 float d = lit[i][c] - flat[i][c];
                                 lift = Mathf.Max(lift, d);
-                                if (d < -1e-3f)
+                                if (flat[i][c] > 0.05f)
+                                {
+                                    inkMin = Mathf.Min(inkMin, lit[i][c] / flat[i][c]);
+                                }
+
+                                if (lit[i][c] < flat[i][c] * floor - 1e-3f)
                                 {
                                     violations++;
-                                    first = first ?? (pose.Name + " tint " + tint + " ground " + ground + " px " + i + " ch" + c + ": " + lit[i] + " < " + flat[i]);
+                                    first = first ?? (pose.Name + " tint " + tint + " ground " + ground + " px " + i + " ch" + c + ": " + lit[i] + " < " + flat[i] + " × " + floor);
                                 }
                             }
                         }
@@ -133,10 +146,12 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            Debug.Log("[DD-TEST] wp081.b5b.T1 covered " + covered + " violations " + violations + " maxLift " + lift.ToString("0.0000"));
+            Debug.Log("[DD-TEST] wp081.b5b.T1 covered " + covered + " violations " + violations + " maxLift " + lift.ToString("0.0000")
+                + " inkMin " + inkMin.ToString("0.0000"));
             Assert.Greater(covered, 100000, "ızgarada glif pikseli bulunmalı (çizim boş mu?)");
             Assert.Greater(lift, 2e-3f, "malzeme açık: kabartma bir yerde ışık ekler (kademe anahtarı / dal çalışıyor mu?)");
-            Assert.AreEqual(0, violations, "renk tabanı (IK-M5): ışıklı glif düz glifin altına inmez - " + first);
+            Assert.Less(inkMin, 0.99f, "d satırı: mürekkep bir yerde koyulaştırır (I1 / I2 bağlı mı?)");
+            Assert.AreEqual(0, violations, "renk tabanı (AD §5-2): ışıklı glif düz × (1 − (0,06 + 0,06 s)) altına inmez - " + first);
         }
 
         // ------------------------------------------------------------------ T2 · outer layers stay outside the ink
@@ -200,16 +215,16 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp081.b5b.T2 leaks " + leaks + " glowReach " + glowReach.ToString("0.00000") + " lobReach " + lobReach.ToString("0.00000"));
             Assert.AreEqual(0, leaks, "glow / lob glif pikseline girmez (IK-M5) - " + first);
-            Assert.Greater(glowReach, 1e-3f, "glow yolu çalışıyor: glifin dışında zemini aydınlatır");
-            // The lob itself, on white (the only ground it can darken): AP-028's 0.25 px24 offset leaves a sub-pixel
-            // sliver (peak α ≈ 0.0015-0.005 by size, tools/twin_check.py) - present, below one 8-bit step (AD D3/D7).
-            Assert.Greater(lobReach, 2e-4f, "lob yolu çalışıyor: beyaz zeminde glifin dışında koyulaştırır");
+            // WP-098A row d: the glow is α 0.07 + 0.05 s of the cream (AP-034's Twin: 0.019 / 0.042 / 0.067 at 24 / 32 / 40 on
+            // #161D21); the lob is ink α 0.45 offset (1.6, −2.4) AP, soft 2.4 AP (the Twin on white: 0.095 / 0.17 / 0.24).
+            Assert.Greater(glowReach, 0.03f, "glow yolu çalışıyor: glifin dışında zemini aydınlatır (d: görünür hale)");
+            Assert.Greater(lobReach, 0.1f, "lob yolu çalışıyor: beyaz zeminde glifin dışında koyulaştırır (d: mürekkep gölge)");
         }
 
         // ------------------------------------------------------------------ T3 · contrast never below flat
 
         [UnityTest]
-        public IEnumerator T3_IkonMalzemesi_Kontrast_DuzdenAzDegil()
+        public IEnumerator T3_IkonMalzemesi_Kontrast_AdBekcisinde()
         {
             RenderTexture rt = NewTarget(false);
             Camera cam = Build(rt);
@@ -218,6 +233,9 @@ namespace DD.Prototype.Tests.PlayMode
             string first = null;
             foreach (Color tint in new[] { UiTokens.Get(UiColor.TextPrimary), UiTokens.Get(UiColor.TextSecondary) })
             {
+                // The AD's guard (AP034-v002-AD §3 MUST-1 §1, §5-2): the cream core ≥ 7:1 on B3, the secondary tone ≥ 4.5:1 - lit,
+                // and flat (the light off: disabled is TextSecondary flat, P-07 6.68:1; Performance draws the token flat).
+                float guard = tint == UiTokens.Get(UiColor.TextPrimary) ? 7f : 4.5f;
                 foreach (Vector3 light in new[] { Rest, new Vector3(0.5f, 0.08f, 0f) })
                 {
                     cam.backgroundColor = Clear;
@@ -243,10 +261,10 @@ namespace DD.Prototype.Tests.PlayMode
                         float rf = UiContrast.Ratio(Opaque(flat[i]), Ground), rl = UiContrast.Ratio(Opaque(lit[i]), Ground);
                         minFlat = Mathf.Min(minFlat, rf);
                         minLit = Mathf.Min(minLit, rl);
-                        if (rl < rf - 1e-3f)
+                        if (rl < guard || rf < guard)
                         {
                             worse++;
-                            first = first ?? ("tint " + tint + " light " + light + " px " + i + ": " + rl.ToString("0.000") + " < " + rf.ToString("0.000"));
+                            first = first ?? ("tint " + tint + " light " + light + " px " + i + ": lit " + rl.ToString("0.000") + " flat " + rf.ToString("0.000") + " < " + guard);
                         }
                     }
                 }
@@ -254,8 +272,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp081.b5b.T3 core " + core + " minFlat " + minFlat.ToString("0.00") + " minLit " + minLit.ToString("0.00"));
             Assert.Greater(core, 20000, "çekirdek pikseller bulunmalı");
-            Assert.AreEqual(0, worse, "çekirdek kontrastı düzden az değil (#161D21) - " + first);
-            Assert.GreaterOrEqual(minLit, minFlat, "en kötü çekirdek: ışıklı ≥ düz");
+            Assert.AreEqual(0, worse, "çekirdek kontrastı AD bekçisinde (#161D21: krem ≥ 7, ikincil ≥ 4,5) - " + first);
         }
 
         // ------------------------------------------------------------------ T4 · reduced motion
@@ -406,6 +423,13 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return cam;
+        }
+
+        /// <summary>The glyph size (px) of the grid cell a target pixel lies in: cells run size by size, key by key, 16 a row.</summary>
+        private static int SizeAt(int pixel, int width)
+        {
+            int index = ((pixel / width) / Cell) * Columns + (pixel % width) / Cell;
+            return Sizes[Mathf.Min(index / UiArt.O1IconKeys.Length, Sizes.Length - 1)];
         }
 
         private void Apply(Vector3 light, Vector3 parameters, Color tint)

@@ -7,6 +7,7 @@
 // Particles: every vertex of a quad sits on its emitter point, uv3.xy is the corner (-1..1), uv3.z the burst's start radius; the vertex stage moves it.
 // Icon (WP-081 ikon v2 B5b): uv1 = (8, sheen -1 off | 0..1, glow 0..0.08, spread px24) with no clock, uv2 = (stroke draw,
 // lit 0|1 - 0 when disabled, opacity, -), uv3 as above (the sprite box uv); _DD_IconTier switches it to the flat token.
+// WP-098A AP-034 v002.1 row d: the global I1 / I2 pages (_DD_IconCavity, _DD_IconGrain, UiFxGlobals) - no new keyword.
 Shader "DD/UI/Fx"
 {
     Properties
@@ -63,6 +64,7 @@ Shader "DD/UI/Fx"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #include "DD_UiFx.hlsl"
+            #include "DD_UiFxLogo.hlsl"
 
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
@@ -192,7 +194,8 @@ Shader "DD/UI/Fx"
                 float visible = smoothstep(0.0, 0.012, edge);
                 float front = (1.0 - smoothstep(0.0, band, edge)) * (t < 0.999 ? 1.0 : 0.0);
                 color.rgb = lerp(color.rgb, color.rgb * 0.55 + _DD_Ink.rgb * 0.2, front * 0.65);
-                color.a *= visible * (wipe ? 1.0 : DD_InkCoverage(raw));
+                // WP-098A (M14): prm.z = 1 erases instead - the ink leaves in the order it came (the brush curtain's uncover).
+                color.a *= (IN.prm.z > 0.5 ? 1.0 - visible : visible) * (wipe ? 1.0 : DD_InkCoverage(raw));
                 return color;
             }
 
@@ -289,11 +292,12 @@ Shader "DD/UI/Fx"
                 return color;
             }
 
-            // WP-081 ikon v2 B5b · Icon (8): AP-028-B's O1 glyph - the SDF's own light-only relief, never under its tint
-            // (DD_IconShade, DD_UiFx.hlsl). UiIconButton's O1 keys only; every other glyph keeps Sdf() above (IK-M18).
+            // WP-081 ikon v2 B5b · Icon (8): AP-028-B's O1 glyph - the SDF's own relief (DD_IconShade, DD_UiFx.hlsl); WP-098A
+            // AP-034 v002.1 row d (AD default): + I1 cavity / I2 grain (screen px: SV_POSITION), ink, lob, size-ramped glow.
+            // UiIconButton's O1 keys only; every other glyph keeps Sdf() above (IK-M18).
             half4 Icon(v2f IN, half4 tint)
             {
-                return DD_IconShade(_MainTex, IN.texcoord, IN.map.xy, tint, IN.fx, IN.prm);
+                return DD_IconShade(_MainTex, IN.texcoord, IN.map.xy, IN.vertex.xy, tint, IN.fx, IN.prm);
             }
 
             fixed4 frag(v2f IN) : SV_Target
@@ -307,6 +311,7 @@ Shader "DD/UI/Fx"
                 float mode = IN.fx.x;
 
                 if (DD_IsMode(mode, DD_FX_INK))            color = InkReveal(color, IN);
+                else if (DD_IsMode(mode, DD_FX_LOGO))      color = DD_LogoInk(color, IN.fx.y, IN.prm, IN.map.xy);
                 else if (DD_IsMode(mode, DD_FX_LEAF))      color = Leaf(color, IN, IN.fx.w);
                 else if (DD_IsMode(mode, DD_FX_STAMP))     color = Stamp(color, IN);
                 else if (DD_IsMode(mode, DD_FX_SHEEN))     color = Sheen(color, IN);

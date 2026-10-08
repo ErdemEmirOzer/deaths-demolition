@@ -8,6 +8,10 @@ namespace DD.Prototype.UI
     /// by the vertex stage from <c>_DD_UiTime</c>. Replaces per-frame CPU drift (UiDrift ≈ 1.2 allocations / frame).
     /// Burst: one-shot sparks (HUD: Special ready, ≤ 0.3 s; Flash class). Loop: petals / rain drifting down (menu; Decor,
     /// frozen under reduced motion).
+    /// WP-098A (HAREKET-MENU M17, C-00 08.10) · <see cref="Scatter"/>: a loop's emitters spread over the whole rect, not only its
+    /// top edge (slow motes - 14–24 px/s over a 9–14 s loop - would otherwise only ever fill a band under the top); and
+    /// <see cref="Cells"/>: each quad reads one cell of a sheet (AP-034 P1: a row of four ash flakes, a row of leaves), cell
+    /// i mod n laid left → right from the first. Both are written into the mesh once - no per-frame CPU work.
     /// </summary>
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class UiFxParticles : MaskableGraphic
@@ -21,6 +25,9 @@ namespace DD.Prototype.UI
         [SerializeField] private Texture _texture;
         [SerializeField] private float _startRadius;
         private float _start = -10000f;
+        [SerializeField] private bool _scatter;
+        [SerializeField] private Rect _cell = new Rect(0f, 0f, 1f, 1f);
+        [SerializeField] private int _cells = 1;
 
         public override Texture mainTexture => _texture != null ? _texture : s_WhiteTexture;
         public int Count => _count;
@@ -41,6 +48,26 @@ namespace DD.Prototype.UI
             _life = Mathf.Max(0.05f, life);
             _loopPeriod = Mathf.Max(0f, loopPeriod);
             _texture = texture;
+            SetVerticesDirty();
+            return this;
+        }
+
+        /// <summary>WP-098A M17: a loop's emitters over the whole rect (true) or along its top edge (false, the rain). One vertex rebuild.</summary>
+        public UiFxParticles Scatter(bool scatter)
+        {
+            _scatter = scatter;
+            SetVerticesDirty();
+            return this;
+        }
+
+        /// <summary>
+        /// WP-098A M17: quad i draws cell (i mod <paramref name="count"/>) of the texture, the cells <paramref name="first"/>.width
+        /// apart to the right of <paramref name="first"/> (texture uv, bottom-left). One vertex rebuild.
+        /// </summary>
+        public UiFxParticles Cells(Rect first, int count)
+        {
+            _cell = first;
+            _cells = Mathf.Max(1, count);
             SetVerticesDirty();
             return this;
         }
@@ -70,16 +97,18 @@ namespace DD.Prototype.UI
                 float seed = (i + 0.5f) / _count;
                 // Loop: emitters spread over the rect's width at its top; burst: all at the centre.
                 Vector3 origin = _loopPeriod > 0f
-                    ? new Vector3(Mathf.Lerp(r.xMin, r.xMax, Hash(seed * 17.3f)), r.yMax, 0f)
+                    ? new Vector3(Mathf.Lerp(r.xMin, r.xMax, Hash(seed * 17.3f)), _scatter ? Mathf.Lerp(r.yMin, r.yMax, Hash(seed * 31.7f + 0.5f)) : r.yMax, 0f)
                     : new Vector3(r.center.x, r.center.y, 0f);
+                var cell = new Vector2(_cell.x + (i % _cells) * _cell.width, _cell.y);
                 var prm = new Vector4(_size, _speed, _gravity, seed);
                 int b = vh.currentVertCount;
                 float half = _size * 0.5f;   // a real quad on the CPU (uGUI drops zero-area geometry); the shader re-centres it
                 float radius = _loopPeriod > 0f ? 0f : _startRadius;
-                vh.AddVert(Vert(origin + new Vector3(-half, -half), c, new Vector2(0f, 0f), fx, prm, -1f, -1f, radius));
-                vh.AddVert(Vert(origin + new Vector3(-half, half), c, new Vector2(0f, 1f), fx, prm, -1f, 1f, radius));
-                vh.AddVert(Vert(origin + new Vector3(half, half), c, new Vector2(1f, 1f), fx, prm, 1f, 1f, radius));
-                vh.AddVert(Vert(origin + new Vector3(half, -half), c, new Vector2(1f, 0f), fx, prm, 1f, -1f, radius));
+                float u1 = cell.x + _cell.width, v1 = cell.y + _cell.height;
+                vh.AddVert(Vert(origin + new Vector3(-half, -half), c, new Vector2(cell.x, cell.y), fx, prm, -1f, -1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(-half, half), c, new Vector2(cell.x, v1), fx, prm, -1f, 1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(half, half), c, new Vector2(u1, v1), fx, prm, 1f, 1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(half, -half), c, new Vector2(u1, cell.y), fx, prm, 1f, -1f, radius));
                 vh.AddTriangle(b, b + 1, b + 2);
                 vh.AddTriangle(b + 2, b + 3, b);
             }

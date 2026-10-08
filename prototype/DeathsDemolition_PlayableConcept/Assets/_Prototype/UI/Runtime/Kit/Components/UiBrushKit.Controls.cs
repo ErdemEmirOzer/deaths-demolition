@@ -20,7 +20,7 @@ namespace DD.Prototype.UI
     ///
     /// USAGE: <c>UiBrushKit.Slider(pane.Content, "Setting.CAMERA SHAKE", "pause.shake", "CAMERA SHAKE INTENSITY", 0f, 2f, v,
     /// 0.1f, FormatShake, SetShake)</c>; lay rows with UiStack / UiFactory.Place at <see cref="UiBrushTokens.RowStep"/>.
-    /// Tabs: <c>UiBrushKit.Tabs(pane.Content, "Tabs", tabs, current, OpenTab, showWords: true)</c> (G2 interim, S-09 §8 S1).
+    /// Tabs: <c>UiBrushKit.Tabs(pane.Content, "Tabs", tabs, current, OpenTab, showWords: true)</c> (S-09 §8 S1: the chosen tab's word).
     /// DON'T: invent object names here (they come from the caller: "Tab.*", "Setting.*"); colour a choice gold (StateGold is
     /// money only - the Currency counter); put a sentence in a tooltip; use Cycle for more than six values (P2: the washed
     /// dropdown); draw a brush trace in a screen file.
@@ -40,7 +40,9 @@ namespace DD.Prototype.UI
         /// C12 · icon tab strip (72×64, step 88) with one C8 under the chosen tab; ←/→ wired, Submit selects (no select-on-focus).
         /// The strip's root is <paramref name="name"/>, as wide as its tabs, its left edge at its own x (pivot 0.5 - place it
         /// with UiFactory.Place); each tab keeps <see cref="UiBrushTab.ObjectName"/>. <paramref name="showWords"/>: the word under
-        /// each glyph (G2 interim until the Menu.Display glyph lands); false: the word is the tooltip.
+        /// the CHOSEN tab's glyph (<see cref="UiIconLabel.BelowChosen"/> - S-09 07.10 §8 S1: G2 closed with AP-034 v002.1's
+        /// Menu.Display, so the interim "a word under every tab" ends; every tab keeps the word's room, the strip never shifts,
+        /// the others say theirs as the tooltip); false: the word is the tooltip on every tab.
         /// </summary>
         public static UiBrushChoiceGroup Tabs(RectTransform parent, string name, UiBrushTab[] tabs, int selected, Action<int> onSelect, bool showWords = false)
         {
@@ -53,7 +55,7 @@ namespace DD.Prototype.UI
             {
                 UiBrushTab spec = tabs[i];
                 UiIconButton tab = UiIconControls.Tab(root, spec.IconKey, spec.NameKey, spec.NameFallback, null, spec.ShortKey, spec.ShortFallback,
-                    UiControlStyle.Brush, showWords ? UiIconLabel.Below : UiIconLabel.Tooltip);
+                    UiControlStyle.Brush, showWords ? UiIconLabel.BelowChosen : UiIconLabel.Tooltip);
                 if (!string.IsNullOrEmpty(spec.ObjectName))
                 {
                     tab.PinObjectName(spec.ObjectName);

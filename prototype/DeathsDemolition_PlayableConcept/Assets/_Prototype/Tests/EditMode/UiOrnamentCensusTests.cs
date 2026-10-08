@@ -84,13 +84,17 @@ namespace DD.Prototype.Tests.EditMode
                 SealLock = 1,
             },
             new Group { Name = "Curtain (boot / loading / ink)", Files = new[] { "Flow/UiCurtain.cs" }, CeremonyLock = 2, SealAllowed = true },
+            // AP-035 brand seal belongs to its own logo group, preserving the HUD exceptions.
+            new Group { Name = "Logo (AP-035)", Files = new[] { "Flow/UiLogoAnimator.cs", "Flow/UiLogoTimeline.cs", "Flow/UiLogoMenuIntro.cs" }, SealAllowed = true },
         };
 
         private static readonly Regex Heading = new Regex(@"UiFactory\.Heading\(");
         private static readonly Regex VermilionImage = new Regex(@"^.*(NewImage\(|FramedCard\(|\.SetColor\(|Tint\().*UiColor\.AccentPrimary\b.*$", RegexOptions.Multiline);
         private static readonly Regex VermilionKit = new Regex(@"UiBrushKit\.(Tabs|Segments|SelectionMark)\(|UiFactory\.HeadingTick\(");
         private static readonly Regex Seal = new Regex(@"seal", RegexOptions.IgnoreCase);
-        private static readonly Regex Brush = new Regex(@"UiInkChannel\.Underline|Ink\.BrushUnderline|UiBrushKit\.(Title|Tabs|Segments|SelectionMark)\(");
+        // WP-098A (HAREKET-MENU M2, C-00 08.10): UiBrushKit.TitleStroke - the free C5 stroke under a title the kit did not build
+        // (the menu's name) - is the window's title trace and counts with the others.
+        private static readonly Regex Brush = new Regex(@"UiInkChannel\.Underline|Ink\.BrushUnderline|UiBrushKit\.(Title|TitleStroke|Tabs|Segments|SelectionMark)\(");
         private static readonly Regex Divider = new Regex(@"UiBrushKit\.Divider\(");
         private static readonly Regex Edge = new Regex(@"UiBrushKit\.EdgeTrace\(");
         private static readonly Regex Wash = new Regex(@"UiBrushWash\.Column|UiBrushKit\.Wash\(");

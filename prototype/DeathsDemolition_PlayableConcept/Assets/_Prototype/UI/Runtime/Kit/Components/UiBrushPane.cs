@@ -13,6 +13,8 @@ namespace DD.Prototype.UI
     ///          UiEvent.PaneOpened.
     ///   Close  input off at once; content, C2 and C1 fade (Fast, Exit) and a silent timeline cue deactivates the pane
     ///          (<see cref="UiTimeline.Callback"/>). The caller returns focus to the control that opened it.
+    /// WP-098A (HAREKET-MENU §4, C-00 08.10): the content's open / close are <see cref="UiPresets.PaneOpen"/> /
+    /// <see cref="UiPresets.PaneClose"/> - the same presets as the main menu's panes (one timing for S-04's windows and the menu).
     /// Under Reduced Motion every part lands at its end state in the same frame. No Update; Open / Close / HandleCancel
     /// allocate nothing once warm (cached event name, a pre-sized mark list, struct tweens).
     ///
@@ -294,7 +296,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            UiPresets.PaneIn(_group, _content, UiBrushTokens.ContentDelay, _owner);
+            UiPresets.PaneOpen(null, null, _group, _content, _owner);   // WP-098A (HAREKET-MENU §4): the menu's pane preset, shared
             UiInput.Focus(focus);
             UiEvents.Raise(UiEvent.PaneOpened, _eventName);
         }
@@ -312,7 +314,7 @@ namespace DD.Prototype.UI
             _group.blocksRaycasts = false;
             UiMotion.KillOwner(_owner, true);   // an opening mid-flight lands first (the content back at its rest)
 
-            UiMotion.Alpha(_group, 0f, UiBrushTokens.Close, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, _owner);
+            UiPresets.PaneClose(null, null, _group, _owner);   // WP-098A: the content leaves on the shared close (Fast, Exit)
             if (_scrim != null)
             {
                 UiMotion.TintAlpha(_scrim, 0f, UiBrushTokens.Close, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, _owner);

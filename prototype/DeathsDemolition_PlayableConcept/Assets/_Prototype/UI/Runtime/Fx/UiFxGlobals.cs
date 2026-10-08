@@ -13,12 +13,24 @@ namespace DD.Prototype.UI
     /// masks (<see cref="InkMask"/>). Missing textures degrade (ink shows at once, flat leaf / paper), never throw.
     /// WP-081 ikon v2 B5b: <c>_DD_IconTier</c>, the icon material's tier switch, is written once at install and on
     /// <see cref="QualityTiers.Changed"/> - not per frame (<see cref="WriteIconTier"/>).
+    /// WP-098A (C-00 08.10): AP-034 v002.1's two icon pages - I1 <c>_DD_IconCavity</c> (cavity / ink density on G1's UVs) and
+    /// I2 <c>_DD_IconGrain</c> (the ink grain, 1:1 in screen pixels) - are bound once at install, never per frame (a global
+    /// texture keeps its binding); missing, they bind white: no cavity, no grain, no dry tail.
     /// </summary>
     public static class UiFxGlobals
     {
         public const string InkKitResource = "Fx/AP012_v004_ink_timemaps_1024";
         public const string LeafTileResource = "Fx/AP012_tile_kinpaku_128";
         public const string PaperTileResource = "Fx/AP012_tile_washi_256";
+
+        /// <summary>WP-098A · AP-034 v002.1 I1: R cavity / AO, G ink density on G1's UVs one-to-one (linear, clamp, no mips).</summary>
+        public const string IconCavityResource = "Fx/ap034_icons_g1cavity_1024";
+
+        /// <summary>WP-098A · AP-034 v002.1 I2: the ink grain tile (one linear channel, repeat), read 1:1 in screen pixels.</summary>
+        public const string IconGrainResource = "Fx/ap034_tile_inkgrain_256";
+
+        /// <summary>WP-098A (M14) · AP-034 v001.1 M3, the full-screen brush wipe's time map (<see cref="UiInkChannel.Wipe"/>; linear, clamp).</summary>
+        public const string InkWipeResource = "Fx/ap034_kit_m3wipe_1024x512_time";
 
         /// <summary>
         /// Each channel's mark rect in the kit (x, y, w, h; bottom-left UV) — AP-012 v004 manifest <c>ink_kit.elements</c>
@@ -55,8 +67,11 @@ namespace DD.Prototype.UI
         private static readonly int LeafTileId = Shader.PropertyToID("_DD_LeafTile");
         private static readonly int PaperTileId = Shader.PropertyToID("_DD_PaperTile");
         private static readonly int IconTierId = Shader.PropertyToID("_DD_IconTier");
+        private static readonly int IconCavityId = Shader.PropertyToID("_DD_IconCavity");
+        private static readonly int IconGrainId = Shader.PropertyToID("_DD_IconGrain");
+        private static readonly int InkWipeId = Shader.PropertyToID("_DD_InkWipe");
 
-        private static Texture s_inkMap, s_leafTile, s_paperTile;
+        private static Texture s_inkMap, s_leafTile, s_paperTile, s_iconCavity, s_iconGrain, s_inkWipe;
         private static readonly Sprite[] s_masks = new Sprite[4];
         private static bool s_installed;
 
@@ -77,6 +92,9 @@ namespace DD.Prototype.UI
         public static Texture InkMap => s_inkMap;
         public static Texture LeafTile => s_leafTile;
         public static Texture PaperTile => s_paperTile;
+        public static Texture IconCavity => s_iconCavity;
+        public static Texture IconGrain => s_iconGrain;
+        public static Texture InkWipe => s_inkWipe;   // WP-098A: null = no brush curtain (the doors stay)
 
         public static void EnsureInstalled()
         {
@@ -104,6 +122,7 @@ namespace DD.Prototype.UI
         public static Sprite InkMask(UiInkChannel channel)
         {
             int i = (int)channel;
+            if (i >= s_masks.Length) return UiSprites.Solid;   // WP-098A: the Wipe channel's mark is the whole rect
             if (s_masks[i] == null)
             {
                 s_masks[i] = Resources.Load<Sprite>("Fx/" + MaskNames[i]);
@@ -129,6 +148,14 @@ namespace DD.Prototype.UI
             Shader.SetGlobalVector(InkMapSizeId, new Vector4(1f / w, 1f / h, w, h));
             Shader.SetGlobalVectorArray(InkRectId, InkRects);
             Shader.SetGlobalVector(InkTimeMaxId, InkTimeMax);
+
+            // WP-098A: the icon pages, once (white = the neutral cavity / ink / grain: the row's ink terms read 0).
+            s_iconCavity = Resources.Load<Texture2D>(IconCavityResource);
+            s_iconGrain = Resources.Load<Texture2D>(IconGrainResource);
+            Shader.SetGlobalTexture(IconCavityId, s_iconCavity != null ? s_iconCavity : Texture2D.whiteTexture);
+            Shader.SetGlobalTexture(IconGrainId, s_iconGrain != null ? s_iconGrain : Texture2D.whiteTexture);
+            s_inkWipe = Resources.Load<Texture2D>(InkWipeResource);   // WP-098A: once; white = empty (nothing inks)
+            Shader.SetGlobalTexture(InkWipeId, s_inkWipe != null ? s_inkWipe : Texture2D.whiteTexture);
         }
 
         /// <summary>Called once per frame by the driver; tests call it directly.</summary>

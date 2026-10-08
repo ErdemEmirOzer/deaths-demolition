@@ -201,6 +201,20 @@ namespace DD.Prototype.UI
             return line;
         }
 
+        /// <summary>
+        /// C5 · WP-098A (HAREKET-MENU M2) · the title's short dry stroke on its own, for a title the kit did not build (the menu's
+        /// name): <paramref name="length"/> clamped to 160–600, top-left at the parent's top-left (place it on
+        /// <see cref="UiBrushMark.Rect"/>), drawn - <see cref="UiBrushMark.Hold"/> / <see cref="UiBrushMark.Draw"/> ink it in. Counts as
+        /// the window's one title trace (UiOrnamentCensusTests).
+        /// </summary>
+        public static UiBrushMark TitleStroke(RectTransform parent, float length)
+        {
+            UiBrushMark stroke = UiBrushMark.Create(UiBrushMarkKind.TitleStroke, parent, "TitleStroke");
+            stroke.Rect.sizeDelta = new Vector2(Mathf.Clamp(length, UiBrushTokens.TitleStrokeMin, UiBrushTokens.TitleStrokeMax), UiBrushTokens.TitleStrokeHeight);
+            TrackInPane(parent, stroke);
+            return stroke;
+        }
+
         /// <summary>C8 · a free selection mark for a custom group (the menu rail); hidden until <see cref="UiBrushMark.Under"/> (counts as one selection).</summary>
         public static UiBrushMark SelectionMark(RectTransform parent)
         {

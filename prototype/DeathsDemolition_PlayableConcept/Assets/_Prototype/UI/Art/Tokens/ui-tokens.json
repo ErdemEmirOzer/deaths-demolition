@@ -105,7 +105,8 @@
     "settleLong": { "$type": "cubicBezier", "$value": [0.16, 1, 0.3, 1] },
     "exit": { "$type": "cubicBezier", "$value": [0.32, 0, 0.67, 0] },
     "move": { "$type": "cubicBezier", "$value": [0.65, 0, 0.35, 1] },
-    "brush": { "$type": "cubicBezier", "$value": [0.25, 0.1, 0.25, 1] }
+    "brush": { "$type": "cubicBezier", "$value": [0.25, 0.1, 0.25, 1] },
+    "sweep": { "$type": "cubicBezier", "$value": [0.4, 0, 0.2, 1] }
   },
   "dimension": {
     "radius": { "small": { "$type": "dimension", "$value": "4px" }, "chip": { "$type": "dimension", "$value": "8px" }, "control": { "$type": "dimension", "$value": "10px" }, "card": { "$type": "dimension", "$value": "14px" } },

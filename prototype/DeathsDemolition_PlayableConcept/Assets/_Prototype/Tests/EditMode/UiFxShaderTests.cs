@@ -151,17 +151,41 @@ namespace DD.Prototype.Tests.EditMode
         public void ModSayilari_ShaderIleAyni()
         {
             // The shader's #defines (DD_UiFx.hlsl) and the C# enum must agree — the mode rides in uv1.x as a float.
-            string hlsl = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFx.hlsl");
+            string hlsl = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFx.hlsl")
+                          + System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFxLogo.hlsl");
             var expected = new Dictionary<string, UiFxMode>
             {
                 { "DD_FX_NONE", UiFxMode.None }, { "DD_FX_INK", UiFxMode.InkReveal }, { "DD_FX_LEAF", UiFxMode.Leaf },
                 { "DD_FX_STAMP", UiFxMode.Stamp }, { "DD_FX_SHEEN", UiFxMode.Sheen }, { "DD_FX_SEGMENT", UiFxMode.SegmentBar },
-                { "DD_FX_SDF", UiFxMode.SdfGlyph }, { "DD_FX_PARTICLES", UiFxMode.Particles }
+                { "DD_FX_SDF", UiFxMode.SdfGlyph }, { "DD_FX_PARTICLES", UiFxMode.Particles },
+                { "DD_FX_ICON", UiFxMode.Icon }, { "DD_FX_LOGO", UiFxMode.LogoInk }
             };
             foreach (KeyValuePair<string, UiFxMode> kv in expected)
             {
                 StringAssert.IsMatch("#define " + kv.Key + @"\s+" + (int)kv.Value + @"\b", hlsl, kv.Key + " ↔ " + kv.Value);
             }
+        }
+        /// <summary>
+        /// AP-035 R3 (S-11 O2, C-00 08.10, K10 / S3-25): LogoInk is mode 9 (8 is S-09's Icon), its maths in its own include
+        /// (code 254 = last ink, 255 = never, a one-code front; the reveal is frames 3..47 of the UiFx duration 1..47), the
+        /// shader only includes it and branches to it - no new keyword (the 4-variant lock above holds).
+        /// </summary>
+        [Test]
+        public void LogoInk_Mod9_KendiIncludeu_AnahtarYok()
+        {
+            Assert.AreEqual(9, (int)UiFxMode.LogoInk, "LogoInk = 9 (Icon = 8 is S-09's)");
+            string logo = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFxLogo.hlsl");
+            string shader = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFx.shader");
+            StringAssert.IsMatch(@"#define DD_LOGO_CODE_MAX\s+254\.0", logo, "254 = last ink, 255 = never");
+            StringAssert.IsMatch(@"#define DD_LOGO_LEAD\s+\(2\.0 / 46\.0\)", logo, "the reveal starts at frame 3 of 1..47");
+            StringAssert.Contains("sampler2D _DD_LogoMap", logo);
+            string code = System.Text.RegularExpressions.Regex.Replace(logo, @"//[^\n]*", string.Empty);
+            StringAssert.DoesNotContain("DD_InkTime", code, "its own maths (S3-25)");
+            StringAssert.DoesNotContain("DD_InkCoverage", code, "its own maths (S3-25)");
+            StringAssert.DoesNotContain("multi_compile", code, "no keyword");
+            StringAssert.Contains("#include \"DD_UiFxLogo.hlsl\"", shader);
+            StringAssert.Contains("DD_IsMode(mode, DD_FX_LOGO)", shader);
+            Assert.AreEqual(UiLogoTimeline.RevealEndSeconds, 46f / 24f, 1e-6f, "UiFx duration = frames 1..47");
         }
     }
 }

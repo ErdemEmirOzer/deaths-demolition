@@ -196,6 +196,22 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// WP-098A (HAREKET-MENU M4) · the bar fills from <paramref name="from"/> to its value over <paramref name="duration"/>
+        /// (Settle), <paramref name="delay"/> s late - showing <paramref name="from"/> until then. Delta: Reduced Motion shows the value.
+        /// </summary>
+        public UiTweenHandle Reveal(float from, UiDuration duration, float delay, int owner = 0)
+        {
+            if (_fill == null)
+            {
+                return default(UiTweenHandle);
+            }
+
+            _fill.fillAmount = Mathf.Clamp01(from);
+            _tween = UiMotion.FillSeconds(_fill, _fill.fillAmount, _target, UiMotionTokens.Seconds(duration), UiEase.Settle, UiMotionClass.Delta, delay, owner);
+            return _tween;
+        }
+
+        /// <summary>
         /// WP-094 (HAREKET-HUD H1 / H2): a piece BROKE OFF - the fill snaps to <paramref name="value01"/> at once (the chunk the
         /// HUD drops carries the lost range away), and the ghost holds the old value 350 ms, then falls (BarGhost, as for an
         /// eased drop; Max(previous, ghost) as ever). A later SetValue of the same value changes nothing.

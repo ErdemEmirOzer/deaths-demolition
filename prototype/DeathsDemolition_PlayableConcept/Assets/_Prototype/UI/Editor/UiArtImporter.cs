@@ -29,6 +29,14 @@ namespace DD.Prototype.UI.EditorTools
         public const string CursorFolder = ArtRoot + "Resources/UI/Cursor/";
         public const string TileFolder = ArtRoot + "Resources/UI/Tiles/";
 
+        /// <summary>
+        /// AP-035 R3 (C-00 08.10, K8): the Logo texture class - the wordmark, its A8 time map and its halo, ≤ 2048 (the Mac
+        /// draws the logo ~1814 px wide). The seal and its fx (UI/LogoMark) stay in the 1024 UI class (the general branch).
+        /// </summary>
+        public const string LogoFolder = ArtRoot + "Resources/UI/Logo/";
+        public const string LogoMarkFolder = ArtRoot + "Resources/UI/LogoMark/";
+        public const int LogoMaxSize = 2048;
+
         [Serializable]
         private sealed class ManifestSprite
         {
@@ -71,6 +79,12 @@ namespace DD.Prototype.UI.EditorTools
             if (assetPath.StartsWith(TileFolder, StringComparison.Ordinal))
             {
                 ImportTile(importer);
+                return;
+            }
+
+            if (assetPath.StartsWith(LogoFolder, StringComparison.Ordinal))
+            {
+                ImportLogo(importer, assetPath);
                 return;
             }
 
@@ -146,6 +160,50 @@ namespace DD.Prototype.UI.EditorTools
             importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
             {
                 name = "Standalone", overridden = true, maxTextureSize = 64, format = TextureImporterFormat.RGBA32
+            });
+        }
+
+        /// <summary>
+        /// Logo class: colour art (wordmark, halo) a single Sprite, sRGB, BC7 (CompressedHQ), full-rect mesh; the time map
+        /// (<c>_timemap_</c>) DD/UI/Fx LogoInk data - a Default texture, LINEAR (sRGB off), Alpha8 from its alpha, never
+        /// compressed (codes 0..254 / 255 exact), Bilinear. All: no mips, Clamp, ≤ 2048, not readable.
+        /// </summary>
+        private static void ImportLogo(TextureImporter importer, string path)
+        {
+            bool map = Path.GetFileNameWithoutExtension(path).IndexOf("_timemap_", StringComparison.Ordinal) >= 0;
+            importer.mipmapEnabled = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.isReadable = false;
+            importer.maxTextureSize = LogoMaxSize;
+            importer.alphaSource = TextureImporterAlphaSource.FromInput;
+            if (map)
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.sRGBTexture = false;
+                importer.alphaIsTransparency = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+                {
+                    name = "Standalone", overridden = true, maxTextureSize = LogoMaxSize, format = TextureImporterFormat.Alpha8
+                });
+                return;
+            }
+
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 100f;
+            importer.sRGBTexture = true;
+            importer.alphaIsTransparency = true;
+            importer.textureCompression = TextureImporterCompression.CompressedHQ;
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.spriteMeshType = SpriteMeshType.FullRect;
+            importer.SetTextureSettings(settings);
+            importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            {
+                name = "Standalone", overridden = true, maxTextureSize = LogoMaxSize, format = TextureImporterFormat.BC7
             });
         }
 

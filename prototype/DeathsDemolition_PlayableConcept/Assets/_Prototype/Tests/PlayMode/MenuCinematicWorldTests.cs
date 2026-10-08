@@ -187,7 +187,10 @@ namespace DD.Prototype.Tests.PlayMode
             yield return new WaitForSecondsRealtime(0.3f);
             Assert.Greater(cinematic.Clock, 0f);
             menu.ShowPane(UiContext.Settings);
+            // WP-098A (HAREKET-MENU §5-3): the world freezes Screen 280 after the pane opens, outside the pane's own motion.
             yield return null;
+            Assert.IsFalse(cinematic.Still, "donma pane girişinden 280 ms sonra başlar");
+            yield return new WaitForSecondsRealtime(UiMenuMotionTokens.FreezeDelay + 0.05f);
             yield return null;
             Assert.IsTrue(cinematic.Still, "panel açıkken durur");
             Assert.AreEqual(0f, cinematic.Clock, 1e-4f, "panel: S01 başlangıcı");
@@ -315,6 +318,170 @@ namespace DD.Prototype.Tests.PlayMode
             yield return KosuHazirOlsun();
             yield return null;
             Assert.AreEqual(0, LiveHeldTargets(), "koşuda tutulan kare hedefi yok (0 MB)");
+        }
+
+        /// <summary>
+        /// WP-098A (C-00 08.10; HAREKET-MENU §5, b31's ~85 ms pane-open frame): the freeze's held frame is the freeze frame itself, as
+        /// Faz 0's cut - on the frame the still begins the camera stays where it stood and draws into the held target (one render of
+        /// the cinematic camera, into the held target), the held image covers the screen at weight 1; the frame after, the camera
+        /// draws the screen at S01's start under the fading held frame. One world render per frame across the open; the still
+        /// begins Screen 280 after the pane (§5-3); the content is built at α 0 on the open's frame (§5-4).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator AnaMenu_Donma_KendiKaresiniTutar_KareBasinaTekRender_IcerikIkiAsamali()
+        {
+            yield return BootTanMainMenuye();
+            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası canlanmadı");
+            yield return Bekle(() => !UiCurtain.IsCovering, 30f, "perde açılmadı");
+            MenuCinematic cinematic = MenuCinematic.Current;
+            Camera cam = cinematic.Camera;
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            yield return new WaitForSecondsRealtime(0.6f);   // the loop moves past S01's start: the freeze has a view to hold
+            Assert.Greater(cinematic.Clock, 0.1f, "döngü ilerliyor");
+            Assert.IsFalse(cinematic.Still);
+
+            var renders = new Dictionary<int, int>();
+            var targets = new Dictionary<int, RenderTexture>();
+            var positions = new Dictionary<int, Vector3>();
+            System.Action<UnityEngine.Rendering.ScriptableRenderContext, Camera> count = (context, c) =>
+            {
+                if (c != cam)
+                {
+                    return;
+                }
+
+                int f = Time.frameCount;
+                renders[f] = renders.TryGetValue(f, out int n) ? n + 1 : 1;
+                targets[f] = c.targetTexture;
+                positions[f] = c.transform.position;
+            };
+            UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += count;
+            try
+            {
+                int freezes = cinematic.FreezeCaptures;
+                menu.ShowPane(UiContext.Settings);
+                Assert.AreEqual(0f, menu.PaneContentGroup.alpha, 1e-4f, "§5-4: içerik açılış karesinde α 0 kurulur");
+                Assert.AreEqual(0f, menu.PaneCardGroup.alpha, 1e-4f, "frameless taşıyıcı da açılış karesinde görünmez");
+                int openFrame = Time.frameCount;
+                yield return null;
+                yield return null;
+                Assert.Greater(Time.frameCount, openFrame);
+                yield return new WaitForSecondsRealtime(0.12f);
+                Assert.Greater(menu.PaneContentGroup.alpha + menu.PaneCardGroup.alpha, 0f, "hareket sonraki karelerde başladı");
+
+                yield return Bekle(() => cinematic.FreezeCaptures > freezes, 5f, "donma kendi karesini tutmadı");
+                int freezeFrame = Time.frameCount;   // this frame's Update set the capture up; it renders next
+                RenderTexture held = cam.targetTexture;
+                Vector3 standing = cam.transform.position;
+                Assert.IsNotNull(held, "donma karesinde kamera tutulan hedefe çiziyor");
+                Assert.AreSame(held, cinematic.HeldTexture, "ekrandaki tutulan kare, kameranın bu kare çizdiği hedef");
+                Assert.AreEqual(1f, cinematic.HeldWeightNow, 1e-4f, "donma karesinde tutulan kare tam ağırlıkta ekranı kaplar");
+                Assert.IsTrue(cinematic.Still);
+
+                yield return null;   // the freeze frame has rendered; this Update gave the camera back at S01's start
+                Assert.IsNull(cam.targetTexture, "donmadan sonraki kare kamera ekrana çiziyor");
+                Assert.AreSame(held, cinematic.HeldTexture, "aynı tutulan kare solar");
+                Assert.Greater(cinematic.HeldWeightNow, 0.9f, "geçiş başında tutulan kare neredeyse tam");
+                Assert.Less((cam.transform.position - MenuCinematic.Shots[0].Start).magnitude, 1e-3f, "kamera S01 başlangıcında");
+                yield return null;
+                yield return null;
+
+                Assert.IsTrue(renders.TryGetValue(freezeFrame, out int atFreeze), "donma karesinde render yok");
+                Assert.AreEqual(1, atFreeze, "donma karesinde tek dünya render'ı");
+                Assert.AreSame(held, targets[freezeFrame], "donma karesinin render'ı tutulan hedefe");
+                Assert.Less(Vector3.Distance(standing, positions[freezeFrame]), 1e-3f, "donma karesi kameranın durduğu yerden");
+                Assert.GreaterOrEqual(AlphaMin(held), 0.99f, "tutulan kare opak");
+                foreach (KeyValuePair<int, int> r in renders)
+                {
+                    Assert.LessOrEqual(r.Value, 1, "karede birden fazla dünya render'ı (kare " + r.Key + ")");
+                }
+
+                Debug.Log("[DD-TEST] wp098.freezeCapture openFrame=" + openFrame + " freezeFrame=" + freezeFrame + " frames=" + renders.Count
+                          + " freezeCaptures=" + cinematic.FreezeCaptures);
+            }
+            finally
+            {
+                UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= count;
+            }
+
+            // Reduced Motion stays a cut: no capture, S01's start at once.
+            menu.ShowPane(UiContext.MainMenu);
+            yield return new WaitForSecondsRealtime(0.5f);
+            int before = cinematic.FreezeCaptures;
+            UiMotion.ReducedMotion = true;
+            yield return null;
+            yield return null;
+            Assert.AreEqual(before, cinematic.FreezeCaptures, "hareketi azalt: kesme, yakalama yok");
+            Assert.Less((cinematic.Camera.transform.position - MenuCinematic.Shots[0].Start).magnitude, 1e-3f);
+        }
+
+        /// <summary>
+        /// WP-098A (HAREKET-MENU M14 / §5-5): PLAY → Selection under the brush curtain - ScreenExiting at t0, the brush covers (the
+        /// M3 wipe), the cinematic camera stops drawing while the cover is whole (UiCurtain.Shut), never more than one world
+        /// render a frame across the transition, and the Selection screen opens under the brush's erase.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator AnaMenu_FircaGecisi_KareBasinaTekDunyaRenderi_KapaliykenCizimYok()
+        {
+            yield return BootTanMainMenuye();
+            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası canlanmadı");
+            yield return Bekle(() => !UiCurtain.IsCovering, 30f, "perde açılmadı");
+            Camera cam = MenuCinematic.Current.Camera;
+            var renders = new Dictionary<int, int>();
+            System.Action<UnityEngine.Rendering.ScriptableRenderContext, Camera> count = (context, c) =>
+            {
+                if (c == cam)
+                {
+                    int f = Time.frameCount;
+                    renders[f] = renders.TryGetValue(f, out int n) ? n + 1 : 1;
+                }
+            };
+
+            bool fast = PrototypeUiFlow.FastTransitions;
+            bool sawShut = false, sawCameraOff = false, sawBrush = false, sawExiting = false;
+            System.Action<UiEvent, string> events = (e, d) => sawExiting |= e == UiEvent.ScreenExiting;
+            UiEvents.Raised += events;
+            UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += count;
+            try
+            {
+                PrototypeUiFlow.FastTransitions = false;
+                PrototypeUiFlow.GoToSelection();
+                Assert.IsTrue(sawExiting, "ScreenExiting t0'da");
+                UiCurtain curtain = UiCurtain.Instance;
+                float deadline = Time.realtimeSinceStartup + 60f;
+                while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+                {
+                    sawBrush |= curtain.Style == UiCurtainStyle.Brush && curtain.BrushVisible && !curtain.DoorsShut;
+                    if (UiCurtain.Shut)
+                    {
+                        sawShut = true;
+                        if (cam != null)
+                        {
+                            sawCameraOff |= !cam.enabled;
+                        }
+                    }
+
+                    yield return null;
+                }
+            }
+            finally
+            {
+                PrototypeUiFlow.FastTransitions = fast;
+                UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= count;
+                UiEvents.Raised -= events;
+            }
+
+            Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name);
+            Assert.IsTrue(sawBrush, "fırça perde örttü (kapılar değil)");
+            Assert.IsTrue(sawShut, "örtü tamamlandı");
+            Assert.IsTrue(sawCameraOff, "§5-5: örtü tamken sinematik kamera çizmez");
+            foreach (KeyValuePair<int, int> r in renders)
+            {
+                Assert.LessOrEqual(r.Value, 1, "geçişte karede birden fazla dünya render'ı (kare " + r.Key + ")");
+            }
+
+            Debug.Log("[DD-TEST] wp098.brushTransition frames=" + renders.Count + " shut=" + sawShut + " cameraOff=" + sawCameraOff);
         }
 
         /// <summary>The held frame targets alive right now (<see cref="MenuCinematic.HeldName"/>).</summary>

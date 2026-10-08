@@ -17,12 +17,16 @@ namespace DD.Prototype.UI
     /// <summary>
     /// How an icon control shows its word: on lift (hover / focus) as a tooltip, always under the glyph (a tab), or beside it
     /// where its screen sets the word (a menu rail: the focused item's word stands next to it - no tooltip).
+    /// WP-098A (S-09 07.10 §8 S1, G2 closed 08.10 with AP-034 v002.1's Menu.Display): <see cref="BelowChosen"/> - the word
+    /// under the chosen tab only; every tab keeps the word's room (the strip never shifts when the choice moves) and the
+    /// others say it as the tooltip on lift.
     /// </summary>
     public enum UiIconLabel
     {
         Tooltip = 0,
         Below = 1,
-        Beside = 2
+        Beside = 2,
+        BelowChosen = 3
     }
 
     /// <summary>
@@ -78,13 +82,21 @@ namespace DD.Prototype.UI
     ///    plus a bar under its word.
     /// The glyph is tinted by token: TextPrimary when it is the choice or a plain button, TextSecondary for the other tabs.
     /// WP-081 ikon v2 B5b: an O1 glyph (<see cref="UiArt.IsO1Glyph"/>) draws through the icon material (DD/UI/Fx Icon) -
-    /// light only ever adds to that token (UiIconMaterialTests T1), and a disabled control shows the flat token.
+    /// lit, then inked within the AD's ceiling - never under token × (1 − (0.06 + 0.06 s)), WP-098A row d (UiIconMaterialTests
+    /// T1) - and a disabled control shows the flat token.
     ///
     /// WP-098A P0b (C-00 07.10) · C12 Brush tab (<see cref="UiControlStyle.Brush"/>, KILAVUZ §4.1 C12, KIT-API §4 "Choice
     /// group"): a frameless <see cref="UiButtonVariant.Brush"/> control - no Nav segment fill, no ChosenBar; a 40 px glyph,
     /// TextSecondary until it is the choice (TextPrimary), the choice's C8 drawn by its <see cref="UiBrushChoiceGroup"/>.
     /// <see cref="UiBrushTokens.TabWidth"/>×<see cref="UiBrushTokens.ControlHeight"/> with the word as the tooltip; with
-    /// the word under the glyph (G2 interim, S-09 07.10 §8 S1: <c>showWords</c>) as wide and as tall as the word needs.
+    /// the word under the glyph (<c>showWords</c>: since G2 closed, S-09 §8 S1, only under the chosen tab -
+    /// <see cref="UiIconLabel.BelowChosen"/>) as wide and as tall as the word needs.
+    ///
+    /// WP-098A (C-00 08.10; DEC-114; HAREKET-MENU §3, M7 / M9 / M18) · the icon states move: lift, press (pointer or a Submit
+    /// pulse), choose, disable, settle and the one idle sheen pass run as tracks on <see cref="UiIconMotion"/>, driven by the
+    /// button's state events (no Update); the glyph's scale and offset ride its RectTransform about its rest, the light (sheen,
+    /// glow, stroke front, the lob's lift) its Icon material. <see cref="PlayNotify"/> is the notification pass. Bind-frame
+    /// changes land at once; Reduced Motion lands every track (the kit's brackets and wash carry the state).
     ///
     /// USAGE: <see cref="UiIconControls.Button"/>, <see cref="UiIconControls.Tab"/>, <see cref="UiIconControls.Tabs"/>.
     /// DON'T: ship an icon without a string key (no literal names), or a glyph under 24 px.
@@ -108,6 +120,11 @@ namespace DD.Prototype.UI
         private bool _tab;
         private string _objectName;
         private UiControlStyle _style;
+
+        // WP-098A · the motion state (UiIconMotion): the pose last written, the glyph's laid-out rest, the bind time.
+        private UiIconPose _shown = UiIconPose.Rest;
+        private Vector2 _glyphRest;
+        private float _boundAt = float.NaN;
 
         /// <summary>WP-098A: the dialect this control is drawn in.</summary>
         public UiControlStyle Style
@@ -202,6 +219,18 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>WP-098A · the word stands under the glyph right now (Below always; BelowChosen while this tab is the choice).</summary>
+        public bool WordVisible
+        {
+            get { return WordsBelow && _button != null && _button.LabelText != null && _button.LabelText.enabled; }
+        }
+
+        /// <summary>The layout keeps a word under the glyph (Below, or BelowChosen whether or not it shows).</summary>
+        private bool WordsBelow
+        {
+            get { return _labelMode == UiIconLabel.Below || _labelMode == UiIconLabel.BelowChosen; }
+        }
+
         /// <summary>The chosen bar is on screen (tabs).</summary>
         public bool BarVisible
         {
@@ -249,20 +278,138 @@ namespace DD.Prototype.UI
                 _bar.gameObject.SetActive(false);
             }
 
-            if (labelMode == UiIconLabel.Tooltip)
+            if (labelMode == UiIconLabel.Tooltip || labelMode == UiIconLabel.BelowChosen)
             {
                 button.LiftChanged += OnLift;
             }
 
+            // WP-098A: the state tracks (UiIconMotion). Handlers are bound once here; the events fire at state changes only.
+            _boundAt = UiMotion.Now(UiClock.Unscaled);
+            button.IconDriven = true;
+            button.LiftChanged += OnLiftMotion;
+            button.PressChanged += OnPressMotion;
+            button.ChoiceChanged += OnChoiceMotion;
+            button.InteractableChanged += OnInteractableMotion;
+
             Layout();
             RefreshState();
+            ApplyPose(RestPose(), true);
+        }
+
+        // ================================================================== WP-098A · motion (UiIconMotion)
+
+        /// <summary>The pose on screen now (the tracks start from it).</summary>
+        public UiIconPose ShownPose
+        {
+            get { return _shown; }
+        }
+
+        /// <summary>Hovered or focused (the idle candidate's condition).</summary>
+        public bool Lifted
+        {
+            get { return _button != null && _button.IsLifted; }
+        }
+
+        /// <summary>A Submit-pressed choice waits for the press's contact (UiIconMotion).</summary>
+        internal bool PendingChoose { get; set; }
+
+        /// <summary>True when <paramref name="now"/> is this control's bind time: its changes then land at once (no track on screen open).</summary>
+        internal bool BoundAt(float now)
+        {
+            return now == _boundAt;
+        }
+
+        /// <summary>
+        /// The composite rest (HAREKET-MENU §3, council §1.3): Reduced Motion or disabled → Rest; lifted → Lifted (whether or not
+        /// chosen); chosen → Chosen; else Rest.
+        /// </summary>
+        public UiIconPose RestPose()
+        {
+            if (UiMotion.ReducedMotion || _button == null || !_button.IsInteractable())
+            {
+                return UiIconPose.Rest;
+            }
+
+            if (_button.IsLifted)
+            {
+                return UiIconPose.Lifted;
+            }
+
+            return _button.IsSelectedChoice ? UiIconPose.Chosen : UiIconPose.Rest;
+        }
+
+        /// <summary>
+        /// Write <paramref name="pose"/>: the glyph's scale and offset about its laid-out rest (AP-028 px24 units, + down: Unity's y
+        /// is − that × the glyph's px24 size), the Icon channels with the lit flag as the state set it. A step below 1/512 is
+        /// skipped mid-track; <paramref name="exact"/> (a track's end, a landing) always writes the pose itself, so every rest is
+        /// exact - never left a sub-threshold step short of its target (WP-098A r3-w4).
+        /// </summary>
+        internal void ApplyPose(UiIconPose pose, bool exact = false)
+        {
+            if (_glyph == null)
+            {
+                return;
+            }
+
+            if (exact ? pose.Same(_shown) : pose.Near(_shown, 1f / 512f))
+            {
+                return;
+            }
+
+            _shown = pose;
+            var rect = (RectTransform)_glyph.transform;
+            float px24 = (int)_size * (64f / 52f) / 24f;
+            rect.localScale = new Vector3(pose.Scale, pose.Scale, 1f);
+            rect.anchoredPosition = _glyphRest + new Vector2(0f, -pose.OffsetY * px24);
+            if (_material != null)
+            {
+                _material.SetIcon(new Vector3(pose.Sheen, pose.Glow, 0f), new Vector3(pose.Draw, _material.Parameters.y, 1f), pose.Lift);
+            }
+        }
+
+        /// <summary>A notification's pass (DEC-114 / §3 notify, 600 ms): the sheen once and a 1.05 nudge.</summary>
+        public void PlayNotify()
+        {
+            UiIconMotion.Play(this, UiIconTrack.Notify);
+        }
+
+        private void OnLiftMotion(bool lifted)
+        {
+            if (lifted)
+            {
+                UiIconMotion.Focused(this);
+                UiIconMotion.Play(this, UiIconTrack.Lift);
+            }
+            else
+            {
+                UiIconMotion.Unfocused(this);
+                UiIconMotion.Play(this, UiIconTrack.Settle);
+            }
+        }
+
+        private void OnPressMotion(bool pressed)
+        {
+            if (pressed)
+            {
+                UiIconMotion.Play(this, UiIconTrack.Press);
+            }
+        }
+
+        private void OnChoiceMotion(bool chosen)
+        {
+            UiIconMotion.Play(this, chosen ? UiIconTrack.Choose : UiIconTrack.Settle);
+        }
+
+        private void OnInteractableMotion(bool usable)
+        {
+            UiIconMotion.Play(this, usable ? UiIconTrack.Settle : UiIconTrack.Disable);
         }
 
         /// <summary>Re-read the words (a language change rebuilds screens; a pane that stays can call this).</summary>
         public void RefreshText()
         {
             gameObject.name = _objectName ?? AccessibleName;
-            if (_labelMode == UiIconLabel.Below && _button.LabelText != null)
+            if (WordsBelow && _button.LabelText != null)
             {
                 _button.SetText(ShortLabel);
             }
@@ -312,6 +459,17 @@ namespace DD.Prototype.UI
             {
                 _material.SetIconLit(usable);   // disabled: the light goes out, the flat token stays (AP-028 render(): disabled = flat)
             }
+
+            if (_labelMode == UiIconLabel.BelowChosen && _button.LabelText != null)
+            {
+                // G2 (S-09 §8 S1): the chosen tab says its word under the glyph; the others keep the room and use the tooltip.
+                bool word = _tab && chosen;
+                _button.LabelText.enabled = word;
+                if (word)
+                {
+                    UiTooltip.Hide((RectTransform)transform);
+                }
+            }
         }
 
         private void Layout()
@@ -322,7 +480,7 @@ namespace DD.Prototype.UI
             {
                 LayoutBrushTab(rect, glyphRect);
             }
-            else if (_labelMode == UiIconLabel.Below)
+            else if (WordsBelow)
             {
                 TMP_Text label = _button.LabelText;
                 label.fontSize = UiTokens.FontSize(UiType.Label);   // the tab's word: Label 15 (bold, upper case), not the button's Body
@@ -358,16 +516,28 @@ namespace DD.Prototype.UI
             }
 
             _glyph.transform.SetAsLastSibling();
+            KeepGlyphRest();
+        }
+
+        /// <summary>WP-098A: a relayout moves the glyph's rest; the pose on screen keeps its offset about the new one.</summary>
+        private void KeepGlyphRest()
+        {
+            var glyphRect = (RectTransform)_glyph.transform;
+            _glyphRest = glyphRect.anchoredPosition;
+            if (_shown.OffsetY != 0f)
+            {
+                glyphRect.anchoredPosition = _glyphRest + new Vector2(0f, -_shown.OffsetY * ((int)_size * (64f / 52f) / 24f));
+            }
         }
 
         /// <summary>
         /// WP-098A P0b · a C12 tab: 72×64 with the glyph centred (the word is the tooltip), or - with the word under the glyph
-        /// (G2 interim) - at least 72 wide, as wide as the word plus a grid unit each side, as tall as glyph + word measured
+        /// (Below; BelowChosen keeps the room on every tab, the word shows under the chosen one) - at least 72 wide, as wide as the word plus a grid unit each side, as tall as glyph + word measured
         /// at the current text scale (U2: from the text, never from a character count).
         /// </summary>
         private void LayoutBrushTab(RectTransform rect, RectTransform glyphRect)
         {
-            if (_labelMode != UiIconLabel.Below)
+            if (!WordsBelow)
             {
                 rect.sizeDelta = new Vector2(UiBrushTokens.TabWidth, UiBrushTokens.ControlHeight);
                 glyphRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -405,7 +575,7 @@ namespace DD.Prototype.UI
 
         private void OnLift(bool lifted)
         {
-            if (lifted)
+            if (lifted && !WordVisible)   // BelowChosen: the chosen tab's word is already under it
             {
                 UiTooltip.Show((RectTransform)transform, ShortLabel);
             }
@@ -418,6 +588,15 @@ namespace DD.Prototype.UI
         private void OnDisable()
         {
             UiTooltip.Hide((RectTransform)transform);
+            UiIconMotion.Forget(this);   // WP-098A: no run, no idle candidate on a hidden control
+        }
+
+        private void OnEnable()
+        {
+            if (_glyph != null)
+            {
+                ApplyPose(RestPose(), true);   // WP-098A: a control disabled mid-track comes back at its rest
+            }
         }
 
         /// <summary>Tests: forget the missing keys recorded so far.</summary>
@@ -448,13 +627,14 @@ namespace DD.Prototype.UI
             // Icon: the glyph in a square plate. Ghost (a menu rail, O1): the bare glyph, the plate only as the hover wash.
             UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, variant, onClick);
             UiIconButton icon = button.gameObject.AddComponent<UiIconButton>();
-            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, label == UiIconLabel.Below ? UiIconLabel.Tooltip : label, size, false);
+            bool below = label == UiIconLabel.Below || label == UiIconLabel.BelowChosen;   // a button has no word under it
+            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, below ? UiIconLabel.Tooltip : label, size, false);
             return icon;
         }
 
         /// <summary>
         /// A tab: glyph over its short word, a Nav segment; <see cref="UiIconButton.SetSelected"/> marks the choice.
-        /// WP-098A: <paramref name="style"/> Brush is the C12 tab (frameless, 40 px glyph, the word under it - the G2 interim;
+        /// WP-098A: <paramref name="style"/> Brush is the C12 tab (frameless, 40 px glyph, the word under it;
         /// <see cref="UiBrushKit.Tabs"/> builds the strip and its one C8, and drops the word with <c>showWords: false</c>).
         /// </summary>
         public static UiIconButton Tab(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
@@ -463,7 +643,7 @@ namespace DD.Prototype.UI
             return Tab(parent, iconKey, nameKey, nameFallback, onClick, shortKey, shortFallback, style, UiIconLabel.Below);
         }
 
-        /// <summary>WP-098A: a tab whose word is <paramref name="label"/> (Below, or Tooltip once the glyph speaks for itself - G2).</summary>
+        /// <summary>WP-098A: a Brush tab whose word is <paramref name="label"/> (Below; BelowChosen - G2 closed: the chosen tab only; Tooltip).</summary>
         internal static UiIconButton Tab(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
             string shortKey, string shortFallback, UiControlStyle style, UiIconLabel label)
         {

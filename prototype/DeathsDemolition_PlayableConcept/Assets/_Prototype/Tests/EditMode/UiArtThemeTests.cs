@@ -187,7 +187,7 @@ namespace DD.Prototype.Tests.EditMode
             Sprite[] glyphs = Resources.LoadAll<Sprite>(UiTheme.GlyphAtlas);
             Sprite[] frames = Resources.LoadAll<Sprite>(UiTheme.FrameAtlas);
             Assert.AreEqual(UiArtImporter.ManifestSpriteNames(G1ManifestPath).Count, glyphs.Length,
-                "G1: every manifest sprite loads (148 v004, 166 R2, 196 with ikon v2 B5a's 30 O1 keys)");
+                "G1: every manifest sprite loads (148 v004, 166 R2, 196 with ikon v2 B5a's 30 O1 keys, 199 with AP-034 v002.1's I6 three)");
             Assert.AreEqual(FrameKeys.Length, frames.Length, "A4: 17 çerçeve/kit + 2 tuş kapağı");
 
             var names = new HashSet<string>(StringComparer.Ordinal);
@@ -878,6 +878,98 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// WP-098A (C-00 08.10) · AP-034 v002.1 I6 into G1 (K/wp-098/tools/merge_ap034_i6_g1.py, B5a's cell encoding): the merge
+        /// record, its three O1 cells in the next free cells with ≥ 4 px of the 52² box free, every B5a O1 cell's rect where it
+        /// was. G2 MUST (KIT-KILAVUZU §8 S1, AP034-v002-AD MUST-2): Menu.Display is its own glyph - another sprite, another cell,
+        /// its ink overlapping Menu.Graphics' ≤ 0.70 (AD: 24 px silhouette IoU ≤ 0.70; P-07 measured 0.156) - and the Settings
+        /// DISPLAY key draws it: Settings.Display is re-aliased from Menu.Graphics to Menu.Display (same rect, same FileId).
+        /// </summary>
+        [Test]
+        public void AP034_I6_Birlesimi_DisplayGraphicstenAyri_SettingsDisplayDisplayCizer()
+        {
+            string json = File.ReadAllText(G1ManifestPath);
+            G1Manifest manifest = JsonUtility.FromJson<G1Manifest>(json);
+            G1Merge merge = null;
+            foreach (G1Merge m in manifest.merges ?? Array.Empty<G1Merge>())
+            {
+                merge = m != null && m.slice == "WP-098A AP-034 I6" ? m : merge;
+            }
+
+            Assert.IsNotNull(merge, "the AP-034 I6 merge record");
+            Assert.AreEqual(new[] { 0f, 256f }, merge.familyFrame256, "the O1 family frame (SVG viewBox)");
+            Assert.AreEqual(64f / 52f, merge.ddIconSdAp, 1e-5f, "DD_ICON_SD_AP");
+            Assert.IsEmpty(merge.replaced, "no cell replaced in place");
+            CollectionAssert.AreEqual(new[] { "Menu.CycleLeft", "Menu.CycleRight", "Menu.Display" }, merge.added);
+            StringAssert.IsMatch("\"realiased\":\\s*\\{\\s*\"Settings\\.Display\":\\s*\"Menu\\.Display\"", json, "G2: Settings.Display → Menu.Display");
+
+            var byName = new Dictionary<string, G1Sprite>(StringComparer.Ordinal);
+            foreach (G1Sprite sprite in manifest.atlases[0].sprites)
+            {
+                byName[sprite.name] = sprite;
+            }
+
+            Assert.AreEqual("Menu.Display", byName["Settings.Display"].aliasOf, "Settings.Display draws the Display glyph");
+            Assert.AreNotEqual(byName["Menu.Display"].x + byName["Menu.Display"].y * 1024, byName["Menu.Graphics"].x + byName["Menu.Graphics"].y * 1024,
+                "Display has its own cell");
+
+            UiTheme theme = UiTheme.Active;
+            Sprite display = theme.Icon("Menu.Display"), graphics = theme.Icon("Menu.Graphics");
+            Assert.IsNotNull(display, "Menu.Display in the theme");
+            Assert.IsNotNull(theme.Icon("Menu.CycleLeft"));
+            Assert.IsNotNull(theme.Icon("Menu.CycleRight"));
+            Assert.AreNotSame(graphics, display, "Display ≠ Graphics (sprite)");
+            Assert.AreNotEqual(graphics.rect, display.rect, "Display ≠ Graphics (cell)");
+
+            var png = new Texture2D(2, 2);
+            try
+            {
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtFolder + "/G1/DD_G1_glyphs_sdf_1024.png")), "G1 png");
+                Color32[] px = png.GetPixels32();
+                int width = png.width;
+                foreach (string name in merge.added)
+                {
+                    G1Sprite cell = byName[name];
+                    int margin = int.MaxValue;
+                    for (int y = 0; y < cell.h; y++)
+                    {
+                        for (int x = 0; x < cell.w; x++)
+                        {
+                            if (px[(cell.y + y) * width + cell.x + x].a >= 128)
+                            {
+                                margin = Math.Min(margin, Math.Min(Math.Min(x, cell.w - 1 - x), Math.Min(y, cell.h - 1 - y)));
+                            }
+                        }
+                    }
+
+                    Assert.AreNotEqual(int.MaxValue, margin, name + ": ink");
+                    Assert.GreaterOrEqual(margin, 4, name + ": the ink keeps 4 px from the 52² box");
+                }
+
+                G1Sprite d = byName["Menu.Display"], g = byName["Menu.Graphics"], s = byName["Settings.Display"];
+                int both = 0, either = 0, aliasDiff = 0;
+                for (int y = 0; y < 52; y++)
+                {
+                    for (int x = 0; x < 52; x++)
+                    {
+                        bool inD = px[(d.y + y) * width + d.x + x].a >= 128, inG = px[(g.y + y) * width + g.x + x].a >= 128;
+                        both += inD && inG ? 1 : 0;
+                        either += inD || inG ? 1 : 0;
+                        aliasDiff += px[(d.y + y) * width + d.x + x].a != px[(s.y + y) * width + s.x + x].a ? 1 : 0;
+                    }
+                }
+
+                float iou = both / (float)Math.Max(either, 1);
+                Debug.Log("[DD-TEST] wp098a.i6 display/graphics IoU " + iou.ToString("0.000"));
+                Assert.LessOrEqual(iou, 0.70f, "G2: Display ≠ Graphics (ink IoU ≤ 0.70)");
+                Assert.AreEqual(0, aliasDiff, "Settings.Display = Menu.Display (G2)");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(png);
+            }
+        }
+
         [Serializable]
         private sealed class G1Manifest
         {
@@ -1190,6 +1282,63 @@ namespace DD.Prototype.Tests.EditMode
             {
                 UnityEngine.Object.DestroyImmediate(parentGo);
             }
+        }
+        // ============================================================ AP-035 R3 · Logo class (S-11 O2, C-00 08.10) - own block
+
+        /// <summary>AP-035 R3 (C-00 08.10, K8): the Logo class - the wordmark, its A8 time map and its halo.</summary>
+        private const string LogoFolder = ArtFolder + "/Logo";
+        private const string LogoMarkFolder = ArtFolder + "/LogoMark";
+        private const long LogoBudgetBytes = 8L * 1024 * 1024;
+        private const int LogoMaxEdge = 2048;
+
+        /// <summary>
+        /// AP-035 R3 (C-00 08.10, K8; Wallpapers precedent): the Logo class (UI/Logo: wordmark, A8 time map, halo) is ≤ 2048 per
+        /// edge with no mips under its own 8 MB source budget; the time map is Alpha8, linear, never alpha-as-transparency; the
+        /// seal and its fx (UI/LogoMark) stay in the 1024 UI class. (The UI 12 MB sum in DokuSinifi_1024VeButce still counts the
+        /// Logo files too - a conservative double count, 1.42 + 2.03 MB.)
+        /// </summary>
+        [Test]
+        public void DokuSinifi_Logo2048VeButce_LogoMark1024()
+        {
+            long logo = 0;
+            foreach (string file in Directory.GetFiles(LogoFolder, "*.png", SearchOption.AllDirectories))
+            {
+                logo += new FileInfo(file).Length;
+            }
+
+            Debug.Log("[DD-TEST] ui.art.budget logo=" + logo + " / " + LogoBudgetBytes);
+            Assert.Greater(logo, 0, "Logo sınıfı boş: " + LogoFolder);
+            Assert.LessOrEqual(logo, LogoBudgetBytes, "Logo sınıfı kaynak bütçeyi aşıyor: " + logo + " B");
+
+            Texture2D[] logoTextures = Resources.LoadAll<Texture2D>("UI/Logo");
+            Assert.AreEqual(3, logoTextures.Length, "wordmark + time map + halo");
+            foreach (Texture2D t in logoTextures)
+            {
+                Assert.LessOrEqual(Mathf.Max(t.width, t.height), LogoMaxEdge, t.name + " Logo sınıfı 2048 tavanını aşıyor");
+                Assert.AreEqual(1, t.mipmapCount, t.name + " Logo dokusunda mipmap olmamalı");
+            }
+
+            Texture2D map = Resources.Load<Texture2D>(UiLogoAssets.TimeMapResource);
+            Assert.IsNotNull(map);
+            Assert.AreEqual(TextureFormat.Alpha8, map.format, "zaman haritası Alpha8");
+            var importer = (UnityEditor.TextureImporter)UnityEditor.AssetImporter.GetAtPath(UiArtImporter.LogoFolder + "ap035_logo_wordmark_timemap_2048x768.png");
+            Assert.IsNotNull(importer);
+            Assert.IsFalse(importer.sRGBTexture, "zaman haritası doğrusal");
+            Assert.IsFalse(importer.alphaIsTransparency, "zaman haritası veri, saydamlık değil");
+
+            Texture2D[] marks = Resources.LoadAll<Texture2D>("UI/LogoMark");
+            Assert.AreEqual(5, marks.Length, "seal, glow, blot, ring, backing");
+            var table = new System.Text.StringBuilder("[DD-TEST] ap035.logo.textures (name size format editorRuntimeBytes)");
+            foreach (Texture2D t in logoTextures) table.Append('\n').Append(t.name).Append(' ').Append(t.width).Append('x').Append(t.height).Append(' ').Append(t.format).Append(' ').Append(UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t));
+            foreach (Texture2D t in marks) table.Append('\n').Append(t.name).Append(' ').Append(t.width).Append('x').Append(t.height).Append(' ').Append(t.format).Append(' ').Append(UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t));
+            Debug.Log(table.ToString());
+            foreach (Texture2D t in marks)
+            {
+                Assert.LessOrEqual(Mathf.Max(t.width, t.height), 1024, t.name + " UI sınıfı 1024² tavanını aşıyor (ADR-015-1)");
+                Assert.AreEqual(1, t.mipmapCount, t.name + " UI dokusunda mipmap olmamalı");
+            }
+
+            StringAssert.StartsWith(UiArtImporter.ArtRoot, LogoMarkFolder + "/", "LogoMark under the UI art root (general 1024 branch)");
         }
     }
 }

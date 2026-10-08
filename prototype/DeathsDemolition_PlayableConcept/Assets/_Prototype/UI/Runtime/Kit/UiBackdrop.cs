@@ -68,6 +68,41 @@ namespace DD.Prototype.UI
         private Vector2 _look;
         private bool _built;
 
+        // WP-098A (HAREKET-MENU M16): layers over the world that follow the same look - the title 4 px (Far), the ambient motes
+        // 12 px (Near); the rail never (0). Written only on a visible change (¼ px).
+        private struct Follower
+        {
+            public RectTransform Rect;
+            public Vector2 Rest;
+            public float Pixels;
+            public Vector2 Written;
+        }
+
+        private readonly System.Collections.Generic.List<Follower> _followers = new System.Collections.Generic.List<Follower>(4);
+
+        /// <summary>WP-098A (M16, SHOULD camera): the look the menu follows now (−1..1, zero under Reduced Motion) - the world camera's sway.</summary>
+        public static Vector2 ActiveLook { get; private set; }
+
+        /// <summary>The followed look (tests).</summary>
+        public Vector2 Look
+        {
+            get { return _look; }
+        }
+
+        /// <summary>
+        /// WP-098A (M16) · <paramref name="rect"/> drifts <paramref name="pixels"/> against the look from where it stands now (its rest),
+        /// with the bands' 0.20 s follow; Reduced Motion holds it at rest. Build time; the rest is not re-read.
+        /// </summary>
+        public void Follow(RectTransform rect, float pixels)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            _followers.Add(new Follower { Rect = rect, Rest = rect.anchoredPosition, Pixels = pixels, Written = Vector2.zero });
+        }
+
         /// <summary>True when the plates loaded (a build without MenuPlates keeps the old veil backdrop).</summary>
         public bool HasPlates
         {
@@ -715,6 +750,7 @@ namespace DD.Prototype.UI
             if (UiMotion.ReducedMotion)
             {
                 _look = Vector2.zero;
+                ActiveLook = _look;
                 Place(_look);
                 SetLantern(1f);
                 return;
@@ -724,6 +760,7 @@ namespace DD.Prototype.UI
             float dt = Mathf.Clamp(deltaSeconds, 0f, 0.1f);
             float k = 1f - Mathf.Exp(-dt / FollowSeconds);
             _look += (look - _look) * k;
+            ActiveLook = _look;
             Place(_look);
 
             float breath = 0.5f + 0.5f * Mathf.Sin(now * (2f * Mathf.PI / BreathPeriod));
@@ -797,6 +834,28 @@ namespace DD.Prototype.UI
             SetBand(_mid, -look * MidParallax);
             SetBand(_lantern != null ? _lantern.rectTransform : null, -look * MidParallax);
             SetBand(_near, -look * NearParallax);
+            for (int i = 0; i < _followers.Count; i++)
+            {
+                Follower f = _followers[i];
+                if (f.Rect == null)
+                {
+                    continue;
+                }
+
+                Vector2 offset = -look * f.Pixels;
+                offset = new Vector2(Mathf.Round(offset.x * 4f) * 0.25f, Mathf.Round(offset.y * 4f) * 0.25f);
+                if (offset != f.Written)
+                {
+                    f.Written = offset;
+                    f.Rect.anchoredPosition = f.Rest + offset;
+                    _followers[i] = f;
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            ActiveLook = Vector2.zero;   // WP-098A: no menu, no sway
         }
 
         private static void SetBand(RectTransform band, Vector2 offset)

@@ -345,7 +345,7 @@ namespace DD.Prototype.UI
             return readout != null;
         }
 
-        /// <summary>A soft ink pad as <paramref name="host"/>'s first child: the host's rect plus the pad's falloff, SurfaceBase α 0.82.</summary>
+        /// <summary>A soft ink pad as <paramref name="host"/>'s first child: the host's rect plus the pad's falloff, SurfaceBase α <see cref="ReadoutPadAlpha"/>.</summary>
         public static Image AddPad(Transform host, Transform existing)
         {
             if (existing != null)
@@ -415,8 +415,13 @@ namespace DD.Prototype.UI
 
         public const string ReadoutPadName = "InkPad";
 
-        /// <summary>The readout pad's alpha (≥ 0.77 holds TextPrimary at 4.5:1 over V6's brightest sky; the edge is soft).</summary>
-        public const float ReadoutPadAlpha = 0.82f;
+        /// <summary>
+        /// The pads' alpha (≥ 0.77 holds TextPrimary at 4.5:1 over V6's brightest sky; the edge is soft). WP-098A (C-00 08.10,
+        /// AP-034 v002.1 MUST-3 K5 / K5b, P-07's recommendation): the rail's pad carries the O1 icons' ground, and an icon is a
+        /// boundary (≥ 3:1 as drawn, worst ring pixel against the core): at 0.82 the day glare's worst pixel read 2.62:1
+        /// (B1 3.07), at 0.87 3.05:1 (B1 3.41) - so ≥ 0.87. The build line's pad shares it.
+        /// </summary>
+        public const float ReadoutPadAlpha = 0.87f;
 
         private static readonly System.Collections.Generic.Dictionary<int, Material> s_underlay = new System.Collections.Generic.Dictionary<int, Material>();
 

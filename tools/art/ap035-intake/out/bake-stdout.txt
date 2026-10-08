@@ -1,0 +1,273 @@
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:217: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  return Image.fromarray(out, "RGBA")
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:344: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  Image.fromarray(np.dstack([timemap, timemap]), "LA").save(os.path.join(OUT, NAMES["timemap"]), optimize=True)
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:353: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  halo_img = Image.fromarray(np.dstack([np.full(halo.shape, 255, np.uint8)] * 3 + [np.round(halo * 255).astype(np.uint8)]), "RGBA")
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:356: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  halo_img = Image.fromarray(np.dstack([np.full((HALO_H, HALO_W), 255, np.uint8)] * 3 + [np.asarray(halo_img)[..., 3]]), "RGBA")
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:388: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  Image.fromarray(np.dstack([np.full((256, 256), 255, np.uint8)] * 3 + [np.asarray(back_img)]), "RGBA").save(os.path.join(OUT, NAMES["backing"]), optimize=True)
+/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/ap035-r3/wt/tools/art/ap035-intake/bake_ap035_logo.py:530: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+  tm = Image.fromarray(timemap.astype(np.float32), "F").resize((960, 360), Image.BILINEAR)   # bilinear on the codes, as the GPU
+{
+ "wordmark": {
+  "file": "ap035_logo_wordmark_2048x768.png",
+  "size": [
+   2048,
+   768
+  ],
+  "mode": "RGBA",
+  "bytes": 1148136,
+  "sha256": "50ff69fb8a1a1579b586d3b2ede14320d2e7c049093d2a99f5b2e7d1132e91e0"
+ },
+ "timemap": {
+  "file": "ap035_logo_wordmark_timemap_2048x768.png",
+  "size": [
+   2048,
+   768
+  ],
+  "mode": "LA",
+  "bytes": 69079,
+  "sha256": "2c90fc1586061b17641230add79f57f4068243f7169ca6374c1d582935e71b06"
+ },
+ "seal": {
+  "file": "ap035_logo_seal_768.png",
+  "size": [
+   768,
+   768
+  ],
+  "mode": "RGBA",
+  "bytes": 425571,
+  "sha256": "fb224cb6b85b79eef3d9784cd14197b27591d5a8bccd0670ad3110fbb7f9dd13"
+ },
+ "glow": {
+  "file": "ap035_logo_seal_glow.png",
+  "size": [
+   384,
+   384
+  ],
+  "mode": "RGBA",
+  "bytes": 42535,
+  "sha256": "1210d3a658a7b4232323171a372ffe8a319f8dff17eeee3880aa9f45e2fa72e9"
+ },
+ "blot": {
+  "file": "ap035_logo_seal_blot.png",
+  "size": [
+   384,
+   384
+  ],
+  "mode": "RGBA",
+  "bytes": 19440,
+  "sha256": "09c9db2946161d3b315d485149ee29656413018dbd3494585fb435e2175cd41e"
+ },
+ "ring": {
+  "file": "ap035_logo_impact_ring.png",
+  "size": [
+   492,
+   512
+  ],
+  "mode": "RGBA",
+  "bytes": 266972,
+  "sha256": "7dc19f67cddc3d56470df4b84b6e6efe3899ce2c39d210074a5d942261d87de5"
+ },
+ "halo": {
+  "file": "ap035_logo_wordmark_halo_1024x384.png",
+  "size": [
+   1024,
+   384
+  ],
+  "mode": "RGBA",
+  "bytes": 63410,
+  "sha256": "90613eb2ff343f9e5fe525542a77d79c767d071f4ecab2074a7af5a00af2e4fc"
+ },
+ "backing": {
+  "file": "ap035_logo_seal_backing_256.png",
+  "size": [
+   256,
+   256
+  ],
+  "mode": "RGBA",
+  "bytes": 6352,
+  "sha256": "4b840eed25e1ac3abdbee0d2e064c186d13ac6d9f78fd548b5bd45569bdcc87f"
+ },
+ "total_bytes": 2041495
+}
+{
+ "owner_from_masks_equals_owner_map": true,
+ "owner_covers_master_alpha": true,
+ "reveal_frames": [
+  3.0000000000005143,
+  45.671335759743464
+ ],
+ "plateaus": {
+  "repaired_progress": true,
+  "v002_progress": {
+   "regions": 324,
+   "pixels_4096": 503655,
+   "largest_pixels_4096": 14857,
+   "inked_pixels_4096": 2521593,
+   "min_px": 145
+  },
+  "used": {
+   "regions": 236,
+   "pixels_4096": 87610,
+   "largest_pixels_4096": 3629,
+   "inked_pixels_4096": 2521593,
+   "min_px": 145
+  }
+ },
+ "timemap": {
+  "size": [
+   2048,
+   768
+  ],
+  "ink_texels_le_254": true,
+  "ink_neighbours_le_254": true,
+  "never_texels_255": 463211,
+  "never_fraction": 0.2945016225179036,
+  "border_all_255": true,
+  "min": 0,
+  "max_inked": 246,
+  "first_ink_frame": 3.0000000000005143,
+  "last_ink_frame": 45.671335759743464,
+  "alpha_mismatch_texels": 0
+ },
+ "halo": {
+  "alpha_within_4_texels_min": 1.0,
+  "alpha_beyond_dilate": 0.0,
+  "halo_1024_vs_2048": {
+   "max_abs_alpha": 0.05490196078431375,
+   "mean_abs_alpha": 0.0005976633308759696,
+   "p999_abs_alpha": 0.027450980392156876
+  }
+ },
+ "seal_backing": {
+  "filled_fraction": 0.6953684488932291,
+  "inside_ring_filled": true
+ },
+ "reveal_vs_intro_png": [
+  {
+   "frame": 4,
+   "truth_px": 3295,
+   "iou_a050": 0.8493813878429263,
+   "ours_px_a050": 3581,
+   "iou_a011": 0.8461137193531559,
+   "ours_px_a011": 3783
+  },
+  {
+   "frame": 6,
+   "truth_px": 13727,
+   "iou_a050": 0.9395700174317257,
+   "ours_px_a050": 12977,
+   "iou_a011": 0.9491258240183433,
+   "ours_px_a011": 13475
+  },
+  {
+   "frame": 8,
+   "truth_px": 17606,
+   "iou_a050": 0.9518568687210747,
+   "ours_px_a050": 16977,
+   "iou_a011": 0.9708407671721677,
+   "ours_px_a011": 17743
+  },
+  {
+   "frame": 12,
+   "truth_px": 28249,
+   "iou_a050": 0.9535244543178533,
+   "ours_px_a050": 27151,
+   "iou_a011": 0.9718495864321958,
+   "ours_px_a011": 28489
+  },
+  {
+   "frame": 16,
+   "truth_px": 39919,
+   "iou_a050": 0.950861056262341,
+   "ours_px_a050": 38133,
+   "iou_a011": 0.971322462431442,
+   "ours_px_a011": 40233
+  },
+  {
+   "frame": 20,
+   "truth_px": 54079,
+   "iou_a050": 0.941577747378021,
+   "ours_px_a050": 52368,
+   "iou_a011": 0.9596406927959265,
+   "ours_px_a011": 55218
+  },
+  {
+   "frame": 24,
+   "truth_px": 71197,
+   "iou_a050": 0.9518632019366665,
+   "ours_px_a050": 68289,
+   "iou_a011": 0.9695572590523114,
+   "ours_px_a011": 71913
+  },
+  {
+   "frame": 28,
+   "truth_px": 79553,
+   "iou_a050": 0.9492759971465402,
+   "ours_px_a050": 76200,
+   "iou_a011": 0.9688215455060191,
+   "ours_px_a011": 80398
+  },
+  {
+   "frame": 32,
+   "truth_px": 93934,
+   "iou_a050": 0.9499491439226988,
+   "ours_px_a050": 90110,
+   "iou_a011": 0.9675400412388312,
+   "ours_px_a011": 95001
+  },
+  {
+   "frame": 36,
+   "truth_px": 106716,
+   "iou_a050": 0.9474664159304393,
+   "ours_px_a050": 102475,
+   "iou_a011": 0.9653664205257716,
+   "ours_px_a011": 108073
+  },
+  {
+   "frame": 40,
+   "truth_px": 123119,
+   "iou_a050": 0.949044070648964,
+   "ours_px_a050": 117777,
+   "iou_a011": 0.9669416233570146,
+   "ours_px_a011": 124397
+  },
+  {
+   "frame": 44,
+   "truth_px": 135232,
+   "iou_a050": 0.9508928571428571,
+   "ours_px_a050": 129153,
+   "iou_a011": 0.9680280587843126,
+   "ours_px_a011": 136348
+  },
+  {
+   "frame": 46,
+   "truth_px": 135342,
+   "iou_a050": 0.9510110470347045,
+   "ours_px_a050": 129219,
+   "iou_a011": 0.9680885728560981,
+   "ours_px_a011": 136453
+  }
+ ],
+ "readability": {
+  "1080_loading_846": {
+   "alpha_mae": 0.003297979817919964,
+   "edge_sharpness_ratio": 0.9831333836626521,
+   "iou_at_0_5": 0.9986558872140027
+  },
+  "1080_menu_960": {
+   "alpha_mae": 0.002978678740014524,
+   "edge_sharpness_ratio": 0.9825801638267289,
+   "iou_at_0_5": 0.9985772499168774
+  },
+  "mac_menu_1814": {
+   "alpha_mae": 0.001467711087288538,
+   "edge_sharpness_ratio": 0.9770765262244558,
+   "iou_at_0_5": 0.9986233855624315
+  }
+ }
+}
+installed 8 files + prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/UI/Art/logo-intake.json

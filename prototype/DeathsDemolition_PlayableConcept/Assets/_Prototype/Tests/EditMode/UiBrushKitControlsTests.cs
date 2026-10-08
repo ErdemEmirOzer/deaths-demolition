@@ -348,7 +348,9 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(UiControlStyle.Brush, tab.Style);
                 Assert.AreEqual(UiButtonVariant.Brush, tab.Button.Variant, "çerçevesiz: Nav dolgusu yok");
                 Assert.IsNull(tab.transform.Find("ChosenBar"), "seçim çubuğu yok: seçimi grubun C8'i taşır");
-                Assert.AreEqual(UiIconLabel.Below, tab.LabelMode, "G2 ara çözümü: kelime glifin altında");
+                // S-09 §8 S1 (G2 closed with AP-034 v002.1's Menu.Display): the word under the chosen tab only.
+                Assert.AreEqual(UiIconLabel.BelowChosen, tab.LabelMode, "G2 kapandı: kelime yalnız seçili sekmenin altında");
+                Assert.AreEqual(i == 1, tab.WordVisible, "kelime yalnız seçili sekmede: " + i);
                 Assert.AreEqual((int)UiIconSize.L, (int)tab.Size, "glif 40");
                 Assert.GreaterOrEqual(((RectTransform)tab.transform).sizeDelta.x, UiBrushTokens.TabWidth);
             }
@@ -361,6 +363,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreSame(group[0], group[1].navigation.selectOnLeft, "← zinciri");
             Assert.IsNull(group[0].navigation.selectOnLeft, "şerit sarmaz");
 
+            Vector2 strip = ((RectTransform)group.Tab(1).transform).anchoredPosition + ((RectTransform)group.Tab(2).transform).sizeDelta;
             group[2].OnSelect(new BaseEventData(null));
             Assert.AreEqual(1, group.Selected, "odak sekmeyi seçmez (her okta pane kurulmaz)");
             group[2].OnSubmit(new BaseEventData(null));
@@ -368,6 +371,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(2, chosen, "bildirildi");
             Assert.IsTrue(group.Tab(2).Button.IsSelectedChoice);
             Assert.IsFalse(group.Tab(1).Button.IsSelectedChoice);
+            Assert.IsTrue(group.Tab(2).WordVisible, "kelime seçimle taşınır");
+            Assert.IsFalse(group.Tab(1).WordVisible);
+            Assert.AreEqual(strip, ((RectTransform)group.Tab(1).transform).anchoredPosition + ((RectTransform)group.Tab(2).transform).sizeDelta,
+                "şerit kaymaz: her sekme kelimenin yerini tutar");
             AssertRgb(UiTokens.Get(UiColor.TextPrimary), group.Tab(2).Glyph.color, "seçili glif krem");
             AssertRgb(UiTokens.Get(UiColor.TextSecondary), group.Tab(1).Glyph.color, "diğer glif ikincil");
 
@@ -464,6 +471,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UiTokens.OpacityDisabled, cycle.PreviousArrow.color.a, 1e-3f, "uçtaki ok %55");
             Assert.AreEqual(1f, cycle.NextArrow.color.a, 1e-3f);
             Assert.AreEqual((float)(int)UiIconSize.S, cycle.NextArrow.rectTransform.sizeDelta.x, 1e-3f, "ok glifi 24");
+            // WP-098A: AP-034 v002.1 I6 - the C16 arrows are their own O1 glyphs, two geometries (a mirror would turn the light).
+            Assert.AreSame(UiArt.Icon(UiStepper.CycleLeftIcon), cycle.PreviousArrow.sprite, "◂ = Menu.CycleLeft");
+            Assert.AreSame(UiArt.Icon(UiStepper.CycleRightIcon), cycle.NextArrow.sprite, "▸ = Menu.CycleRight");
+            Assert.AreEqual(Quaternion.identity, cycle.PreviousArrow.transform.localRotation, "sol ok döndürülmez / aynalanmaz");
             Assert.GreaterOrEqual(Child(cycle, "Next").sizeDelta.x, UiTokens.TargetPreferred, "ok isabeti ≥ 48");
 
             cycle.Step(-1);

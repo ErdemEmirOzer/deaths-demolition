@@ -168,12 +168,18 @@ namespace DD.Prototype.UI
 
             _selectedChoice = value;
             Refresh(false);
+            ChoiceChanged?.Invoke(value);   // WP-098A: the icon's choose / settle track (MainMenuScreen writes the choice here)
         }
 
         public void SetInteractable(bool value)
         {
+            bool changed = interactable != value;
             interactable = value;
             Refresh(false);
+            if (changed)
+            {
+                InteractableChanged?.Invoke(value);
+            }
         }
 
         public void SetOnClick(Action onClick)
@@ -203,14 +209,18 @@ namespace DD.Prototype.UI
                 return; // a hold control acts on a completed hold, never on a click
             }
 
+            // WP-098A (M10): the splash lands where the pointer let go.
+            LastActivationFromPointer = true;
+            LastPointerPosition = eventData != null ? eventData.position : Vector2.zero;
             Activate();
         }
 
         public void OnSubmit(BaseEventData eventData)
         {
-            if (_variant == UiButtonVariant.Brush && !IsHoldButton && IsActive() && IsInteractable())
+            LastActivationFromPointer = false;   // WP-098A (M10): a pad / keyboard confirm splashes at the control's centre
+            if (!IsHoldButton && IsActive() && IsInteractable())
             {
-                BrushSubmitDepth();   // WP-098A: a key / pad press dips the control too (80 ms, then release)
+                PressPulse();   // WP-098A (M9): a key / pad press shows its press too (80 ms, then release)
             }
 
             if (IsHoldButton)
@@ -228,6 +238,10 @@ namespace DD.Prototype.UI
             if (eventData != null && eventData.button == PointerEventData.InputButton.Left)
             {
                 UiCursor.SetPressed(true);   // V1 Press art while the control is held
+                if (IsInteractable() && !IsHoldButton)
+                {
+                    UiEvents.Raise(UiEvent.PressDown, name);   // WP-098A (HAREKET-MENU §3): the press's own cue, Confirm follows on release
+                }
             }
 
             if (IsHoldButton && eventData != null && eventData.button == PointerEventData.InputButton.Left)
@@ -394,7 +408,7 @@ namespace DD.Prototype.UI
         private void Refresh(bool instant)
         {
             bool enabledControl = IsInteractable();
-            bool pressed = enabledControl && currentSelectionState == SelectionState.Pressed;
+            bool pressed = enabledControl && (currentSelectionState == SelectionState.Pressed || _pulse);
             bool hovered = enabledControl && currentSelectionState == SelectionState.Highlighted;
 
             bool focused = enabledControl && _hasFocus;

@@ -267,6 +267,140 @@ namespace DD.Prototype.UI
             return UiMotion.Move(marker, to, UiDuration.Fast, UiEase.Move, UiMotionClass.Decor, 0f, UiClock.Unscaled, owner);
         }
 
+        // ============================================================ WP-098A · menu v5 (HAREKET-MENU §4 / §7, C-00 08.10)
+
+        /// <summary>
+        /// PaneOpen (M11 / §4 "Pencere açılışı"; the one entry S-04's windows share through <see cref="UiBrushPane"/>): the card
+        /// fades in over Fast, its frame inks in with the brush wipe over Screen 280 (AP-034 M3, <see cref="UiInkChannel.Wipe"/>),
+        /// the content rises (<see cref="PaneIn"/>, 60 ms late). Any part may be null. Decor: under Reduced Motion all at once.
+        /// </summary>
+        public static void PaneOpen(CanvasGroup card, UiFx frame, CanvasGroup content, RectTransform contentRect, int owner = 0)
+        {
+            if (card != null)
+            {
+                card.alpha = 0f;
+                UiMotion.Alpha(card, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor, 0f, UiClock.Unscaled, owner);
+            }
+
+            if (frame != null)
+            {
+                frame.Configure(UiFxMode.InkReveal, UiDuration.Screen, PaneFrameWipe, UiInkChannel.Wipe);
+                frame.Play();
+            }
+
+            PaneIn(content, contentRect, UiBrushTokens.ContentDelay, owner);
+        }
+
+        /// <summary>
+        /// PaneClose (M12 / §4 "Pencere kapanışı"): the content leaves (<see cref="PaneOut"/>), the frame is wiped off in the
+        /// direction it came, the card fades - all over Fast 140 (Exit). Returns the seconds until it is gone.
+        /// </summary>
+        public static float PaneClose(CanvasGroup card, UiFx frame, CanvasGroup content, int owner = 0)
+        {
+            if (content != null)
+            {
+                PaneOut(content, owner);
+            }
+
+            if (frame != null)
+            {
+                frame.Configure(UiFxMode.InkReveal, UiDuration.Fast, PaneFrameErase, UiInkChannel.Wipe);
+                frame.Play();
+            }
+
+            if (card != null)
+            {
+                UiMotion.Alpha(card, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, owner);
+            }
+
+            return UiMotion.ReducedMotion ? 0f : UiMotionTokens.Seconds(UiDuration.Fast);
+        }
+
+        /// <summary>A pane frame's brush at rest, drawn (build time, and before a pane lands without motion): the wipe set up, landed.</summary>
+        public static void PaneFrame(UiFx frame)
+        {
+            if (frame == null) return;
+            frame.Configure(UiFxMode.InkReveal, UiDuration.Screen, PaneFrameWipe, UiInkChannel.Wipe);
+            frame.Play(-(frame.Duration + 1f));
+        }
+
+        /// <summary>A pane at rest at once (Reduced Motion, a change of pane): the card and the content opaque, the frame drawn.</summary>
+        public static void PaneLand(CanvasGroup card, UiFx frame, CanvasGroup content)
+        {
+            if (card != null) { UiMotion.KillTarget(card, false); card.alpha = 1f; }
+            if (content != null) { UiMotion.KillTarget(content, false); content.alpha = 1f; }
+            PaneFrame(frame);
+        }
+
+        /// <summary>The frame's wipe parameters: (front band default, wipe mode, ink in) and its erase (ink out, same direction).</summary>
+        public static readonly Vector3 PaneFrameWipe = new Vector3(0f, 1f, 0f);
+
+        public static readonly Vector3 PaneFrameErase = new Vector3(0f, 1f, 1f);
+
+        /// <summary>
+        /// StaggerRows (M13): each row fades in over Base 220 (Settle) - and rises 8 px with <paramref name="rise"/> - <paramref name="step"/>
+        /// apart (StaggerRow 40 ms; StaggerCard 60 ms) from <paramref name="delay"/>; rows past the sixth share the sixth's delay. Rows
+        /// get a CanvasGroup once (build time). <paramref name="rise"/> false keeps every row where it is laid out (a scrolled or clipped
+        /// list: the focus reveal and the clip read the rows in place; the block's rise is its PaneIn). Decor: under Reduced Motion
+        /// they are at rest at once. Returns the rows staggered.
+        /// </summary>
+        public static int StaggerRows(System.Collections.Generic.IList<RectTransform> rows, float step, float delay = 0f, int owner = 0, bool rise = true)
+        {
+            if (rows == null)
+            {
+                return 0;
+            }
+
+            int n = 0;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                RectTransform row = rows[i];
+                if (row == null || !row.gameObject.activeSelf)
+                {
+                    continue;
+                }
+
+                CanvasGroup group = UiFactory.Group(row.gameObject);
+                float at = delay + Mathf.Min(n, UiMotionTokens.StaggerRowMaxItems - 1) * step;
+                group.alpha = 0f;
+                UiMotion.Alpha(group, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, at, UiClock.Unscaled, owner);
+                if (rise)
+                {
+                    Vector2 rest = row.anchoredPosition;
+                    row.anchoredPosition = rest - new Vector2(0f, Travel);
+                    UiMotion.Move(row, rest, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, at, UiClock.Unscaled, owner);
+                }
+
+                n++;
+            }
+
+            return n;
+        }
+
+        /// <summary>
+        /// HoverLift (M8): a kit text control's face rises <see cref="UiMenuMotionTokens.HoverLiftPx"/> (a whole pixel; no scale)
+        /// from <paramref name="rest"/> over Base 220 Settle, and settles back over Fast 140 Exit. The caller keeps the rest.
+        /// </summary>
+        public static UiTweenHandle HoverLift(RectTransform face, Vector2 rest, bool lifted, int owner = 0)
+        {
+            if (face == null) return default(UiTweenHandle);
+            return lifted
+                ? UiMotion.Move(face, rest + new Vector2(0f, UiMenuMotionTokens.HoverLiftPx), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, 0f, UiClock.Unscaled, owner)
+                : UiMotion.Move(face, rest, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, owner);
+        }
+
+        /// <summary>InkWave (M7 / M8): the cream ripple behind a lifted control (<see cref="UiInkWave"/>; dwell-gated, rate-limited, none under RM).</summary>
+        public static bool InkWave(UiInkWave wave, bool lifted)
+        {
+            return wave != null && wave.Lift(lifted);
+        }
+
+        /// <summary>InkSplash (M10): the click splash at <paramref name="localPoint"/> in <paramref name="layer"/> (<see cref="UiInkSplashLayer"/>).</summary>
+        public static bool InkSplash(UiInkSplashLayer layer, Vector2 localPoint, int source, bool hero)
+        {
+            return layer != null && layer.Play(localPoint, source, hero);
+        }
+
         /// <summary>BarGhost: the lost-value ghost holds 350 ms, then drops to the value over 220 ms (Delta: RM shows it statically for the hold, then removes it).</summary>
         public static UiTweenHandle BarGhost(Image ghost, float from, float to, int owner = 0)
         {

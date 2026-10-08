@@ -22,8 +22,9 @@ namespace DD.Prototype.UI
     ///
     /// WP-098A P0b (C-00 07.10) · C16 value cycle, Brush style (<see cref="UiControlStyle.Brush"/>, KILAVUZ §4.1 / §4.3,
     /// KIT-API §4 "Ayar satırları") - the kit's dropdown for 2–6 values: a frameless <see cref="UiButtonVariant.Brush"/>
-    /// row, the MenuBody label in the label column and "◂ VALUE ▸" across the value column - the O1 Menu.Previous /
-    /// Menu.Next glyphs at 24 (UiSprites.Chevron when the atlas has none) in TextSecondary, TextPrimary under the pointer,
+    /// row, the MenuBody label in the label column and "◂ VALUE ▸" across the value column - the O1 Menu.CycleLeft /
+    /// Menu.CycleRight glyphs at 24 (AP-034 v002.1 I6, drawn for C16: two geometries, never a mirror - a mirror would turn the
+    /// light; UiSprites.Chevron when the atlas has none) in TextSecondary, TextPrimary under the pointer,
     /// the value in MenuBody cream. A step slides the arrow 4 px its way and back (Fast, Decor); an end arrow sits at
     /// <see cref="UiTokens.OpacityDisabled"/> and a push past it plays Denied + <see cref="UiPresets.DeniedNudge"/> on that
     /// arrow (never on the word). Reduced Motion: the word cuts, nothing slides or shakes. V3 (the default) is unchanged.
@@ -33,6 +34,11 @@ namespace DD.Prototype.UI
         /// <summary>The chevron hit box (44 px rule); the drawn glyph is <see cref="ChevronGlyph"/>.</summary>
         public const float ChevronSize = 44f;
         public const float ChevronGlyph = 14f;
+
+        /// <summary>WP-098A · the C16 arrows' O1 glyphs (AP-034 v002.1 I6; the pager's Menu.Previous / Menu.Next stay the pager's).</summary>
+        public const string CycleLeftIcon = "Menu.CycleLeft";
+
+        public const string CycleRightIcon = "Menu.CycleRight";
 
         /// <summary>The value box is as wide as the longest value (measured at build, at the current TextScale), at least this - so stacked steppers with short values share one left-chevron column (AD 5a SHOULD-2).</summary>
         public const float MinValueWidth = 160f;
@@ -198,14 +204,14 @@ namespace DD.Prototype.UI
             labelRect.offsetMin = new Vector2(0f, labelRect.offsetMin.y);
             labelRect.offsetMax = new Vector2(-(column + UiBrushKit.ValueColumnGap), labelRect.offsetMax.y);
 
-            _next = BrushArrow("Next", -hit * 0.5f, "Menu.Next", 0f, +1, hit);
+            _next = BrushArrow("Next", -hit * 0.5f, CycleRightIcon, 0f, +1, hit);
             RectTransform valueRect = _value.rectTransform;
             valueRect.anchorMin = new Vector2(1f, 0f);
             valueRect.anchorMax = new Vector2(1f, 1f);
             valueRect.pivot = new Vector2(1f, 0.5f);
             valueRect.sizeDelta = new Vector2(_valueWidth, 0f);
             valueRect.anchoredPosition = new Vector2(-hit, 0f);
-            _previous = BrushArrow("Previous", -(column - hit * 0.5f), "Menu.Previous", 180f, -1, hit);
+            _previous = BrushArrow("Previous", -(column - hit * 0.5f), CycleLeftIcon, 180f, -1, hit);
 
             row.SetOnClick(() => Step(+1));   // Submit on the row goes to the next value (KILAVUZ §4.3 C16)
             Apply(false);

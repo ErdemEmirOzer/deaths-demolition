@@ -79,6 +79,7 @@ namespace DD.Prototype.UI
             if (sceneName == PrototypeScenes.MainMenu)
             {
                 UiNavigation.EnterBase(UiContext.MainMenu);
+                Ensure<UiLogoMenuIntro>();   // AP-035: installed before the menu invokes its single logo hook
                 Ensure<MainMenuScreen>();
             }
             else if (sceneName == PrototypeScenes.Selection)

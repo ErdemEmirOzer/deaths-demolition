@@ -117,6 +117,12 @@ MonoBehaviour:
     Sprite: {fileID: 1221050695471490317, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Controls
     Sprite: {fileID: -7791906619513945541, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Menu.CycleLeft
+    Sprite: {fileID: 8833370477796178160, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Menu.CycleRight
+    Sprite: {fileID: 2704683808395711661, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Menu.Display
+    Sprite: {fileID: -1540299678186840665, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.EndRun
     Sprite: {fileID: 967201107043964545, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Gamepad
