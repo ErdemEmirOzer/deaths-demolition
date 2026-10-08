@@ -415,7 +415,7 @@ namespace DD.Art.Tests.PlayMode
             var stancePaths = new List<float>();
             bool[] stance = new bool[2], plant = new bool[2], lift = new bool[2];
             var stancePath = new RunnerStancePath[2];
-            RunnerTrace trace = RunnerTrace.Create();
+            RunnerTrace trace = RunnerTrace.Create(v);
             var contactSlips = new List<float>();
             float contactTravel = 0f;
             Vector3[] lastContact = new Vector3[2];
@@ -526,6 +526,21 @@ namespace DD.Art.Tests.PlayMode
                 public string rateR, bodyScaleR;
                 public Vector3 rootWorld, rootForward, modelWorld, modelScale, ankleL, ankleR;
             }
+            // Extra opt-in source diagnosis only. Value fields; fixed-capacity array allocated once.
+            [Serializable] private struct BoneLocalTrs
+            {
+                public bool available, parentAvailable;
+                public Vector3 localPosition, localScale, worldPosition;
+                public Quaternion localRotation, worldRotation;
+                public Matrix4x4 localToWorld, parentLocalToWorld;
+            }
+            [Serializable] private struct LocalStreamFrame
+            {
+                public int index, unityFrame;
+                public bool ikOff;
+                public Matrix4x4 physicalRootLocalToWorld, modelLocalToWorld;
+                public BoneLocalTrs hips, leftUpperLeg, leftLowerLeg, leftFoot, rightUpperLeg, rightLowerLeg, rightFoot;
+            }
             [Serializable] private struct Stance
             {
                 public int foot, startIndex, liftIndex, samples;
@@ -537,6 +552,13 @@ namespace DD.Art.Tests.PlayMode
                 public string sampleStage = "same post-yield sample as acceptance; lift frame closes before sampling";
                 public int frameCapacity = MaxFrames, stanceCapacity = MaxStances, frameCount, stanceCount, droppedFrames, droppedStances;
                 public bool samplingComplete;
+                public bool localTrsRequested;
+                public int localFrameCount, droppedLocalFrames;
+                public string avatarName, controllerName, activeClipNameAtSetup;
+                public int avatarInstanceId, controllerInstanceId, activeClipInstanceIdAtSetup;
+                public float activeClipLengthAtSetup;
+                public bool avatarHuman, avatarValid;
+                public LocalStreamFrame[] localFrames;
                 public Frame[] frames = new Frame[MaxFrames];
                 public Stance[] stances = new Stance[MaxStances];
             }
@@ -544,16 +566,48 @@ namespace DD.Art.Tests.PlayMode
             private readonly int[] _start = { -1, -1 };
             private readonly string _directory;
             private int _index;
-            private RunnerTrace(string directory)
+            private readonly Transform _hips, _leftUpperLeg, _leftLowerLeg, _leftFoot, _rightUpperLeg, _rightLowerLeg, _rightFoot;
+            private RunnerTrace(string directory, ZombieSkinnedVisual visual)
             {
                 _directory = directory;
                 _data.sourceCommit = Environment.GetEnvironmentVariable("DD_R2_COMMIT");
                 _data.unityVersion = Application.unityVersion;
+                _data.localTrsRequested = Environment.GetEnvironmentVariable("DD_WP096_RETARGET_LOCAL_TRS") == "1";
+                if (_data.localTrsRequested)
+                {
+                    Animator animator = visual.Animator;
+                    _data.schema = "wp096-runner-trace-v2-local-trs";
+                    _data.localFrames = new LocalStreamFrame[MaxFrames];
+                    Avatar avatar = animator.avatar;
+                    _data.avatarName = avatar != null ? avatar.name : null;
+                    _data.avatarHuman = avatar != null && avatar.isHuman;
+                    _data.avatarValid = avatar != null && avatar.isValid;
+                    _data.controllerName = animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.name : null;
+                    _data.avatarInstanceId = avatar != null ? avatar.GetInstanceID() : 0;
+                    _data.controllerInstanceId = animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.GetInstanceID() : 0;
+                    AnimatorClipInfo[] clips = animator.GetCurrentAnimatorClipInfo(0); // once at setup, never while sampling
+                    float bestWeight = -1f;
+                    for (int i = 0; i < clips.Length; i++)
+                    {
+                        if (clips[i].clip == null || clips[i].weight <= bestWeight) continue;
+                        bestWeight = clips[i].weight;
+                        _data.activeClipNameAtSetup = clips[i].clip.name;
+                        _data.activeClipInstanceIdAtSetup = clips[i].clip.GetInstanceID();
+                        _data.activeClipLengthAtSetup = clips[i].clip.length;
+                    }
+                    _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
+                    _leftUpperLeg = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+                    _leftLowerLeg = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
+                    _leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                    _rightUpperLeg = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+                    _rightLowerLeg = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
+                    _rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+                }
             }
-            public static RunnerTrace Create()
+            public static RunnerTrace Create(ZombieSkinnedVisual visual)
             {
                 string directory = Environment.GetEnvironmentVariable("DD_WP096_TRACE_DIR");
-                return !string.IsNullOrEmpty(directory) && System.IO.Path.IsPathRooted(directory) ? new RunnerTrace(directory) : null;
+                return !string.IsNullOrEmpty(directory) && System.IO.Path.IsPathRooted(directory) ? new RunnerTrace(directory, visual) : null;
             }
             public void Capture(Transform root, ZombieSkinnedVisual visual, Vector3 left, Vector3 right, bool[] plants, bool[] lifts)
             {
@@ -574,6 +628,32 @@ namespace DD.Art.Tests.PlayMode
                     rate = animator.GetFloat(C.GaitRate), bodyScale = visual.GaitBodyScale,
                     plants = (plants[0] ? 1 : 0) | (plants[1] ? 2 : 0), lifts = (lifts[0] ? 1 : 0) | (lifts[1] ? 2 : 0)
                 };
+                CaptureLocalTrs(root, animator.transform);
+            }
+            private static BoneLocalTrs ReadLocalTrs(Transform bone)
+            {
+                if (bone == null) return default;
+                Transform parent = bone.parent;
+                return new BoneLocalTrs
+                {
+                    available = true, parentAvailable = parent != null,
+                    localPosition = bone.localPosition, localRotation = bone.localRotation, localScale = bone.localScale,
+                    worldPosition = bone.position, worldRotation = bone.rotation, localToWorld = bone.localToWorldMatrix,
+                    parentLocalToWorld = parent != null ? parent.localToWorldMatrix : Matrix4x4.identity
+                };
+            }
+            private void CaptureLocalTrs(Transform root, Transform model)
+            {
+                if (!_data.localTrsRequested) return;
+                if (_data.localFrameCount == MaxFrames) { _data.droppedLocalFrames++; return; }
+                _data.localFrames[_data.localFrameCount++] = new LocalStreamFrame
+                {
+                    index = _index, unityFrame = Time.frameCount, ikOff = FootIkAdapter.Force == 0,
+                    physicalRootLocalToWorld = root.localToWorldMatrix, modelLocalToWorld = model.localToWorldMatrix,
+                    hips = ReadLocalTrs(_hips), leftUpperLeg = ReadLocalTrs(_leftUpperLeg),
+                    leftLowerLeg = ReadLocalTrs(_leftLowerLeg), leftFoot = ReadLocalTrs(_leftFoot),
+                    rightUpperLeg = ReadLocalTrs(_rightUpperLeg), rightLowerLeg = ReadLocalTrs(_rightLowerLeg), rightFoot = ReadLocalTrs(_rightFoot)
+                };
             }
             public void Begin(int foot) => _start[foot] = _index;
             public void Close(int foot, float path, int samples)
@@ -589,6 +669,7 @@ namespace DD.Art.Tests.PlayMode
                     _data.samplingComplete = complete;
                     Array.Resize(ref _data.frames, _data.frameCount);
                     Array.Resize(ref _data.stances, _data.stanceCount);
+                    if (_data.localTrsRequested) Array.Resize(ref _data.localFrames, _data.localFrameCount);
                     for (int i = 0; i < _data.frameCount; i++)
                     {
                         _data.frames[i].rateR = _data.frames[i].rate.ToString("R", CultureInfo.InvariantCulture);
