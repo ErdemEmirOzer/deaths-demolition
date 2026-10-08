@@ -20,7 +20,6 @@ namespace DD.Prototype.Tests.EditMode
     /// untouched; the K2 validator.
     /// </summary>
     [TestFixture]
-    [Category("WP095")]
     public sealed class Wp095FeelTimeScaleTests
     {
         private const float Dt = 1f / 60f;
@@ -104,6 +103,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ K1 · min(requests)
 
         [Test]
+        [Category("WP095")]
         public void Hakem_EnKucukIstekKazanir_SonZombiDurmaninAltindaBaslar()
         {
             Assert.IsTrue(FeelTimeScale.RequestStop(7, 4, FeelEventId.LastZombie));
@@ -131,6 +131,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ K1 / S4 · the pause wins, the envelope resumes
 
         [Test]
+        [Category("WP095")]
         public void Duraklatma_Kazanir_ZarfKaldigiYerdenSurer_SonundaBir()
         {
             // hit-stop: 2 frames before the pause, 2 after
@@ -204,6 +205,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ K1 · foreign writers
 
         [Test]
+        [Category("WP095")]
         public void YabanciYazar_HakemSusar_SaatOnlarinKalir()
         {
             Assert.IsTrue(FeelTimeScale.RequestStop(5, 4, FeelEventId.ArmorBreak));
@@ -238,6 +240,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ K2 · no accumulation
 
         [Test]
+        [Category("WP095")]
         public void K2_Aralik040_AyniGrupDortKare_BaskaGrupReddedilir()
         {
             Assert.AreEqual(3, FeelTimeScale.FramesFor(2, 1.25f, 4), "2 × 1,25 = 2,5 → yukarı 3");
@@ -281,6 +284,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ §5 auto-fire guard
 
         [Test]
+        [Category("WP095")]
         public void OtoAtesKorumasi_YalnizBuyukAnlarGirer()
         {
             FeelHitStopTD.NotifyTrigger(true, 600f);   // ar_1-like: 600 rpm producing shots
@@ -440,6 +444,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        [Category("WP095")]
         public void S3_Birikme_Saniyede10Oldurme30s_PayAltiYuzde_AralikKirkSantisaniye()
         {
             S3Result single = RunS3(95u, 0);
@@ -469,6 +474,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ §4.11 · the last zombie, the switches
 
         [Test]
+        [Category("WP095")]
         public void SonZombi_Zarf083ArtiEksiBirKare_SondaBir_KapaliAnahtarIstekYok()
         {
             FeelHitStopTD.OnKill(Kill(31, weapon: ClassicWeaponId.AssaultRifle, lastOfRound: true));
@@ -554,6 +560,7 @@ namespace DD.Prototype.Tests.EditMode
         /// that starts on a step it scaled itself must not take that step as the new base).
         /// </summary>
         [Test]
+        [Category("WP095")]
         public void FizikAdimi_HerCikistaTabanaDoner_ArdArdaDurmalardaBirikmez()
         {
             const float baseFixed = 0.02f;
@@ -593,6 +600,8 @@ namespace DD.Prototype.Tests.EditMode
 
         /// <summary>gt-f2 MUST-1: in first / third person the death beat still drives the clock, the physics step stays at the base.</summary>
         [Test]
+        [Category("WP095")]
+        [Category("FPTP")]
         public void FizikAdimi_IlkUcuncuSahis_OlumVurusundaDegismez()
         {
             const float baseFixed = 0.02f;
@@ -629,6 +638,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        [Category("WP095")]
         public void Olum_Kazanir_TopDownSlotlariBiter_YeniIstekReddedilir()
         {
             Assert.IsTrue(FeelTimeScale.BeginLastZombie(Vector3.zero));
@@ -656,6 +666,8 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ first / third person untouched
 
         [Test]
+        [Category("WP095")]
+        [Category("FPTP")]
         public void IlkVeUcuncuSahis_HicIstekYok_YerelTavan004()
         {
             foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson })
@@ -683,6 +695,13 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(1f, Time.timeScale, 1e-6f);
             }
 
+        }
+
+        // C-00 TD-only: keep the mixed method's TD assertions outside its FPTP category.
+        [Test]
+        [Category("WP095")]
+        public void Ustten_YerelTavan_DortKare()
+        {
             CameraModeService.Request(CameraMode.TopDown, instant: true);
             HitStopService.ResetForTests();
             Assert.IsTrue(HitStopService.RequestForGroup(8, .2f, 0f, .06f));
@@ -690,6 +709,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        [Category("WP095")]
         public void HitStopService_KureselDurmadaGorselDelta_IkiKezYavaslatmaz()
         {
             Assert.IsTrue(HitStopService.RequestForGroup(9, .035f, 0f, .06f));
@@ -705,6 +725,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ K2 · validator
 
         [Test]
+        [Category("WP095")]
         public void Validator_K2_MaxContinuous0067Kabul_YerelSatirlar004Kalir()
         {
             FeelConfigData d = FeelConfig.CreateDefaults();

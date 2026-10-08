@@ -18,7 +18,6 @@ namespace DD.Prototype.Tests.PlayMode
     /// person (top-down only, user 06.10).
     /// </summary>
     [TestFixture]
-    [Category("WP087")]
     public sealed class Wp087HareketIziTests
     {
         private SpecialWeaponSahne _s;
@@ -41,8 +40,9 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         [UnityTest]
+        [Category("WP087")]
         [Timeout(180000)]
-        public IEnumerator Iz_Ustten_WTusu_SatirlarVeHiz_TpSatirYazmaz()
+        public IEnumerator Iz_Ustten_WTusu_SatirlarVeHiz()
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -60,10 +60,6 @@ namespace DD.Prototype.Tests.PlayMode
             _iz.Flush();
             int tdRows = _iz.RowsWritten;
 
-            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
-            yield return SpecialWeaponSahne.Kareler(15);
-            _iz.Flush();
-            int tpRows = _iz.RowsWritten - tdRows;
             Object.Destroy(_iz.gameObject);
             _iz = null;
             yield return null;
@@ -87,17 +83,38 @@ namespace DD.Prototype.Tests.PlayMode
                 if (c[19] != "1") controlOff++;
             }
 
-            Debug.Log("[DD-TEST] wp087.movetrace rows td " + tdRows + " tp " + tpRows + ", Move (0,1) rows " + moveRows + ", > 5 m/s rows " + fastRows + ", control off " + controlOff + "\n" +
+            Debug.Log("[DD-TEST] wp087.movetrace rows td " + tdRows + ", Move (0,1) rows " + moveRows + ", > 5 m/s rows " + fastRows + ", control off " + controlOff + "\n" +
                       string.Join("\n", lines, 0, Mathf.Min(lines.Length, 8)));
             // gt SHOULD-1 (07.10): ranges, not floors — a recorder writing two rows a frame or holding the last Move would pass a floor
             Assert.That(tdRows, Is.InRange(58, 62), "her üstten karede bir satır (≈ 60: 40 basılı + 20 bırakılmış; kurulum kareleri armdan önce)");
-            Assert.AreEqual(0, tpRows, "üçüncü şahısta satır yazılmaz (yalnız TD)");
             Assert.That(moveRows, Is.InRange(38, 42), "W basılı karelerde Move (0, 1)");
             Assert.That(stillRows, Is.InRange(18, 22), "bırakılan karelerde Move y = 0 (son değer tutulmaz)");
             Assert.AreEqual(tdRows, moveRows + stillRows, "her satır ya basılı ya bırakılmış");
             Assert.AreEqual(tdRows, padRows, "gamepad sütunları her satırda");
             Assert.Greater(fastRows, 20, "motor hızlanınca düzlemsel hız > 5 m/s");
             Assert.AreEqual(0, controlOff, "kontrol açık");
+        }
+
+        // C-00 TD-only: preserve the mixed test's TP assertions in a separately excluded method.
+        [UnityTest]
+        [Category("WP087")]
+        [Category("FPTP")]
+        [Timeout(180000)]
+        public IEnumerator Iz_UcuncuSahis_SatirYazmaz()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            Time.captureDeltaTime = 1f / 60f;
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
+            _yol = Path.Combine(Path.GetTempPath(), "dd-movetrace-test-" + System.Guid.NewGuid().ToString("N") + ".csv");
+            _iz = MoveTraceRecorder.Arm(_yol);
+            int tdRows = _iz.RowsWritten;
+
+            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(15);
+            _iz.Flush();
+            int tpRows = _iz.RowsWritten - tdRows;
+            Assert.AreEqual(0, tpRows, "üçüncü şahısta satır yazılmaz (yalnız TD)");
         }
     }
 }
