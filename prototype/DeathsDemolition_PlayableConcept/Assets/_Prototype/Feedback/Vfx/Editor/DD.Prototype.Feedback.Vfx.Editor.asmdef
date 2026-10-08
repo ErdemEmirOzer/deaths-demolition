@@ -1,0 +1,11 @@
+{
+  "name": "DD.Prototype.Feedback.Vfx.Editor",
+  "references": [
+    "DD.Prototype.Runtime",
+    "DD.Prototype.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}
