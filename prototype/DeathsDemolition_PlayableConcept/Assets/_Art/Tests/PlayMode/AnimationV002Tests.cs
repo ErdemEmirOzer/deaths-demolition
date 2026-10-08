@@ -415,6 +415,7 @@ namespace DD.Art.Tests.PlayMode
             var stancePaths = new List<float>();
             bool[] stance = new bool[2], plant = new bool[2], lift = new bool[2];
             var stancePath = new RunnerStancePath[2];
+            RunnerTrace trace = RunnerTrace.Create();
             var contactSlips = new List<float>();
             float contactTravel = 0f;
             Vector3[] lastContact = new Vector3[2];
@@ -435,6 +436,7 @@ namespace DD.Art.Tests.PlayMode
             };
             v.Events.Raised += onEvent;
             float t0 = Time.time;
+            bool traceSamplingComplete = false;
             try
             {
                 while (Time.time - t0 < 4f)
@@ -442,6 +444,7 @@ namespace DD.Art.Tests.PlayMode
                     root.transform.position += Vector3.right * speed * Time.deltaTime;
                     v.SetSpeed(speed, Time.deltaTime);
                     yield return null;
+                    trace?.Capture(root.transform, v, lf.position, rf.position, plant, lift);
                     // Observe after animation/IK, not inside the animation event callback (whose bones
                     // still contain the previous pose). A lift closes the last grounded sample; it never
                     // adds the swinging foot or cancels left/right signed errors.
@@ -450,7 +453,11 @@ namespace DD.Art.Tests.PlayMode
                         Vector3 ankle = foot == 0 ? lf.position : rf.position;
                         if (lift[foot])
                         {
-                            if (stance[foot] && stancePath[foot].Samples > 0) stancePaths.Add(stancePath[foot].Path);
+                            if (stance[foot] && stancePath[foot].Samples > 0)
+                            {
+                                stancePaths.Add(stancePath[foot].Path);
+                                trace?.Close(foot, stancePath[foot].Path, stancePath[foot].Samples);
+                            }
                             stance[foot] = false;
                             lift[foot] = false;
                         }
@@ -458,6 +465,7 @@ namespace DD.Art.Tests.PlayMode
                         {
                             stance[foot] = true;
                             stancePath[foot].Begin(ankle);
+                            trace?.Begin(foot);
                             plant[foot] = false;
                         }
                         else if (stance[foot])
@@ -482,8 +490,9 @@ namespace DD.Art.Tests.PlayMode
                         pending = false;
                     }
                 }
+                traceSamplingComplete = true;
             }
-            finally { v.Events.Raised -= onEvent; Time.captureDeltaTime = 0f; FootIkAdapter.Force = -1; }
+            finally { v.Events.Raised -= onEvent; Time.captureDeltaTime = 0f; FootIkAdapter.Force = -1; trace?.Write(traceSamplingComplete); }
 
             var perCycle = new List<float>();
             for (int i = 0; i + 1 < slips.Count; i += 2) perCycle.Add(Mathf.Abs(0.5f * (slips[i] + slips[i + 1])));
@@ -504,6 +513,96 @@ namespace DD.Art.Tests.PlayMode
                       + (median * 100f).ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
             Assert.GreaterOrEqual(stancePaths.Count, 8, "aktif klibin plant→lift olaylarından yeterli tamamlanmış adım ölçülmedi");
             Assert.LessOrEqual(stanceMedian, 0.02f, "Runner koşusunda basan ayak bileğinin mutlak yatay yolu > 2 cm/adım (aktif klip plant→lift)");
+        }
+
+        // Optional evidence only: no classifier, metric or Animator mutation. Fixed buffers; I/O after sampling.
+        private sealed class RunnerTrace
+        {
+            private const int MaxFrames = 512, MaxStances = 64;
+            [Serializable] private struct Frame
+            {
+                public int index, unityFrame, currentState, nextState, plants, lifts;
+                public float time, dt, currentTime, nextTime, blendTime, rate, bodyScale;
+                public string rateR, bodyScaleR;
+                public Vector3 rootWorld, rootForward, modelWorld, modelScale, ankleL, ankleR;
+            }
+            [Serializable] private struct Stance
+            {
+                public int foot, startIndex, liftIndex, samples;
+                public float absoluteHorizontalPath;
+            }
+            [Serializable] private sealed class Packet
+            {
+                public string schema = "wp096-runner-trace-v1", sourceCommit, unityVersion;
+                public string sampleStage = "same post-yield sample as acceptance; lift frame closes before sampling";
+                public int frameCapacity = MaxFrames, stanceCapacity = MaxStances, frameCount, stanceCount, droppedFrames, droppedStances;
+                public bool samplingComplete;
+                public Frame[] frames = new Frame[MaxFrames];
+                public Stance[] stances = new Stance[MaxStances];
+            }
+            private readonly Packet _data = new Packet();
+            private readonly int[] _start = { -1, -1 };
+            private readonly string _directory;
+            private int _index;
+            private RunnerTrace(string directory)
+            {
+                _directory = directory;
+                _data.sourceCommit = Environment.GetEnvironmentVariable("DD_R2_COMMIT");
+                _data.unityVersion = Application.unityVersion;
+            }
+            public static RunnerTrace Create()
+            {
+                string directory = Environment.GetEnvironmentVariable("DD_WP096_TRACE_DIR");
+                return !string.IsNullOrEmpty(directory) && System.IO.Path.IsPathRooted(directory) ? new RunnerTrace(directory) : null;
+            }
+            public void Capture(Transform root, ZombieSkinnedVisual visual, Vector3 left, Vector3 right, bool[] plants, bool[] lifts)
+            {
+                _index++;
+                if (_data.frameCount == MaxFrames) { _data.droppedFrames++; return; }
+                Animator animator = visual.Animator;
+                AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+                bool blending = animator.IsInTransition(0);
+                AnimatorStateInfo next = blending ? animator.GetNextAnimatorStateInfo(0) : default;
+                _data.frames[_data.frameCount++] = new Frame
+                {
+                    index = _index, unityFrame = Time.frameCount, time = Time.time, dt = Time.deltaTime,
+                    rootWorld = root.position, rootForward = root.forward, modelWorld = animator.transform.position,
+                    modelScale = animator.transform.lossyScale, ankleL = left, ankleR = right,
+                    currentState = current.fullPathHash, currentTime = current.normalizedTime,
+                    nextState = blending ? next.fullPathHash : 0, nextTime = blending ? next.normalizedTime : 0f,
+                    blendTime = blending ? animator.GetAnimatorTransitionInfo(0).normalizedTime : 0f,
+                    rate = animator.GetFloat(C.GaitRate), bodyScale = visual.GaitBodyScale,
+                    plants = (plants[0] ? 1 : 0) | (plants[1] ? 2 : 0), lifts = (lifts[0] ? 1 : 0) | (lifts[1] ? 2 : 0)
+                };
+            }
+            public void Begin(int foot) => _start[foot] = _index;
+            public void Close(int foot, float path, int samples)
+            {
+                if (_data.stanceCount == MaxStances) { _data.droppedStances++; return; }
+                _data.stances[_data.stanceCount++] = new Stance
+                { foot = foot, startIndex = _start[foot], liftIndex = _index, samples = samples, absoluteHorizontalPath = path };
+            }
+            public void Write(bool complete)
+            {
+                try
+                {
+                    _data.samplingComplete = complete;
+                    Array.Resize(ref _data.frames, _data.frameCount);
+                    Array.Resize(ref _data.stances, _data.stanceCount);
+                    for (int i = 0; i < _data.frameCount; i++)
+                    {
+                        _data.frames[i].rateR = _data.frames[i].rate.ToString("R", CultureInfo.InvariantCulture);
+                        _data.frames[i].bodyScaleR = _data.frames[i].bodyScale.ToString("R", CultureInfo.InvariantCulture);
+                    }
+                    System.IO.Directory.CreateDirectory(_directory);
+                    string path = System.IO.Path.Combine(_directory, "runner-" + Guid.NewGuid().ToString("N") + ".json");
+                    using (var file = new System.IO.StreamWriter(new System.IO.FileStream(path, System.IO.FileMode.CreateNew)))
+                        file.Write(JsonUtility.ToJson(_data));
+                    Debug.Log("[DD-TEST] wp096.runner.trace=" + path + " frames=" + _data.frameCount + " stances=" + _data.stanceCount
+                        + " dropped=" + _data.droppedFrames + "/" + _data.droppedStances);
+                }
+                catch (Exception error) { Debug.LogWarning("wp096.runner.trace unavailable: " + error.GetType().Name); }
+            }
         }
 
         // One fixed marker, absolute horizontal path. Used by the live measurement and its positive control.

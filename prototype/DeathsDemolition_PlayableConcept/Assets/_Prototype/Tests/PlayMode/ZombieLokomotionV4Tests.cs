@@ -2414,6 +2414,52 @@ namespace DD.Prototype.Tests.PlayMode
         }
     }
 
+    // Read-only callbacks around FootIkAdapter's default script order. Applied only to opt-in trace bodies.
+    [DefaultExecutionOrder(-32000)]
+    internal sealed class ZombiIkTraceBefore : MonoBehaviour
+    {
+        private Animator _animator;
+        private FootIkAdapter _ik;
+        private Vector3[] _locks;
+        private Transform _hipL, _hipR;
+        public int FrameId = -1, OffsetReleases;
+        public Vector3 Left, Right, LockL, LockR, HipL, HipR;
+        public void Initialize(Animator animator, FootIkAdapter ik, Vector3[] locks)
+        {
+            _animator = animator; _ik = ik; _locks = locks;
+            _hipL = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+            _hipR = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+        }
+        private void OnAnimatorIK(int layerIndex)
+        {
+            if (layerIndex != 0 || _animator == null) return;
+            FrameId = Time.frameCount;
+            Left = _animator.GetIKPosition(AvatarIKGoal.LeftFoot); Right = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+            if (_locks != null && _locks.Length == 2) { LockL = _locks[0]; LockR = _locks[1]; }
+            if (_hipL != null) HipL = _hipL.position;
+            if (_hipR != null) HipR = _hipR.position;
+            OffsetReleases = _ik != null ? _ik.ReleasedByOffset : 0;
+        }
+    }
+    [DefaultExecutionOrder(32000)]
+    internal sealed class ZombiIkTraceAfter : MonoBehaviour
+    {
+        private Animator _animator;
+        private FootIkAdapter _ik;
+        public int FrameId = -1, OffsetReleases;
+        public Vector3 Left, Right;
+        public float WeightL, WeightR;
+        public void Initialize(Animator animator, FootIkAdapter ik) { _animator = animator; _ik = ik; }
+        private void OnAnimatorIK(int layerIndex)
+        {
+            if (layerIndex != 0 || _animator == null) return;
+            FrameId = Time.frameCount;
+            Left = _animator.GetIKPosition(AvatarIKGoal.LeftFoot); Right = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+            WeightL = _animator.GetIKPositionWeight(AvatarIKGoal.LeftFoot); WeightR = _animator.GetIKPositionWeight(AvatarIKGoal.RightFoot);
+            OffsetReleases = _ik != null ? _ik.ReleasedByOffset : 0;
+        }
+    }
+
     /// <summary>
     /// WP-096 zombie sampler, one per body: a record per frame AFTER the Animator, its IK passes and every LateUpdate solver
     /// (LocomotionLean −10, the look-at, the chains; order 32000) — the pose the frame shows. The contact inputs and the bone
@@ -2444,6 +2490,209 @@ namespace DD.Prototype.Tests.PlayMode
             public bool IkVar, IkServis, KilitL, KilitR;
         }
 
+        // Opt-in evidence for the measured worst ZL1 clip and the four ZL5 bodies only.
+        // Fixed buffers; no file I/O, reflection, LINQ, or changes to contact/metric inputs while sampling.
+        private sealed class FailureTrace
+        {
+            private const int MaxFrames = 2400;
+            [Serializable] private struct Frame
+            {
+                public int unityFrame, label, since, currentState, nextState, currentClip, nextClip, boneMask;
+                public float time, dt, currentTime, nextTime, blendTime, currentWeight, nextWeight, gaitRate, bodyScale;
+                public string gaitRateR, bodyScaleR, motorFrameR, motorRateR;
+                public Vector3 physicalRoot, modelRoot, modelScale, hips, ankleL, ankleR, rootVelocity, hipsVelocity, ankleVelocityL, ankleVelocityR;
+                public bool validMetricFrame, plantL, plantR, liftL, liftR, ikServed, lockedL, lockedR, groundL, groundR;
+                public float groundGapL, groundGapR, motorFrame, motorRate, motorScale, motorYaw;
+                public int offsetReleases, stretchReleases, gateReleases, liftReleases, plantReleases, transitionStarts, transitionCompletions;
+                public bool motorActive, motorClockAvailable, ikProbeSameFrame, ikProbeCounterOrderConsistent, lockPositionsAvailable;
+                public Vector3 animatedGoalL, animatedGoalR, targetGoalL, targetGoalR, lockBeforeL, lockBeforeR, lockAfterL, lockAfterR, hipPreL, hipPreR;
+                public float offsetXZL, offsetXZR, targetWeightL, targetWeightR;
+                public int preIkOffsetReleases, postIkOffsetReleases;
+            }
+            [Serializable] private struct ClipName { public int id; public string name; }
+            [Serializable] private sealed class Packet
+            {
+                public string schema = "wp096-zombie-failure-trace-v1", sourceCommit, unityVersion, body;
+                public string sampleStage = "existing recorder LateUpdate after Animator/IK; raw event flags use unchanged classifier";
+                public string limit = "pre/post IK probes request script orders -32000/+32000; same-frame/counter flags must validate callback order; no runtime parity claimed";
+                public int frameCapacity = MaxFrames, frameCount, observedFrames, droppedFrames, bonesPerFrame, droppedClipNames;
+                public Frame[] frames = new Frame[MaxFrames];
+                public Quaternion[] rootSpaceBoneRotations;
+                public string[] boneNames;
+                public ClipName[] clips;
+            }
+            private readonly Packet _data;
+            private readonly string _directory;
+            private readonly ZombieSkinnedVisual _visual;
+            private readonly Transform _physicalRoot;
+            private bool _written;
+            private readonly Func<ZombieSkinnedVisual, float> _motorFrame, _motorRate, _motorScale;
+            private readonly Vector3[] _lockPositions;
+            private readonly ZombiIkTraceBefore _beforeIk;
+            private readonly ZombiIkTraceAfter _afterIk;
+            private FailureTrace(string directory, string body, Animator animator)
+            {
+                _directory = directory;
+                _visual = animator.GetComponentInParent<ZombieSkinnedVisual>();
+                ZombieEnemy enemy = animator.GetComponentInParent<ZombieEnemy>();
+                _physicalRoot = enemy != null ? enemy.transform : animator.transform;
+                _motorFrame = FloatReader("_transitionFrame"); _motorRate = FloatReader("_transitionRate"); _motorScale = FloatReader("_transitionScale");
+                if (_visual != null)
+                {
+                    _motorFrame?.Invoke(_visual); _motorRate?.Invoke(_visual); _motorScale?.Invoke(_visual); // warm before measured frames
+                }
+                FootIkAdapter ik = animator.GetComponent<FootIkAdapter>();
+                FieldInfo locks = typeof(FootIkAdapter).GetField("_lockPos", BindingFlags.Instance | BindingFlags.NonPublic);
+                _lockPositions = ik != null && locks != null ? locks.GetValue(ik) as Vector3[] : null; // once, not in the frame callback
+                _beforeIk = animator.gameObject.AddComponent<ZombiIkTraceBefore>();
+                _beforeIk.Initialize(animator, ik, _lockPositions);
+                _afterIk = animator.gameObject.AddComponent<ZombiIkTraceAfter>();
+                _afterIk.Initialize(animator, ik);
+                HumanBodyBones[] bones = R2LokomotionOlcumTests.Kemikler;
+                _data = new Packet
+                {
+                    sourceCommit = Environment.GetEnvironmentVariable("DD_R2_COMMIT"), unityVersion = Application.unityVersion, body = body,
+                    bonesPerFrame = bones.Length, rootSpaceBoneRotations = new Quaternion[MaxFrames * bones.Length], boneNames = new string[bones.Length]
+                };
+                for (int i = 0; i < bones.Length; i++) _data.boneNames[i] = bones[i].ToString();
+            }
+            public static FailureTrace Create(string body, Animator animator)
+            {
+                string directory = Environment.GetEnvironmentVariable("DD_WP096_TRACE_DIR");
+                if (string.IsNullOrEmpty(directory) || !Path.IsPathRooted(directory)) return null;
+                const string prefix = "WP096_Kayit_";
+                string label = body.StartsWith(prefix, StringComparison.Ordinal) ? body.Substring(prefix.Length) : body;
+                bool target = label.StartsWith("Ultra/walk_stomp_B/", StringComparison.Ordinal)
+                    || label == "Standard" || label == "Special" || label == "Elite" || label == "Ultra";
+                return target ? new FailureTrace(directory, label, animator) : null;
+            }
+            private static Func<ZombieSkinnedVisual, float> FloatReader(string name)
+            {
+                FieldInfo field = typeof(ZombieSkinnedVisual).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field == null || field.FieldType != typeof(float)) return null;
+                // Resolve/compile only while binding the optional editor fixture; invoking this typed delegate does not box.
+                var body = System.Linq.Expressions.Expression.Parameter(typeof(ZombieSkinnedVisual), "body");
+                try
+                {
+                    return System.Linq.Expressions.Expression.Lambda<Func<ZombieSkinnedVisual, float>>(
+                        System.Linq.Expressions.Expression.Field(body, field), body).Compile();
+                }
+                catch (NotSupportedException) { return null; }
+                catch (MemberAccessException) { return null; }
+            }
+            public void Capture(ZombiKaydedici owner, Kare k)
+            {
+                _data.observedFrames++;
+                if (_data.frameCount == MaxFrames) { _data.droppedFrames++; return; }
+                Animator animator = owner._anim;
+                AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+                bool blending = animator.IsInTransition(0);
+                AnimatorStateInfo next = blending ? animator.GetNextAnimatorStateInfo(0) : default;
+                var frame = new Frame
+                {
+                    unityFrame = Time.frameCount, time = k.Zaman, dt = k.Dt, label = k.Etiket, since = k.Since, validMetricFrame = k.Gecerli,
+                    physicalRoot = _physicalRoot.position, modelRoot = owner._kok.position, modelScale = owner._kok.lossyScale,
+                    hips = owner._kalca.position, ankleL = owner._ayakL.position, ankleR = owner._ayakR.position,
+                    rootVelocity = k.KokV, hipsVelocity = k.KalcaV, ankleVelocityL = k.AyakVL, ankleVelocityR = k.AyakVR,
+                    plantL = k.OlayL, plantR = k.OlayR, liftL = k.KalkL, liftR = k.KalkR,
+                    ikServed = k.IkServis, lockedL = k.KilitL, lockedR = k.KilitR,
+                    groundL = !float.IsNaN(k.BoslukL) && !float.IsInfinity(k.BoslukL), groundR = !float.IsNaN(k.BoslukR) && !float.IsInfinity(k.BoslukR),
+                    currentState = current.fullPathHash, nextState = blending ? next.fullPathHash : 0,
+                    currentTime = current.normalizedTime, nextTime = blending ? next.normalizedTime : 0f,
+                    currentClip = k.Klip, nextClip = k.SonrakiKlip,
+                    currentWeight = DominantWeight(animator, false), nextWeight = blending ? DominantWeight(animator, true) : 0f,
+                    blendTime = blending ? animator.GetAnimatorTransitionInfo(0).normalizedTime : 0f,
+                    gaitRate = animator.GetFloat(CharacterAnimatorContract.GaitRate), bodyScale = _visual != null ? _visual.GaitBodyScale : 0f
+                };
+                frame.groundGapL = frame.groundL ? k.BoslukL : 0f;
+                frame.groundGapR = frame.groundR ? k.BoslukR : 0f;
+                if (_visual != null)
+                {
+                    frame.motorClockAvailable = _motorFrame != null && _motorRate != null && _motorScale != null;
+                    if (frame.motorClockAvailable)
+                    {
+                        frame.motorFrame = _motorFrame(_visual); frame.motorRate = _motorRate(_visual); frame.motorScale = _motorScale(_visual);
+                    }
+                    frame.motorYaw = _visual.TransitionYawDegrees; frame.motorActive = _visual.TransitionActive;
+                    frame.transitionStarts = _visual.TransitionStarts; frame.transitionCompletions = _visual.TransitionCompletions;
+                }
+                if (owner._ik != null)
+                {
+                    frame.offsetReleases = owner._ik.ReleasedByOffset; frame.stretchReleases = owner._ik.ReleasedByStretch;
+                    frame.gateReleases = owner._ik.ReleasedByGate; frame.liftReleases = owner._ik.ReleasedByLift; frame.plantReleases = owner._ik.ReleasedByPlant;
+                }
+                frame.ikProbeSameFrame = _beforeIk.FrameId == Time.frameCount && _afterIk.FrameId == Time.frameCount;
+                if (frame.ikProbeSameFrame)
+                {
+                    frame.animatedGoalL = _beforeIk.Left; frame.animatedGoalR = _beforeIk.Right;
+                    frame.targetGoalL = _afterIk.Left; frame.targetGoalR = _afterIk.Right;
+                    frame.lockBeforeL = _beforeIk.LockL; frame.lockBeforeR = _beforeIk.LockR;
+                    frame.hipPreL = _beforeIk.HipL; frame.hipPreR = _beforeIk.HipR;
+                    frame.targetWeightL = _afterIk.WeightL; frame.targetWeightR = _afterIk.WeightR;
+                    frame.preIkOffsetReleases = _beforeIk.OffsetReleases; frame.postIkOffsetReleases = _afterIk.OffsetReleases;
+                    frame.ikProbeCounterOrderConsistent = frame.preIkOffsetReleases <= frame.postIkOffsetReleases
+                        && frame.postIkOffsetReleases == frame.offsetReleases;
+                    frame.lockPositionsAvailable = _lockPositions != null && _lockPositions.Length == 2;
+                    if (frame.lockPositionsAvailable)
+                    {
+                        frame.lockAfterL = _lockPositions[0]; frame.lockAfterR = _lockPositions[1];
+                        Vector3 left = frame.lockAfterL - frame.animatedGoalL, right = frame.lockAfterR - frame.animatedGoalR;
+                        left.y = right.y = 0f; frame.offsetXZL = left.magnitude; frame.offsetXZR = right.magnitude;
+                    }
+                }
+                Quaternion inverse = Quaternion.Inverse(owner._kok.rotation);
+                for (int b = 0; b < owner._kemik.Length; b++)
+                {
+                    Transform bone = owner._kemik[b];
+                    if (bone == null) continue;
+                    frame.boneMask |= 1 << b;
+                    _data.rootSpaceBoneRotations[_data.frameCount * _data.bonesPerFrame + b] = inverse * bone.rotation;
+                }
+                _data.frames[_data.frameCount++] = frame;
+            }
+            private static float DominantWeight(Animator animator, bool next)
+            {
+                // Reuse the recorder's existing list. No classifier uses it between calls to Baskin.
+                if (next) animator.GetNextAnimatorClipInfo(0, s_klip); else animator.GetCurrentAnimatorClipInfo(0, s_klip);
+                float weight = 0f;
+                for (int i = 0; i < s_klip.Count; i++) weight = Mathf.Max(weight, s_klip[i].weight);
+                return weight;
+            }
+            public void Write()
+            {
+                if (_written) return;
+                _written = true;
+                if (_beforeIk != null) { _beforeIk.enabled = false; Object.Destroy(_beforeIk); }
+                if (_afterIk != null) { _afterIk.enabled = false; Object.Destroy(_afterIk); }
+                try
+                {
+                    Array.Resize(ref _data.frames, _data.frameCount);
+                    Array.Resize(ref _data.rootSpaceBoneRotations, _data.frameCount * _data.bonesPerFrame);
+                    for (int i = 0; i < _data.frameCount; i++)
+                    {
+                        _data.frames[i].gaitRateR = _data.frames[i].gaitRate.ToString("R", CultureInfo.InvariantCulture);
+                        _data.frames[i].bodyScaleR = _data.frames[i].bodyScale.ToString("R", CultureInfo.InvariantCulture);
+                        _data.frames[i].motorFrameR = _data.frames[i].motorFrame.ToString("R", CultureInfo.InvariantCulture);
+                        _data.frames[i].motorRateR = _data.frames[i].motorRate.ToString("R", CultureInfo.InvariantCulture);
+                    }
+                    _data.clips = new ClipName[Mathf.Min(KlipAdlari.Count, 128)];
+                    _data.droppedClipNames = Mathf.Max(0, KlipAdlari.Count - _data.clips.Length);
+                    int c = 0;
+                    foreach (KeyValuePair<int, string> clip in KlipAdlari)
+                    {
+                        if (c == _data.clips.Length) break;
+                        _data.clips[c++] = new ClipName { id = clip.Key, name = clip.Value };
+                    }
+                    string name = Regex.Replace(_data.body, "[^A-Za-z0-9_-]", "_");
+                    Directory.CreateDirectory(_directory);
+                    string path = Path.Combine(_directory, "zl-" + name + "-" + Guid.NewGuid().ToString("N") + ".json");
+                    using (var file = new StreamWriter(new FileStream(path, FileMode.CreateNew))) file.Write(JsonUtility.ToJson(_data));
+                    Debug.Log("[DD-TEST] wp096.zombie.trace=" + path + " frames=" + _data.frameCount + " dropped=" + _data.droppedFrames);
+                }
+                catch (Exception error) { Debug.LogWarning("wp096.zombie.trace unavailable: " + error.GetType().Name); }
+            }
+        }
+
         public static readonly Dictionary<int, string> KlipAdlari = new Dictionary<int, string>();
         private static readonly List<AnimatorClipInfo> s_klip = new List<AnimatorClipInfo>(8);
         private static readonly int LokoHash = Animator.StringToHash(CharacterAnimatorContract.LocomotionState);
@@ -2457,6 +2706,7 @@ namespace DD.Prototype.Tests.PlayMode
         private Animator _anim;
         private Transform _kok, _kalca, _gogus, _ayakL, _ayakR, _parmakL, _parmakR;
         private FootIkAdapter _ik;
+        private FailureTrace _failureTrace;
         private Vector3 _onceTL, _onceTR;
         private Transform[] _kemik;
         private Quaternion[] _onceRot;
@@ -2485,6 +2735,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (_parmakL == null) _parmakL = _ayakL;
             if (_parmakR == null) _parmakR = _ayakR;
             _ik = anim.GetComponent<FootIkAdapter>();
+            _failureTrace = FailureTrace.Create(gameObject.name, anim);
             HumanBodyBones[] kemikler = R2LokomotionOlcumTests.Kemikler;
             _kemik = new Transform[kemikler.Length];
             _onceRot = new Quaternion[kemikler.Length];
@@ -2501,6 +2752,7 @@ namespace DD.Prototype.Tests.PlayMode
             _olayBagli = false;
             _bagli = false;
             enabled = false;
+            _failureTrace?.Write();
         }
 
         private void OnDestroy() => Birak();
@@ -2642,6 +2894,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Kareler.Add(k);
+            _failureTrace?.Capture(this, k);
             _onceKok = kok;
             _onceKalca = kalca;
             _onceL = l;
