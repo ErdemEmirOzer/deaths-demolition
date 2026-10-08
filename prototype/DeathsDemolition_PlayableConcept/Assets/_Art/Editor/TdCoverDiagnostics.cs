@@ -1292,7 +1292,6 @@ namespace DD.Art.Pipeline.EditorTools
                     if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f || value > 1f)
                         throw new InvalidOperationException("UNKNOWN: invalid raw depth readback");
                 feature.ReadSamples(_dir, values);
-                feature.ReadNativeLedger(_dir);
                 if (name.EndsWith("-depth-full", StringComparison.Ordinal)) _physicalInventory = CapturePhysicalInventory(cam);
                 using (var writer = new BinaryWriter(File.Create(Path.Combine(_dir, name + ".rfloat"))))
                     foreach (float value in values) writer.Write(value);
@@ -1411,8 +1410,6 @@ namespace DD.Art.Pipeline.EditorTools
         private Material _material;
         private RTHandle _output;
         private DepthPass _pass;
-        private ArmPass _armPass;
-        private readonly TdNativeMsaaBridge _native = new TdNativeMsaaBridge();
         public RenderTexture Output => _output.rt;
         public int CopiedFrames;
         public string SourceDescription;
@@ -1560,10 +1557,6 @@ namespace DD.Art.Pipeline.EditorTools
             }
             catch (Exception error) { Unsupported(error); }
         }
-        public void ReadNativeLedger(string directory)
-        {
-            if (_requested) _native.ReadLedger(directory, _sampleLabel, _ordinal, _camera.GetInstanceID());
-        }
         public void WriteSamples(string directory, string pose)
         {
             string pin = Environment.GetEnvironmentVariable("DD_TD_SOURCE_PIN");
@@ -1593,28 +1586,18 @@ namespace DD.Art.Pipeline.EditorTools
             if (!rt.Create() || !rt.IsCreated())
                 throw new InvalidOperationException("UNKNOWN: R32 depth output allocation failed");
             _pass = new DepthPass(this) { renderPassEvent = RenderPassEvent.AfterRenderingTransparents };
-            if (_native.OptIn) _armPass = new ArmPass(this) { renderPassEvent = RenderPassEvent.BeforeRendering };
         }
         public override void Create() { }
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
         {
-            if (data.cameraData.camera == _camera)
-            {
-                if (_armPass != null && _requested) renderer.EnqueuePass(_armPass);
-                renderer.EnqueuePass(_pass);
-            }
+            if (data.cameraData.camera == _camera) renderer.EnqueuePass(_pass);
         }
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData data)
         {
-            if (data.cameraData.camera == _camera)
-            {
-                _pass.Setup(renderer.cameraDepthTargetHandle, data.cameraData.cameraTargetDescriptor);
-                if (_armPass != null) _armPass.Setup(renderer.cameraDepthTargetHandle);
-            }
+            if (data.cameraData.camera == _camera) _pass.Setup(renderer.cameraDepthTargetHandle, data.cameraData.cameraTargetDescriptor);
         }
         protected override void Dispose(bool disposing)
         {
-            _native.Dispose();
             if (_output != null)
             {
                 _output.Release();
@@ -1624,23 +1607,6 @@ namespace DD.Art.Pipeline.EditorTools
             CoreUtils.Destroy(_compute); _compute = null;
             CoreUtils.Destroy(_material);
             _material = null;
-        }
-        // Empty MRT + overrideCameraTarget avoids both attachment binding/clear and UniversalRenderer's before-opaque clear-policy branch.
-        // This is metadata only. Existing URP executes the same command buffer; no independent Execute/Clear/Submit.
-        private sealed class ArmPass : ScriptableRenderPass
-        {
-            private readonly TdCoverDepthFeature _owner;
-            private RTHandle _source;
-            public ArmPass(TdCoverDepthFeature owner)
-            {
-                _owner = owner;
-                ConfigureTarget(Array.Empty<RTHandle>());
-            }
-            public void Setup(RTHandle source) => _source = source;
-            public override void Execute(ScriptableRenderContext context, ref RenderingData data)
-            {
-                if (_owner._requested) _owner._native.Arm(_source, _owner._camera, _owner._sampleLabel, _owner._ordinal, ref data);
-            }
         }
         private sealed class DepthPass : ScriptableRenderPass
         {
@@ -1671,13 +1637,9 @@ namespace DD.Art.Pipeline.EditorTools
             public override void Execute(ScriptableRenderContext context, ref RenderingData data)
             {
                 if (_copy == null) throw new InvalidOperationException("UNKNOWN: depth copy setup missing");
-                try
-                {
-                    _copy.Execute(context, ref data);
-                    _owner.DispatchSamples(_source, ref data);
-                    _owner.CopiedFrames++;
-                }
-                finally { _owner._native.Disarm(ref data); }
+                _copy.Execute(context, ref data);
+                _owner.DispatchSamples(_source, ref data);
+                _owner.CopiedFrames++;
             }
         }
     }
