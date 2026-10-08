@@ -30,7 +30,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// that puts the motor on the ring's threshold speed (the 1-D blend's pure ring); sprint = full tilt. Each segment: 1 s warm-up
     /// (excluded), then until both feet show ≥ 6 cycles (and ≥ 3 s), bounded at 12 s (walk) / 10 s (run, sprint).</item>
     /// <item>Course K, the writer's positive controls (WP-082 R3 PLAN §5.1): sprint_fwd and walk_fwd with the foot IK off, sprint_fwd with the
-    /// Animator's LocoRate forced to ×0.5 (a known slide of ≈ 0.5).</item>
+    /// Animator's LocoRate forced to ×0.5 with foot IK still off (a known slide of ≈ 0.5, subject to the same positive-control gate).</item>
     /// <item>Course S: run forward with the aim swung ±100° (PLAN §4.3; L1 / L3 reported, not gated).</item>
     /// <item>Course B, transitions × 5: start (still → run), stop (run → still), pivot 180° (run → run reversed), 90° cut
     /// (run → run ±90°). Base directions fwd, right, back, left, fwd_r; the cut alternates right / left.</item>
@@ -57,7 +57,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// Positive controls (same run; a control that fails keeps the gates that depend on it unwritten): (a) every steady segment's
     /// contact share per foot within ±10 points of the clip events' stance share (foot_x → foot_x_off) AND the pose agreeing with the
     /// phase (a2) — gates L1, L1t, L2;
-    /// (b) the ×0.5 LocoRate segment reads L1 0.5 ± 0.1 — gates L1; (c) StrideEslemesi on the pure run directions: the stride-match slide
+    /// (b) the ×0.5 LocoRate segment has verified IK-off / actual-rate isolation and reads L1 0.5 ± 0.1 — gates L1; (c) StrideEslemesi on the pure run directions: the stride-match slide
     /// (CadenceBand.SlideFraction at the measured speed and the clip rate LocoRate × child time scale) within 0.03 of the segment's
     /// L1 avg — an information row since S-06 08.10 (the slide it misses is the AP-022 v008 clips' own stance motion). L1 / L1t sample
     /// (S-06 08.10): phase contact ∧ the animated foot's |vertical speed| ≤ 0.15 m/s (R2's vertical rule; logged as wp082.l1Def);
@@ -416,16 +416,26 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            // ---- course K: the positive controls (foot IK off ×2, LocoRate ×0.5)
+            // ---- course K: the positive controls (foot IK off ×2, then LocoRate ×0.5 with IK still off).
+            // A foot lock would alter the shown foot speed and invalidate control (b); restore both overrides even on iterator failure.
             if (_iptal == null)
             {
-                FootIkAdapter.Force = 0;
-                yield return Kararli(merkez, parcalar[iIkOffRun], iIkOffRun, Yon8(0, cubuk[2, 0]), Isinma + 600);
-                yield return Kararli(merkez, parcalar[iIkOffWalk], iIkOffWalk, Yon8(0, cubuk[0, 0]), Isinma + 720);
-                FootIkAdapter.Force = -1;
-                _carpan.Carpan = KontrolRate;
-                yield return Kararli(merkez, parcalar[iRate], iRate, Yon8(0, cubuk[2, 0]), Isinma + 600);
-                _carpan.Carpan = 1f;
+                int forceBefore = FootIkAdapter.Force;
+                float multiplierBefore = _carpan.Carpan;
+                try
+                {
+                    FootIkAdapter.Force = 0;
+                    yield return Kararli(merkez, parcalar[iIkOffRun], iIkOffRun, Yon8(0, cubuk[2, 0]), Isinma + 600);
+                    yield return Kararli(merkez, parcalar[iIkOffWalk], iIkOffWalk, Yon8(0, cubuk[0, 0]), Isinma + 720);
+                    _carpan.Carpan = KontrolRate;
+                    yield return Kararli(merkez, parcalar[iRate], iRate, Yon8(0, cubuk[2, 0]), Isinma + 600);
+                }
+                finally
+                {
+                    FootIkAdapter.Force = forceBefore;
+                    if (_carpan != null) _carpan.Carpan = multiplierBefore;
+                    if (_kayit != null) _kayit.Etiket = -1;   // restored frames must not remain labelled as the half-rate control
+                }
             }
 
             // ---- course S: run forward, the aim swung ±100° (2 s period)
@@ -878,14 +888,36 @@ namespace DD.Prototype.Tests.PlayMode
             return ok;
         }
 
-        /// <summary>(b) LocoRate forced ×0.5 on run_fwd: L1 there reads 0.5 ± 0.1.</summary>
+        /// <summary>(b) Verified IK-off and actual LocoRate ×0.5 on sprint_fwd: L1 still must read 0.5 ± 0.1.</summary>
         private bool KontrolB(Istat[] ist, int iRate, List<string> hatalar)
         {
             Istat s = ist[iRate], b = ist[16];
-            bool ok = s.Kayma.Count > 0 && Math.Abs(s.L1Avg - KontrolKayma) <= KontrolKaymaTolerans;
+            int frames = 0, wrongForce = 0, served = 0, weighted = 0, locked = 0, wrongRate = 0;
+            float maxRateError = 0f, maxWeight = 0f;
+            foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
+            {
+                if (k.Etiket != iRate || k.Since < Isinma || !k.Gecerli) continue;
+                frames++;
+                if (k.IkForce != 0) wrongForce++;
+                if (k.IkAdapterServed) served++;
+                if (float.IsNaN(k.IkWeight) || float.IsInfinity(k.IkWeight) || k.IkWeight > 0.001f) weighted++;
+                if (k.Locked != 0) locked++;
+                maxWeight = Mathf.Max(maxWeight, k.IkWeight);
+                float expectedRate = k.OwnerRate * KontrolRate;
+                float error = Mathf.Abs(k.Rate - expectedRate);
+                if (float.IsNaN(error) || float.IsInfinity(error) || expectedRate <= 0f || error > 1e-4f) wrongRate++;
+                else maxRateError = Mathf.Max(maxRateError, error);
+            }
+
+            bool isolated = frames > 0 && wrongForce == 0 && served == 0 && weighted == 0 && locked == 0 && wrongRate == 0;
+            bool knownSlide = s.Kayma.Count > 0 && Math.Abs(s.L1Avg - KontrolKayma) <= KontrolKaymaTolerans;
+            bool ok = isolated && knownSlide;
+            Debug.Log("[DD-TEST] wp082.controlB isolation frames=" + frames + " wrongForce=" + wrongForce + " served=" + served + " residualWeightFrames=" + weighted + " maxWeight=" + F(maxWeight) +
+                      " locked=" + locked + " wrongRate=" + wrongRate + " rateErrorMax=" + F(maxRateError) + " pass=" + isolated);
             Debug.Log("[DD-TEST] wp082.controlB knownSlide rate×" + KontrolRate + " L1 avg " + F(s.L1Avg) + " p95 " + F(s.L1P95) + " n " + s.Kayma.Count + " (expected " + KontrolKayma + " ± " + KontrolKaymaTolerans +
                       ") LocoRate " + F3(s.Rate) + " v " + F2(s.V) + " — base run_fwd L1 " + F(b.L1Avg) + " LocoRate " + F3(b.Rate) + " pass=" + ok);
-            if (!ok) hatalar.Add("pozitif kontrol (b) bilinen kayma FAIL: L1 " + F(s.L1Avg) + " (beklenen " + KontrolKayma + " ± " + KontrolKaymaTolerans + ")");
+            if (!isolated) hatalar.Add("pozitif kontrol (b) izolasyon FAIL: kare=" + frames + " force=" + wrongForce + " served=" + served + " weight=" + weighted + " locked=" + locked + " rate=" + wrongRate);
+            if (!knownSlide) hatalar.Add("pozitif kontrol (b) bilinen kayma FAIL: L1 " + F(s.L1Avg) + " (beklenen " + KontrolKayma + " ± " + KontrolKaymaTolerans + ")");
             return ok;
         }
 
@@ -1185,7 +1217,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (string.IsNullOrEmpty(dir)) return;
             var sec = new HashSet<int> { 0, 8, 16, 20, iIkOffRun, iIkOffWalk, iRate };
             var sb = new StringBuilder("label,since,frame,valid,phaseL,phaseR,contactL,contactR,poseL,poseR,r2L,r2R,animSoleL,animSoleR,shownSoleL,shownSoleR,animVyL,animVyR," +
-                                       "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed\n");
+                                       "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed,ownerRate,ikForce,ikAdapterServed,ikWeight\n");
             foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
             {
                 if (!sec.Contains(k.Etiket)) continue;
@@ -1195,7 +1227,8 @@ namespace DD.Prototype.Tests.PlayMode
                   .Append(F(k.AnimGapL)).Append(',').Append(F(k.AnimGapR)).Append(',').Append(F(k.GapL)).Append(',').Append(F(k.GapR)).Append(',')
                   .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append(',').Append(F3(Yatay(k.FootVL).magnitude)).Append(',').Append(F3(Yatay(k.FootVR).magnitude)).Append(',')
                   .Append(F3(k.BodyV.magnitude)).Append(',').Append(F(k.Pelvis)).Append(',').Append(k.Locked).Append(',').Append(F3(k.Rate)).Append(',')
-                  .Append(k.OlayL ? 1 : 0).Append(',').Append(k.OlayR ? 1 : 0).Append(',').Append(k.OffL ? 1 : 0).Append(',').Append(k.OffR ? 1 : 0).Append(',').Append(k.IkServed ? 1 : 0).Append('\n');
+                  .Append(k.OlayL ? 1 : 0).Append(',').Append(k.OlayR ? 1 : 0).Append(',').Append(k.OffL ? 1 : 0).Append(',').Append(k.OffR ? 1 : 0).Append(',').Append(k.IkServed ? 1 : 0).Append(',')
+                  .Append(F(k.OwnerRate)).Append(',').Append(k.IkForce).Append(',').Append(k.IkAdapterServed ? 1 : 0).Append(',').Append(F(k.IkWeight)).Append('\n');
             }
 
             System.IO.Directory.CreateDirectory(dir);
@@ -1438,6 +1471,10 @@ namespace DD.Prototype.Tests.PlayMode
             public float AnimGapL, AnimGapR;      // animated sole (before the foot IK), m
             public float AnimVyL, AnimVyR;        // its vertical speed, m/s
             public bool IkServed;
+            public int IkForce;                   // actual static override in this sampled frame (control b)
+            public bool IkAdapterServed;          // raw Served, including a solve before its blend weight reaches 0.001
+            public float IkWeight;               // remaining IK blend weight; Force=0 alone does not prove the pose is IK-free
+            public float OwnerRate;              // PlayerSkinnedVisual's unmultiplied rate in this same frame
             public float Rate;                    // the Animator's LocoRate this frame
             public float Honest;                  // PlayerSkinnedVisual.HonestSpeed this frame (m/s)
             public byte Locked;                   // FootIkAdapter.LockedFeet
@@ -1728,6 +1765,10 @@ namespace DD.Prototype.Tests.PlayMode
             // the animated sole = the shown sole − the height the foot IK added this frame (weight × LeftLift / RightLift). Holds for the
             // per-foot drop (shown ≈ hit + feetBottomHeight → animated = −delta) and for S-03's PreserveSwingLift common correction
             // (WP-096 c1a2a8a4, where Lift is the shared delta + the foot's ground step); no served IK → the shown pose
+            k.IkForce = FootIkAdapter.Force;
+            k.IkAdapterServed = _ik != null && _ik.Served;
+            k.IkWeight = _ik != null ? _ik.Weight : 0f;
+            k.OwnerRate = _pv != null ? _pv.LocoRate : float.NaN;
             k.IkServed = _ik != null && _ik.Served && _ik.Weight > 0.001f;
             k.AnimGapL = k.IkServed ? k.GapL - _ik.Weight * _ik.LeftLift : k.GapL;
             k.AnimGapR = k.IkServed ? k.GapR - _ik.Weight * _ik.RightLift : k.GapR;

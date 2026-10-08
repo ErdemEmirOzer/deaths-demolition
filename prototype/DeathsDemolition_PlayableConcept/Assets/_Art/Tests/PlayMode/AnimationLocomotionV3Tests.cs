@@ -318,8 +318,9 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-082 / WP-083 B2b (C-00 05.10, S-02 magazine contract v1): the player's left hand carries socket_mag_l at the palm centre
-        /// (wrist → middle-finger base, half-way) and it follows the hand through the animated pose.
+        /// WP-082 / WP-083 B2b, E3 contract correction (C-00 08.10): the Hero's authored socket keeps its hand-local TRS through
+        /// Attach and animation (D1's calibrated frame). A separate fresh instance without the named socket exercises Ensure's
+        /// fallback: wrist → middle-finger base, half-way, within the original 5 mm limit. The historical test name stays stable.
         /// </summary>
         [Category("WP071")]
         [UnityTest]
@@ -328,36 +329,72 @@ namespace DD.Art.Tests.PlayMode
         {
             yield return Stage();
             CharacterAssetSet set = CharacterAssetSet.Load();
-            var stage = new GameObject("WP083_MagSocket");
-            _temp.Add(stage);
-            Transform visual = new GameObject("Visual").transform;
-            visual.SetParent(stage.transform, false);
-            GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
-            var pv = go.GetComponent<PlayerSkinnedVisual>();
-            Vector3 velocity = Vector3.zero;
-            pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
-            pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            Transform socket = pv.MagazineSocket;
-            Transform hand = pv.Animator.GetBoneTransform(HumanBodyBones.LeftHand), middle = pv.Animator.GetBoneTransform(HumanBodyBones.LeftMiddleProximal);
-            Assert.IsNotNull(socket, "socket_mag_l yok");
-            Assert.AreEqual(MagazineSocket.Name, socket.name);
-            Assert.AreSame(hand, socket.parent, "socket_mag_l sol elin çocuğu olmalı");
-            Assert.AreSame(socket, MagazineSocket.Ensure(pv.Animator), "ikinci çağrı aynı soketi döndürmeli (çift soket yok)");
             Time.captureDeltaTime = 1f / 60f;
-            velocity = Vector3.forward * 3f;
-            float maxErr = 0f;
-            for (int f = 0; f < 60; f++)
+            foreach (bool fallback in new[] { false, true })
             {
-                stage.transform.position += velocity * Time.deltaTime;
-                yield return null;
-                Vector3 palm = Vector3.Lerp(hand.position, middle.position, MagazineSocket.PalmShare);
-                maxErr = Mathf.Max(maxErr, Vector3.Distance(palm, socket.position));
-            }
+                string mode = fallback ? "fallback" : "authored";
+                var stage = new GameObject("WP083_MagSocket_" + mode);
+                _temp.Add(stage);
+                Transform visual = new GameObject("Visual").transform;
+                visual.SetParent(stage.transform, false);
+                GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
+                var pv = go.GetComponent<PlayerSkinnedVisual>();
+                Assert.IsNotNull(pv);
+                Assert.IsNotNull(pv.Animator);
+                Transform hand = pv.Animator.GetBoneTransform(HumanBodyBones.LeftHand);
+                Transform middle = pv.Animator.GetBoneTransform(HumanBodyBones.LeftMiddleProximal);
+                Assert.IsNotNull(hand, mode + ": Humanoid LeftHand yok");
+                Assert.IsNotNull(middle, mode + ": Humanoid LeftMiddleProximal yok");
+                Transform authored = hand.Find(MagazineSocket.Name);
+                Assert.IsNotNull(authored, "Hero prefabında authored socket_mag_l sol elin doğrudan çocuğu olmalı");
+                Vector3 expectedLocalPosition = authored.localPosition;
+                Quaternion expectedLocalRotation = authored.localRotation;
+                Vector3 expectedLocalScale = authored.localScale;
+                if (fallback)
+                {
+                    // Only this disposable test instance is changed; the authored node's parent and TRS, prefab and D1 stay intact.
+                    authored.name = "WP083_AuthoredMagSocketExcludedFromFallback";
+                    expectedLocalPosition = hand.InverseTransformPoint(Vector3.Lerp(hand.position, middle.position, MagazineSocket.PalmShare));
+                    expectedLocalRotation = Quaternion.identity;
+                    expectedLocalScale = Vector3.one;
+                }
 
-            float toWrist = Vector3.Distance(socket.position, hand.position);
-            Debug.Log("[DD-TEST] wp083.magsocket local=" + socket.localPosition.ToString("F3") + " toWrist=" + (toWrist * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm palmErrMax=" + (maxErr * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm");
-            Assert.Less(maxErr, 0.005f, "soket koşuda avuç ortasından ayrıldı (> 5 mm)");
-            Assert.That(toWrist, Is.InRange(0.02f, 0.10f), "avuç ortası bilekten 2–10 cm");
+                Vector3 velocity = Vector3.zero;
+                pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+                pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                Transform socket = pv.MagazineSocket;
+                Assert.IsNotNull(socket, mode + ": socket_mag_l yok");
+                Assert.AreEqual(MagazineSocket.Name, socket.name);
+                Assert.AreSame(hand, socket.parent, mode + ": socket_mag_l sol elin çocuğu olmalı");
+                if (fallback) Assert.AreNotSame(authored, socket, "Ensure gerçek fallback soketi oluşturmalı");
+                else Assert.AreSame(authored, socket, "Attach authored soketi korumalı");
+                Assert.AreSame(socket, MagazineSocket.Ensure(pv.Animator), mode + ": ikinci çağrı aynı soketi döndürmeli");
+                int socketCount = 0;
+                foreach (Transform t in hand.GetComponentsInChildren<Transform>(true)) if (t.name == MagazineSocket.Name) socketCount++;
+                Assert.AreEqual(1, socketCount, mode + ": çift soket var");
+                velocity = Vector3.forward * 3f;
+                float maxErr = 0f, maxPalmErr = 0f;
+                for (int frame = 0; frame < 60; frame++)
+                {
+                    stage.transform.position += velocity * Time.deltaTime;
+                    yield return null;
+                    Assert.AreSame(hand, socket.parent, mode + ": animasyonda soket ebeveyni değişti");
+                    Assert.Less(Vector3.Distance(expectedLocalPosition, socket.localPosition), 1e-6f, mode + ": el-local konum değişti");
+                    Assert.Less(Quaternion.Angle(expectedLocalRotation, socket.localRotation), 0.001f, mode + ": el-local dönüş değişti");
+                    Assert.Less(Vector3.Distance(expectedLocalScale, socket.localScale), 1e-6f, mode + ": el-local ölçek değişti");
+                    maxErr = Mathf.Max(maxErr, Vector3.Distance(hand.TransformPoint(expectedLocalPosition), socket.position));
+                    Vector3 palm = Vector3.Lerp(hand.position, middle.position, MagazineSocket.PalmShare);
+                    maxPalmErr = Mathf.Max(maxPalmErr, Vector3.Distance(palm, socket.position));
+                }
+
+                velocity = Vector3.zero;
+                float toWrist = Vector3.Distance(socket.position, hand.position);
+                Debug.Log("[DD-TEST] wp083.magsocket mode=" + mode + " local=" + socket.localPosition.ToString("F3") + " toWrist=" + (toWrist * 100f).ToString("F1", CultureInfo.InvariantCulture)
+                          + " cm authoredFrameErrMax=" + (maxErr * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm palmErrMax=" + (maxPalmErr * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm");
+                Assert.Less(maxErr, 0.005f, mode + ": soket koşuda tanımlı el-local çerçeveden ayrıldı (> 5 mm)");
+                if (fallback) Assert.Less(maxPalmErr, 0.005f, "fallback soket koşuda avuç ortasından ayrıldı (> 5 mm)");
+                Assert.That(toWrist, Is.InRange(0.02f, 0.10f), mode + ": soket bilekten 2–10 cm");
+            }
         }
 
         /// <summary>
