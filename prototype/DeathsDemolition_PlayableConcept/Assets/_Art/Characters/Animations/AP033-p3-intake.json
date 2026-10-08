@@ -6,7 +6,7 @@
   "clip_count": 254,
   "applyRootMotion": false,
   "source_license": "AP033-p3-LICENSES.csv",
-  "note": "Source export SHA256SUMS retained as provenance; this intake checksum list uses destination names. Unity import/runtime not yet verified.",
+  "note": "Source export SHA256SUMS retained as provenance; this intake checksum list uses destination names. Unity import/runtime not yet verified. LICENSES destination uses repository LF line endings; source_license_sha256 preserves the original export bytes.",
   "files": [
     {
       "path": "AP033_zombie_start_run_v001.fbx",
@@ -60,8 +60,8 @@
     },
     {
       "path": "AP033-p3-LICENSES.csv",
-      "bytes": 15282,
-      "sha256": "61908dba87aa0783d3d22afe45f3df8593888352d11c21dbbafb22273f306d52"
+      "bytes": 15231,
+      "sha256": "c97814c6405834f31b6b72d2876197e3549f0d59644a80cf45e1aa2978105abc"
     },
     {
       "path": "AP033-p3-SHA256SUMS",
@@ -88,5 +88,6 @@
       "bytes": 14530,
       "sha256": "2081e6b1974775c36571668c2f36e0983e6c87b1c1b45097827037af0a47da9a"
     }
-  ]
+  ],
+  "source_license_sha256": "61908dba87aa0783d3d22afe45f3df8593888352d11c21dbbafb22273f306d52"
 }
