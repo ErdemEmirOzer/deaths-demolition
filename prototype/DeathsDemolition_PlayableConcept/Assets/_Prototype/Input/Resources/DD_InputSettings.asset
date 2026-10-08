@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: DD_InputSettings
   m_EditorClassIdentifier: 
   _defaults:
-    Version: 2
+    Version: 4
     StickDeadzone: 0.15
     RumbleEnabled: 1
-    RumbleIntensity: 0.3
+    RumbleIntensity: 0.7
     AimAssistEnabled: 1
     AimAssistAngleDegrees: 6
     AimAssistDistance: 15

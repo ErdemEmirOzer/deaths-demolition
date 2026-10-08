@@ -14,6 +14,13 @@ namespace DD.Prototype.Feedback
     /// game is stopped, a running hit-stop is ended first, the scale is only given back
     /// when it is still ours, and <see cref="Rounds.RunFlowClock"/> cancels the beat before
     /// it freezes (a pause or the results hold must never remember 0.3 as "running").
+    ///
+    /// WP-095 K1 (C-00 08.10): the beat is a REQUESTER of <see cref="FeelTimeScale"/>, the one
+    /// clock arbiter (min of the top-down hit-stop, the last zombie and this beat). It keeps its
+    /// envelope and push-in; the arbiter writes the clock, notices a foreign writer (the beat ends,
+    /// the scale stays theirs) and hands the base back. The beat does not age while the run clock
+    /// is frozen. First / third person: a freeze still ends it (FeelTimeScale.Suspend); top-down:
+    /// a pause suspends it and it resumes where it stopped.
     /// </summary>
     public static class DeathSequence
     {
@@ -22,7 +29,6 @@ namespace DD.Prototype.Feedback
         private static float _holdSeconds;
         private static float _outSeconds;
         private static float _elapsed;
-        private static float _applied = 1f;
         private static float _restoreScale = 1f;
 
         public static bool IsActive
@@ -99,19 +105,36 @@ namespace DD.Prototype.Feedback
             }
 
             HitStopService.Cancel();
+            FeelTimeScale.NotifyDeathBegan();   // WP-095 K1: the top-down stop / last zombie end, death wins (§4.11 P 100)
 
             _scale = Mathf.Clamp(scale, Vfx.GameFeelSettings.MinDeathSlowScale, 1f);
             _inSeconds = Mathf.Max(0f, inSeconds);
             _holdSeconds = Mathf.Max(0f, holdSeconds);
             _outSeconds = Mathf.Max(0f, outSeconds);
             _elapsed = 0f;
-            _restoreScale = Time.timeScale;
+            _restoreScale = FeelTimeScale.BaseScale;   // WP-095 K1: the arbiter's base (1), never a 0.06 stop on screen
             IsActive = true;
             Count++;
             PushIn01 = 0f;
-            Apply(ScaleAt(0f));
+            UpdatePushIn();
+            FeelTimeScale.Refresh();
             DeathSequenceRunner.Ensure();
             return true;
+        }
+
+        /// <summary>WP-095 K1: the scale this beat asks the arbiter for now (1 when idle).</summary>
+        public static float CurrentScale => IsActive ? ScaleAt(_elapsed) : 1f;
+
+        /// <summary>WP-095 K1: a foreign writer took the clock — the beat is over without a write (the scale is theirs).</summary>
+        internal static void EndQuietly()
+        {
+            if (!IsActive)
+            {
+                return;
+            }
+
+            IsActive = false;
+            _elapsed = 0f;
         }
 
         /// <summary>Advance with unscaled time. Called by the runner; tests may drive it directly.</summary>
@@ -122,10 +145,10 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            // Somebody else took the clock (pause / results hold / a scene change): the beat is over, the scale is theirs.
-            if (Mathf.Abs(Time.timeScale - _applied) > 0.0001f)
+            // WP-095 K1: the pause holds the beat where it is (top-down suspends it; first / third person ended it on the
+            // freeze). A foreign writer is the arbiter's call now: FeelTimeScale.Refresh ends the beat and leaves their scale.
+            if (Rounds.RunFlowClock.IsFrozen)
             {
-                IsActive = false;
                 return;
             }
 
@@ -136,10 +159,11 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Apply(ScaleAt(_elapsed));
+            UpdatePushIn();
+            FeelTimeScale.Refresh();
         }
 
-        /// <summary>End now and give the clock back (if it is still ours); the push-in goes with it.</summary>
+        /// <summary>End now and give the clock back (if it is still ours — the arbiter decides); the push-in goes with it.</summary>
         public static void Cancel()
         {
             if (!IsActive)
@@ -173,10 +197,8 @@ namespace DD.Prototype.Feedback
             return Mathf.Lerp(_scale, _restoreScale, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(outT)));
         }
 
-        private static void Apply(float scale)
+        private static void UpdatePushIn()
         {
-            _applied = scale;
-            Time.timeScale = scale;
             float inT = _inSeconds > 0f ? Mathf.Clamp01(_elapsed / _inSeconds) : 1f;
             PushIn01 = Mathf.SmoothStep(0f, 1f, inT);
         }
@@ -185,10 +207,7 @@ namespace DD.Prototype.Feedback
         {
             IsActive = false;
             _elapsed = 0f;
-            if (Mathf.Abs(Time.timeScale - _applied) < 0.0001f)
-            {
-                Time.timeScale = _restoreScale > 0.01f ? _restoreScale : 1f;
-            }
+            FeelTimeScale.Refresh();   // WP-095 K1: the arbiter gives the base back if the clock is still its own
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -198,7 +217,6 @@ namespace DD.Prototype.Feedback
             PushIn01 = 0f;
             Count = 0;
             _elapsed = 0f;
-            _applied = 1f;
             _restoreScale = 1f;
         }
     }

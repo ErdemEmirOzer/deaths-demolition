@@ -37,7 +37,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1, FeelEventRouter.CameraRequests);
             Assert.AreEqual(1, FeelEventRouter.AcceptedLocalStops);
             Assert.AreEqual(.04f, HitStopService.RemainingRealSeconds, 1e-6f);
-            Assert.AreEqual(1f, Time.timeScale, 1e-6f, "Combat presentation must never write the global clock.");
+            // WP-095 K1 (C-00 08.10): the top-down GLOBAL stop may slow the clock now, but it is FeelTimeScale's, requested from
+            // FeelEvents — the router's stop stays the local VFX envelope. Expectation unchanged (verified), message narrowed.
+            Assert.AreEqual(1f, Time.timeScale, 1e-6f, "The router's local stop must never write the global clock (K1: only FeelTimeScale does).");
+            Assert.IsFalse(FeelTimeScale.GlobalStopActive, "K1: an impact-router flush asks the arbiter for nothing.");
         }
 
         [Test]
@@ -50,7 +53,7 @@ namespace DD.Prototype.Tests.EditMode
             FeelEventRouter.Flush();
             Assert.AreEqual(0, FeelEventRouter.AcceptedLocalStops);
             Assert.IsFalse(HitStopService.IsActive);
-            Assert.AreEqual(1f, Time.timeScale, 1e-6f);
+            Assert.AreEqual(1f, Time.timeScale, 1e-6f);   // WP-095 K1: unchanged (verified) — the router never writes the clock
         }
 
         [Test]
@@ -134,7 +137,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual((1f / 30f) * .06f, first, 1e-6f);
             Assert.AreEqual((.035f - 1f / 30f) * .06f + (2f / 30f - .035f), second, 1e-6f);
             Assert.IsFalse(HitStopService.IsActive);
-            Assert.AreEqual(1f, Time.timeScale, 1e-6f);
+            Assert.AreEqual(1f, Time.timeScale, 1e-6f);   // WP-095 K1: unchanged (verified) — HitStopService still never writes the clock
         }
     }
 }

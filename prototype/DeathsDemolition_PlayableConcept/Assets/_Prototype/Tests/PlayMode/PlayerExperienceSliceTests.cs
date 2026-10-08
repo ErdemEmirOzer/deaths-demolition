@@ -160,16 +160,30 @@ namespace DD.Prototype.Tests.PlayMode
             Transform follow = _s.Rig.CameraFollowTarget;
             float distBefore = (cam.transform.position - follow.position).magnitude;
             int shakesBefore = CameraShakeService.ActiveCount;
+            // WP-095 (R3, his sözleşmesi §2; C-00 K1–K7 08.10): top-down shakes through TopDownFeelCamera — the death's PlayerDamaged
+            // (fatal = heavy) is world trauma (K2), not a CameraShakeService request; first / third person keep the service
+            bool topDown = CameraModeService.Current == CameraMode.TopDown;
+            TopDownFeelCamera td = cam.TopDownFeel;
+            int worldBefore = td != null ? td.WorldEvents : 0;
             float scaleBefore = Time.timeScale;
             Assert.AreEqual(1f, scaleBefore, 0.001f);
 
             Vur(Vector3.left, 5f);   // lethal
+            float tOlum = Time.realtimeSinceStartup;   // S-02 (f2a): the beat's real-time length is measured (Results comes at resultsDelay real)
             yield return null;
             Assert.IsTrue(_s.Rig.Health.IsDead, "Ölüm gerçekleşmedi.");
             Assert.IsTrue(DeathSequence.IsActive, "Ölüm sekansı başlamadı.");
             Assert.AreEqual(RunPhase.Dead, RunDirector.Instance.Phase);
             Assert.IsFalse(_s.Rig.Motor.ControlEnabled, "Ölümde kontrol kapanmalı (tek istisna).");
-            Assert.Greater(CameraShakeService.ActiveCount, shakesBefore, "Ölüm sarsıntısı yok.");
+            if (topDown)
+            {
+                Assert.IsNotNull(td, "TD his kamerası yok.");
+                Assert.Greater(td.WorldEvents, worldBefore, "Ölüm sarsıntısı yok (TD: K2 dünya travması).");
+            }
+            else
+            {
+                Assert.Greater(CameraShakeService.ActiveCount, shakesBefore, "Ölüm sarsıntısı yok.");
+            }
 
             yield return new WaitForSecondsRealtime(feel.DeathSlowInSeconds + 0.15f);
             Assert.AreEqual(feel.DeathSlowScale, Time.timeScale, 0.05f, "Yavaşlama ölçeği tutmadı.");
@@ -181,6 +195,10 @@ namespace DD.Prototype.Tests.PlayMode
             // The beat ends on its own, before the results hand-off, and the clock is 1 again (or frozen by a hold — never 0.3).
             float total = feel.DeathSlowTotalSeconds;
             yield return SpecialWeaponSahne.Bekle(() => !DeathSequence.IsActive, total + 1f, "ölüm sekansı bitmedi");
+            float vurusGercek = Time.realtimeSinceStartup - tOlum;
+            Debug.Log("[DD-TEST] wp095.death beatEndReal=" + vurusGercek.ToString("F2") + "s total=" + total.ToString("F2") + "s frozen=" + RunFlowClock.IsFrozen +
+                      " fixedDt=" + Time.fixedDeltaTime.ToString("F4"));
+            Assert.Less(vurusGercek, total + 0.3f, "WP-095 K1: ölüm vuruşu gerçek zamanda uzadı (hakem / donma)");
             Assert.IsTrue(Time.timeScale > 0.99f || RunFlowClock.IsFrozen, "Sekans sonrası saat " + Time.timeScale);
             Assert.AreEqual(1f, DeathSequence.PushIn01, 1e-3f, "push-in Results'a kadar tutulur");
             yield return null;

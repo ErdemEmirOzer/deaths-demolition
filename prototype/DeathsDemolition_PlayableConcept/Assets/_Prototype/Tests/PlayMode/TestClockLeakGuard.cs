@@ -51,11 +51,14 @@ namespace DD.Prototype.Tests.PlayMode
                 Time.captureDeltaTime = 0f;
             }
 
-            if (Mathf.Abs(Time.timeScale - 1f) <= 0.0001f && !DeathSequence.IsActive && !HitStopService.IsActive) return;
+            if (Mathf.Abs(Time.timeScale - 1f) <= 0.0001f && !DeathSequence.IsActive && !HitStopService.IsActive && !FeelTimeScale.HasWork) return;
 
             string before = Describe();
             DeathSequence.Cancel();
             FeelEventRouter.Clear();   // cancels the hit-stop token and the pending camera requests
+            // WP-095 K1: the clock arbiter (top-down global stop, last-zombie slow motion) ends with the test and starts clean.
+            FeelTimeScale.Cancel();
+            FeelTimeScale.ResetForTests();
             if (!RunFlowClock.IsFrozen && Mathf.Abs(Time.timeScale - 1f) > 0.0001f) Time.timeScale = 1f;
             Debug.Log("[DD-CLOCK] end-leak " + name + " " + before + " -> " + Describe());
         }
@@ -63,7 +66,8 @@ namespace DD.Prototype.Tests.PlayMode
         private static string Describe()
         {
             return "timeScale=" + Time.timeScale.ToString("F3") + " death=" + DeathSequence.IsActive + " hitStop=" + HitStopService.IsActive +
-                   " holds=" + RunFlowClock.DescribeHolds();
+                   " feelClock=" + FeelTimeScale.HasWork + " globalStop=" + FeelTimeScale.GlobalStopActive + " lastZombie=" +
+                   FeelTimeScale.LastZombieActive + " holds=" + RunFlowClock.DescribeHolds();
         }
     }
 }

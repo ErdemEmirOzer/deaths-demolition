@@ -291,6 +291,20 @@ namespace DD.Prototype.Tests.PlayMode
                     "yakalarsa REQ-045 ihlal edilir: hasar aldigi an oyuncunun nisani olur.");
             }
 
+            // WP-095 K1 (C-00 08.10) is the root cause of the wait below: this hit is 30 % of max health — HEAVY (≥ 25 %) — so
+            // top-down asks the clock arbiter (FeelTimeScale) for a 2-frame global stop. That stop is the arbiter's, not the
+            // indicator's; the indicator itself runs on unscaled time and never touches the clock. Let the stop end (≤ 4
+            // frames, here 2), then the clock must be exactly what it was: the HUD left it alone (REQ-045 unchanged).
+            // S-02 (f2a): the stop runs on REAL time (4 frames = 0.067 s at 60 fps) and batch frames are 1–3 ms, so frames are no
+            // measure here (ders-batch-kare-suresi) — wait real time with a margin.
+            float durmaT0 = Time.realtimeSinceStartup;
+            while (DD.Prototype.Feedback.FeelTimeScale.GlobalStopActive && Time.realtimeSinceStartup - durmaT0 < 0.5f)
+            {
+                yield return null;
+            }
+
+            Assert.IsFalse(DD.Prototype.Feedback.FeelTimeScale.GlobalStopActive, "K1: küresel durma 4 karede (0,067 s) bitmedi.");
+            Assert.Less(Time.realtimeSinceStartup - durmaT0, 0.25f, "K1: küresel durma 4 kareden (0,067 s) çok uzun sürdü.");
             Assert.AreEqual(oncekiZamanOlcegi, Time.timeScale, 0.0001f,
                 "Hasar geri bildirimi timeScale'e dokundu.");
 
@@ -338,18 +352,23 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(uygulandi, "ApplyDamage hasari uygulamadi; olcum gecersiz.");
         }
 
-        /// <summary>Bütün kenarlar sönene kadar bekler. Bir vuruşun ömrü 0.48 sn = 29 kare.</summary>
+        /// <summary>
+        /// Bütün kenarlar sönene kadar bekler. Bir vuruşun ömrü 0.48 sn (gösterge ölçeksiz zamanla söner). S-02 (f2a): 120 KARE
+        /// değil gerçek zaman — batch'te kareler 1–3 ms, 120 kare 0,48 s'ye yetmiyordu (ders-batch-kare-suresi); WP-095 K1'in ağır
+        /// vuruştaki küresel durması (timeScale 0,06) kareleri daha da hızlandırınca görünür oldu.
+        /// </summary>
         private IEnumerator KenarlarSonsun()
         {
-            const int enFazlaKare = 120;
+            const float enFazlaSaniye = 2f;
+            float t0 = Time.realtimeSinceStartup;
 
-            for (int i = 0; i < enFazlaKare && _katman.IsShowing; i++)
+            while (_katman.IsShowing && Time.realtimeSinceStartup - t0 < enFazlaSaniye)
             {
                 yield return null;
             }
 
             Assert.IsFalse(_katman.IsShowing,
-                "Gosterge " + enFazlaKare + " kare sonunda hala yaniyor; sonum calismiyor " +
+                "Gosterge " + enFazlaSaniye + " sn sonunda hala yaniyor; sonum calismiyor " +
                 "ya da olcum penceresine disaridan hasar giriyor.");
         }
 

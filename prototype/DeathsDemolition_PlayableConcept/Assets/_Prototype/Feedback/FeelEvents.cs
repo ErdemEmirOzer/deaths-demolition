@@ -29,6 +29,7 @@ namespace DD.Prototype.Feedback
         RoundStarted = 11,
         RoundEnded = 12,
         LastZombie = 13,
+        Heartbeat = 14,
     }
 
     /// <summary>One trigger pull (a shotgun's pellets are one shot). Raised after the round is spent.</summary>
@@ -290,6 +291,24 @@ namespace DD.Prototype.Feedback
         public readonly Transform Enemy;
     }
 
+    /// <summary>
+    /// WP-095 phase 2 (his sözleşmesi §4.7): one beat of the low-health heart — 70 bpm at the enter threshold rising to 110 bpm
+    /// at 10 % health; the first beat on entering, none while the run clock is frozen (pause, shop). S-08's heartbeat and S-02's
+    /// rumble keep time with it.
+    /// </summary>
+    public readonly struct FeelHeartbeat
+    {
+        public FeelHeartbeat(int beat, float bpm, float healthRatio)
+        {
+            Beat = beat; Bpm = bpm; HealthRatio = healthRatio;
+        }
+
+        /// <summary>1 for the first beat of a low-health stretch.</summary>
+        public readonly int Beat;
+        public readonly float Bpm;
+        public readonly float HealthRatio;
+    }
+
     /// <summary>The thresholds the derived events use (his sözleşmesi K/wp-095/HIS-SOZLESMESI.md; FeelProfile_TD sets them).</summary>
     [Serializable]
     public struct FeelEventThresholds
@@ -340,10 +359,11 @@ namespace DD.Prototype.Feedback
         public static event Action<FeelRound> RoundStarted;
         public static event Action<FeelRound> RoundEnded;
         public static event Action<FeelLastZombie> LastZombie;
+        public static event Action<FeelHeartbeat> Heartbeat;
 
         public static FeelEventThresholds Thresholds = FeelEventThresholds.Default;
 
-        private const int KindCount = 14;
+        private const int KindCount = 15;
         private static readonly int[] s_counts = new int[KindCount];
 
         /// <summary>Events raised since the last reset, per kind (tests / probes / telemetry).</summary>
@@ -404,6 +424,8 @@ namespace DD.Prototype.Feedback
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
+            FeelEventsRunner.Ensure();
+            Thresholds = FeelProfileTD.Active.Thresholds();   // WP-095 phase 2: the TD profile carries the multi-kill / low-health thresholds
             Rearm();
             if (s_installed) return;
             s_installed = true;
@@ -500,9 +522,12 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            s_lowRatio = ratio;
             if (!InLowHealth && ratio <= Thresholds.LowHealthEnter)
             {
                 InLowHealth = true;
+                s_beat = 0;
+                s_nextBeat = float.NegativeInfinity;   // the first beat on the next tick
                 Emit(LowHealth, new FeelLowHealth(true, ratio, false), FeelEventKind.LowHealth);
             }
             else if (InLowHealth && ratio >= Thresholds.LowHealthExit)
@@ -570,6 +595,31 @@ namespace DD.Prototype.Feedback
             s_goldChain = now - s_lastGoldTime <= Thresholds.GoldChainWindowSeconds ? s_goldChain + 1 : 0;
             s_lastGoldTime = now;
             Emit(GoldCollected, new FeelGold(amount, balance, position, s_goldChain), FeelEventKind.GoldCollected);
+        }
+
+        // ------------------------------------------------------------------ heartbeat (his sözleşmesi §4.7)
+
+        private static float s_lowRatio = 1f;
+        private static float s_nextBeat = float.NegativeInfinity;
+        private static int s_beat;
+
+        /// <summary>Beats per minute at <paramref name="healthRatio"/>: the profile's enter rate at the enter threshold, its floor rate at 10 %.</summary>
+        internal static float HeartbeatBpm(float healthRatio)
+        {
+            FeelProfileTD profile = FeelProfileTD.Active;
+            float t = Mathf.InverseLerp(Thresholds.LowHealthEnter, profile.heartbeatFloorHealth, healthRatio);
+            return Mathf.Lerp(profile.heartbeatBpmAtEnter, profile.heartbeatBpmAtFloor, t);
+        }
+
+        /// <summary>Once per frame (FeelEventsRunner): the beats due by <paramref name="now"/> (unscaled), none while frozen.</summary>
+        internal static void TickHeartbeat(float now, bool frozen)
+        {
+            if (!InLowHealth || frozen) return;
+            if (now < s_nextBeat) return;
+            float bpm = HeartbeatBpm(s_lowRatio);
+            s_beat++;
+            s_nextBeat = now + 60f / Mathf.Max(1f, bpm);
+            Emit(Heartbeat, new FeelHeartbeat(s_beat, bpm, s_lowRatio), FeelEventKind.Heartbeat);
         }
 
         // ------------------------------------------------------------------ multi-kill (his sözleşmesi §4.4)
@@ -706,7 +756,8 @@ namespace DD.Prototype.Feedback
         {
             ShotFired = null; EnemyHit = null; EnemyKilled = null; MultiKill = null; Explosion = null; PlayerDamaged = null;
             LowHealth = null; ReloadStarted = null; ReloadEnded = null; DryFire = null; GoldCollected = null;
-            RoundStarted = null; RoundEnded = null; LastZombie = null;
+            RoundStarted = null; RoundEnded = null; LastZombie = null; Heartbeat = null;
+            s_lowRatio = 1f; s_nextBeat = float.NegativeInfinity; s_beat = 0;
             for (int i = 0; i < KindCount; i++) s_counts[i] = 0;
             Thresholds = FeelEventThresholds.Default;
             InLowHealth = false;
@@ -727,5 +778,27 @@ namespace DD.Prototype.Feedback
             Rearm();
         }
 #endif
+    }
+
+    /// <summary>WP-095 phase 2: the per-frame clock of the derived events (the heartbeat) — one hidden DDOL object.</summary>
+    [AddComponentMenu("")]
+    internal sealed class FeelEventsRunner : MonoBehaviour
+    {
+        private static FeelEventsRunner s_instance;
+
+        internal static void Ensure()
+        {
+            if (s_instance != null) return;
+            var go = new GameObject("FeelEventsRunner") { hideFlags = HideFlags.HideInHierarchy };
+            DontDestroyOnLoad(go);
+            s_instance = go.AddComponent<FeelEventsRunner>();
+        }
+
+        private void Update() => FeelEvents.TickHeartbeat(Time.unscaledTime, RunFlowClock.IsFrozen);
+
+        private void OnDestroy()
+        {
+            if (s_instance == this) s_instance = null;
+        }
     }
 }

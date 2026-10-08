@@ -15,7 +15,8 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-059 · player experience v1, the pure parts: the game-feel asset carries the
     /// player's bump / death shake / death beat inside the WP-019 ceilings and the results
     /// delay always outlasts the slow-down; the death beat owns the clock like a hit-stop
-    /// (refused when stopped, cancelled by a freeze, restores 1 not 0.3); the aim-assist
+    /// (refused when stopped, cancelled by a freeze — WP-095 K1: suspended by a top-down pause —
+    /// restores 1 not 0.3); the aim-assist
     /// level is WP-024 data with a version-1 migration and legacy-field edits honoured;
     /// a rebound Pause control reaches the prompt glyph through the remap service.
     /// </summary>
@@ -32,6 +33,7 @@ namespace DD.Prototype.Tests.EditMode
             Time.timeScale = 1f;
             DeathSequence.Cancel();
             DeathSequence.ResetCounters();
+            FeelTimeScale.ResetForTests();   // WP-095 K1: the beat writes through the clock arbiter — start it clean
             FeelRuntime.ResetForTests();
             FeelRuntime.Initialize(null);
         }
@@ -41,6 +43,8 @@ namespace DD.Prototype.Tests.EditMode
         {
             DeathSequence.Cancel();
             RunFlowClock.ClearHolds();
+            FeelTimeScale.ResetForTests();
+            CameraSystem.CameraModeService.Request(CameraSystem.CameraMode.TopDown, instant: true);   // WP-095: the FP leg below
             InputRemapRegistry.SetCurrent(null);
             GameFeelSettings.Override(null);
             FeelRuntime.ResetForTests();
@@ -112,13 +116,36 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0f, DeathSequence.PushIn01, 1e-4f);
 
             // A freeze (pause / results hold) during the beat: the hold sees 1 as the scale to restore, never 0.3.
+            // WP-095 K1 (C-00 08.10) is the root cause of the change below: the beat is a requester of the one clock arbiter
+            // (FeelTimeScale) and "the pause always wins, the envelope resumes where it stopped" — in top-down a pause-like
+            // hold SUSPENDS the beat instead of cancelling it. First / third person keep the pre-K1 behaviour (mode-agnostic
+            // clock code unchanged there): the old expectation now runs in first person, the new one in top-down.
+            CameraSystem.CameraModeService.Request(CameraSystem.CameraMode.FirstPerson, instant: true);   // before Begin: the beat locks mode changes
             Assert.IsTrue(DeathSequence.Begin(0.3f, 0f, 1.0f, 0f));
             Assert.AreEqual(0.3f, Time.timeScale, 1e-3f);
             RunFlowClock.AddHold(RunFlowClock.DebugHold);
-            Assert.IsFalse(DeathSequence.IsActive, "Dondurma sekansı iptal etmeli.");
+            Assert.IsFalse(DeathSequence.IsActive, "FP: dondurma sekansı iptal etmeli (K1 öncesi gibi).");
             Assert.AreEqual(0f, Time.timeScale, 1e-4f);
             RunFlowClock.RemoveHold(RunFlowClock.DebugHold);
             Assert.AreEqual(1f, Time.timeScale, 1e-4f, "Dondurma kalkınca 0,3 değil 1.");
+            CameraSystem.CameraModeService.Request(CameraSystem.CameraMode.TopDown, instant: true);
+
+            // K1, top-down: the pause suspends the beat, gives 1 back on release (never 0.3), and the beat resumes where it stopped.
+            Assert.IsTrue(DeathSequence.Begin(0.3f, 0f, 1.0f, 0f));
+            DeathSequence.Tick(0.4f);
+            Assert.AreEqual(0.3f, Time.timeScale, 1e-3f);
+            RunFlowClock.AddHold(RunFlowClock.DebugHold);
+            Assert.IsTrue(DeathSequence.IsActive, "TD: dondurma sekansı askıya alır (K1).");
+            Assert.AreEqual(0f, Time.timeScale, 1e-4f);
+            DeathSequence.Tick(0.5f);
+            Assert.AreEqual(0.4f, DeathSequence.Elapsed, 1e-4f, "donukken sekans yaşlanmaz");
+            RunFlowClock.RemoveHold(RunFlowClock.DebugHold);
+            Assert.AreEqual(1f, Time.timeScale, 1e-4f, "Dondurma kalkınca 0,3 değil 1.");
+            DeathSequence.Tick(0.1f);
+            Assert.AreEqual(0.3f, Time.timeScale, 1e-3f, "sekans kaldığı yerden sürer");
+            DeathSequence.Tick(0.6f);
+            Assert.IsFalse(DeathSequence.IsActive, "kalan süre sonunda biter");
+            Assert.AreEqual(1f, Time.timeScale, 1e-4f);
 
             // Refused while the clock is stopped; a foreign write ends the beat without touching the clock.
             Time.timeScale = 0f;

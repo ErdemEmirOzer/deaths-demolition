@@ -24,10 +24,10 @@ namespace DD.Prototype.Rounds
     /// scale directly is not a compile error and not a visible bug until the day a
     /// pause overlaps a round end, which is exactly the case a player will find first.
     ///
-    /// Hit-stop safety: <see cref="HitStopService"/> also owns the time scale for a few
-    /// milliseconds at a time, <see cref="DeathSequence"/> for the death beat. Freezing
-    /// cancels either first and restores its base scale rather than the 0.06 / 0.3 it
-    /// happened to be showing.
+    /// Hit-stop safety: <see cref="FeelTimeScale"/> (WP-095 K1) owns the time scale below this
+    /// clock — the top-down global hit-stop, the last zombie's slow motion, the death beat.
+    /// Freezing always wins: it suspends (top-down pause) or ends the arbiter first and
+    /// restores its base scale rather than the 0.06 / 0.25 / 0.5 it happened to be showing.
     /// </summary>
     public static class RunFlowClock
     {
@@ -77,13 +77,14 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
-            // A hit stop owns the clock for ~45 ms at a time. Ending it first means the
-            // scale we remember is the real one, not the 0.06 of the freeze frame. The
-            // WP-059 death beat is the same story with 0.3 for a second and a half.
-            HitStopService.Cancel();
-            DeathSequence.Cancel();
+            // WP-095 K1 (C-00 08.10): the feel clock is one arbiter now (FeelTimeScale: the top-down global
+            // hit-stop, the last zombie's slow motion, the WP-059 death beat). The scale we remember must be the
+            // real one, not the 0.06 / 0.25 / 0.5 on screen. Top-down, a pause SUSPENDS the arbiter: it hands
+            // back its base (1) and re-applies what is left on the next frame after the release. First / third
+            // person, the round end and the results END it as before (the local VFX hit-stop always ends).
+            float arbiterBase = FeelTimeScale.Suspend(id);
 
-            s_restoreScale = Time.timeScale > 0.01f ? Time.timeScale : 1f;
+            s_restoreScale = arbiterBase > 0.01f ? arbiterBase : (Time.timeScale > 0.01f ? Time.timeScale : 1f);
             Time.timeScale = 0f;
 
             Raise(true);

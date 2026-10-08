@@ -43,9 +43,13 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Baslik_YirmiSutun()
+        public void Baslik_YirmiYediSutun_IlkYirmiYerinde_OkVeCubukSonda()
         {
-            Assert.AreEqual(20, MoveTraceRecorder.Header.Split(',').Length);
+            string[] h = MoveTraceRecorder.Header.Split(',');
+            Assert.AreEqual(27, h.Length, "07.10 gt SHOULD-3: + ok tuşları ve gamepad sol çubuğu");
+            Assert.AreEqual("control", h[19], "ilk 20 sütun yerinde (eski izler aynı okunur)");
+            Assert.AreEqual(new[] { "key_up", "key_left", "key_down", "key_right", "pad_x", "pad_y", "pad_last_update" },
+                new[] { h[20], h[21], h[22], h[23], h[24], h[25], h[26] });
         }
     }
 }

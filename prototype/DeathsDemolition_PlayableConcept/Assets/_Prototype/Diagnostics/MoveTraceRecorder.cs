@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.InputAbstraction;
+using DD.Prototype.Inputs;
 using DD.Prototype.PlayerSystem;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DD.Prototype.Diagnostics
 {
@@ -29,14 +29,15 @@ namespace DD.Prototype.Diagnostics
     {
         public const string Flag = "-ddMoveTrace";
         public const int BlockRows = 1024;
-        public const string Header = "frame,t_real,dt_unscaled,dt,time_scale,key_w,key_a,key_s,key_d,kb_last_update,move_x,move_y,cmd_vx,cmd_vz,vel_vx,vel_vz,pos_x,pos_z,facing_deg,control";
+        // 07.10 gt SHOULD-3: the arrow keys and the gamepad's left stick appended (the first 20 columns keep their places)
+        public const string Header = "frame,t_real,dt_unscaled,dt,time_scale,key_w,key_a,key_s,key_d,kb_last_update,move_x,move_y,cmd_vx,cmd_vz,vel_vx,vel_vz,pos_x,pos_z,facing_deg,control,key_up,key_left,key_down,key_right,pad_x,pad_y,pad_last_update";
 
         private struct Row
         {
             public int Frame;
-            public double TReal, KbLast;
-            public float DtUnscaled, Dt, TimeScale, MoveX, MoveY, CmdX, CmdZ, VelX, VelZ, PosX, PosZ, Facing;
-            public byte Keys;   // bit 0 W, 1 A, 2 S, 3 D
+            public double TReal, KbLast, PadLast;
+            public float DtUnscaled, Dt, TimeScale, MoveX, MoveY, CmdX, CmdZ, VelX, VelZ, PosX, PosZ, Facing, StickX, StickY;
+            public byte Keys;   // bit 0 W, 1 A, 2 S, 3 D, 4 Up, 5 Left, 6 Down, 7 Right
             public bool Control;
         }
 
@@ -115,22 +116,15 @@ namespace DD.Prototype.Diagnostics
             if (rig == null || rig.Motor == null) return;
             PlayerMotor motor = rig.Motor;
             IInputSource input = InputSourceRegistry.Current;
-            Keyboard kb = Keyboard.current;
+            // ADR-024-2 parity: the Input System is read in Input/ (MoveTraceDevices), never here
+            MoveTraceDevices.Read(out byte keys, out double kbLast, out Vector2 stick, out double padLast);
             Vector2 move = input != null ? input.Move : Vector2.zero;
             Vector3 cmd = motor.CommandedPlanarVelocity, vel = motor.PlanarVelocity, pos = motor.transform.position, f = motor.transform.forward;
-            byte keys = 0;
-            if (kb != null)
-            {
-                if (kb.wKey.isPressed) keys |= 1;
-                if (kb.aKey.isPressed) keys |= 2;
-                if (kb.sKey.isPressed) keys |= 4;
-                if (kb.dKey.isPressed) keys |= 8;
-            }
 
             _rows[_count++] = new Row
             {
                 Frame = Time.frameCount, TReal = Time.realtimeSinceStartupAsDouble, DtUnscaled = Time.unscaledDeltaTime, Dt = Time.deltaTime, TimeScale = Time.timeScale,
-                Keys = keys, KbLast = kb != null ? kb.lastUpdateTime : -1.0, MoveX = move.x, MoveY = move.y, CmdX = cmd.x, CmdZ = cmd.z, VelX = vel.x, VelZ = vel.z,
+                Keys = keys, KbLast = kbLast, PadLast = padLast, StickX = stick.x, StickY = stick.y, MoveX = move.x, MoveY = move.y, CmdX = cmd.x, CmdZ = cmd.z, VelX = vel.x, VelZ = vel.z,
                 PosX = pos.x, PosZ = pos.z, Facing = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg, Control = motor.ControlEnabled
             };
             if (_count == BlockRows) Flush();
@@ -161,7 +155,11 @@ namespace DD.Prototype.Diagnostics
               .Append(r.KbLast.ToString("0.0000", c)).Append(',').Append(r.MoveX.ToString("0.###", c)).Append(',').Append(r.MoveY.ToString("0.###", c)).Append(',')
               .Append(r.CmdX.ToString("0.###", c)).Append(',').Append(r.CmdZ.ToString("0.###", c)).Append(',').Append(r.VelX.ToString("0.###", c)).Append(',')
               .Append(r.VelZ.ToString("0.###", c)).Append(',').Append(r.PosX.ToString("0.###", c)).Append(',').Append(r.PosZ.ToString("0.###", c)).Append(',')
-              .Append(r.Facing.ToString("0.#", c)).Append(',').Append(r.Control ? '1' : '0');
+              .Append(r.Facing.ToString("0.#", c)).Append(',').Append(r.Control ? '1' : '0').Append(',')
+              .Append((r.Keys & 16) != 0 ? '1' : '0').Append(',').Append((r.Keys & 32) != 0 ? '1' : '0').Append(',')
+              .Append((r.Keys & 64) != 0 ? '1' : '0').Append(',').Append((r.Keys & 128) != 0 ? '1' : '0').Append(',')
+              .Append(r.StickX.ToString("0.###", c)).Append(',').Append(r.StickY.ToString("0.###", c)).Append(',')
+              .Append(r.PadLast.ToString("0.0000", c));
             return sb.ToString();
         }
 
