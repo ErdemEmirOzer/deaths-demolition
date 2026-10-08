@@ -13947,6 +13947,17 @@
      "part_mag",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_lmg_1_reload_empty_v009.fbx",
+    "sha256": "05016937aa729ffffb50b495e4d0d11862163f440ec4e75516ad1ae94a23b988",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -14077,6 +14088,17 @@
      "part_mag",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_lmg_1_reload_tac_v009.fbx",
+    "sha256": "c6a4a41fd8d22b4e7c83b0b9473fbeb762231972a58640467312d3ddff11b3e3",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -14982,6 +15004,17 @@
      "part_cover",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_sw_arc_reload_empty_v009.fbx",
+    "sha256": "81b406c77a76d48567cc5b20f7db96970c4a0a8fad3eb151a3a860c676adc760",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -15101,6 +15134,17 @@
      "part_cover",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_sw_arc_reload_tac_v009.fbx",
+    "sha256": "4eb86f282980e01376fb8d39129592d0e444b6f76467a3ca91881a3dc3c4a07f",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -15415,6 +15459,17 @@
      "part_lever",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_sw_gel_reload_empty_v009.fbx",
+    "sha256": "456a40f5207abbe779eb146f8f7e51ad697fa9953726848c4e96e54c86de8ff0",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -15529,6 +15584,17 @@
      "part_lever",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_sw_gel_reload_tac_v009.fbx",
+    "sha256": "a78bf46dfb82d9de94ae3b1abcbd3f2f380a4ddd113e51820e7ce3a249873383",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -17048,6 +17114,17 @@
      "part_mag",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_lmg_2_reload_empty_v009.fbx",
+    "sha256": "00d4def1ca57b2ecf071cb356b521099906e1d3a4c5529d7c41911709b667e3d",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
@@ -17163,6 +17240,17 @@
      "part_mag",
      "part_trigger"
     ]
+   },
+   "e5_d1_source": {
+    "package": "AP-024",
+    "manifest_revision": "v009",
+    "source_path": "exports/v004/clips/AP022_tp_lmg_2_reload_tac_v009.fbx",
+    "sha256": "be4c805dd4d61bd3e92fe01df251d9ce28a23878a6fb2add3b6f13ae8ea44880",
+    "source_manifest": "AP-024/manifest/AP024-manifest-v009.json",
+    "source_manifest_sha256": "a9de2c95ba78ab5e96da8057a355a934ff0f497d8999b46cb0c7a8534d3760eb",
+    "events_sha256": "a0434fb1cb2b825cc26b5b73512db10a7c17296e59da4c739d4d7452e69d40d2",
+    "target_filename_policy": "Existing v008 asset path retained to preserve GUID and subasset references",
+    "validation_scope": "Existing validation is v008 history; v009 Unity import, wrist and contact are not measured by intake"
    }
   },
   {
