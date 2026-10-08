@@ -112,7 +112,9 @@ if [ "$DO_STILLS" -eq 1 ] && [ $SIG -eq 0 ] && [ $RC -eq 0 ]; then
   n=$(ls "$OUT/stills"/*.png 2>/dev/null | wc -l | tr -d ' ')
   [ -f "$OUT/error.json" ] && { echo "td-capture: the capture agent refused — $(cat "$OUT/error.json")" >&2; RC=1; }
   if [ ! -f "$OUT/stills/poses.json" ]; then
-    grep -q "TdCapture" "$OUT/logs/stills.log" 2>/dev/null || { echo "td-capture: no capture agent answered — is $APP a DEV build? (tools/build.sh dev)" >&2; RC=3; }
+    REFUSED=$(grep -E 'not started|TIMEOUT|refus' "$OUT/logs/stills.out" 2>/dev/null | tail -1)   # gt SHOULD-3 (08.10)
+    if [ -n "$REFUSED" ]; then echo "td-capture: the stills launch was refused by player-run: $REFUSED" >&2; RC=1
+    else grep -q "TdCapture" "$OUT/logs/stills.log" 2>/dev/null || { echo "td-capture: no capture agent answered — is $APP a DEV build? (tools/build.sh dev)" >&2; RC=3; }; fi
     [ $RC -eq 0 ] && { echo "td-capture: stills produced no poses.json ($n PNG) — $OUT/logs/stills.log" >&2; RC=1; }
   else
     grep -q 'navmesh-miss' "$OUT/stills/poses.json" && { echo "td-capture: a pose had no NavMesh within 2 m — see stills/poses.json" >&2; RC=1; }
@@ -172,9 +174,14 @@ python3 "$HERE/td-capture/manifest.py" "$OUT" --app "$APP" --seed "$SEED" --pose
   --hold "$HOLD" --guard "$GR" --rc "$RC" --signal "$SIG" > "$OUT/logs/manifest.out" 2>&1 || true
 python3 -c 'import json, sys; q = json.load(open(sys.argv[1])).get("videoQuality") or {}
 v = (q.get("verdict") or "").split("+"); d = q.get("avDrift") or {}
+ph = ", ".join("%s %.1f fps/longest %.2f s/av %s" % (p["name"], p["fps"], p["longestFrame"] or 0, p["avError"]) for p in q.get("phases") or [])
+ph and print("td-capture: video phases (judged on %s): %s" % ("+".join(q.get("judgedOn") or []), ph))
+"phase-missing" in v and print("WARNING td-capture: the boot clip never reached the menu and/or the run — judged phases missing (exit 1)")
 "low-fps" in v and print("WARNING td-capture: the MP4 stutters — effective %.1f fps < %d (load at launch %s); retake on a quieter machine" % (q["effectiveFps"], q["minFps"], q.get("loadAtLaunch")))
 "av-drift" in v and print("WARNING td-capture: sound and picture are up to %.3f s apart in the MP4 (> %.2f; audio clock %+.3f s by the stop) — retake on a quieter machine" % (q["avError"], q["maxAvDrift"], d.get("atStop", 0.0)))' "$OUT/capture.json" 2>&1 | tee -a "$DD_TIMELINE" >&2
 [ $SIG -ne 0 ] && exit $SIG
 [ $GR -ne 0 ] && exit $GR
+# gt SHOULD-2 (08.10): a boot clip that never reached the menu or the run is no evidence
+[ $RC -eq 0 ] && python3 -c 'import json, sys; sys.exit(0 if "phase-missing" in ((json.load(open(sys.argv[1])).get("videoQuality") or {}).get("verdict") or "").split("+") else 1)' "$OUT/capture.json" 2>/dev/null && RC=1
 [ $RC -eq 0 ] && dd_log "td-capture: done — $OUT"
 exit $RC

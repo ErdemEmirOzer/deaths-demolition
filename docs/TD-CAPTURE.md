@@ -41,7 +41,10 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
 - **Video quality:** `capture.json` → `videoQuality.verdict` is `ok`, `low-fps`, `av-drift` or `low-fps+av-drift`. The script prints a warning, and still exits 0.
   - `low-fps`: effective capture fps is below 24, so the Player ran slow on a loaded machine and the MP4 stutters.
   - `av-drift`: sound and picture are more than 0.1 s apart somewhere in the MP4 (`videoQuality.avError` = `align.json` `maxSecondErr`, the worst second). The raw audio clock is in `videoQuality.avDrift`.
-  - A boot clip usually reads `low-fps+av-drift`. Loading hitches drop frames, and a scene swap leaves a silent second that gets padded. Judge its sound from the menu on.
+  - A boot clip is judged per phase (C-00 08.10). `videoQuality.phases` lists loading / menu / selection / fighting, each with `fps`, `longestFrame` (s) and `avError`.
+    - The verdict comes from the menu and fighting phases only; the loading screen's hitches are a product measurement, not a capture fault.
+    - A boot clip that never reaches the menu or the run gets `phase-missing` and exits 1.
+    - The script prints one line with every phase's numbers.
   - Both mean: retake on a quieter machine (`--video-only`, new label), and don't judge sound against picture.
   - `summary.json`'s `audio.driftSeconds` is read after the frame drain and is misleading; use `videoQuality.avDrift`.
 - **HUD-less frames:** `--hud off` hides the in-run HUD in stills and video (for TopDown background plates). The dev watermark stays.
@@ -53,4 +56,4 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
 - **Watermark:** dev builds draw "Development Build" bottom right. That is expected, the same in before and after.
 - **Tools:** nothing is installed. The two Swift helpers compile with the Command Line Tools' `swiftc` into `$TMPDIR/dd-td-capture/`.
 
-Exit codes: 0 done · 1 launch failed / NavMesh miss / crowd short / MP4 without sound · 3 not a dev build · 30/31/65/75 guard · 32 restore not accepted by `qa/oos_rule.py` · 64 usage · 128+n signal (the restore still runs).
+Exit codes: 0 done · 1 launch failed or refused / NavMesh miss / crowd short / MP4 without sound / boot phase missing · 3 not a dev build · 30/31/65/75 guard · 32 restore not accepted by `qa/oos_rule.py` · 64 usage · 128+n signal (the restore still runs).

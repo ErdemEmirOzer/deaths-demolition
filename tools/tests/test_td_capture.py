@@ -33,6 +33,8 @@ def flag(n):
 log = flag("-logFile")
 if log:
     Path(log).write_text("" if os.environ.get("FAKE_RELEASE") else "[TdCapture] armed\n")
+if os.environ.get("FAKE_REFUSE"):   # player-run's disk gate said no: nothing launched
+    print("2026-10-08T00:00:00Z disk-gate: used swap 16500.00 MB > 16384 (16 GiB) — not started (75)"); sys.exit(75)
 if os.environ.get("FAKE_SLEEP"):
     Path(os.environ["FAKE_LOG"] + ".sleeping").write_text(str(os.getpid()))
     time.sleep(60)
@@ -66,7 +68,8 @@ elif wav:
     w = wave.open(wav, "wb"); w.setnchannels(2); w.setsampwidth(2); w.setframerate(48000)
     w.writeframes(b"".join(struct.pack("<hh", int(5000 * math.sin(n / 20.0)), 0) for n in range(48000 * 3)))
     w.close(); off = 0.5
-phases = {"loadingStart": 0.4, "loadingEnd": 3.1, "menu": 3.3, "fighting": 8.0} if flag("-ddTdCaptureMode") == "boot" else None
+phases = {"loadingStart": 0.0, "loadingEnd": 0.5, "menu": 0.5, "selectionRequested": 0.9, "selection": 1.0, "runRequested": 1.1,
+          "fighting": None if os.environ.get("FAKE_BOOT_NOFIGHT") else 1.2} if flag("-ddTdCaptureMode") == "boot" else None
 (v / "sync.json").write_text(json.dumps({"audio": {"wavOffsetSeconds": off, "sampleRate": 48000}, "phases": phases}))
 lag = float(os.environ.get("FAKE_AVDRIFT", "0"))   # the audio clock loses this much by t = 2 s
 os.environ.get("FAKE_NOANCHORS") or (v / "audio-sync.tsv").write_text("# t_seconds\twav_frames_captured\n" + "".join(
@@ -295,7 +298,24 @@ class TdCaptureTests(unittest.TestCase):
         self.assertEqual("boot", video[video.index("-ddTdCaptureMode") + 1])
         self.assertNotIn("-ddQaBot", video); self.assertNotIn("-ddDirectToRun", video)   # the agent drives menu → run
         rec = json.loads((self.out() / "capture.json").read_text())
-        self.assertEqual({"loadingStart": 0.4, "loadingEnd": 3.1, "menu": 3.3, "fighting": 8.0}, rec["video"]["phases"])
+        self.assertEqual(1.2, rec["video"]["phases"]["fighting"])
+        q = rec["videoQuality"]   # C-00 08.10: judged on menu + fighting only; every phase measured
+        self.assertEqual(["menu", "fighting"], q["judgedOn"]); self.assertEqual("ok", q["verdict"])
+        self.assertEqual(["loading", "menu", "selection", "fighting"], [p["name"] for p in q["phases"]])
+        self.assertTrue(all(p["fps"] > 24 for p in q["phases"]), q["phases"])
+        self.assertIn("video phases (judged on menu+fighting)", r.stderr)
+
+    def test_VideoBoot_KosuyaUlasmadi_PhaseMissing_Cikis1(self):
+        """gt SHOULD-2 (08.10): a boot clip that never reached the run is no evidence — verdict phase-missing, exit 1."""
+        r = self.run_cap("--video-only", "--video-from", "boot", "--video-seconds", "30", FAKE_BOOT_NOFIGHT="1")
+        self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+        self.assertIn("phase-missing", json.loads((self.out() / "capture.json").read_text())["videoQuality"]["verdict"])
+
+    def test_FotoLansmaniReddedildi_NedenYazilir_Cikis1(self):
+        """gt SHOULD-3 (08.10): a stills launch refused by player-run (disk gate) names the reason — not "DEV build?" 3."""
+        r = self.run_cap("--stills-only", FAKE_REFUSE="1")
+        self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+        self.assertIn("the stills launch was refused by player-run", r.stderr); self.assertNotIn("DEV build", r.stderr)
 
     def test_AnkrajYok_TekOfsetleSesYineVar(self):
         """no audio-sync.tsv (an older agent): align_audio exits 2 → the single wavOffsetSeconds, still with sound."""

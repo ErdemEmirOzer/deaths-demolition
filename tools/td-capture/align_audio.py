@@ -10,7 +10,7 @@ first anchor play up to it. The output WAV starts at video t0 (tdmux --wav-offse
 the sound can be early by at most that gap, at every anchor it is exact.
 
 usage: align_audio.py <video dir> <out.wav>   (reads audio.wav, audio-sync.tsv, sync.json, frames.tsv)
-writes <video dir>/align.json {anchors, seconds, paddedSeconds, trimmedSeconds, maxSecondErr}
+writes <video dir>/align.json {anchors, seconds, paddedSeconds, trimmedSeconds, maxSecondErr, perSecond [[t, err]]}
 exit 0 written · 2 missing / unusable input (the caller falls back to the single offset)"""
 import json
 import sys
@@ -87,6 +87,7 @@ def main(argv):
     place(int(round(t0 * rate)) - f0, 0, f0)   # what the WAV held before the first anchor, ending at it
     padded = trimmed = 0
     worst = 0.0
+    per_second = []   # [t_i, error s] — the phase verdict (manifest.py) reads it per stretch
     for i, (t, f) in enumerate(A):
         t_next = A[i + 1][0] if i + 1 < len(A) else total_s
         f_next = A[i + 1][1] if i + 1 < len(A) else n_src
@@ -95,12 +96,14 @@ def main(argv):
         if i + 1 < len(A):   # the last stretch simply runs out — not a gap
             padded += max(0, need - have); trimmed += max(0, have - need)
             worst = max(worst, abs(need - have) / rate)
+            per_second.append([round(t, 3), round(abs(need - have) / rate, 3)])
     with wave.open(str(dst), "wb") as w:
         w.setnchannels(ch); w.setsampwidth(width); w.setframerate(rate); w.writeframes(bytes(out))
     rec = {"anchors": len(A), "seconds": round(n_out / rate, 3), "paddedSeconds": round(padded / rate, 3),
-           "trimmedSeconds": round(trimmed / rate, 3), "maxSecondErr": round(worst, 3), "wav": dst.name}
+           "trimmedSeconds": round(trimmed / rate, 3), "maxSecondErr": round(worst, 3), "wav": dst.name,
+           "perSecond": per_second}
     (video / "align.json").write_text(json.dumps(rec) + "\n", encoding="utf-8")
-    print(json.dumps(rec))
+    print(json.dumps({k: v for k, v in rec.items() if k != "perSecond"}))
     return 0
 
 
