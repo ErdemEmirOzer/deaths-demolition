@@ -66,7 +66,7 @@ namespace DD.Art.Pipeline.EditorTools
                 cam.fieldOfView = RigFov;
                 cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
                 Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
-                float bare = BareGroundShare(cam);
+                float bare = BareGroundShare(cam, requireVegetation ? Path.Combine(dir, name + "-bare") : null);
                 bareRows.Append(bareRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare));
                 bareSum += bare;
             }
@@ -159,9 +159,10 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>
         /// WP-092 · The share of the TD frame that shows bare ground: the same pose rendered with every ground-shader renderer
         /// (and the fog / shaft cards over it) hidden against a black clear; a pixel nothing else covers is bare ground.
-        /// Water, plants, props and buildings all count as covered.
+        /// Water, plants, props and buildings all count as covered. Very dark covered pixels can also satisfy the black threshold;
+        /// combined captures save the existing measurement render and its binary classification for diagnosis, without another render.
         /// </summary>
-        private static float BareGroundShare(Camera cam)
+        private static float BareGroundShare(Camera cam, string diagnosticPrefix)
         {
             var hidden = new List<Renderer>();
             foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
@@ -186,7 +187,21 @@ namespace DD.Art.Pipeline.EditorTools
                 if (data != null) data.renderPostProcessing = false;
                 Color32[] px = Grab(cam, Width / 4, Height / 4);
                 int bare = 0;
-                foreach (Color32 c in px) if (c.r + c.g + c.b <= 6) bare++;
+                Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    Color32 c = px[i];
+                    bool isBare = c.r + c.g + c.b <= 6;
+                    if (isBare) bare++;
+                    if (mask != null) mask[i] = isBare ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 255);
+                }
+
+                if (diagnosticPrefix != null)
+                {
+                    Save(px, diagnosticPrefix + "-source.png", Width / 4, Height / 4);
+                    Save(mask, diagnosticPrefix + "-mask.png", Width / 4, Height / 4);
+                }
+
                 return (float)bare / px.Length;
             }
             finally
@@ -412,11 +427,22 @@ namespace DD.Art.Pipeline.EditorTools
         private static void Save(Color32[] px, string path)
         {
             int w = px.Length == MapPixels * MapPixels ? MapPixels : Width, h = px.Length == MapPixels * MapPixels ? MapPixels : Height;
+            Save(px, path, w, h);
+        }
+
+        private static void Save(Color32[] px, string path, int w, int h)
+        {
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            tex.SetPixels32(px);
-            tex.Apply(false);
-            File.WriteAllBytes(path, tex.EncodeToPNG());
-            UnityEngine.Object.DestroyImmediate(tex);
+            try
+            {
+                tex.SetPixels32(px);
+                tex.Apply(false);
+                File.WriteAllBytes(path, tex.EncodeToPNG());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(tex);
+            }
         }
 
         private static string OutDir()
