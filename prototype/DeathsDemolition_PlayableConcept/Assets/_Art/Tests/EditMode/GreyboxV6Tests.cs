@@ -24,7 +24,8 @@ namespace DD.Art.Tests.EditMode
     {
         private static WorldPlacementAsset Open()
         {
-            EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
+            // WP-092 A: the world as the builder made it — World_FPTPOnly's units folded back in place (WorldFptpSplit.OpenMerged)
+            WorldFptpSplit.OpenMerged();
             Physics.SyncTransforms();
             var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(GreyboxV6Builder.PlacementPath);
             Assert.IsNotNull(placement, "greybox placement");
@@ -229,7 +230,7 @@ namespace DD.Art.Tests.EditMode
                 if (!NavMesh.SamplePosition(p.position + Vector3.up * 1.3f, out NavMeshHit h, 2f, NavMesh.AllAreas) || !NavMesh.CalculatePath(h.position, seed, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete)
                     fails.Add("silah " + p.id + " " + p.position);
 
-            foreach (GreyboxV6Builder.Room room in GreyboxV6Builder.Rooms)
+            foreach (GreyboxV6Builder.Room room in GreyboxV6Builder.AllRooms())
             {
                 if (room.Walls && (room.Doors == null || room.Doors.Length < 2)) fails.Add(room.Id + " < 2 çıkış");
                 var inside = new Vector3((room.X0 + room.X1) * 0.5f + 1.5f, room.Floor + 0.2f, (room.Z0 + room.Z1) * 0.5f - 1.5f);
@@ -269,7 +270,7 @@ namespace DD.Art.Tests.EditMode
 
         /// <summary>WP-074 B1c · S-03's region volumes (WP-076 B6 §5.2): 7 rooms, 20 room exits, the three chokepoint runs, S-03's values.</summary>
         [Test]
-        public void Greybox_BolgeHacimleri_7Oda_20Cikis_3Darbogaz_S03Degerleri()
+        public void Greybox_BolgeHacimleri_13Oda_33Cikis_3Darbogaz_S03Degerleri()
         {
             Open();
             var rooms = new Dictionary<string, NavRegionVolume>();
@@ -285,17 +286,28 @@ namespace DD.Art.Tests.EditMode
                 else other.Add(v);
             }
 
-            Assert.AreEqual(7, rooms.Count, "R1–R6 + R7");
-            Assert.AreEqual(20, gates.Count, "oda çıkışı");
+            // WP-092: the layout plan's buildings join the rooms (R1–R6 + R7 had 7 rooms and 20 exits before it)
+            List<GreyboxV6Builder.Room> all = GreyboxV6Builder.AllRooms();
+            int doors = 0;
+            foreach (GreyboxV6Builder.Room r in all) doors += r.Doors != null ? r.Doors.Length : 0;
+            Assert.AreEqual(all.Count + 1, rooms.Count, "R1–R6 + R7 + WP-092 yapıları");
+            Assert.AreEqual(doors + 4 + GreyboxV6Builder.CorridorGates.Length, gates.Count, "oda çıkışı");
+            Assert.AreEqual(13, rooms.Count, "S-03 08.10 M1: 13 oda");
+            Assert.AreEqual(33, gates.Count, "S-03 08.10 M1: 33 çıkış (K1_W0 ile)");
             Assert.AreEqual(3, other.Count, "C8 köprü + C1 geçit + K1");
             var fails = new List<string>();
             var noAlt = new List<string>();
             var exits = new Dictionary<string, int>();
             foreach (KeyValuePair<string, NavRegionVolume> r in rooms)
-                if (r.Value.capacity != GreyboxV6Builder.RoomCapacity[r.Key] || Mathf.Abs(r.Value.costMultiplier - 1f) > 1e-4f) fails.Add(r.Key + " kapasite/maliyet");
+            {
+                GreyboxV6Builder.Room room = all.Find(x => x.Id == r.Key);
+                int want = r.Key == GreyboxV6Builder.R7Id ? GreyboxV6Builder.RoomCapacity[r.Key] : room != null ? GreyboxV6Builder.CapacityOf(room) : -1;
+                if (r.Value.capacity != want || Mathf.Abs(r.Value.costMultiplier - 1f) > 1e-4f) fails.Add(r.Key + " kapasite/maliyet");
+            }
             foreach (NavRegionVolume g in gates)
             {
-                if (!rooms.ContainsKey(g.roomId)) { fails.Add(g.id + " roomId '" + g.roomId + "'"); continue; }
+                bool corridorGate = System.Array.Exists(GreyboxV6Builder.CorridorGates, c => c.id == g.id) && other.Exists(v => v.id == g.roomId);
+                if (!rooms.ContainsKey(g.roomId) && !corridorGate) { fails.Add(g.id + " roomId '" + g.roomId + "'"); continue; }
                 exits[g.roomId] = (exits.TryGetValue(g.roomId, out int e) ? e : 0) + 1;
                 float width = Mathf.Max(g.size.x, g.size.z);
                 bool choke = width <= GreyboxV6Builder.ChokepointWidth + 1e-3f;
@@ -305,7 +317,7 @@ namespace DD.Art.Tests.EditMode
                 if (!NavMesh.SamplePosition(g.center - Vector3.up * 1.2f, out _, 1.5f, NavMesh.AllAreas)) fails.Add(g.id + " NavMesh dışı");
             }
 
-            foreach (GreyboxV6Builder.Room r in GreyboxV6Builder.Rooms)
+            foreach (GreyboxV6Builder.Room r in all)
                 if (r.Walls && (!exits.TryGetValue(r.Id, out int e) || e < 2)) fails.Add(r.Id + " < 2 çıkış hacmi");
             NavRegionVolume bridge = other.Find(v => v.kind == NavRegionKind.Bridge);
             Assert.IsNotNull(bridge);
@@ -411,8 +423,190 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(22, CountOf(gates, "\"kind\":"), "22 kapı (S-03 senaryo C, C-00 25.09)");
             Assert.AreEqual(10, CountOf(gates, "\"kind\": \"inner\""), "10 orta kapı");
             Assert.AreEqual(5, CountOf(regions, "\"polygonXZ\":"), "5 bölge");
-            Assert.AreEqual(GreyboxV6Builder.Rooms.Length + GreyboxV6Builder.Corridors.Length, CountOf(acoustic, "\"enclosure\":"), "akustik alan");
+            Assert.AreEqual(GreyboxV6Builder.AllRooms().Count + GreyboxV6Builder.Corridors.Length + GreyboxV6Builder.AcousticExtras.Length, CountOf(acoustic, "\"enclosure\":"), "akustik alan");
             StringAssert.Contains("\"enclosure\": \"Hall\"", acoustic);
+        }
+
+        /// <summary>
+        /// WP-097 / WP-092 (S-08, C-00 07.10) · The acoustic spaces: every room's enclosure is the builder's rule (a closed room of 20–90 m²
+        /// under ≤ 4 m is a Room — the pavilion, the kura and the tea house among them), and every top-down roof inside the ring sits over an
+        /// acoustic space (S-08's coverage gate: a new roof cannot reach main without its sound space).
+        /// </summary>
+        [Test]
+        public void Greybox_Akustik_OdaSinifi_HerCatiBirAlanin_Ustunde()
+        {
+            Open();
+            Dictionary<string, object> json = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(GreyboxV6Builder.AcousticJson)), "acoustic");
+            var polygons = new List<List<Vector2>>();
+            var enclosure = new Dictionary<string, string>();
+            foreach (object o in ArtJson.AsList(ArtJson.Require(json, "spaces"), "spaces"))
+            {
+                Dictionary<string, object> space = ArtJson.AsObject(o, "space");
+                enclosure[ArtJson.AsString(ArtJson.Require(space, "id"))] = ArtJson.AsString(ArtJson.Require(space, "enclosure"));
+                object flat = ArtJson.Get(space, "polygonXZ");
+                if (flat != null) polygons.Add(Points(ArtJson.AsList(flat)));
+                object segments = ArtJson.Get(space, "segmentsXZ");
+                if (segments != null) foreach (object quad in ArtJson.AsList(segments)) polygons.Add(Points(ArtJson.AsList(quad)));
+            }
+
+            var fails = new List<string>();
+            foreach (GreyboxV6Builder.Room room in GreyboxV6Builder.AllRooms())
+                if (!enclosure.TryGetValue(room.Id, out string e) || e != GreyboxV6Builder.AcousticClassOf(room)) fails.Add(room.Id + " enclosure " + e);
+            foreach (string id in new[] { "R2_EastPavilion", "R3_Kura", "R4_TeaHouse" })
+                if (!enclosure.TryGetValue(id, out string e) || e != "Room") fails.Add(id + " Room değil: " + e);
+            int roofs = 0;
+            foreach (CameraOccluderClass c in Object.FindObjectsOfType<CameraOccluderClass>(true))
+            {
+                if (c.Kind != CameraOccluderKind.Roof) continue;
+                Vector3 centre = c.GetComponent<Collider>().bounds.center;
+                if (Mathf.Abs(centre.x) > GreyboxV6Builder.HalfExtent || Mathf.Abs(centre.z) > GreyboxV6Builder.HalfExtent) continue;
+                roofs++;
+                var p = new Vector2(centre.x, centre.z);
+                if (!polygons.Exists(poly => Inside(poly, p))) fails.Add(c.transform.root.name + "/…/" + c.transform.parent.name + "/" + c.name + " (" + p.x.ToString("0.0") + ", " + p.y.ToString("0.0") + ") hiçbir akustik alanda değil");
+            }
+
+            Debug.Log("[DD-TEST] wp092.acoustic spaces " + enclosure.Count + " roofs " + roofs);
+            Assert.Greater(roofs, 10, "çatı");
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+        }
+
+        private static List<Vector2> Points(List<object> flat)
+        {
+            var list = new List<Vector2>();
+            for (int i = 0; i + 1 < flat.Count; i += 2) list.Add(new Vector2(ArtJson.AsFloat(flat[i]), ArtJson.AsFloat(flat[i + 1])));
+            return list;
+        }
+
+        private static bool Inside(List<Vector2> poly, Vector2 p)
+        {
+            bool inside = false;
+            for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
+                if ((poly[i].y > p.y) != (poly[j].y > p.y) && p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x) inside = !inside;
+            return inside;
+        }
+
+        /// <summary>
+        /// WP-092 B · The layout plan (WorldV5Layout, layout-v6.json) in the world: every building's shell fades as one (one fade state over its
+        /// bays, roofs and camera-side wall); no collider top of a plan piece in the banned 0.31–0.49 m band; every lit lamp carries a baked
+        /// point light in the AD's 2400–2700 K range at its socket; every piece of the plan is in the project (none skipped).
+        /// </summary>
+        [Test]
+        public void Greybox_Yerlesim_YapilarSoner_YasakTepeYok_LambalarPisirilir()
+        {
+            Open();
+            WorldV5Layout.Plan plan = WorldV5Layout.Load();
+            Assert.IsNotNull(plan, WorldV5Layout.LayoutJson);
+            GameObject root = GameObject.Find(WorldV5Layout.RootName);
+            Assert.IsNotNull(root, WorldV5Layout.RootName);
+            var fails = new List<string>();
+            foreach (WorldV5Layout.Building b in plan.Buildings)
+            {
+                if (b.IsExisting) continue;
+                Transform shell = root.transform.Find(WorldV5Layout.BuildingGroupName + "/" + b.Id + WorldV5Layout.ShellSuffix);
+                if (shell == null) { fails.Add(b.Id + " kabuk yok"); continue; }
+                if (shell.GetComponent<OccluderFadeState>() == null) fails.Add(b.Id + " kabukta solma durumu yok");
+                foreach (OccluderFadeState inner in shell.GetComponentsInChildren<OccluderFadeState>(true))
+                    if (inner.transform != shell) fails.Add(b.Id + " iç solma durumu " + inner.name);
+                if (b.SouthWall == "fade" && shell.Find(WorldV5Layout.WallOccluderName) == null) fails.Add(b.Id + " güney cephe solmuyor");
+            }
+
+            foreach (WorldV5Layout.Item item in plan.Items)
+            {
+                string prefab = ArtLibraryPaths.Prefab(item.Source, item.Family, "SM_" + item.Family + "_V" + item.Variation.ToString("00"));
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(prefab) == null) fails.Add(item.Id + " " + prefab + " yok");
+            }
+
+            foreach (WorldV5Layout.Lamp lamp in plan.Lamps)
+            {
+                string prefab = ArtLibraryPaths.Prefab(lamp.Source, lamp.Family, "SM_" + lamp.Family + "_V" + lamp.Variation.ToString("00"));
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(prefab) == null) fails.Add(lamp.Id + " " + prefab + " yok");
+            }
+
+            foreach (Collider c in root.GetComponentsInChildren<Collider>(false))
+            {
+                if (c.gameObject.layer == PrototypeLayers.CameraOccluder) continue;
+                GameObject owner = PrefabUtility.GetOutermostPrefabInstanceRoot(c.gameObject);
+                if (owner == null) continue;
+                float rise = c.bounds.max.y - owner.transform.position.y;
+                if (rise > WorldV5Layout.BannedTopMin && rise < WorldV5Layout.BannedTopMax && c.bounds.size.y > 0.05f) fails.Add(owner.name + "/" + c.name + " tepe " + rise.ToString("0.00") + " m");
+            }
+
+            int lit = 0;
+            Color warm = Mathf.CorrelatedColorTemperatureToRGB(WorldV5Layout.MaxKelvin), hot = Mathf.CorrelatedColorTemperatureToRGB(WorldV5Layout.MinKelvin);   // AD AP-030: 2400–2700 K
+            foreach (Light light in root.GetComponentsInChildren<Light>(true))
+            {
+                lit++;
+                if (light.lightmapBakeType != LightmapBakeType.Baked) fails.Add(light.transform.parent.name + " pişirilmiyor");
+                if (light.color.b > warm.b + 0.02f || light.color.b < hot.b - 0.02f) fails.Add(light.transform.parent.name + " renk sıcaklığı dışında");
+            }
+
+            // S-07 08.10: what LanternFlames moves (hanging lamps, the floating tōrō) is not static-batched.
+            var swinging = new HashSet<string>();
+            foreach (WorldV5Layout.Lamp lamp in plan.Lamps) if (WorldV5Layout.Swings(lamp)) swinging.Add(WorldV5Layout.LampPrefix + lamp.Id + "_");
+            int moving = 0;
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                bool lamp = false;
+                foreach (string prefix in swinging) if (t.name.StartsWith(prefix, System.StringComparison.Ordinal)) lamp = true;
+                bool toro = t.parent != null && System.Array.IndexOf(WorldV5Layout.MovingGroups, t.parent.name) >= 0;
+                if (!lamp && !toro) continue;
+                moving++;
+                foreach (Transform c in t.GetComponentsInChildren<Transform>(true))
+                    if ((GameObjectUtility.GetStaticEditorFlags(c.gameObject) & StaticEditorFlags.BatchingStatic) != 0) { fails.Add(t.name + " statik batch'te (sallanamaz)"); break; }
+            }
+
+            Assert.Greater(moving, 20, "sallanan lambalar + tōrō");
+
+            int wantLit = 0;
+            foreach (WorldV5Layout.Lamp lamp in plan.Lamps) if (lamp.Light != "emissive" && lamp.Lit) wantLit++;
+            // S-03 08.10 (b)4: every kit door (the nagaya doors, K1 west) has no collider at its lintel — the Executioner (2.66 m) walks under.
+            int doorsChecked = 0;
+            foreach (Transform t in Object.FindObjectsOfType<Transform>(true))
+            {
+                GameObject src = PrefabUtility.IsOutermostPrefabInstanceRoot(t.gameObject) ? PrefabUtility.GetCorrespondingObjectFromSource(t.gameObject) : null;
+                if (src == null || !src.name.StartsWith("SM_" + WorldV5Dress.KairoDoorFamily + "_V", System.StringComparison.Ordinal)) continue;
+                doorsChecked++;
+                foreach (Collider c in t.GetComponentsInChildren<Collider>(false))
+                {
+                    float bottom = c.bounds.min.y - t.position.y;
+                    if (c.enabled && bottom > WorldV5Dress.LintelBottomMin && bottom < WorldV5Dress.LintelBottomMax) fails.Add(t.name + " lento kollideri açık (" + bottom.ToString("0.00") + " m)");
+                }
+            }
+
+            Assert.GreaterOrEqual(doorsChecked, 7, "kit kapıları (B1–B6 + K1 batı)");
+            Debug.Log("[DD-TEST] wp092.layout buildings " + plan.Buildings.Count + " items " + plan.Items.Count + " lamps " + plan.Lamps.Count + " lit " + lit);
+            Assert.AreEqual(wantLit, lit, "pişirilen lamba ışığı");
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+        }
+
+        /// <summary>
+        /// WP-092 · The baked probes reach the world: every world renderer but the ground, the water and the camera/sky sheets blends the light
+        /// and reflection probes (the AP-023 kit prefabs came with both off, so the bake never lit the dress); the ground and water stay off.
+        /// </summary>
+        [Test]
+        public void Greybox_ProbeKarisimi_DunyaBlend_ZeminSuKapali()
+        {
+            Open();
+            GameObject world = GameObject.Find(Ap005WorldBootstrap.RootName);
+            Assert.IsNotNull(world);
+            int blend = 0;
+            var fails = new List<string>();
+            foreach (MeshRenderer r in world.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (WorldV5Lighting.IsProbeOff(r.name))
+                {
+                    if (r.lightProbeUsage != UnityEngine.Rendering.LightProbeUsage.Off) fails.Add(r.name + " zemin/su probe kullanıyor");
+                    continue;
+                }
+
+                if (r.sharedMaterial == null || System.Array.IndexOf(WorldV5Lighting.ProbeIgnoredShaders, r.sharedMaterial.shader.name) >= 0) continue;
+                if (r.lightProbeUsage != UnityEngine.Rendering.LightProbeUsage.BlendProbes) fails.Add(r.transform.parent.name + "/" + r.name + " " + r.lightProbeUsage);
+                else blend++;
+            }
+
+            Debug.Log("[DD-TEST] wp092.probes blending " + blend + " wrong " + fails.Count);
+            Assert.Greater(blend, 1000, "probe karışan renderer");
+            Assert.IsEmpty(fails, fails.Count + " renderer:\n" + string.Join("\n", fails.GetRange(0, Mathf.Min(fails.Count, 40))));
         }
 
         /// <summary>
@@ -670,6 +864,121 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp074.b8.bake " + report.lightmapCount + " lightmaps " + report.shippedBytes / 1048576 + " MB imported (" + report.bytes / 1048576 + " MB EXR), probes " + report.probes + ", reflection " + report.reflectionProbes + ", " + report.bakeSeconds.ToString("F0") + " s");
         }
 
+        /// <summary>
+        /// R3 #1 (C-00 07.10 decision B) · The bake writes its probes into the root's <see cref="WorldBakedProbes"/> (the runtime binds
+        /// them: the world is loaded additively and Unity never does): the same count the bake laid out, from the scene's own lighting
+        /// data (or the standalone copy). AD 07.10 M1: the ground, plaza slate, rock-garden gravel and every pond's water stay off the
+        /// probes (the runtime ambient, the approved Look B tone); the bamboo grove stays probe-lit.
+        /// </summary>
+        [Test]
+        [Category("R3")]
+        public void Greybox_R3_PisimisProblar_KokteReferans_ZeminVeSuProbDisi()
+        {
+            Open();
+            var report = JsonUtility.FromJson<WorldV5Lighting.Report>(File.ReadAllText(WorldV5Lighting.ReportPath));
+            var holder = GameObject.Find(Ap005WorldBootstrap.RootName).GetComponent<WorldBakedProbes>();
+            Assert.IsNotNull(holder, "kökte WorldBakedProbes yok (bake sonrası WriteProbeReference)");
+            Assert.IsNotNull(holder.Probes, "pişmiş prob referansı boş");
+            Assert.AreEqual(report.probes, holder.Probes.count, "referanstaki prob sayısı bake'in yerleştirdiği değil");
+            Assert.AreEqual(holder.Probes.count, holder.BakedCount, "BakedCount");
+            Assert.AreEqual(report.probeRefCount, holder.Probes.count, "rapordaki probeRefCount");
+            Assert.AreEqual(report.probeSource, holder.Source, "rapordaki probeSource");
+            string path = AssetDatabase.GetAssetPath(holder.Probes);
+            if (holder.Source == "lightingData")
+                StringAssert.EndsWith("/LightingData.asset", path, "kaynak sahnenin kendi ışık verisi olmalı");
+            else
+                Assert.AreEqual(WorldV5Lighting.StandaloneProbesPath, path, "bağımsız kopya yolu");
+
+            int off = 0, ponds = 0;
+            foreach (MeshRenderer r in GameObject.Find(Ap005WorldBootstrap.RootName).GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (!WorldV5Lighting.IsProbeOff(r.name)) continue;
+                Assert.AreEqual(UnityEngine.Rendering.LightProbeUsage.Off, r.lightProbeUsage, r.name + ": zemin/su prob dışı kalmalı (AD M1)");
+                off++;
+                if (r.name.StartsWith("Pond", System.StringComparison.Ordinal)) ponds++;
+            }
+
+            Assert.GreaterOrEqual(ponds, 3, "havuz suları");
+            Assert.GreaterOrEqual(off, 6, "Ground + Plaza_Slate + Karesansui_Gravel + havuzlar");
+            int groveProbe = 0;
+            foreach (MeshRenderer r in GameObject.Find(WorldV5Dress.GroveGroupName).GetComponentsInChildren<MeshRenderer>(true))
+                if (r.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.BlendProbes) groveProbe++;
+            Assert.Greater(groveProbe, 0, "bambu korusu probla aydınlanmalı");
+            Debug.Log("[DD-TEST] r3.probes.ref " + holder.Probes.count + " (" + holder.Source + ") off=" + off + " groveProbe=" + groveProbe);
+        }
+
+        /// <summary>
+        /// N3 (WP-081 B, menu-n2-n4 RAPOR §N3) · Each pond's water is the builder's ellipse disc (<see cref="GreyboxV6Builder.PondWaterSegments"/>
+        /// rim vertices, depth ramp in R, foam band in G) instead of the 20-sided Cylinder, and the waterfall pond keeps its shore: at
+        /// least five strips outside the falls' clearing, the strips and curves covering ≥ 60 % of its rim, the two curved pieces on the
+        /// rim (not out on the grass).
+        /// </summary>
+        [Test]
+        [Category("R3")]
+        public void Greybox_N3_HavuzSuyu_ElipsAg_SelaleHavuzununKiyisi()
+        {
+            Open();
+            Transform greybox = GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform;
+            Transform falls = null;
+            var waters = new List<Transform>();
+            foreach (Transform w in greybox)
+            {
+                if (!w.name.StartsWith("Pond", System.StringComparison.Ordinal) || !w.name.EndsWith("_Water", System.StringComparison.Ordinal)) continue;
+                waters.Add(w);
+                Mesh mesh = w.GetComponent<MeshFilter>().sharedMesh;
+                int index = int.Parse(w.name.Substring(4, w.name.Length - 4 - "_Water".Length));
+                Assert.AreEqual(GreyboxV6Builder.PondWaterMeshPath(index), AssetDatabase.GetAssetPath(mesh), w.name + ": su ağı builder'ın elipsi değil");
+                int seg = GreyboxV6Builder.PondWaterSegments;
+                Assert.GreaterOrEqual(seg, 96, "kenar");
+                Assert.AreEqual(seg * GreyboxV6Builder.PondRingInsets.Length + 1, mesh.vertexCount, w.name + ": köşe sayısı");
+                Color[] colors = mesh.colors;
+                Assert.AreEqual(mesh.vertexCount, colors.Length, w.name + ": vertex rengi yok");
+                for (int i = 0; i < seg; i++)
+                {
+                    Assert.AreEqual(0f, colors[i].r, 1e-4f, w.name + ": kıyıda derinlik 0");
+                    Assert.AreEqual(1f, colors[i].g, 1e-4f, w.name + ": kıyıda köpük bandı");
+                }
+
+                Assert.AreEqual(1f, colors[mesh.vertexCount - 1].r, 1e-4f, w.name + ": merkez derin");
+                Assert.IsNull(w.GetComponent<Collider>(), w.name + ": su ağının çarpıştırıcısı yok");
+                if (falls == null || w.localScale.x * w.localScale.z > falls.localScale.x * falls.localScale.z) falls = w;
+            }
+
+            Assert.GreaterOrEqual(waters.Count, 3, "havuzlar");
+            Transform shores = GameObject.Find(WorldV5Dress.ShoreGroupName).transform;
+            int strips = 0, curves = 0;
+            float covered = 0f;
+            foreach (Transform t in shores)
+            {
+                bool strip = t.name.StartsWith("SM_pond_shore_moss", System.StringComparison.Ordinal) || t.name.StartsWith("SM_pond_shore_pebble", System.StringComparison.Ordinal);
+                bool curve = t.name.StartsWith("SM_pond_shore_curve", System.StringComparison.Ordinal);
+                if (!strip && !curve) continue;
+                // each piece belongs to the pond whose rim it sits closest to (Pond1's east rim lies inside Pond0's 0.8–1.2 band)
+                Transform owner = null;
+                float best = float.MaxValue;
+                foreach (Transform w in waters)
+                {
+                    Vector3 local = w.InverseTransformPoint(t.position);
+                    float off = Mathf.Abs(2f * new Vector2(local.x, local.z).magnitude - 1f);   // 0 = on the rim of the unit disc (radius 0.5)
+                    if (off < best) { best = off; owner = w; }
+                }
+
+                if (owner != falls || best > 0.2f) continue;
+                if (strip) strips++; else curves++;
+                Bounds b = new Bounds(t.position, Vector3.zero);
+                foreach (Renderer rr in t.GetComponentsInChildren<Renderer>(true)) b.Encapsulate(rr.bounds);
+                covered += Mathf.Max(b.size.x, b.size.z);
+            }
+
+            float perimeter = Mathf.PI * (falls.localScale.x + falls.localScale.z) * 0.5f;
+            Debug.Log("[DD-TEST] n3.shore " + falls.name + " strips=" + strips + " curves=" + curves + " covered=" + covered.ToString("F1") + " / perimeter " + perimeter.ToString("F1"));
+            // WP-092 (first rebuild of the N3 builder, 08.10): Pond0's 10 rim points less the falls' 5.5 m clearing and the crossing deck
+            // leave 5 strips; with the two curves they cover 112 % of the rim — the shore is whole, the count was an estimate.
+            Assert.GreaterOrEqual(strips, 5, falls.name + ": şelale havuzunda kıyı şeridi");
+            Assert.AreEqual(2, curves, falls.name + ": iki kavisli parça kıyıda (elipsin 0,8–1,2 bandında)");
+            Assert.GreaterOrEqual(covered / perimeter, 0.6f, falls.name + ": kıyı modülleri / çevre");
+        }
+
         /// <summary>WP-075 C6 · The v6 look: the bootstrap's profile is DD_Look_v5 with the colour lookup on LUT v2 at full contribution; the recipe's ΔE gate passed.</summary>
         [Test]
         public void Greybox_C6_LutV2_ProfilBagli_DeltaEKapisi()
@@ -762,26 +1071,19 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void Greybox_C7b_YosunZemin_DunyaUzayi_YolBantlari()
         {
+            // WP-092 B5 replaces the WP-075 C7b box material: the box stays the walkable collider (NavMesh source) and draws nothing;
+            // the ground is WorldV5Terrain's chunks on DD/GroundTerrain with the world masks (the full contract: WorldV5TerrainTests).
             Open();
             var ground = GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform.Find("Ground")?.gameObject;
             Assert.IsNotNull(ground, "greybox Ground");
-            Material m = ground.GetComponent<MeshRenderer>().sharedMaterial;
-            Assert.AreEqual(WorldV5Moss.ShaderName, m.shader.name);
-            Assert.AreEqual(WorldV5Moss.MaterialPath, AssetDatabase.GetAssetPath(m));
-            Assert.LessOrEqual(m.GetFloat("_MossSaturation"), 0.8f, "yosun doygunluğu (AD MUST-1: karede s ≤ 0,58)");
-            foreach (string slot in new[] { "_MossMap", "_MossNormal", "_GravelMap", "_EarthMap", "_PathMask" }) Assert.IsNotNull(m.GetTexture(slot), slot);
-            Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>(WorldV5Moss.OldMaterialPath), "eski Lit yosun kopyası silindi");
-
-            // The mask: gravel on a lane centre, soil only on its shoulder, nothing far from any path.
-            var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(WorldV5Moss.MaskPath);
-            Assert.AreEqual(WorldV5Moss.MaskSize, mask.width);
-            Color Sample(Vector2 p) => mask.GetPixelBilinear((p.x + WorldV5Moss.MaskHalf) / (2f * WorldV5Moss.MaskHalf), (p.y + WorldV5Moss.MaskHalf) / (2f * WorldV5Moss.MaskHalf));
-            Assert.Greater(Sample(new Vector2(-45f, 5f)).r, 0.8f, "bambu ana yolu çakıl");
-            Color shoulder = Sample(new Vector2(-45f + 2.0f, 5f));   // the middle of the soil band (1.45 … 2.6 m)
-            Assert.Less(shoulder.r, 0.3f);
-            Assert.Greater(shoulder.g, 0.5f, "omuz toprak");
-            Color far = Sample(new Vector2(-70f, -70f));
-            Assert.Less(far.r + far.g, 0.02f, "yoldan uzak: yosun");
+            Assert.IsNotNull(ground.GetComponent<BoxCollider>(), "zemin çarpıştırıcısı");
+            Assert.IsNull(ground.GetComponent<MeshRenderer>(), "kutu çizilmez (zemin WorldV5Terrain)");
+            Transform terrain = GameObject.Find(WorldV5Dress.RootName).transform.Find(WorldV5Terrain.RootName);
+            Assert.IsNotNull(terrain, "zemin parçaları");
+            Material m = terrain.GetChild(0).GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.AreEqual(WorldV5Terrain.ShaderName, m.shader.name);
+            foreach (string slot in new[] { "_MaskA", "_MaskB", "_MossMap", "_SoilMap", "_GravelMap" }) Assert.IsNotNull(m.GetTexture(slot), slot);
+            Assert.LessOrEqual(m.GetFloat("_MossSaturation"), 0.9f, "yosun doygunluğu (AD MUST-1)");
         }
 
         [Test]

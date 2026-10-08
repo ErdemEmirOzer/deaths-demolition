@@ -1,21 +1,22 @@
 {
-    "utc": "2026-10-05T23:12:49.8225450Z",
+    "utc": "2026-10-08T04:05:43.7362640Z",
     "lightmapper": "ProgressiveGPU",
     "lightmapResolution": 16.0,
-    "contributeGI": 716,
-    "probes": 1009,
+    "contributeGI": 904,
+    "probes": 2085,
     "reflectionProbes": 20,
-    "lightmapCount": 2,
+    "lightmapCount": 3,
     "budgetMb": 96,
-    "bakeSeconds": 1269.4970703125,
-    "bytes": 118087263,
-    "shippedBytes": 53262336,
+    "bakeSeconds": 402.5696716308594,
+    "bytes": 137705138,
+    "shippedBytes": 54660464,
     "withinBudget": true,
     "ok": true,
     "files": [
         "LightingData.asset",
         "Lightmap-0_comp_light.exr",
         "Lightmap-1_comp_light.exr",
+        "Lightmap-2_comp_light.exr",
         "ReflectionProbe-0.exr",
         "ReflectionProbe-1.exr",
         "ReflectionProbe-10.exr",
@@ -37,5 +38,7 @@
         "ReflectionProbe-7.exr",
         "ReflectionProbe-8.exr",
         "ReflectionProbe-9.exr"
-    ]
+    ],
+    "probeSource": "lightingData",
+    "probeRefCount": 2085
 }

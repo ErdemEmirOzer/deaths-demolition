@@ -351,6 +351,43 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
+        /// WP-092 C · The AP-030 world kit (P-05 lamps + interior; staged by wp-092/tools/stage-ap030.py): the AP-023 chain on the AP-030
+        /// rows only — contract import, the two atlas masks, the ap030_* materials (glow slots emissive, baked GI), one prefab per
+        /// variation (LODGroup, primitive colliders, SOCKET_* children), the showcase. Re-run after a new stage (v001 final, v002).
+        /// Batch: <c>-executeMethod …RunLibraryAp030</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Library AP-030 (WP-092 C)", priority = 309)]
+        public static void RunLibraryAp030()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Library AP-030 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Library AP-030: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Contract models (AP-030 FBX: mesh compression, lightmap UVs)", ReimportContractModels);
+            LibraryStep(2, "Contract textures (AP-030 atlases + lamp emission)", ReimportContractTextures);
+            LibraryStep(3, "Library masks (AP-030 ORM → MetallicSmoothnessAO)", () =>
+            {
+                foreach (string role in ArtLibraryMaterialRoles.PackedTextureRoles())
+                    if (role.StartsWith(ArtLibraryMaterialRoles.Ap030RolePrefix, StringComparison.Ordinal)) ArtTextureRepack.BuildMask(role);
+                AssetDatabase.SaveAssets();
+            });
+            LibraryStep(4, "Library materials (ap030_* roles)", () =>
+            {
+                foreach (ArtLibraryMaterialRoles.Spec spec in ArtLibraryMaterialRoles.All)
+                    if (spec.Role.StartsWith(ArtLibraryMaterialRoles.Ap030RolePrefix, StringComparison.Ordinal)) ArtMaterialBuilder.BuildLibraryRole(spec);
+                AssetDatabase.SaveAssets();
+            });
+            LibraryStep(5, "AP-030 prefabs", () => ArtLibraryPrefabBuilder.BuildLibrary("AP-030"));
+            LibraryStep(6, "Rebuild library showcase", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Library AP-030: done in " + Seconds(total) + " s.");
+        }
+
+        /// <summary>
         /// WP-038 · The surface half of <see cref="RunWorldV4"/> only: surface materials (parameter round), the placement
         /// import with the AP-015P plates (scene, NavMesh with the water rows, build settings) and the bake preparation.
         /// Models, textures and prefabs are untouched — re-bake afterwards (<c>ArtLightingBake.BakeWorld</c>).

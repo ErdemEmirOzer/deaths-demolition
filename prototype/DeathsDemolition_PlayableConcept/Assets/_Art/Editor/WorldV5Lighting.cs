@@ -23,6 +23,10 @@ namespace DD.Art.Pipeline.EditorTools
     /// ponds, grove, kairō and gardens; the plaza's two box probes become baked too. Settings DD_World_v5 (GPU lightmapper, 16
     /// texels/m, AO, 2 bounces); structures and ground are lightmapped, dressing and vegetation probe-lit (WorldV5Dress.Place).
     /// Report: DD_World_v5.bake-report.json (budget 96 MB of imported lightmaps + reflections; the EXR on disk is listed too).
+    /// <para>R3 #1 (C-00 07.10 decision B): the world is loaded additively, so Unity never binds these probes on its own; after the
+    /// bake the builder writes them into the root's <see cref="WorldBakedProbes"/>, which binds them at runtime. The ground and the
+    /// water stay out of the probes (<see cref="ApplyProbeUsage"/>, AD 07.10 M1): one SH sample at a 170 m plate's centre turned the
+    /// approved cold slate warm; they keep the runtime ambient, the characters, bamboo, hall and props take the baked light.</para>
     /// </summary>
     public static class WorldV5Lighting
     {
@@ -31,7 +35,61 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ProbeGroupName = "Light Probes (B8)", ReflectionGroupName = "Reflection Probes (B8)";
         public const float LightmapResolution = 16f, ProbeGridHalf = 54f, ProbeGridStep = 6f;
         public static readonly float[] ProbeHeights = { 0.6f, 2.0f, 4.5f };
+        public const float InteriorProbeStep = 1.5f;
+        public static readonly float[] InteriorProbeHeights = { 0.5f, 1.6f, 2.6f };
         public const int ReflectionResolution = 512, BudgetMb = 96;
+
+        /// <summary>R3 #1: the standalone copy of the baked probes, used only when the lighting data's own LightProbes cannot be loaded.</summary>
+        public static string StandaloneProbesPath => GreyboxV6Builder.DataFolder + "/V6_LightProbes.asset";
+
+        /// <summary>R3 #1 (AD 07.10 M1) · the large ground and water renderers that keep the runtime ambient instead of the baked
+        /// probes: the greybox ground (WP-092 B5: the terrain chunks that replace its renderer), the plaza slate, the rock garden
+        /// gravel and every pond's water.</summary>
+        public static bool IsProbeOff(string rendererName)
+        {
+            return rendererName == "Ground" || rendererName.StartsWith(WorldV5Terrain.ChunkPrefix, StringComparison.Ordinal)
+                   || rendererName == WorldV5Ground.PlazaName || rendererName == "Karesansui_Gravel"
+                   || (rendererName.StartsWith("Pond", StringComparison.Ordinal) && rendererName.EndsWith("_Water", StringComparison.Ordinal));
+        }
+
+        /// <summary>Unlit cards and sky that never sample probes (left as they are).</summary>
+        public static readonly string[] ProbeIgnoredShaders = { "DD/FogSheet", "DD/ShaftCard", "DD/SkyPlate", "DD/SkyPanorama", "DD/UnderstorySkirt", "DD/SunDisc" };
+
+        /// <summary>
+        /// R3 #1 · sets <see cref="IsProbeOff"/>'s renderers to LightProbeUsage.Off; returns how many (the builder runs it after the dress).
+        /// WP-092 (R3): every other world renderer now BLENDS the baked light probes and reflection probes. The kit prefabs are
+        /// built with both Off (ArtLibraryPrefabBuilder, WP-012 — there were no baked probes then), so the dress's LOD1/2, its
+        /// dressing and its vegetation took the runtime ambient SH and ignored the bake's probes and the lamp-lit interiors.
+        /// Lightmapped LOD0 pieces keep their lightmap; the probes only feed what the lightmap does not cover.
+        /// </summary>
+        public static int ApplyProbeUsage(Transform root)
+        {
+            int n = 0;
+            foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (IsProbeOff(r.name))
+                {
+                    r.lightProbeUsage = LightProbeUsage.Off;
+                    n++;
+                    continue;
+                }
+
+                if (r.sharedMaterial != null && Array.IndexOf(ProbeIgnoredShaders, r.sharedMaterial.shader.name) >= 0) continue;
+                r.lightProbeUsage = LightProbeUsage.BlendProbes;
+                r.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
+            }
+
+            return n;
+        }
+
+        /// <summary>WP-092 · how many world renderers blend the baked probes after <see cref="ApplyProbeUsage"/> (evidence line).</summary>
+        public static int CountProbeBlending(Transform root)
+        {
+            int n = 0;
+            foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(true))
+                if (r.lightProbeUsage == LightProbeUsage.BlendProbes) n++;
+            return n;
+        }
 
         /// <summary>Baked reflection volumes (centre, size) — the courts beyond the plaza's own two probes.</summary>
         public static readonly (string name, Vector3 centre, Vector3 size)[] ReflectionVolumes =
@@ -67,6 +125,9 @@ namespace DD.Art.Pipeline.EditorTools
             public long bytes, shippedBytes;
             public bool withinBudget, ok;
             public string[] files;
+            /// <summary>R3 #1: where the root's WorldBakedProbes took the probes from ("lightingData" / "standalone" / "none") and their count.</summary>
+            public string probeSource;
+            public int probeRefCount;
         }
 
         /// <summary>Prepares and bakes the (already saved) v6 scene under <paramref name="root"/>; returns a one-line summary.</summary>
@@ -124,15 +185,17 @@ namespace DD.Art.Pipeline.EditorTools
 
                 LightingSettings settings = ArtLightingBake.EnsureLightingSettings(SettingsPath, "DD_World_v5", LightmapResolution);
                 Lightmapping.lightingSettings = settings;
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
+                SaveLoaded();
 
+                // WP-092 A: every loaded scene bakes together — the world (active: its settings) and World_FPTPOnly next to it — so the
+                // FP / TP-only content keeps its bounce and shadows on the world and the world's lightmaps stay one bake.
                 var sw = Stopwatch.StartNew();
                 Lightmapping.Clear();
                 bool ok = Lightmapping.Bake();
                 sw.Stop();
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
+                (LightProbes baked, string probeSource) = ok ? WriteProbeReference(root) : (null, "none");
+                SaveLoaded();
+                Debug.Log("[WorldV5Lighting] scenes baked together: " + LoadedScenes() + "; other scenes' ContributeGI renderers lightmapped " + OtherScenesLightmapped(scene));
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
 
@@ -147,13 +210,15 @@ namespace DD.Art.Pipeline.EditorTools
                     budgetMb = BudgetMb,
                     bakeSeconds = (float)sw.Elapsed.TotalSeconds,
                     ok = ok,
+                    probeSource = probeSource,
+                    probeRefCount = baked != null ? baked.count : 0,
                 };
                 Measure(scene.path, report);
                 File.WriteAllText(ReportPath, JsonUtility.ToJson(report, true) + "\n", new UTF8Encoding(false));
                 AssetDatabase.ImportAsset(ReportPath);
                 string line = "bake " + (ok ? "OK" : "FAILED") + " " + report.bakeSeconds.ToString("F0", CultureInfo.InvariantCulture) + " s: " + report.lightmapCount + " lightmaps, " +
                               (report.shippedBytes / 1048576.0).ToString("F1", CultureInfo.InvariantCulture) + " MB imported (" + (report.bytes / 1048576.0).ToString("F1", CultureInfo.InvariantCulture) +
-                              " MB EXR on disk; budget " + BudgetMb + "), ContributeGI " + contributeGI + ", probes " + positions.Length + ", reflection " + reflectionCount;
+                              " MB EXR on disk; budget " + BudgetMb + "), ContributeGI " + contributeGI + ", probes " + positions.Length + " (bound at runtime: " + report.probeRefCount + ", " + probeSource + "), reflection " + reflectionCount;
                 Debug.Log("[WorldV5Lighting] " + line);
                 if (!ok) throw new InvalidOperationException("[WorldV5Lighting] Lightmapping.Bake returned false");
                 return line;
@@ -162,6 +227,83 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 WorldLayout.SetCurrent(previous);
             }
+        }
+
+        private static void SaveLoaded()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene s = SceneManager.GetSceneAt(i);
+                if (!s.isLoaded || string.IsNullOrEmpty(s.path)) continue;
+                EditorSceneManager.MarkSceneDirty(s);
+                EditorSceneManager.SaveScene(s);
+            }
+        }
+
+        private static string LoadedScenes()
+        {
+            var names = new List<string>();
+            for (int i = 0; i < SceneManager.sceneCount; i++) if (SceneManager.GetSceneAt(i).isLoaded) names.Add(SceneManager.GetSceneAt(i).name);
+            return string.Join(" + ", names);
+        }
+
+        private static string OtherScenesLightmapped(Scene world)
+        {
+            int gi = 0, mapped = 0;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene s = SceneManager.GetSceneAt(i);
+                if (!s.isLoaded || s == world) continue;
+                foreach (GameObject go in s.GetRootGameObjects())
+                foreach (MeshRenderer r in go.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (!r.enabled || (GameObjectUtility.GetStaticEditorFlags(r.gameObject) & StaticEditorFlags.ContributeGI) == 0 || r.receiveGI != ReceiveGI.Lightmaps) continue;
+                    gi++;
+                    if (r.lightmapIndex >= 0 && r.lightmapIndex < 0xFFFE) mapped++;
+                }
+            }
+
+            return mapped + "/" + gi;
+        }
+
+        /// <summary>
+        /// R3 #1 · after the bake: the scene's LightProbes — the lighting data's own (a sub-object of LightingData.asset), else a
+        /// standalone copy of <c>LightmapSettings.lightProbes</c> at <see cref="StandaloneProbesPath"/> — written into the root's
+        /// <see cref="WorldBakedProbes"/>. Returns the probes and their source.
+        /// </summary>
+        public static (LightProbes probes, string source) WriteProbeReference(Transform root)
+        {
+            LightProbes probes = null;
+            string source = "none";
+            LightingDataAsset data = Lightmapping.lightingDataAsset;
+            if (data != null)
+            {
+                foreach (UnityEngine.Object o in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(data)))
+                {
+                    if (o is LightProbes lp && lp.count > 0 && (probes == null || lp.count > probes.count))
+                    {
+                        probes = lp;
+                        source = "lightingData";
+                    }
+                }
+            }
+
+            if (probes == null && LightmapSettings.lightProbes != null && LightmapSettings.lightProbes.count > 0)
+            {
+                LightProbes copy = UnityEngine.Object.Instantiate(LightmapSettings.lightProbes);
+                copy.name = "V6_LightProbes";
+                AssetDatabase.DeleteAsset(StandaloneProbesPath);
+                AssetDatabase.CreateAsset(copy, StandaloneProbesPath);
+                probes = copy;
+                source = "standalone";
+            }
+
+            WorldBakedProbes holder = root.GetComponent<WorldBakedProbes>();
+            if (holder == null) holder = root.gameObject.AddComponent<WorldBakedProbes>();
+            holder.SetBaked(probes, probes != null ? probes.count : 0, source);
+            EditorUtility.SetDirty(holder);
+            Debug.Log("[WorldV5Lighting] baked probes for the runtime: " + (probes != null ? probes.count : 0) + " (" + source + ")");
+            return (probes, source);
         }
 
         /// <summary>The bake outputs next to the scene: files, EXR bytes on disk, the imported textures' memory, the lightmap count, the budget verdict.</summary>
@@ -246,6 +388,12 @@ namespace DD.Art.Pipeline.EditorTools
                 Add(new Vector3(x, 2.2f, z));
                 Add(new Vector3(x, 3.8f, z));
             }
+
+            // WP-092: the interiors' lamp pools on the furniture (probe-lit dressing) — a 1.5 m grid inside every layout building, three heights.
+            foreach (Bounds room in WorldV5Layout.InteriorVolumes(WorldV5Layout.Load()))
+            for (float x = room.min.x + 0.75f; x <= room.max.x - 0.5f; x += InteriorProbeStep)
+            for (float z = room.min.z + 0.75f; z <= room.max.z - 0.5f; z += InteriorProbeStep)
+                foreach (float h in InteriorProbeHeights) Add(new Vector3(x, room.min.y + h, z));
 
             return list.ToArray();
         }

@@ -65,6 +65,8 @@ namespace DD.Art.Tests.EditMode
         [TestCase("Assets/_Prototype/T_stone_BaseColor.png", false)]
         [TestCase("Assets/_Art/Environment/Families/curb/curb_LOD0.fbx", false)]
         [TestCase("Assets/_Art/Resources/MenuPlates/plate_far.png", false)]   // WP-068: own contract (ApplyMenuPlate)
+        [TestCase("Assets/_Art/Resources/VegetationMasks/World_V6_Greybox/veg_mask_a.png", false)]   // WP-092 B5: data mask (WorldV5TerrainTests)
+        [TestCase("Assets/_Art/Environment/World/V6/Ground/T_V6_GroundMaskA.png", false)]   // WP-092 B5: data mask
         public void IsContractTexture_YalnizArtAltindakiPng(string yol, bool beklenen)
         {
             Assert.AreEqual(beklenen, ArtImportContract.IsContractTexture(yol), "IsContractTexture(" + yol + ")");

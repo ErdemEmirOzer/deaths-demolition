@@ -164,7 +164,7 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void PropMateryalleri_OrmV002_OcclusionBagli_TuretilmisMaskeGKanaliAO()
         {
-            int bound = 0, windRoles = 0, ap023 = 0, ap023Wind = 0;
+            int bound = 0, windRoles = 0, ap023 = 0, ap023Wind = 0, ap030 = 0;
             foreach (string role in ArtLibraryMaterialRoles.PackedTextureRoles())
             {
                 if (!ArtTextureRepack.CarriesOcclusion(role)) continue;
@@ -183,13 +183,14 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(m.IsKeywordEnabled("_OCCLUSIONMAP"), role);
                 string prov = File.ReadAllText(ArtPipelinePaths.DerivedMaskProvenance(role));
                 Assert.IsTrue(prov.Contains("MetallicSmoothnessAO v2"), role + ": provenance v2");
-                if (kit) ap023++; else bound++;
+                if (kit) ap023++; else if (role.StartsWith(ArtLibraryMaterialRoles.Ap030RolePrefix, StringComparison.Ordinal)) ap030++; else bound++;
             }
 
             Assert.AreEqual(14, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I) + 4 Faz 2b Lit prop rolü (WP-038L)");
             Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
             Assert.AreEqual(22, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel); v007 + trim = 21; v016 (B9) + bark_maple (momiji gövdesi) = 22");
             Assert.AreEqual(1, ap023Wind, "WP-074 B5: AP-023 bamboo_culm rüzgâr gölgelendiricisinde");
+            Assert.AreEqual(9, ap030, "WP-092 C: AP-030 iç mekân + lamba atlası (ORM AO'lu); v002 + ishidatami, gravel, dirt, boardwalk, drain, puddle, props = 9");
         }
     }
 }

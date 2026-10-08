@@ -210,6 +210,20 @@ namespace DD.Art.Pipeline.EditorTools
                     }
                 }
 
+                // WP-092 C: the AP-030 EMPTY sockets (SOCKET_Flame / SOCKET_Light) as root children at their manifest point — the builder
+                // uses the Mesh sub-assets, not the model hierarchy, so the FBX's own Null nodes never reach the prefab.
+                if (variation.sockets != null)
+                {
+                    foreach (ArtLibraryManifest.Socket socket in variation.sockets)
+                    {
+                        var socketGo = new GameObject(socket.name);
+                        socketGo.transform.SetParent(root.transform, false);
+                        socketGo.transform.localPosition = socket.PrefabPosition;
+                        socketGo.transform.localRotation = socket.PrefabRotation;
+                        socketGo.transform.localScale = Vector3.one;
+                    }
+                }
+
                 // Main LODGroup (root). Every part that is not roof/broken switches together. WP-074 B7: the family's class sets the cull
                 // (structure / vegetation to the fog end, props — the AP-017 dressing among them — at 45 m on High).
                 ArtFamilyPrefabBuilder.LodClass lodClass = ArtFamilyPrefabBuilder.ClassOf(family);

@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void BitkiMateryalleri_FoliageWindUzerinde_KesimVeCiftYuzDogru()
         {
             string[] roller = ArtLibraryMaterialRoles.RolesOn(ArtLibraryMaterialRoles.ShaderKind.FoliageWind);
-            Assert.AreEqual(23, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23.");
+            Assert.AreEqual(24, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23; WP-092 C AP-030 v002: + ap030_props_cloth (çamaşır / noren kumaşı) = 24.");
             var ihlaller = new List<string>();
             foreach (string rol in roller)
             {

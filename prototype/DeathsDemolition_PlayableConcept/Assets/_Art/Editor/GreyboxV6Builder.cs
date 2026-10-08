@@ -57,7 +57,27 @@ namespace DD.Art.Pipeline.EditorTools
             public float X0, X1, Z0, Z1, Floor, Height;
             public Door[] Doors;
             public bool Walls = true, RoofOnly;
+            /// <summary>WP-092: a layout room's capacity (the v6 rooms take theirs from <see cref="RoomCapacity"/>).</summary>
+            public int Capacity;
         }
+
+        /// <summary>WP-092 · The v6 rooms and, when the world is dressed, the layout plan's buildings (WorldV5Layout) — the rooms the region
+        /// volumes and the acoustic spaces list. The greybox boxes and the garden's tree clearances keep <see cref="Rooms"/> alone.</summary>
+        public static List<Room> AllRooms(bool dress = true)
+        {
+            var rooms = new List<Room>(Rooms);
+            if (dress) rooms.AddRange(WorldV5Layout.Rooms(WorldV5Layout.Load()));
+            return rooms;
+        }
+
+        public static int CapacityOf(Room room) => room.Capacity > 0 ? room.Capacity : RoomCapacity[room.Id];
+
+        /// <summary>WP-097 roof coverage (S-08): a roofed place that is neither a room nor a corridor still needs its sound space — the karamon's
+        /// open gate roof (8 × 3.2 m over the south axis) reads like the azumaya, a roof-only Corridor.</summary>
+        public static readonly (string id, string enclosure, float x0, float z0, float x1, float z1, float ceiling)[] AcousticExtras =
+        {
+            ("G_Karamon", "Corridor", -4f, -17.6f, 4f, -14.4f, 6f),
+        };
 
         public sealed class Corridor
         {
@@ -191,13 +211,18 @@ namespace DD.Art.Pipeline.EditorTools
         public static void BuildCli()
         {
             string[] args = System.Environment.GetCommandLineArgs();
-            string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0);
+            string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0,
+                Array.IndexOf(args, WorldFptpSplit.NoSplitFlag) < 0, Array.IndexOf(args, WorldFptpSplit.ForceFlag) >= 0);
             Debug.Log("[GreyboxV6] " + report);
         }
 
         /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>
-        /// <param name="bake">WP-074 B8: bake the scene's lighting after the build (WorldV5Lighting; needs a graphics device — the GPU lightmapper).</param>
-        public static string Build(bool dress = true, bool bake = false)
+        /// <param name="bake">WP-074 B8: bake the scene's lighting after the build (WorldV5Lighting; needs a graphics device — the GPU lightmapper).
+        /// WP-092 A: with World_FPTPOnly open next to the world, the one bake lights both scenes together.</param>
+        /// <param name="fptpSplit">WP-092 A: move the top-down-invisible visuals the committed list names into World_FPTPOnly
+        /// (WorldFptpSplit; only while the list's content hash matches this build — <c>-ddNoFptpSplit</c> builds the world whole).</param>
+        /// <param name="fptpForce">Apply a stale list entry by entry (<c>-ddFptpForce</c>; audit again instead whenever possible).</param>
+        public static string Build(bool dress = true, bool bake = false, bool fptpSplit = true, bool fptpForce = false)
         {
             EnsureFolder(DataFolder);
             EnsureFolder(DataFolder + "/Materials");
@@ -234,9 +259,15 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildSouth(g, basins);
             boxes += BuildBamboo(g);
             WorldV5Dress.Report dressed = dress ? WorldV5Dress.Apply(g, root.transform) : null;
+            WorldV5Layout.Report laid = dress ? WorldV5Layout.Apply(root.transform, WorldV5Layout.Load()) : null;   // WP-092: buildings, clusters, lamps
+            if (laid != null && laid.Details().Length > 0) Debug.Log(laid.Details());
+            List<Room> rooms = AllRooms(dress);
+            // R3 #1 (AD 07.10 M1): the ground and the water keep the runtime ambient (the approved Look B tone), not the baked probes
+            int probeOff = WorldV5Lighting.ApplyProbeUsage(root.transform);
+            int probeBlend = WorldV5Lighting.CountProbeBlending(root.transform);   // WP-092: the rest of the world blends the baked probes
 
             // WP-074 B1c · S-03 WP-076 B6 §5.2 region volumes (rooms, room exits, chokepoints).
-            BuildRegionVolumes(root.transform);
+            BuildRegionVolumes(root.transform, rooms);
 
             WorldPlacementAsset placement = WritePlacement(apPlacement);
             var bootstrap = root.AddComponent<Ap005WorldBootstrap>();
@@ -255,11 +286,13 @@ namespace DD.Art.Pipeline.EditorTools
             int links = NavMeshIslandLinker.LinkIslands(root.transform, seed);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            // WP-092 A · after the NavMesh and the colliders are final: the never-top-down-visible visuals → World_FPTPOnly (stays open for the bake)
+            WorldFptpSplit.Report split = WorldFptpSplit.ApplyAfterBuild(scene, root.transform, fptpSplit, fptpForce);
             RegisterDevScene();
-            WriteJson();
+            WriteJson(rooms);
             AssetDatabase.SaveAssets();
             string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + ", " + split + baked;
         }
 
         // ---------------------------------------------------------------- pieces
@@ -479,6 +512,12 @@ namespace DD.Art.Pipeline.EditorTools
         };
 
         public const string R7Id = "R7_SakuraCourt", RegionGroupName = "Region Volumes";
+
+        /// <summary>WP-092 (S-03 08.10 (c)) · Gates of a corridor's side doors (roomId = the corridor): K1's west door on the kit bay's wall line.</summary>
+        public static readonly (string id, string corridor, Vector3 centre, float width, char side)[] CorridorGates =
+        {
+            ("K1_W0", "K1_WestKairo", new Vector3(-33f - 2.235f, KairoFloor, 0f), 2.0f, 'W'),
+        };
         /// <summary>A door no wider than this is a chokepoint (Ek B §3.3: clear width ≤ 2.5 m).</summary>
         public const float ChokepointWidth = 2.5f;
 
@@ -489,12 +528,14 @@ namespace DD.Art.Pipeline.EditorTools
         /// wider door is an exit only (capacity 0, cost 1.0); the C8 bridge (Bridge, 2, 1.35), the C1 stepping causeway (Corridor, 1,
         /// 1.3) and the closed K1 kairō (Corridor, 6, 1.3). World-axis boxes; the markers register themselves in play.
         /// </summary>
-        public static int BuildRegionVolumes(Transform root)
+        public static int BuildRegionVolumes(Transform root) => BuildRegionVolumes(root, AllRooms());
+
+        public static int BuildRegionVolumes(Transform root, List<Room> rooms)
         {
             var group = new GameObject(RegionGroupName).transform;
             group.SetParent(root, false);
             var openings = new List<(string room, string id, Vector3 centre, float width, char side, float floor)>();
-            foreach (Room r in Rooms)
+            foreach (Room r in rooms)
             {
                 if (r.Doors == null) continue;
                 var perSide = new Dictionary<char, int>();
@@ -514,12 +555,15 @@ namespace DD.Art.Pipeline.EditorTools
             openings.Add((R7Id, R7Id + "_N0", new Vector3(36f, 0f, 10f), 4f, 'N', 0f));
             openings.Add((R7Id, R7Id + "_S0", new Vector3(36f, 0f, -8f), 4f, 'S', 0f));
 
+            // WP-092 (S-03 08.10 (c)): K1's west door, now the kit door (2.0 m clear) — a chokepoint gate of the K1 corridor.
+            foreach ((string id, string corridor, Vector3 centre, float width, char side) in CorridorGates) openings.Add((corridor, id, centre, width, side, KairoFloor));
+
             int n = 0;
-            foreach (Room r in Rooms)
+            foreach (Room r in rooms)
             {
                 float h = r.Height;
                 Marker(group, r.Id, NavRegionKind.Room, new Vector3((r.X0 + r.X1) * 0.5f, r.Floor + h * 0.5f, (r.Z0 + r.Z1) * 0.5f), new Vector3(r.X1 - r.X0, h, r.Z1 - r.Z0),
-                    1f, RoomCapacity[r.Id], null, "");
+                    1f, CapacityOf(r), null, "");
                 n++;
             }
 
@@ -632,14 +676,16 @@ namespace DD.Art.Pipeline.EditorTools
         {
             int n = 0;
             float grow = 0.5f, a = b.semi.x + grow, c = b.semi.y + grow;
-            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            water.name = "Pond" + index + "_Water";
+            // N3 (WP-081 B, menu-n2-n4 RAPOR §N3 b): the builder's own ellipse disc in place of the 20-sided Cylinder — the same local
+            // contract (unit disc of radius 0.5 at local y 1, the transform's scale is the ellipse), so the shore, the lotus, the
+            // atmosphere sheets and the NotWalkable rims read it as before; vertex colour R = depth ramp, G = foam band (DD_Water_v2).
+            var water = new GameObject("Pond" + index + "_Water");   // the Default layer, as the Cylinder primitive had
             water.transform.SetParent(g, false);
             water.transform.position = new Vector3(b.centre.x, 0.02f, b.centre.y);
             water.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
             water.transform.localScale = new Vector3(b.semi.x * 2f, 0.01f, b.semi.y * 2f);
-            UnityEngine.Object.DestroyImmediate(water.GetComponent<Collider>());
-            water.GetComponent<MeshRenderer>().sharedMaterial = Mat("water");
+            water.AddComponent<MeshFilter>().sharedMesh = PondWaterMesh(index, b.semi);
+            water.AddComponent<MeshRenderer>().sharedMaterial = Mat("water");
             n++;
             // NotWalkable strips along the ellipse's local x (1 m), local height −1…0.1 m so bridge/causeway tops stay walkable.
             // WP-075 (C-00 28.09, zombies held at the C1 slab joint and the C8 plank ends): the AP-023 decks top out at 0.15–0.16 m, a
@@ -729,6 +775,78 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max) — the <see cref="Crossings"/>.</summary>
         public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions = Array.ConvertAll(Crossings, c => (c.Min, c.Max));
+
+        /// <summary>N3 · pond water disc: <see cref="PondWaterSegments"/> rim vertices.</summary>
+        public const int PondWaterSegments = 128;
+
+        /// <summary>N3 · metric insets of the disc's rings from the shore; the depth ramp reaches 1 at <see cref="PondDepthRamp"/>, the foam band is <see cref="PondFoamBand"/> wide.</summary>
+        public static readonly float[] PondRingInsets = { 0f, 0.15f, 0.3f, 0.6f, 1.2f, 2.4f };
+        public const float PondDepthRamp = 1.2f, PondFoamBand = 0.3f;
+
+        public static string PondWaterMeshPath(int index) => DataFolder + "/V6_Pond" + index + "_Water.asset";
+
+        /// <summary>
+        /// N3 · the pond's water as a unit disc (radius 0.5, local y 1 = the old Cylinder's top face) for the transform's ellipse scale
+        /// (2 × <paramref name="semi"/>): rings at <see cref="PondRingInsets"/> metres in from the shore measured on the ellipse, a centre
+        /// vertex; colour R = clamp01(inset / <see cref="PondDepthRamp"/>), G = 1 within <see cref="PondFoamBand"/> of the shore. Saved
+        /// (or rewritten in place) at <see cref="PondWaterMeshPath"/>.
+        /// </summary>
+        public static Mesh PondWaterMesh(int index, Vector2 semi)
+        {
+            int seg = PondWaterSegments, rings = PondRingInsets.Length;
+            var verts = new List<Vector3>(seg * rings + 1);
+            var colors = new List<Color>(seg * rings + 1);
+            var uvs = new List<Vector2>(seg * rings + 1);
+            for (int k = 0; k < rings; k++)
+            {
+                float inset = PondRingInsets[k];
+                for (int i = 0; i < seg; i++)
+                {
+                    float t = i * Mathf.PI * 2f / seg, cos = Mathf.Cos(t), sin = Mathf.Sin(t);
+                    float radius = Mathf.Sqrt(semi.x * cos * semi.x * cos + semi.y * sin * semi.y * sin);   // metres to the rim along this ray
+                    float r = Mathf.Clamp01(1f - inset / Mathf.Max(0.01f, radius));
+                    var v = new Vector3(0.5f * r * cos, 1f, 0.5f * r * sin);
+                    verts.Add(v);
+                    uvs.Add(new Vector2(v.x + 0.5f, v.z + 0.5f));
+                    colors.Add(new Color(Mathf.Clamp01(inset / PondDepthRamp), inset <= PondFoamBand + 1e-4f ? 1f : 0f, 0f, 1f));
+                }
+            }
+
+            int centre = verts.Count;
+            verts.Add(new Vector3(0f, 1f, 0f));
+            uvs.Add(new Vector2(0.5f, 0.5f));
+            colors.Add(new Color(1f, 0f, 0f, 1f));
+            var tris = new List<int>(seg * rings * 6);
+            for (int k = 0; k + 1 < rings; k++)
+            {
+                for (int i = 0; i < seg; i++)
+                {
+                    int a = k * seg + i, b = k * seg + (i + 1) % seg, c = (k + 1) * seg + i, d = (k + 1) * seg + (i + 1) % seg;
+                    tris.AddRange(new[] { a, c, b, b, c, d });   // clockwise from above: the face looks up
+                }
+            }
+
+            int last = (rings - 1) * seg;
+            for (int i = 0; i < seg; i++) tris.AddRange(new[] { last + i, centre, last + (i + 1) % seg });
+
+            string path = PondWaterMeshPath(index);
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            bool created = mesh == null;
+            if (created) mesh = new Mesh { name = "V6_Pond" + index + "_Water" };
+            mesh.Clear();
+            mesh.SetVertices(verts);
+            mesh.SetUVs(0, uvs);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(tris, 0);
+            var normals = new Vector3[verts.Count];
+            for (int i = 0; i < normals.Length; i++) normals[i] = Vector3.up;
+            mesh.normals = normals;
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            if (created) AssetDatabase.CreateAsset(mesh, path);
+            else EditorUtility.SetDirty(mesh);
+            return mesh;
+        }
 
         public static bool InPondStripExclusion(Vector2 p)
         {
@@ -934,18 +1052,19 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>C-00 25.09: World v5 is the default world — a release entry right after World_AP005 (the release list stays contiguous:
-        /// Boot … Results, World_AP005, World_V6_Greybox, then the dev-only pilot and showcase), and DD_WorldSource on V6.</summary>
+        /// Boot … Results, World_AP005, World_V6_Greybox, World_FPTPOnly (WP-092 A), then the dev-only pilot and showcase), and DD_WorldSource on V6.</summary>
         private static void RegisterDevScene()
         {
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             scenes.RemoveAll(s => s.path == ScenePath);
             int at = scenes.FindIndex(s => s.path == ArtLibraryPaths.Ap005WorldScene);
             scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(ScenePath, true));
+            WorldFptpSplit.Register(scenes);   // WP-092 A: World_FPTPOnly right after the world (release; loaded only in TP / FP)
             EditorBuildSettings.scenes = scenes.ToArray();
             PlacementImporter.EnsureWorldSourceAsset(WorldSource.V6);
         }
 
-        private static void WriteJson()
+        private static void WriteJson(List<Room> rooms)
         {
             var sb = new StringBuilder();
             sb.Append("{\n  \"schema\": \"dd.spawn-gates/v6\",\n  \"source\": \"WP-074 B1 greybox (Ek B §3.4); proposal to S-03 WP-076\",\n  \"halfExtent\": 55,\n  \"playerStart\": [0, -3],\n  \"gates\": [\n");
@@ -968,20 +1087,20 @@ namespace DD.Art.Pipeline.EditorTools
             for (int r = 0; r < RegionIds.Length; r++)
                 sb.Append("    { \"id\": \"").Append(RegionIds[r]).Append("\", \"polygonXZ\": [").Append(string.Join(", ", Array.ConvertAll(RegionPolygons[r], F))).Append("] }").Append(r + 1 < RegionIds.Length ? ",\n" : "\n");
             sb.Append("  ],\n  \"rooms\": [\n");
-            for (int i = 0; i < Rooms.Length; i++)
+            for (int i = 0; i < rooms.Count; i++)
             {
-                Room room = Rooms[i];
+                Room room = rooms[i];
                 sb.Append("    { \"id\": \"").Append(room.Id).Append("\", \"box\": [").Append(F(room.X0)).Append(", ").Append(F(room.Z0)).Append(", ").Append(F(room.X1)).Append(", ").Append(F(room.Z1))
-                  .Append("], \"floor\": ").Append(F(room.Floor)).Append(", \"exits\": ").Append(room.Doors != null ? room.Doors.Length : 4).Append(" }").Append(i + 1 < Rooms.Length ? ",\n" : "\n");
+                  .Append("], \"floor\": ").Append(F(room.Floor)).Append(", \"exits\": ").Append(room.Doors != null ? room.Doors.Length : 4).Append(" }").Append(i + 1 < rooms.Count ? ",\n" : "\n");
             }
 
             sb.Append("  ]\n}\n");
             File.WriteAllText(RegionsJson, sb.ToString());
 
             sb.Clear();
-            sb.Append("{\n  \"schema\": \"dd.acoustic-spaces/v6\",\n  \"note\": \"WP-074 §3 / Ek B §4; Enclosure Open | Corridor | Hall; outside every space = Open\",\n  \"spaces\": [\n");
+            sb.Append("{\n  \"schema\": \"dd.acoustic-spaces/v6\",\n  \"note\": \"WP-074 §3 / Ek B §4; Enclosure Open | Corridor | Hall | Room (WP-097: closed, 20–90 m², ceiling ≤ 4 m); outside every space = Open\",\n  \"spaces\": [\n");
             var spaces = new List<string>();
-            foreach (Room room in Rooms)
+            foreach (Room room in rooms)
             {
                 var thresholds = new List<string>();
                 if (room.Doors != null)
@@ -990,7 +1109,7 @@ namespace DD.Art.Pipeline.EditorTools
                         Vector2 p = d.Side == 'N' ? new Vector2(d.At, room.Z1) : d.Side == 'S' ? new Vector2(d.At, room.Z0) : d.Side == 'E' ? new Vector2(room.X1, d.At) : new Vector2(room.X0, d.At);
                         thresholds.Add("[" + F(p.x) + ", " + F(p.y) + ", " + F(d.Width) + "]");
                     }
-                spaces.Add("    { \"id\": \"" + room.Id + "\", \"enclosure\": \"" + room.Acoustic + "\", \"polygonXZ\": [" + F(room.X0) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z1) + ", " + F(room.X0) + ", " + F(room.Z1)
+                spaces.Add("    { \"id\": \"" + room.Id + "\", \"enclosure\": \"" + AcousticClassOf(room) + "\", \"polygonXZ\": [" + F(room.X0) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z1) + ", " + F(room.X0) + ", " + F(room.Z1)
                            + "], \"floor\": " + F(room.Floor) + ", \"ceiling\": " + F(room.Floor + room.Height) + ", \"areaM2\": " + F((room.X1 - room.X0) * (room.Z1 - room.Z0)) + ", \"thresholds\": [" + string.Join(", ", thresholds) + "] }");
             }
 
@@ -1006,11 +1125,30 @@ namespace DD.Art.Pipeline.EditorTools
                 spaces.Add("    { \"id\": \"" + c.Id + "\", \"enclosure\": \"Corridor\", \"closed\": " + (c.Closed ? "true" : "false") + ", \"segmentsXZ\": [" + string.Join(", ", poly) + "], \"ceiling\": " + F(KairoFloor + c.Height) + " }");
             }
 
+            foreach ((string id, string enclosure, float x0, float z0, float x1, float z1, float ceiling) in AcousticExtras)
+                spaces.Add("    { \"id\": \"" + id + "\", \"enclosure\": \"" + enclosure + "\", \"polygonXZ\": [" + F(x0) + ", " + F(z0) + ", " + F(x1) + ", " + F(z0) + ", " + F(x1) + ", " + F(z1) + ", " + F(x0) + ", " + F(z1)
+                           + "], \"floor\": 0, \"ceiling\": " + F(ceiling) + ", \"areaM2\": " + F((x1 - x0) * (z1 - z0)) + ", \"thresholds\": [] }");
+
             sb.Append(string.Join(",\n", spaces)).Append("\n  ]\n}\n");
             File.WriteAllText(AcousticJson, sb.ToString());
             AssetDatabase.ImportAsset(SpawnGatesJson);
             AssetDatabase.ImportAsset(RegionsJson);
             AssetDatabase.ImportAsset(AcousticJson);
+        }
+
+        /// <summary>
+        /// WP-097 / WP-092 (S-08 K3, C-00 07.10) · The acoustic class of a room: a closed room of 20–90 m² under a ceiling of
+        /// ≤ 4 m is a "Room" (the tea house, the east pavilion and the kura rang 1.6–1.8 s as halls; a small room wants
+        /// 0.35–0.65 s). Otherwise the authored class stays (the chūmon is a Corridor at 5 m); a room authored without one takes
+        /// the full rule: narrowest side &lt; 3.5 m → Corridor, else Hall.
+        /// </summary>
+        public static string AcousticClassOf(Room room)
+        {
+            float w = room.X1 - room.X0, d = room.Z1 - room.Z0, area = w * d;
+            bool closed = room.Walls && !room.RoofOnly;
+            if (closed && area >= 20f && area <= 90f && room.Height <= 4f + 1e-3f) return "Room";
+            if (!string.IsNullOrEmpty(room.Acoustic)) return room.Acoustic;
+            return Mathf.Min(w, d) < 3.5f ? "Corridor" : "Hall";
         }
 
         // ---------------------------------------------------------------- helpers

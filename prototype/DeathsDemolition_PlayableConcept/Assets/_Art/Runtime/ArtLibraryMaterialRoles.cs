@@ -78,9 +78,33 @@ namespace DD.Art
             /// <summary>WP-074 B5 · Textured / Cutout without an ORM (the AP-023 card atlases ship albedo + normal only): scalar <see cref="Smoothness"/>, metallic 0, no derived mask.</summary>
             public bool NoPackedMap;
 
+            /// <summary>WP-092 C · Texture role of an emission map (<c>T_&lt;role&gt;_Emission</c>, sRGB, the colour is in the map); null = no emission.</summary>
+            public string EmissionTextureRole;
+            /// <summary>WP-092 C · Linear multiplier of the emission map (<c>_EmissionColor</c> = white × this, HDR); baked into GI (BakedEmissive).</summary>
+            public float EmissionIntensity;
+
             public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap;
             public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasBaseColorMap => Kind != Kind.Flat;
+            public bool HasEmission => !string.IsNullOrEmpty(EmissionTextureRole) && EmissionIntensity > 0f;
+        }
+
+        /// <summary>WP-092 C · Material roles of the AP-030 kit (P-05: atlas roles ap030_&lt;atlas&gt;, glow roles ap030_&lt;family&gt;_glow).</summary>
+        public const string Ap030RolePrefix = "ap030_";
+
+        /// <summary>WP-092 C · Texture roles that ship an Emission map (distinct, in row order).</summary>
+        public static string[] EmissionTextureRoles()
+        {
+            var list = new List<string>();
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                if (Rows[i].HasEmission && !list.Contains(Rows[i].EmissionTextureRole))
+                {
+                    list.Add(Rows[i].EmissionTextureRole);
+                }
+            }
+
+            return list.ToArray();
         }
 
         /// <summary>WP-017 · Linear multiplier of the AP-005B world plaster (measured: × 0.82 on the hf003 mean gives sRGB (203, 202, 193) ≈ #CDCBC1).</summary>
@@ -297,6 +321,36 @@ namespace DD.Art
             rows.Add(new Spec { Role = "ap023_rope", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.012f, 0.011f, 0.010f, 1f), Smoothness = 0.15f });
             rows.Add(new Spec { Role = "ap023_lantern_glow", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.578f, 0.497f, 0.392f, 1f), Smoothness = 0.30f });   // sRGB #C8BBA8
             rows.Add(new Spec { Role = "ap023_lantern_paper", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.6155f, 0.4815f, 0.2786f, 1f), Smoothness = 0.25f });  // sRGB (0.807, 0.723, 0.565)
+
+            // WP-092 C · AP-030 world kit (P-05, v001 P1: lamps + interior; wp-092/tools/stage-ap030.py). Two atlases (lamp 1024², interior
+            // 2048²): albedo / normal / ORM (R AO, G roughness, B metallic) → the derived mask carries AO (ArtTextureRepack.CarriesOcclusion).
+            // Each lamp's lit area is its own slot AP030_M_<family>_glow_v001: the lamp atlas + T_ap030_lamp_Emission (sRGB, the 2200–2700 K
+            // colour is in the map), _EmissionColor = white × the receipt's AP030_emission_strength, baked into GI; the slot is what the
+            // flicker drives (S-07). No Light component in any prefab: the baked point lights are placed per lamp (WP-092 lead).
+            // v002 (P2 road kit + P3 clusters): one atlas per road surface (ishidatami 4K, the rest 2K) and the props atlas (clusters, clutter
+            // items). Gravel / dirt edges are an alpha cutout (BaseColor A, 0.5), single-sided ground strips. The props atlas also carries the
+            // cloth (laundry, noren: AP003_Wind carriers → DD/Foliage Wind, two-sided cutout hem), the stain decals (single-sided cutout) and
+            // the well / drain water square (Lit; DD/Water later). Their AP023_Mask vertex colour (R streak, G moss, A edge) is not read by
+            // URP/Lit. hibachi: v002 ember glow ×2.5 (was 1.0).
+            foreach (string atlas in new[] { "interior", "lamp", "ishidatami", "boardwalk", "drain", "puddle", "props" })
+            {
+                rows.Add(new Spec { Role = Ap030RolePrefix + atlas, Kind = Kind.Textured, TextureRole = Ap030RolePrefix + atlas });
+            }
+
+            foreach (string atlas in new[] { "gravel", "dirt" })
+            {
+                rows.Add(new Spec { Role = Ap030RolePrefix + atlas, Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + atlas, Cutoff = 0.5f, SingleSided = true });
+            }
+
+            rows.Add(new Spec { Role = Ap030RolePrefix + "props_cloth", Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + "props", Shader = ShaderKind.FoliageWind, Cutoff = 0.5f });
+            rows.Add(new Spec { Role = Ap030RolePrefix + "props_decal", Kind = Kind.Cutout, TextureRole = Ap030RolePrefix + "props", Cutoff = 0.5f, SingleSided = true });
+            rows.Add(new Spec { Role = Ap030RolePrefix + "water", Kind = Kind.Textured, TextureRole = Ap030RolePrefix + "props" });
+
+            foreach ((string family, float strength) in new[] { ("andon", 2.0f), ("kerosene_lamp", 3.0f), ("wall_sconce", 2.5f), ("hibachi", 2.5f) })
+            {
+                rows.Add(new Spec { Role = Ap030RolePrefix + family + "_glow", Kind = Kind.Textured, TextureRole = Ap030RolePrefix + "lamp", EmissionTextureRole = Ap030RolePrefix + "lamp", EmissionIntensity = strength });
+            }
+
             return rows;
         }
 

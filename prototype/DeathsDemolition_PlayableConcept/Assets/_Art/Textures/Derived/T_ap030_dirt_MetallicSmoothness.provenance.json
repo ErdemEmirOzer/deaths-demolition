@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_dirt_Packed.png",
+    "sourceSha256": "ca49a9173347f3c91e39a8de502a5872615ea880338cb57425b9685373fd5193",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-08T02:25:30.7084120Z",
+    "outputSha256": "8589151b3a24b9fe9a88d643be06b78e2a992554b89ca95460c29d7bbadc25f1"
+}

@@ -66,8 +66,26 @@ namespace DD.Art
             public string residueCell;
             /// <summary>WP-038L · AP-017 koi shoal (FBX custom props AP017_swim = loop): circle radius range, speed, depth range. Absent = static prop.</summary>
             public Swim swim;
+            /// <summary>WP-092 C · AP-030 EMPTY sockets (lamps: SOCKET_Flame, SOCKET_Light) — the FBX Null nodes in Blender space; empty for the older libraries.</summary>
+            public List<Socket> sockets = new List<Socket>();
 
             public bool HasSwim => swim != null && swim.speedMps > 0f && swim.radiusM != null && swim.radiusM.Length == 2 && swim.radiusM[0] > 0f;
+        }
+
+        /// <summary>WP-092 C · A named attachment point (an FBX EMPTY at the model root): Blender-space metres, built as a child of the prefab root.</summary>
+        [Serializable]
+        public sealed class Socket
+        {
+            public string name;
+            public float[] position;
+            /// <summary>AP-030 v002 · CCW yaw about Blender +Z in degrees (road corner / curve exits: the flow leaves along the socket's +Z); 0 = unrotated.</summary>
+            public float yawDeg;
+
+            /// <summary>Prefab-root space (the AP world contract, <see cref="WorldPlacementAsset.ToUnity"/>).</summary>
+            public Vector3 PrefabPosition => WorldPlacementAsset.ToUnity(position[0], position[1], position[2]);
+
+            /// <summary>Prefab-root space rotation (<see cref="WorldPlacementAsset.ToUnityYaw"/>): its +Z is the Blender-space flow direction.</summary>
+            public Quaternion PrefabRotation => WorldPlacementAsset.ToUnityYaw(yawDeg);
         }
 
         [Serializable]

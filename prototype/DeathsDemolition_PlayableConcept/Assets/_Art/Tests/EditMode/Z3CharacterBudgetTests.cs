@@ -657,6 +657,7 @@ namespace DD.Art.Tests.EditMode
             {
                 string p = f.Replace('\\', '/');
                 if (ArtImportContract.IsLutTexture(p) || ArtImportContract.IsMenuPlateTexture(p) || ArtImportContract.IsLightCookieTexture(p)) continue;
+                if (ArtImportContract.IsDataMaskTexture(p)) continue;   // WP-092 B5: data masks (WorldV5TerrainTests)
                 list.Add(p);
             }
 

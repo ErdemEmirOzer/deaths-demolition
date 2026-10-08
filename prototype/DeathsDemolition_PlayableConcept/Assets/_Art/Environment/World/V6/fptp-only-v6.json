@@ -1,0 +1,1347 @@
+{
+    "schema": "dd.fptp-only/v1",
+    "ruleVersion": 2,
+    "world": "Assets/_Art/Scenes/World_V6_Greybox.unity",
+    "contentHash": "c657b09641645969db71b48cafe1c6b739b9dc10",
+    "rule": "move = movable unit (WorldFptpSplit.StaticPin null) with 0 px in every TD pose (2.4:1 + 16:9 crop, FOV +1.5deg, LOD0, fader emulated, opaque + transparent passes), 0 px in the plaza planar reflection, no shadow into a pose frustum (sun sweep to y -2, 60 m) and no shadow-casting point/spot light range on a pose",
+    "units": 3403,
+    "moved": 167,
+    "entries": [
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_0_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_0_0",
+            "fingerprint": "GroundTerrain_0_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_0_9@0.00,0.00,0.00",
+            "family": "GroundTerrain_0_9",
+            "fingerprint": "GroundTerrain_0_9|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_1_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_1_0",
+            "fingerprint": "GroundTerrain_1_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_2_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_2_0",
+            "fingerprint": "GroundTerrain_2_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_3_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_3_0",
+            "fingerprint": "GroundTerrain_3_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_4_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_4_0",
+            "fingerprint": "GroundTerrain_4_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_4_7@0.00,0.00,0.00",
+            "family": "GroundTerrain_4_7",
+            "fingerprint": "GroundTerrain_4_7|r1|t204|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 204
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_5_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_5_0",
+            "fingerprint": "GroundTerrain_5_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_5_7@0.00,0.00,0.00",
+            "family": "GroundTerrain_5_7",
+            "fingerprint": "GroundTerrain_5_7|r1|t204|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 204
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_6_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_6_0",
+            "fingerprint": "GroundTerrain_6_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_7_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_7_0",
+            "fingerprint": "GroundTerrain_7_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_8_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_8_0",
+            "fingerprint": "GroundTerrain_8_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_9_0@0.00,0.00,0.00",
+            "family": "GroundTerrain_9_0",
+            "fingerprint": "GroundTerrain_9_0|r1|t578|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 578
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky (AP-019)/Horizon_far@0.00,0.00,0.00",
+            "family": "SM_horizon_far",
+            "fingerprint": "SM_horizon_far|r1|t96|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 96
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky (AP-019)/Horizon_mid@0.00,0.00,0.00",
+            "family": "SM_horizon_mid",
+            "fingerprint": "SM_horizon_mid|r1|t144|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 144
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky (AP-019)/Horizon_near@0.00,0.00,0.00",
+            "family": "SM_horizon_near",
+            "fingerprint": "SM_horizon_near|r1|t192|e0.0,0.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 192
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/Landmark_Pagoda@189.28,-1.00,270.32",
+            "family": "SM_sky_Landmark_Pagoda",
+            "fingerprint": "SM_sky_Landmark_Pagoda|r1|t2|e0.0,35.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/Landmark_Temple@285.79,-1.00,-165.00",
+            "family": "SM_sky_Landmark_Temple",
+            "fingerprint": "SM_sky_Landmark_Temple|r1|t2|e0.0,120.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/Landmark_Torii@-187.94,-1.00,-68.40",
+            "family": "SM_sky_Landmark_Torii",
+            "fingerprint": "SM_sky_Landmark_Torii|r1|t2|e0.0,250.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/NW_Cluster_0@-208.88,-1.00,146.26",
+            "family": "SM_sky_NW_Cluster_0",
+            "fingerprint": "SM_sky_NW_Cluster_0|r1|t2|e0.0,305.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/NW_Cluster_1@-163.91,-1.00,195.34",
+            "family": "SM_sky_NW_Cluster_1",
+            "fingerprint": "SM_sky_NW_Cluster_1|r1|t2|e0.0,320.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/Sky v2 (C3)/NW_Cluster_2@-107.77,-1.00,231.11",
+            "family": "SM_sky_NW_Cluster_2",
+            "fingerprint": "SM_sky_NW_Cluster_2|r1|t2|e0.0,335.0,0.0|s1.00,1.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_East@88.00,-1.00,0.00",
+            "family": "SM_SkirtWall",
+            "fingerprint": "SM_SkirtWall|r1|t2|e0.0,90.0,0.0|s176.00,6.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_North@0.00,-1.00,88.00",
+            "family": "SM_SkirtWall",
+            "fingerprint": "SM_SkirtWall|r1|t2|e0.0,0.0,0.0|s176.00,6.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_South@0.00,-1.00,-88.00",
+            "family": "SM_SkirtWall",
+            "fingerprint": "SM_SkirtWall|r1|t2|e0.0,180.0,0.0|s176.00,6.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@-10.21,0.00,-77.70",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,56.8,0.0|s0.96,0.96,0.96|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@-69.49,0.00,-73.74",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,133.7,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@-7.19,0.00,-83.29",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,69.4,0.0|s1.03,1.03,1.03|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@-81.35,0.00,-76.52",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,347.2,0.0|s1.01,1.01,1.01|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@11.47,0.00,-81.15",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,273.4,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@36.06,0.00,-74.39",
+            "family": "SM_black_pine_V04",
+            "fingerprint": "SM_black_pine_V04|r6|t24411|e0.0,347.1,0.0|s1.06,1.06,1.06|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 24411
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-30.99,0.00,-74.74",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,323.3,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-4.35,0.00,-73.57",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,317.8,0.0|s0.99,0.99,0.99|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-50.12,0.00,-75.67",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,337.2,0.0|s0.91,0.91,0.91|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-67.40,0.00,-78.23",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,163.9,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-70.95,0.00,-77.85",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,152.7,0.0|s0.96,0.96,0.96|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@-73.38,0.00,-71.30",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,77.7,0.0|s1.13,1.13,1.13|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@14.81,0.00,-73.61",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,337.0,0.0|s1.07,1.07,1.07|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V05@14.88,0.00,-76.11",
+            "family": "SM_black_pine_V05",
+            "fingerprint": "SM_black_pine_V05|r6|t17863|e0.0,248.6,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 17863
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-0.32,0.00,-76.98",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,49.1,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-10.94,0.00,-79.61",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,246.1,0.0|s0.98,0.98,0.98|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-16.38,0.00,-76.53",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,308.4,0.0|s0.87,0.87,0.87|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-2.16,0.00,-83.01",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,74.7,0.0|s0.90,0.90,0.90|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-27.45,0.00,-79.34",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,161.6,0.0|s1.19,1.19,1.19|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-27.74,0.00,-77.00",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,9.9,0.0|s1.14,1.14,1.14|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-28.06,0.00,-74.81",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,284.3,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-3.68,0.00,-80.85",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,110.6,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-30.29,0.00,-76.37",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,276.4,0.0|s0.86,0.86,0.86|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-33.67,0.00,-83.77",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,78.0,0.0|s1.14,1.14,1.14|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-33.91,0.00,-80.72",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,334.6,0.0|s1.13,1.13,1.13|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-37.64,0.00,-76.55",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,105.7,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-37.64,0.00,-80.85",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,194.2,0.0|s0.87,0.87,0.87|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-38.57,0.00,-74.41",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,68.1,0.0|s0.85,0.85,0.85|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-4.34,0.00,-76.30",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,181.7,0.0|s0.98,0.98,0.98|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-41.86,0.00,-81.18",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,309.4,0.0|s1.19,1.19,1.19|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-43.01,0.00,-77.37",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,177.0,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-43.32,0.00,-83.42",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,236.3,0.0|s1.00,1.00,1.00|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-44.61,0.00,-81.30",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,252.3,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-44.79,0.00,-78.14",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,288.7,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-46.64,0.00,-83.66",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,252.7,0.0|s0.96,0.96,0.96|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-49.64,0.00,-82.60",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,144.4,0.0|s1.02,1.02,1.02|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-54.93,0.00,-81.31",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,126.8,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-55.20,0.00,-83.58",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,3.7,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-56.45,0.00,-76.13",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,78.1,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-59.46,0.00,-81.04",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,65.4,0.0|s0.89,0.89,0.89|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-6.99,0.00,-76.50",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,143.7,0.0|s0.99,0.99,0.99|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-65.17,0.00,-74.48",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,348.1,0.0|s0.94,0.94,0.94|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-65.58,0.00,-79.40",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,191.2,0.0|s1.03,1.03,1.03|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-70.58,0.00,-83.82",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,169.7,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-74.15,0.00,-77.89",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,43.0,0.0|s0.91,0.91,0.91|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-74.36,0.00,-81.14",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,48.6,0.0|s1.05,1.05,1.05|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-79.25,0.00,-83.59",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,281.2,0.0|s1.01,1.01,1.01|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-81.24,0.00,-72.44",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,349.8,0.0|s0.96,0.96,0.96|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@-9.57,0.00,-73.24",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,96.5,0.0|s0.88,0.88,0.88|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@10.16,0.00,-76.73",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,352.7,0.0|s1.15,1.15,1.15|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@13.23,0.00,-83.24",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,317.5,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@14.92,0.00,-80.27",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,262.4,0.0|s0.98,0.98,0.98|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@16.36,0.00,-79.93",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,346.5,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@2.99,0.00,-77.08",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,284.0,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@20.66,0.00,-79.92",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,76.3,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@25.21,0.00,-79.77",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,354.4,0.0|s0.98,0.98,0.98|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@25.84,0.00,-77.40",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,154.6,0.0|s0.94,0.94,0.94|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@28.42,0.00,-78.40",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,322.4,0.0|s0.88,0.88,0.88|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@31.94,0.00,-81.81",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,181.9,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@34.12,0.00,-82.83",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,345.5,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@36.05,0.00,-76.34",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,171.7,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@4.69,0.00,-81.54",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,246.6,0.0|s1.14,1.14,1.14|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@42.75,0.00,-81.74",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,125.4,0.0|s1.03,1.03,1.03|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@49.01,0.00,-76.45",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,116.5,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@49.64,0.00,-83.31",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,171.9,0.0|s0.90,0.90,0.90|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@5.62,0.00,-74.73",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,230.8,0.0|s0.89,0.89,0.89|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@51.67,0.00,-77.82",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,189.3,0.0|s0.87,0.87,0.87|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@51.69,0.00,-80.63",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,67.6,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@53.62,0.00,-83.89",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,30.0,0.0|s1.20,1.20,1.20|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@56.06,0.00,-83.00",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,226.5,0.0|s1.09,1.09,1.09|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@58.23,0.00,-77.91",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,53.7,0.0|s0.88,0.88,0.88|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@6.28,0.00,-83.06",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,82.8,0.0|s1.15,1.15,1.15|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@60.50,0.00,-80.20",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,7.7,0.0|s1.09,1.09,1.09|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@62.38,0.00,-83.42",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,47.7,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@65.63,0.00,-81.63",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,168.4,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@7.03,0.00,-81.56",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,225.2,0.0|s1.02,1.02,1.02|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@71.33,0.00,-76.52",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,349.5,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@73.80,0.00,-77.71",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,198.6,0.0|s1.10,1.10,1.10|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@78.27,0.00,-79.61",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,150.1,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@81.27,0.00,-75.81",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,340.7,0.0|s1.02,1.02,1.02|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V01@83.44,0.00,-74.01",
+            "family": "SM_sugi_V01",
+            "fingerprint": "SM_sugi_V01|r6|t5446|e0.0,286.2,0.0|s0.92,0.92,0.92|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 5446
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-12.80,0.00,-77.62",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,246.6,0.0|s1.20,1.20,1.20|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-18.24,0.00,-80.32",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,75.8,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-21.06,0.00,-75.86",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,346.8,0.0|s1.02,1.02,1.02|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-24.54,0.00,-80.19",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,141.4,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-31.43,0.00,-79.85",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,146.5,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-48.14,0.00,-80.45",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,104.2,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-51.92,0.00,-79.35",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,50.0,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-52.77,0.00,-76.20",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,287.0,0.0|s0.86,0.86,0.86|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-6.33,0.00,-79.52",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,33.3,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-7.72,0.00,-73.71",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,258.5,0.0|s1.06,1.06,1.06|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@-83.33,0.00,-81.17",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,351.8,0.0|s1.07,1.07,1.07|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@0.21,0.00,-81.78",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,110.0,0.0|s0.92,0.92,0.92|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@10.84,0.00,-74.02",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,168.1,0.0|s1.08,1.08,1.08|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@16.29,0.00,-76.66",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,48.4,0.0|s0.98,0.98,0.98|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@16.32,0.00,-74.02",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,164.9,0.0|s1.08,1.08,1.08|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@17.89,0.00,-83.78",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,339.4,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@27.03,0.00,-79.53",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,332.8,0.0|s0.94,0.94,0.94|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@32.48,0.00,-78.38",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,239.3,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@33.76,0.00,-81.17",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,140.2,0.0|s1.16,1.16,1.16|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@37.94,0.00,-78.24",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,348.0,0.0|s1.05,1.05,1.05|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@40.74,0.00,-77.23",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,7.9,0.0|s0.91,0.91,0.91|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@55.99,0.00,-80.58",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,109.6,0.0|s0.92,0.92,0.92|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@56.66,0.00,-77.18",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,235.5,0.0|s1.06,1.06,1.06|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@58.94,0.00,-74.14",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,81.3,0.0|s0.90,0.90,0.90|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@6.56,0.00,-75.79",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,18.8,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@61.66,0.00,-80.42",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,328.4,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@69.78,0.00,-72.64",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,337.2,0.0|s0.95,0.95,0.95|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@70.36,0.00,-80.75",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,338.7,0.0|s0.91,0.91,0.91|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V02@77.25,0.00,-78.16",
+            "family": "SM_sugi_V02",
+            "fingerprint": "SM_sugi_V02|r6|t4342|e0.0,178.5,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 4342
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-13.37,0.00,-79.45",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,293.2,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-14.01,0.00,-83.64",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,232.0,0.0|s1.06,1.06,1.06|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-14.24,0.00,-73.78",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,341.7,0.0|s0.99,0.99,0.99|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-21.42,0.00,-79.43",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,177.9,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-25.15,0.00,-76.36",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,137.1,0.0|s1.07,1.07,1.07|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-25.36,0.00,-73.60",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,249.9,0.0|s1.17,1.17,1.17|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-33.78,0.00,-78.02",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,112.1,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-37.67,0.00,-83.42",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,6.0,0.0|s0.94,0.94,0.94|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-59.83,0.00,-76.49",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,239.8,0.0|s0.92,0.92,0.92|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-61.70,0.00,-76.34",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,125.8,0.0|s0.96,0.96,0.96|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-61.71,0.00,-81.49",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,99.1,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-61.88,0.00,-83.82",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,335.0,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-71.18,0.00,-80.68",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,5.4,0.0|s1.12,1.12,1.12|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-76.24,0.00,-81.62",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,64.7,0.0|s1.01,1.01,1.01|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-77.64,0.00,-82.69",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,42.5,0.0|s1.13,1.13,1.13|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@-80.52,0.00,-81.32",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,150.9,0.0|s1.19,1.19,1.19|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@1.37,0.00,-73.70",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,308.1,0.0|s0.87,0.87,0.87|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@11.36,0.00,-70.77",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,286.7,0.0|s0.90,0.90,0.90|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@19.63,0.00,-76.38",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,77.5,0.0|s1.18,1.18,1.18|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@2.44,0.00,-72.31",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,206.4,0.0|s0.92,0.92,0.92|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@23.37,0.00,-73.95",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,334.8,0.0|s0.89,0.89,0.89|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@25.80,0.00,-82.64",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,292.5,0.0|s1.01,1.01,1.01|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@39.11,0.00,-81.58",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,290.6,0.0|s1.03,1.03,1.03|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@44.83,0.00,-80.51",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,238.9,0.0|s1.18,1.18,1.18|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@45.69,0.00,-75.82",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,306.6,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@46.44,0.00,-73.81",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,201.3,0.0|s1.11,1.11,1.11|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@47.67,0.00,-81.53",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,123.4,0.0|s0.94,0.94,0.94|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@61.92,0.00,-72.23",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,97.9,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@65.88,0.00,-83.63",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,213.6,0.0|s1.06,1.06,1.06|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@70.77,0.00,-83.38",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,24.7,0.0|s0.97,0.97,0.97|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@75.81,0.00,-69.90",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,88.7,0.0|s0.93,0.93,0.93|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        },
+        {
+            "key": "Dress v5 (AP-023)/VistaForest/SM_sugi_V03@80.11,0.00,-73.74",
+            "family": "SM_sugi_V03",
+            "fingerprint": "SM_sugi_V03|r6|t3782|e0.0,143.7,0.0|s1.04,1.04,1.04|Proxy",
+            "mode": "Proxy",
+            "renderers": 6,
+            "triangles": 3782
+        }
+    ]
+}

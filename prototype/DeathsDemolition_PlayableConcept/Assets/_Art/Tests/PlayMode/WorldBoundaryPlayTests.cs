@@ -8,6 +8,7 @@ using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Enemies;
+using DD.Prototype.Navigation;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
@@ -575,7 +576,30 @@ namespace DD.Art.Tests.PlayMode
             int innerMarkers = 0;
             foreach (SpawnPointMarker m in UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>()) if (m.Kind == SpawnPointKind.Inner) innerMarkers++;
             Assert.AreEqual(10, innerMarkers, "orta kapı marker'ı (Kind = Inner; 6 + S-03 senaryo C'nin 4'ü, C-00 25.09)");
-            Assert.AreEqual(30, UnityEngine.Object.FindObjectsOfType<DD.Prototype.Navigation.NavRegionMarker>().Length, "B1c bölge hacimleri (7 oda + 20 çıkış + 3 darboğaz)");
+            // WP-092 + S-03 08.10 M1: six new rooms, their exits and K1_W0 extend the old 30-volume world.
+            // Count the live kinds as well as unique ids: a missing room cannot be hidden by an extra gate.
+            var regionIds = new HashSet<string>(StringComparer.Ordinal);
+            int rooms = 0, gates = 0, bridges = 0, corridors = 0;
+            foreach (NavRegionMarker marker in UnityEngine.Object.FindObjectsOfType<NavRegionMarker>())
+            {
+                NavRegionVolume volume = marker.Volume;
+                Assert.IsNotNull(volume, "canlı bölge kaydı: " + marker.name);
+                Assert.IsFalse(string.IsNullOrEmpty(volume.id), "boş bölge kimliği: " + marker.name);
+                Assert.IsTrue(regionIds.Add(volume.id), "yinelenen bölge kimliği: " + volume.id);
+                switch (volume.kind)
+                {
+                    case NavRegionKind.Room: rooms++; break;
+                    case NavRegionKind.Gate: gates++; break;
+                    case NavRegionKind.Bridge: bridges++; break;
+                    case NavRegionKind.Corridor: corridors++; break;
+                    default: Assert.Fail("beklenmeyen bölge türü: " + volume.id + " / " + volume.kind); break;
+                }
+            }
+            Assert.AreEqual(13, rooms, "WP-092: R1–R7 + altı yeni oda");
+            Assert.AreEqual(33, gates, "WP-092: oda çıkışları ve K1_W0");
+            Assert.AreEqual(1, bridges, "C8 köprü");
+            Assert.AreEqual(2, corridors, "C1 geçit + K1 koridor");
+            Assert.AreEqual(49, regionIds.Count, "S-03 M1: 13 oda + 33 çıkış + 3 geçit");
             yield return null;
             Time.captureDeltaTime = 1f / 60f;
             _girdi = new Girdi();
