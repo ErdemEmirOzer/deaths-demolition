@@ -246,7 +246,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.GreaterOrEqual(inkStart, HudArt.SmearDenseLeft * texel - 0.01f, name + ": the first ink inside the dense zone");
                 Assert.AreEqual((HudArt.SmearNativeWidth - HudArt.SmearDenseRight) * texel + HudArt.SealFromDenseRight * seal, sealCentre, 1e-3f, name + ": the seal's place");
                 Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.45 em");
-                Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGapEm * 44f, runRight, 1e-3f, name + ": 0.22 em to the seal");
+                Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f), runRight, 1e-3f, name + ": 0.22 em to the seal");
+                Assert.AreEqual(HudArt.SealGapEm * 44f, HudArt.SealGap(44f), 1e-4f, name + ": at cap 44 the 0.22 em rules (9.68 ≥ 9 px)");
             }
         }
 
@@ -254,7 +255,8 @@ namespace DD.Prototype.Tests.EditMode
         /// 08.10 (S-09, plate fit): the plate is at most <see cref="HudArt.PlateMaxWidth"/> (288, inside S-09's 320 ceiling); a
         /// numeral that would pass it shrinks the cap in proportion, floor <see cref="HudArt.CapFloor"/> 32. I and XIV keep the
         /// HUD's cap 40; XXXVIII (the longest under 40) and LXXXVIII (the longest under 100) fit at a smaller cap; no round
-        /// 1…100 lays a plate past the ceiling.
+        /// 1…100 lays a plate past the ceiling. r3-w2 (08.10): the plate holds seal + gap + numeral with the gap ≥ 9 px, so the
+        /// numeral's clip box (8 px) never reaches the ring at a fitted cap (0.22 em is 7.3 px at XXXVIII's 33).
         /// </summary>
         [Test]
         public void Plaka_Sigdirma_EnCok288_UzunRakamCapiKuculur_Taban32()
@@ -282,6 +284,10 @@ namespace DD.Prototype.Tests.EditMode
                 float width, height, runRight, sealCentre, seal;
                 HudArt.LaySmear(fitted, em * fitted, lsb, out width, out height, out runRight, out sealCentre, out seal);
                 Assert.LessOrEqual(width, HudArt.PlateMaxWidth + 0.01f, RomanNumerals.Cached(round) + ": the plate ≤ 288");
+                // r3-w2 (08.10): the numeral never touches the seal - its clip box (8 px round the letters) ends before the ring.
+                Assert.Greater(runRight - HudArt.NumeralClipPad, sealCentre + seal * 0.5f + 0.5f,
+                    RomanNumerals.Cached(round) + ": the letters' clip box clear of the seal ring at cap " + fitted);
+                Assert.GreaterOrEqual(runRight - (sealCentre + seal * 0.5f), HudArt.SealGapMinPx - 1e-3f, RomanNumerals.Cached(round) + ": the gap ≥ 9 px");
                 Assert.AreEqual(fitted / HudArt.SmearCapRatio, height, 1e-3f, RomanNumerals.Cached(round) + ": height follows the cap");
                 worst = Mathf.Max(worst, width);
             }

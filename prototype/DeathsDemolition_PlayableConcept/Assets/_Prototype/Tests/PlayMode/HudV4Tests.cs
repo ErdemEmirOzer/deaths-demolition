@@ -323,6 +323,14 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(round.center.y, seal.center.y, 0.5f, where + ": the seal at the cap's middle");
                 Assert.Greater(letters.xMin, canvasRect.center.x + canvasRect.width * 0.25f, where + ": the numeral in the right quarter");
                 Assert.Less(letters.xMax, seal.xMin, where + ": the letters before the seal");
+                // 08.10: RoundSeal is the seal's footprint (the ring); the AP-032 cell it draws overflows it, centred, 256 / 72 wide.
+                Assert.AreEqual(sealDiameter, seal.width, 0.5f, where + ": the seal's footprint is the ring (0.45 em)");
+                if (hud.RoundSealAuthored)
+                {
+                    Rect cell = CanvasRectOf(screen, (RectTransform)hud.RoundSeal.Find("Seal"));
+                    Assert.AreEqual(sealDiameter / HudArt.SealRingShareOfCell, cell.width, 0.5f, where + ": the cell drawn round the ring");
+                    Assert.AreEqual(seal.center.x, cell.center.x, 0.5f, where + ": the cell centred on the ring");
+                }
                 Assert.Greater(round.xMin, canvasRect.center.x, where + ": the plate in the right half");
             }
             else

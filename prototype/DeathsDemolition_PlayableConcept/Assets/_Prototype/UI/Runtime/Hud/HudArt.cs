@@ -89,6 +89,22 @@ namespace DD.Prototype.UI
         public const float SealGapEm = 0.22f;
         public const float SealFromDenseRight = 0.55f;
 
+        /// <summary>The numeral's reveal clip pads the letters this much on every side (the brush ink past the advance box).</summary>
+        public const float NumeralClipPad = 8f;
+
+        /// <summary>
+        /// 08.10 (S-09, r3-w2 layout FAIL "the letters before the seal"): the gap between the run and the seal ring is never under
+        /// this - the clip box (<see cref="NumeralClipPad"/>) ends 1 px before the ring, so the numeral never touches the seal at
+        /// any cap. 0.22 em is 7.3 px at XXXVIII's fitted cap 33; from cap 41 up the 0.22 em rules.
+        /// </summary>
+        public const float SealGapMinPx = NumeralClipPad + 1f;
+
+        /// <summary>The run-to-ring gap at <paramref name="cap"/>: 0.22 em, never under <see cref="SealGapMinPx"/>.</summary>
+        public static float SealGap(float cap)
+        {
+            return Mathf.Max(SealGapEm * cap, SealGapMinPx);
+        }
+
         private static readonly Sprite[] s_gold = new Sprite[2];
         private static readonly Sprite[] s_smear = new Sprite[2];
         private static readonly Sprite[][] s_roman = new Sprite[2][];
@@ -282,8 +298,8 @@ namespace DD.Prototype.UI
         /// §3.3 / smear.json "layout_recommendation" for a numeral <paramref name="runWidth"/> wide (advances + kerning) at cap
         /// <paramref name="cap"/>, its first letter's left side bearing <paramref name="firstLsbEm"/>: the plate is cap /
         /// <see cref="SmearCapRatio"/> tall and L + R + n·period wide - n the fewest periods whose dense zone holds the run, the
-        /// 0.22 em gap and the seal (+ 0.02 em); a width on a period multiple cuts the tiled centre on a period boundary, so no
-        /// seam. The seal's centre sits 0.55 diameters left of the dense zone's right end; the run ends 0.22 em before the
+        /// gap (<see cref="SealGap"/>: 0.22 em, ≥ 9 px) and the seal (+ 0.02 em); a width on a period multiple cuts the tiled centre on a period boundary, so no
+        /// seam. The seal's centre sits 0.55 diameters left of the dense zone's right end; the run ends the gap before the
         /// seal; any spare dense width stays at the head (left). Distances from the plate's right edge, in the cap's units.
         /// </summary>
         public static void LaySmear(float cap, float runWidth, float firstLsbEm, out float width, out float height, out float runRight,
@@ -293,13 +309,15 @@ namespace DD.Prototype.UI
             float texel = height / SmearNativeHeight;   // ref px per x1 texel
             float capTexels = cap / texel;
             sealDiameter = SealEm * cap;
-            float required = (runWidth / Mathf.Max(1f, cap) + SealGapEm + 1.05f * SealEm - firstLsbEm + 0.02f) * capTexels;
+            float gap = SealGap(cap);
+            // The plate holds seal + gap + numeral: the dense zone carries the run, the gap and the seal (+ 0.02 em).
+            float required = (runWidth / Mathf.Max(1f, cap) + gap / Mathf.Max(1f, cap) + 1.05f * SealEm - firstLsbEm + 0.02f) * capTexels;
             float denseAtZero = SmearHead + SmearTail - SmearDenseLeft - (SmearNativeWidth - SmearDenseRight);
             int n = Mathf.Max(0, Mathf.CeilToInt((required - denseAtZero) / SmearPeriod - 1e-4f));
             width = (SmearHead + SmearTail + n * SmearPeriod) * texel;
             float tail = (SmearNativeWidth - SmearDenseRight) * texel;
             sealCentre = tail + SealFromDenseRight * sealDiameter;
-            runRight = sealCentre + sealDiameter * 0.5f + SealGapEm * cap;
+            runRight = sealCentre + sealDiameter * 0.5f + gap;
         }
 
         /// <summary>
@@ -316,7 +334,20 @@ namespace DD.Prototype.UI
                 return baseCap;
             }
 
-            return Mathf.Max(CapFloor, baseCap * PlateMaxWidth / width);
+            // The gap's pixel floor does not shrink with the cap, so a proportional step may land a period long: step again.
+            float cap = Mathf.Max(CapFloor, baseCap * PlateMaxWidth / width);
+            for (int i = 0; i < 4 && cap > CapFloor; i++)
+            {
+                LaySmear(cap, runEm * cap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal);
+                if (width <= PlateMaxWidth + 0.01f)
+                {
+                    break;
+                }
+
+                cap = Mathf.Max(CapFloor, cap * PlateMaxWidth / width);
+            }
+
+            return cap;
         }
 
         /// <summary>The glyph's cap centre below the plate's centre (the baseline at 0.62 of the height, the cap above it), px.</summary>

@@ -123,8 +123,11 @@ namespace DD.Prototype.UI
         /// <summary>HAREKET-HUD R4: at a round's end the seal "dries" to this share of its alpha; the next stamp wets it again.</summary>
         public const float RoundSealDryAlpha = 0.7f;
 
-        /// <summary>The numeral clip's margin round the letters: the HUD ink's outline and underlay never meet the mask's edge.</summary>
-        private const float RoundClipPad = 8f;
+        /// <summary>
+        /// The numeral clip's margin round the letters: the HUD ink's outline and underlay never meet the mask's edge. 08.10: the
+        /// plate's seal gap is never under this + 1 px (HudArt.SealGapMinPx) - the clip box itself stays clear of the ring.
+        /// </summary>
+        private const float RoundClipPad = HudArt.NumeralClipPad;
 
         /// <summary>AP-032's smear plate takes the HUD ink at this alpha (§3.3 "kodda ink, α ≤ 0,90"), level (it is laid out, not leaned).</summary>
         public const float RoundSmearAuthoredAlpha = 0.9f;
@@ -167,7 +170,6 @@ namespace DD.Prototype.UI
         private RectTransform _roundBox;
         private bool _roundSmearAuthored;
         private bool _roundSealAuthored;
-        private RectTransform _roundSealHost;
         private float _roundRunRight;   // the numeral's end, from the cluster's right edge (the seal and its gap, or the plate's tail too)
         private HudRoundNumeral _roundNumeral;
         private float _roundSealHitAt = -1f;
@@ -188,8 +190,14 @@ namespace DD.Prototype.UI
         /// <summary>The round numeral (tests, captures).</summary>
         public HudRoundNumeral RoundNumeral => _roundNumeral;
 
-        /// <summary>The round's seal accent (tests).</summary>
+        /// <summary>
+        /// The round's seal accent (tests): its footprint - the ring's outer diameter, centred on it - which the stamp scales. The
+        /// AP-032 cell it draws is 256 / 72 of the ring (transparent round it) and overflows the footprint (08.10).
+        /// </summary>
         public RectTransform RoundSeal => _roundSeal;
+
+        /// <summary>The seal draws AP-032's cell (the ring 72 / 256 of it); false: the kit's hanko mask, which is the seal edge to edge.</summary>
+        public bool RoundSealAuthored => _roundSealAuthored;
 
         /// <summary>Unscaled time the round seal's hit is due (the reveal's contact frame; −1 before the first reveal). Tests, captures.</summary>
         public float RoundSealHitAt => _roundSealHitAt;
@@ -358,7 +366,7 @@ namespace DD.Prototype.UI
                 // R2: the plate inks in left to right over its own alpha (wipe), Emphasis.
                 _roundSmearFx = _roundSmear.gameObject.AddComponent<UiFx>();
                 _roundSmearFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, new Vector3(0f, 1f, 0f), BrushChannel);
-                sealSize = UiArt.Icon(RoundSealKey) != null ? sealDiameter / HudArt.SealRingShareOfCell : sealDiameter;
+                sealSize = sealDiameter;   // the footprint: the ring (the cell overflows it, below)
             }
             else
             {
@@ -391,14 +399,21 @@ namespace DD.Prototype.UI
             Sprite authoredSeal = UiArt.Icon(RoundSealKey);
             _roundSealAuthored = authoredSeal != null;
             Sprite hanko = authoredSeal != null ? authoredSeal : UiFxGlobals.InkMask(UiInkChannel.Hanko);
-            // The seal and its depth twins stand in one host the plate fit moves and sizes (08.10: the cap may shrink).
+            // The seal and its depth twins stand in one host - the seal's footprint, the ring's outer diameter - which the plate
+            // fit moves and sizes (08.10: the cap may shrink) and the stamp scales. The AP-032 cell is the ring and its clear
+            // surround (the ring 72 / 256 of it): it overflows the footprint by anchors past 0..1, so the footprint is what the
+            // layout (and "the letters before the seal") sees, while the cell draws exactly where it did. The twins copy its anchors.
             RectTransform sealHost = Place(UiFactory.NewRect("SealHost", back), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-sealCentre, 0f), new Vector2(sealSize, sealSize));
             Image seal = UiFactory.NewImage("Seal", sealHost, UiColor.AccentPrimary, hanko != null ? hanko : UiSprites.Disc);
-            UiFactory.Fill(seal.rectTransform);
+            float cellHalf = _roundSealAuthored ? 0.5f / HudArt.SealRingShareOfCell : 0.5f;
+            seal.rectTransform.anchorMin = new Vector2(0.5f - cellHalf, 0.5f - cellHalf);
+            seal.rectTransform.anchorMax = new Vector2(0.5f + cellHalf, 0.5f + cellHalf);
+            seal.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            seal.rectTransform.offsetMin = Vector2.zero;
+            seal.rectTransform.offsetMax = Vector2.zero;
             Fade(seal, RoundSealAlpha);
             Depth(seal);
-            _roundSealHost = sealHost;
-            _roundSeal = seal.rectTransform;
+            _roundSeal = sealHost;
             _roundSealImage = seal;
             // R3: the ink spreads centre-out through the seal as it stamps (Hanko time map, Screen) - over the kit mask's own
             // mark, or (the AP-032 ring, whose shape is its alpha) as a wipe.
@@ -482,9 +497,9 @@ namespace DD.Prototype.UI
                 _roundSmear.rectTransform.sizeDelta = new Vector2(plateWidth, plateHeight);
                 _roundSmear.rectTransform.anchoredPosition = new Vector2(0f, -HudArt.SmearCapOffset(plateHeight));
                 _roundCluster.sizeDelta = new Vector2(plateWidth, _roundCluster.sizeDelta.y);
-                float sealSize = _roundSealAuthored ? sealDiameter / HudArt.SealRingShareOfCell : sealDiameter;
-                _roundSealHost.anchoredPosition = new Vector2(-sealCentre, 0f);
-                _roundSealHost.sizeDelta = new Vector2(sealSize, sealSize);
+                // The footprint is the ring (the cell overflows it by its anchors): it follows the cap.
+                _roundSeal.anchoredPosition = new Vector2(-sealCentre, 0f);
+                _roundSeal.sizeDelta = new Vector2(sealDiameter, sealDiameter);
             }
             else
             {
