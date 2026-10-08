@@ -9,7 +9,7 @@
 ^Wp073LauncherVfxTests$	S-07	launcher VFX
 ^(Vfx|ArtVfx|ArtBlood|Atmosphere|ArtWave3|Feel|SetPass|WeaponLayerDiagnostic|ShaderLibrary)	S-07	VFX / feel
 ^(Animation|ArtAnimation|Character|ArtCharacter|Armor|ArtArmor|ArtTier|HitboxPose)	S-06	animation / characters
-^(R2Hero|R2Lokomotion|R2Fikstur|Sr1Bolt|ArtLocomotionV4)	S-06	R2 / R3 hero + locomotion measures, camera-leak guard, sr_1 bolt hold (WP-083)
+^(R2Hero|R2Lokomotion|R2Fikstur|Sr1Bolt|ArtLocomotionV4|HeroV2Import|ArtCharacterLocomotionTree|R3HeroTdKare)	S-06	R2 / R3 hero + locomotion measures, camera-leak guard, sr_1 bolt hold (WP-083)
 ^(World|Pilot|Look|NavMeshConnectivity|GoldenSlice|ArtLibrary|ArtAssetGate|ArtImport|ArtPrefab|ArtRepo|MenuPlate|ArtVisualRegression)	S-05	world / art pipeline
 ^(AttackSelectorTests|AttackVarietySliceTests)$	S-03	attack selection / variety
 ^(Enemy(?!DamagesPlayer)|NavPathFollower|R1BAiFix|FlankOpenGround|Spawn|RoundSpawn|RoundClear|RoundFormula|RoundTable|RoundLedger|Threat|Crowd|RegionNav|Tier|SpecialReaction|FlowRace)	S-03	enemies / AI / rounds
