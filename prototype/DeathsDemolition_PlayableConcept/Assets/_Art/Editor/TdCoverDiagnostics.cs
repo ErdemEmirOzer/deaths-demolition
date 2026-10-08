@@ -43,7 +43,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             RenderPipelineManager.beginCameraRendering -= BeforeCamera;
             RenderPipelineManager.endCameraRendering -= AfterCamera;
-            try { WriteJson("diagnostic-frames.json", new FrameRecords { frames = _frames.ToArray(), verifiedReplayCpuStateRestores = _replayRestores, verifiedPoseCpuStateRestores = _poseRestores }); }
+            try { WriteJson("diagnostic-frames.json", new FrameRecords { frames = _frames.ToArray(), verifiedReplayCpuStateRestores = _replayRestores, verifiedPoseCpuStateRestores = _poseRestores, verifiedRendererVisibilityRestores = _visibilityRestores }); }
             finally { _previewScope.Dispose(); }
         }
 
@@ -53,7 +53,7 @@ namespace DD.Art.Pipeline.EditorTools
         private string _renderLabel;
         private readonly List<FrameRecord> _frames = new List<FrameRecord>();
         private FrameRecord _pendingFrame;
-        private int _replayRestores, _poseRestores;
+        private int _replayRestores, _poseRestores, _visibilityRestores;
 
         // Called only by the opt-in entry point; baseline capture methods have no entropy hook.
         public void Observe(Camera camera)
@@ -92,7 +92,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             public string randomHashLimit = "Opaque Random.State GetHashCode is a diagnostic fingerprint; restoration uses full State.Equals.";
             public FrameRecord[] frames;
-            public int verifiedReplayCpuStateRestores, verifiedPoseCpuStateRestores;
+            public int verifiedReplayCpuStateRestores, verifiedPoseCpuStateRestores, verifiedRendererVisibilityRestores;
             public string gpuMaterialPropertyReadback = "NOT_SUPPORTED: shader has no texture Properties; no Material.GetTexture/GetVector used";
             public string gpuRestoreWrite = "RECONSTRUCTED_WRITE from END actual render pixelWidth/Height + typed pass array/index/offsets; not GPU readback verified";
         }
@@ -496,6 +496,10 @@ namespace DD.Art.Pipeline.EditorTools
             public string registration = "PNG and RFloat readback use ReadPixels lower-left origin. GPU projection is renderIntoTexture=true. Verify point registration before interpreting pixels.";
             public string limits = "Raw non-linear depth; CopyDepth resolves MSAA to farthest sample. ZWriteOff/transparent color, shadows and subpixel coverage cannot be identified from depth alone. No ForceLOD, material override, wind freeze or replacement draw.";
             public string sourceDepth;
+            public string bareVisibilityApi = "Renderer.enabled=false; legacy !enabled/null sharedMaterial skip and exact six ground/air shaders; hidden enabled states restored before category isolates";
+            public string priorBareVisibilitySourcePin = "83400db52a68260bd69af67064018fd9b2f776a8";
+            public string priorBareVisibilityApi = "forceRenderingOff for bare/bare-repeat; historical v004 raw remains immutable";
+            public string currentSourcePinEvidence = "Fresh run pin-start.json + companion-source-v006 manifest; visibility revision legacy-enabled-v006; full/category isolation API unchanged";
             public int fullRgbChanged, bareRgbChanged, bareMaskMembershipChanged;
             public bool runtimeEntropyReplayed;
             public string entropyRestoreEvidence = "Typed CPU index/offset/array identity/full RNG state restored+verified; GPU material property readback NOT_SUPPORTED. Material setters are RECONSTRUCTED_WRITE from actual END target dimensions. diagnostic-frames.json records all renders.";
@@ -574,9 +578,7 @@ namespace DD.Art.Pipeline.EditorTools
                 float[] full = ReplayDepth(fullEntropy, cam, feature, name + "-depth-full", true);
                 Color32[] fullRgb = _lastRgb;
                 int fullRgbChanged = Changed(originalFull, fullRgb);
-                for (int i = 0; i < renderers.Length; i++)
-                    renderers[i].forceRenderingOff = off[i] || MetricHidden(renderers[i].sharedMaterial);
-                float[] bare = ReplayDepth(_bareEntropy, cam, feature, name + "-depth-bare", true);
+                float[] bare = ReplayBareDepth(_bareEntropy, cam, feature, name + "-depth-bare", true);
                 Color32[] originalBare = LoadRgb(Path.Combine(_dir, name + "-bare-source.png"));
                 int bareRgbChanged = Changed(originalBare, _lastRgb);
                 int bareMembershipChanged = ChangedMembership(originalBare, _lastRgb);
@@ -591,9 +593,7 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int i = 0; i < renderers.Length; i++) renderers[i].forceRenderingOff = off[i];
                 _draw.SetValue(null, draw);
                 float[] fullAgain = ReplayDepth(fullEntropy, cam, feature, name + "-depth-full-repeat");
-                for (int i = 0; i < renderers.Length; i++)
-                    renderers[i].forceRenderingOff = off[i] || MetricHidden(renderers[i].sharedMaterial);
-                float[] bareAgain = ReplayDepth(_bareEntropy, cam, feature, name + "-depth-bare-repeat");
+                float[] bareAgain = ReplayBareDepth(_bareEntropy, cam, feature, name + "-depth-bare-repeat");
                 var ids = new Color32[W * H];
                 var counts = new int[256];
                 int fullChanged = 0, bareChanged = 0;
@@ -645,7 +645,14 @@ namespace DD.Art.Pipeline.EditorTools
             finally
             {
                 live.Remove(feature);
-                for (int i = 0; i < renderers.Length; i++) if (renderers[i] != null) renderers[i].forceRenderingOff = off[i];
+                bool visibilityRestored = true;
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] == null) { visibilityRestored = false; continue; }
+                    renderers[i].enabled = records[i].enabled;
+                    renderers[i].forceRenderingOff = off[i];
+                    visibilityRestored &= renderers[i].enabled == records[i].enabled && renderers[i].forceRenderingOff == off[i];
+                }
                 _draw.SetValue(null, draw);
                 cam.clearFlags = clear;
                 cam.backgroundColor = background;
@@ -658,7 +665,33 @@ namespace DD.Art.Pipeline.EditorTools
                 entryEntropy.Restore();
                 _poseRestores++;
                 _bareEntropy = null;
+                if (!visibilityRestored) throw new InvalidOperationException("UNKNOWN: diagnostic renderer enabled/forceRenderingOff restoration failed");
+                _visibilityRestores++;
                 if (!SameList(live, original)) throw new InvalidOperationException("Diagnostic feature-list drift");
+            }
+        }
+
+        // Same visibility API, enumeration, skip predicate and shader set as the unchanged BareGroundShare.
+        private float[] ReplayBareDepth(SsaoEntropy entropy, Camera camera, TdCoverDepthFeature feature, string label, bool rgb = false)
+        {
+            var hidden = new List<Renderer>();
+            try
+            {
+                foreach (Renderer r in Object.FindObjectsOfType<Renderer>())
+                {
+                    if (!r.enabled || r.sharedMaterial == null) continue;
+                    string shader = r.sharedMaterial.shader.name;
+                    if (shader == "DD/GroundTiles" || shader == "DD/GroundMoss" || shader == "DD/GroundBlend" || shader == "DD/GroundTerrain" || shader == "DD/FogSheet" || shader == "DD/ShaftCard")
+                    {
+                        r.enabled = false;
+                        hidden.Add(r);
+                    }
+                }
+                return ReplayDepth(entropy, camera, feature, label, rgb);
+            }
+            finally
+            {
+                foreach (Renderer r in hidden) if (r != null) r.enabled = true;
             }
         }
 
