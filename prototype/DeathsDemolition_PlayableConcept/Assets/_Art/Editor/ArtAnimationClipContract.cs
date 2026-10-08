@@ -27,6 +27,15 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ManifestPath = AnimationsFolder + "/AP009-clips-manifest.json";
         public const string ManifestSchema = "AP009.clips-manifest.v008";   // WP-071: + AP-022 slice 1 (10 zombie deaths / attacks, root_motion);   // WP-032G: AP-009G v007 = v006b + player_sw_hold_jewel (TideJewel);   // WP-032E: AP-009F v006 (85 clips; 23 pose re-keys: aim A shoulder / B compact / C hip class poses, stumble, death_ultra — frames/events as v005b)
         public const int Fps = CharacterAnimatorContract.Fps;
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §2.3 / §11) · the AP-026 v002 locomotion set (24 mixamo-hero loops + idle_03 + 96 LocomotionV4
+        /// start / stop clips) has its own manifest in the AP009 row format next to the AP009 one: the AP009 manifest keeps its
+        /// count (<see cref="CharacterAnimatorContract.ClipCount"/>); <see cref="SpecFor"/>, the importer and the gate read both.
+        /// </summary>
+        public const string LocoManifestPath = AnimationsFolder + "/AP026-loco-manifest.json";
+        public const string LocoManifestSchema = "AP026.loco-manifest.r3";
+        /// <summary>WP-082 R3: the LOCO-SOZLESME data the builder writes into the tree and the set (copied from K/wp-082/data).</summary>
+        public const string LocoDataFolder = AnimationsFolder + "/AP026-loco-data";
 
         /// <summary>
         /// WP-032: the AP-009 armature-only export faces the opposite way from the AP-006/007 body
@@ -87,6 +96,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static Dictionary<string, ClipSpec> s_cache;
         private static string s_cacheText;
+        private static Dictionary<string, ClipSpec> s_locoCache;
+        private static string s_locoCacheText;
 
         public static bool IsAnimationClip(string assetPath)
         {
@@ -102,9 +113,39 @@ namespace DD.Art.Pipeline.EditorTools
             string text = File.ReadAllText(full);
             if (s_cache != null && s_cacheText == text) return s_cache;
 
+            s_cache = Parse(text, ManifestSchema);
+            s_cacheText = text;
+            return s_cache;
+        }
+
+        /// <summary>WP-082 R3: the AP-026 locomotion manifest, parsed (cached by text). Null when absent.</summary>
+        public static Dictionary<string, ClipSpec> LocoManifest()
+        {
+            string full = Path.Combine(Directory.GetCurrentDirectory(), LocoManifestPath);
+            if (!File.Exists(full)) return null;
+            string text = File.ReadAllText(full);
+            if (s_locoCache != null && s_locoCacheText == text) return s_locoCache;
+            s_locoCache = Parse(text, LocoManifestSchema);
+            s_locoCacheText = text;
+            return s_locoCache;
+        }
+
+        /// <summary>WP-082 R3: both manifests in one map (a new dictionary; AP009 rows first). Null without the AP009 manifest.</summary>
+        public static Dictionary<string, ClipSpec> ManifestAll()
+        {
+            Dictionary<string, ClipSpec> a = Manifest();
+            if (a == null) return null;
+            var all = new Dictionary<string, ClipSpec>(a, StringComparer.Ordinal);
+            Dictionary<string, ClipSpec> loco = LocoManifest();
+            if (loco != null) foreach (KeyValuePair<string, ClipSpec> kv in loco) all[kv.Key] = kv.Value;
+            return all;
+        }
+
+        private static Dictionary<string, ClipSpec> Parse(string text, string expectedSchema)
+        {
             var root = ArtJson.AsObject(ArtJson.Parse(text), "manifest");
             string schema = ArtJson.AsString(ArtJson.Require(root, "schema"), "schema");
-            if (schema != ManifestSchema) throw new InvalidDataException("[ArtAnimation] manifest schema " + schema + " != " + ManifestSchema);
+            if (schema != expectedSchema) throw new InvalidDataException("[ArtAnimation] manifest schema " + schema + " != " + expectedSchema);
             int fps = ArtJson.AsInt(ArtJson.Require(root, "fps"), "fps");
             if (fps != Fps) throw new InvalidDataException("[ArtAnimation] manifest fps " + fps + " != " + Fps);
 
@@ -196,20 +237,20 @@ namespace DD.Art.Pipeline.EditorTools
                 map[spec.name] = spec;
             }
 
-            s_cache = map;
-            s_cacheText = text;
             return map;
         }
 
         /// <summary>The manifest entry for an Animations/ FBX (by file name), or null.</summary>
         public static ClipSpec SpecFor(string assetPath)
         {
-            Dictionary<string, ClipSpec> map = Manifest();
-            if (map == null) return null;
             string file = Path.GetFileName(assetPath);
-            foreach (ClipSpec s in map.Values)
+            foreach (Dictionary<string, ClipSpec> map in new[] { Manifest(), LocoManifest() })   // WP-082 R3: + the AP-026 locomotion manifest
             {
-                if (s.fbx == file) return s;
+                if (map == null) continue;
+                foreach (ClipSpec s in map.Values)
+                {
+                    if (s.fbx == file) return s;
+                }
             }
 
             return null;

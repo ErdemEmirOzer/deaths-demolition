@@ -270,13 +270,19 @@ namespace DD.Art.Tests.EditMode
 
             // WP-016 (ADR-016-1): the character files — player base + 2 clips, zombie 3 bodies + 19 modules
             // (AP007-modules.json) + 2 clips; the library test checks their contents.
-            beklenen.Add(ArtCharacterContract.PlayerAvatarSource);
+            for (int lod = 0; lod < ArtCharacterContract.HeroV2LodCount; lod++) beklenen.Add(ArtCharacterContract.HeroV2LodFile(lod));   // WP-082 R3: hero v2 (AP-024D D6, exports/v004 Hero_v2_TD_LOD0..3)
+            beklenen.Add(ArtCharacterContract.LegacyPlayerModel);        // WP-082 R3: the pre-hero body, kept for the FP viewmodel
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerFpArmsModel);   // WP-071 · AP-022 FP arms v2 (P-06)
             // WP-018: the 30 AP-009 clip files listed by the manifest.
             int klip = 0;
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
             Assert.AreEqual(232, klip, "232 = 222 + AP-022 player locomotion 10 (MUST-3/4); 222 = 217 + AP-022 zombie locomotion 5 (MUST-I1); 217 = 205 + FP Special 12; 205 = 203 + lmg_2 tray reloads 2; 203 = 194 + smg_2 FP 9 (WP-071 r2); 194 = 182 + TP Special family 12; 182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
+            // WP-082 R3 · AP-026 v002 locomotion (AP026-loco-manifest.json): idle_03 + 24 loops + 48 starts + 48 stops = 121.
+            int loco = 0;
+            var locoManifest = ArtAnimationClipContract.LocoManifest();
+            if (locoManifest != null) foreach (var spec in locoManifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) loco++;
+            Assert.AreEqual(121, loco, "AP-026 R3 yürüyüş: idle_03 + 24 döngü + 48 start + 48 stop");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);
@@ -551,6 +557,11 @@ namespace DD.Art.Tests.EditMode
             };
             foreach (string f in fpArmsFiles) if (beklenen.Add(f)) fpArms++;
             Assert.AreEqual(6, fpArms, "AP-022 FP kolları v2: 3 skin albedo + Normal + Packed + türetilmiş MS");
+
+            // WP-082 R3 · AP-024 hero v2 (v003 Textures + D5 skins, SHA in HeroV2-provenance.json): BaseColor + Normal + ORM + derived MetallicSmoothness + skin 2 / 3 BaseColor = 6.
+            int hero = 0;
+            foreach (string f in ArtCharacterPrefabBuilder.HeroV2TextureFiles()) if (beklenen.Add(f)) hero++;
+            Assert.AreEqual(6, hero, "kahraman v2: BaseColor + Normal + ORM + türetilmiş MS + D5 deri 2/3");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

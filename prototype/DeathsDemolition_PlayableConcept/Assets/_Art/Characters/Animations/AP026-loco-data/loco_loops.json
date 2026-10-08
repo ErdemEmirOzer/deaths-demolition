@@ -1,0 +1,2791 @@
+{
+ "schema": "WP082R3.loco-loops.v1",
+ "generator": "K/wp-082/data/gen_loco_tables.py",
+ "date": "2026-10-07",
+ "units": "metre (şablon), 30 fps",
+ "provenance": {
+  "canonical_index": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/hero-canonical-index-v002c.json",
+   "sha256": "cb4d98cdd991bdc42dce8b7e63c4e464f7dc295c194766f46d73c873847bd550"
+  },
+  "transition_events": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/anim-events-transition-v002c.json",
+   "sha256": "6d32650ddceb58326b1d0ee87faa85d361c5dbedc03c73eca50980a6874546fb"
+  },
+  "entry_blend": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/entry-blend-contract-v002c.json",
+   "sha256": "936a96c947f25b96d9948f446214361ee18379416fe4ef1214e9ff7d6c254598"
+  },
+  "transition_quality": {
+   "path": "K/asset-production/AP-026/exports/v002/hero-v002c/hero-quality-metrics-v002c.csv",
+   "sha256": "587125b145bcbff4ccdc0d355972314aac1df675bbe8604e88d19066d515f4bd"
+  },
+  "loop_events": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/anim-events.json",
+   "sha256": "bac9d5128f6b4eaff93f05d926b4bc630437da5dc8c47b52cbe1858e81c532ab"
+  },
+  "loop_index": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/mixamo_hero_clip_index_v002.json",
+   "sha256": "1585498ec6c57c8d04b1d6151f2af6ac528199cdca4cfb03c06e91080c70f8b7"
+  },
+  "loop_quality": {
+   "path": "K/asset-production/AP-026/exports/v002/mixamo-hero/mixamo_hero_quality_v002.csv",
+   "sha256": "92182b421fe014d5037bf3eb0b872c3571df363b8ced02f5ff71454ad76cdc8a"
+  },
+  "mixamo_sources": {
+   "path": "K/asset-production/AP-026/validation/mixamo_sources_v002.json",
+   "sha256": "0d77a8805b55b1d234365ad76872d0e103b8e730bece3c57927f786a672e68c8"
+  },
+  "v4_contract_csv": {
+   "path": "K/asset-production/AP-026/exports/v002/AP026-locomotion-v4-contract.csv",
+   "sha256": "d29d151f936009966ccc94cffbac55a151556508f3da60a757e49ffad0bfd2e8"
+  },
+  "hero_bones": {
+   "path": "K/asset-production/AP-024/validation/hero_rig_final_clean_bones.json",
+   "sha256": "00c2decd0e0bbad8a4f052b627927433df7ffaeeb36621b9b5178a1c81de747d"
+  },
+  "template_bones": {
+   "path": "K/asset-production/AP-026/exports/v002/rig-template/AP026-rig-bones-v002.json",
+   "sha256": "e0faadcda08eb8f6e3478979a57b8c7e8db1460721e33d67c76259f91a247786"
+  }
+ },
+ "main_commit_code_refs": "d738d0cb (kod satırları; 77f46216 ile aynı dosyalar)",
+ "measured_in_unity": false,
+ "count": 32,
+ "r3_count": 24,
+ "idle": {
+  "clip": "AP026_tp_idle_03",
+  "unity_take": [
+   "AP026_tp_idle_03"
+  ],
+  "fbx": "exports/v002/mixamo-hero/AP026_tp_idle_03_v002.fbx",
+  "fbx_sha256": "8b42d385371836992261f2e92a805082156235d5b0522557a9202e43f63fa106",
+  "frames": 120,
+  "stand_still": "kare 0 tutulur (DD_Player_StandStill üretimi, ArtAnimatorBuilder.BuildStandStillClip); start girişinin incoming pozu (entry_blend incoming_clip=AP026_tp_idle_03, phase0=0)"
+ },
+ "phase_alignment": {
+  "all_foot_l_frame0": true
+ },
+ "loops": [
+  {
+   "clip": "AP026_tp_walk_fwd",
+   "unity_take": [
+    "AP026_tp_walk_fwd"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_fwd_v002.fbx",
+   "fbx_sha256": "dae1506ca5f76de43e21259e76435c608df297ba1cd4246faff842643f559580",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "fwd",
+   "dir_index": 0,
+   "nominal_angle_deg": 0.0,
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "travel_angle_deg": 0.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.0,
+    1.0
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 2,
+     "phase": 0.052632
+    },
+    "foot_r": {
+     "frame": 19,
+     "phase": 0.5
+    },
+    "foot_l_off": {
+     "frame": 20,
+     "phase": 0.526316
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 20.375,
+     "start_phase": 0.0,
+     "fraction": 0.536184
+    },
+    "Right": {
+     "start_frame": 19.0,
+     "duration_frames": 20.875,
+     "start_phase": 0.5,
+     "fraction": 0.549342
+    }
+   },
+   "stance_frames": {
+    "Left": 20,
+    "Right": 21
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5362,
+     "Right": 0.5493
+    },
+    "from_events": {
+     "Left": 0.5263,
+     "Right": 0.5526
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01426,
+   "blender_L1_p95": 0.03825,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_fwd (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_fwd_r",
+   "unity_take": [
+    "AP026_tp_walk_fwd_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_fwd_r_v002.fbx",
+   "fbx_sha256": "2708d3fe33ba372d3bcfb2678453bb4bb82540edfdf401b08d4cbe4ab9c7a119",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "fwd_r",
+   "dir_index": 1,
+   "nominal_angle_deg": 45.0,
+   "travel_dir_unity_xz": [
+    0.707114,
+    0.7071
+   ],
+   "travel_angle_deg": 45.001,
+   "travel_angle_dev_deg": 0.001,
+   "blend_position_xy": [
+    0.707114,
+    0.7071
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 2,
+     "phase": 0.052632
+    },
+    "foot_r": {
+     "frame": 18,
+     "phase": 0.473684
+    },
+    "foot_l_off": {
+     "frame": 22,
+     "phase": 0.578947
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 21.5,
+     "start_phase": 0.0,
+     "fraction": 0.565789
+    },
+    "Right": {
+     "start_frame": 17.875,
+     "duration_frames": 21.875,
+     "start_phase": 0.470395,
+     "fraction": 0.575658
+    }
+   },
+   "stance_frames": {
+    "Left": 22,
+    "Right": 22
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5658,
+     "Right": 0.5757
+    },
+    "from_events": {
+     "Left": 0.5789,
+     "Right": 0.5789
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01018,
+   "blender_L1_p95": 0.02877,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_fwd_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_right",
+   "unity_take": [
+    "AP026_tp_walk_right"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_right_v002.fbx",
+   "fbx_sha256": "ac3aee97cc98a650df6542f6e8b0a874238d8b4c6f30ca2e4e7ffa8aa4479131",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "right",
+   "dir_index": 2,
+   "nominal_angle_deg": 90.0,
+   "travel_dir_unity_xz": [
+    1.0,
+    5e-06
+   ],
+   "travel_angle_deg": 90.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    1.0,
+    5e-06
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 2,
+     "phase": 0.052632
+    },
+    "foot_r": {
+     "frame": 20,
+     "phase": 0.526316
+    },
+    "foot_l_off": {
+     "frame": 21,
+     "phase": 0.552632
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 21.125,
+     "start_phase": 0.0,
+     "fraction": 0.555921
+    },
+    "Right": {
+     "start_frame": 19.5,
+     "duration_frames": 20.375,
+     "start_phase": 0.513158,
+     "fraction": 0.536184
+    }
+   },
+   "stance_frames": {
+    "Left": 21,
+    "Right": 20
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5559,
+     "Right": 0.5362
+    },
+    "from_events": {
+     "Left": 0.5526,
+     "Right": 0.5263
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01528,
+   "blender_L1_p95": 0.04082,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_right (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_back_r",
+   "unity_take": [
+    "AP026_tp_walk_back_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_back_r_v002.fbx",
+   "fbx_sha256": "083dbe26c6edf7f7f2dad56c09e7c6a749caf26558ab9c1386f9115558a91474",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "back_r",
+   "dir_index": 3,
+   "nominal_angle_deg": 135.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    -0.707107
+   ],
+   "travel_angle_deg": 135.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    0.707107,
+    -0.707107
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 1,
+     "phase": 0.026316
+    },
+    "foot_r": {
+     "frame": 18,
+     "phase": 0.473684
+    },
+    "foot_l_off": {
+     "frame": 20,
+     "phase": 0.526316
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 19.625,
+     "start_phase": 0.0,
+     "fraction": 0.516447
+    },
+    "Right": {
+     "start_frame": 17.75,
+     "duration_frames": 20.875,
+     "start_phase": 0.467105,
+     "fraction": 0.549342
+    }
+   },
+   "stance_frames": {
+    "Left": 20,
+    "Right": 21
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5164,
+     "Right": 0.5493
+    },
+    "from_events": {
+     "Left": 0.5263,
+     "Right": 0.5526
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01092,
+   "blender_L1_p95": 0.02611,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_back_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_back",
+   "unity_take": [
+    "AP026_tp_walk_back"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_back_v002.fbx",
+   "fbx_sha256": "851a8142bfa0bce8ec9f86cb1aa7e8dfd0dfde26f73e9735d7f6b464daa39745",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "back",
+   "dir_index": 4,
+   "nominal_angle_deg": 180.0,
+   "travel_dir_unity_xz": [
+    0.000287,
+    -1.0
+   ],
+   "travel_angle_deg": 179.984,
+   "travel_angle_dev_deg": -0.016,
+   "blend_position_xy": [
+    0.000287,
+    -1.0
+   ],
+   "cycle_frames_delivered": 37,
+   "cycle_frames_source": 30,
+   "child_time_scale": 1.233333,
+   "cycle_seconds_natural": 1.0,
+   "stride_cycle_m_template": 1.726667,
+   "natural_speed_mps_template": 1.7267,
+   "natural_speed_mps_hero_est": 1.8381,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 120.0,
+   "cadence_spm_delivered": 97.3,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 1,
+     "phase": 0.027027
+    },
+    "foot_r": {
+     "frame": 18,
+     "phase": 0.486486
+    },
+    "foot_l_off": {
+     "frame": 20,
+     "phase": 0.540541
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 19.75,
+     "start_phase": 0.0,
+     "fraction": 0.533784
+    },
+    "Right": {
+     "start_frame": 18.0,
+     "duration_frames": 19.75,
+     "start_phase": 0.486486,
+     "fraction": 0.533784
+    }
+   },
+   "stance_frames": {
+    "Left": 20,
+    "Right": 20
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5338,
+     "Right": 0.5338
+    },
+    "from_events": {
+     "Left": 0.5405,
+     "Right": 0.5405
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.0124,
+   "blender_L1_p95": 0.02903,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_back (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_back_l",
+   "unity_take": [
+    "AP026_tp_walk_back_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_back_l_v002.fbx",
+   "fbx_sha256": "bb3fe049caa85f4b84a7bf670c8bd49ede25c5f1aaa490d1dc6b620ec9a68d93",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "back_l",
+   "dir_index": 5,
+   "nominal_angle_deg": 225.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    -0.707106
+   ],
+   "travel_angle_deg": 225.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.707107,
+    -0.707106
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 1,
+     "phase": 0.026316
+    },
+    "foot_r": {
+     "frame": 17,
+     "phase": 0.447368
+    },
+    "foot_l_off": {
+     "frame": 21,
+     "phase": 0.552632
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 20.875,
+     "start_phase": 0.0,
+     "fraction": 0.549342
+    },
+    "Right": {
+     "start_frame": 17.0,
+     "duration_frames": 22.125,
+     "start_phase": 0.447368,
+     "fraction": 0.582237
+    }
+   },
+   "stance_frames": {
+    "Left": 21,
+    "Right": 22
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5493,
+     "Right": 0.5822
+    },
+    "from_events": {
+     "Left": 0.5526,
+     "Right": 0.5789
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01818,
+   "blender_L1_p95": 0.04531,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_back_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_left",
+   "unity_take": [
+    "AP026_tp_walk_left"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_left_v002.fbx",
+   "fbx_sha256": "63fdf1112aec55342f6959f61c6f475f738e0d8f50d33e729c4fe81109fe5789",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "left",
+   "dir_index": 6,
+   "nominal_angle_deg": 270.0,
+   "travel_dir_unity_xz": [
+    -1.0,
+    -5e-06
+   ],
+   "travel_angle_deg": 270.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    -1.0,
+    -5e-06
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 1,
+     "phase": 0.026316
+    },
+    "foot_r": {
+     "frame": 19,
+     "phase": 0.5
+    },
+    "foot_l_off": {
+     "frame": 22,
+     "phase": 0.578947
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 22.125,
+     "start_phase": 0.0,
+     "fraction": 0.582237
+    },
+    "Right": {
+     "start_frame": 18.75,
+     "duration_frames": 20.25,
+     "start_phase": 0.493421,
+     "fraction": 0.532895
+    }
+   },
+   "stance_frames": {
+    "Left": 22,
+    "Right": 20
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5822,
+     "Right": 0.5329
+    },
+    "from_events": {
+     "Left": 0.5789,
+     "Right": 0.5263
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01761,
+   "blender_L1_p95": 0.04363,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_left (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_walk_fwd_l",
+   "unity_take": [
+    "AP026_tp_walk_fwd_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_walk_fwd_l_v002.fbx",
+   "fbx_sha256": "726e099c4efa81c5768547aaf56c230a5d3eca05863f8db678d213a2bde1cbd4",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "walk",
+   "used_in_r3": true,
+   "dir": "fwd_l",
+   "dir_index": 7,
+   "nominal_angle_deg": 315.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 315.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    -0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 38,
+   "cycle_frames_source": 31,
+   "child_time_scale": 1.225806,
+   "cycle_seconds_natural": 1.033333,
+   "stride_cycle_m_template": 1.773333,
+   "natural_speed_mps_template": 1.7161,
+   "natural_speed_mps_hero_est": 1.8268,
+   "delivered_speed_mps_rate1": 1.4,
+   "cadence_spm_natural": 116.13,
+   "cadence_spm_delivered": 94.74,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_r_off": {
+     "frame": 2,
+     "phase": 0.052632
+    },
+    "foot_r": {
+     "frame": 19,
+     "phase": 0.5
+    },
+    "foot_l_off": {
+     "frame": 20,
+     "phase": 0.526316
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 19.625,
+     "start_phase": 0.0,
+     "fraction": 0.516447
+    },
+    "Right": {
+     "start_frame": 18.875,
+     "duration_frames": 21.0,
+     "start_phase": 0.496711,
+     "fraction": 0.552632
+    }
+   },
+   "stance_frames": {
+    "Left": 20,
+    "Right": 21
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.5164,
+     "Right": 0.5526
+    },
+    "from_events": {
+     "Left": 0.5263,
+     "Right": 0.5526
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01012,
+   "blender_L1_p95": 0.0282,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_walk_fwd_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_fwd",
+   "unity_take": [
+    "AP026_tp_jog_fwd"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_fwd_v002.fbx",
+   "fbx_sha256": "2ec2dd244edc9f866adeca610ce9061b94308e5859c45a2ba33ebd21df9a566b",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "fwd",
+   "dir_index": 0,
+   "nominal_angle_deg": 0.0,
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "travel_angle_deg": 0.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.0,
+    1.0
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 9,
+     "phase": 0.36
+    },
+    "foot_r": {
+     "frame": 13,
+     "phase": 0.52
+    },
+    "foot_r_off": {
+     "frame": 21,
+     "phase": 0.84
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 9.25,
+     "start_phase": 0.0,
+     "fraction": 0.37
+    },
+    "Right": {
+     "start_frame": 12.75,
+     "duration_frames": 8.375,
+     "start_phase": 0.51,
+     "fraction": 0.335
+    }
+   },
+   "stance_frames": {
+    "Left": 9,
+    "Right": 8
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.37,
+     "Right": 0.335
+    },
+    "from_events": {
+     "Left": 0.36,
+     "Right": 0.32
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01722,
+   "blender_L1_p95": 0.04195,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_fwd (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_fwd_r",
+   "unity_take": [
+    "AP026_tp_jog_fwd_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_fwd_r_v002.fbx",
+   "fbx_sha256": "0ea1425e2b45c0dc5eb873291cd12e5efceb6613e50e8c2176b9f483edeedd65",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "fwd_r",
+   "dir_index": 1,
+   "nominal_angle_deg": 45.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 45.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 6,
+     "phase": 0.24
+    },
+    "foot_r": {
+     "frame": 12,
+     "phase": 0.48
+    },
+    "foot_r_off": {
+     "frame": 19,
+     "phase": 0.76
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 6.375,
+     "start_phase": 0.0,
+     "fraction": 0.255
+    },
+    "Right": {
+     "start_frame": 11.75,
+     "duration_frames": 7.375,
+     "start_phase": 0.47,
+     "fraction": 0.295
+    }
+   },
+   "stance_frames": {
+    "Left": 6,
+    "Right": 7
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.255,
+     "Right": 0.295
+    },
+    "from_events": {
+     "Left": 0.24,
+     "Right": 0.28
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01682,
+   "blender_L1_p95": 0.03251,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_fwd_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_right",
+   "unity_take": [
+    "AP026_tp_jog_right"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_right_v002.fbx",
+   "fbx_sha256": "4d86e3b684dce851c274cba1f91412f0b399aaf336b5d93a9bc1e6de98642788",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "right",
+   "dir_index": 2,
+   "nominal_angle_deg": 90.0,
+   "travel_dir_unity_xz": [
+    1.0,
+    0.0
+   ],
+   "travel_angle_deg": 90.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    1.0,
+    0.0
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 7,
+     "phase": 0.28
+    },
+    "foot_r": {
+     "frame": 12,
+     "phase": 0.48
+    },
+    "foot_r_off": {
+     "frame": 20,
+     "phase": 0.8
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 6.75,
+     "start_phase": 0.0,
+     "fraction": 0.27
+    },
+    "Right": {
+     "start_frame": 11.75,
+     "duration_frames": 7.75,
+     "start_phase": 0.47,
+     "fraction": 0.31
+    }
+   },
+   "stance_frames": {
+    "Left": 7,
+    "Right": 8
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.27,
+     "Right": 0.31
+    },
+    "from_events": {
+     "Left": 0.28,
+     "Right": 0.32
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01541,
+   "blender_L1_p95": 0.0423,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_right (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_back_r",
+   "unity_take": [
+    "AP026_tp_jog_back_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_back_r_v002.fbx",
+   "fbx_sha256": "c1c71473a3c4d7a5a836f874b3157512670d2efd908ee5d614c100205f568bef",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "back_r",
+   "dir_index": 3,
+   "nominal_angle_deg": 135.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    -0.707107
+   ],
+   "travel_angle_deg": 135.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    0.707107,
+    -0.707107
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 8,
+     "phase": 0.32
+    },
+    "foot_r": {
+     "frame": 13,
+     "phase": 0.52
+    },
+    "foot_r_off": {
+     "frame": 20,
+     "phase": 0.8
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 7.625,
+     "start_phase": 0.0,
+     "fraction": 0.305
+    },
+    "Right": {
+     "start_frame": 12.75,
+     "duration_frames": 7.625,
+     "start_phase": 0.51,
+     "fraction": 0.305
+    }
+   },
+   "stance_frames": {
+    "Left": 8,
+    "Right": 8
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.305,
+     "Right": 0.305
+    },
+    "from_events": {
+     "Left": 0.32,
+     "Right": 0.28
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02306,
+   "blender_L1_p95": 0.08884,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_back_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_back",
+   "unity_take": [
+    "AP026_tp_jog_back"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_back_v002.fbx",
+   "fbx_sha256": "7f7702a20cb8f74a00aac0addbd06138a1ddd36751d07376f2b011ba1eb7a465",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "back",
+   "dir_index": 4,
+   "nominal_angle_deg": 180.0,
+   "travel_dir_unity_xz": [
+    0.0,
+    -1.0
+   ],
+   "travel_angle_deg": 180.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    0.0,
+    -1.0
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 9,
+     "phase": 0.36
+    },
+    "foot_r": {
+     "frame": 11,
+     "phase": 0.44
+    },
+    "foot_r_off": {
+     "frame": 20,
+     "phase": 0.8
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 8.625,
+     "start_phase": 0.0,
+     "fraction": 0.345
+    },
+    "Right": {
+     "start_frame": 10.625,
+     "duration_frames": 8.875,
+     "start_phase": 0.425,
+     "fraction": 0.355
+    }
+   },
+   "stance_frames": {
+    "Left": 9,
+    "Right": 9
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.345,
+     "Right": 0.355
+    },
+    "from_events": {
+     "Left": 0.36,
+     "Right": 0.36
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01537,
+   "blender_L1_p95": 0.0335,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_back (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_back_l",
+   "unity_take": [
+    "AP026_tp_jog_back_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_back_l_v002.fbx",
+   "fbx_sha256": "2bbbf03efdeb1268aab8ecb6d0fa3127c6f05fc3abc0d18c9b9fe2ab0d2af759",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "back_l",
+   "dir_index": 5,
+   "nominal_angle_deg": 225.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    -0.707107
+   ],
+   "travel_angle_deg": 225.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.707107,
+    -0.707107
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 8,
+     "phase": 0.32
+    },
+    "foot_r": {
+     "frame": 10,
+     "phase": 0.4
+    },
+    "foot_r_off": {
+     "frame": 19,
+     "phase": 0.76
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 8.5,
+     "start_phase": 0.0,
+     "fraction": 0.34
+    },
+    "Right": {
+     "start_frame": 10.5,
+     "duration_frames": 8.875,
+     "start_phase": 0.42,
+     "fraction": 0.355
+    }
+   },
+   "stance_frames": {
+    "Left": 8,
+    "Right": 9
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.34,
+     "Right": 0.355
+    },
+    "from_events": {
+     "Left": 0.32,
+     "Right": 0.36
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.0155,
+   "blender_L1_p95": 0.03727,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_back_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_left",
+   "unity_take": [
+    "AP026_tp_jog_left"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_left_v002.fbx",
+   "fbx_sha256": "144e8bb591e0147fe5eb6deed99be77ec9b28f29afa46058afe43d4f1f0d4a0a",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "left",
+   "dir_index": 6,
+   "nominal_angle_deg": 270.0,
+   "travel_dir_unity_xz": [
+    -1.0,
+    0.0
+   ],
+   "travel_angle_deg": 270.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -1.0,
+    0.0
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 7,
+     "phase": 0.28
+    },
+    "foot_r": {
+     "frame": 13,
+     "phase": 0.52
+    },
+    "foot_r_off": {
+     "frame": 20,
+     "phase": 0.8
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 6.875,
+     "start_phase": 0.0,
+     "fraction": 0.275
+    },
+    "Right": {
+     "start_frame": 12.625,
+     "duration_frames": 7.5,
+     "start_phase": 0.505,
+     "fraction": 0.3
+    }
+   },
+   "stance_frames": {
+    "Left": 7,
+    "Right": 8
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.275,
+     "Right": 0.3
+    },
+    "from_events": {
+     "Left": 0.28,
+     "Right": 0.28
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01831,
+   "blender_L1_p95": 0.03945,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_left (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_jog_fwd_l",
+   "unity_take": [
+    "AP026_tp_jog_fwd_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_jog_fwd_l_v002.fbx",
+   "fbx_sha256": "63cf9ba0544190669760f591d243648540247789f457556cd458420cb2b43d9b",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "jog",
+   "used_in_r3": false,
+   "dir": "fwd_l",
+   "dir_index": 7,
+   "nominal_angle_deg": 315.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 315.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    -0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 25,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.5625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.25,
+   "natural_speed_mps_template": 4.2188,
+   "natural_speed_mps_hero_est": 4.4909,
+   "delivered_speed_mps_rate1": 2.7,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 144.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 8,
+     "phase": 0.32
+    },
+    "foot_r": {
+     "frame": 13,
+     "phase": 0.52
+    },
+    "foot_r_off": {
+     "frame": 20,
+     "phase": 0.8
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 8.0,
+     "start_phase": 0.0,
+     "fraction": 0.32
+    },
+    "Right": {
+     "start_frame": 12.625,
+     "duration_frames": 6.875,
+     "start_phase": 0.505,
+     "fraction": 0.275
+    }
+   },
+   "stance_frames": {
+    "Left": 8,
+    "Right": 7
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.32,
+     "Right": 0.275
+    },
+    "from_events": {
+     "Left": 0.32,
+     "Right": 0.28
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.01903,
+   "blender_L1_p95": 0.03483,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_jog_fwd_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_fwd",
+   "unity_take": [
+    "AP026_tp_run_fwd"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_fwd_v002.fbx",
+   "fbx_sha256": "1eeb7507e3b89d8f28a2e77410a47d79e63b4e1c83e30550687f115456290aba",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "fwd",
+   "dir_index": 0,
+   "nominal_angle_deg": 0.0,
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "travel_angle_deg": 0.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.0,
+    1.0
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 5,
+     "phase": 0.357143
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.857143
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 5.125,
+     "start_phase": 0.0,
+     "fraction": 0.366071
+    },
+    "Right": {
+     "start_frame": 7.125,
+     "duration_frames": 4.75,
+     "start_phase": 0.508929,
+     "fraction": 0.339286
+    }
+   },
+   "stance_frames": {
+    "Left": 5,
+    "Right": 5
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3661,
+     "Right": 0.3393
+    },
+    "from_events": {
+     "Left": 0.3571,
+     "Right": 0.3571
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02044,
+   "blender_L1_p95": 0.05681,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_fwd (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_fwd_r",
+   "unity_take": [
+    "AP026_tp_run_fwd_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_fwd_r_v002.fbx",
+   "fbx_sha256": "2fef36d98d6efa7b10e04b30e8d224e87e00a40872fb986ab3c0237b6881b88c",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "fwd_r",
+   "dir_index": 1,
+   "nominal_angle_deg": 45.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 45.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.285714
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.785714
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 3.625,
+     "start_phase": 0.0,
+     "fraction": 0.258929
+    },
+    "Right": {
+     "start_frame": 6.625,
+     "duration_frames": 4.125,
+     "start_phase": 0.473214,
+     "fraction": 0.294643
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 4
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2589,
+     "Right": 0.2946
+    },
+    "from_events": {
+     "Left": 0.2857,
+     "Right": 0.2857
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02748,
+   "blender_L1_p95": 0.05125,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_fwd_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_right",
+   "unity_take": [
+    "AP026_tp_run_right"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_right_v002.fbx",
+   "fbx_sha256": "c7d953fede82816e07d4aab2879b8c336abc0976a75ec9b7c70ed314391a65e2",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "right",
+   "dir_index": 2,
+   "nominal_angle_deg": 90.0,
+   "travel_dir_unity_xz": [
+    1.0,
+    0.0
+   ],
+   "travel_angle_deg": 90.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    1.0,
+    0.0
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.285714
+    },
+    "foot_r": {
+     "frame": 6,
+     "phase": 0.428571
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.785714
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.0,
+     "fraction": 0.285714
+    },
+    "Right": {
+     "start_frame": 6.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.428571,
+     "fraction": 0.357143
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 5
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2857,
+     "Right": 0.3571
+    },
+    "from_events": {
+     "Left": 0.2857,
+     "Right": 0.3571
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02234,
+   "blender_L1_p95": 0.06055,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_right (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_back_r",
+   "unity_take": [
+    "AP026_tp_run_back_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_back_r_v002.fbx",
+   "fbx_sha256": "182589c498fc7235ffbd65395c0c7ef02163613e023aefc90a67739c74604f93",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "back_r",
+   "dir_index": 3,
+   "nominal_angle_deg": 135.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    -0.707107
+   ],
+   "travel_angle_deg": 135.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    0.707107,
+    -0.707107
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 5,
+     "phase": 0.357143
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.857143
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.0,
+     "fraction": 0.357143
+    },
+    "Right": {
+     "start_frame": 7.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.5,
+     "fraction": 0.357143
+    }
+   },
+   "stance_frames": {
+    "Left": 5,
+    "Right": 5
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3571,
+     "Right": 0.3571
+    },
+    "from_events": {
+     "Left": 0.3571,
+     "Right": 0.3571
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02141,
+   "blender_L1_p95": 0.05475,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_back_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_back",
+   "unity_take": [
+    "AP026_tp_run_back"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_back_v002.fbx",
+   "fbx_sha256": "5153782b0c4ac35e3be302cd29e0f37844e924eaf3cbc2c558a6605b910f9469",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "back",
+   "dir_index": 4,
+   "nominal_angle_deg": 180.0,
+   "travel_dir_unity_xz": [
+    0.0,
+    -1.0
+   ],
+   "travel_angle_deg": 180.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    0.0,
+    -1.0
+   ],
+   "cycle_frames_delivered": 17,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0625,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.227,
+   "natural_speed_mps_template": 4.1756,
+   "natural_speed_mps_hero_est": 4.445,
+   "delivered_speed_mps_rate1": 4.03,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 211.76,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 6,
+     "phase": 0.352941
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.411765
+    },
+    "foot_r_off": {
+     "frame": 13,
+     "phase": 0.764706
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 5.875,
+     "start_phase": 0.0,
+     "fraction": 0.345588
+    },
+    "Right": {
+     "start_frame": 7.25,
+     "duration_frames": 6.0,
+     "start_phase": 0.426471,
+     "fraction": 0.352941
+    }
+   },
+   "stance_frames": {
+    "Left": 6,
+    "Right": 6
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3456,
+     "Right": 0.3529
+    },
+    "from_events": {
+     "Left": 0.3529,
+     "Right": 0.3529
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02039,
+   "blender_L1_p95": 0.0433,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_back (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_back_l",
+   "unity_take": [
+    "AP026_tp_run_back_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_back_l_v002.fbx",
+   "fbx_sha256": "27811aeafa0770b6b0b7ed42ae974510d7bb857f9c177b29646cbddabd2268aa",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "back_l",
+   "dir_index": 5,
+   "nominal_angle_deg": 225.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    -0.707107
+   ],
+   "travel_angle_deg": 225.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.707107,
+    -0.707107
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 5,
+     "phase": 0.357143
+    },
+    "foot_r": {
+     "frame": 5,
+     "phase": 0.357143
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.785714
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.0,
+     "fraction": 0.357143
+    },
+    "Right": {
+     "start_frame": 5.0,
+     "duration_frames": 6.0,
+     "start_phase": 0.357143,
+     "fraction": 0.428571
+    }
+   },
+   "stance_frames": {
+    "Left": 5,
+    "Right": 6
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3571,
+     "Right": 0.4286
+    },
+    "from_events": {
+     "Left": 0.3571,
+     "Right": 0.4286
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02567,
+   "blender_L1_p95": 0.05782,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_back_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_left",
+   "unity_take": [
+    "AP026_tp_run_left"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_left_v002.fbx",
+   "fbx_sha256": "a1645a0c180d55e197788f768dcba1d2e3608c2d83e8eeb60b3c2e32eef3c395",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "left",
+   "dir_index": 6,
+   "nominal_angle_deg": 270.0,
+   "travel_dir_unity_xz": [
+    -1.0,
+    0.0
+   ],
+   "travel_angle_deg": 270.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -1.0,
+    0.0
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.285714
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.857143
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.0,
+     "fraction": 0.285714
+    },
+    "Right": {
+     "start_frame": 7.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.5,
+     "fraction": 0.357143
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 5
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2857,
+     "Right": 0.3571
+    },
+    "from_events": {
+     "Left": 0.2857,
+     "Right": 0.3571
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.03189,
+   "blender_L1_p95": 0.06515,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_left (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_run_fwd_l",
+   "unity_take": [
+    "AP026_tp_run_fwd_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_run_fwd_l_v002.fbx",
+   "fbx_sha256": "33a7bded9aa01c4aa12a6cc600cf796c597bc87afea2ebb2b2be6bfadfaaf006",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "run",
+   "used_in_r3": true,
+   "dir": "fwd_l",
+   "dir_index": 7,
+   "nominal_angle_deg": 315.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 315.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    -0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 14,
+   "cycle_frames_source": 16,
+   "child_time_scale": 0.875,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 2.146667,
+   "natural_speed_mps_template": 4.025,
+   "natural_speed_mps_hero_est": 4.2847,
+   "delivered_speed_mps_rate1": 4.6,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 257.14,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.285714
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.785714
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.5,
+     "start_phase": 0.0,
+     "fraction": 0.321429
+    },
+    "Right": {
+     "start_frame": 7.0,
+     "duration_frames": 3.875,
+     "start_phase": 0.5,
+     "fraction": 0.276786
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 4
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3214,
+     "Right": 0.2768
+    },
+    "from_events": {
+     "Left": 0.2857,
+     "Right": 0.2857
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.03294,
+   "blender_L1_p95": 0.06089,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_run_fwd_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_fwd",
+   "unity_take": [
+    "AP026_tp_sprint_fwd"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_fwd_v002.fbx",
+   "fbx_sha256": "b050ce283bd26e2b87d48907a540e52011f8c2a43fdb4f1d46cba78fb305a64b",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "fwd",
+   "dir_index": 0,
+   "nominal_angle_deg": 0.0,
+   "travel_dir_unity_xz": [
+    0.0,
+    1.0
+   ],
+   "travel_angle_deg": 0.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    0.0,
+    1.0
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 5,
+     "phase": 0.3125
+    },
+    "foot_r": {
+     "frame": 7,
+     "phase": 0.4375
+    },
+    "foot_r_off": {
+     "frame": 13,
+     "phase": 0.8125
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 5.0,
+     "start_phase": 0.0,
+     "fraction": 0.3125
+    },
+    "Right": {
+     "start_frame": 7.0,
+     "duration_frames": 6.0,
+     "start_phase": 0.4375,
+     "fraction": 0.375
+    }
+   },
+   "stance_frames": {
+    "Left": 5,
+    "Right": 6
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.3125,
+     "Right": 0.375
+    },
+    "from_events": {
+     "Left": 0.3125,
+     "Right": 0.375
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02326,
+   "blender_L1_p95": 0.05298,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_fwd (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_fwd_r",
+   "unity_take": [
+    "AP026_tp_sprint_fwd_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_fwd_r_v002.fbx",
+   "fbx_sha256": "11df55142851afabf99fefc0e3318a364a66612ae4bbbad2a58a96cecca4c384",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "fwd_r",
+   "dir_index": 1,
+   "nominal_angle_deg": 45.0,
+   "travel_dir_unity_xz": [
+    0.707107,
+    0.707106
+   ],
+   "travel_angle_deg": 45.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    0.707107,
+    0.707106
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.25
+    },
+    "foot_r": {
+     "frame": 8,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.75
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.25,
+     "start_phase": 0.0,
+     "fraction": 0.265625
+    },
+    "Right": {
+     "start_frame": 7.625,
+     "duration_frames": 4.75,
+     "start_phase": 0.476562,
+     "fraction": 0.296875
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 5
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2656,
+     "Right": 0.2969
+    },
+    "from_events": {
+     "Left": 0.25,
+     "Right": 0.25
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.03102,
+   "blender_L1_p95": 0.07414,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_fwd_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_right",
+   "unity_take": [
+    "AP026_tp_sprint_right"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_right_v002.fbx",
+   "fbx_sha256": "a920122e49d45f7cc270713dacac574362e61cf6b99ff145ccdb0d0455cb1f16",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "right",
+   "dir_index": 2,
+   "nominal_angle_deg": 90.0,
+   "travel_dir_unity_xz": [
+    1.0,
+    -1e-06
+   ],
+   "travel_angle_deg": 90.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    1.0,
+    -1e-06
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.25
+    },
+    "foot_r": {
+     "frame": 8,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.75
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.0,
+     "fraction": 0.25
+    },
+    "Right": {
+     "start_frame": 8.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.5,
+     "fraction": 0.25
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 4
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.25,
+     "Right": 0.25
+    },
+    "from_events": {
+     "Left": 0.25,
+     "Right": 0.25
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.0324,
+   "blender_L1_p95": 0.07438,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_right (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_back_r",
+   "unity_take": [
+    "AP026_tp_sprint_back_r"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_back_r_v002.fbx",
+   "fbx_sha256": "8bf4bbb8beb88830475e24bb2ee2f9ee4bc453fd0867bb7ad83d46cbf3b75e25",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "back_r",
+   "dir_index": 3,
+   "nominal_angle_deg": 135.0,
+   "travel_dir_unity_xz": [
+    0.7071,
+    -0.707113
+   ],
+   "travel_angle_deg": 135.001,
+   "travel_angle_dev_deg": 0.001,
+   "blend_position_xy": [
+    0.7071,
+    -0.707113
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 3,
+     "phase": 0.1875
+    },
+    "foot_r": {
+     "frame": 8,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.6875
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 3.125,
+     "start_phase": 0.0,
+     "fraction": 0.195312
+    },
+    "Right": {
+     "start_frame": 7.5,
+     "duration_frames": 3.25,
+     "start_phase": 0.46875,
+     "fraction": 0.203125
+    }
+   },
+   "stance_frames": {
+    "Left": 3,
+    "Right": 3
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.1953,
+     "Right": 0.2031
+    },
+    "from_events": {
+     "Left": 0.1875,
+     "Right": 0.1875
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.03111,
+   "blender_L1_p95": 0.06381,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_back_r (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_back",
+   "unity_take": [
+    "AP026_tp_sprint_back"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_back_v002.fbx",
+   "fbx_sha256": "3ade97e358b18c2775bc631f21f99fb38fc35c4db632c671802f623b4fd02b7e",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "back",
+   "dir_index": 4,
+   "nominal_angle_deg": 180.0,
+   "travel_dir_unity_xz": [
+    0.0,
+    -1.0
+   ],
+   "travel_angle_deg": 180.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    0.0,
+    -1.0
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 3,
+     "phase": 0.1875
+    },
+    "foot_r": {
+     "frame": 9,
+     "phase": 0.5625
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.6875
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 3.25,
+     "start_phase": 0.0,
+     "fraction": 0.203125
+    },
+    "Right": {
+     "start_frame": 8.625,
+     "duration_frames": 2.125,
+     "start_phase": 0.539062,
+     "fraction": 0.132812
+    }
+   },
+   "stance_frames": {
+    "Left": 3,
+    "Right": 2
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2031,
+     "Right": 0.1328
+    },
+    "from_events": {
+     "Left": 0.1875,
+     "Right": 0.125
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02942,
+   "blender_L1_p95": 0.08681,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_back (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_back_l",
+   "unity_take": [
+    "AP026_tp_sprint_back_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_back_l_v002.fbx",
+   "fbx_sha256": "c9f41858624558951936a1ff9111ef21cd7f3486b64682427a402e112d2c2643",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "back_l",
+   "dir_index": 5,
+   "nominal_angle_deg": 225.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    -0.707106
+   ],
+   "travel_angle_deg": 225.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -0.707107,
+    -0.707106
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 3,
+     "phase": 0.1875
+    },
+    "foot_r": {
+     "frame": 9,
+     "phase": 0.5625
+    },
+    "foot_r_off": {
+     "frame": 11,
+     "phase": 0.6875
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 3.25,
+     "start_phase": 0.0,
+     "fraction": 0.203125
+    },
+    "Right": {
+     "start_frame": 8.625,
+     "duration_frames": 2.125,
+     "start_phase": 0.539062,
+     "fraction": 0.132812
+    }
+   },
+   "stance_frames": {
+    "Left": 3,
+    "Right": 2
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2031,
+     "Right": 0.1328
+    },
+    "from_events": {
+     "Left": 0.1875,
+     "Right": 0.125
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02629,
+   "blender_L1_p95": 0.09013,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_back_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_left",
+   "unity_take": [
+    "AP026_tp_sprint_left"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_left_v002.fbx",
+   "fbx_sha256": "f3f198611ac1539e99588cd53df6a736982d4dbae76c390ad77030a934505af9",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "left",
+   "dir_index": 6,
+   "nominal_angle_deg": 270.0,
+   "travel_dir_unity_xz": [
+    -1.0,
+    0.0
+   ],
+   "travel_angle_deg": 270.0,
+   "travel_angle_dev_deg": 0.0,
+   "blend_position_xy": [
+    -1.0,
+    0.0
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 3,
+     "phase": 0.1875
+    },
+    "foot_r": {
+     "frame": 8,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.75
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 3.25,
+     "start_phase": 0.0,
+     "fraction": 0.203125
+    },
+    "Right": {
+     "start_frame": 7.5,
+     "duration_frames": 4.125,
+     "start_phase": 0.46875,
+     "fraction": 0.257812
+    }
+   },
+   "stance_frames": {
+    "Left": 3,
+    "Right": 4
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.2031,
+     "Right": 0.2578
+    },
+    "from_events": {
+     "Left": 0.1875,
+     "Right": 0.25
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.03407,
+   "blender_L1_p95": 0.08659,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_left (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  },
+  {
+   "clip": "AP026_tp_sprint_fwd_l",
+   "unity_take": [
+    "AP026_tp_sprint_fwd_l"
+   ],
+   "fbx": "exports/v002/mixamo-hero/AP026_tp_sprint_fwd_l_v002.fbx",
+   "fbx_sha256": "b19bb7e54ecdbec8a725c7e28287b4c3091d42a226934553127464f5e3a18322",
+   "fbx_sha256_recomputed_match": true,
+   "ring": "sprint",
+   "used_in_r3": true,
+   "dir": "fwd_l",
+   "dir_index": 7,
+   "nominal_angle_deg": 315.0,
+   "travel_dir_unity_xz": [
+    -0.707107,
+    0.707107
+   ],
+   "travel_angle_deg": 315.0,
+   "travel_angle_dev_deg": -0.0,
+   "blend_position_xy": [
+    -0.707107,
+    0.707107
+   ],
+   "cycle_frames_delivered": 16,
+   "cycle_frames_source": 16,
+   "child_time_scale": 1.0,
+   "cycle_seconds_natural": 0.533333,
+   "stride_cycle_m_template": 3.306667,
+   "natural_speed_mps_template": 6.2,
+   "natural_speed_mps_hero_est": 6.6,
+   "delivered_speed_mps_rate1": 6.2,
+   "cadence_spm_natural": 225.0,
+   "cadence_spm_delivered": 225.0,
+   "foot_events": {
+    "foot_l": {
+     "frame": 0,
+     "phase": 0.0
+    },
+    "foot_l_off": {
+     "frame": 4,
+     "phase": 0.25
+    },
+    "foot_r": {
+     "frame": 8,
+     "phase": 0.5
+    },
+    "foot_r_off": {
+     "frame": 12,
+     "phase": 0.75
+    }
+   },
+   "contact_windows": {
+    "Left": {
+     "start_frame": 0.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.0,
+     "fraction": 0.25
+    },
+    "Right": {
+     "start_frame": 8.0,
+     "duration_frames": 4.0,
+     "start_phase": 0.5,
+     "fraction": 0.25
+    }
+   },
+   "stance_frames": {
+    "Left": 4,
+    "Right": 4
+   },
+   "contact_share_expected": {
+    "from_contact_windows": {
+     "Left": 0.25,
+     "Right": 0.25
+    },
+    "from_events": {
+     "Left": 0.25,
+     "Right": 0.25
+    },
+    "tolerance_pp": 10
+   },
+   "blender_L1_avg": 0.02879,
+   "blender_L1_p95": 0.07007,
+   "source": "mixamo_hero_clip_index_v002.json#clips/AP026_tp_sprint_fwd_l (source.*, contact_windows) + anim-events.json + mixamo_hero_quality_v002.csv",
+   "measured_in_unity": false
+  }
+ ]
+}

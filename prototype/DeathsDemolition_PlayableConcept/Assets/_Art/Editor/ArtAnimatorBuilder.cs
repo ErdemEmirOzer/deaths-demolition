@@ -61,14 +61,34 @@ namespace DD.Art.Pipeline.EditorTools
             return File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ArtAnimationClipContract.ManifestPath));
         }
 
-        public static Report BuildAll(float playerReferenceSpeed)
+        public static Report BuildAll(float playerReferenceSpeed) => Build(playerReferenceSpeed, true);
+
+        /// <summary>
+        /// WP-082 R3 batch entry · the player controller, its set (+ the AP-026 locomotion tables), weapon sets and FP set only —
+        /// the zombie controller and set stay as they are on disk (BuildAll rebuilds both).
+        /// </summary>
+        public static void BuildPlayerCli()
         {
+            ArtNatural24Calibration.ValidateInputs(); // fail before EnsureAvatars can reimport
+            // hero-t4 (08.10): a first import of a new clip FBX keeps Unity's auto-map (54–55 human bones: fp_camera → LeftEye, jaw → Jaw,
+            // sec_band_1 → RightEye); the v1.1 template lands on the contract re-import EnsureAvatars forces — before any clip is read.
+            ArtCharacterPrefabBuilder.EnsureAvatars();
+            Build(ArtCharacterPrefabBuilder.PlayerLocomotionReferenceSpeed(), false);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        private static Report Build(float playerReferenceSpeed, bool zombieToo)
+        {
+            ArtNatural24Calibration.ValidateInputs(); // exact source pins before generated asset mutation
             Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest = ArtAnimationClipContract.Manifest();
             if (manifest == null) throw new FileNotFoundException(LogPrefix + "manifest missing", ArtAnimationClipContract.ManifestPath);
             if (manifest.Count != C.ClipCount) throw new InvalidDataException(LogPrefix + "manifest lists " + manifest.Count + " clips != " + C.ClipCount);
+            // WP-082 R3: + the AP-026 locomotion manifest (player rows; the AP009 count above stays the AP009 file's)
+            Dictionary<string, ArtAnimationClipContract.ClipSpec> all = ArtAnimationClipContract.ManifestAll();
 
             var clips = new Dictionary<string, AnimationClip>(StringComparer.Ordinal);
-            foreach (ArtAnimationClipContract.ClipSpec spec in manifest.Values)
+            foreach (ArtAnimationClipContract.ClipSpec spec in all.Values)
             {
                 AnimationClip clip = ArtAnimationClipContract.ClipOf(spec);
                 if (clip == null) throw new InvalidOperationException(LogPrefix + "clip not imported: " + spec.name + " (" + ArtAnimationClipContract.FbxPath(spec) + ")");
@@ -80,17 +100,26 @@ namespace DD.Art.Pipeline.EditorTools
             AvatarMask aim = BuildMask(AimMask, body: true, head: false, arms: false, legs: false, root: false);
 
             var report = new Report { clips = clips.Count };
+            LocoData loco = LoadLocoData(clips);
             // WP-032 (ADR-032-1): the no-slip speeds measured on the Unity rig, used by the 2-D blend time scales and the sets.
-            Dictionary<string, float> unitySpeeds = Calibrate(manifest, clips);
-            AnimatorController player = BuildPlayer(clips, manifest, unitySpeeds, upper, aim, playerReferenceSpeed, out report.playerStates, out report.playerLayers);
-            AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
-
-            WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
-                clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps);
+            Dictionary<string, float> unitySpeeds = Calibrate(all, clips, zombieToo ? null : "player");
+            ArtNatural24Calibration.Apply(unitySpeeds, all, clips, loco); // final authoritative PHASE_ALL raw override
+            AnimatorController player = BuildPlayer(clips, all, unitySpeeds, upper, aim, playerReferenceSpeed, loco, out report.playerStates, out report.playerLayers);
+            if (loco != null)
+                WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, all, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
+                    clips[C.PlayerIdleAp026], clips[C.PlayerWalk[0]], loco.thresholds[1], loco.tables);
+            else
+                WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, all, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
+                    clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps, new CharacterAnimationSet.LocomotionTables());
             WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips, manifest);
             WriteFirstPerson(ArtCharacterPrefabBuilder.PlayerAnimationSet, clips, manifest);
-            WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
-                clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
+            ArtNatural24Calibration.VerifyGenerated(); // validate in-memory speeds before SaveAssets
+            if (zombieToo)
+            {
+                AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
+                WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
+                    clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps, null);
+            }
 
             AssetDatabase.SaveAssets();
             Debug.Log(LogPrefix + "built: " + report.clips + " clips, player " + report.playerStates + " states / " + report.playerLayers + " layers, zombie "
@@ -193,12 +222,21 @@ namespace DD.Art.Pipeline.EditorTools
         /// <see cref="LocomotionV4.ClipParam"/> equals its id (and Alive, when the controller has it), back to Locomotion near its end.
         /// Adds nothing (not even the parameter) while no such clip exists. Returns the number of states added.
         /// </summary>
-        public static int AddLocomotionV4(AnimatorController c, AnimatorStateMachine sm, AnimatorState loco, IDictionary<string, AnimationClip> clips)
+        public static int AddLocomotionV4(AnimatorController c, AnimatorStateMachine sm, AnimatorState loco, IDictionary<string, AnimationClip> clips) => AddLocomotionV4(c, sm, loco, clips, null);
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §2.4): with the AP-026 tables every v4 state runs on the motion-time parameter
+        /// <see cref="LocomotionV4.TimeParam"/> (written by the runtime from the distance / remaining-distance tables); a start enters in
+        /// 0.30 s and leaves at its <c>exit_t_norm</c> in 0.10 s onto the loop at <c>loop_offset_norm</c>; a stop enters in 0.10 s and
+        /// leaves at 1.0 in 0.15 s (offset 0). Without tables: the B3b skeleton values.
+        /// </summary>
+        public static int AddLocomotionV4(AnimatorController c, AnimatorStateMachine sm, AnimatorState loco, IDictionary<string, AnimationClip> clips, LocoData data)
         {
             int n = 0;
             for (int id = 0; id < LocomotionV4.Count; id++) if (clips.ContainsKey(LocomotionV4.ClipName(id))) n++;
             if (n == 0) return 0;
             c.AddParameter(new AnimatorControllerParameter { name = LocomotionV4.ClipParam, type = AnimatorControllerParameterType.Int, defaultInt = LocomotionV4.None });
+            if (data != null) c.AddParameter(new AnimatorControllerParameter { name = LocomotionV4.TimeParam, type = AnimatorControllerParameterType.Float, defaultFloat = 0f });
             bool alive = false;
             foreach (AnimatorControllerParameter p in c.parameters) if (p.name == C.Alive) alive = true;
             AnimatorStateMachine v4 = sm.AddStateMachine(LocomotionV4.StateMachine);
@@ -208,12 +246,24 @@ namespace DD.Art.Pipeline.EditorTools
                 AnimatorState s = v4.AddState(LocomotionV4.StateName(id));
                 s.motion = clip;
                 s.writeDefaultValues = true;
+                bool start = id < LocomotionV4.StopBase;
+                CharacterAnimationSet.LocoV4Clip row = data != null && data.v4.TryGetValue(id, out CharacterAnimationSet.LocoV4Clip r) ? r : null;
+                if (row != null)
+                {
+                    s.timeParameterActive = true;
+                    s.timeParameter = LocomotionV4.TimeParam;
+                }
+
                 AnimatorStateTransition into = sm.AddAnyStateTransition(s);
-                into.hasExitTime = false; into.hasFixedDuration = true; into.duration = 0.1f; into.canTransitionToSelf = false;
+                into.hasExitTime = false; into.hasFixedDuration = true; into.canTransitionToSelf = false;
+                into.duration = row == null ? 0.1f : start ? data.startEntrySeconds : data.stopEntrySeconds;
                 into.AddCondition(AnimatorConditionMode.Equals, id, LocomotionV4.ClipParam);
                 if (alive) into.AddCondition(AnimatorConditionMode.If, 0f, C.Alive);
                 AnimatorStateTransition back = s.AddTransition(loco);
-                back.hasExitTime = true; back.exitTime = 0.85f; back.hasFixedDuration = true; back.duration = 0.15f;
+                back.hasExitTime = true; back.hasFixedDuration = true;
+                if (row == null) { back.exitTime = 0.85f; back.duration = 0.15f; }
+                else if (start) { back.exitTime = row.exitTNorm; back.duration = data.startExitSeconds; back.offset = row.loopOffsetNorm; }
+                else { back.exitTime = 1f; back.duration = data.stopExitSeconds; back.offset = 0f; }
             }
 
             return n;
@@ -310,11 +360,12 @@ namespace DD.Art.Pipeline.EditorTools
         };
 
         /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>
-        public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips)
+        public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips, string onlyTarget = null)
         {
             var result = new Dictionary<string, float>(StringComparer.Ordinal);
             foreach (string target in new[] { "player", "zombie" })
             {
+                if (onlyTarget != null && target != onlyTarget) continue;   // WP-082 R3: the player-only build
                 GameObject rig = InstantiateCalibrationRig(target);
                 if (rig == null) continue;
                 try
@@ -350,7 +401,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         private static AnimatorController BuildPlayer(Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> m, Dictionary<string, float> unitySpeeds,
-            AvatarMask upper, AvatarMask aim, float reference, out int states, out int layers)
+            AvatarMask upper, AvatarMask aim, float reference, LocoData locoData, out int states, out int layers)
         {
             AnimatorController c = Fresh(PlayerController,
                 (C.MoveX, AnimatorControllerParameterType.Float), (C.MoveY, AnimatorControllerParameterType.Float), (C.LocoRate, AnimatorControllerParameterType.Float),
@@ -369,43 +420,54 @@ namespace DD.Art.Pipeline.EditorTools
             SetDefault(c, C.LocoRate, 1f);
             SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
+            if (locoData != null) c.AddParameter(C.LocoSpeed, AnimatorControllerParameterType.Float);   // WP-082 R3: m/s, the 1-D ring parameter
 
             // ---- base: 2-D locomotion + deaths + pickup
             AnimatorStateMachine sm = c.layers[0].stateMachine;
             AnimatorState loco = c.CreateBlendTreeInController(C.LocomotionState, out BlendTree tree, 0);
-            tree.blendType = BlendTreeType.FreeformDirectional2D;
-            tree.blendParameter = C.MoveX;
-            tree.blendParameterY = C.MoveY;
-            tree.useAutomaticThresholds = false;
-            // WP-032B: two rings. The walk clips sit at their own no-slide speed over the reference
-            // (radius = clip speed / reference, so the blend passes THROUGH the walk at rate 1) and
-            // the v002 run cycles sit on the unit circle; between them the tree cross-fades walk→run
-            // (AP-009B README: blend above ~1.6× the walk speed — the walk scaled beyond ×2.1 reads as skating).
-            // WP-071 MUST-3 (P-06 AD refuter B): the centre is a static stand (idle frame 0 held) as long as the walk cycle and at the walk
-            // children's time scale, so it never stretches the tree cycle; the idle breath plays in its own state (Idle_Breath, below).
-            float walkScale = PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkFwd));
-            AnimationClip stand = BuildStandStillClip(clips[C.PlayerIdle], clips[C.PlayerWalkFwd].length);
-            tree.children = new[]
+            AnimationClip breathClip = clips[C.PlayerIdle];
+            if (locoData != null)
             {
-                stand != null ? Child2D(stand, 0f, 0f, walkScale) : Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
-                Ring(clips, m, unitySpeeds, reference, C.PlayerWalkFwd, 0f, 1f),
-                Ring(clips, m, unitySpeeds, reference, C.PlayerWalkBack, 0f, -1f),
-                Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeLeft, -1f, 0f),
-                Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeRight, 1f, 0f),
-                Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
-                // WP-071 D-1 (C-00 01.10, user: backward ×0.65, S-02 PlayerConfigSection): run_back sits at the backward top speed (4.03 m/s → clip rate 1.12)
-                Child2D(clips[C.PlayerRunBack], 0f, -DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier,
-                    PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack), DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier)),
-                Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
-                Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
-            };
+                BuildHeroLocomotion(c, tree, clips, locoData);
+                breathClip = clips[C.PlayerIdleAp026];
+            }
+            else
+            {
+                tree.blendType = BlendTreeType.FreeformDirectional2D;
+                tree.blendParameter = C.MoveX;
+                tree.blendParameterY = C.MoveY;
+                tree.useAutomaticThresholds = false;
+                // WP-032B: two rings. The walk clips sit at their own no-slide speed over the reference
+                // (radius = clip speed / reference, so the blend passes THROUGH the walk at rate 1) and
+                // the v002 run cycles sit on the unit circle; between them the tree cross-fades walk→run
+                // (AP-009B README: blend above ~1.6× the walk speed — the walk scaled beyond ×2.1 reads as skating).
+                // WP-071 MUST-3 (P-06 AD refuter B): the centre is a static stand (idle frame 0 held) as long as the walk cycle and at the walk
+                // children's time scale, so it never stretches the tree cycle; the idle breath plays in its own state (Idle_Breath, below).
+                float walkScale = PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkFwd));
+                AnimationClip stand = BuildStandStillClip(clips[C.PlayerIdle], clips[C.PlayerWalkFwd].length);
+                tree.children = new[]
+                {
+                    stand != null ? Child2D(stand, 0f, 0f, walkScale) : Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
+                    Ring(clips, m, unitySpeeds, reference, C.PlayerWalkFwd, 0f, 1f),
+                    Ring(clips, m, unitySpeeds, reference, C.PlayerWalkBack, 0f, -1f),
+                    Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeLeft, -1f, 0f),
+                    Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeRight, 1f, 0f),
+                    Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
+                    // WP-071 D-1 (C-00 01.10, user: backward ×0.85 — PlayerConfigSection.BackwardSpeedMultiplier; the old "×0.65" note was stale, WP-082 B2): run_back sits at the backward top speed
+                    Child2D(clips[C.PlayerRunBack], 0f, -DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier,
+                        PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack), DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier)),
+                    Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
+                    Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
+                };
+            }
+
             loco.speedParameterActive = true;
             loco.speedParameter = C.LocoRate;
             loco.writeDefaultValues = true;
             sm.defaultState = loco;
             // WP-071 MUST-3: the idle breath at rate 1 in its own base state — in after 0.2 s under 0.1 m/s (PlayerSkinnedVisual sets Still), 0.12 s blends
             AnimatorState breath = sm.AddState(C.StillState);
-            breath.motion = clips[C.PlayerIdle];
+            breath.motion = breathClip;   // WP-082 R3: AP-026 idle_03 with the 8-way tree (its frame 0 is the stand)
             breath.writeDefaultValues = true;
             AnimatorStateTransition toBreath = loco.AddTransition(breath);
             toBreath.hasExitTime = false; toBreath.hasFixedDuration = true; toBreath.duration = 0.12f;
@@ -414,7 +476,7 @@ namespace DD.Art.Pipeline.EditorTools
             fromBreath.hasExitTime = false; fromBreath.hasFixedDuration = true; fromBreath.duration = 0.12f;
             fromBreath.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Still);
             // WP-083 B3b: the v4 start / stop / pivot sub-state machine — only the AP-026 clips the set carries (none until AP-024/026)
-            AddLocomotionV4(c, sm, loco, clips);
+            AddLocomotionV4(c, sm, loco, clips, locoData);
 
             for (int i = 0; i < C.PlayerDeathClips.Length; i++)   // WP-032C: + death_side (2)
             {
@@ -995,6 +1057,188 @@ namespace DD.Art.Pipeline.EditorTools
             return clip;
         }
 
+        // ============================================================ WP-082 R3 · AP-026 8-way locomotion
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §2–§4, §7–§8, §11) · the AP-026 locomotion data the builder writes into the player tree and the set:
+        /// the 1-D ring thresholds (hero m/s), the child time scales (natural cadence), the v4 transition seconds and the runtime tables.
+        /// Read once per build from <see cref="ArtAnimationClipContract.LocoDataFolder"/> (copies of K/wp-082/data); the runtime never
+        /// parses JSON.
+        /// </summary>
+        public sealed class LocoData
+        {
+            /// <summary>Slot order 0 stand, 1 walk, 2 run, 3 sprint; hero m/s (×k estimate until StrideCalibrator measures the hero).</summary>
+            public readonly float[] thresholds = new float[4];
+            public float standTimeScale = 1f;
+            /// <summary>[ring 0 walk / 1 run / 2 sprint][dir] child time scale (LOCO-SOZLESME §3).</summary>
+            public readonly float[][] timeScale = { new float[8], new float[8], new float[8] };
+            public float startEntrySeconds = 0.3f, stopEntrySeconds = 0.1f, startExitSeconds = 0.1f, stopExitSeconds = 0.15f;
+            public readonly Dictionary<int, CharacterAnimationSet.LocoV4Clip> v4 = new Dictionary<int, CharacterAnimationSet.LocoV4Clip>();
+            public CharacterAnimationSet.LocomotionTables tables;
+        }
+
+        public static readonly string[] RingTreeNames = { "Walk8", "Run8", "Sprint8" };
+
+        private static string[] RingClips(int ring) => ring == 0 ? C.PlayerWalk : ring == 1 ? C.PlayerRun : C.PlayerSprint;
+
+        /// <summary>The AP-026 data, or null when the data folder or any ring / idle clip is missing (the AP-022 4-way tree is built then).</summary>
+        public static LocoData LoadLocoData(IDictionary<string, AnimationClip> clips)
+        {
+            string dir = Path.Combine(Directory.GetCurrentDirectory(), ArtAnimationClipContract.LocoDataFolder);
+            if (!Directory.Exists(dir)) return null;
+            if (!clips.ContainsKey(C.PlayerIdleAp026)) return null;
+            for (int r = 0; r < 3; r++) foreach (string n in RingClips(r)) if (!clips.ContainsKey(n)) return null;
+
+            Dictionary<string, object> Doc(string file) => ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(Path.Combine(dir, file))), file);
+            float[] Floats(object o, string what)
+            {
+                List<object> l = ArtJson.AsList(o, what);
+                var a = new float[l.Count];
+                for (int i = 0; i < a.Length; i++) a[i] = ArtJson.AsFloat(l[i], what);
+                return a;
+            }
+
+            var data = new LocoData();
+            Dictionary<string, object> constants = Doc("loco_constants.json");
+            float k = ArtJson.AsFloat(ArtJson.Require(ArtJson.AsObject(ArtJson.Require(constants, "hero_stride_scale"), "hero_stride_scale"), "default"), "k");
+            foreach (object co in ArtJson.AsList(ArtJson.Require(ArtJson.AsObject(ArtJson.Require(constants, "tree"), "tree"), "children"), "children"))
+            {
+                Dictionary<string, object> child = ArtJson.AsObject(co, "child");
+                int slot = ArtJson.AsInt(ArtJson.Require(child, "slot"), "slot");
+                if (slot == 0)
+                {
+                    data.thresholds[0] = 0f;
+                    data.standTimeScale = ArtJson.AsFloat(ArtJson.Require(child, "time_scale"), "time_scale");
+                    continue;
+                }
+
+                data.thresholds[slot] = ArtJson.AsFloat(ArtJson.Require(child, "threshold_mps_hero_est"), "threshold_mps_hero_est");
+                string[] names = RingClips(slot - 1);
+                foreach (object go in ArtJson.AsList(ArtJson.Require(child, "children"), "ring children"))
+                {
+                    Dictionary<string, object> g = ArtJson.AsObject(go, "ring child");
+                    int d = Array.IndexOf(names, ArtJson.AsString(ArtJson.Require(g, "clip"), "clip"));
+                    if (d < 0) throw new InvalidDataException(LogPrefix + "loco_constants: unknown ring clip " + ArtJson.AsString(g["clip"]));
+                    data.timeScale[slot - 1][d] = ArtJson.AsFloat(ArtJson.Require(g, "time_scale"), "time_scale");
+                }
+            }
+
+            Dictionary<string, object> v4c = ArtJson.AsObject(ArtJson.Require(constants, "v4"), "v4");
+            data.startEntrySeconds = ArtJson.AsFloat(ArtJson.Require(v4c, "start_entry_seconds"));
+            data.stopEntrySeconds = ArtJson.AsFloat(ArtJson.Require(v4c, "stop_entry_seconds"));
+            data.startExitSeconds = ArtJson.AsFloat(ArtJson.Require(v4c, "start_exit_seconds"));
+            data.stopExitSeconds = ArtJson.AsFloat(ArtJson.Require(v4c, "stop_exit_seconds"));
+            Dictionary<string, object> gaits = ArtJson.AsObject(ArtJson.Require(constants, "v4_gait_speeds_mps_template"), "v4_gait_speeds_mps_template");
+            var gaitSpeeds = new float[LocomotionV4.Gaits.Length];
+            for (int g = 0; g < gaitSpeeds.Length; g++)
+            {
+                object v = ArtJson.Get(gaits, LocomotionV4.Gaits[g]);
+                gaitSpeeds[g] = v is string ? 0f : v == null ? 0f : ArtJson.AsFloat(v);   // jog: "Infinity (R3'te kapalı)" → 0 = off
+            }
+
+            var tables = new CharacterAnimationSet.LocomotionTables { heroStrideScale = k, ringThresholdMps = (float[])data.thresholds.Clone(), v4GaitSpeedsMpsTemplate = gaitSpeeds };
+            foreach (object lo in ArtJson.AsList(ArtJson.Require(Doc("loco_loops.json"), "loops"), "loops"))
+            {
+                Dictionary<string, object> l = ArtJson.AsObject(lo, "loop");
+                if (!ArtJson.AsBool(ArtJson.Require(l, "used_in_r3"))) continue;
+                string ring = ArtJson.AsString(ArtJson.Require(l, "ring"));
+                tables.loops.Add(new CharacterAnimationSet.LocoLoop
+                {
+                    clip = ArtJson.AsString(ArtJson.Require(l, "clip")),
+                    ringSlot = ring == "walk" ? 1 : ring == "run" ? 2 : ring == "sprint" ? 3 : throw new InvalidDataException(LogPrefix + "ring " + ring),
+                    dirIndex = ArtJson.AsInt(ArtJson.Require(l, "dir_index")),
+                    strideCycleMTemplate = ArtJson.AsFloat(ArtJson.Require(l, "stride_cycle_m_template")),
+                    cycleSecondsNatural = ArtJson.AsFloat(ArtJson.Require(l, "cycle_seconds_natural"))
+                });
+            }
+
+            foreach ((string file, string key, bool start) in new[] { ("loco_v4_starts.json", "starts", true), ("loco_v4_stops.json", "stops", false) })
+            {
+                foreach (object vo in ArtJson.AsList(ArtJson.Require(Doc(file), key), key))
+                {
+                    Dictionary<string, object> v = ArtJson.AsObject(vo, key);
+                    if (!ArtJson.AsBool(ArtJson.Require(v, "used_in_r3"))) continue;
+                    var row = new CharacterAnimationSet.LocoV4Clip
+                    {
+                        clip = ArtJson.AsString(ArtJson.Require(v, "clip")),
+                        v4Id = ArtJson.AsInt(ArtJson.Require(v, "v4_id")),
+                        samples = ArtJson.AsInt(ArtJson.Require(v, "samples")),
+                        seconds = ArtJson.AsFloat(ArtJson.Require(v, "seconds")),
+                        loopPhaseEquivNormPerFrame = Floats(ArtJson.Require(v, "loop_phase_equiv_norm_per_frame"), "loop_phase_equiv_norm_per_frame")
+                    };
+                    if (row.clip != LocomotionV4.ClipName(row.v4Id)) throw new InvalidDataException(LogPrefix + row.clip + ": v4_id " + row.v4Id + " is " + LocomotionV4.ClipName(row.v4Id));
+                    if (row.loopPhaseEquivNormPerFrame.Length != row.samples) throw new InvalidDataException(LogPrefix + row.clip + ": phase table " + row.loopPhaseEquivNormPerFrame.Length + " != samples " + row.samples);
+                    if (start)
+                    {
+                        Dictionary<string, object> lut = ArtJson.AsObject(ArtJson.Require(v, "lut_t_at_dist"), "lut_t_at_dist");
+                        Dictionary<string, object> exit = ArtJson.AsObject(ArtJson.Require(v, "exit"), "exit");
+                        row.distStepMTemplate = ArtJson.AsFloat(ArtJson.Require(lut, "dist_step_m_template"));
+                        row.lutTAtDist = Floats(ArtJson.Require(lut, "t_norm"), "t_norm");
+                        row.exitTNorm = ArtJson.AsFloat(ArtJson.Require(exit, "exit_t_norm"));
+                        row.loopOffsetNorm = ArtJson.AsFloat(ArtJson.Require(exit, "loop_offset_norm"));
+                    }
+                    else
+                    {
+                        Dictionary<string, object> lut = ArtJson.AsObject(ArtJson.Require(v, "lut_t_at_remaining"), "lut_t_at_remaining");
+                        row.remainingStepMTemplate = ArtJson.AsFloat(ArtJson.Require(lut, "remaining_step_m_template"));
+                        row.lutTAtRemaining = Floats(ArtJson.Require(lut, "t_norm"), "t_norm");
+                        row.settleTNorm = ArtJson.AsFloat(ArtJson.Require(v, "settle_t_norm"));
+                    }
+
+                    if (!clips.ContainsKey(row.clip)) throw new InvalidDataException(LogPrefix + "v4 clip in the data but not imported: " + row.clip);
+                    tables.v4.Add(row);
+                    data.v4[row.v4Id] = row;
+                }
+            }
+
+            if (!tables.HasRings) throw new InvalidDataException(LogPrefix + "loco data: rings incomplete (" + tables.loops.Count + " loops)");
+            for (int i = 1; i < 4; i++) if (!(data.thresholds[i] > data.thresholds[i - 1])) throw new InvalidDataException(LogPrefix + "loco thresholds not increasing");
+            data.tables = tables;
+            Debug.Log(LogPrefix + "AP-026 loco data: k " + k.ToString("F4") + ", thresholds " + data.thresholds[1].ToString("F4") + "/" + data.thresholds[2].ToString("F4") + "/" + data.thresholds[3].ToString("F4")
+                      + " m/s, " + tables.loops.Count + " loops, " + tables.v4.Count + " v4 clips");
+            return data;
+        }
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §2.1–§2.2, §3): <c>Locomotion</c> = Simple1D on LocoSpeed (m/s): 0 the static stand (AP-026 idle_03
+        /// frame 0 held for the walk cycle, at the walk time scale), then Walk8 / Run8 / Sprint8 — each a SimpleDirectional2D on the unit
+        /// MoveX / MoveY with the eight AP-026 loops at their nominal positions (LocomotionV4.Directions, clockwise from forward) and the
+        /// natural-cadence time scales. No motion at the 2-D centre: the stand is the 1-D slot 0.
+        /// </summary>
+        private static void BuildHeroLocomotion(AnimatorController c, BlendTree tree, Dictionary<string, AnimationClip> clips, LocoData data)
+        {
+            tree.blendType = BlendTreeType.Simple1D;
+            tree.blendParameter = C.LocoSpeed;
+            tree.useAutomaticThresholds = false;
+            AnimationClip walkFwd = clips[C.PlayerWalk[0]];
+            AnimationClip stand = BuildStandStillClip(clips[C.PlayerIdleAp026], walkFwd.length);
+            var kids = new ChildMotion[4];
+            kids[0] = new ChildMotion { motion = stand != null ? (Motion)stand : clips[C.PlayerIdleAp026], threshold = 0f, timeScale = data.standTimeScale, directBlendParameter = "" };
+            string path = AssetDatabase.GetAssetPath(c);
+            for (int r = 0; r < 3; r++)
+            {
+                var sub = new BlendTree
+                {
+                    name = RingTreeNames[r], blendType = BlendTreeType.SimpleDirectional2D, blendParameter = C.MoveX, blendParameterY = C.MoveY,
+                    useAutomaticThresholds = false, hideFlags = HideFlags.HideInHierarchy
+                };
+                AssetDatabase.AddObjectToAsset(sub, path);
+                string[] names = RingClips(r);
+                var ring = new ChildMotion[8];
+                for (int d = 0; d < 8; d++)
+                {
+                    float a = d * 45f * Mathf.Deg2Rad;
+                    ring[d] = Child2D(clips[names[d]], Mathf.Round(Mathf.Sin(a) * 1e6f) / 1e6f, Mathf.Round(Mathf.Cos(a) * 1e6f) / 1e6f, data.timeScale[r][d]);
+                }
+
+                sub.children = ring;
+                kids[r + 1] = new ChildMotion { motion = sub, threshold = data.thresholds[r + 1], timeScale = 1f, directBlendParameter = "" };
+            }
+
+            tree.children = kids;
+            EditorUtility.SetDirty(tree);
+        }
+
         private static ChildMotion Child2D(Motion motion, float x, float y, float timeScale)
         {
             return new ChildMotion { motion = motion, position = new Vector2(x, y), timeScale = timeScale, directBlendParameter = "" };
@@ -1268,7 +1512,8 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         private static void WriteSet(string setPath, AnimatorController controller, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest,
-            Dictionary<string, AnimationClip> clips, Dictionary<string, float> unitySpeeds, string target, string source, float referenceSpeed, AnimationClip idle, AnimationClip walk, float walkSpeed)
+            Dictionary<string, AnimationClip> clips, Dictionary<string, float> unitySpeeds, string target, string source, float referenceSpeed, AnimationClip idle, AnimationClip walk, float walkSpeed,
+            CharacterAnimationSet.LocomotionTables locomotion)
         {
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
             bool created = set == null;
@@ -1294,6 +1539,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             set.Configure(idle, walk, walkSpeed, controller, source, table, ArtAnimationClipContract.ManifestSchema, referenceSpeed);
+            if (locomotion != null) set.ConfigureLocomotion(locomotion);   // WP-082 R3: the AP-026 8-way + v4 tables (empty = the AP-022 4-way path); zombie: untouched
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "animation set " + (created ? "created" : "updated") + ": " + setPath + " (" + table.Count + " clips, controller " + controller.name + ")");
         }

@@ -373,6 +373,11 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_fparms_skin1", TextureClass.Character },
             { "player_fparms_skin2", TextureClass.Character },
             { "player_fparms_skin3", TextureClass.Character },
+            // WP-082 R3 · AP-024 hero v2 "Kırık Mühür" (one 2K atlas: BaseColor sRGB, Normal OpenGL Y+, ORM R AO / G rough / B metal →
+            // derived MetallicSmoothness; the ORM is the derived map's source, capped at 1024 like every mask role).
+            { "hero_v2", TextureClass.Character },
+            { "hero_v2_skin2", TextureClass.Character },   // WP-082 R3 · AP-024D D5 skin 2 (Steel/Indigo), same atlas
+            { "hero_v2_skin3", TextureClass.Character },   // WP-082 R3 · AP-024D D5 skin 3 (olive-moss/cream), same atlas
             { "zombie_atlas", TextureClass.Character },
             { "zombie_cloth", TextureClass.Character },    // WP-020 · AP-007 v002 second (cloth) atlas
             { "zombie_masks", TextureClass.Character },    // WP-084 · AP-025 9-slice mask array (T_zombie_masks_Array)
@@ -1049,6 +1054,17 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Writes the contract into a model importer. Returns true if anything changed.</summary>
         public static bool Apply(ModelImporter importer)
         {
+            return ApplyModelCore(importer, true);
+        }
+
+        // Exact pinned Hero-copy clip opt-in; preserve its existing animation state.
+        internal static bool ApplyModelPreservingAnimationState(ModelImporter importer)
+        {
+            return ApplyModelCore(importer, false);
+        }
+
+        private static bool ApplyModelCore(ModelImporter importer, bool applyAnimationDefaults)
+        {
             bool changed = false;
             changed |= Set(importer.globalScale, ModelGlobalScale, v => importer.globalScale = v);
             changed |= Set(importer.useFileScale, ModelUseFileScale, v => importer.useFileScale = v);
@@ -1074,8 +1090,11 @@ namespace DD.Art.Pipeline.EditorTools
             }
             changed |= Set(importer.swapUVChannels, ModelSwapUVChannels, v => importer.swapUVChannels = v);
             changed |= Set(importer.materialImportMode, ModelMaterialImportMode, v => importer.materialImportMode = v);
-            changed |= Set(importer.animationType, ModelAnimationType, v => importer.animationType = v);
-            changed |= Set(importer.importAnimation, ModelImportAnimation, v => importer.importAnimation = v);
+            if (applyAnimationDefaults)
+            {
+                changed |= Set(importer.animationType, ModelAnimationType, v => importer.animationType = v);
+                changed |= Set(importer.importAnimation, ModelImportAnimation, v => importer.importAnimation = v);
+            }
             changed |= Set(importer.importBlendShapes, ModelImportBlendShapes, v => importer.importBlendShapes = v);
             changed |= Set(importer.importCameras, ModelImportCameras, v => importer.importCameras = v);
             changed |= Set(importer.importLights, ModelImportLights, v => importer.importLights = v);

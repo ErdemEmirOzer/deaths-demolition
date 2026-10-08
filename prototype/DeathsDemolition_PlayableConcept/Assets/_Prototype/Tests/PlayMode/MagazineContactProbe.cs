@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Weapons;
+using DD.Prototype.Characters;
 using UnityEngine;
 
 namespace DD.Prototype.Tests.PlayMode
@@ -37,7 +38,7 @@ namespace DD.Prototype.Tests.PlayMode
         private readonly List<string> _rows = new List<string>();
         private WeaponMagazineOwnership _owner;
         private Transform _socket, _seatParent;
-        private Vector3 _seatLocal;
+        private Matrix4x4 _seatLocal, _partToSocket;
         private string _label;
         private int _maxDeviation, _beatsMeasured;
         private float _maxClosestCm;
@@ -59,7 +60,9 @@ namespace DD.Prototype.Tests.PlayMode
             if (part == null || handSocket == null || owner == null) return;
             _socket = handSocket;
             _seatParent = part.parent;
-            _seatLocal = part.localPosition;
+            _seatLocal = Matrix4x4.TRS(part.localPosition, part.localRotation, part.localScale);
+            ReloadPartSocket row = handSocket.GetComponent<ReloadPartSocket>();
+            _partToSocket = row != null && ReloadPartCalibration.TryGet(row.Key, out Matrix4x4 m) ? m.inverse : Matrix4x4.identity;
             _owner = owner;
             _owner.Stepped += OnStep;
         }
@@ -68,7 +71,8 @@ namespace DD.Prototype.Tests.PlayMode
         public void Tick()
         {
             if (_owner == null || _seatParent == null || _socket == null) return;
-            _distance.Add(Vector3.Distance(_socket.position, _seatParent.TransformPoint(_seatLocal)));
+            Vector3 target = (_seatParent.localToWorldMatrix * _seatLocal * _partToSocket).GetColumn(3);
+            _distance.Add(Vector3.Distance(_socket.position, target));
         }
 
         // a beat lands during a frame whose pose the NEXT Tick samples: its index is the current sample count

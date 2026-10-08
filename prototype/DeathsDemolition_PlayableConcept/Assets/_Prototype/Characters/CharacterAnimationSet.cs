@@ -65,9 +65,14 @@ namespace DD.Prototype.Characters
         public const string ArmorBreak = "ArmorBreak";   // trigger (base): ArmorBreak_<region>
         public const string ArmorBreakRegion = "ArmorBreakRegion"; // int: 0 head, 1 torso, 2 leg
         public const string Stumble = "Stumble";         // trigger (base): hit_special_stumble (Runner)
-        public const string MoveX = "MoveX";             // player: local strafe velocity / reference speed
-        public const string MoveY = "MoveY";             // player: local forward velocity / reference speed
-        public const string LocoRate = "LocoRate";       // player: |v| / reference speed (state speed multiplier)
+        // WP-082 R3 (LOCO-SOZLESME §1): with the AP-026 8-way tree (LocoSpeed present) MoveX / MoveY are the body-space UNIT
+        // direction (hip hysteresis + angle smoothing) and LocoRate = clamp(v / honest speed, CadenceBand); the AP-022 4-way
+        // controller (no LocoSpeed) keeps the old meaning: local velocity / reference speed, LocoRate = |v| / reference.
+        public const string MoveX = "MoveX";             // player: body-space direction x (right +)
+        public const string MoveY = "MoveY";             // player: body-space direction y (forward +)
+        public const string LocoRate = "LocoRate";       // player: Locomotion state speed multiplier
+        /// <summary>WP-082 R3: float, the planar speed in m/s (hero world, unsmoothed) — the 1-D ring tree's parameter.</summary>
+        public const string LocoSpeed = "LocoSpeed";
         // WP-032B queue / idle-in-crowd wait (AP-009B idle_queue): bool gate + per-body cycle offset so a queue never shifts in unison
         public const string Waiting = "Waiting";           // bool
         public const string WaitPhase = "WaitPhase";       // float 0..1 (cycle offset of the Wait state)
@@ -146,6 +151,18 @@ namespace DD.Prototype.Characters
         public const string PlayerRunBack = "AP022_tp_run_back";
         public const string PlayerRunStrafeLeft = "AP022_tp_run_strafe_l";
         public const string PlayerRunStrafeRight = "AP022_tp_run_strafe_r";
+        // WP-082 R3 (LOCO-SOZLESME §2.3, PLAN §4.2): the AP-026 v002 mixamo-hero loops, 8 directions per ring in
+        // LocomotionV4.Directions order (0 fwd, 1 fwd_r, 2 right, 3 back_r, 4 back, 5 back_l, 6 left, 7 fwd_l); take = clip name
+        public const string PlayerIdleAp026 = "AP026_tp_idle_03";
+        public static readonly string[] PlayerWalk = Ring8("walk");
+        public static readonly string[] PlayerRun = Ring8("run");
+        public static readonly string[] PlayerSprint = Ring8("sprint");
+        private static string[] Ring8(string ring)
+        {
+            var n = new string[8];
+            for (int i = 0; i < 8; i++) n[i] = LocomotionV4.ClipPrefix + ring + "_" + LocomotionV4.Directions[i];
+            return n;
+        }
         public const string PlayerFireRecoil = "AP009_player_fire_recoil";
         public const string PlayerHitLight = "AP009_player_hit_light";
         public const string PlayerDeathFwd = "AP009_player_death_fwd";
@@ -466,6 +483,86 @@ namespace DD.Prototype.Characters
             float clipSpeed = SpeedOf(clipName);
             return clipSpeed > 0.01f ? Mathf.Max(0f, metersPerSecond) / clipSpeed : 1f;
         }
+
+        // ---------------------------------------------------------------- WP-082 R3 locomotion tables
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §4, §7, §8, §11): one AP-026 8-way loop — the ring's honest-speed inputs. Field names are the
+        /// data JSON's (<c>K/wp-082/data/loco_loops.json#loops[]</c>) in camelCase; template metres, 30 fps.
+        /// </summary>
+        [Serializable]
+        public sealed class LocoLoop
+        {
+            /// <summary><c>clip</c> / <c>unity_take</c> (AP026_tp_&lt;ring&gt;_&lt;dir&gt;).</summary>
+            public string clip;
+            /// <summary>The 1-D tree slot of the ring: 1 walk, 2 run, 3 sprint (slot 0 = the stand, no loop row).</summary>
+            public int ringSlot;
+            /// <summary><c>dir_index</c>: <see cref="LocomotionV4.Directions"/> order (0 fwd … 7 fwd_l, clockwise).</summary>
+            public int dirIndex;
+            /// <summary><c>stride_cycle_m_template</c>: one cycle's travel at the natural cadence (× k on the hero).</summary>
+            public float strideCycleMTemplate;
+            /// <summary><c>cycle_seconds_natural</c>: one cycle's seconds after the child time scale.</summary>
+            public float cycleSecondsNatural;
+        }
+
+        /// <summary>
+        /// WP-082 R3: one LocomotionV4 clip's tables (start or stop; <c>K/wp-082/data/loco_v4_starts.json#starts[]</c> /
+        /// <c>loco_v4_stops.json#stops[]</c>), precomputed by the builder — the runtime never parses JSON.
+        /// </summary>
+        [Serializable]
+        public sealed class LocoV4Clip
+        {
+            /// <summary><c>clip</c> (the AP-026 take name, <see cref="LocomotionV4.ClipName"/>).</summary>
+            public string clip;
+            /// <summary><c>v4_id</c> (<see cref="LocomotionV4.StartId"/> / <see cref="LocomotionV4.StopId"/>).</summary>
+            public int v4Id;
+            /// <summary><c>samples</c>: frames in the clip (= loopPhaseEquivNormPerFrame length).</summary>
+            public int samples;
+            /// <summary><c>seconds</c>: the clip's length at rate 1.</summary>
+            public float seconds;
+            /// <summary>Start: <c>lut_t_at_dist.dist_step_m_template</c>.</summary>
+            public float distStepMTemplate;
+            /// <summary>Start: <c>lut_t_at_dist.t_norm</c> (33): normalised time at i × step of template travel.</summary>
+            public float[] lutTAtDist = new float[0];
+            /// <summary>Start: <c>exit.exit_t_norm</c>.</summary>
+            public float exitTNorm = 1f;
+            /// <summary>Start: <c>exit.loop_offset_norm</c> (the loop's normalised offset on the exit).</summary>
+            public float loopOffsetNorm;
+            /// <summary>Stop: <c>lut_t_at_remaining.remaining_step_m_template</c>.</summary>
+            public float remainingStepMTemplate;
+            /// <summary>Stop: <c>lut_t_at_remaining.t_norm</c> (33): earliest normalised time with ≤ i × step of template travel left.</summary>
+            public float[] lutTAtRemaining = new float[0];
+            /// <summary>Stop: <c>settle_t_norm</c> (the motor has stopped).</summary>
+            public float settleTNorm = 1f;
+            /// <summary><c>loop_phase_equiv_norm_per_frame</c> (samples): the loop phase (0 = foot_l) each frame stands for.</summary>
+            public float[] loopPhaseEquivNormPerFrame = new float[0];
+        }
+
+        /// <summary>WP-082 R3: the locomotion tables the builder writes from <c>K/wp-082/data</c> (empty = AP-022 4-way path).</summary>
+        [Serializable]
+        public sealed class LocomotionTables
+        {
+            /// <summary><c>loco_constants.json#hero_stride_scale.default</c>: k, template metres → hero metres (measured k replaces it).</summary>
+            public float heroStrideScale = 1f;
+            /// <summary>The 1-D tree's thresholds, m/s on the hero, slot order (0 stand, 1 walk, 2 run, 3 sprint) — the same numbers the builder writes into the tree.</summary>
+            public float[] ringThresholdMps = new float[0];
+            /// <summary><c>v4_gait_speeds_mps_template</c> in <see cref="LocomotionV4.Gaits"/> order (walk, jog, run, sprint); ≤ 0 = gait off (jog in R3).</summary>
+            public float[] v4GaitSpeedsMpsTemplate = new float[0];
+            public List<LocoLoop> loops = new List<LocoLoop>();
+            public List<LocoV4Clip> v4 = new List<LocoV4Clip>();
+
+            /// <summary>The 8-way rings are complete (3 rings × 8 directions + 4 thresholds).</summary>
+            public bool HasRings => loops != null && loops.Count >= 24 && ringThresholdMps != null && ringThresholdMps.Length >= 4;
+        }
+
+        [Tooltip("WP-082 R3: AP-026 8-way locomotion + v4 distance tables (builder, from K/wp-082/data). Empty = the AP-022 4-way path.")]
+        [SerializeField] private LocomotionTables _locomotion = new LocomotionTables();
+
+        /// <summary>WP-082 R3: the locomotion tables (never null).</summary>
+        public LocomotionTables Locomotion => _locomotion ?? (_locomotion = new LocomotionTables());
+
+        /// <summary>Editor (builder): the locomotion tables.</summary>
+        public void ConfigureLocomotion(LocomotionTables tables) => _locomotion = tables ?? new LocomotionTables();
 
         /// <summary>Editor (builder): rewrite the table.</summary>
         public void Configure(AnimationClip idle, AnimationClip walk, float walkSpeed, RuntimeAnimatorController controller, string source, List<Entry> clips, string manifestSchema, float locomotionReferenceSpeed)

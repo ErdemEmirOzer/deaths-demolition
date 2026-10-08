@@ -55,7 +55,8 @@ namespace DD.Prototype.Characters
         private Func<Transform> _magazinePart;
         private Func<bool> _gate;
         private Transform _seatParent;
-        private Vector3 _seatLocal;
+        private Matrix4x4 _seatLocal, _partToSocket;
+        private bool _calibrated;
         private bool _reloading;
         private float _start, _detachAt, _insertAt, _detachSeen, _insertSeen;
         private WeaponMagazineOwnership _owner;
@@ -96,10 +97,12 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>A reload starts now: its gameplay duration and the clip that plays it (null = the deadline marks alone).</summary>
-        public void BeginReload(float seconds, AnimationClip clip)
+        public void BeginReload(float seconds, AnimationClip clip, Matrix4x4? socketToPart = null, WeaponMagazineOwnership owner = null)
         {
             CancelReload();
             if (seconds <= 0.05f) return;
+            _calibrated = socketToPart.HasValue;
+            _partToSocket = socketToPart.HasValue ? socketToPart.Value.inverse : Matrix4x4.identity;
             _start = Time.time;
             float grace = WeaponMagazineOwnership.DeadlineGraceSeconds;
             _detachAt = WeaponMagazineOwnership.MagazineMarks[(int)MagazineStep.Detach] * seconds + grace;
@@ -108,7 +111,7 @@ namespace DD.Prototype.Characters
             {
                 foreach (AnimationEvent e in clip.events)
                 {
-                    if (!WeaponMagazineOwnership.TryStepFor(CharacterAnimationEvents.Parse(e.functionName), out MagazineStep step)) continue;
+                    if (!ReloadPartCalibration.TryStep(CharacterAnimationEvents.Parse(e.functionName), out MagazineStep step)) continue;
                     float at = e.time / clip.length * seconds;
                     if (step == MagazineStep.Detach) _detachAt = Mathf.Min(_detachAt, at);
                     else if (step == MagazineStep.Insert) _insertAt = Mathf.Min(_insertAt, at);
@@ -118,7 +121,7 @@ namespace DD.Prototype.Characters
             _detachSeen = _insertSeen = float.NaN;
             // the beats as they land (clip event or deadline — the predicted time only starts the reach)
             DD.Prototype.Weapons.WeaponController c = WeaponRegistry.ActiveController;
-            _owner = c != null ? c.Magazine : null;
+            _owner = owner ?? (c != null ? c.Magazine : null);
             if (_owner != null) _owner.Stepped += OnStep;
             _reloading = true;
             ResolveSeat();
@@ -156,7 +159,7 @@ namespace DD.Prototype.Characters
             Transform part = _magazinePart != null ? _magazinePart() : null;
             if (part == null || part.parent == null || part.parent.name == MagazineSocket.Name) return;
             _seatParent = part.parent;
-            _seatLocal = part.localPosition;
+            _seatLocal = Matrix4x4.TRS(part.localPosition, part.localRotation, part.localScale);
         }
 
         /// <summary>The reload ended early (interrupted / switched / died): the hand goes back to the clip.</summary>
@@ -183,9 +186,14 @@ namespace DD.Prototype.Characters
             float w = Mathf.Max(BeatWeight(t, _detachAt, _detachSeen), BeatWeight(t, _insertAt, _insertSeen)) * Mathf.Clamp01(Strength);
             Weight = w;
             if (w <= 0f) { LastError = float.NaN; return; }
-            Vector3 seat = _seatParent.TransformPoint(_seatLocal);
-            Vector3 handGoal = seat - (_palm.position - _hand.position);   // the palm (socket) on the seat, the hand's own rotation kept
+            Matrix4x4 target = _seatParent.localToWorldMatrix * _seatLocal * _partToSocket;
+            Vector3 seat = target.GetColumn(3);
+            Quaternion handRotation = _calibrated ? target.rotation * Quaternion.Inverse(Quaternion.Inverse(_hand.rotation) * _palm.rotation) : _hand.rotation;
+            Quaternion blendedRotation = Quaternion.Slerp(_hand.rotation, handRotation, w);
+            Vector3 palmOffset = blendedRotation * Quaternion.Inverse(_hand.rotation) * (_palm.position - _hand.position);
+            Vector3 handGoal = seat - palmOffset;
             WeaponGripIk.Solve(_upper, _lower, _hand, Vector3.Lerp(_hand.position, handGoal, w));
+            _hand.rotation = blendedRotation;
             // out of the left arm's reach (a long magazine well, sr_1): the hands meet — the right arm brings the weapon (it rides the
             // right hand) the rest of the way, then the left hand closes on the moved seat
             Vector3 residual = (seat - _palm.position) * w;
@@ -194,13 +202,17 @@ namespace DD.Prototype.Characters
                 Quaternion rRot = _rHand.rotation;
                 WeaponGripIk.Solve(_rUpper, _rLower, _rHand, _rHand.position - residual);
                 _rHand.rotation = rRot;
-                seat = _seatParent.TransformPoint(_seatLocal);
+                target = _seatParent.localToWorldMatrix * _seatLocal * _partToSocket;
+                seat = target.GetColumn(3);
                 handGoal = seat - (_palm.position - _hand.position);
                 WeaponGripIk.Solve(_upper, _lower, _hand, Vector3.Lerp(_hand.position, handGoal, w));
+                _hand.rotation = blendedRotation;
             }
 
             LastError = w >= 1f ? Vector3.Distance(_palm.position, seat) : float.NaN;
         }
+
+        private void OnDisable() => CancelReload();
 
         /// <summary>The contact weight at <paramref name="dt"/> seconds from a beat (smoothstep in, hold, smoothstep out).</summary>
         public static float Window(float dt)

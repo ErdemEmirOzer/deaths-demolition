@@ -7,8 +7,9 @@ namespace DD.Prototype.Characters
     /// plan (AP026-clips-v1: four gaits × eight directions × lead foot for starts and stops, pivots 90 / 135 / 180 to either side
     /// on either foot, turn 45 in place). One stable id per clip drives the Animator's LocomotionV4 sub-state machine through the
     /// int parameter <see cref="ClipParam"/> (set for one frame, AnyState → the clip's state; no trigger left armed when a clip is
-    /// missing). ArtAnimatorBuilder creates a state only for the clips the set carries — none today, so the controller is
-    /// unchanged until AP-024 / AP-026 deliver. Rig-agnostic (names and directions only).
+    /// missing). ArtAnimatorBuilder creates a state only for the clips the set carries. Rig-agnostic (names and directions only).
+    /// WP-082 R3 (LOCO-SOZLESME §6–§8): the states are driven by the motion-time parameter <see cref="TimeParam"/>
+    /// (<see cref="LocomotionV4Clock"/>: distance-matched starts, remaining-distance stops).
     /// </summary>
     public static class LocomotionV4
     {
@@ -16,6 +17,8 @@ namespace DD.Prototype.Characters
         public const string StateMachine = "LocomotionV4";
         /// <summary>Int parameter: the clip id to enter this frame, <see cref="None"/> otherwise.</summary>
         public const string ClipParam = "V4Clip";
+        /// <summary>WP-082 R3: float parameter, every LocomotionV4 state's motion time (normalised 0..1, monotone; 0 while no v4 state plays). Written before <see cref="ClipParam"/>.</summary>
+        public const string TimeParam = "V4Time";
         public const int None = -1;
 
         /// <summary>The eight travel directions in body space, clockwise from forward (AP-026 direction names).</summary>
@@ -24,6 +27,19 @@ namespace DD.Prototype.Characters
         public static readonly int[] PivotAngles = { 90, 135, 180 };
 
         public const int StartBase = 0, StopBase = 64, PivotBase = 128, TurnBase = 140, Count = 142;
+
+        /// <summary>WP-082 R3: the short-name hash of every id's state (<see cref="StateName"/>), computed once.</summary>
+        private static readonly int[] s_stateHash = BuildStateHashes();
+
+        private static int[] BuildStateHashes()
+        {
+            var h = new int[Count];
+            for (int id = 0; id < Count; id++) h[id] = Animator.StringToHash(StateName(id));
+            return h;
+        }
+
+        /// <summary>WP-082 R3: the state's short-name hash of an id (0 outside 0..Count-1).</summary>
+        public static int StateHash(int id) => id >= 0 && id < Count ? s_stateHash[id] : 0;
 
         /// <summary>Direction index (0..7) of a body-space planar vector (x right, y forward); -1 for a zero vector.</summary>
         public static int Direction8(Vector2 local)
@@ -37,6 +53,16 @@ namespace DD.Prototype.Characters
         public static int StopId(int gait, int dir, bool leftFoot) => StopBase + gait * 16 + dir * 2 + (leftFoot ? 0 : 1);
         public static int PivotId(int angleIndex, bool toRight, bool leftFoot) => PivotBase + angleIndex * 4 + (toRight ? 2 : 0) + (leftFoot ? 0 : 1);
         public static int TurnId(bool leftFoot) => TurnBase + (leftFoot ? 0 : 1);
+
+        public static bool IsStart(int id) => id >= StartBase && id < StopBase;
+        public static bool IsStop(int id) => id >= StopBase && id < PivotBase;
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §7.1, S-06 B3): the start's lead foot — sideways and diagonal, the foot on the travel side (the
+        /// open step; the other foot crosses over and its clip is 25 → 31–37 frames); forward the left, backward the right
+        /// (<c>loco_constants.json#start_lead_default</c>, 24/24 the shortest clip or a tie).
+        /// </summary>
+        public static bool StartLeadLeft(int dir) => dir == 0 || dir >= 5;
 
         /// <summary>The AP-026 clip name of an id (null outside 0..Count-1).</summary>
         public static string ClipName(int id)
@@ -65,13 +91,130 @@ namespace DD.Prototype.Characters
             return clip == null ? null : "V4_" + clip.Substring(ClipPrefix.Length);
         }
 
-        /// <summary>The gait band of a speed: the nearest gait reference speed (m/s) in <paramref name="gaitSpeeds"/> (walk…sprint).</summary>
+        /// <summary>The gait band of a speed: the nearest gait reference speed (m/s) in <paramref name="gaitSpeeds"/> (walk…sprint; +∞ = gait off).</summary>
         public static int GaitFor(float speed, float[] gaitSpeeds)
         {
             int best = 0;
             for (int i = 1; i < gaitSpeeds.Length && i < Gaits.Length; i++)
                 if (Mathf.Abs(speed - gaitSpeeds[i]) < Mathf.Abs(speed - gaitSpeeds[best])) best = i;
             return best;
+        }
+
+        /// <summary>
+        /// WP-082 R3: a uniform lookup table read at <paramref name="x"/> (index = x / step, linear between entries, clamped at
+        /// both ends). Zero allocation.
+        /// </summary>
+        public static float LutLookup(float[] lut, float step, float x)
+        {
+            if (lut == null || lut.Length == 0) return 0f;
+            if (step <= 1e-6f || x <= 0f) return lut[0];
+            float i = x / step;
+            int last = lut.Length - 1;
+            if (i >= last) return lut[last];
+            int a = (int)i;
+            return Mathf.LerpUnclamped(lut[a], lut[a + 1], i - a);
+        }
+
+        /// <summary>WP-082 R3: a per-frame table read at a normalised clip time (frame = t × (n − 1), linear).</summary>
+        public static float FrameLookup(float[] perFrame, float tNorm)
+        {
+            if (perFrame == null || perFrame.Length == 0) return 0f;
+            int last = perFrame.Length - 1;
+            float f = Mathf.Clamp01(tNorm) * last;
+            int a = (int)f;
+            if (a >= last) return perFrame[last];
+            // the phase tables wrap (… 0.98, 0.01 …): interpolate on the circle
+            float p = perFrame[a], q = perFrame[a + 1];
+            float d = q - p;
+            if (d > 0.5f) d -= 1f; else if (d < -0.5f) d += 1f;
+            float r = p + d * (f - a);
+            return r - Mathf.Floor(r);
+        }
+
+        /// <summary>Circular distance of two cycle phases (0..0.5).</summary>
+        public static float PhaseDistance(float a, float b)
+        {
+            float d = Mathf.Abs(a - b);
+            d -= Mathf.Floor(d);
+            return d > 0.5f ? 1f - d : d;
+        }
+    }
+
+    /// <summary>
+    /// WP-082 R3 (LOCO-SOZLESME §7–§8, §11): the v4 tables indexed by id, built once from the set's
+    /// <see cref="CharacterAnimationSet.LocomotionTables"/> (the builder's precomputed arrays) — no JSON, no allocation per frame.
+    /// </summary>
+    public sealed class LocomotionV4Tables
+    {
+        private readonly CharacterAnimationSet.LocoV4Clip[] _byId = new CharacterAnimationSet.LocoV4Clip[LocomotionV4.Count];
+
+        /// <summary>k: template metres → hero metres.</summary>
+        public float StrideScale { get; private set; } = 1f;
+        public int Count { get; private set; }
+
+        public LocomotionV4Tables(CharacterAnimationSet.LocomotionTables source)
+        {
+            if (source == null) return;
+            StrideScale = source.heroStrideScale > 0.01f ? source.heroStrideScale : 1f;
+            if (source.v4 == null) return;
+            for (int i = 0; i < source.v4.Count; i++)
+            {
+                CharacterAnimationSet.LocoV4Clip c = source.v4[i];
+                if (c == null || c.v4Id < 0 || c.v4Id >= LocomotionV4.Count || c.seconds <= 1e-3f) continue;
+                if (LocomotionV4.IsStart(c.v4Id) && (c.lutTAtDist == null || c.lutTAtDist.Length < 2)) continue;
+                if (LocomotionV4.IsStop(c.v4Id) && (c.lutTAtRemaining == null || c.lutTAtRemaining.Length < 2)) continue;
+                if (_byId[c.v4Id] == null) Count++;
+                _byId[c.v4Id] = c;
+            }
+        }
+
+        public bool Has(int id) => id >= 0 && id < LocomotionV4.Count && _byId[id] != null;
+        public CharacterAnimationSet.LocoV4Clip Get(int id) => Has(id) ? _byId[id] : null;
+        public float Seconds(int id) => Has(id) ? _byId[id].seconds : 1f;
+
+        /// <summary>Start: the clip time at <paramref name="heroMetres"/> of travel (§7.2).</summary>
+        public float StartTimeAt(int id, float heroMetres)
+        {
+            CharacterAnimationSet.LocoV4Clip c = Get(id);
+            return c == null ? 0f : LocomotionV4.LutLookup(c.lutTAtDist, c.distStepMTemplate, heroMetres / StrideScale);
+        }
+
+        /// <summary>Stop: the earliest clip time with ≤ <paramref name="heroMetres"/> of travel left (§8.3; 0 → settle).</summary>
+        public float StopTimeAt(int id, float heroMetres)
+        {
+            CharacterAnimationSet.LocoV4Clip c = Get(id);
+            if (c == null) return 0f;
+            if (heroMetres <= 1e-4f) return c.settleTNorm;
+            return LocomotionV4.LutLookup(c.lutTAtRemaining, c.remainingStepMTemplate, heroMetres / StrideScale);
+        }
+
+        /// <summary>The loop phase (0 = foot_l) the clip's pose at <paramref name="tNorm"/> stands for.</summary>
+        public float PhaseAt(int id, float tNorm)
+        {
+            CharacterAnimationSet.LocoV4Clip c = Get(id);
+            return c == null ? 0f : LocomotionV4.FrameLookup(c.loopPhaseEquivNormPerFrame, tNorm);
+        }
+
+        public float ExitT(int id) => Has(id) ? (LocomotionV4.IsStart(id) ? _byId[id].exitTNorm : 1f) : 1f;
+        public float ExitOffset(int id) => Has(id) && LocomotionV4.IsStart(id) ? _byId[id].loopOffsetNorm : 0f;
+
+        /// <summary>
+        /// §8.3: the stop variant (l / r) whose entry frame's loop phase is nearest <paramref name="phaseNow"/> (tie → l), and its
+        /// entry time. Returns false when neither variant has a table.
+        /// </summary>
+        public bool PickStop(int gait, int dir, float remainingHeroMetres, float phaseNow, out bool leftFoot, out float entryT)
+        {
+            int l = LocomotionV4.StopId(gait, dir, true), r = LocomotionV4.StopId(gait, dir, false);
+            bool hasL = Has(l), hasR = Has(r);
+            leftFoot = true;
+            entryT = 0f;
+            if (!hasL && !hasR) return false;
+            float tL = hasL ? StopTimeAt(l, remainingHeroMetres) : 0f, tR = hasR ? StopTimeAt(r, remainingHeroMetres) : 0f;
+            float cL = hasL ? LocomotionV4.PhaseDistance(PhaseAt(l, tL), phaseNow) : float.MaxValue;
+            float cR = hasR ? LocomotionV4.PhaseDistance(PhaseAt(r, tR), phaseNow) : float.MaxValue;
+            leftFoot = cL <= cR;
+            entryT = leftFoot ? tL : tR;
+            return true;
         }
     }
 
@@ -85,16 +228,22 @@ namespace DD.Prototype.Characters
     /// <item>Start: from rest (≥ <see cref="RestSeconds"/> under <see cref="RestSpeed"/>, or still now) the heading reaches
     /// <see cref="MoveSpeed"/> — direction of the heading in body space, gait = the target speed's band.</item>
     /// <item>Pivot: moving at ≥ <see cref="MoveSpeed"/>, the heading turns ≥ <see cref="PivotMinDegrees"/> from the travel (nearest
-    /// of 90 / 135 / 180, side by sign; then <see cref="PivotCooldown"/>).</item>
-    /// <item>Stop: moving ≥ <see cref="MovingSeconds"/>, the heading stays under <see cref="MoveSpeed"/> × 0.5 for
-    /// <see cref="StopConfirm"/> (braking, or commanded) — direction / gait of the last steady (not braking) travel.</item>
+    /// of 90 / 135 / 180, side by sign; then <see cref="PivotCooldown"/>). WP-082 R3 (§6): never while <see cref="AimDriven"/> (top-down:
+    /// the body faces the aim, a pivot clip would turn the hips against it) — the 8-way tree carries the turn.</item>
+    /// <item>Stop: moving ≥ <see cref="MovingSeconds"/>, the heading stays under <see cref="MoveSpeed"/> × 0.5 — on the motor's command
+    /// the first such frame (WP-082 R3 §8.1), from the prediction for <see cref="StopConfirm"/> — direction / gait of the last steady
+    /// (not braking) travel.</item>
     /// </list>
-    /// The lead foot is the one NOT planted. Zero allocation.
+    /// The lead foot: with <see cref="ContractLead"/> (WP-082 R3 §7.1 / §8.3) the start takes <see cref="LocomotionV4.StartLeadLeft"/>
+    /// and the stop the variant whose entry phase matches <see cref="PhaseNow"/> (<see cref="Tables"/>); without it (tests of the
+    /// B3b detector) the foot NOT planted. Zero allocation.
     /// </summary>
     public sealed class LocomotionV4Events
     {
         public const float RestSpeed = 0.15f, MoveSpeed = 0.6f, RestSeconds = 0.1f, MovingSeconds = 0.2f;
         public const float Lookahead = 0.2f, AccelSmoothing = 0.05f, PivotMinDegrees = 67.5f, PivotCooldown = 0.3f, StopConfirm = 0.05f;
+        /// <summary>WP-082 R3 §8.2: the motor's braking rate the remaining stop distance assumes (PlayerConfigSection.Deceleration default, m/s²).</summary>
+        public const float DefaultDeceleration = 60f;
 
         private enum Phase { Rest, Moving, Stopping }
 
@@ -108,6 +257,26 @@ namespace DD.Prototype.Characters
         /// <summary>The heading of the last tick (commanded, or predicted; tests / diagnostics).</summary>
         public Vector3 Heading { get; private set; }
 
+        /// <summary>WP-082 R3 §6: the body's facing belongs to the aim (top-down) — no pivot / turn ids. Written by the owner before <see cref="Feed"/>.</summary>
+        public bool AimDriven { get; set; }
+        /// <summary>WP-082 R3 §7.1 / §8.3: the contract's lead-foot rule instead of the free foot (S-06 B3).</summary>
+        public bool ContractLead { get; set; }
+        /// <summary>WP-082 R3: the v4 tables (stop variant + entry time); null = no distance tables.</summary>
+        public LocomotionV4Tables Tables { get; set; }
+        /// <summary>WP-082 R3 §8.3: the current loop phase (0 = foot_l) of the pose, written by the owner before <see cref="Feed"/>.</summary>
+        public float PhaseNow { get; set; }
+        /// <summary>WP-082 R3 §8.2: the braking rate for d_rem = v² / (2 a).</summary>
+        public float Deceleration { get; set; } = DefaultDeceleration;
+        /// <summary>WP-082 R3 §7.2 option A: starts off (the loop + LocomotionLean only). Tests / measurement switch.</summary>
+        public static bool StartsEnabled = true;
+        /// <summary>WP-082 R3: the last stop's entry time (§8.3; 0 for the other events).</summary>
+        public float EntryT { get; private set; }
+        /// <summary>WP-082 R3: moving (not resting, not braking to a stop).</summary>
+        public bool IsMoving => _phase == Phase.Moving;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => StartsEnabled = true;
+
         public void Reset()
         {
             _phase = Phase.Rest;
@@ -117,6 +286,7 @@ namespace DD.Prototype.Characters
             _hasLast = false;
             LastEvent = LocomotionV4.None;
             Heading = Vector3.zero;
+            EntryT = 0f;
         }
 
         /// <summary>One tick: returns the clip id to play now or <see cref="LocomotionV4.None"/>.</summary>
@@ -145,7 +315,7 @@ namespace DD.Prototype.Characters
             Heading = heading;
             float ahead = heading.magnitude;
             bool braking = Vector3.Dot(_accel, worldVelocity) < 0f;
-            bool lead = !leftPlanted;   // the lead foot steps first: the free one
+            bool lead = !leftPlanted;   // B3b detector: the lead foot steps first, the free one (ContractLead replaces it)
             _cooldown = Mathf.Max(0f, _cooldown - dt);
             int id = LocomotionV4.None;
 
@@ -167,7 +337,7 @@ namespace DD.Prototype.Characters
                 case Phase.Moving:
                     _moving += dt;
                     if (speed >= MoveSpeed && !braking) { _steadyDir = worldVelocity / speed; _steadySpeed = speed; }
-                    if (_cooldown <= 0f && speed >= MoveSpeed && ahead >= MoveSpeed)
+                    if (!AimDriven && _cooldown <= 0f && speed >= MoveSpeed && ahead >= MoveSpeed)
                     {
                         float turn = Vector3.SignedAngle(worldVelocity, heading, Vector3.up);
                         if (Mathf.Abs(turn) >= PivotMinDegrees)
@@ -181,12 +351,14 @@ namespace DD.Prototype.Characters
                     }
 
                     _stopHold = (braking || commanded.HasValue) && ahead < MoveSpeed * 0.5f ? _stopHold + dt : 0f;
-                    if (_stopHold >= StopConfirm - 1e-4f)
+                    // WP-082 R3 §8.1: on the motor's command the stop is decided on the first frame (no StopConfirm wait — at
+                    // 6.2 m/s 0.05 s would leave 0.085 of the 0.32 m to the clip); the prediction keeps the confirmation
+                    if (commanded.HasValue ? _stopHold > 0f : _stopHold >= StopConfirm - 1e-4f)
                     {
                         if (_moving >= MovingSeconds && _steadyDir.sqrMagnitude > 0f)
                         {
                             int dir = LocomotionV4.Direction8(Local(bodyRotation, _steadyDir));
-                            if (dir >= 0) id = LocomotionV4.StopId(LocomotionV4.GaitFor(_steadySpeed, gaitSpeeds), dir, lead);
+                            if (dir >= 0) id = Stop(LocomotionV4.GaitFor(_steadySpeed, gaitSpeeds), dir, lead, speed);
                         }
 
                         _phase = Phase.Stopping;
@@ -210,16 +382,136 @@ namespace DD.Prototype.Characters
             return id;
         }
 
-        private static int Start(Vector3 heading, Quaternion body, float speed, bool lead, float[] gaitSpeeds)
+        private int Start(Vector3 heading, Quaternion body, float speed, bool lead, float[] gaitSpeeds)
         {
+            EntryT = 0f;
+            if (!StartsEnabled) return LocomotionV4.None;
             int dir = LocomotionV4.Direction8(Local(body, heading));
-            return dir >= 0 ? LocomotionV4.StartId(LocomotionV4.GaitFor(speed, gaitSpeeds), dir, lead) : LocomotionV4.None;
+            if (dir < 0) return LocomotionV4.None;
+            if (ContractLead) lead = LocomotionV4.StartLeadLeft(dir);
+            return LocomotionV4.StartId(LocomotionV4.GaitFor(speed, gaitSpeeds), dir, lead);
+        }
+
+        private int Stop(int gait, int dir, bool lead, float speed)
+        {
+            EntryT = 0f;
+            if (!ContractLead) return LocomotionV4.StopId(gait, dir, lead);
+            // §8.2–8.3: the remaining braking distance picks the entry frame; the variant whose entry phase meets the pose's phase
+            float remaining = speed * speed / (2f * Mathf.Max(0.1f, Deceleration));
+            if (Tables != null && Tables.PickStop(gait, dir, remaining, PhaseNow, out bool left, out float t))
+            {
+                EntryT = t;
+                return LocomotionV4.StopId(gait, dir, left);
+            }
+
+            // no tables: the foot that lands next in the loop (foot_l at phase 0, foot_r at ≈ 0.5)
+            float p = PhaseNow - Mathf.Floor(PhaseNow);
+            return LocomotionV4.StopId(gait, dir, p >= 0.5f);
         }
 
         private static Vector2 Local(Quaternion body, Vector3 dirW)
         {
             Vector3 l = Quaternion.Inverse(body) * dirW;
             return new Vector2(l.x, l.z);
+        }
+    }
+
+    /// <summary>
+    /// WP-082 R3 (LOCO-SOZLESME §7.2, §8.4): the motion time of the playing v4 clip. A start follows the distance the body has
+    /// really travelled (template metres = hero metres / k through the clip's LUT; monotone; at most <see cref="StartRateCap"/> ×
+    /// the clip's own rate, past it the feet slide), a stop follows the remaining braking distance (never behind the clip's own
+    /// rate; motor stopped → settle). The owner writes <see cref="T"/> to <see cref="LocomotionV4.TimeParam"/>. Zero allocation.
+    /// </summary>
+    public sealed class LocomotionV4Clock
+    {
+        public enum Kind { None, Start, Stop, Other }
+
+        /// <summary>Tick result: keep playing, leave to Locomotion (the clip's end / exit), or cancel the start (the body did not go).</summary>
+        public enum Step { Playing, Exit, Cancel }
+
+        /// <summary>§7.2 option B' (3.0): the start's highest playback rate × its own rate; +∞ = pure distance matching (option B).</summary>
+        public static float StartRateCap = 3f;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => StartRateCap = 3f;
+
+        /// <summary>§7.2: a start whose body stays under <see cref="LocomotionV4Events.RestSpeed"/> this long is cancelled (a wall).</summary>
+        public const float CancelSeconds = 0.1f;
+        /// <summary>A position step longer than this in one tick is a teleport, not travel (metres).</summary>
+        public const float MaxStepMetres = 0.5f;
+
+        private Kind _kind;
+        private int _id = LocomotionV4.None;
+        private float _t, _dist, _slow, _seconds = 1f;
+        private Vector3 _lastPos;
+
+        public Kind Current => _kind;
+        public int Id => _id;
+        /// <summary>The normalised motion time (0..1).</summary>
+        public float T => _t;
+        /// <summary>The start's travelled distance, hero metres (tests).</summary>
+        public float Distance => _dist;
+
+        public void Reset()
+        {
+            _kind = Kind.None;
+            _id = LocomotionV4.None;
+            _t = _dist = _slow = 0f;
+            _seconds = 1f;
+        }
+
+        /// <summary>A v4 clip begins at <paramref name="entryT"/> (start: 0; stop: the remaining-distance entry).</summary>
+        public void Begin(int id, float entryT, float seconds, Vector3 position)
+        {
+            _id = id;
+            _kind = LocomotionV4.IsStart(id) ? Kind.Start : LocomotionV4.IsStop(id) ? Kind.Stop : Kind.Other;
+            _t = Mathf.Clamp01(entryT);
+            _dist = 0f;
+            _slow = 0f;
+            _seconds = Mathf.Max(0.05f, seconds);
+            _lastPos = position;
+        }
+
+        /// <summary>The clip ended or was left: no v4 time (the owner writes 0).</summary>
+        public void End() => Reset();
+
+        /// <summary>One frame of the clip's time. <paramref name="exitT"/> = the start's exit_t_norm (stops / others: 1).</summary>
+        public Step Tick(LocomotionV4Tables tables, Vector3 position, float speed, float deceleration, float exitT, float dt)
+        {
+            if (_kind == Kind.None || dt <= 0f) return Step.Playing;
+            Vector3 d = position - _lastPos;
+            d.y = 0f;
+            _lastPos = position;
+            float step = d.magnitude;
+            float natural = dt / _seconds;
+            switch (_kind)
+            {
+                case Kind.Start:
+                {
+                    if (step <= MaxStepMetres) _dist += step;
+                    float tD = tables != null ? tables.StartTimeAt(_id, _dist) : _t + natural;
+                    float tN = _t + natural * StartRateCap;
+                    _t = Mathf.Clamp01(Mathf.Max(_t, Mathf.Min(tD, tN)));   // monotone; over the cap the feet slide
+                    _slow = speed < LocomotionV4Events.RestSpeed ? _slow + dt : 0f;
+                    if (_slow >= CancelSeconds) return Step.Cancel;
+                    return _t >= exitT - 1e-4f ? Step.Exit : Step.Playing;
+                }
+                case Kind.Stop:
+                {
+                    float remaining = speed * speed / (2f * Mathf.Max(0.1f, deceleration));
+                    float tD = tables != null ? tables.StopTimeAt(_id, remaining) : 0f;
+                    _t = Mathf.Clamp01(Mathf.Max(_t + natural, tD));   // never behind the motor; at rest the clip settles at its own rate
+                    return _t >= 1f - 1e-4f ? Step.Exit : Step.Playing;
+                }
+                default:
+                    _t = Mathf.Clamp01(_t + natural);
+                    return _t >= exitT - 1e-4f ? Step.Exit : Step.Playing;
+            }
+        }
+
+        /// <summary>After the exit the outgoing clip keeps its own rate through the blend (never past 1).</summary>
+        public void Coast(float dt)
+        {
+            if (_kind != Kind.None && dt > 0f) _t = Mathf.Min(1f, _t + dt / _seconds);
         }
     }
 }

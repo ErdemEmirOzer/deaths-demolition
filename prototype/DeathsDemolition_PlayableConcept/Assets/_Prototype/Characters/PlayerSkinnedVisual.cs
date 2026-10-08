@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Weapons;
 using UnityEngine;
+using DD.Prototype.Feedback;
 
 namespace DD.Prototype.Characters
 {
@@ -21,6 +22,10 @@ namespace DD.Prototype.Characters
     /// <c>aim_layer</c> = <see cref="PlayerAimLayer"/> turning Spine/Chest/UpperChest toward the
     /// aim (REQ-038) on top of the base. <c>PlayerProceduralAnimator</c> forwards its hooks
     /// here and writes nothing to the hidden block rig; the ProceduralPoseBridge is gone.
+    ///
+    /// WP-082 R3 (LOCO-SOZLESME): with the AP-026 controller (LocoSpeed: Simple1D rings → SimpleDirectional2D 8 ways) the base
+    /// layer is fed LocoSpeed (m/s), the body-space unit direction (hip hysteresis + smoothing) and LocoRate = v / honest speed;
+    /// the v4 starts / stops run on V4Time (distance-matched). The AP-022 4-way controller keeps its path (no LocoSpeed).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerSkinnedVisual : MonoBehaviour
@@ -64,6 +69,10 @@ namespace DD.Prototype.Characters
         private static readonly int LocoRateId = Animator.StringToHash(CharacterAnimatorContract.LocoRate);
         private static readonly int StillId = Animator.StringToHash(CharacterAnimatorContract.Still);
         private static readonly int V4ClipId = Animator.StringToHash(LocomotionV4.ClipParam);
+        // WP-082 R3 (LOCO-SOZLESME §1): the AP-026 8-way tree's speed and the v4 motion time
+        private static readonly int LocoSpeedId = Animator.StringToHash(CharacterAnimatorContract.LocoSpeed);
+        private static readonly int V4TimeId = Animator.StringToHash(LocomotionV4.TimeParam);
+        private static readonly int LocomotionStateHash = Animator.StringToHash(CharacterAnimatorContract.LocomotionState);
         private static readonly int FireId = Animator.StringToHash(CharacterAnimatorContract.Fire);
         private static readonly int HitId = Animator.StringToHash(CharacterAnimatorContract.HitLight);
         private static readonly int DieId = Animator.StringToHash(CharacterAnimatorContract.Die);
@@ -124,6 +133,53 @@ namespace DD.Prototype.Characters
             "Highest playback rate of the run cycles (P-06 ×1.6: faster reads as a flicker). WP-032B needed 2.0 on the v002 run_fwd (3.75 m/s on the " +
             "Unity rig); WP-032C: the v003 run_fwd stride is 1.05 m (Blender 5.69 m/s no-slide), so 6.2 m/s sits under the cap again. Cap.", true)]
         public const float MaxRunRate = CadenceBand.Max;   // WP-071 K3: the run cycles stay in the cadence band; faster travel slides
+
+        // ------------------------------------------------------------ WP-082 R3 · AP-026 8-way locomotion (LOCO-SOZLESME §4–§5)
+
+        [PrototypeOnly(PendingDecisions.None, "WP-082 R3 §5.2 hip hysteresis: the fore / aft hemisphere switches only past 90° ± the dead band, held this long (PLAN §4.3 proposal; tuned by measurement).", true)]
+        public const float HipCenterDegrees = 90f, HipDeadBandDegrees = 10f, HipHoldSeconds = 0.15f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-082 R3 §5.3: the tree direction turns toward the hysteresis angle at this rate (MoveSmoothing 0.12 s per 90°; the top-down aim turns 720°/s).", true)]
+        public const float DirectionDegreesPerSecond = 750f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-082 R3 §4.1 / §5.3: under this planar speed (m/s) the body stands — LocoRate 1, direction and hemisphere frozen.", true)]
+        public const float StandSpeed = 0.05f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-082 R3 §2.4: the fallback cross-fades into Locomotion (start exit / stop exit / cancelled start, seconds) when the motion-time state does not take its exit-time transition.", true)]
+        public const float V4StartExitSeconds = 0.10f, V4StopExitSeconds = 0.15f, V4CancelSeconds = 0.15f;
+
+        private RuntimeAnimatorController _scannedController;
+        private bool _scannedInitialized;
+        private bool _hasLocoSpeed, _hasV4Time, _ringsReady, _loco8, _warnedNoRings;
+        // 1-D slot thresholds (m/s, hero) and the ring children's honest-speed inputs [ (slot − 1) × 8 + dir ]: stride (hero m) / cycle (s)
+        private readonly float[] _ringThreshold = new float[4];
+        private readonly float[] _ringStride = new float[24];
+        private readonly float[] _ringCycle = new float[24];
+        private float _standCycle = 1f;
+        private float _honest = 1f, _blendCycle = 1f;
+        // §5: the hip hemisphere (true = fore), its hold timer, the clamped side, the smoothed tree angle (degrees, 0 fwd, +90 right)
+        private bool _fore = true, _hasHeading;
+        private float _hemiHold, _treeAngle;
+        private int _clampSide = 1;
+        // §7–§8: the playing v4 clip's motion time and its exit fallback
+        private LocomotionV4Tables _v4Tables;
+        private readonly LocomotionV4Clock _v4Clock = new LocomotionV4Clock();
+        private bool _v4Exiting, _v4FadeIssued;
+        private int _v4Frames;
+        private float _v4ExitOffset, _v4ExitSeconds;
+
+        /// <summary>WP-082 R3: the controller carries the AP-026 8-way tree (LocoSpeed) — MoveX / MoveY are the unit direction, LocoSpeed m/s.</summary>
+        public bool Locomotion8 => _loco8;
+        /// <summary>WP-082 R3 §4.1: the honest speed of the current blend (Σ w·S / Σ w·T, m/s; tests / probes).</summary>
+        public float HonestSpeed => _honest;
+        /// <summary>WP-082 R3 §5: the fore hemisphere is active (hip hysteresis; tests / probes).</summary>
+        public bool HipFore => _fore;
+        /// <summary>WP-082 R3: the v4 motion-time clock (tests / probes).</summary>
+        public LocomotionV4Clock V4Clock => _v4Clock;
+        /// <summary>WP-082 R3: the v4 tables bound at Attach (null without them).</summary>
+        public LocomotionV4Tables V4Tables => _v4Tables;
+        /// <summary>WP-082 R3 §8.2: the braking rate the stop's remaining distance assumes (PlayerConfigSection.Deceleration; the rig factory may set the live value).</summary>
+        public float V4Deceleration { get => _v4.Deceleration; set => _v4.Deceleration = Mathf.Max(0.1f, value); }
 
         public Animator Animator => _animator;
         private WeaponGripIk _gripIk;
@@ -345,23 +401,19 @@ namespace DD.Prototype.Characters
                 }
             }
 
-            _hasStill = false;
-            _hasV4 = false;
             _v4.Reset();
+            _v4Clock.Reset();
+            _v4Exiting = _v4FadeIssued = false;
+            _hasHeading = false;
+            _fore = true;
             // WP-083 B3b: the gait bands from the AP-026 forward loops (their no-slide speeds); a missing loop keeps the band ordered
             for (int g = 0; g < _v4GaitSpeeds.Length; g++)
             {
                 float s = _animation != null ? _animation.SpeedOf(LocomotionV4.ClipPrefix + LocomotionV4.Gaits[g] + "_fwd") : 0f;
                 _v4GaitSpeeds[g] = s > 0.05f ? s : (g + 1) * 1.6f;
             }
-            if (_animator != null && _animator.runtimeAnimatorController != null)
-            {
-                foreach (AnimatorControllerParameter prm in _animator.parameters)
-                {
-                    if (prm.nameHash == StillId) _hasStill = true;
-                    if (prm.nameHash == V4ClipId) _hasV4 = true;
-                }
-            }
+            BindLocomotionTables();   // WP-082 R3: the 8-way ring tables, the v4 distance tables and gait speeds (§7.1)
+            ScanParameters();
             _runTimeScale = runSpeed > 0.01f && _animation != null ? RunChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
@@ -391,7 +443,7 @@ namespace DD.Prototype.Characters
             if (_contactIk != null)
             {
                 // third-person views only (in first person this body is not seen; the FP arms carry their own contact)
-                _contactIk.Configure(_animator, _magSocket, HeldMagazinePart,
+                _contactIk.Configure(_animator, _magSocket, () => _specialReload ? _specialMagazineVisual.Part : HeldMagazinePart(),
                     () => _authored && !_dying && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson);
             }
             // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
@@ -407,6 +459,9 @@ namespace DD.Prototype.Characters
             // WP-071: foot lock where the cadence is honest (walk ring rate ≈ 1; run ring when its clip rate ≤ LockMaxRate)
             // WP-071 MUST-4 (e): the lock follows the DOMINANT ring child's clip rate and slide share (run_back at 6.2 m/s slides 30 % → no lock)
             if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true, LockGateOpen);
+            // WP-082 R3 (E3 RAPOR §L3, S-03 WP-096): the swing foot keeps its animated lift — the per-foot solve pulled both feet to
+            // the ground every frame, dropping the pelvis 0.19–0.27 m and reading every frame as contact
+            if (_footIk != null) _footIk.PreserveSwingLift = true;
             // WP-071 B2: procedural lean on the spine from the planar acceleration
             if (_lean == null && _animator != null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
             if (_lean != null) _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying);
@@ -427,6 +482,7 @@ namespace DD.Prototype.Characters
                 SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-032E · S-02 WP-056 (ADR-056-1): Activated → hold pose, Fired → swing beat, Deactivated → classic Aim
                 _subscribed = true;
             }
+            SubscribeFeelReload();
 
             if (_authored)
             {
@@ -447,8 +503,30 @@ namespace DD.Prototype.Characters
             return _weaponSocket;
         }
 
+        private void OnEnable() { if (_subscribed) SubscribeFeelReload(); }
+        private void OnDisable()
+        {
+            UnsubscribeFeelReload();
+            CancelReload();
+        }
+        private void SubscribeFeelReload()
+        {
+            if (_feelSubscribed) return;
+            FeelEvents.ReloadStarted += OnFeelReloadStarted;
+            FeelEvents.ReloadEnded += OnFeelReloadEnded;
+            _feelSubscribed = true;
+        }
+        private void UnsubscribeFeelReload()
+        {
+            if (!_feelSubscribed) return;
+            FeelEvents.ReloadStarted -= OnFeelReloadStarted;
+            FeelEvents.ReloadEnded -= OnFeelReloadEnded;
+            _feelSubscribed = false;
+        }
         private void OnDestroy()
         {
+            UnsubscribeFeelReload();
+            EndSpecialReload();
             if (_subscribed)
             {
                 if (_events != null) _events.Raised -= OnAnimationEvent;
@@ -466,6 +544,8 @@ namespace DD.Prototype.Characters
 
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
+            if (_specialReload && ReloadPartCalibration.TryStep(e, out MagazineStep partStep))
+                _specialMagazine.OnEvent(partStep);
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
             // WP-071 B4 (AP-022); WP-083 R3 (C-00 07.10): not on sr_1's bolt cycle — the hold keeps the weapon at its pivot there, and a
             // support hand following the clip's bolt stroke would work it in the air beside the held weapon; it stays on the handguard
@@ -597,6 +677,7 @@ namespace DD.Prototype.Characters
         /// <summary>Equip: the v3 set when the weapon's AnimSet has one, else the legacy class pose.</summary>
         public void EquipWeapon(DD.Prototype.Core.Weapons.WeaponDefinition def, ClassicWeaponId id)
         {
+            CancelReload();
             _weaponDef = def;
             _classicId = id;
             if (_holdIk != null) _holdIk.SetWeapon(id);   // WP-083 B2: the per-weapon hold row
@@ -630,6 +711,14 @@ namespace DD.Prototype.Characters
 
         private ClassicWeaponId _classicId;
         private bool _specialV3;
+        private bool _feelSubscribed, _specialReload, _specialReloadRestoreLegacy;
+        private SpecialWeaponId _specialReloadId;
+        private readonly WeaponMagazineOwnership _specialMagazine = new WeaponMagazineOwnership();
+        private readonly WeaponMagazineVisual _specialMagazineVisual = new WeaponMagazineVisual();
+        private readonly float[] _specialMarks = new float[WeaponMagazineOwnership.StepCount];
+        public bool SpecialReloadPresentationActive => _specialReload;
+        public WeaponMagazineOwnership SpecialMagazine => _specialMagazine;
+        public WeaponMagazineVisual SpecialMagazineVisual => _specialMagazineVisual;
 
         /// <summary>True while a Special plays through its TP v3 set (<see cref="EquipSpecialV3"/>).</summary>
         public bool SpecialV3Active => _specialV3;
@@ -640,10 +729,10 @@ namespace DD.Prototype.Characters
         /// the v3 pose. The classic weapon's definition, burst clock and FP arms are not touched; the classic id is kept for the
         /// way back. Returns false (the SwHold interim pose stays) when the set is off or missing.
         /// </summary>
-        public bool EquipSpecialV3(SpecialWeaponId id)
+        public bool EquipSpecialV3(SpecialWeaponId id, bool reloadOnly = false)
         {
             string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(id);
-            int k = key != null && TpV3On(key) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
+            int k = key != null && (TpV3On(key) || reloadOnly) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
             if (k < 0) return false;
             SetSpecialHold(0);
             if (_gripIk != null) _gripIk.SetGrasp(false);   // WP-083 B2f: the grasp is the classic handguard's
@@ -664,7 +753,77 @@ namespace DD.Prototype.Characters
         }
         private void OnReloadStarted(float duration) => PlayReload(duration, WeaponEvents.LastReloadEmpty);   // S-02 d3f3b52e: written just before the event
         private void OnReloadInterrupted() => CancelReload();
-        private void OnSpecialEnded() => SetSpecialHold(0);
+        private void OnSpecialEnded() { CancelReload(); SetSpecialHold(0); }
+
+        private void OnFeelReloadStarted(FeelReload e)
+        {
+            if (!e.Special || !_authored || _dying || !isActiveAndEnabled) return;
+            WeaponController controller = WeaponRegistry.ActiveController;
+            if (controller == null || !controller.SpecialWeaponActive || controller.Special.Id != e.SpecialId) return;
+            string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(e.SpecialId);
+            if (key != "sw_arc" && key != "sw_gel") return;
+            bool restoreLegacy = !_specialV3;
+            CancelReload();
+            if ((!_specialV3 || WeaponAnimSet != key) && !EquipSpecialV3(e.SpecialId, reloadOnly: true)) return;
+            _specialReloadRestoreLegacy = restoreLegacy;
+            _specialReload = true;
+            _specialReloadId = e.SpecialId;
+            _specialMagazineVisual.Bind(controller.SpecialRigBody, key);
+            _specialMagazine.Begin(tactical: !e.Empty);
+            _specialMagazine.Stepped += OnSpecialMagazineStep;
+            CharacterAnimationSet.Entry entry = _animation.Find(CharacterAnimatorContract.PlayerWeaponClipV3(key, e.Empty ? "reload_empty" : "reload_tac"));
+            for (int i = 0; i < _specialMarks.Length; i++) _specialMarks[i] = WeaponMagazineOwnership.MagazineMarks[i];
+            if (entry?.clip != null && entry.clip.length > 0f)
+                foreach (AnimationEvent beat in entry.clip.events)
+                    if (ReloadPartCalibration.TryStep(CharacterAnimationEvents.Parse(beat.functionName), out MagazineStep step))
+                        _specialMarks[(int)step] = beat.time / entry.clip.length;
+            // mag_hand_attach is omitted in v009: keep it BETWEEN detach and insert, not before the authored detach.
+            _specialMarks[(int)MagazineStep.HandAttach] = Mathf.Lerp(_specialMarks[0], _specialMarks[2], 0.5f);
+            PlayReload(e.DurationSeconds, e.Empty);
+        }
+        private void OnFeelReloadEnded(FeelReload e)
+        {
+            if (e.Special && _specialReload && e.SpecialId == _specialReloadId) CancelReload();
+        }
+        private void OnSpecialMagazineStep(MagazineStep step, bool fromEvent)
+        {
+            if (step == MagazineStep.Detach || step == MagazineStep.HandAttach)
+            {
+                // The FP Special has no arm/part calibration. Keep its model complete in FP.
+                if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+                    _specialMagazineVisual.ToHand(_magSocket);
+            }
+            else _specialMagazineVisual.Home();
+        }
+        private void EndSpecialReload()
+        {
+            bool restoreLegacy = _specialReload && _specialReloadRestoreLegacy;
+            _specialReloadRestoreLegacy = false;
+            _specialReload = false;
+            _specialMagazine.Stepped -= OnSpecialMagazineStep;
+            _specialMagazine.End();
+            _specialMagazineVisual.Home();
+            if (restoreLegacy)
+            {
+                _specialV3 = false;
+                EquipWeapon(_weaponDef, _classicId);
+                WeaponController c = WeaponRegistry.ActiveController;
+                if (c != null && c.SpecialWeaponActive && c.Special.Id == _specialReloadId) SetSpecialHold(HoldIndexOf(_specialReloadId));
+            }
+        }
+        private void TickSpecialReload()
+        {
+            if (!_specialReload) return;
+            WeaponController c = WeaponRegistry.ActiveController;
+            if (_dying || c == null || !c.SpecialWeaponActive || c.Special.Id != _specialReloadId || !c.Special.IsReloading)
+            {
+                CancelReload();
+                return;
+            }
+            if (DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+                _specialMagazineVisual.Home();
+            _specialMagazine.Tick(c.Special.ReloadProgress01, c.Special.ReloadDuration, _specialMarks);
+        }
 
         /// <summary>WP-032E: the usage bus is the authoritative Special beat surface (WP-056); the HUD-state path above stays as the fallback for a Special without usage events.</summary>
         private void OnSpecialUsage(SpecialUsageEvent e)
@@ -674,7 +833,7 @@ namespace DD.Prototype.Characters
                 case SpecialUsageKind.Activated: if (!EquipSpecialV3(e.Id)) SetSpecialHold(HoldIndexOf(e.Id)); break;
                 // Fired: the swing is already fired through IWeaponHost.OnWeaponFired → PlayerProceduralAnimator.PlayFireRecoil → PlayFire()
                 // (WeaponController.FireSpecialOnce keeps that call); a second trigger here would only re-arm the same beat.
-                case SpecialUsageKind.Deactivated: SetSpecialHold(0); break;
+                case SpecialUsageKind.Deactivated: CancelReload(); SetSpecialHold(0); break;
             }
         }
 
@@ -728,7 +887,8 @@ namespace DD.Prototype.Characters
         public void PlayReload(float seconds, bool empty)
         {
             if (!_authored || _dying) return;
-            if (_fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
+            ReloadPartCalibration.ConfigureSocket(_magSocket, WeaponAnimSet);
+            if (!_specialV3 && _fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
             if (_weapon == 3) return;
             string clip;
             if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
@@ -740,14 +900,33 @@ namespace DD.Prototype.Characters
             CharacterAnimationSet.Entry entry = _animation.Find(clip);
             float clipSeconds = entry?.seconds ?? 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
-            _animator.SetTrigger(ReloadId);
-            if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip);
+            if (_specialReload && ResolveOverrideLayer() >= 0)
+            {
+                // A gameplay-started Special reload owns the upper layer. Pickup's exit
+                // transitions have interruption disabled and can still be latched while
+                // EquipSpecialV3 changes SwHold/AOC; a Reload trigger alone cannot replace
+                // that transition in time for the authored magazine beats. Select the
+                // same v3 reload state explicitly and clear any pending pickup request.
+                _animator.ResetTrigger(PickupId);
+                // HandleSpecialEnded requests the classic hand-back SwitchIn. If a new
+                // Special reload starts before that old upper transition finishes, the
+                // pending trigger becomes eligible as SwitchIn_V3 and cuts off ReloadTac.
+                // This reload supersedes that previous weapon's hand-back request.
+                _animator.ResetTrigger(SwitchInId);
+                _animator.ResetTrigger(ReloadId);
+                _animator.CrossFadeInFixedTime(empty ? CharacterAnimatorContract.ReloadEmptyState : CharacterAnimatorContract.ReloadTacState,
+                    0.05f, _overrideLayer, 0f);
+            }
+            else _animator.SetTrigger(ReloadId);
+            Matrix4x4? partMatrix = ReloadPartCalibration.TryGet(WeaponAnimSet, out Matrix4x4 m) ? m : (Matrix4x4?)null;
+            if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip, partMatrix, _specialReload ? _specialMagazine : null);
         }
 
         /// <summary>Reload interrupted (special pickup / death): straight back to the rest pose.</summary>
         public void CancelReload()
         {
-            if (!_authored) return;
+            EndSpecialReload();
+            if (!_authored || _animator == null) return;
             if (_contactIk != null) _contactIk.CancelReload();
             if (_fpArms != null) _fpArms.CancelContact();
             _animator.ResetTrigger(ReloadId);
@@ -844,6 +1023,7 @@ namespace DD.Prototype.Characters
         public void PlayDeath(Vector3 localHitDirection, bool coin)
         {
             if (!_authored || _dying) return;
+            CancelReload();
             _dying = true;
             _deathEnded = false;
             SetFireHeld(false);   // WP-071 r2: a dying body never keeps the LMG fire loop
@@ -893,6 +1073,7 @@ namespace DD.Prototype.Characters
 
         private void Update()
         {
+            TickSpecialReload();
             if (_animator == null || _animation == null) return;
             float dt = Time.deltaTime;
             Vector3 v = _planarVelocity != null ? _planarVelocity() : Vector3.zero;
@@ -908,13 +1089,28 @@ namespace DD.Prototype.Characters
             }
 
             if (_dying) return;
+            // WP-082 R3: the parameter set is looked up once per controller (Attach, the runtime override controller, a late init)
+            if (_animator.runtimeAnimatorController != _scannedController || (!_scannedInitialized && _animator.isInitialized)) ScanParameters();
             TickV3Weapon();
             MuteTpAdditiveInFirstPerson();
 
-            // Local (character-space) velocity over the set's reference speed: the 2-D blend axes.
-            // The child time scales were baked against the same reference, so |v| / reference is
-            // the exact no-slide rate at the blend corners; near idle the rate eases back to 1 so
-            // the idle breath does not freeze.
+            _mps = mps;
+            _stillFor = mps < StillSpeed ? _stillFor + dt : 0f;
+            StillRequested = _stillFor >= StillHoldSeconds;
+            if (_hasStill) _animator.SetBool(StillId, StillRequested);
+            if (_loco8) TickLocomotion8(v, mps, dt);
+            else TickLocomotionLegacy(v, mps, dt);
+            if (_hasV4) TickV4(v, mps, dt);
+            _ = _referenceSpeed;   // the motor's live top speed stays available for a follow-up run cycle
+        }
+
+        /// <summary>
+        /// The AP-022 4-way controller (no LocoSpeed): local velocity over the set's reference speed on the 2-D blend axes. The
+        /// child time scales were baked against the same reference, so |v| / reference is the exact no-slide rate at the blend
+        /// corners; near idle the rate eases back to 1 so the idle breath does not freeze.
+        /// </summary>
+        private void TickLocomotionLegacy(Vector3 v, float mps, float dt)
+        {
             float reference = _animation.LocomotionReferenceSpeed;
             Vector3 local = transform.InverseTransformDirection(v) / reference;
             Vector2 targetMove = new Vector2(Mathf.Clamp(local.x, -1f, 1f), Mathf.Clamp(local.z, -1f, 1f));
@@ -925,17 +1121,6 @@ namespace DD.Prototype.Characters
             // The old Lerp(1, s, s) played the AP-022 walk ring at 1.80× (406 spm at 2.6 m/s).
             WalkRingRadius = RingAlong(targetMove, _walkSpeed) / reference;
             float targetRate = Mathf.Min(Mathf.Max(speed01, WalkRingRadius), MaxRunRate / _runTimeScale);
-            _mps = mps;
-            _stillFor = mps < StillSpeed ? _stillFor + dt : 0f;
-            StillRequested = _stillFor >= StillHoldSeconds;
-            if (_hasStill) _animator.SetBool(StillId, StillRequested);
-            if (_hasV4)
-            {
-                // one frame per event: the AnyState transition reads it this update, None clears it the next (no trigger left armed)
-                int v4 = _v4.Feed(v, _commandedVelocity != null ? _commandedVelocity() : (Vector3?)null, transform.rotation, _referenceSpeed != null ? _referenceSpeed() : 0f,
-                    _footIk != null && _footIk.IsLocked(0), _v4GaitSpeeds, dt);
-                _animator.SetInteger(V4ClipId, v4);
-            }
             if (dt > 0f)
             {
                 _move = Vector2.MoveTowards(_move, targetMove, dt / MoveSmoothing);
@@ -952,7 +1137,266 @@ namespace DD.Prototype.Characters
             // Child time scales in the blend tree are reference / clip speed_mps, so the state
             // speed is simply |v| / reference (idle at 0 has no foot to slide).
             _animator.SetFloat(LocoRateId, Mathf.Max(_rate, 0.05f));
-            _ = _referenceSpeed;   // the motor's live top speed stays available for a follow-up run cycle
+        }
+
+        /// <summary>
+        /// WP-082 R3 (LOCO-SOZLESME §4.1, §5): the AP-026 8-way tree — LocoSpeed = |v| (m/s, unsmoothed: the motor is continuous and
+        /// a lag is a slide); MoveX / MoveY = the body-space unit direction after the hip hysteresis (±<see cref="HipDeadBandDegrees"/>
+        /// around ±90°, held <see cref="HipHoldSeconds"/>) and the angle smoothing (<see cref="DirectionDegreesPerSecond"/>);
+        /// LocoRate = clamp(v / honest speed, CadenceBand) with honest = Σ w·S / Σ w·T over the blend's own weights. Zero allocation.
+        /// </summary>
+        private void TickLocomotion8(Vector3 v, float mps, float dt)
+        {
+            if (mps >= StandSpeed)
+            {
+                Vector3 local = transform.InverseTransformDirection(v);
+                float theta = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;   // 0 forward, +90 right (LocomotionV4.Direction8)
+                float a = Mathf.Abs(theta);
+                if (!_hasHeading) { _fore = a <= HipCenterDegrees; _hemiHold = 0f; }
+                bool wantFore = a < HipCenterDegrees - HipDeadBandDegrees ? true : a > HipCenterDegrees + HipDeadBandDegrees ? false : _fore;
+                if (wantFore != _fore)
+                {
+                    _hemiHold += dt;
+                    if (_hemiHold >= HipHoldSeconds) { _fore = wantFore; _hemiHold = 0f; }
+                }
+                else _hemiHold = 0f;
+
+                // θ_eff: the fore hemisphere never weighs a back_* child (and the aft never a fwd_*); at its edge only left / right.
+                // Keep the cached side only near the front/back centre, where the sign can jitter across 0/180.
+                // Reuse the existing angular dead band; lateral and diagonal travel keep their actual left/right sign.
+                bool clamped = _fore ? a >= HipCenterDegrees : a <= HipCenterDegrees;
+                int side = theta > 0f ? 1 : theta < 0f ? -1 : _clampSide;
+                bool atHeadingCenter = a <= HipDeadBandDegrees || a >= 180f - HipDeadBandDegrees;
+                if (clamped && atHeadingCenter) side = _clampSide; else _clampSide = side;
+                float eff = side * (_fore ? Mathf.Min(a, HipCenterDegrees) : Mathf.Max(a, HipCenterDegrees));
+                if (!_hasHeading || dt <= 0f) _treeAngle = eff;
+                else _treeAngle = Mathf.DeltaAngle(0f, Mathf.MoveTowardsAngle(_treeAngle, eff, DirectionDegreesPerSecond * dt));
+                _hasHeading = true;
+            }
+
+            float rad = _treeAngle * Mathf.Deg2Rad;
+            _move = new Vector2(Mathf.Sin(rad), Mathf.Cos(rad));
+            _honest = HonestSpeedOf(mps, _treeAngle);
+            _rate = mps < StandSpeed || _honest < 0.01f ? 1f : CadenceBand.Clamp(mps / _honest);
+            WalkRingRadius = 0f;   // the AP-022 walk ring's readout; the 8-way tree has no ring radius
+            _animator.SetFloat(LocoSpeedId, mps);
+            _animator.SetFloat(MoveXId, _move.x);
+            _animator.SetFloat(MoveYId, _move.y);
+            _animator.SetFloat(LocoRateId, _rate);
+        }
+
+        /// <summary>
+        /// WP-082 R3 §4.1: the honest speed of the tree at (<paramref name="mps"/>, <paramref name="angle"/>) — Simple1D weights over
+        /// the slot thresholds (linear, clamped at the ends) × the two neighbouring direction children's angular weights; stand
+        /// slot S = 0, T = walk_fwd. Also keeps Σ w·T (the blend's cycle seconds) for the fallback cross-fade offsets.
+        /// </summary>
+        private float HonestSpeedOf(float mps, float angle)
+        {
+            if (!_ringsReady) { _blendCycle = 1f; return mps; }
+            int lo = 0;
+            float w = 0f;
+            if (mps >= _ringThreshold[3]) { lo = 2; w = 1f; }
+            else if (mps > _ringThreshold[0])
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    if (mps > _ringThreshold[i + 1]) continue;
+                    lo = i;
+                    float span = _ringThreshold[i + 1] - _ringThreshold[i];
+                    w = span > 1e-4f ? (mps - _ringThreshold[i]) / span : 1f;
+                    break;
+                }
+            }
+
+            float f = angle / 45f;
+            f -= Mathf.Floor(f / 8f) * 8f;
+            int j0 = (int)f;
+            if (j0 > 7) j0 = 7;
+            int j1 = (j0 + 1) & 7;
+            float wj = f - j0;
+            float num = 0f, den = 0f;
+            for (int s = 0; s < 2; s++)
+            {
+                int slot = lo + s;
+                float ws = s == 0 ? 1f - w : w;
+                if (ws <= 0f) continue;
+                if (slot == 0) { den += ws * _standCycle; continue; }
+                int b = (slot - 1) * 8;
+                num += ws * ((1f - wj) * _ringStride[b + j0] + wj * _ringStride[b + j1]);
+                den += ws * ((1f - wj) * _ringCycle[b + j0] + wj * _ringCycle[b + j1]);
+            }
+
+            _blendCycle = den > 1e-4f ? den : _standCycle;
+            return den > 1e-4f ? num / den : 0f;
+        }
+
+        /// <summary>
+        /// WP-082 R3 (§6–§8): the v4 event (top-down: no pivot / turn — <see cref="LocomotionV4Events.AimDriven"/>), its motion time
+        /// (<see cref="LocomotionV4.TimeParam"/> written before <see cref="LocomotionV4.ClipParam"/>, the same frame), and the exits.
+        /// </summary>
+        private void TickV4(Vector3 v, float mps, float dt)
+        {
+            _v4.AimDriven = !DD.Prototype.CameraSystem.CameraModeService.IsLookMode;
+            _v4.ContractLead = true;   // S-06 B3: never IsLocked(0) — the foot lock is closed at rest, every start read "left"
+            _v4.Tables = _v4Tables;
+            _v4.PhaseNow = CurrentLoopPhase();
+            // one frame per event: the AnyState transition reads it this update, None clears it the next (no trigger left armed)
+            int id = _v4.Feed(v, _commandedVelocity != null ? _commandedVelocity() : (Vector3?)null, transform.rotation, _referenceSpeed != null ? _referenceSpeed() : 0f,
+                false, _v4GaitSpeeds, dt);
+            if (id != LocomotionV4.None)
+            {
+                if (_hasV4Time && _v4Tables != null && _v4Tables.Has(id)) _v4Clock.Begin(id, _v4.EntryT, _v4Tables.Seconds(id), transform.position);
+                else _v4Clock.End();
+                _v4Exiting = _v4FadeIssued = false;
+                _v4Frames = 0;
+            }
+            else if (_v4Clock.Current != LocomotionV4Clock.Kind.None) TickV4Clock(mps, dt);
+
+            if (_hasV4Time) _animator.SetFloat(V4TimeId, _v4Clock.Current != LocomotionV4Clock.Kind.None ? _v4Clock.T : 0f);
+            _animator.SetInteger(V4ClipId, id);
+        }
+
+        private void TickV4Clock(float mps, float dt)
+        {
+            int id = _v4Clock.Id;
+            int hash = LocomotionV4.StateHash(id);
+            bool inTransition = _animator.IsInTransition(0);
+            bool current = _animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hash;
+            bool entering = inTransition && _animator.GetNextAnimatorStateInfo(0).shortNameHash == hash;
+            _v4Frames++;
+            if (_v4Exiting)
+            {
+                // the exit: the outgoing clip keeps its own rate through the blend; the fallback cross-fade when the motion-time state
+                // did not take its exit-time transition within a frame (LOCO-SOZLESME §2.4, [ölçülmedi])
+                if (!current && !entering) { _v4Clock.End(); _v4Exiting = false; return; }
+                _v4Clock.Coast(dt);
+                if (!_v4FadeIssued && !inTransition && _v4Frames > 2) CrossFadeToLocomotion(_v4ExitSeconds, _v4ExitOffset);
+                return;
+            }
+
+            // the state never came (no state for the clip, or the base layer was taken — hurt / death): no v4 time
+            if (!current && !entering && _v4Frames > 2) { _v4Clock.End(); return; }
+            LocomotionV4Clock.Step step = _v4Clock.Tick(_v4Tables, transform.position, mps, _v4.Deceleration, _v4Tables.ExitT(id), dt);
+            if (step == LocomotionV4Clock.Step.Cancel)
+            {
+                // §7.2: the body did not go (a wall) — back to Locomotion (the stand slot: no phase)
+                CrossFadeToLocomotion(V4CancelSeconds, 0f);
+            }
+            else if (step == LocomotionV4Clock.Step.Exit)
+            {
+                bool start = _v4Clock.Current == LocomotionV4Clock.Kind.Start;
+                _v4ExitOffset = start ? _v4Tables.ExitOffset(id) : 0f;
+                _v4ExitSeconds = start ? V4StartExitSeconds : V4StopExitSeconds;
+                _v4Exiting = true;
+                _v4FadeIssued = false;
+                _v4Frames = 0;
+            }
+            else if (_v4Clock.Current == LocomotionV4Clock.Kind.Stop && _v4.IsMoving)
+            {
+                // §8.4: commanded again during the stop (not a reversal, so no new start) — back to the loop at the stop pose's phase
+                CrossFadeToLocomotion(V4StopExitSeconds, _v4Tables.PhaseAt(id, _v4Clock.T));
+            }
+        }
+
+        /// <summary>
+        /// Base layer → Locomotion at a loop phase (normalised; converted to the state's seconds with the blend's cycle Σ w·T). The
+        /// outgoing clip keeps its own rate until the base layer has left it (V4Time is not dropped to 0 under the blend).
+        /// </summary>
+        private void CrossFadeToLocomotion(float seconds, float phase)
+        {
+            float cycle = _loco8 ? _blendCycle : 1f;
+            _animator.CrossFadeInFixedTime(LocomotionStateHash, seconds, 0, Mathf.Repeat(phase, 1f) * cycle);
+            _v4Exiting = true;
+            _v4FadeIssued = true;
+            _v4Frames = 0;
+        }
+
+        /// <summary>§8.3: the loop phase (0 = foot_l) of the pose now — the playing v4 clip's table, else the Locomotion state's normalised time.</summary>
+        private float CurrentLoopPhase()
+        {
+            if (_v4Clock.Current != LocomotionV4Clock.Kind.None && _v4Tables != null && _v4Tables.Has(_v4Clock.Id)) return _v4Tables.PhaseAt(_v4Clock.Id, _v4Clock.T);
+            if (!_animator.isInitialized) return 0f;
+            AnimatorStateInfo s = _animator.GetCurrentAnimatorStateInfo(0);
+            return s.shortNameHash == LocomotionStateHash ? s.normalizedTime - Mathf.Floor(s.normalizedTime) : 0f;
+        }
+
+        /// <summary>WP-082 R3: the parameters this controller answers — once per controller (the scan allocates the parameter array).</summary>
+        private void ScanParameters()
+        {
+            _scannedController = _animator != null ? _animator.runtimeAnimatorController : null;
+            _scannedInitialized = _animator != null && _animator.isInitialized;
+            bool was8 = _loco8;
+            _hasStill = _hasV4 = _hasLocoSpeed = _hasV4Time = false;
+            if (_scannedController != null)
+            {
+                foreach (AnimatorControllerParameter prm in _animator.parameters)
+                {
+                    if (prm.nameHash == StillId) _hasStill = true;
+                    else if (prm.nameHash == V4ClipId) _hasV4 = true;
+                    else if (prm.nameHash == LocoSpeedId) _hasLocoSpeed = true;
+                    else if (prm.nameHash == V4TimeId) _hasV4Time = true;
+                }
+            }
+
+            // a LocoSpeed controller is always fed on its own parameters (else its 1-D tree would sit in the stand slot); without
+            // the set's ring tables LocoRate stays 1 and the foot lock stays closed
+            _loco8 = _hasLocoSpeed;
+            if (_loco8 && !_ringsReady && !_warnedNoRings)
+            {
+                _warnedNoRings = true;
+                Debug.LogWarning("[PlayerSkinnedVisual] WP-082: the controller has " + CharacterAnimatorContract.LocoSpeed + " but the animation set has no 8-way ring tables — LocoRate 1, foot lock closed.");
+            }
+            if (_loco8 != was8) { _hasHeading = false; _fore = true; _hemiHold = 0f; _treeAngle = 0f; _clampSide = 1; }
+        }
+
+        /// <summary>
+        /// WP-082 R3 (§4.2, §7.1, §11): the set's locomotion tables into flat arrays, once — the 1-D thresholds, stride × k and
+        /// cycle seconds per ring child, the v4 tables by id and the v4 gait speeds (template × k; ≤ 0 = off → +∞).
+        /// </summary>
+        private void BindLocomotionTables()
+        {
+            _ringsReady = false;
+            _v4Tables = null;
+            CharacterAnimationSet.LocomotionTables t = _animation != null ? _animation.Locomotion : null;
+            if (t == null) return;
+            float k = t.heroStrideScale > 0.01f ? t.heroStrideScale : 1f;
+            if (t.HasRings)
+            {
+                int filled = 0;
+                for (int i = 0; i < _ringStride.Length; i++) { _ringStride[i] = 0f; _ringCycle[i] = 0f; }
+                for (int i = 0; i < t.loops.Count; i++)
+                {
+                    CharacterAnimationSet.LocoLoop l = t.loops[i];
+                    if (l == null || l.ringSlot < 1 || l.ringSlot > 3 || l.dirIndex < 0 || l.dirIndex > 7 || l.cycleSecondsNatural <= 0.01f) continue;
+                    int b = (l.ringSlot - 1) * 8 + l.dirIndex;
+                    if (_ringCycle[b] <= 0f) filled++;
+                    CharacterAnimationSet.Entry entry = _animation.Find(l.clip);
+                    // unitySpeedMps is measured on this Avatar at the imported clip's rate 1.
+                    // The controller's child timeScale changes cycle duration, not distance
+                    // per cycle. Use that measured hero distance once; template * k is only
+                    // the fallback when no valid imported measurement is available.
+                    float measuredStride = entry?.clip != null ? entry.unitySpeedMps * entry.clip.length : 0f;
+                    _ringStride[b] = measuredStride > 0f && !float.IsNaN(measuredStride) && !float.IsInfinity(measuredStride)
+                        ? measuredStride : l.strideCycleMTemplate * k;
+                    _ringCycle[b] = l.cycleSecondsNatural;
+                }
+
+                bool ordered = true;
+                for (int i = 0; i < 4; i++) _ringThreshold[i] = t.ringThresholdMps[i];
+                for (int i = 0; i < 3; i++) if (_ringThreshold[i + 1] <= _ringThreshold[i]) ordered = false;
+                _standCycle = _ringCycle[0] > 0f ? _ringCycle[0] : 1f;   // walk_fwd (§2.1 slot 0)
+                _ringsReady = filled == 24 && ordered;
+            }
+
+            if (t.v4 != null && t.v4.Count > 0) _v4Tables = new LocomotionV4Tables(t);
+            if (t.v4GaitSpeedsMpsTemplate != null && t.v4GaitSpeedsMpsTemplate.Length >= _v4GaitSpeeds.Length)
+            {
+                for (int g = 0; g < _v4GaitSpeeds.Length; g++)
+                {
+                    float s = t.v4GaitSpeedsMpsTemplate[g];
+                    _v4GaitSpeeds[g] = s > 0f ? s * k : float.PositiveInfinity;   // jog in R3: never chosen
+                }
+            }
         }
 
         /// <summary>WP-071 MUST-3/4: a ring's contact speed along a move direction (fwd / back by |y|, the strafe side by |x|).</summary>
@@ -966,16 +1410,25 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>
-        /// WP-071 MUST-4 (e): the foot-lock gate — moving, and the dominant ring child (walk inside the ring, run past the halfway to the run
-        /// ring) plays at ≤ CadenceBand.LockMaxRate with a slide share ≤ <see cref="LockMaxSlide"/>.
+        /// The foot-lock gate. WP-082 R3 (LOCO-SOZLESME §10, the 8-way tree): moving, the base layer in Locomotion and not in a
+        /// transition (closed through every v4 state — AP-026 runtime_foot_ik false), LocoRate ≤ CadenceBand.LockMaxRate and the slide
+        /// share ≤ CadenceBand.SlideTopDown. WP-071 MUST-4 (e), the AP-022 4-way controller: the dominant ring child (walk inside
+        /// the ring, run past the halfway to the run ring) plays at ≤ CadenceBand.LockMaxRate with a slide share ≤ <see cref="LockMaxSlide"/>.
         /// </summary>
         private bool LockGateOpen()
         {
+            if (_loco8)
+            {
+                if (!_ringsReady || _mps < StillSpeed || _move.sqrMagnitude < 0.25f || !_animator.isInitialized) return false;
+                if (_animator.IsInTransition(0) || _animator.GetCurrentAnimatorStateInfo(0).shortNameHash != LocomotionStateHash) return false;
+                return _rate <= CadenceBand.LockMaxRate && CadenceBand.SlideFraction(_mps, _honest, _rate) <= CadenceBand.SlideTopDown;
+            }
+
             if (_move.sqrMagnitude <= 0.004f || _mps < StillSpeed || _animation == null) return false;
             float reference = _animation.LocomotionReferenceSpeed;
             float walk = RingAlong(_move, _walkSpeed), run = RingAlong(_move, _runSpeed);
             float speed01 = _mps / reference;
-            float runRadius = RunRingRadius(_move);   // D-1: run_back sits at the backward multiplier
+            float runRadius = RunRingRadius(_move);   // D-1: run_back sits at the backward multiplier (×0.85)
             bool runDominant = speed01 > 0.5f * (walk / reference + runRadius);
             float spd = runDominant ? run : walk;
             float scale = runDominant ? RunChildTimeScale(reference, spd, runRadius) : ChildTimeScale(reference, spd);
@@ -992,14 +1445,15 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>
-        /// WP-071 D-1 (C-00 01.10, user: backward ×0.65): a run child at <paramref name="radius"/> of the reference (run_back at
-        /// PlayerConfigSection.BackwardSpeedMultiplier) — its clip rate at that radius is radius × time scale, kept inside the cadence band.
+        /// WP-071 D-1 (C-00 01.10, user: the backward multiplier — today ×0.85, PlayerConfigSection.BackwardSpeedMultiplier; S-06 B2):
+        /// a run child at <paramref name="radius"/> of the reference (run_back at PlayerConfigSection.BackwardSpeedMultiplier) — its
+        /// clip rate at that radius is radius × time scale, kept inside the cadence band. AP-022 4-way controller only.
         /// </summary>
         public static float RunChildTimeScale(float referenceSpeed, float clipSpeedMps, float radius) => Mathf.Min(CadenceBand.Max / Mathf.Max(0.1f, radius), ChildTimeScale(referenceSpeed, clipSpeedMps));
 
         /// <summary>
         /// WP-071 D-1: the run ring's radius along a move direction — the motor's backward scale (S-02 PlayerMotor.BackwardScale:
-        /// lerp(1, PlayerConfigSection.BackwardSpeedMultiplier, the backward share)): 1 forward / side, 0.65 straight back, ≈ 0.75 at 45° back.
+        /// lerp(1, PlayerConfigSection.BackwardSpeedMultiplier, the backward share)): 1 forward / side, 0.85 straight back, ≈ 0.89 at 45° back.
         /// </summary>
         public static float RunRingRadius(Vector2 move)
         {

@@ -1,0 +1,399 @@
+{
+ "schema": "WP-082 R3 hero v2 provenance (E1 unity-specialist, 07.10.2026)",
+ "package": "AP-024 hero v2 \"Kirik Muhur\"",
+ "manifest": {
+  "path": "AP-024/manifest/AP024-manifest-v007.json",
+  "sha256": "a01c76b2a9fadda498b406f1d9358ae2face83b66b581df0eb79b69e4ec2e232",
+  "sha256sums": "AP-024/manifest/SHA256SUMS-v007",
+  "sha256sums_sha256": "0242fa3d6731cccae9237cc34d148f16cd78dc37cd7c997b6373334720597cfb",
+  "skins_note": "D5 (manifest v007): PlayerSkin 0 = v003 BaseColor (D4: kept), 1 = skin2 Steel/Indigo, 2 = skin3 olive-moss/cream; same atlas/UVs",
+  "note": "AP-024D D6: exports/v004 Hero_v2_TD_LOD0..3 (PlayerRig + Player_Body_LOD<n> each) = the v003 data; LOD0 avatar source, LOD1-3 rig fragments re-bound by bone name"
+ },
+ "data_base": {
+  "manifest": "AP-024/manifest/AP024-manifest-v005.json",
+  "sha256": "e029aa1b2b3d0ff393fb64a6a47cac078d43e60fab17d20f0e35fd0373334c81",
+  "export": "AP-024/exports/v003"
+ },
+ "files": [
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Hero_v2_TD_LOD0.fbx",
+   "source": "AP-024/exports/v004/Hero_v2_TD_LOD0.fbx",
+   "sha256": "1176e99b7bc2b5626e34ed264f5c6da7efe69d9df833b608cc8e7468baa14f06",
+   "bytes": 2923884
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Hero_v2_TD_LOD1.fbx",
+   "source": "AP-024/exports/v004/Hero_v2_TD_LOD1.fbx",
+   "sha256": "e9aed8cf914a7e63e4c60aa92dc45c5ca6d2fe3e2579dcbd254007cffd729baf",
+   "bytes": 1685244
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Hero_v2_TD_LOD2.fbx",
+   "source": "AP-024/exports/v004/Hero_v2_TD_LOD2.fbx",
+   "sha256": "2b8722b1d8259601edba7059b0a80fa01847d2880e7a0b60fb0a27ecdb68dd9d",
+   "bytes": 892924
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Hero_v2_TD_LOD3.fbx",
+   "source": "AP-024/exports/v004/Hero_v2_TD_LOD3.fbx",
+   "sha256": "8cb6f478c0439d32c2070c94ef0d1c7d747b67c97ff94148047b2a3dea97a1b2",
+   "bytes": 463580
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_BaseColor.png",
+   "source": "AP-024/exports/v003/Textures/Hero_v2_BaseColor.png",
+   "sha256": "5d43c3e615f5a006b99764836f33af3bf476fc4c5ce8da98560cfef99507ad31",
+   "bytes": 5536206
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_Normal.png",
+   "source": "AP-024/exports/v003/Textures/Hero_v2_Normal.png",
+   "sha256": "d90f28083061c3e36cbce2dc8fab28c51ed12ebd5640009473f552b966e00ed5",
+   "bytes": 5216228
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_ORM.png",
+   "source": "AP-024/exports/v003/Textures/Hero_v2_ORM.png",
+   "sha256": "4d71792da7d0775ab28d1ec65350c69fc493379504de4782fbe8f31dc96a3ca7",
+   "bytes": 4858394
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_skin2_BaseColor.png",
+   "source": "AP-024/exports/v004/Textures/Hero_v2Skin2_BaseColor.png",
+   "sha256": "e8c62aaf9bde8b20cc2d641722e4ccef22ba28db8accbf48de3164ce6273cb99",
+   "bytes": 4976113
+  },
+  {
+   "unity": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_skin3_BaseColor.png",
+   "source": "AP-024/exports/v004/Textures/Hero_v2Skin3_BaseColor.png",
+   "sha256": "a8383d9ad359acf3bac278158ca00a1ec787f78e26a4fd1165dd7f5a7996c021",
+   "bytes": 4865812
+  }
+ ],
+ "lod_triangles_blender": [
+  34144,
+  17802,
+  7860,
+  2958
+ ],
+ "bones_source": {
+  "path": "AP-024/validation/hero_rig_final_clean_bones.json",
+  "sha256": "00c2decd0e0bbad8a4f052b627927433df7ffaeeb36621b9b5178a1c81de747d"
+ },
+ "bones": [
+  [
+   "Root",
+   null
+  ],
+  [
+   "Hips",
+   "Root"
+  ],
+  [
+   "Spine",
+   "Hips"
+  ],
+  [
+   "Chest",
+   "Spine"
+  ],
+  [
+   "UpperChest",
+   "Chest"
+  ],
+  [
+   "Neck",
+   "UpperChest"
+  ],
+  [
+   "Head",
+   "Neck"
+  ],
+  [
+   "jaw",
+   "Head"
+  ],
+  [
+   "fp_camera",
+   "Head"
+  ],
+  [
+   "sec_band_1",
+   "Head"
+  ],
+  [
+   "sec_band_2",
+   "sec_band_1"
+  ],
+  [
+   "LeftShoulder",
+   "UpperChest"
+  ],
+  [
+   "LeftUpperArm",
+   "LeftShoulder"
+  ],
+  [
+   "LeftLowerArm",
+   "LeftUpperArm"
+  ],
+  [
+   "LeftHand",
+   "LeftLowerArm"
+  ],
+  [
+   "LeftThumb1",
+   "LeftHand"
+  ],
+  [
+   "LeftThumb2",
+   "LeftThumb1"
+  ],
+  [
+   "LeftThumb3",
+   "LeftThumb2"
+  ],
+  [
+   "LeftIndex1",
+   "LeftHand"
+  ],
+  [
+   "LeftIndex2",
+   "LeftIndex1"
+  ],
+  [
+   "LeftIndex3",
+   "LeftIndex2"
+  ],
+  [
+   "LeftMiddle1",
+   "LeftHand"
+  ],
+  [
+   "LeftMiddle2",
+   "LeftMiddle1"
+  ],
+  [
+   "LeftMiddle3",
+   "LeftMiddle2"
+  ],
+  [
+   "LeftRing1",
+   "LeftHand"
+  ],
+  [
+   "LeftRing2",
+   "LeftRing1"
+  ],
+  [
+   "LeftRing3",
+   "LeftRing2"
+  ],
+  [
+   "LeftPinky1",
+   "LeftHand"
+  ],
+  [
+   "LeftPinky2",
+   "LeftPinky1"
+  ],
+  [
+   "LeftPinky3",
+   "LeftPinky2"
+  ],
+  [
+   "socket_mag_l",
+   "LeftHand"
+  ],
+  [
+   "mag_socket",
+   "socket_mag_l"
+  ],
+  [
+   "prop_l",
+   "LeftHand"
+  ],
+  [
+   "socket_weapon_l",
+   "LeftHand"
+  ],
+  [
+   "lowerarm_twist_01_l",
+   "LeftLowerArm"
+  ],
+  [
+   "lowerarm_twist_02_l",
+   "LeftLowerArm"
+  ],
+  [
+   "upperarm_twist_l",
+   "LeftUpperArm"
+  ],
+  [
+   "RightShoulder",
+   "UpperChest"
+  ],
+  [
+   "RightUpperArm",
+   "RightShoulder"
+  ],
+  [
+   "RightLowerArm",
+   "RightUpperArm"
+  ],
+  [
+   "RightHand",
+   "RightLowerArm"
+  ],
+  [
+   "RightThumb1",
+   "RightHand"
+  ],
+  [
+   "RightThumb2",
+   "RightThumb1"
+  ],
+  [
+   "RightThumb3",
+   "RightThumb2"
+  ],
+  [
+   "RightIndex1",
+   "RightHand"
+  ],
+  [
+   "RightIndex2",
+   "RightIndex1"
+  ],
+  [
+   "RightIndex3",
+   "RightIndex2"
+  ],
+  [
+   "RightMiddle1",
+   "RightHand"
+  ],
+  [
+   "RightMiddle2",
+   "RightMiddle1"
+  ],
+  [
+   "RightMiddle3",
+   "RightMiddle2"
+  ],
+  [
+   "RightRing1",
+   "RightHand"
+  ],
+  [
+   "RightRing2",
+   "RightRing1"
+  ],
+  [
+   "RightRing3",
+   "RightRing2"
+  ],
+  [
+   "RightPinky1",
+   "RightHand"
+  ],
+  [
+   "RightPinky2",
+   "RightPinky1"
+  ],
+  [
+   "RightPinky3",
+   "RightPinky2"
+  ],
+  [
+   "socket_weapon_r",
+   "RightHand"
+  ],
+  [
+   "prop_r",
+   "RightHand"
+  ],
+  [
+   "lowerarm_twist_01_r",
+   "RightLowerArm"
+  ],
+  [
+   "lowerarm_twist_02_r",
+   "RightLowerArm"
+  ],
+  [
+   "upperarm_twist_r",
+   "RightUpperArm"
+  ],
+  [
+   "socket_back",
+   "UpperChest"
+  ],
+  [
+   "LeftUpperLeg",
+   "Hips"
+  ],
+  [
+   "LeftLowerLeg",
+   "LeftUpperLeg"
+  ],
+  [
+   "LeftFoot",
+   "LeftLowerLeg"
+  ],
+  [
+   "LeftToes",
+   "LeftFoot"
+  ],
+  [
+   "thigh_twist_l",
+   "LeftUpperLeg"
+  ],
+  [
+   "RightUpperLeg",
+   "Hips"
+  ],
+  [
+   "RightLowerLeg",
+   "RightUpperLeg"
+  ],
+  [
+   "RightFoot",
+   "RightLowerLeg"
+  ],
+  [
+   "RightToes",
+   "RightFoot"
+  ],
+  [
+   "thigh_twist_r",
+   "RightUpperLeg"
+  ],
+  [
+   "sec_sash_1",
+   "Hips"
+  ],
+  [
+   "sec_sash_2",
+   "sec_sash_1"
+  ],
+  [
+   "sec_sash_3",
+   "sec_sash_2"
+  ],
+  [
+   "sec_pouch_1",
+   "Hips"
+  ],
+  [
+   "sec_gourd_1",
+   "Hips"
+  ]
+ ],
+ "validation": [
+  {
+   "path": "AP-024/validation/ap024d_fbx_roundtrip_split.json",
+   "sha256": "1547284d3e7ef3674d14eca1eeaeec492bc9915b0db801dd2db9e6b35953054b"
+  }
+ ]
+}

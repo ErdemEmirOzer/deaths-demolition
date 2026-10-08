@@ -120,35 +120,59 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.LocomotionState, loco.name);
             var tree = loco.motion as BlendTree;
             Assert.IsNotNull(tree);
-            Assert.AreEqual(BlendTreeType.FreeformDirectional2D, tree.blendType);
-            Assert.AreEqual(9, tree.children.Length);   // WP-032B: idle + walk ring ×4 + run ring ×4
-            Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.LocoRate);
-            float reference = set.LocomotionReferenceSpeed;
-            // WP-071 MUST-3 (P-06 AD refuter B): the centre is the generated static stand at the walk children's time scale; the idle
-            // breath (AP-022 120 f) plays in its own base state on Still, at rate 1
-            Assert.AreEqual(C.PlayerStandStill, tree.children[0].motion.name, "merkez: statik duruş (idle f0)");
-            Assert.AreEqual(0f, tree.children[0].position.magnitude, 1e-4f, "statik duruş merkezde");
-            Assert.AreEqual(PlayerSkinnedVisual.ChildTimeScale(reference, set.SpeedOf(C.PlayerWalkFwd)), tree.children[0].timeScale, 1e-4f, "statik duruş yürüme çocuklarının ölçeğinde");
-            AnimatorState breath = null;
-            foreach (ChildAnimatorState st in c.layers[0].stateMachine.states) if (st.state.name == C.StillState) breath = st.state;
-            Assert.IsNotNull(breath, "Idle_Breath durumu yok");
-            Assert.AreEqual(set.Clip(C.PlayerIdle), breath.motion, "nefes AP-022 idle (hız 1, LocoRate'ten bağımsız)");
-            Assert.IsFalse(breath.speedParameterActive);
-            foreach (ChildMotion ch in tree.children)
+            if (set.Locomotion.HasRings)
             {
-                if (ch.motion.name == C.PlayerStandStill) continue;
-                float clipSpeed = set.SpeedOf(ch.motion.name);
-                // WP-071 K3: the four run cycles are capped at the cadence band (the walk ring keeps its honest scale)
-                bool runChild = ch.motion.name.Contains("_run_");
-                // WP-071 D-1: run_back at the backward multiplier (PlayerConfigSection.BackwardSpeedMultiplier), the other runs on the unit circle
-                float runRadius = ch.motion.name == C.PlayerRunBack ? DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier : 1f;
-                float expected = clipSpeed > 0f ? (runChild ? PlayerSkinnedVisual.RunChildTimeScale(reference, clipSpeed, runRadius) : PlayerSkinnedVisual.ChildTimeScale(reference, clipSpeed)) : 1f;
-                Assert.AreEqual(expected, ch.timeScale, 1e-4f, ch.motion.name + " timeScale");
-                bool run = ch.motion.name.Contains("_run_");
-                float radius = ch.position.magnitude;
-                if (run) Assert.AreEqual(runRadius, radius, 1e-4f, ch.motion.name + " koşu halkası (run_back: geri çarpanında)");
-                else if (clipSpeed > 0f) Assert.AreEqual(Mathf.Clamp(clipSpeed / reference, 0.2f, 0.9f), radius, 1e-4f, ch.motion.name + " yürüyüş halkası kendi hızında");
-                else Assert.AreEqual(0f, radius, 1e-4f, "idle merkezde");
+                // WP-082 R3 (LOCO-SOZLESME §2): the AP-026 hero tree — Simple1D on LocoSpeed: the static stand (AP-026 idle_03 f0) at 0, then
+                // Walk8 / Run8 / Sprint8 (8-way SimpleDirectional2D each; checked ring by ring in ArtCharacterLocomotionTreeTests); the breath
+                // plays idle_03 in its own state, at rate 1.
+                Assert.AreEqual(BlendTreeType.Simple1D, tree.blendType);
+                Assert.AreEqual(C.LocoSpeed, tree.blendParameter);
+                Assert.AreEqual(4, tree.children.Length, "duruş + 3 halka");
+                Assert.AreEqual(C.PlayerStandStill, tree.children[0].motion.name, "duruş: statik (idle_03 f0)");
+                Assert.AreEqual(0f, tree.children[0].threshold, 1e-6f);
+                var walk8 = (BlendTree)tree.children[1].motion;
+                Assert.AreEqual(walk8.children[0].timeScale, tree.children[0].timeScale, 1e-4f, "statik duruş walk_fwd ölçeğinde (döngü süresi walk ile eşit)");
+                Assert.AreEqual(set.Clip(C.PlayerWalk[0]).length, ((AnimationClip)tree.children[0].motion).length, 1e-3f, "duruş uzunluğu = walk_fwd");
+                for (int i = 1; i < 4; i++) Assert.AreEqual(BlendTreeType.SimpleDirectional2D, ((BlendTree)tree.children[i].motion).blendType);
+                AnimatorState breath8 = null;
+                foreach (ChildAnimatorState st in c.layers[0].stateMachine.states) if (st.state.name == C.StillState) breath8 = st.state;
+                Assert.IsNotNull(breath8, "Idle_Breath durumu yok");
+                Assert.AreEqual(set.Clip(C.PlayerIdleAp026), breath8.motion, "nefes AP-026 idle_03 (hız 1)");
+                Assert.IsFalse(breath8.speedParameterActive);
+                Params(c, C.LocoSpeed, LocomotionV4.TimeParam);
+            }
+            else
+            {
+                Assert.AreEqual(BlendTreeType.FreeformDirectional2D, tree.blendType);
+                Assert.AreEqual(9, tree.children.Length);   // WP-032B: idle + walk ring ×4 + run ring ×4
+                Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.LocoRate);
+                float reference = set.LocomotionReferenceSpeed;
+                // WP-071 MUST-3 (P-06 AD refuter B): the centre is the generated static stand at the walk children's time scale; the idle
+                // breath (AP-022 120 f) plays in its own base state on Still, at rate 1
+                Assert.AreEqual(C.PlayerStandStill, tree.children[0].motion.name, "merkez: statik duruş (idle f0)");
+                Assert.AreEqual(0f, tree.children[0].position.magnitude, 1e-4f, "statik duruş merkezde");
+                Assert.AreEqual(PlayerSkinnedVisual.ChildTimeScale(reference, set.SpeedOf(C.PlayerWalkFwd)), tree.children[0].timeScale, 1e-4f, "statik duruş yürüme çocuklarının ölçeğinde");
+                AnimatorState breath = null;
+                foreach (ChildAnimatorState st in c.layers[0].stateMachine.states) if (st.state.name == C.StillState) breath = st.state;
+                Assert.IsNotNull(breath, "Idle_Breath durumu yok");
+                Assert.AreEqual(set.Clip(C.PlayerIdle), breath.motion, "nefes AP-022 idle (hız 1, LocoRate'ten bağımsız)");
+                Assert.IsFalse(breath.speedParameterActive);
+                foreach (ChildMotion ch in tree.children)
+                {
+                    if (ch.motion.name == C.PlayerStandStill) continue;
+                    float clipSpeed = set.SpeedOf(ch.motion.name);
+                    // WP-071 K3: the four run cycles are capped at the cadence band (the walk ring keeps its honest scale)
+                    bool runChild = ch.motion.name.Contains("_run_");
+                    // WP-071 D-1: run_back at the backward multiplier (PlayerConfigSection.BackwardSpeedMultiplier), the other runs on the unit circle
+                    float runRadius = ch.motion.name == C.PlayerRunBack ? DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier : 1f;
+                    float expected = clipSpeed > 0f ? (runChild ? PlayerSkinnedVisual.RunChildTimeScale(reference, clipSpeed, runRadius) : PlayerSkinnedVisual.ChildTimeScale(reference, clipSpeed)) : 1f;
+                    Assert.AreEqual(expected, ch.timeScale, 1e-4f, ch.motion.name + " timeScale");
+                    bool run = ch.motion.name.Contains("_run_");
+                    float radius = ch.position.magnitude;
+                    if (run) Assert.AreEqual(runRadius, radius, 1e-4f, ch.motion.name + " koşu halkası (run_back: geri çarpanında)");
+                    else if (clipSpeed > 0f) Assert.AreEqual(Mathf.Clamp(clipSpeed / reference, 0.2f, 0.9f), radius, 1e-4f, ch.motion.name + " yürüyüş halkası kendi hızında");
+                    else Assert.AreEqual(0f, radius, 1e-4f, "idle merkezde");
+                }
             }
 
             // WP-071 B4b (K8): the v3 generic weapon states (Weapon == 4) + one override controller per AnimSet (weapon slots only)
@@ -518,9 +542,9 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(170, player.Clips.Count);   // WP-071: + AP-022 player locomotion 10 Assert.AreEqual(62, zombie.Clips.Count);   // WP-071 MUST-I1: + AP-022 zombie locomotion 5   // + TP Special family 12; WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
+            Assert.AreEqual(player.Locomotion.HasRings ? 291 : 170, player.Clips.Count);   // WP-082 R3: + AP-026 locomotion 121 (AP026-loco-manifest.json)   // WP-071: + AP-022 player locomotion 10 Assert.AreEqual(62, zombie.Clips.Count);   // WP-071 MUST-I1: + AP-022 zombie locomotion 5   // + TP Special family 12; WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
-            var m = Manifest();
+            var m = ArtAnimationClipContract.ManifestAll();   // WP-082 R3: AP009 + AP-026 locomotion rows
             foreach (var set in new[] { player, zombie })
             foreach (CharacterAnimationSet.Entry e in set.Clips)
             {
@@ -531,7 +555,8 @@ namespace DD.Art.Tests.EditMode
                 Assert.AreEqual(m[e.name].additive, e.additive);
             }
 
-            Assert.AreEqual(player.Clip(C.PlayerIdle), player.Idle); Assert.AreEqual(player.Clip(C.PlayerWalkFwd), player.Walk);
+            if (player.Locomotion.HasRings) { Assert.AreEqual(player.Clip(C.PlayerIdleAp026), player.Idle); Assert.AreEqual(player.Clip(C.PlayerWalk[0]), player.Walk); }   // WP-082 R3
+            else { Assert.AreEqual(player.Clip(C.PlayerIdle), player.Idle); Assert.AreEqual(player.Clip(C.PlayerWalkFwd), player.Walk); }
             Assert.AreEqual(zombie.Clip(C.ZombieIdleSway), zombie.Idle); Assert.AreEqual(zombie.Clip(C.ZombieShambleA), zombie.Walk);
             Assert.IsTrue(player.Source.Contains("AP-009") && zombie.Source.Contains("AP-009"));
         }

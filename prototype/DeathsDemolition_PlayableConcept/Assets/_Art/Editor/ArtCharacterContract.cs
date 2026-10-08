@@ -38,9 +38,32 @@ namespace DD.Art.Pipeline.EditorTools
         public const string PlayerFolder = ArtImportContract.CharactersRoot + "/Player";
         public const string ZombieFolder = ArtImportContract.CharactersRoot + "/Zombie";
         public const string ClipsFolderName = "Clips";
-        public const string PlayerAvatarSource = PlayerFolder + "/player_base.fbx";
+        /// <summary>
+        /// WP-082 R3 (C-00 07.10) · hero v2 "Kırık Mühür" (AP-024 v003 data, P-06 AP-024D D6 = exports/v004: four FBX
+        /// <c>Hero_v2_TD_LOD0..3</c>, each the armature <c>PlayerRig</c> + its own <c>Player_Body_LOD&lt;n&gt;</c>, 77 bones, no
+        /// separate head) is the player body. LOD0 is the avatar source; LOD1–3 are rig fragments (Generic, no avatar) whose
+        /// renderers the prefab builder re-binds by bone name onto the LOD0 skeleton.
+        /// </summary>
+        public const string HeroV2Folder = PlayerFolder + "/HeroV2";
+        public const int HeroV2LodCount = 4;
+        public static string HeroV2LodFile(int lod) => HeroV2Folder + "/Hero_v2_TD_LOD" + lod + ".fbx";
+        public const string PlayerAvatarSource = HeroV2Folder + "/Hero_v2_TD_LOD0.fbx";
+        /// <summary>
+        /// WP-082 R3 · the AP-022 rig v002 body (pre-hero). Kept ONLY for the first-person viewmodel: FP copies this model and draws
+        /// the AP-022 FP arms on its skeleton, bit-identical to before (FP is out of the R3 TD scope; not re-targeted to the hero).
+        /// Still a character model on the v1.1 contract with its own avatar (the FP Animator needs it).
+        /// </summary>
+        public const string LegacyPlayerModel = PlayerFolder + "/player_base.fbx";
         public const string ZombieAvatarSource = ZombieFolder + "/zombie_body_A.fbx";
         public const int BoneCount = 56;
+        /// <summary>WP-082 R3 · hero v2: the 77 PlayerRig bones under the armature (Root + 52 human + jaw + twist ×8 + fp_camera + 7 sockets + 7 sec_*).</summary>
+        public const int HeroV2BoneCount = 77;
+        /// <summary>WP-082 R3 · hero v2 sockets (AP-024 README): name → parent bone.</summary>
+        public static readonly string[,] HeroV2SocketParents =
+        {
+            { "socket_weapon_r", "RightHand" }, { "socket_weapon_l", "LeftHand" }, { "socket_mag_l", "LeftHand" }, { "mag_socket", "socket_mag_l" },
+            { "prop_r", "RightHand" }, { "prop_l", "LeftHand" }, { "socket_back", "UpperChest" }, { "fp_camera", "Head" }
+        };
         /// <summary>WP-032F (AP-006C): secondary-motion chain bones `sec_&lt;chain&gt;_&lt;i&gt;` — extra transforms outside the human map, never keyed by the clips. Player 7 (sash ×3, pouch, gourd, band ×2), zombie 17 (mino ×9, hair ×2, queue ×2, hachimaki ×2, bandage ×2).</summary>
         public const int PlayerSecondaryBones = 7;
         public const int ZombieSecondaryBones = 17;
@@ -74,7 +97,16 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool IsRigFragment(string assetPath)
         {
-            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(ZombieFolder + "/Faces/", StringComparison.Ordinal);
+            if (assetPath == null) return false;
+            string p = assetPath.Replace('\\', '/');
+            return p.StartsWith(ZombieFolder + "/Faces/", StringComparison.Ordinal) || IsHeroV2LodFragment(p);
+        }
+
+        /// <summary>WP-082 R3 · the hero's LOD1–3 files: Generic / no avatar (their meshes are re-bound to the LOD0 skeleton by bone name).</summary>
+        public static bool IsHeroV2LodFragment(string assetPath)
+        {
+            for (int lod = 1; lod < HeroV2LodCount; lod++) if (assetPath == HeroV2LodFile(lod)) return true;
+            return false;
         }
 
         public static bool IsClip(string assetPath)
@@ -85,7 +117,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsAvatarSource(string assetPath)
         {
-            return assetPath == PlayerAvatarSource || assetPath == ZombieAvatarSource;
+            return assetPath == PlayerAvatarSource || assetPath == ZombieAvatarSource || assetPath == LegacyPlayerModel;   // WP-082 R3: the FP model keeps its own avatar
         }
 
         /// <summary>The avatar source file a character FBX copies from (itself for the two sources).</summary>
@@ -157,11 +189,69 @@ namespace DD.Art.Pipeline.EditorTools
             return true;
         }
 
+        // WP-082 R3: reviewed source-only one-clip exception; actual import requires a separate grant.
+        private const string PinnedHeroCopyClipPath = "Assets/_Art/Characters/Animations/AP022_tp_lmg_2_reload_tac_v008.fbx";
+        private const string PinnedHeroCopyClipGuid = "91d21fc08d3234866bef95abc4b6c473";
+        private const string PinnedHeroReferencePath = "Assets/_Art/Characters/Player/HeroV2/Hero_v2_TD_LOD0.fbx";
+        private const string PinnedHeroReferenceGuid = "96b52215e71f840c4a81e3b4bffddc89";
+        private const long PinnedHeroReferenceLocalId = 9000000L;
+        private const string PinnedHeroReferenceDependency = "bc7caa10d859f4e5ca5ef00f81dc6da4";
+
+        private static bool UsesPinnedHeroCopyAvatar(string path)
+        {
+            return string.Equals(path, PinnedHeroCopyClipPath, StringComparison.Ordinal)
+                && string.Equals(AssetDatabase.AssetPathToGUID(path), PinnedHeroCopyClipGuid, StringComparison.Ordinal);
+        }
+        private static bool HasExactTemplateHumanMapping(Avatar avatar)
+        {
+            HumanBone[] template = TemplateHumanBones();
+            if (HumanoidBoneCount != 52 || template.Length != 52)
+                throw new InvalidOperationException("Pinned exception requires existing 52-bone template");
+            var expected = new List<string>(template.Length);
+            foreach (HumanBone bone in template) expected.Add(bone.humanName + "=" + bone.boneName);
+            expected.Sort(StringComparer.Ordinal);
+            List<string> actual = HumanMapping(avatar);
+            return actual.Count == 52 && string.Equals(string.Join("\n", actual), string.Join("\n", expected), StringComparison.Ordinal);
+        }
+        private static Avatar ExplicitPinnedHeroAvatar()
+        {
+            if (!string.Equals(AssetDatabase.AssetPathToGUID(PinnedHeroReferencePath), PinnedHeroReferenceGuid, StringComparison.Ordinal))
+                throw new InvalidOperationException("Pinned Hero reference GUID mismatch");
+            if (!string.Equals(AssetDatabase.GetAssetDependencyHash(PinnedHeroReferencePath).ToString(), PinnedHeroReferenceDependency, StringComparison.Ordinal))
+                throw new InvalidOperationException("Pinned Hero reference dependency mismatch");
+            Avatar avatar = AssetDatabase.LoadAssetAtPath<Avatar>(PinnedHeroReferencePath);
+            string guid; long localId;
+            if (avatar == null || !string.Equals(AssetDatabase.GetAssetPath(avatar), PinnedHeroReferencePath, StringComparison.Ordinal)
+                || !AssetDatabase.TryGetGUIDAndLocalFileIdentifier(avatar, out guid, out localId)
+                || !string.Equals(guid, PinnedHeroReferenceGuid, StringComparison.Ordinal) || localId != PinnedHeroReferenceLocalId
+                || !string.Equals(avatar.name, "Hero_v2_TD_LOD0Avatar", StringComparison.Ordinal)
+                || !avatar.isValid || !avatar.isHuman || !HasExactTemplateHumanMapping(avatar))
+                throw new InvalidOperationException("Pinned Hero identity/human mapping invalid");
+            return avatar;
+        }
+        private static void ValidatePinnedHeroCopyReference(ModelImporter importer, List<string> violations)
+        {
+            Avatar expected;
+            try { expected = ExplicitPinnedHeroAvatar(); }
+            catch (InvalidOperationException exception) { violations.Add("sourceAvatar: " + exception.Message); return; }
+            Avatar actual = importer.sourceAvatar; string guid; long localId;
+            if (actual == null || actual != expected
+                || !string.Equals(AssetDatabase.GetAssetPath(actual), PinnedHeroReferencePath, StringComparison.Ordinal)
+                || !AssetDatabase.TryGetGUIDAndLocalFileIdentifier(actual, out guid, out localId)
+                || !string.Equals(guid, PinnedHeroReferenceGuid, StringComparison.Ordinal) || localId != PinnedHeroReferenceLocalId
+                || !actual.isValid || !actual.isHuman || !HasExactTemplateHumanMapping(actual))
+                violations.Add("sourceAvatar: explicit pinned Hero Avatar required");
+        }
+
         /// <summary>Writes the v1.1 rules into a character importer. Returns true if anything changed.</summary>
         public static bool Apply(ModelImporter importer)
         {
-            bool changed = ArtImportContract.Apply(importer);   // v1 first; the lines below override its animation/blend-shape defaults
             string path = importer.assetPath;
+            bool copyHero = UsesPinnedHeroCopyAvatar(path);
+            Avatar pinnedHero = copyHero ? ExplicitPinnedHeroAvatar() : null;
+            bool changed = copyHero
+                ? ArtImportContract.ApplyModelPreservingAnimationState(importer)
+                : ArtImportContract.Apply(importer);   // Default assets retain v1 animation defaults.
             bool clip = IsClip(path);
             bool fragment = IsRigFragment(path);   // WP-084: Generic, no avatar
 
@@ -172,14 +262,27 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.importBlendShapes, false, v => importer.importBlendShapes = v);
             changed |= Set(importer.importVisibility, false, v => importer.importVisibility = v);
 
-            changed |= Set(importer.avatarSetup, fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel, v => importer.avatarSetup = v);
-            if (importer.sourceAvatar != null)
+            if (copyHero)
             {
-                importer.sourceAvatar = null;
-                changed = true;
+                changed |= Set(importer.avatarSetup, ModelImporterAvatarSetup.CopyFromOther, v => importer.avatarSetup = v);
+                if (importer.sourceAvatar != pinnedHero)
+                {
+                    importer.sourceAvatar = pinnedHero;
+                    changed = true;
+                }
+                // Hero source HumanDescription is authoritative; no local rewrite here.
             }
-
-            if (!fragment) changed |= ApplyHumanDescription(importer);
+            else
+            {
+                changed |= Set(importer.avatarSetup, fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel, v => importer.avatarSetup = v);
+                if (importer.sourceAvatar != null)
+                {
+                    importer.sourceAvatar = null;
+                    changed = true;
+                }
+    
+                if (!fragment) changed |= ApplyHumanDescription(importer);
+            }
 
             if (clip)
             {
@@ -254,13 +357,37 @@ namespace DD.Art.Pipeline.EditorTools
             string path = importer.assetPath;
             bool clip = IsClip(path);
             bool fragment = IsRigFragment(path);
+            bool copyHero = UsesPinnedHeroCopyAvatar(path);
             Check(v, "animationType", importer.animationType, fragment ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.Human);
             Check(v, "optimizeGameObjects", importer.optimizeGameObjects, false);
             Check(v, "importAnimation", importer.importAnimation, clip);
             Check(v, "importBlendShapes", importer.importBlendShapes, false);
-            Check(v, "avatarSetup", importer.avatarSetup, fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel);
+            Check(v, "avatarSetup", importer.avatarSetup, copyHero ? ModelImporterAvatarSetup.CopyFromOther : fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel);
             Avatar avatar = AvatarOf(path);
-            if (fragment)
+            if (copyHero)
+            {
+                ValidatePinnedHeroCopyReference(importer, v);
+                if (avatar == null || !avatar.isValid || !avatar.isHuman)
+                    v.Add("copiedAvatar: RUNTIME_UNKNOWN; local AvatarOf is " + (avatar == null ? "missing" : !avatar.isValid ? "invalid" : "not humanoid"));
+                else if (!HasExactTemplateHumanMapping(avatar))
+                    v.Add("copiedAvatar.humanBones: exact existing 52-bone mapping required");
+                GameObject importedModel = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                Animator[] importedAnimators = importedModel == null ? new Animator[0] : importedModel.GetComponentsInChildren<Animator>(true);
+                if (importedAnimators.Length != 1)
+                    v.Add("copiedAvatar.effective: UNKNOWN; expected one imported Animator");
+                else
+                {
+                    Avatar effective = importedAnimators[0].avatar;
+                    Avatar expected = null;
+                    try { expected = ExplicitPinnedHeroAvatar(); }
+                    catch (InvalidOperationException exception) { v.Add("copiedAvatar.effective: " + exception.Message); }
+                    if (effective == null || !effective.isValid || !effective.isHuman)
+                        v.Add("copiedAvatar.effective: UNKNOWN; missing/invalid/nonhuman Avatar");
+                    else if (expected != null && (effective != expected || effective != importer.sourceAvatar || !HasExactTemplateHumanMapping(effective)))
+                        v.Add("copiedAvatar.effective: pinned Hero/sourceAvatar identity mismatch");
+                }
+            }
+            else if (fragment)
             {
                 if (avatar != null) v.Add("avatar: present on a rig fragment (WP-084: Generic, no avatar)");
             }
