@@ -127,12 +127,45 @@ namespace DD.Prototype.Feedback
         public static void EndSpawnGroup() { _spawnGroupId = 0; }
         public static int CaptureSpawnGroup() => _spawnGroupId;
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        // Per-window diagnostic counts of the first VisualDelta branch actually selected.
+        // Counters are read-only to callers and never allocate in the sampled call path.
+        public static long FeelCostVisualInactive { get; private set; }
+        public static long FeelCostVisualGroupZero { get; private set; }
+        public static long FeelCostVisualMismatch { get; private set; }
+        public static long FeelCostVisualNonpositiveDelta { get; private set; }
+        public static long FeelCostVisualGlobalGuard { get; private set; }
+        public static long FeelCostVisualLocalAdjusted { get; private set; }
+        public static long FeelCostVisualOffSkip { get; private set; }
+
+        public static void ResetFeelCostBranches()
+        {
+            FeelCostVisualInactive = FeelCostVisualGroupZero = FeelCostVisualMismatch = 0;
+            FeelCostVisualNonpositiveDelta = FeelCostVisualGlobalGuard = FeelCostVisualLocalAdjusted = FeelCostVisualOffSkip = 0;
+        }
+#endif
+
         /// <summary>Exact overlap prevents a 35 ms token becoming two 30 fps frames.</summary>
         public static float VisualDelta(int groupId, float scaledDelta, float unscaledDelta)
         {
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.LegacyHitStop);
-            if (feelCostScope.Skip) return scaledDelta;
+            bool countFeelCostBranch = FeelCostMeasurement.Armed && FeelCostMeasurement.Sampling;
+            if (feelCostScope.Skip)
+            {
+                if (countFeelCostBranch) FeelCostVisualOffSkip++;
+                return scaledDelta;
+            }
+            if (countFeelCostBranch)
+            {
+                // Match the production short-circuit order; one counter per real call.
+                if (!IsActive) FeelCostVisualInactive++;
+                else if (groupId == 0) FeelCostVisualGroupZero++;
+                else if (groupId != _groupId) FeelCostVisualMismatch++;
+                else if (unscaledDelta <= 0f) FeelCostVisualNonpositiveDelta++;
+                else if (FeelTimeScale.GlobalStopApplied) FeelCostVisualGlobalGuard++;
+                else FeelCostVisualLocalAdjusted++;
+            }
 #endif
             if (!IsActive || groupId == 0 || groupId != _groupId || unscaledDelta <= 0f) return scaledDelta;
             if (FeelTimeScale.GlobalStopApplied) return scaledDelta;   // WP-095 K1: the world is already stopped (TD) — not twice

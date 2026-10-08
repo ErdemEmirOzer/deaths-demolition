@@ -16,6 +16,8 @@ namespace DD.Prototype.Feedback
     /// <summary>Opt-in QA only. Outermost synchronous main-thread scopes are inclusive, never summed twice.
     /// GC.Alloc is stopped/read synchronously per outer scope (NOT GC Allocated In Frame and NOT heap delta).
     /// Those byte samples are accumulated by rendered frame. Uncovered threads/native/render work is excluded.</summary>
+    public enum FeelCostCallbackClass { SteadyProduction, RoundEndProduction, CompatibilityControl, WarmObserved }
+
     public static class FeelCostMeasurement
     {
         public const string MarkerName = "DD.Feel.Cost";
@@ -25,6 +27,12 @@ namespace DD.Prototype.Feedback
         public static string[] MemberNames { get; private set; }
         public static int[] MemberCalls { get; private set; }
         public static bool[] ExpectedMembers { get; private set; }
+        public static bool[] OriginalRequiredMembers { get; private set; }
+        public static FeelCostCallbackClass[] CallbackClasses { get; private set; }
+        public static bool NaturalRoundPhase { get; set; }
+        public static bool DiagnosticMixerOnly { get; set; }
+        public static bool DspSampleCall { get; set; }
+        public static int NaturalAsyncEvents { get; private set; }
         public static bool RegistrationPhase { get; set; }
         private static ProfilerMarker s_marker;
         private static ProfilerRecorder s_cpu, s_gc;
@@ -62,7 +70,8 @@ namespace DD.Prototype.Feedback
             s_members = new Dictionary<string, int>[(int)FeelCostPath.Count];
             for (int i = 0; i < s_members.Length; i++) s_members[i] = new Dictionary<string, int>(MembersPerPath, StringComparer.Ordinal);
             MemberNames = new string[s_members.Length * MembersPerPath]; MemberCalls = new int[MemberNames.Length];
-            ExpectedMembers = new bool[MemberNames.Length];
+            ExpectedMembers = new bool[MemberNames.Length]; OriginalRequiredMembers = new bool[MemberNames.Length];
+            CallbackClasses = new FeelCostCallbackClass[MemberNames.Length];
             RegisterRequiredCallbacks();
             s_marker = new ProfilerMarker(ProfilerCategory.Scripts, MarkerName);
             // CPU: previous complete frame, sum of all OUTER marker calls on this thread.
@@ -76,10 +85,10 @@ namespace DD.Prototype.Feedback
             if (!s_cpu.Valid || !s_gc.Valid) ErrorBits |= 1;
         }
 
-        private static void Require(FeelCostPath path, string member)
+        private static void Require(FeelCostPath path, string member, FeelCostCallbackClass classification = FeelCostCallbackClass.SteadyProduction)
         {
             var members = s_members[(int)path]; int slot = (int)path * MembersPerPath + members.Count;
-            members.Add(member, slot); MemberNames[slot] = path + "." + member; ExpectedMembers[slot] = true;
+            members.Add(member, slot); MemberNames[slot] = path + "." + member; ExpectedMembers[slot] = OriginalRequiredMembers[slot] = true; CallbackClasses[slot] = classification;
         }
         // Source inventory, not a list inferred from callbacks observed during warmup.
         // Scene lifecycle/reset callbacks are excluded; a scene change during sampling still invalidates the run.
@@ -167,7 +176,7 @@ namespace DD.Prototype.Feedback
             Require(FeelCostPath.Router, "Flush");
             Require(FeelCostPath.Router, "ModeHitStop");
             Require(FeelCostPath.Router, "AdvanceLateFrame");
-            Require(FeelCostPath.LegacyHitStop, "Request");
+            Require(FeelCostPath.LegacyHitStop, "Request", FeelCostCallbackClass.CompatibilityControl);
             Require(FeelCostPath.LegacyHitStop, "RequestForGroup");
             Require(FeelCostPath.LegacyHitStop, "VisualDelta");
             Require(FeelCostPath.LegacyHitStop, "Tick");
@@ -178,8 +187,13 @@ namespace DD.Prototype.Feedback
             Require(FeelCostPath.Muzzle, "TopDownLightRange");
             Require(FeelCostPath.Muzzle, "TopDownFlickerFloor");
             Require(FeelCostPath.RunFlow, "AddHold");
-            Require(FeelCostPath.RunFlow, "TickFeelRoundEndDeferral");
-            Require(FeelCostPath.RunFlow, "ShouldDeferFeelRoundEndHold");
+            Require(FeelCostPath.RunFlow, "TickFeelRoundEndDeferral", FeelCostCallbackClass.RoundEndProduction);
+            Require(FeelCostPath.RunFlow, "ShouldDeferFeelRoundEndHold", FeelCostCallbackClass.RoundEndProduction);
+        }
+
+        public static int Calls(FeelCostPath path, string member)
+        {
+            int slot; return s_members[(int)path].TryGetValue(member, out slot) ? MemberCalls[slot] : 0;
         }
 
         public static void BeginFrame()
@@ -192,12 +206,16 @@ namespace DD.Prototype.Feedback
         public static void ClearWindow()
         {
             Array.Clear(PathCalls, 0, PathCalls.Length); Array.Clear(EventCalls, 0, EventCalls.Length); Array.Clear(MemberCalls, 0, MemberCalls.Length);
-            ExternalEvents = CriticalEvents = FireStarts = FireStops = 0; InputHash = 2166136261u;
+            ExternalEvents = CriticalEvents = FireStarts = FireStops = NaturalAsyncEvents = 0; InputHash = 2166136261u;
         }
         public static void Ingress(FeelEventKind kind)
         {
             if (!s_armed || !Sampling) return;
-            if (!Replaying) ExternalEvents++;
+            if (!Replaying)
+            {
+                bool allowedNatural = NaturalRoundPhase && (kind == FeelEventKind.RoundEnded || kind == FeelEventKind.GoldCollected);
+                if (allowedNatural) NaturalAsyncEvents++; else ExternalEvents++;
+            }
             int k = (int)kind; EventCalls[k]++; InputHash = (InputHash ^ (uint)(k + 1)) * 16777619u;
         }
         public static void Trigger(bool started)
@@ -213,7 +231,7 @@ namespace DD.Prototype.Feedback
 
         public static Scope Enter(FeelCostPath path, [CallerMemberName] string member = "")
         {
-            if (!s_armed || CameraModeService.Current != CameraMode.TopDown) return default;
+            if (!s_armed || CameraModeService.Current != CameraMode.TopDown || (DiagnosticMixerOnly && !DspSampleCall)) return default;
             bool skip = GateActive && !LayersOn && path != FeelCostPath.Control && path != FeelCostPath.Events;
             if (Thread.CurrentThread.ManagedThreadId != s_thread) { if (Sampling) ErrorBits |= 2; return new Scope(false, skip); }
             long outerStart = Sampling && s_depth == 0 ? Stopwatch.GetTimestamp() : 0;
@@ -222,7 +240,7 @@ namespace DD.Prototype.Feedback
             {
                 if (Sampling) { ErrorBits |= 32; return new Scope(false, skip); }
                 if (members.Count >= MembersPerPath) { ErrorBits |= 64; return new Scope(false, skip); }
-                slot = (int)path * MembersPerPath + members.Count; members.Add(member, slot); MemberNames[slot] = path + "." + member;
+                slot = (int)path * MembersPerPath + members.Count; members.Add(member, slot); MemberNames[slot] = path + "." + member; CallbackClasses[slot] = FeelCostCallbackClass.WarmObserved;
             }
             if (RegistrationPhase) ExpectedMembers[slot] = true;
             if (!Sampling) return new Scope(false, skip);
@@ -265,7 +283,7 @@ namespace DD.Prototype.Feedback
         }
         public static void Disarm()
         {
-            Sampling = GateActive = Replaying = false; LayersOn = true;
+            Sampling = GateActive = Replaying = NaturalRoundPhase = DiagnosticMixerOnly = DspSampleCall = false; LayersOn = true;
             if (s_cpu.Valid) s_cpu.Dispose(); if (s_gc.Valid) s_gc.Dispose();
             s_armed = false; s_depth = 0;
         }

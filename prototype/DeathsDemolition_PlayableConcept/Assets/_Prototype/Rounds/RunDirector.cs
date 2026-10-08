@@ -104,6 +104,65 @@ namespace DD.Prototype.Rounds
         private bool _roundEndHoldDeferred;
         private float _roundEndHoldWaited;
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>Passive QA observations of the real clear/hold path, valid only in an armed feel-cost session.
+        /// BeforeClear/AfterClear use existing public HUD snapshots; live phase/clock fields avoid HUD refresh lag at hold completion.</summary>
+        [System.Serializable]
+        public struct FeelCostRoundObservation
+        {
+            public int ClearAccepted, ClearIgnored, DeferTrue, DeferFalse;
+            public int DeferralTicks, PendingTicks, WaitingTicks, FrozenPendingTicks;
+            public int HoldApplied, EnvelopeCompletions, SafetyCompletions, GateOffCompletions;
+            public int ClearedRound;
+            public RunHudState BeforeClear, AfterClear;
+            public RunPhase ClearEntryPhase, LastPhase;
+            public bool ClearEntryFrozen, LastFrozen, LastRoundEndHold, LastDeferred, LastZombieActive;
+            public float LastWaitedSeconds;
+        }
+
+        private FeelCostRoundObservation _feelCostRoundObservation;
+        public FeelCostRoundObservation FeelCostRoundObservations => _feelCostRoundObservation;
+
+        /// <summary>Diagnostics only; resets no run/clock/ledger/gameplay state. Call between observation phases.</summary>
+        public void ResetFeelCostRoundObservations() => _feelCostRoundObservation = default;
+
+        private enum FeelCostRoundStage { Accepted, Ignored, DeferYes, DeferNo, Tick, Waiting, GateComplete, Complete, HoldApplied, Published }
+
+        private void ObserveFeelCostRound(FeelCostRoundStage stage, int round = 0)
+        {
+            if (!Feedback.FeelCostMeasurement.Armed) return;
+            ref FeelCostRoundObservation o = ref _feelCostRoundObservation;
+            o.LastPhase = _phase;
+            o.LastFrozen = RunFlowClock.IsFrozen;
+            o.LastRoundEndHold = RunFlowClock.HasHold(RunFlowClock.RoundEndHold);
+            o.LastDeferred = _roundEndHoldDeferred;
+            o.LastZombieActive = Feedback.FeelTimeScale.LastZombieActive;
+            o.LastWaitedSeconds = _roundEndHoldWaited;
+            switch (stage)
+            {
+                case FeelCostRoundStage.Accepted:
+                    o.ClearAccepted++; o.ClearedRound = round; o.BeforeClear = RunEvents.Current;
+                    o.ClearEntryPhase = _phase; o.ClearEntryFrozen = o.LastFrozen;
+                    break;
+                case FeelCostRoundStage.Ignored: o.ClearIgnored++; break;
+                case FeelCostRoundStage.DeferYes: o.DeferTrue++; break;
+                case FeelCostRoundStage.DeferNo: o.DeferFalse++; break;
+                case FeelCostRoundStage.Tick:
+                    o.DeferralTicks++;
+                    if (_roundEndHoldDeferred) { o.PendingTicks++; if (o.LastFrozen) o.FrozenPendingTicks++; }
+                    break;
+                case FeelCostRoundStage.Waiting: o.WaitingTicks++; break;
+                case FeelCostRoundStage.GateComplete: o.GateOffCompletions++; break;
+                case FeelCostRoundStage.Complete:
+                    if (o.LastZombieActive && _roundEndHoldWaited >= Feedback.FeelTimeScale.RoundEndHoldSafetySeconds) o.SafetyCompletions++;
+                    else o.EnvelopeCompletions++;
+                    break;
+                case FeelCostRoundStage.HoldApplied: o.HoldApplied++; break;
+                case FeelCostRoundStage.Published: o.AfterClear = RunEvents.Current; break;
+            }
+        }
+#endif
+
         // ------------------------------------------------------------------ public API
 
         /// <summary>Current phase. The screen-driving value.</summary>
@@ -618,23 +677,37 @@ namespace DD.Prototype.Rounds
         private bool TickFeelRoundEndDeferral()
         {
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
+            ObserveFeelCostRound(FeelCostRoundStage.Tick);
             using var feelCostScope = Feedback.FeelCostMeasurement.Enter(Feedback.FeelCostPath.RunFlow);
             if (feelCostScope.Skip)
             {
                 if (!_roundEndHoldDeferred) return false;
+                ObserveFeelCostRound(FeelCostRoundStage.GateComplete);
                 _roundEndHoldDeferred = false;
                 _phaseTimer = 0f;
                 RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+                ObserveFeelCostRound(FeelCostRoundStage.HoldApplied);
                 return true;
             }
 #endif
             if (!_roundEndHoldDeferred) return false;
             if (!RunFlowClock.IsFrozen) _roundEndHoldWaited += Time.unscaledDeltaTime;
             if (Feedback.FeelTimeScale.LastZombieActive && _roundEndHoldWaited < Feedback.FeelTimeScale.RoundEndHoldSafetySeconds)
+            {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                ObserveFeelCostRound(FeelCostRoundStage.Waiting);
+#endif
                 return true;
+            }
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            ObserveFeelCostRound(FeelCostRoundStage.Complete);
+#endif
             _roundEndHoldDeferred = false;
             _phaseTimer = 0f;
             RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            ObserveFeelCostRound(FeelCostRoundStage.HoldApplied);
+#endif
             return true;
         }
 
@@ -684,8 +757,14 @@ namespace DD.Prototype.Rounds
         {
             if (_phase != RunPhase.Fighting)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                ObserveFeelCostRound(FeelCostRoundStage.Ignored, round);
+#endif
                 return;
             }
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            ObserveFeelCostRound(FeelCostRoundStage.Accepted, round);
+#endif
 
             // An unfinished round grants no round XP; this is the only path that banks it.
             int roundXp = HasConfig ? Config.RoundCompletionXp(round) : 0;
@@ -702,12 +781,21 @@ namespace DD.Prototype.Rounds
             // person, or the slow motion off: the hold is taken now, as before.
             if (ShouldDeferFeelRoundEndHold())
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                ObserveFeelCostRound(FeelCostRoundStage.DeferYes);
+#endif
                 _roundEndHoldDeferred = true;
                 _roundEndHoldWaited = 0f;
             }
             else
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                ObserveFeelCostRound(FeelCostRoundStage.DeferNo);
+#endif
                 RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                ObserveFeelCostRound(FeelCostRoundStage.HoldApplied);
+#endif
             }
 
             // REQ-076 (WP-004): every packet still on the floor - the last kill's included,
@@ -727,6 +815,9 @@ namespace DD.Prototype.Rounds
             RunAudioEvents.Raise(RunAudioEvent.RoundComplete);
 
             PublishState();
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            ObserveFeelCostRound(FeelCostRoundStage.Published);
+#endif
         }
 
         // ------------------------------------------------------------------ counting
