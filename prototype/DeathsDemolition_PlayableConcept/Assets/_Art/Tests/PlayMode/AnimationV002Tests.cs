@@ -515,6 +515,123 @@ namespace DD.Art.Tests.PlayMode
             Assert.LessOrEqual(stanceMedian, 0.02f, "Runner koşusunda basan ayak bileğinin mutlak yatay yolu > 2 cm/adım (aktif klip plant→lift)");
         }
 
+        // Separate bounded raw diagnosis. Never substitutes for the Runner 2cm acceptance test.
+        [UnityTest, Explicit("C00 separate grant; production-controller one-cycle local TRS diagnosis only"), Category("Diagnostics")]
+        public IEnumerator RunnerRetarget_ProductionController_OneCycle_RawLocalTrs()
+        {
+            string directory = Environment.GetEnvironmentVariable("DD_WP096_TRACE_DIR");
+            if (Environment.GetEnvironmentVariable("DD_WP096_RETARGET_LOCAL_TRS") != "1"
+                || string.IsNullOrEmpty(directory) || !System.IO.Path.IsPathRooted(directory))
+                throw new InvalidOperationException("one-cycle diagnosis requires extra local TRS opt-in and absolute fresh trace directory");
+            // Match the existing Runner production setup and 60-frame warm clock exactly.
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, 60f, "MainMenu");
+            yield return null;
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(80f, 0.2f, 80f); ground.transform.position = new Vector3(0f, -0.1f, 0f); ground.layer = PrototypeLayers.Environment;
+            FootIkAdapter.Force = 0;
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var root = new GameObject("WP032B_Runner");
+            _temp.Add(root);
+            root.transform.SetPositionAndRotation(new Vector3(-20f, 0f, 0f), Quaternion.LookRotation(Vector3.right));
+            GameObject go = UnityEngine.Object.Instantiate(set.ZombiePrefab, root.transform, false);
+            var v = go.GetComponent<ZombieSkinnedVisual>();
+            v.Assemble(set.ZombieLibrary, ZombieLookSelector.Select(set.ZombieLibrary, 11u));
+            v.ApplyMaterial(set.ZombieLibrary, 1);
+            v.ResetForSpawn(EnemyTier.Special, 4.6f, "A", 0, false);
+            v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            Avatar avatar = v.Animator.avatar;
+            bool avatarReady = avatar != null && avatar.isHuman && avatar.isValid;
+            Transform lf = avatarReady ? v.Animator.GetBoneTransform(HumanBodyBones.LeftFoot) : null;
+            Transform rf = avatarReady ? v.Animator.GetBoneTransform(HumanBodyBones.RightFoot) : null;
+            const float speed = 4.6f;
+            Time.captureDeltaTime = 1f / 60f;
+            bool[] plant = new bool[2], lift = new bool[2], stance = new bool[2];
+            var paths = new RunnerStancePath[2];
+            RunnerTrace trace = null;
+            bool subscribed = false, began = false, complete = false;
+            int firstFrame = -1, lastFrame = -1, captured = 0, closedLeft = 0, closedRight = 0;
+            string stop = "bounded-frame-limit";
+            Action<CharacterAnimationEvent> onEvent = e =>
+            {
+                if (e == CharacterAnimationEvent.FootLeft) plant[0] = true;
+                else if (e == CharacterAnimationEvent.FootRight) plant[1] = true;
+                else if (e == CharacterAnimationEvent.FootLOff) lift[0] = true;
+                else if (e == CharacterAnimationEvent.FootROff) lift[1] = true;
+            };
+            try
+            {
+                for (int i = 0; i < 60; i++) { v.SetSpeed(speed, Time.deltaTime); yield return null; }
+                trace = RunnerTrace.Create(v);
+                if (!trace.DiagnosticInputsAvailable) { stop = "missing-bone-or-invalid-avatar"; throw new InvalidOperationException(stop); }
+                v.Events.Raised += onEvent;
+                subscribed = true;
+                // At most 64 seek + 64 capture frames; no manual Animator/Playable clock and no retry.
+                for (int step = 0; step < 128; step++)
+                {
+                    root.transform.position += Vector3.right * speed * Time.deltaTime;
+                    v.SetSpeed(speed, Time.deltaTime);
+                    yield return null;
+                    if (!began)
+                    {
+                        if (!plant[0])
+                        {
+                            plant[0] = plant[1] = lift[0] = lift[1] = false;
+                            if (step == 63) { stop = "left-anchor-not-observed"; break; }
+                            continue;
+                        }
+                        began = true;
+                        firstFrame = Time.frameCount;
+                    }
+                    bool boundary = captured > 0 && plant[0];
+                    trace.Capture(root.transform, v, lf.position, rf.position, plant, lift);
+                    lastFrame = Time.frameCount;
+                    captured++;
+                    // Same fixed ankle and original plant->lift bookkeeping; no acceptance threshold here.
+                    for (int foot = 0; foot < 2; foot++)
+                    {
+                        Vector3 ankle = foot == 0 ? lf.position : rf.position;
+                        if (lift[foot])
+                        {
+                            if (stance[foot] && paths[foot].Samples > 0)
+                            {
+                                trace.Close(foot, paths[foot].Path, paths[foot].Samples);
+                                if (foot == 0) closedLeft++; else closedRight++;
+                            }
+                            stance[foot] = false;
+                        }
+                        if (plant[foot] && !boundary)
+                        {
+                            stance[foot] = true;
+                            paths[foot].Begin(ankle);
+                            trace.Begin(foot);
+                        }
+                        else if (stance[foot]) paths[foot].Sample(ankle);
+                    }
+                    plant[0] = plant[1] = lift[0] = lift[1] = false;
+                    if (boundary)
+                    {
+                        complete = closedLeft == 1 && closedRight == 1;
+                        stop = complete ? "next-left-plant-one-cycle" : "cycle-boundary-incomplete-stances";
+                        break;
+                    }
+                    if (captured == 64) { stop = "capture-frame-limit"; break; }
+                }
+            }
+            finally
+            {
+                if (subscribed) v.Events.Raised -= onEvent;
+                Time.captureDeltaTime = 0f;
+                FootIkAdapter.Force = -1;
+                trace?.SetDiagnosticCycleBounds(firstFrame, lastFrame, closedLeft, closedRight, stop);
+                trace?.Write(complete);
+            }
+            Assert.IsTrue(complete, "raw one-cycle capture incomplete: " + stop + "; this is not a locomotion acceptance verdict");
+            Assert.IsTrue(trace != null && trace.DiagnosticArtifactWritten, "raw one-cycle artifact was not written; diagnosis unavailable");
+        }
+
         // Optional evidence only: no classifier, metric or Animator mutation. Fixed buffers; I/O after sampling.
         private sealed class RunnerTrace
         {
@@ -553,6 +670,8 @@ namespace DD.Art.Tests.PlayMode
                 public int frameCapacity = MaxFrames, stanceCapacity = MaxStances, frameCount, stanceCount, droppedFrames, droppedStances;
                 public bool samplingComplete;
                 public bool localTrsRequested;
+                public string diagnosticScope, cycleStopReason;
+                public int cycleFirstUnityFrame, cycleLastUnityFrame, cycleClosedLeft, cycleClosedRight, cycleMissingBoneMask;
                 public int localFrameCount, droppedLocalFrames;
                 public string avatarName, controllerName, activeClipNameAtSetup;
                 public int avatarInstanceId, controllerInstanceId, activeClipInstanceIdAtSetup;
@@ -566,6 +685,7 @@ namespace DD.Art.Tests.PlayMode
             private readonly int[] _start = { -1, -1 };
             private readonly string _directory;
             private int _index;
+            public bool DiagnosticArtifactWritten { get; private set; }
             private readonly Transform _hips, _leftUpperLeg, _leftLowerLeg, _leftFoot, _rightUpperLeg, _rightLowerLeg, _rightFoot;
             private RunnerTrace(string directory, ZombieSkinnedVisual visual)
             {
@@ -595,6 +715,7 @@ namespace DD.Art.Tests.PlayMode
                         _data.activeClipInstanceIdAtSetup = clips[i].clip.GetInstanceID();
                         _data.activeClipLengthAtSetup = clips[i].clip.length;
                     }
+                    if (!_data.avatarHuman || !_data.avatarValid) return; // diagnosis remains unavailable; never invent missing local TRS
                     _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
                     _leftUpperLeg = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
                     _leftLowerLeg = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
@@ -655,6 +776,17 @@ namespace DD.Art.Tests.PlayMode
                     rightUpperLeg = ReadLocalTrs(_rightUpperLeg), rightLowerLeg = ReadLocalTrs(_rightLowerLeg), rightFoot = ReadLocalTrs(_rightFoot)
                 };
             }
+            private int MissingLocalBoneMask => (_hips == null ? 1 : 0) | (_leftUpperLeg == null ? 2 : 0)
+                | (_leftLowerLeg == null ? 4 : 0) | (_leftFoot == null ? 8 : 0) | (_rightUpperLeg == null ? 16 : 0)
+                | (_rightLowerLeg == null ? 32 : 0) | (_rightFoot == null ? 64 : 0);
+            public bool DiagnosticInputsAvailable => _data.localTrsRequested && _data.avatarHuman && _data.avatarValid && MissingLocalBoneMask == 0;
+            public void SetDiagnosticCycleBounds(int first, int last, int left, int right, string stop)
+            {
+                _data.diagnosticScope = "raw production-controller one-cycle local TRS only; never Runner acceptance";
+                _data.cycleFirstUnityFrame = first; _data.cycleLastUnityFrame = last;
+                _data.cycleClosedLeft = left; _data.cycleClosedRight = right; _data.cycleStopReason = stop;
+                _data.cycleMissingBoneMask = MissingLocalBoneMask;
+            }
             public void Begin(int foot) => _start[foot] = _index;
             public void Close(int foot, float path, int samples)
             {
@@ -679,6 +811,7 @@ namespace DD.Art.Tests.PlayMode
                     string path = System.IO.Path.Combine(_directory, "runner-" + Guid.NewGuid().ToString("N") + ".json");
                     using (var file = new System.IO.StreamWriter(new System.IO.FileStream(path, System.IO.FileMode.CreateNew)))
                         file.Write(JsonUtility.ToJson(_data));
+                    DiagnosticArtifactWritten = true;
                     Debug.Log("[DD-TEST] wp096.runner.trace=" + path + " frames=" + _data.frameCount + " stances=" + _data.stanceCount
                         + " dropped=" + _data.droppedFrames + "/" + _data.droppedStances);
                 }
