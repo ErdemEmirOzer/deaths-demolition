@@ -3,8 +3,8 @@
 #   tools/slot.sh acquire unity <etiket>    # bloklar; slot alınca 0 döner (2 Unity batch; swap <10 GB ve yük <24 iken 3)
 #   tools/slot.sh acquire blender <etiket>  # en fazla 1 ağır Blender CLI (render/bake/sim)
 #   tools/slot.sh acquire smoke <etiket>    # release smoke (gerçek Player profilini yazar) — tek slot, eşzamanlı smoke yok
-#   tools/slot.sh acquire player <etiket>   # WP-043D: her Player başlatma (yakalama, bot, perf, smoke) — tek slot; main-ci
-#                                           # koşu boyunca tutar (ses cihazı + odak paylaşılıyor: UiV3 ses testi kırıldı)
+#   tools/slot.sh acquire player <etiket>   # WP-043D: her Player başlatma (yakalama, bot, perf, smoke) — tek slot. WP-099
+#                                           # (C-00 08.10, §0.8): editor-scope koşu (main-ci dahil) player slotu ALMAZ
 #   tools/slot.sh release unity|blender|smoke <etiket>
 #   tools/slot.sh status
 #   tools/slot.sh holds <kind> [<pid>]      # WP-079G D6a: salt okunur — <pid> (varsayılan: sahip) ya da atalarından biri canlı

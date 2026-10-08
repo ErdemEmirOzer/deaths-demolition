@@ -3,9 +3,10 @@
 #
 # Every Player launch — captures, bots, perf probes — goes through the single 'player' machine slot
 # (tools/slot.sh). Players share the audio device and window focus with Editor PlayMode tests: a
-# full-screen capture running during main-ci broke the UiV3 audio test (C-00 25.09). main-ci holds the
-# 'player' slot for its whole run, so a wrapped launch waits until CI is done, and two wrapped launches
-# never overlap. Warns (does not refuse) when another Player is already running — the user's own game
+# full-screen capture running during main-ci broke the UiV3 audio test (C-00 25.09). Two wrapped launches
+# never overlap. Since WP-099 (C-00 08.10, OTURUM-ACILIS-R3 §0.8) main-ci takes NO player slot — an editor-scope
+# run never does (holding it while queued for a guard window starved every Player): a Player started during
+# main-ci's PlayMode run can disturb an audio/focus test (WP-043D risk, accepted). Warns (does not refuse) when another Player is already running — the user's own game
 # or an unwrapped launch — and when -ddTelemetryDir is missing (the run would write the real telemetry
 # folder). User data is NOT guarded here: keep tools/userdata-guard.sh snapshot/restore around it.
 # Y2 (C-00 30.09): INT/TERM/HUP to this wrapper are passed on to the Player (as TERM) and the wrapper waits for it — a
