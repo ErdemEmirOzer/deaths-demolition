@@ -88,6 +88,9 @@ namespace DD.Prototype.Rendering
         [SerializeField, Tooltip("DD/VFX Puddle - Namekuji puddles / splats, Raiju burn marks (WP-073 B6).")]
         private Shader _vfxPuddle;
 
+        [SerializeField, Tooltip("DD/World Vegetation - WP-093 living ground (instanced grass / flora).")]
+        private Shader _vegetation;
+
         [SerializeField]
         [Tooltip("Materials that exist only to keep runtime keyword variants out of the stripper.")]
         private Material[] _variantPins = new Material[0];
@@ -127,6 +130,7 @@ namespace DD.Prototype.Rendering
         public Shader VfxAtmo => _vfxAtmo;
         public Shader VfxGel => _vfxGel;
         public Shader VfxPuddle => _vfxPuddle;
+        public Shader Vegetation => _vegetation;
 
         /// <summary>Read-only view, for the build check and the tests.</summary>
         public Material[] VariantPins => _variantPins;
@@ -153,6 +157,7 @@ namespace DD.Prototype.Rendering
             if (_vfxAtmo == null) { eksik.Add("VfxAtmo"); }
             if (_vfxGel == null) { eksik.Add("VfxGel"); }
             if (_vfxPuddle == null) { eksik.Add("VfxPuddle"); }
+            if (_vegetation == null) { eksik.Add("Vegetation"); }
 
             for (int i = 0; i < _variantPins.Length; i++)
             {

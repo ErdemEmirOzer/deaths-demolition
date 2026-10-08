@@ -57,7 +57,35 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool WantsLightmapUv(string assetPath)
         {
-            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) && !IsSurfaceModel(assetPath);
+            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) && !IsSurfaceModel(assetPath) && !IsVegetationAsset(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-093 vegetation (AP-031)
+
+        /// <summary>
+        /// WP-093 · AP-031 vegetation kit (P-05): instanced at runtime by DD.Prototype.World.Vegetation, never lightmapped (no UV2),
+        /// models CPU-readable (the runtime copies each LOD into a Y-up mesh, VegetationKit.ExtractLod), the grass / flora atlases
+        /// alpha-tested at 0.45 with coverage-preserving mips and Alpha Is Transparency OFF (P-05 08.10 note §4: the RGB is flooded
+        /// under alpha 0 by the producer; dilation would overwrite it), ground-detail sets capped at 1024 (TD samples mip ≈ 3.9).
+        /// </summary>
+        public const string VegetationRoot = EnvironmentRoot + "/Vegetation";
+        public const float VegetationAlphaReference = 0.45f;
+        public const int GroundDetailMaxSize = 1024;
+
+        public static bool IsVegetationAsset(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(VegetationRoot + "/", StringComparison.Ordinal);
+        }
+
+        /// <summary>Alpha Is Transparency: cutout (not vegetation) and sheets.</summary>
+        public static bool AlphaIsTransparencyOf(string assetPath, bool cutout, bool sheet)
+        {
+            return (cutout && !IsVegetationAsset(assetPath)) || sheet;
+        }
+
+        public static float CutoutAlphaReferenceOf(string assetPath)
+        {
+            return IsVegetationAsset(assetPath) ? VegetationAlphaReference : CutoutAlphaReference;
         }
 
         /// <summary>Every asset below this folder is under contract.</summary>
@@ -105,6 +133,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool ModelIsReadableOf(string assetPath)
         {
+            if (assetPath != null && assetPath.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase) && IsVegetationAsset(assetPath)) return true;   // WP-093
             return assetPath != null && System.IO.Path.GetFileName(assetPath).StartsWith("AP015_ground_", StringComparison.Ordinal) && IsSurfaceModel(assetPath);
         }
         public const ModelImporterIndexFormat ModelIndexFormat = ModelImporterIndexFormat.Auto;
@@ -431,7 +460,14 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap023_tatami", TextureClass.Structure },
             { "ap023_washi", TextureClass.Structure },
             { "ap023_wood_planks", TextureClass.Structure },
-            { "ap023_wood_timber", TextureClass.Structure }
+            { "ap023_wood_timber", TextureClass.Structure },
+            // WP-093 · AP-031 vegetation kit (P-05 v001): the grass / flora atlases (Foliage) and the four ground-detail sets (Ground, capped 1024).
+            { "VEG_Grass", TextureClass.Foliage },
+            { "VEG_Flora", TextureClass.Foliage },
+            { "GroundDetail_Soil", TextureClass.Ground },
+            { "GroundDetail_Moss", TextureClass.Ground },
+            { "GroundDetail_Gravel", TextureClass.Ground },
+            { "GroundDetail_Mud", TextureClass.Ground }
         };
 
         public static IEnumerable<KeyValuePair<string, TextureClass>> TextureClassTable => ClassOfRoleTable;
@@ -514,6 +550,7 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-084 (C-00 06.10): the 40-zombie texture budget (Z3b ≤ 96 MB) with the AP-025 mask array — the cloth smoothness is the
             // least visible zombie map (the mask detail is zombie identity and stays); AD before / after in three cameras.
             if (slug == "zombie_cloth" && RoleOf(assetPath) == TextureRole.MetallicSmoothness) size = Mathf.Min(size, ZombieClothMetallicSmoothnessMaxSize);
+            if (slug != null && slug.StartsWith("GroundDetail_", StringComparison.Ordinal)) size = Mathf.Min(size, GroundDetailMaxSize);   // WP-093
             return size;
         }
 
@@ -663,7 +700,11 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool KeepsCutoutAlpha(string assetPath)
         {
-            return RoleOf(assetPath) == TextureRole.BaseColor && ArtLibraryMaterialRoles.IsCutoutTextureRole(RoleSlugOf(assetPath));
+            if (RoleOf(assetPath) != TextureRole.BaseColor) return false;
+            string slug = RoleSlugOf(assetPath);
+            // WP-093: the AP-031 grass / flora atlases are alpha-tested (cut 0.45).
+            if (IsVegetationAsset(assetPath) && slug != null && slug.StartsWith("VEG_", StringComparison.Ordinal)) return true;
+            return ArtLibraryMaterialRoles.IsCutoutTextureRole(slug);
         }
 
         public static TextureRole RoleOf(string assetPath)
@@ -799,7 +840,9 @@ namespace DD.Art.Pipeline.EditorTools
         {
             if (assetPath == null || !assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return false;
             string p = assetPath.Replace('\\', '/');
-            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal);
+            // AP037 brush RGBA/time masks own linear/clamp/BC7-BC4 imports via their explicit intake.
+            return p.StartsWith(VegetationMaskRoot, StringComparison.Ordinal) || p.StartsWith(GroundMaskPrefix, StringComparison.Ordinal)
+                   || p.StartsWith(ArtRoot + "/VFX/AP037/v001.1/", StringComparison.Ordinal);
         }
 
         // ------------------------------------------------------------------ WP-075 light cookies
@@ -1083,7 +1126,7 @@ namespace DD.Art.Pipeline.EditorTools
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
             // A VFX sheet's alpha is its coverage (blended, not clipped): transparency dilation, no coverage-preserving mips.
             bool sheet = role == TextureRole.Sheet;
-            changed |= Set(importer.alphaIsTransparency, cutout || sheet, v => importer.alphaIsTransparency = v);
+            changed |= Set(importer.alphaIsTransparency, AlphaIsTransparencyOf(importer.assetPath, cutout, sheet), v => importer.alphaIsTransparency = v);
             // The mask keeps its alpha (smoothness) and a cutout BaseColor keeps its opacity;
             // every other colour/normal/packed map carries none worth keeping. A sheet without a
             // source alpha takes its coverage from the grey (AlphaSourceOf).
@@ -1094,7 +1137,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.mipMapsPreserveCoverage, cutout, v => importer.mipMapsPreserveCoverage = v);
             if (cutout)
             {
-                changed |= Set(importer.alphaTestReferenceValue, CutoutAlphaReference, v => importer.alphaTestReferenceValue = v);
+                changed |= Set(importer.alphaTestReferenceValue, CutoutAlphaReferenceOf(importer.assetPath), v => importer.alphaTestReferenceValue = v);
             }
 
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);
@@ -1192,12 +1235,12 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "wrapModeU", importer.wrapModeU, TextureWrap);
             Check(v, "wrapModeV", importer.wrapModeV, WrapVOf(importer.assetPath));
             Check(v, "anisoLevel", importer.anisoLevel, TextureAniso);
-            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, cutout || sheet);
+            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, AlphaIsTransparencyOf(importer.assetPath, cutout, sheet));
             Check(v, "alphaSource", importer.alphaSource, alpha);
             Check(v, "mipMapsPreserveCoverage", importer.mipMapsPreserveCoverage, cutout);
             if (cutout)
             {
-                Check(v, "alphaTestReferenceValue", importer.alphaTestReferenceValue, CutoutAlphaReference);
+                Check(v, "alphaTestReferenceValue", importer.alphaTestReferenceValue, CutoutAlphaReferenceOf(importer.assetPath));
             }
 
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);

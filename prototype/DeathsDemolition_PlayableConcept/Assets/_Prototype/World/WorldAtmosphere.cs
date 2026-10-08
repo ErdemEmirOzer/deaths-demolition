@@ -284,6 +284,7 @@ namespace DD.Prototype.World
             EnsureWind(root);
             BuildDrift(WorldPiece.Group(root, "Atmosphere"), DefaultRunRegions(), palette);
             DD.Prototype.Feedback.Vfx.AtmosphereSystem.Attach(WorldPiece.Group(root, "Atmosphere"));   // WP-073 B5 (S-07): DEC-102 grains / petals / leaves / steam / drips
+            DD.Prototype.Feedback.Vfx.AmbientVfxSystem.Attach(WorldPiece.Group(root, "Atmosphere"));   // WP-093 1b: roof smoke, pond / puddle / drip rings
         }
 
         /// <summary>
@@ -299,6 +300,7 @@ namespace DD.Prototype.World
             EnsureWind(root);
             BuildDrift(WorldPiece.Group(root, "Atmosphere"), regions ?? DefaultRunRegions(), null);
             DD.Prototype.Feedback.Vfx.AtmosphereSystem.Attach(WorldPiece.Group(root, "Atmosphere"));   // WP-073 B5 (S-07): DEC-102 grains / petals / leaves / steam / drips
+            DD.Prototype.Feedback.Vfx.AmbientVfxSystem.Attach(WorldPiece.Group(root, "Atmosphere"));   // WP-093 1b: roof smoke, pond / puddle / drip rings
         }
 
         /// <summary>

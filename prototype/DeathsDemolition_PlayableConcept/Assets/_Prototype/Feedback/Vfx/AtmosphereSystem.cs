@@ -351,6 +351,28 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        // ------------------------------------------------------------------ WP-093 1b · drip landing log (read by AmbientVfxSystem)
+
+        /// <summary>The landing log's length: the last this many eave / bamboo drips (a ring where one lands on water).</summary>
+        public const int MaxDripLandings = 64;
+        private readonly Vector4[] _dripLandings = new Vector4[MaxDripLandings];
+        private float _clock;
+
+        /// <summary>Seconds of <see cref="Step"/> so far (the landing log's time base).</summary>
+        public float Clock => _clock;
+
+        /// <summary>Drips logged so far (a serial; the log keeps the last <see cref="MaxDripLandings"/>).</summary>
+        public int DripLandingWrites { get; private set; }
+
+        /// <summary>Logged drip <paramref name="serial"/>: xyz the landing point, w the <see cref="Clock"/> it lands at. 0 B.</summary>
+        public Vector4 DripLanding(int serial) => _dripLandings[((serial % MaxDripLandings) + MaxDripLandings) % MaxDripLandings];
+
+        private void LogDripLanding(Vector3 pos, float ground, float life)
+        {
+            _dripLandings[DripLandingWrites % MaxDripLandings] = new Vector4(pos.x, ground, pos.z, _clock + life);
+            DripLandingWrites++;
+        }
+
         // ------------------------------------------------------------------ lifecycle
 
         /// <summary>
@@ -875,6 +897,7 @@ namespace DD.Prototype.Feedback.Vfx
             using (s_marker.Auto())
             {
                 if (!Ready || dt <= 0f) return;
+                _clock += dt;
                 VfxTierLevel tier = VfxTier.Current;
                 if (!_tierApplied || tier != _tier) ApplyTier(tier);
                 if (!_scanned) return;
@@ -1204,6 +1227,8 @@ namespace DD.Prototype.Feedback.Vfx
                     break;
             }
 
+            // WP-093 1b: an eave / bamboo drip lands at its anchor's ground after `life` (a prefill drip is born mid-fall: not logged).
+            if (!prefill && (a.Source == Source.Eave || a.Source == Source.BambooTip)) LogDripLanding(pos, a.Ground, life);
             Emit(li, ps, pos, vel, size, aspect, frame, colour, look, life, prefill);
         }
 

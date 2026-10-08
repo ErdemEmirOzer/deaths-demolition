@@ -57,6 +57,8 @@ namespace DD.Prototype.Rendering
         public static Shader VfxAtmo => Named(Library.VfxAtmo, "VfxAtmo");
         public static Shader VfxGel => Named(Library.VfxGel, "VfxGel");
         public static Shader VfxPuddle => Named(Library.VfxPuddle, "VfxPuddle");
+        /// <summary>DD/World Vegetation: WP-093 instanced grass / flora.</summary>
+        public static Shader Vegetation => Named(Library.Vegetation, "Vegetation");
 
         /// <summary>
         /// True when the library is present and every reference is filled. Lets a caller

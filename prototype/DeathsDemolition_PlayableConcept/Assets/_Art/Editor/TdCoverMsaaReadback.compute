@@ -1,0 +1,22 @@
+// Diagnostic read-only actual MSAA4 depth. Never resolve or reconstruct samples.
+#pragma kernel ReadMsaa4
+#pragma target 5.0
+Texture2DMS<float, 4> _SourceDepth;
+RWStructuredBuffer<float4> _Samples;
+float4 _ScaleBias;
+int _UvStartsAtTop;
+[numthreads(8, 8, 1)]
+void ReadMsaa4(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= 480 || id.y >= 270) return;
+    // Direct texel id is already raster-normalized; only actual CopyDepthPass scaleBias remains.
+    float2 uv = (float2(id.xy) + 0.5) / float2(480.0, 270.0);
+    uv = uv * _ScaleBias.xy + _ScaleBias.zw;
+    int2 coord = int2(uv * float2(480.0, 270.0));
+    if (coord.x < 0 || coord.y < 0 || coord.x >= 480 || coord.y >= 270) return; // Sentinel retained: unsupported mapping.
+    float s0 = _SourceDepth.Load(coord, 0);
+    float s1 = _SourceDepth.Load(coord, 1);
+    float s2 = _SourceDepth.Load(coord, 2);
+    float s3 = _SourceDepth.Load(coord, 3);
+    _Samples[id.y * 480 + id.x] = float4(s0, s1, s2, s3);
+}

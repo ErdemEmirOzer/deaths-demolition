@@ -42,13 +42,20 @@ namespace DD.Prototype.Navigation
         public void Register()
         {
             Unregister();
-            _volume = new NavRegionVolume
+            _volume = CreateVolume();
+            RegionNavProfile.RegisterSceneVolume(_volume);
+        }
+
+        /// <summary>WP-093 · The volume this marker describes, NOT registered (readers that must not touch the registry: the
+        /// vegetation probe, which also runs in edit mode where OnEnable never registered anything).</summary>
+        public NavRegionVolume CreateVolume()
+        {
+            return new NavRegionVolume
             {
                 id = _id, kind = _kind, center = transform.position, size = _size, costMultiplier = Mathf.Max(1f, _costMultiplier),
                 capacity = Mathf.Max(0, _capacity), hasAlternative = _hasAlternative, alternative = _alternative, areaName = _areaName,
                 roomId = _roomId, polygonXZ = _polygonXZ != null && _polygonXZ.Length >= 3 ? _polygonXZ : null
             };
-            RegionNavProfile.RegisterSceneVolume(_volume);
         }
 
         public void Unregister()

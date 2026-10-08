@@ -1,0 +1,1100 @@
+{
+ "schema": "AP031.atlas.grass.v1",
+ "atlas": "T_VEG_Grass",
+ "size": [
+  2048,
+  2048
+ ],
+ "files": {
+  "BaseColor": "T_VEG_Grass_BaseColor.png",
+  "Normal": "T_VEG_Grass_Normal.png",
+  "ORM": "T_VEG_Grass_ORM.png"
+ },
+ "conventions": {
+  "uv_origin": "bottom-left (Blender / Unity UV); px_uv = [x, y_from_bottom, w, h]; px_png = [x, y_from_top, w, h]",
+  "strip_v": "v0 = blade root (z = 0), v1 = strip top; u spans the strip width",
+  "alpha_cutoff": 0.45,
+  "BaseColor": "sRGB RGBA8, alpha = coverage (cut 0.45), RGB flooded into alpha 0 (whole cell, >= 2 px)",
+  "Normal": "tangent space, OpenGL Y+ (Unity normal map as-is), RGB8 linear",
+  "ORM": "R AO, G roughness 0.80-0.95, B translucency (SS 0.10 / GM 0.20 / GT 0.30, upper 50 % of blade), no metallic",
+  "unity_import": "BaseColor: sRGB, Alpha Is Transparency off, Mip Maps Preserve Coverage ON (cutoff 0.45), aniso 4, mip bias 0; Normal: Normal map; ORM: sRGB off"
+ },
+ "width_profile": "strip: W * (root_w + (1 - root_w) * min(1, s / 0.35)); plume_stalk: stalk_w until plume_v[0], linear to W at plume_v[1]",
+ "segments": {
+  "SS": {
+   "LOD0": [
+    0,
+    0.35,
+    0.68,
+    1
+   ],
+   "LOD1": [
+    0,
+    0.35,
+    1
+   ]
+  },
+  "GM": {
+   "LOD0": [
+    0,
+    0.35,
+    0.6,
+    0.82,
+    1
+   ],
+   "LOD1": [
+    0,
+    0.35,
+    1
+   ]
+  },
+  "GT": {
+   "LOD0": [
+    0,
+    0.35,
+    0.55,
+    0.72,
+    0.87,
+    1
+   ],
+   "LOD1": [
+    0,
+    0.35,
+    0.68,
+    1
+   ]
+  },
+  "TP": {
+   "LOD0": [
+    0,
+    0.35,
+    0.6,
+    0.66,
+    1
+   ],
+   "LOD1": [
+    0,
+    0.6,
+    0.66,
+    1
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "S00",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    0,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.0,
+    0.0,
+    0.0625,
+    0.25
+   ],
+   "px_png": [
+    0,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S01",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    128,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.0625,
+    0.0,
+    0.125,
+    0.25
+   ],
+   "px_png": [
+    128,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S02",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    256,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.125,
+    0.0,
+    0.1875,
+    0.25
+   ],
+   "px_png": [
+    256,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S03",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    384,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.1875,
+    0.0,
+    0.25,
+    0.25
+   ],
+   "px_png": [
+    384,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S04",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    512,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.25,
+    0.0,
+    0.3125,
+    0.25
+   ],
+   "px_png": [
+    512,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S05",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    640,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.3125,
+    0.0,
+    0.375,
+    0.25
+   ],
+   "px_png": [
+    640,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S06",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    768,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.375,
+    0.0,
+    0.4375,
+    0.25
+   ],
+   "px_png": [
+    768,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S07",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    896,
+    0,
+    128,
+    512
+   ],
+   "dry": true,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.4375,
+    0.0,
+    0.5,
+    0.25
+   ],
+   "px_png": [
+    896,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S08",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1024,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.5,
+    0.0,
+    0.5625,
+    0.25
+   ],
+   "px_png": [
+    1024,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S09",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1152,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.5625,
+    0.0,
+    0.625,
+    0.25
+   ],
+   "px_png": [
+    1152,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S10",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1280,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.625,
+    0.0,
+    0.6875,
+    0.25
+   ],
+   "px_png": [
+    1280,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S11",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1408,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.6875,
+    0.0,
+    0.75,
+    0.25
+   ],
+   "px_png": [
+    1408,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S12",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1536,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.75,
+    0.0,
+    0.8125,
+    0.25
+   ],
+   "px_png": [
+    1536,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S13",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1664,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.8125,
+    0.0,
+    0.875,
+    0.25
+   ],
+   "px_png": [
+    1664,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S14",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1792,
+    0,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.875,
+    0.0,
+    0.9375,
+    0.25
+   ],
+   "px_png": [
+    1792,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "S15",
+   "family": "SS",
+   "kind": "strip",
+   "px_uv": [
+    1920,
+    0,
+    128,
+    512
+   ],
+   "dry": true,
+   "sub_blades": 2,
+   "L": 0.16,
+   "W": 0.044,
+   "root_w": 0.62,
+   "uv": [
+    0.9375,
+    0.0,
+    1.0,
+    0.25
+   ],
+   "px_png": [
+    1920,
+    1536,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "M0",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    0,
+    512,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.0,
+    0.25,
+    0.0625,
+    0.5
+   ],
+   "px_png": [
+    0,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "M1",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    128,
+    512,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.0625,
+    0.25,
+    0.125,
+    0.5
+   ],
+   "px_png": [
+    128,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "M2",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    256,
+    512,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.125,
+    0.25,
+    0.1875,
+    0.5
+   ],
+   "px_png": [
+    256,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "M3",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    384,
+    512,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.1875,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "px_png": [
+    384,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "MD0",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    512,
+    512,
+    128,
+    512
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.25,
+    0.25,
+    0.3125,
+    0.5
+   ],
+   "px_png": [
+    512,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "MD1",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    640,
+    512,
+    128,
+    512
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.3125,
+    0.25,
+    0.375,
+    0.5
+   ],
+   "px_png": [
+    640,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "M4",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    1792,
+    512,
+    128,
+    512
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.875,
+    0.25,
+    0.9375,
+    0.5
+   ],
+   "px_png": [
+    1792,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "MD2",
+   "family": "GM",
+   "kind": "strip",
+   "px_uv": [
+    1920,
+    512,
+    128,
+    512
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.42,
+   "W": 0.062,
+   "root_w": 0.55,
+   "uv": [
+    0.9375,
+    0.25,
+    1.0,
+    0.5
+   ],
+   "px_png": [
+    1920,
+    1024,
+    128,
+    512
+   ]
+  },
+  {
+   "name": "T0",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    0,
+    1024,
+    128,
+    1024
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.0,
+    0.5,
+    0.0625,
+    1.0
+   ],
+   "px_png": [
+    0,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "T1",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    128,
+    1024,
+    128,
+    1024
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.0625,
+    0.5,
+    0.125,
+    1.0
+   ],
+   "px_png": [
+    128,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "T2",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    256,
+    1024,
+    128,
+    1024
+   ],
+   "dry": false,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.125,
+    0.5,
+    0.1875,
+    1.0
+   ],
+   "px_png": [
+    256,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "TD0",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    384,
+    1024,
+    128,
+    1024
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.1875,
+    0.5,
+    0.25,
+    1.0
+   ],
+   "px_png": [
+    384,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "TD1",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    512,
+    1024,
+    128,
+    1024
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.25,
+    0.5,
+    0.3125,
+    1.0
+   ],
+   "px_png": [
+    512,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "TP0",
+   "family": "GT",
+   "kind": "plume_stalk",
+   "px_uv": [
+    640,
+    1024,
+    128,
+    1024
+   ],
+   "dry": false,
+   "L": 0.95,
+   "W": 0.075,
+   "stalk_w": 0.018,
+   "plume_v": [
+    0.6,
+    0.66
+   ],
+   "uv": [
+    0.3125,
+    0.5,
+    0.375,
+    1.0
+   ],
+   "px_png": [
+    640,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "TD2",
+   "family": "GT",
+   "kind": "strip",
+   "px_uv": [
+    1792,
+    1024,
+    128,
+    1024
+   ],
+   "dry": true,
+   "sub_blades": 3,
+   "L": 0.95,
+   "W": 0.072,
+   "root_w": 0.45,
+   "uv": [
+    0.875,
+    0.5,
+    0.9375,
+    1.0
+   ],
+   "px_png": [
+    1792,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "TP1",
+   "family": "GT",
+   "kind": "plume_stalk",
+   "px_uv": [
+    1920,
+    1024,
+    128,
+    1024
+   ],
+   "dry": false,
+   "L": 0.95,
+   "W": 0.075,
+   "stalk_w": 0.018,
+   "plume_v": [
+    0.6,
+    0.66
+   ],
+   "uv": [
+    0.9375,
+    0.5,
+    1.0,
+    1.0
+   ],
+   "px_png": [
+    1920,
+    0,
+    128,
+    1024
+   ]
+  },
+  {
+   "name": "CM_A",
+   "family": "GM",
+   "kind": "card",
+   "px_uv": [
+    768,
+    512,
+    512,
+    512
+   ],
+   "Wc": 0.46,
+   "Hc": 0.36,
+   "plumes": 0,
+   "n_blades": 30,
+   "dry_frac": 0.2,
+   "uv": [
+    0.375,
+    0.25,
+    0.625,
+    0.5
+   ],
+   "px_png": [
+    768,
+    1024,
+    512,
+    512
+   ]
+  },
+  {
+   "name": "CM_B",
+   "family": "GM",
+   "kind": "card",
+   "px_uv": [
+    1280,
+    512,
+    512,
+    512
+   ],
+   "Wc": 0.46,
+   "Hc": 0.45,
+   "plumes": 0,
+   "n_blades": 32,
+   "dry_frac": 0.2,
+   "uv": [
+    0.625,
+    0.25,
+    0.875,
+    0.5
+   ],
+   "px_png": [
+    1280,
+    1024,
+    512,
+    512
+   ]
+  },
+  {
+   "name": "CT_A",
+   "family": "GT",
+   "kind": "card",
+   "px_uv": [
+    768,
+    1024,
+    512,
+    1024
+   ],
+   "Wc": 0.56,
+   "Hc": 0.85,
+   "plumes": 0,
+   "n_blades": 40,
+   "dry_frac": 0.5,
+   "uv": [
+    0.375,
+    0.5,
+    0.625,
+    1.0
+   ],
+   "px_png": [
+    768,
+    0,
+    512,
+    1024
+   ]
+  },
+  {
+   "name": "CT_B",
+   "family": "GT",
+   "kind": "card",
+   "px_uv": [
+    1280,
+    1024,
+    512,
+    1024
+   ],
+   "Wc": 0.56,
+   "Hc": 0.95,
+   "plumes": 4,
+   "n_blades": 34,
+   "dry_frac": 0.5,
+   "uv": [
+    0.625,
+    0.5,
+    0.875,
+    1.0
+   ],
+   "px_png": [
+    1280,
+    0,
+    512,
+    1024
+   ]
+  }
+ ],
+ "reserved": []
+}

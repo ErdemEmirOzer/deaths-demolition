@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Core.Pooling;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Rendering;
 using UnityEngine;
 
@@ -49,6 +50,7 @@ namespace DD.Prototype.Feedback.Vfx
         private PrototypePool<AtlasBurstEffect> _straw;
         private PrototypePool<CasingEffect> _casings;
         /// <summary>WP-073 B1: the casing pool (direction §1.3: 24 / 48 / 96 by tier; the pool is sized once, at the tier in effect).</summary>
+        public const int TdCasingBudget = 12;
         public static int CasingCapacity => VfxTier.Pick(24, 48, 128);   // DEC-100: Cinematic 128
         public int CasingsEjected { get; private set; }
         public PrototypePool<CasingEffect> CasingPool => _casings;
@@ -308,6 +310,7 @@ namespace DD.Prototype.Feedback.Vfx
                 velocity = port.right * (1.9f + seed * 0.8f) + Vector3.up * (1.4f + seed * 0.6f) - port.forward * 0.4f;
             }
 
+            MakeTdCasingRoom(_casings);
             CasingEffect c = _casings.Get(port.position, Quaternion.LookRotation(port.forward, port.up));
             if (c == null) return;
             c.Play(lib.MeshFor(mesh), lib.Material, velocity, seed, life);
@@ -315,6 +318,13 @@ namespace DD.Prototype.Feedback.Vfx
             // WP-087 (C-00 05.10): the throw this casing got, with its shot — the casing sound lands where this casing lands
             DD.Prototype.Core.Config.ClassicWeaponId weapon = active != null && active.Classic != null ? active.Classic.Id : default;
             CasingEvents.RaiseLaunched(new CasingLaunchInfo(shotSerial >= 0 ? shotSerial : active != null ? active.ShotSerial : 0, weapon, port.position, velocity, scale));
+        }
+
+        /// <summary>Recycle oldest visible TD casing before the next real launch; one launch event still follows each new casing.</summary>
+        public static void MakeTdCasingRoom(DD.Prototype.Core.Pooling.PrototypePool<CasingEffect> pool)
+        {
+            if (CameraModeService.Current != CameraMode.TopDown || pool == null) return;
+            while (pool.CountSpawned >= TdCasingBudget) pool.Spawned[0].Despawn();
         }
 
         /// <summary>The weapons whose shells follow the mechanism, never the flash: sg_1 pump (clip or 0.40 s fallback) and
@@ -722,6 +732,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayFleshHit(Vector3 point, Vector3 normal, Vector3 shotDirection, bool critical, bool killed)
         {
+            // AP037 owns the TD flesh layer only after its complete asset set is warmed.
+            if (FeelBrushVfxSystem.OwnsTdLayers) return true;
             if (!_ready || AuditMute)
             {
                 return false;
@@ -1040,7 +1052,7 @@ namespace DD.Prototype.Feedback.Vfx
             // the hit path draws the sheet at the impact and the splinter under the body.
             PlayDecal(VfxIds.DecalLacquerSplinter, groundPoint, Vector3.up, 0f, DecalSecondsSplinter, 0.7f, Color.white);
             // WP-019b: the flesh under the plate bleeds too — kept below the critical level so the plate loss still reads (brief 3).
-            if (_blood.IsReady)
+            if (_blood.IsReady && !FeelBrushVfxSystem.OwnsTdLayers)
             {
                 any |= _blood.PlayHit(point, normal, shotDirection, BloodSystem.HitClass.ArmorBreak);
             }
@@ -1097,6 +1109,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayZombieDeath(Vector3 feet, Vector3 hitDirection, bool heavy, Vector3 hitPoint, Vector3 normal, FeedbackWeight weight = FeedbackWeight.Standard)
         {
+            if (FeelBrushVfxSystem.OwnsTdLayers) return true;
             if (!_ready || AuditMute)
             {
                 return false;

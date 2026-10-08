@@ -24,6 +24,112 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly Unity.Profiling.ProfilerMarker s_marker = new Unity.Profiling.ProfilerMarker("WP073.TracerRibbons");
 
         public const int Capacity = 256;
+        public const int TdCapacity = 48;
+        private struct TdRound
+        {
+            public bool Alive, Sniper, Stopped;
+            public int Id;
+            public float Age, Speed, Target;
+            public Vector3 Origin, Head, Direction;
+            public Color Color;
+        }
+        private readonly TdRound[] _tdRounds = new TdRound[TdCapacity];
+        private int _tdSyntheticId;
+        public int LiveTdTracers { get; private set; }
+        public int LiveTdSmoke { get; private set; }
+
+        /// <summary>TD birth admission: each pellet is a shot, bounded to 48 shared tracer/smoke records.</summary>
+        public bool RecordTdProjectile(in ProjectileSpawnInfo info)
+        {
+            if (CameraModeService.Current != CameraMode.TopDown || info.Kind == ProjectileKind.Rocket
+                || info.Kind == ProjectileKind.Orb || info.Kind == ProjectileKind.Gel) return false;
+            for (int i = 0; i < TdCapacity; i++)
+            {
+                if (_tdRounds[i].Alive) continue;
+                VfxWeaponProfile profile = VfxWeaponProfiles.For(info.WeaponId);
+                _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId, Sniper = profile.Class == VfxWeaponClass.Sniper,
+                    Origin = info.Position, Head = info.Position, Direction = info.Direction.normalized,
+                    Speed = info.Speed, Target = float.PositiveInfinity, Color = profile.HeadColor };
+                LiveTdTracers++;
+                if (_tdRounds[i].Sniper) LiveTdSmoke++;
+                return true;
+            }
+            return false;
+        }
+        public void StopTdProjectile(int id, Vector3 position, bool cleared = false)
+        {
+            for (int i = 0; i < TdCapacity; i++)
+            {
+                ref TdRound r = ref _tdRounds[i];
+                if (!r.Alive || r.Id != id) continue;
+                r.Head = position; r.Stopped = true;
+                if (cleared) r.Alive = false;
+                return;
+            }
+        }
+        /// <summary>Presentation clock; projectile positions are read, never simulated or changed.</summary>
+        public void TickTd(float delta)
+        {
+            delta = Mathf.Max(0f, delta);
+            for (int pIndex = 0; pIndex < ProjectileSystem.LiveCount; pIndex++)
+            {
+                ref readonly ProjectileState p = ref ProjectileSystem.Get(pIndex);
+                for (int i = 0; i < TdCapacity; i++)
+                {
+                    ref TdRound r = ref _tdRounds[i];
+                    if (!r.Alive || r.Stopped || r.Id != p.Generation) continue;
+                    Vector3 lift = MuzzleCatchUp(p, delta);
+                    r.Head = p.Position + lift; r.Origin = p.Origin + lift;
+                    r.Direction = p.Direction;
+                    break;
+                }
+            }
+            LiveTdTracers = LiveTdSmoke = 0;
+            for (int i = 0; i < TdCapacity; i++)
+            {
+                ref TdRound r = ref _tdRounds[i]; if (!r.Alive) continue;
+                r.Age += delta;
+                if (r.Id < 0 && !r.Stopped)
+                {
+                    float distance = Mathf.Min(r.Target, r.Age * r.Speed);
+                    r.Head = r.Origin + r.Direction * distance;
+                    if (distance >= r.Target) r.Stopped = true;
+                }
+                if (r.Age >= (r.Sniper ? .4f : .04f)) { r.Alive = false; continue; }
+                if (r.Age < (r.Sniper ? .12f : .04f)) LiveTdTracers++;
+                if (r.Sniper) LiveTdSmoke++;
+            }
+        }
+        private void ClearTd()
+        {
+            for (int i = 0; i < TdCapacity; i++) _tdRounds[i] = default;
+            LiveTdTracers = LiveTdSmoke = 0;
+        }
+        private int DrawTd(int layer)
+        {
+            int n = 0;
+            for (int i = 0; i < TdCapacity; i++)
+            {
+                ref TdRound r = ref _tdRounds[i];
+                if (!r.Alive || (layer == 0 && r.Age >= (r.Sniper ? .12f : .04f)) || (layer == 1 && !r.Sniper)) continue;
+                Vector3 tail = layer == 1 ? r.Origin : r.Head - r.Direction * Mathf.Min((r.Head-r.Origin).magnitude, r.Sniper ? 10f : 8f);
+                float length = (r.Head-tail).magnitude; if (length < .01f) continue;
+                Color color = layer == 1 ? new Color(.48f,.50f,.52f) : r.Color;
+                Write(n, 0, r.Head, tail, layer == 1 ? .12f : r.Sniper ? .07f : .03f,
+                    0f, length, 0f, 0f, 0f, color, color, false, false);
+                // Exact metre widths; TD does not inherit the older pixel floor/head dot.
+                _extra[n] = Vector4.zero;
+                float alpha = layer == 1 ? .16f * (1f-r.Age/.4f) : 1f;
+                _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : 0f;
+                n++;
+            }
+            if (n == 0) return 0;
+            _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
+            _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
+            _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
+            Graphics.DrawMeshInstanced(_quad, 0, _material, _matrices, n, _block, ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
+            return n;
+        }
         public const string ShaderName = "DD/VFX Ribbon";
         public const float PelletBarLength = 0.5f;
         /// <summary>WP-073 B2 (AD B1 SHOULD): in first person the bars are shorter and softer — 0.30 m at α 0.6 (they crossed the whole lower frame).</summary>
@@ -166,12 +272,14 @@ namespace DD.Prototype.Feedback.Vfx
             ProjectileDriver.DrawInterimTrails = _material == null;
             ProjectileEvents.Impact += OnImpact;
             ProjectileEvents.Spawned += OnSpawned;
+            ProjectileEvents.Expired += OnExpired;
         }
 
         private void OnDestroy()
         {
             ProjectileEvents.Impact -= OnImpact;
             ProjectileEvents.Spawned -= OnSpawned;
+            ProjectileEvents.Expired -= OnExpired;
             if (s_instance != this) return;
             s_instance = null;
             ProjectileDriver.DrawInterimTrails = true;
@@ -213,6 +321,22 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
+            if (CameraModeService.Current == CameraMode.TopDown)
+            {
+                var info = new ProjectileSpawnInfo(--_tdSyntheticId, -1, default, ProjectileKind.Bullet, default,
+                    origin, (end-origin).normalized, profile.Speed, 0);
+                // Legacy hitscan specials keep their explicit profile, including the sniper envelope.
+                if (!RecordTdProjectile(info)) return true;
+                for (int i = 0; i < TdCapacity; i++)
+                    if (_tdRounds[i].Alive && _tdRounds[i].Id == info.ProjectileId)
+                    {
+                        _tdRounds[i].Sniper = profile.Class == VfxWeaponClass.Sniper;
+                        _tdRounds[i].Color = profile.HeadColor;
+                        _tdRounds[i].Target = (end-origin).magnitude;
+                        break;
+                    }
+                return true;
+            }
             Vector3 axis = end - origin;
             float target = axis.magnitude;
             if (target < 0.05f)
@@ -238,12 +362,16 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void OnSpawned(ProjectileSpawnInfo info)
         {
+            if (CameraModeService.Current == CameraMode.TopDown) RecordTdProjectile(info);
             if (info.Kind == ProjectileKind.Pellet && info.PelletIndex == 0)
             {
                 _centrePellets[_centreNext] = info.ProjectileId;
                 _centreNext = (_centreNext + 1) % _centrePellets.Length;
             }
         }
+
+        private void OnExpired(ProjectileExpireInfo info) =>
+            StopTdProjectile(info.ProjectileId, info.Position, info.Reason == ProjectileEndReason.Cleared);
 
         private bool IsCentrePellet(int projectileId)
         {
@@ -258,6 +386,11 @@ namespace DD.Prototype.Feedback.Vfx
         // A stopped projectile: its head stays on the impact, the tail runs in (length already flown, ≤ L).
         private void OnImpact(ProjectileImpactInfo hit)
         {
+            if (CameraModeService.Current == CameraMode.TopDown)
+            {
+                if (hit.Stopped) StopTdProjectile(hit.ProjectileId, hit.Position);
+                return;
+            }
             if (_material == null || !hit.Stopped || hit.Kind == ProjectileKind.Rocket || hit.Kind == ProjectileKind.Orb || hit.Kind == ProjectileKind.Gel)
             {
                 return;
@@ -322,6 +455,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Drop every local ribbon (scene change, tests).</summary>
         public void Clear()
         {
+            ClearTd();
             for (int i = 0; i < Capacity; i++) _rounds[i].Alive = false;
             _live = 0;
         }
@@ -333,6 +467,16 @@ namespace DD.Prototype.Feedback.Vfx
             using var marker = s_marker.Auto();   // WP-073 §5: per-tier ms, read by ProfilerRecorder (S-10 / tier-ms.md)
             if (_material != null) ProjectileDriver.DrawInterimTrails = false;
             float dt = Time.deltaTime;
+            if (CameraModeService.Current == CameraMode.TopDown)
+            {
+                TickTd(dt);
+                _live = LiveTdTracers; _firstPerson = false; _performance = VfxTier.Current == VfxTierLevel.Performance;
+                DrawnCore = _material != null ? DrawTd(0) : 0;
+                DrawnGlow = _material != null ? DrawTd(1) : 0;
+                DrawnGlint = 0;
+                return;
+            }
+            ClearTd();
             _live = 0;
             for (int i = 0; i < Capacity; i++)
             {

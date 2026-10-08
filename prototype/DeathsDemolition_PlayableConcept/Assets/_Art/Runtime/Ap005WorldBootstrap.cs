@@ -119,6 +119,9 @@ namespace DD.Art
 
             report.Append("[AP005] Atmosphere: ").Append(_buildAtmosphere ? "sun + volume + wind + " + driftFields + " drift fields" : "off").Append(".\n");
 
+            // WP-093: the living ground (V6 only; built on the vegetation system's next LateUpdate, menu backdrop included).
+            VegetationWorldHookup.Ensure(this);
+
             if (viewer)
             {
                 // AP-028 v002 menu budget: wet surfaces from the baked probes only - no real-time planar reflection.
