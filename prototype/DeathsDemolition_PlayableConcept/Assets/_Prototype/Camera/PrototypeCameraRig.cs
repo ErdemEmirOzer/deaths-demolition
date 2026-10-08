@@ -201,6 +201,9 @@ namespace DD.Prototype.CameraSystem
         private bool _weaponLowered;
         private readonly Dictionary<Renderer, ShadowCastingMode> _playerShadowModes = new Dictionary<Renderer, ShadowCastingMode>(32);
 
+        // WP-095 (R3) · the top-down feel channels K1–K5 (his sözleşmesi §2); fed by CameraFeelDriver from FeelEvents, TD only.
+        private readonly TopDownFeelCamera _tdFeel = new TopDownFeelCamera();
+
         private DebugPanelSlider _shakeSlider;
         private DebugPanelButton _testPunch;
         private DebugPanelButton _testRumble;
@@ -280,6 +283,12 @@ namespace DD.Prototype.CameraSystem
         public float ThirdPersonBoom
         {
             get { return CameraModeService.Current == CameraMode.ThirdPerson ? _tpBoom : -1f; }
+        }
+
+        /// <summary>WP-095 (R3): the top-down feel channels (K1 / K2 trauma, K3 kicks, K4 lean, K5 zoom). Read-only use outside TD.</summary>
+        public TopDownFeelCamera TopDownFeel
+        {
+            get { return _tdFeel; }
         }
 
         /// <summary>Shake-free world position of the camera.</summary>
@@ -637,7 +646,13 @@ namespace DD.Prototype.CameraSystem
             // WP-059: the death beat pulls the camera a little towards the fallen body
             // (GameFeelSettings.DeathCameraPushIn of the offset, eased with the slow-down).
             float pushIn = DeathSequence.PushIn01 * GameFeelSettings.Active.DeathCameraPushIn;
-            position = _focus + _lookAhead + _offsetFromFocus * (1f - pushIn);
+            // WP-095 K4 (C-00 K7 08.10): the fire lean joins AFTER the SmoothDamps, in its own clamp |look-ahead + lean| ≤
+            // lookAheadTotalCapMeters (3 m); the 2.5 m look-ahead cap above stays. K4 / K5 envelopes run on unscaled time and stop
+            // while RunFlowClock is frozen; reduced motion → 0.
+            _tdFeel.TickEnvelopes(RunFlowClock.IsFrozen ? 0f : Time.unscaledDeltaTime, _lookAheadSmoothTime);
+            Vector3 lean = TopDownFeelCamera.ClampLean(_lookAhead, _tdFeel.LeanOffset(CameraModeService.Settings.ReducedMotion),
+                _tdFeel.Profile.lookAheadTotalCapMeters);
+            position = _focus + _lookAhead + lean + _offsetFromFocus * (1f - pushIn);
             rotation = _fixedRotation;
             fov = _fieldOfView;
         }
@@ -676,6 +691,7 @@ namespace DD.Prototype.CameraSystem
             _fromFov = _camera != null ? _camera.fieldOfView : _fieldOfView;
             _recoil = Vector2.zero;
             _fovPunch = 0f;
+            _tdFeel.Reset();   // WP-095: no top-down trauma / lean / zoom survives a mode change
 
             if (mode == CameraMode.TopDown)
             {
@@ -1241,7 +1257,9 @@ namespace DD.Prototype.CameraSystem
             CameraReactions.Drain(out recoil, out kick, out kickRoll, out fovPunch, out fovSeconds);
 
             CameraWeaponFeelRow row = CameraModesFeel.ActiveRow;
-            FeelSpring kickSpring = CameraModesFeel.KickSpring(row != null ? row.Weight : FeelWeight.W2);
+            bool topDown = mode == CameraMode.TopDown;
+            // WP-095 K3: top-down takes the spring from the TD profile's weapon row (kickSpring W1–W4); FP / TP keep the A4.2 row.
+            FeelSpring kickSpring = CameraModesFeel.KickSpring(topDown ? _tdFeel.KickWeight : row != null ? row.Weight : FeelWeight.W2);
             if (dt > 0f)
             {
                 float omega = 4.6f / Mathf.Max(0.05f, row != null ? row.RecoverySeconds : CameraModesFeel.DefaultRecoverySeconds);
@@ -1284,9 +1302,17 @@ namespace DD.Prototype.CameraSystem
             }
 
             float translation = mode == CameraMode.FirstPerson ? 0f : 1f;   // D-15: no FP translation
-            _kickOffset += kick * translation * cosmetic;
-            _kickRoll += kickRoll * rollScale;
-            float rollCap = mode == CameraMode.FirstPerson ? CameraModesFeel.RollCapFpDeg : CameraModesFeel.RollCapTpDeg;
+            // WP-095: top-down kicks enter the spring unscaled — TopDownFeelCamera.Compose applies the player's scale and reduced
+            // motion once, to K1 + K2 + K3 together (his sözleşmesi §2 / §6); the TD fire / event kicks join here (sustained cap).
+            _kickOffset += kick * translation * (topDown ? 1f : cosmetic);
+            _kickRoll += kickRoll * (topDown ? 1f : rollScale);
+            if (topDown)
+            {
+                _tdFeel.ApplyKicks(ref _kickOffset, _fixedRotation);
+            }
+
+            float rollCap = topDown ? _tdFeel.Profile.rollCapDegrees
+                : mode == CameraMode.FirstPerson ? CameraModesFeel.RollCapFpDeg : CameraModesFeel.RollCapTpDeg;
             _kickRoll = Mathf.Clamp(_kickRoll, -rollCap, rollCap);
             if (settings.ReducedMotion)
             {
@@ -1331,6 +1357,12 @@ namespace DD.Prototype.CameraSystem
         {
             if (_shakeNode == null)
             {
+                return;
+            }
+
+            if (mode == CameraMode.TopDown)
+            {
+                ApplyTopDownShake(dt);   // WP-095 (R3): K1–K3 + K5; the first / third person path below is unchanged
                 return;
             }
 
@@ -1432,6 +1464,45 @@ namespace DD.Prototype.CameraSystem
             _lastFeet = Feet;
             _shakeNode.localPosition = localOffset + _kickOffset + bob;
             _shakeNode.localRotation = Quaternion.Euler(shakeEuler.x, shakeEuler.y, totalRoll);
+        }
+
+        /// <summary>
+        /// WP-095 (R3) · the top-down shake node (his sözleşmesi §2, C-00 K4 / K6 08.10): any direct CameraShakeService request
+        /// + K1 fire trauma + K2 world trauma + K3 kick spring, clamped together to aggregateCapMeters × the player's scale
+        /// (the pause slider read as 0–1) × 0.3 in reduced motion, roll ≤ rollCapDegrees; then K5 on the node's local +Z after
+        /// the clamp. Trauma decays on scaled time after sampling (a hit-stop holds the frame). The aim ray is rebuilt from the
+        /// stable pose (ScreenPointToAimPlane), so none of it moves the aim.
+        /// </summary>
+        private void ApplyTopDownShake(float dt)
+        {
+            FeelProfileTD profile = _tdFeel.Profile;
+            float modeScale = Mathf.Max(0f, CameraModeService.CurrentProfile.ShakeScale);
+            Vector3 legacy;
+            float legacyRoll;
+            CameraShakeService.Sample(dt, profile.aggregateCapMeters * modeScale, 1f, _fixedRotation, out legacy, out legacyRoll);
+
+            // WP-095 §4.11: the last zombie — the view leans lastZombieFocusBlend (30 %) of the way to the kill point on the slow
+            // motion's envelope; on the shake node, so the aim (rebuilt from the stable pose) never moves
+            Vector3 focusShift = Vector3.zero;
+            if (FeelTimeScale.LastZombieActive)
+            {
+                Vector3 toKill = FeelTimeScale.LastZombiePosition - _focus;
+                toKill.y = 0f;
+                toKill = Vector3.ClampMagnitude(toKill * (profile.lastZombieFocusBlend * FeelTimeScale.LastZombieBlend01), profile.lookAheadTotalCapMeters);
+                focusShift = Quaternion.Inverse(_fixedRotation) * toKill;
+            }
+
+            _tdFeel.SetFocusShift(focusShift);
+
+            Vector3 local;
+            float roll;
+            _tdFeel.Compose(_fixedRotation, legacy, legacyRoll, _kickOffset, _kickRoll, _shakeIntensity,
+                CameraModeService.Settings.ReducedMotion, _offsetFromFocus.magnitude, out local, out roll);
+            _tdFeel.AdvanceTrauma(dt);
+
+            _lastFeet = Feet;
+            _shakeNode.localPosition = local;
+            _shakeNode.localRotation = Quaternion.Euler(0f, 0f, roll);
         }
 
         // ----------------------------------------------------------------- aim query

@@ -130,10 +130,20 @@ namespace DD.Prototype.Feedback
 
                 if (snapshot.Enabled && e.ShakeAmplitudeMeters > 0f && e.ShakeSeconds > 0f)
                 {
-                    CameraShakeBridge.Shake(e.ShakeAmplitudeMeters, e.ShakeSeconds, Profile(e.Kind), e.Direction);
+                    // WP-095 (R3): top-down camera response is K2 / K3 / K5 from FeelEvents (TopDownFeelCamera) — the bridge would
+                    // shake a second time, so top-down does not forward it. CameraRequests stays the arbitration's decision (one
+                    // per trigger group, escalation allowed); the hit-stop below is unchanged. First / third person keep the shake.
+                    if (CameraModeService.Current != CameraMode.TopDown)
+                    {
+                        CameraShakeBridge.Shake(e.ShakeAmplitudeMeters, e.ShakeSeconds, Profile(e.Kind), e.Direction);
+                    }
+
                     CameraRequests++;
                 }
-                bool localStop = index == globalStopWinner &&
+                // WP-095 K1: this is the LOCAL VFX envelope (FeelConfig rows; it never writes the clock). The top-down global
+                // stop is FeelTimeScale's, asked from FeelEvents (FeelHitStopTD); top-down, the profile's hitStopLocal switch
+                // turns this local layer off (his sözleşmesi S5). First / third person unchanged.
+                bool localStop = index == globalStopWinner && LocalStopAllowed &&
                     HitStopService.RequestForGroup(e.GroupId, ModeHitStop(e.Kind, e.HitStopSeconds),
                         snapshot.HitStop.minIntervalSeconds, snapshot.HitStop.presentationScale);
                 if (localStop) AcceptedLocalStops++;
@@ -165,11 +175,18 @@ namespace DD.Prototype.Feedback
             return CameraModesFeel.HitStopSeconds(id, mode);
         }
 
-        /// <summary>Production late-frame order: age prior tokens before resolving new requests.</summary>
+        /// <summary>WP-095: top-down, the local envelope follows FeelProfile_TD.hitStopLocal; first / third person always allowed.</summary>
+        private static bool LocalStopAllowed => CameraModeService.Current != CameraMode.TopDown || FeelProfileTD.Active.hitStopLocal;
+
+        /// <summary>
+        /// Production late-frame order: age prior tokens before resolving new requests. WP-095 K1: then the clock arbiter
+        /// (FeelTimeScale) ages its slots and writes min(hit-stop, last zombie, death beat) once, after this frame's requests.
+        /// </summary>
         public static void AdvanceLateFrame(float unscaledDeltaTime)
         {
             HitStopService.Tick(unscaledDeltaTime);
             Flush();
+            FeelTimeScale.AdvanceLateFrame(unscaledDeltaTime);
         }
 
         public static void Clear()
@@ -184,6 +201,7 @@ namespace DD.Prototype.Feedback
         {
             Reset();
             HitStopService.ResetForTests();
+            FeelTimeScale.ResetForTests();   // WP-095 K1: the stop path's clock arbiter starts clean too (no clock write)
         }
 #endif
 

@@ -296,16 +296,22 @@ namespace DD.Prototype.Diagnostics
 
                 RunEvents.RoundCompleted -= onCleared;
                 DamageEvents.EnemyDied -= onDied;
+                // WP-095 K5 (C-00 08.10): top-down with the last-zombie slow motion on, the round-end freeze waits for that beat
+                // (≤ roundEndHoldSafetySeconds) — frozen at the clear OR within the safety window
+                float freezeWait0 = Time.realtimeSinceStartup;
+                float safety = DD.Prototype.Feedback.FeelProfileTD.Active.roundEndHoldSafetySeconds + 0.2f;
+                while (tsAtClear != 0f && !RunFlowClock.IsFrozen && Time.realtimeSinceStartup - freezeWait0 < safety) yield return null;
+                bool frozenInTime = tsAtClear == 0f || RunFlowClock.IsFrozen;
                 GoldAutoCollectReport sweep = gold.LastAutoCollect;
                 Stage s6 = Capture("06-round-complete-sweep", run, gold, "6,7");
                 int roundPackets = gold.PacketsSpawned - spawnedBeforeRound;
                 int roundManual = gold.PacketsCollected - collectedBeforeRound;
-                s6.pass = cleared == 1 && killed == pool && roundPackets == pool && tsAtClear == 0f && outstandingAtClear == 0 &&
+                s6.pass = cleared == 1 && killed == pool && roundPackets == pool && frozenInTime && outstandingAtClear == 0 &&
                           sweep.Round == 1 && sweep.Packets == roundPackets - roundManual && sweep.Amount == gold.Wallet.EarnedByAutoCollect - autoBeforeRound &&
                           roundReward >= pool * standard && gold.Wallet.TotalEarned - earnedBeforeRound == roundReward &&
                           balAtClear == gold.Wallet.Balance && gold.FallbackCredits == 0 && gold.CreditRefusals == 0;
                 s6.detail = "pool=" + pool + " killed=" + killed + " maxFloor=" + maxFloor + " sweep=" + sweep.Packets + "/" + sweep.Amount + "g balanceAtClear=" + balAtClear +
-                            " roundReward=" + roundReward + " (>= " + pool * standard + ") timeScaleAtClear=" + tsAtClear + " outstandingAtClear=" + outstandingAtClear;
+                            " roundReward=" + roundReward + " (>= " + pool * standard + ") timeScaleAtClear=" + tsAtClear + " frozenInTime=" + frozenInTime + " outstandingAtClear=" + outstandingAtClear;
                 s6.note = "round completed once; every packet left on the floor (last kill included) swept and credited in the RoundCleared frame, world frozen";
                 Write(s6);
                 yield return WaitUntil(() => gold.LiveOrbCount == 0, "sweep flight");

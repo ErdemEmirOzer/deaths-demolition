@@ -298,6 +298,9 @@ namespace DD.Prototype.Tests.PlayMode
             // frames in 1.2 s, 9 in the control window, and failed "Kontrol penceresi çok kısa" while the same test alone saw
             // 314 / 300 (b6mi). The old reason for real frames (iter5: a fixed step stalled the unscaled clock the hit-stop
             // ended on, the sim stuck at 6 %) is gone: REQ-127's hit-stop is a local VFX envelope and never owns timeScale.
+            // WP-095 K1 (C-00 08.10): top-down a global stop (armour break, heavy death, …) now does slow the clock for ≤ 4 real
+            // frames, through FeelTimeScale — but it ages on Time.unscaledDeltaTime, which a fixed capture step leaves real, so
+            // it ends in real time and cannot stall the sim; the loop below is game time (Time.time), a stop only adds frames.
             float captureDt0 = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
 
@@ -1000,6 +1003,8 @@ namespace DD.Prototype.Tests.PlayMode
             AudioEvents.Cue += cDinle;
             AudioEvents.CueSuppressed += bDinle;
             int hitStopOnce = HitStopService.Count;
+            int globalStopOnce = FeelTimeScale.Stops;   // WP-095 K1: the top-down global stop is counted by the clock arbiter
+            int lastZombieOnce = FeelEvents.Count(FeelEventKind.LastZombie);
             float unscaledOnce = Time.unscaledTime;
 
             try
@@ -1119,6 +1124,14 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsFalse(olum[0].WasHeavyDeath);
                 Assert.AreEqual(0f, olum[0].SuggestedHitStop, 0.0001f, "Standard ölümü hit-stop önerdi (REQ-127).");
                 Assert.AreEqual(hitStopOnce, HitStopService.Count, "REQ-127: AR ile flesh hit/ölüm hit-stop üretti.");
+                // WP-095 K1 (C-00 08.10): REQ-127 changed — top-down may stop the world now, but never for an AR flesh hit or an
+                // ordinary kill (his sözleşmesi §4.3; a critical kill only with a single-shot class weapon, ar_1 is not one). The
+                // round's last zombie would (§4.11), so a raised LastZombie (not expected in this harness: the round is stopped)
+                // skips the check.
+                if (FeelEvents.Count(FeelEventKind.LastZombie) == lastZombieOnce)
+                {
+                    Assert.AreEqual(globalStopOnce, FeelTimeScale.Stops, "K1: AR ile flesh hit/sıradan ölüm küresel durma istedi.");
+                }
                 Assert.GreaterOrEqual(ates, beklenenIsabet, "Ateş sesi cue'su eksik.");
                 Assert.GreaterOrEqual(fleshCue, 1, "FleshHit ses cue'su yok.");
                 Assert.AreEqual(1, olumCue, "EnemyDeath ses cue'su " + olumCue + " kez (tam 1).");
@@ -1154,6 +1167,8 @@ namespace DD.Prototype.Tests.PlayMode
                     if (CameraShakeService.ActiveCount > 0) bumpAlindi++;
                 };
                 PlayerHealth.AnyDamaged += pDinle;
+                TopDownFeelCamera tdKanal = PrototypeCameraRig.Active != null ? PrototypeCameraRig.Active.TopDownFeel : null;
+                int tdDunyaOnce = tdKanal != null ? tdKanal.WorldEvents : 0;
                 try
                 {
                     Assert.IsNotNull(Dogur(merkez + new Vector3(0f, 0f, 1.6f), merkez));
@@ -1168,8 +1183,20 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.AreEqual(TekVurusHasari, oyuncuHasar[0].AppliedAmount, 0.01f);
                     StringAssert.StartsWith("Zombie.", oyuncuHasar[0].SourceId);
                     Assert.Greater(flash, 0f, "Hasar flaşı (görsel geri bildirim) yok.");
-                    Assert.Greater(shakeSayisi, 0, "Hasar kamera Bump sarsıntısı üretmedi (DEC-031).");
-                    Assert.Greater(bumpAlindi, 0, "Bump kameraya ulaştı ama CameraShakeService almadı (alıcı yok?).");
+                    if (CameraModeService.Current == CameraMode.TopDown)
+                    {
+                        // WP-095 (R3, his sözleşmesi §2): tepeden hasar kamerayı K2 / K3 ile oynatır (TopDownFeelCamera ←
+                        // FeelEvents.PlayerDamaged); yönlendiricinin Bump'ı artık köprüye gitmez (ikinci sarsıntı olurdu).
+                        // DEC-031 korunur: hasar kamerayı oynatır — ölçüm yeri değişti.
+                        Assert.IsNotNull(tdKanal, "Tepeden kamera kanalları yok.");
+                        Assert.AreEqual(0, shakeSayisi, "Tepeden hasar Bump'ı köprüye hâlâ gidiyor (çift sarsıntı).");
+                        Assert.Greater(tdKanal.WorldEvents, tdDunyaOnce, "Hasar tepeden dünya travması (K2) üretmedi (DEC-031).");
+                    }
+                    else
+                    {
+                        Assert.Greater(shakeSayisi, 0, "Hasar kamera Bump sarsıntısı üretmedi (DEC-031).");
+                        Assert.Greater(bumpAlindi, 0, "Bump kameraya ulaştı ama CameraShakeService almadı (alıcı yok?).");
+                    }
                 }
                 finally
                 {
@@ -1431,7 +1458,106 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(float.IsNaN(p50) || float.IsInfinity(p50));
         }
 
+        // ================================================================ WP-095 · tepeden kamera K1–K5
+
+        /// <summary>
+        /// WP-095 (R3, his sözleşmesi §2 · K/wp-095/F2-KAMERA-GOREV.md): tepeden ar_1 ile 2 s basılı ateş.
+        /// (a) sarsıntı düğümü oynar ve K1 + K2 + K3 toplamı ≤ aggregateCapMeters (0,22 m); K5 bu testte yok — raund başı
+        /// nefesi bitmeden ateş başlamaz; (b) eski tepeden ateş sarsıntısı (CameraShakeService) çalışmaz: çift sarsıntı yok;
+        /// (c) imlecin dünya noktası kararlı pozdan kurulur: rig'in nişanı, yalnız kararlı pozdan hesaplanan noktadan &lt; 1 cm
+        /// sapar, telafisiz ham kamera ışını oynar (pozitif kontrol); (d) tetik bırakılınca 1 s (60 oyun karesi) içinde düğüm ≈ 0
+        /// (K1 1,6/s ile söner, K3 yayı döner).
+        /// </summary>
+        [UnityTest]
+        [Category("Regression")]
+        [Timeout(180000)]
+        public IEnumerator Wp095_TepedenAr1Ates_SarsintiKenetli_NisanKararli_BirakincaSifir()
+        {
+            yield return RunSahnesiniHazirla();
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "Test tepeden kamerada koşar.");
+            ClassicWeaponId onceki = WeaponRegistry.SelectedWeapon;
+            try
+            {
+                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AssaultRifle), "ar_1 kuşanılmadı");
+                PrototypeCameraRig kam = PrototypeCameraRig.Active;
+                TopDownFeelCamera kanal = kam.TopDownFeel;
+                Transform dugum = kam.Camera.transform;
+                WeaponController silah = WeaponRegistry.ActiveController;
+                yield return Bekle(() => silah.Classic.CanFire, 5f, "Silah ateşe hazır değil.");
+                // Raund başı K5 nefesi (+%4 → 0, 0,8 s ölçeksiz) ve kurulumdan kalan her şey sönsün: bu test yalnız K1–K3'ü ölçer.
+                yield return Bekle(() => Mathf.Abs(kanal.ZoomFraction) < 1e-6f && dugum.localPosition.magnitude < 1e-4f, 8f,
+                    "Ateşten önce kamera dinlenmeye dönmedi (K5 / düğüm).");
+
+                float duzlemY = _rig.transform.position.y + NisanDuzlemi;
+                Vector2 ekran = new Vector2(Screen.width * 0.5f, Screen.height * 0.8f);   // oyuncunun önü
+                _girdi.Imlec = ekran;
+                int atisOnce = kanal.Shots;
+                float enBuyukOfset = 0f, enBuyukToplam = 0f, enBuyukNisanSapma = 0f, enBuyukHamSapma = 0f;
+                _girdi.AtesBasili = true;
+                for (int i = 0; i < 120; i++)
+                {
+                    yield return null;
+                    enBuyukOfset = Mathf.Max(enBuyukOfset, dugum.localPosition.magnitude);
+                    enBuyukToplam = Mathf.Max(enBuyukToplam, kanal.Last.TotalMeters);
+                    Assert.AreEqual(0, CameraShakeService.ActiveCount, "Eski tepeden ateş sarsıntısı hâlâ çalışıyor (çift sarsıntı).");
+
+                    Vector3 nisan;
+                    Assert.IsTrue(kam.ScreenPointToAimPlane(ekran, duzlemY, out nisan), "Nişan projeksiyonu başarısız.");
+                    Vector3 kararli = KararliPozdanDuzlemNoktasi(kam, ekran, duzlemY);
+                    enBuyukNisanSapma = Mathf.Max(enBuyukNisanSapma, Vector3.Distance(nisan, kararli));
+                    Ray ham = kam.Camera.ScreenPointToRay(ekran);
+                    if (Mathf.Abs(ham.direction.y) > 1e-5f)
+                    {
+                        Vector3 hamNokta = ham.origin + ham.direction * ((duzlemY - ham.origin.y) / ham.direction.y);
+                        enBuyukHamSapma = Mathf.Max(enBuyukHamSapma, Vector3.Distance(hamNokta, kararli));
+                    }
+                }
+
+                _girdi.AtesBasili = false;
+                int atis = kanal.Shots - atisOnce;
+                for (int i = 0; i < 60; i++)
+                {
+                    yield return null;
+                }
+
+                float kalan = dugum.localPosition.magnitude;
+                float kalanRoll = Quaternion.Angle(dugum.localRotation, Quaternion.identity);
+                float tavan = FeelProfileTD.Active.aggregateCapMeters;
+                Debug.Log("[DD-TEST] wp095.kamera ar_1 2s atis=" + atis + " dugum max=" + enBuyukOfset.ToString("F4") + " m toplam max=" +
+                          enBuyukToplam.ToString("F4") + " m (tavan " + tavan + ") nisan sapma=" + (enBuyukNisanSapma * 1000f).ToString("F2") +
+                          " mm ham=" + (enBuyukHamSapma * 1000f).ToString("F1") + " mm birakinca 1s=" + kalan.ToString("F5") + " m");
+
+                Assert.GreaterOrEqual(atis, 10, "Ölçüm boş: 2 s'de tepeden kanala yeterli atış ulaşmadı (FeelEvents.ShotFired → K1).");
+                Assert.Greater(enBuyukOfset, 0.005f, "Tepeden ateş sarsıntı düğümünü oynatmadı (K1 / K3).");
+                Assert.LessOrEqual(enBuyukOfset, tavan + 1e-4f, "K1 + K2 + K3 düğüm ofseti 0,22 m tavanını aştı: " + enBuyukOfset);
+                Assert.LessOrEqual(enBuyukToplam, tavan + 1e-4f, "Kenet sonrası toplam tavanı aştı: " + enBuyukToplam);
+                Assert.Greater(enBuyukHamSapma, 0.002f, "Ham kamera ışını bile oynamadı; telafi ölçülemiyor (ölçüm boş).");
+                Assert.Less(enBuyukNisanSapma, 0.01f,
+                    "REQ-126: sarsıntı imlecin dünya noktasını " + (enBuyukNisanSapma * 1000f).ToString("F2") + " mm oynattı.");
+                Assert.Less(kalan, 1e-3f, "Tetik bırakılınca 1 s içinde düğüm sıfıra dönmedi: " + dugum.localPosition);
+                Assert.Less(kalanRoll, 0.01f, "Bırakınca roll kaldı: " + kalanRoll);
+            }
+            finally
+            {
+                _girdi.AtesBasili = false;
+                WeaponRegistry.SelectedWeapon = onceki;   // T1: the process-wide selection goes back
+            }
+        }
+
         // ======================================================================== yardımcı
+
+        /// <summary>WP-095: the aim-plane point under <paramref name="ekran"/> from the rig's STABLE pose only (pinhole; the shake node is ignored).</summary>
+        private static Vector3 KararliPozdanDuzlemNoktasi(PrototypeCameraRig kam, Vector2 ekran, float duzlemY)
+        {
+            Camera c = kam.Camera;
+            Rect r = c.pixelRect;
+            float tan = Mathf.Tan(c.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float x = ((ekran.x - r.x) / r.width * 2f - 1f) * tan * c.aspect;
+            float y = ((ekran.y - r.y) / r.height * 2f - 1f) * tan;
+            Vector3 yon = kam.StableRotation * new Vector3(x, y, 1f).normalized;
+            Vector3 koken = kam.StablePosition;
+            return koken + yon * ((duzlemY - koken.y) / yon.y);
+        }
 
         private static ZombieEnemy Dogur(Vector3 konum, Vector3 bakisHedefi)
         {
