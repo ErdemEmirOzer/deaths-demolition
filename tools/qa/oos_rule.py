@@ -39,7 +39,8 @@ PRUNE = {"Library", "Temp", ".git", "Logs", "obj", "node_modules", "asset-produc
 PID = re.compile(r"\bpid (\d+)\b")
 MTIME = re.compile(r"\bmtime (\d\d:\d\d:\d\d)Z")
 SUMMARY_UTC = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ) userdata-guard restore scope=")
-SPAN_SLACK = 2   # s: the sampler / summary seconds are whole, the restore writes just before its summary line
+SPAN_SLACK = 0   # s (gt S-2, C-00 08.10: was 2 — a 2 s false-PASS band): whole seconds on both sides, the grant comes
+                 # before any write of the run and the restore's summary line after its last write
 BAD_NL = "$'\\n'"   # guard 52b7a00f..: the file ended in this literal instead of a newline (C-00 05.10) — read it too
 
 

@@ -141,6 +141,32 @@ class OosRuleTests(unittest.TestCase):
         self.span_case(other_scope="editor")   # only a player-scope window runs a Player / restores the player area
         ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
 
+    def test_2b_SinirlarTam_BirSaniyeDisariKalir(self):
+        """gt S-2 (08.10): SPAN_SLACK 0 — the other window's own seconds hold, one second outside does not."""
+        for mtime, ok_want in (("12:03:00", True), ("12:05:01", True), ("12:02:59", False), ("12:05:02", False)):
+            with self.subTest(mtime=mtime):
+                self.span_case(mtime=mtime)
+                ok, why = self.decide(); self.assertEqual(ok_want, ok, why)
+
+    def test_2b_DigerPencereHenuzAcik_BeklerSonraGecer(self):
+        """gt S-7 (08.10): the writer window is still open (no restore summary yet) — condition 3 waits for it; once it
+        restores verified=1 the change passes with the warning."""
+        self.span_case(mtime="12:05:00")
+        (self.owner / "restore.txt").unlink()
+        restored = []
+        def sleep(_):
+            if not restored:
+                (self.owner / "restore.txt").write_text(
+                    "2026-10-05T12:06:00Z userdata-guard restore scope=player touched=1 verified=1 extraKeys=0\nexit=0\n")
+                restored.append(1)
+        ok, why = oos_rule.decide(self.ug, [self.root], wait=60, sleep=sleep)
+        self.assertTrue(ok, why); self.assertIn("WARNING (2b", why); self.assertEqual([1], restored)
+
+    def test_2b_DigerPencereAcikKalir_Kalir(self):
+        self.span_case(mtime="12:05:00")
+        (self.owner / "restore.txt").unlink()
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("not restored yet", why)
+
     def test_2b_MtimeKendiPenceresiDisinda_Kalir(self):
         # gt S-1 (08.10): the other window DOES hold 11:50 (11:40 → 11:55) — only this window's own span (12:00 →) refuses
         self.span_case(mtime="11:50:00", other_start="11:40:00", other_end="11:55:00")
