@@ -73,8 +73,8 @@ namespace DD.Art.Pipeline.EditorTools
                         Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
                         diagnostics.MarkBareEntropy();
                         diagnostics.Label(name + "-bare-original");
-                        float bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
-                        File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare) + "}");
+                        BareShare bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
+                        File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare.Ground) + ", \"legacyBlack\": " + F(bare.LegacyBlack) + "}");
                         diagnostics.Capture(cam, name, feet, ground);
                     }
                 }, true, false);
@@ -84,7 +84,9 @@ namespace DD.Art.Pipeline.EditorTools
         {
             string dir = OutDir();
             var bareRows = new StringBuilder();
-            float bareSum = 0f;
+            var legacyRows = new StringBuilder();
+            var splitRows = new StringBuilder();
+            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f;
             foreach ((string name, Vector2 feet) in Poses)
             {
                 Vector3 ground = Ground(feet);
@@ -93,13 +95,22 @@ namespace DD.Art.Pipeline.EditorTools
                 cam.fieldOfView = RigFov;
                 cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
                 Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
-                float bare = BareGroundShare(cam, requireVegetation ? Path.Combine(dir, name + "-bare") : null);
-                bareRows.Append(bareRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare));
-                bareSum += bare;
+                BareShare bare = BareGroundShare(cam, requireVegetation ? Path.Combine(dir, name + "-bare") : null);
+                bareRows.Append(bareRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare.Ground));
+                legacyRows.Append(legacyRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare.LegacyBlack));
+                splitRows.Append(splitRows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"natural\": " + F(bare.Natural) + ", \"paved\": " + F(bare.Paved) + "}");
+                bareSum += bare.Ground;
+                legacySum += bare.LegacyBlack;
+                naturalSum += bare.Natural;
+                pavedSum += bare.Paved;
             }
 
-            File.WriteAllText(Path.Combine(dir, "bare-ground.json"), "{" + bareRows + ", \"mean\": " + F(bareSum / Poses.Length) + "}");
-            Debug.Log("[TDCAP] " + Poses.Length + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / Poses.Length));
+            int n = Poses.Length;
+            File.WriteAllText(Path.Combine(dir, "bare-ground.json"),
+                "{" + bareRows + ", \"mean\": " + F(bareSum / n) + ", \"metric\": \"" + BareMetric + "\", \"split\": {" + splitRows + ", \"mean\": {\"natural\": " + F(naturalSum / n) +
+                ", \"paved\": " + F(pavedSum / n) + "}}, \"legacyBlack\": {" + legacyRows + ", \"mean\": " + F(legacySum / n) + "}}");
+            Debug.Log("[TDCAP] " + n + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / n) + " (" + BareMetric + "; natural " + F(naturalSum / n) +
+                      ", paved " + F(pavedSum / n) + "; legacy black-threshold " + F(legacySum / n) + ")");
         }, requireVegetation);
 
         /// <summary>WP-092 B5 · One frame at the TD rig's angle from another offset (the ground study's close looks) → DD_TD_OUT/&lt;name&gt;.png.</summary>
@@ -183,13 +194,136 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[TDCAP] empty area " + json);
         }
 
+        /// <summary>The bare-ground metric's name in bare-ground.json (R3 10.10: what ground shows, by id, not by colour).</summary>
+        public const string BareMetric = "ground-id-v2";
+
+        /// <summary>Ground shaders: natural (moss, terrain: the vegetation's ground) and paved (plaza slate, path granite, route plates).</summary>
+        public static readonly string[] NaturalGroundShaders = { "DD/GroundMoss", "DD/GroundTerrain" };
+        public static readonly string[] PavedGroundShaders = { "DD/GroundTiles", "DD/GroundBlend" };
+
+        /// <summary>The id colours of the ground render: natural ground, paved ground (anything else is cover).</summary>
+        public static readonly Color32 NaturalId = new Color32(255, 0, 255, 255), PavedId = new Color32(0, 255, 255, 255);
+
+        /// <summary>One pose's bare ground: <see cref="Ground"/> = natural + paved (the gate value), and the legacy black-threshold share.</summary>
+        public struct BareShare
+        {
+            public float Ground, Natural, Paved, LegacyBlack;
+        }
+
         /// <summary>
-        /// WP-092 · The share of the TD frame that shows bare ground: the same pose rendered with every ground-shader renderer
-        /// (and the fog / shaft cards over it) hidden against a black clear; a pixel nothing else covers is bare ground.
-        /// Water, plants, props and buildings all count as covered. Very dark covered pixels can also satisfy the black threshold;
-        /// combined captures save the existing measurement render and its binary classification for diagnosis, without another render.
+        /// WP-092 · The share of the TD frame that shows bare ground — the gate (C-00 08.10: mean ≤ 25 %, plaza ≤ 80 %).
+        /// R3 10.10 (<see cref="BareMetric"/>): an id render decides it. The ground renderers draw in flat unlit id colours (natural /
+        /// paved), the water flat white (cover, as before), fog / shaft cards hidden, black clear, no post, no fog, no MSAA, the
+        /// vegetation preview and every other renderer as they are: a pixel is bare when it shows a ground id. The legacy measure
+        /// (ground hidden, a pixel bare when its colour sums ≤ 6) is kept beside it: it also counted dark covered pixels — roof tile
+        /// channels, eaves and shaded interiors that the no-post render takes to 0 — as bare (Codex 08.10: 450 822 of 1 036 800
+        /// diagnostic pixels at exactly 0, cause unproven).
         /// </summary>
-        private static float BareGroundShare(Camera cam, string diagnosticPrefix)
+        private static BareShare BareGroundShare(Camera cam, string diagnosticPrefix)
+        {
+            var result = new BareShare { LegacyBlack = LegacyBlackShare(cam, diagnosticPrefix) };
+            Shader unlit = DD.Prototype.Rendering.PrototypeShaders.Unlit;
+            if (unlit == null) throw new InvalidOperationException("[TDCAP] the URP Unlit shader is missing from the shader library: no ground-id render");
+            var natural = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            var paved = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            var water = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            SetUnlitColour(natural, NaturalId);
+            SetUnlitColour(paved, PavedId);
+            SetUnlitColour(water, new Color32(255, 255, 255, 255));
+            var swapped = new List<(Renderer renderer, Material[] materials)>();
+            var hidden = new List<Renderer>();
+            foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
+            {
+                if (!r.enabled || r.sharedMaterial == null) continue;
+                string shader = r.sharedMaterial.shader.name;
+                Material id = Array.IndexOf(NaturalGroundShaders, shader) >= 0 ? natural
+                    : Array.IndexOf(PavedGroundShaders, shader) >= 0 ? paved
+                    : shader.StartsWith("DD/Water", StringComparison.Ordinal) ? water : null;
+                if (id != null)
+                {
+                    Material[] was = r.sharedMaterials;
+                    var ids = new Material[was.Length];
+                    for (int i = 0; i < ids.Length; i++) ids[i] = id;
+                    r.sharedMaterials = ids;
+                    swapped.Add((r, was));
+                }
+                else if (shader == "DD/FogSheet" || shader == "DD/ShaftCard")
+                {
+                    r.enabled = false;
+                    hidden.Add(r);
+                }
+            }
+
+            CameraClearFlags flags = cam.clearFlags;
+            Color background = cam.backgroundColor;
+            bool fog = RenderSettings.fog;
+            var data = cam.GetUniversalAdditionalCameraData();
+            bool post = data != null && data.renderPostProcessing;
+            try
+            {
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                RenderSettings.fog = false;
+                if (data != null) data.renderPostProcessing = false;
+                int w = Width / 4, h = Height / 4;
+                Color32[] px = Grab(cam, w, h, 1);
+                int nat = 0, pav = 0;
+                Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    GroundClass c = Classify(px[i]);
+                    if (c == GroundClass.Natural) nat++;
+                    else if (c == GroundClass.Paved) pav++;
+                    if (mask != null) mask[i] = c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : c == GroundClass.Paved ? new Color32(128, 128, 128, 255) : new Color32(0, 0, 0, 255);
+                }
+
+                if (diagnosticPrefix != null)
+                {
+                    Save(px, diagnosticPrefix + "-id.png", w, h);
+                    Save(mask, diagnosticPrefix + "-id-mask.png", w, h);
+                }
+
+                result.Natural = (float)nat / px.Length;
+                result.Paved = (float)pav / px.Length;
+                result.Ground = result.Natural + result.Paved;
+                return result;
+            }
+            finally
+            {
+                cam.clearFlags = flags;
+                cam.backgroundColor = background;
+                RenderSettings.fog = fog;
+                if (data != null) data.renderPostProcessing = post;
+                foreach ((Renderer r, Material[] was) in swapped) r.sharedMaterials = was;
+                foreach (Renderer r in hidden) r.enabled = true;
+                UnityEngine.Object.DestroyImmediate(natural);
+                UnityEngine.Object.DestroyImmediate(paved);
+                UnityEngine.Object.DestroyImmediate(water);
+            }
+        }
+
+        public enum GroundClass { Cover, Natural, Paved }
+
+        /// <summary>A pixel of the id render: an id colour within 24 per channel, anything else cover (lit, shaded, black or blended).</summary>
+        public static GroundClass Classify(Color32 c)
+        {
+            if (Near(c, NaturalId)) return GroundClass.Natural;
+            if (Near(c, PavedId)) return GroundClass.Paved;
+            return GroundClass.Cover;
+        }
+
+        private static bool Near(Color32 a, Color32 b) => Mathf.Abs(a.r - b.r) <= 24 && Mathf.Abs(a.g - b.g) <= 24 && Mathf.Abs(a.b - b.b) <= 24;
+
+        private static void SetUnlitColour(Material m, Color32 c)
+        {
+            m.SetColor("_BaseColor", c);
+            m.SetColor("_Color", c);
+            m.SetFloat("_Surface", 0f);   // opaque
+        }
+
+        /// <summary>The legacy measure (WP-092 08.10), kept for comparison: every ground-shader renderer (and the fog / shaft cards)
+        /// hidden against a black clear, a pixel bare when its colour sums ≤ 6 — dark covered pixels included.</summary>
+        private static float LegacyBlackShare(Camera cam, string diagnosticPrefix)
         {
             var hidden = new List<Renderer>();
             foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
@@ -426,9 +560,12 @@ namespace DD.Art.Pipeline.EditorTools
             return NavMesh.SamplePosition(new Vector3(xz.x, 0f, xz.y), out NavMeshHit h, 3f, NavMesh.AllAreas) ? h.position : new Vector3(xz.x, 0f, xz.y);
         }
 
-        private static Color32[] Grab(Camera cam, int w, int h)
+        private static Color32[] Grab(Camera cam, int w, int h) => Grab(cam, w, h, 4);
+
+        /// <summary>One render into a <paramref name="w"/>×<paramref name="h"/> ARGB32 target; <paramref name="msaa"/> 1 for the id render (no blended edges).</summary>
+        private static Color32[] Grab(Camera cam, int w, int h, int msaa)
         {
-            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = msaa };
             var read = new Texture2D(w, h, TextureFormat.RGBA32, false);
             try
             {
