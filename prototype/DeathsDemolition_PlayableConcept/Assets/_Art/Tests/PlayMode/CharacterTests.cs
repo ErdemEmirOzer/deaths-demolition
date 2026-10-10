@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.IO;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
@@ -291,18 +292,22 @@ namespace DD.Art.Tests.PlayMode
             PlayerSkinnedVisual pv = PlayerVisual();
             Vector3 feet = rig.transform.position;
 
-            // A ring of twelve Standard zombies 5–9 m from the player, in the frame of the gameplay rig.
-            var zombies = new List<ZombieEnemy>();
-            for (int i = 0; i < 12; i++)
-            {
-                float a = i * Mathf.PI * 2f / 12f;
-                float r = 5f + (i % 3) * 2f;
-                ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, feet + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r), Quaternion.identity);
-                if (z != null) zombies.Add(z);
-            }
-
-            Assert.GreaterOrEqual(zombies.Count, 10, "kalabalık doğmadı");
-            // Freeze them where they are (the director is not driving them; they will still walk).
+            // WP-096 R3 (C-00 10.10): one frozen frame read 0.042–0.085 on the same tree (S-05, six runs). Measured causes, in order:
+            //  1. the cloud shadow — the sun cookie drifts 1.3 m/s (CloudShadowDriver) and no phase was fixed, so each run read the phase
+            //     its frame count landed on. WP-075 direction §4 (binding): DEC-077 runs at the drift phases 0 / 0.25 / 0.5 / 0.75 and
+            //     passes in EACH (CloudShadowDriver.ForcedPhase);
+            //  2. the crowd's make-up — twelve bodies are one draw of the looks pool: at one phase the crowd luma read 0.12–0.27 by seed.
+            //     The crowd is now the session's first Dec077Crowds × 12 bodies (the factory seed from its session-start value, the
+            //     round director stopped and its own bodies gone), each crowd measured at every phase, the gates on the phase means;
+            //  3. the frame count — the streaming warm-up runs before any crowd exists, each crowd walks exactly Dec077SettleFrames at
+            //     1/60 and then holds its pose; the player keeps animating and is sampled Dec077SamplesPerPhase times per phase and crowd.
+            _director.StopRound();
+            _director.ClearAllEnemies();
+            UnityEngine.Random.InitState(Dec077Seed);
+            FieldInfo seedField = typeof(EnemyFactory).GetField("s_seedCounter", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(seedField, "EnemyFactory.s_seedCounter yok — tohum sabitlenemez");
+            uint seedBefore = (uint)seedField.GetValue(null);
+            seedField.SetValue(null, Dec077FactorySeed);
             Time.captureDeltaTime = 1f / 60f;
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
             if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp016-captures");
@@ -311,70 +316,114 @@ namespace DD.Art.Tests.PlayMode
             int warm = 0;
             yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
 
-            var zombieRenderers = new List<SkinnedMeshRenderer>();
-            foreach (ZombieEnemy z in zombies) zombieRenderers.AddRange(z.GetComponentsInChildren<SkinnedMeshRenderer>(true));
             // WP-059C (S-02): the weapon in hand sits level in front of the chest since WP-059B — hidden for the captures so the
             // figure / body band is the body itself, as the DEC-077 method measured it (S-10's gate excludes the same renderers).
             var weaponRenderers = new List<Renderer>();
             if (WeaponRegistry.ActiveController != null) WeaponRegistry.ActiveController.CollectWeaponRenderers(weaponRenderers);
             foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = false;
-            Time.captureDeltaTime = 0f;
-            Time.timeScale = 0f;
+            float? phaseBefore = CloudShadowDriver.ForcedPhase;
+            int np = Dec077Phases.Length;
+            var phaseSamples = new List<Dec077Sample>[np];
+            for (int ph = 0; ph < np; ph++) phaseSamples[ph] = new List<Dec077Sample>(Dec077Crowds * Dec077SamplesPerPhase);
+            var crowdPhaseSep = new float[Dec077Crowds, np];
+            var zombies = new List<ZombieEnemy>();
             try
             {
-                // Full frame, then without the player, then without the zombies → difference masks.
-                Color32[] full = Capture(pose, Path.Combine(dir, "readability-characters-full.png"));
-                SetEnabled(pv.Renderers, false);
-                Color32[] noPlayer = Capture(pose, null);
-                SetEnabled(pv.Renderers, true);
-                SetEnabled(zombieRenderers, false);
-                Color32[] noZombies = Capture(pose, Path.Combine(dir, "readability-characters-nozombies.png"));
-                SetEnabled(zombieRenderers, true);
-
-                // WP-038E (P-06 AP-007D measurement): the plain frame diff also picks up the zombies' cast shadows and SSAO
-                // on the ground (60–68 % of the "zombie" pixels), which drags the crowd luma down as the crowd grows —
-                // a pixel that merely got darker while keeping the ground's hue is shadow, not body, and is excluded.
-                bool[] playerMask = DiffFigure(full, noPlayer);
-                bool[] zombieMask = DiffFigure(full, noZombies);
-                int playerPx = Count(playerMask), zombiePx = Count(zombieMask);
-                Assert.Greater(playerPx, 400, "oyuncu maskesi boş (" + playerPx + " px)");
-                Assert.Greater(zombiePx, 4000, "zombi maskesi boş (" + zombiePx + " px)");
-
-                // Player per skin (the mask does not change with the albedo). Two readings: the whole
-                // figure (hair, dark hakama, self-shadow included) and the WP-013-equivalent body
-                // column — the upper 20–60 % band of the figure, central 60 % columns, i.e. the
-                // primary garment the DEC-077 capsule proxy stands for.
-                var skinContrast = new float[3];
-                var skinContrastBody = new float[3];
-                var playerLuma = new float[3];
-                float surroundLuma = 0f;
-                bool[] bodyMask = Band(playerMask, 0.20f, 0.60f, 0.20f, 0.80f);
-                bool[] playerRing = Ring(playerMask, zombieMask, 4, 10);
-                for (int s = 0; s < 3; s++)
+                for (int c = 0; c < Dec077Crowds; c++)
                 {
-                    rig.ApplySkin((PlayerSkin)s);
-                    Color32[] frame = Capture(pose, Path.Combine(dir, "readability-characters-skin" + (s + 1) + ".png"));
-                    float inner = MeanLuma(frame, playerMask);
-                    float body = MeanLuma(frame, bodyMask);
-                    float ring = MeanLuma(frame, playerRing);
-                    skinContrast[s] = Mathf.Abs(inner - ring) / Mathf.Max(inner + ring, 1e-3f);
-                    skinContrastBody[s] = Mathf.Abs(body - ring) / Mathf.Max(body + ring, 1e-3f);
-                    playerLuma[s] = body;
-                    surroundLuma = ring;
+                    if (c > 0)
+                    {
+                        SetCrowdFrozen(zombies, false);
+                        EnemyFactory.ClearAll();   // no kill credit; the next crowd takes the next twelve seeds
+                        zombies.Clear();
+                    }
+
+                    // A ring of twelve Standard zombies 5–9 m from the player, in the frame of the gameplay rig.
+                    for (int i = 0; i < 12; i++)
+                    {
+                        float a = i * Mathf.PI * 2f / 12f;
+                        float r = 5f + (i % 3) * 2f;
+                        ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, feet + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r), Quaternion.identity);
+                        if (z != null) zombies.Add(z);
+                    }
+
+                    Assert.GreaterOrEqual(zombies.Count, 10, "kalabalık " + c + " doğmadı");
+                    var zombieRenderers = new List<SkinnedMeshRenderer>();
+                    foreach (ZombieEnemy z in zombies) zombieRenderers.AddRange(z.GetComponentsInChildren<SkinnedMeshRenderer>(true));
+                    Time.timeScale = 1f;
+                    Time.captureDeltaTime = 1f / 60f;
+                    CloudShadowDriver.ForcedPhase = Dec077Phases[0];
+                    for (int f = 0; f < Dec077SettleFrames; f++) yield return null;
+                    SetCrowdFrozen(zombies, true);
+                    for (int ph = 0; ph < np; ph++)
+                    {
+                        CloudShadowDriver.ForcedPhase = Dec077Phases[ph];
+                        var crowd = new List<Dec077Sample>(Dec077SamplesPerPhase);
+                        for (int k = 0; k < Dec077SamplesPerPhase; k++)
+                        {
+                            Time.timeScale = 1f;
+                            Time.captureDeltaTime = 1f / 60f;
+                            for (int f = 0; f < Dec077StepFrames; f++) yield return null;
+                            Time.captureDeltaTime = 0f;
+                            Time.timeScale = 0f;
+                            crowd.Add(MeasureDec077(rig, pv, zombieRenderers, pose, c == 0 && ph == 0 && k == 0 ? dir : null));
+                        }
+
+                        phaseSamples[ph].AddRange(crowd);
+                        crowdPhaseSep[c, ph] = Dec077Mean(crowd, x => Mathf.Abs(x.PlayerLuma[0] - x.ZombieLuma));
+                    }
                 }
 
-                rig.ApplySkin(PlayerSkins.Default);
-                float zombieLuma = MeanLuma(full, zombieMask);
-                float zombieRing = MeanLuma(full, Ring(zombieMask, playerMask, 4, 10));
-                float zombieContrast = Mathf.Abs(zombieLuma - zombieRing) / Mathf.Max(zombieLuma + zombieRing, 1e-3f);
-                float zombieDeltaV = Mathf.Abs(MeanValue(full, zombieMask) - MeanValue(full, Ring(zombieMask, playerMask, 4, 10)));
+                var all = new List<Dec077Sample>();
+                var phaseSep = new float[np, 3];
+                var phaseCi = new float[np];
+                var phaseCrowd = new float[np];
+                for (int ph = 0; ph < np; ph++)
+                {
+                    List<Dec077Sample> l = phaseSamples[ph];
+                    Assert.AreEqual(Dec077Crowds * Dec077SamplesPerPhase, l.Count, "DEC-077 faz " + ph + " örnekleri kayıtta değil");
+                    all.AddRange(l);
+                    for (int s = 0; s < 3; s++) { int sk = s; phaseSep[ph, s] = Dec077Mean(l, x => Mathf.Abs(x.PlayerLuma[sk] - x.ZombieLuma)); }
+                    phaseCi[ph] = Dec077Ci95(l, x => Mathf.Abs(x.PlayerLuma[0] - x.ZombieLuma));
+                    phaseCrowd[ph] = Dec077Mean(l, x => x.ZombieContrast);
+                    var perCrowd = new System.Text.StringBuilder();
+                    for (int c = 0; c < Dec077Crowds; c++) perCrowd.Append(' ').Append(crowdPhaseSep[c, ph].ToString("F3", CultureInfo.InvariantCulture));
+                    Debug.Log("[DD-TEST] wp016.readability.phase " + Dec077Phases[ph].ToString("F2", CultureInfo.InvariantCulture)
+                              + " pL1=" + Dec077Mean(l, x => x.PlayerLuma[0]).ToString("F3", CultureInfo.InvariantCulture) + " zL=" + Dec077Mean(l, x => x.ZombieLuma).ToString("F3", CultureInfo.InvariantCulture)
+                              + " sep1=" + phaseSep[ph, 0].ToString("F3", CultureInfo.InvariantCulture) + " ±" + phaseCi[ph].ToString("F3", CultureInfo.InvariantCulture)
+                              + " sep2b=" + phaseSep[ph, 1].ToString("F3", CultureInfo.InvariantCulture) + " sep3=" + phaseSep[ph, 2].ToString("F3", CultureInfo.InvariantCulture)
+                              + " zombieCrowd=" + phaseCrowd[ph].ToString("F3", CultureInfo.InvariantCulture) + " sep1 per crowd:" + perCrowd);
+                }
 
-                Debug.Log("[DD-TEST] wp016.readability warm=" + warm + " playerPx=" + playerPx + " bodyPx=" + Count(bodyMask) + " zombiePx=" + zombiePx +
+                int worst = 0, worstCrowd = 0;
+                for (int ph = 1; ph < np; ph++)
+                {
+                    if (phaseSep[ph, 0] < phaseSep[worst, 0]) worst = ph;
+                    if (phaseCrowd[ph] < phaseCrowd[worstCrowd]) worstCrowd = ph;
+                }
+
+                var skinContrast = new float[3];
+                var skinContrastBody = new float[3];
+                var sepWorst = new float[3];
+                for (int s = 0; s < 3; s++)
+                {
+                    int sk = s;
+                    skinContrast[s] = Dec077Mean(all, x => x.Figure[sk]);
+                    skinContrastBody[s] = Dec077Mean(all, x => x.Body[sk]);
+                    sepWorst[s] = phaseSep[0, s];
+                    for (int ph = 1; ph < np; ph++) sepWorst[s] = Mathf.Min(sepWorst[s], phaseSep[ph, s]);
+                }
+
+                Debug.Log("[DD-TEST] wp016.readability warm=" + warm + " crowds=" + Dec077Crowds + " phases=" + np + "x" + Dec077SamplesPerPhase + " seed=" + Dec077FactorySeed
+                          + " playerPx=" + Dec077Mean(all, x => x.PlayerPx).ToString("F0", CultureInfo.InvariantCulture)
+                          + " bodyPx=" + Dec077Mean(all, x => x.BodyPx).ToString("F0", CultureInfo.InvariantCulture)
+                          + " zombiePx=" + Dec077Mean(all, x => x.ZombiePx).ToString("F0", CultureInfo.InvariantCulture) +
                           " figure skin1=" + skinContrast[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2b=" + skinContrast[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrast[2].ToString("F3", CultureInfo.InvariantCulture) +
                           " | body skin1=" + skinContrastBody[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2b=" + skinContrastBody[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrastBody[2].ToString("F3", CultureInfo.InvariantCulture) +
-                          " zombieCrowd=" + zombieContrast.ToString("F3", CultureInfo.InvariantCulture) + " zombieDeltaV=" + zombieDeltaV.ToString("F3", CultureInfo.InvariantCulture) +
-                          " playerVsZombieLuma=" + (playerLuma[0] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + "/" + (playerLuma[1] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + "/" + (playerLuma[2] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) +
-                          " surround=" + surroundLuma.ToString("F3", CultureInfo.InvariantCulture) + " -> " + dir);
+                          " zombieCrowd=" + phaseCrowd[worstCrowd].ToString("F3", CultureInfo.InvariantCulture) + " zombieDeltaV=" + Dec077Mean(all, x => x.ZombieDeltaV).ToString("F3", CultureInfo.InvariantCulture) +
+                          " playerVsZombieLuma=" + sepWorst[0].ToString("F3", CultureInfo.InvariantCulture) + "/" + sepWorst[1].ToString("F3", CultureInfo.InvariantCulture) + "/" + sepWorst[2].ToString("F3", CultureInfo.InvariantCulture) +
+                          " worstPhase=" + Dec077Phases[worst].ToString("F2", CultureInfo.InvariantCulture) + " ci95=" + phaseCi[worst].ToString("F3", CultureInfo.InvariantCulture) +
+                          " surround=" + Dec077Mean(all, x => x.Surround).ToString("F3", CultureInfo.InvariantCulture) + " -> " + dir);
 
                 // DEC-077 on real characters (WP-016 measurement, gameplay angle −49°): the zombie crowd is
                 // asserted at the official 0.06; the player skins are REPORTED — from above, the head, the
@@ -382,23 +431,30 @@ namespace DD.Art.Tests.PlayMode
                 // luminance reading differs from AP-006's front-view R2 (0.125 / 0.005 / 0.089) — measured
                 // here 0.048 / 0.078 / 0.038 on courtyard paving: art-director judgment + AP-006 handover
                 // (WP-016 note). Player/zombie separation is asserted for skin 1; skins 2b and 3 are reported (WP-017, WP-038G).
-                Assert.GreaterOrEqual(zombieContrast, ReadabilityThresholds.CapsuleContrastMin, "zombi kalabalığı/çevre kontrastı (DEC-077)");
-                Assert.Greater(Mathf.Abs(playerLuma[0] - zombieLuma), 0.08f, "skin 1 oyuncu gövdesi/zombi ayrımı");
+                // WP-096 R3: both gates hold in EVERY cloud phase (WP-075 §4) on the crowds' mean — the worst phase is asserted; the
+                // thresholds are unchanged.
+                Assert.GreaterOrEqual(phaseCrowd[worstCrowd], ReadabilityThresholds.CapsuleContrastMin,
+                    "zombi kalabalığı/çevre kontrastı (DEC-077), bulut fazı " + Dec077Phases[worstCrowd].ToString("F2", CultureInfo.InvariantCulture)
+                    + ": " + phaseCrowd[worstCrowd].ToString("F3", CultureInfo.InvariantCulture));
+                Assert.Greater(sepWorst[0], 0.08f, "skin 1 oyuncu gövdesi/zombi ayrımı, en kötü bulut fazı " + Dec077Phases[worst].ToString("F2", CultureInfo.InvariantCulture)
+                    + ": " + sepWorst[0].ToString("F3", CultureInfo.InvariantCulture) + " ±" + phaseCi[worst].ToString("F3", CultureInfo.InvariantCulture)
+                    + " (fazlar " + phaseSep[0, 0].ToString("F3", CultureInfo.InvariantCulture) + " / " + phaseSep[1, 0].ToString("F3", CultureInfo.InvariantCulture)
+                    + " / " + phaseSep[2, 0].ToString("F3", CultureInfo.InvariantCulture) + " / " + phaseSep[3, 0].ToString("F3", CultureInfo.InvariantCulture) + ")");
                 // WP-038G: the character fill (K2) lifts the player and the crowd together (+0.07 / +0.09 luma), so the skin 3
                 // body/zombie separation stays where the DEC-077 shadow-free mask (WP-038E) left it — 0.079 against the 0.08 line.
                 // Skin 3's marginal separation is a product decision (WP-026 / AP-006B: QA-gate artefact, skin 3 v002 stays):
                 // reported like skin 2b, not asserted.
-                if (Mathf.Abs(playerLuma[2] - zombieLuma) < 0.08f)
+                if (sepWorst[2] < 0.08f)
                 {
-                    Debug.LogWarning("[DD-TEST] wp016.readability REPORTED: skin 3 oyuncu gövdesi/zombi luma ayrımı " + Mathf.Abs(playerLuma[2] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + " < 0.08 (ürün kararı WP-026 / AP-006B)");
+                    Debug.LogWarning("[DD-TEST] wp016.readability REPORTED: skin 3 oyuncu gövdesi/zombi luma ayrımı " + sepWorst[2].ToString("F3", CultureInfo.InvariantCulture) + " < 0.08 (ürün kararı WP-026 / AP-006B)");
                 }
                 // WP-017: skin 2 = 2b Steel/Indigo (user 2026-09-16 07:50). The light steel body separates from the
                 // zombie cloth 2–3× better than 2a (measured 0.102 and 0.074 in two runs vs 0.031), but the reading
                 // straddles 0.08 because the body band follows the idle frame the capture froze on (A-pose arms widen
                 // the box) — reported, not asserted, until AP-009 clips fix the pose.
-                if (Mathf.Abs(playerLuma[1] - zombieLuma) < 0.08f)
+                if (sepWorst[1] < 0.08f)
                 {
-                    Debug.LogWarning("[DD-TEST] wp016.readability REPORTED: skin 2b oyuncu gövdesi/zombi luma ayrımı " + Mathf.Abs(playerLuma[1] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + " < 0.08 (poz bağımlı bant; 2a 0.031)");
+                    Debug.LogWarning("[DD-TEST] wp016.readability REPORTED: skin 2b oyuncu gövdesi/zombi luma ayrımı " + sepWorst[1].ToString("F3", CultureInfo.InvariantCulture) + " < 0.08 (poz bağımlı bant; 2a 0.031)");
                 }
                 for (int s = 0; s < 3; s++)
                 {
@@ -410,11 +466,116 @@ namespace DD.Art.Tests.PlayMode
             }
             finally
             {
+                CloudShadowDriver.ForcedPhase = phaseBefore;
+                seedField.SetValue(null, seedBefore);
                 Time.timeScale = 1f;
                 Time.captureDeltaTime = 0f;
                 foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = true;   // WP-059C
+                SetCrowdFrozen(zombies, false);
                 foreach (ZombieEnemy z in zombies) if (z != null && z.IsAlive) z.Kill();
             }
+        }
+
+        // ------------------------------------------------------------------ DEC-077 sampling (WP-096 R3)
+
+        private const int Dec077Seed = 16077;
+        /// <summary>EnemyFactory's seed counter at session start (it resets to 1 at SubsystemRegistration): the crowds are the session's first bodies.</summary>
+        private const uint Dec077FactorySeed = 1u;
+        /// <summary>Consecutive crowds of twelve — one crowd is one draw of the looks pool (its luma read 0.12–0.27 by seed at one phase).</summary>
+        private const int Dec077Crowds = 4;
+        /// <summary>WP-075 direction §4: the cloud-cookie drift phases DEC-077 is measured at (each must pass).</summary>
+        private static readonly float[] Dec077Phases = { 0f, 0.25f, 0.5f, 0.75f };
+        private const int Dec077SamplesPerPhase = 3;   // per crowd and phase: the player's idle / aim pose, 0.2 s apart
+        private const int Dec077SettleFrames = 30;     // 0.5 s at 1/60 after each crowd spawns, then it holds its pose
+        private const int Dec077StepFrames = 12;       // 0.2 s between samples (the cookie phase is held)
+
+        private struct Dec077Sample
+        {
+            public float PlayerPx, ZombiePx, BodyPx, Surround, ZombieLuma, ZombieContrast, ZombieDeltaV;
+            public float[] Figure, Body, PlayerLuma;
+        }
+
+        /// <summary>The crowd holds its pose (no walk, no animation) while the player keeps animating between samples.</summary>
+        private static void SetCrowdFrozen(List<ZombieEnemy> zombies, bool frozen)
+        {
+            foreach (ZombieEnemy z in zombies)
+            {
+                if (z == null) continue;
+                z.enabled = !frozen;
+                if (z.Skinned != null && z.Skinned.Animator != null) z.Skinned.Animator.enabled = !frozen;
+            }
+        }
+
+        /// <summary>One DEC-077 reading on the frozen frame: full / no player / no zombies → difference masks, then the three skins.</summary>
+        private static Dec077Sample MeasureDec077(PlayerRig rig, PlayerSkinnedVisual pv, List<SkinnedMeshRenderer> zombieRenderers, ArtVisualRegression.CameraPose pose, string dir)
+        {
+            var m = new Dec077Sample { Figure = new float[3], Body = new float[3], PlayerLuma = new float[3] };
+            Color32[] full = Capture(pose, dir != null ? Path.Combine(dir, "readability-characters-full.png") : null);
+            SetEnabled(pv.Renderers, false);
+            Color32[] noPlayer = Capture(pose, null);
+            SetEnabled(pv.Renderers, true);
+            SetEnabled(zombieRenderers, false);
+            Color32[] noZombies = Capture(pose, dir != null ? Path.Combine(dir, "readability-characters-nozombies.png") : null);
+            SetEnabled(zombieRenderers, true);
+
+            // WP-038E (P-06 AP-007D measurement): the plain frame diff also picks up the zombies' cast shadows and SSAO
+            // on the ground (60–68 % of the "zombie" pixels), which drags the crowd luma down as the crowd grows —
+            // a pixel that merely got darker while keeping the ground's hue is shadow, not body, and is excluded.
+            bool[] playerMask = DiffFigure(full, noPlayer);
+            bool[] zombieMask = DiffFigure(full, noZombies);
+            int playerPx = Count(playerMask), zombiePx = Count(zombieMask);
+            Assert.Greater(playerPx, 400, "oyuncu maskesi boş (" + playerPx + " px)");
+            Assert.Greater(zombiePx, 4000, "zombi maskesi boş (" + zombiePx + " px)");
+            m.PlayerPx = playerPx; m.ZombiePx = zombiePx;
+
+            // Player per skin (the mask does not change with the albedo). Two readings: the whole
+            // figure (hair, dark hakama, self-shadow included) and the WP-013-equivalent body
+            // column — the upper 20–60 % band of the figure, central 60 % columns, i.e. the
+            // primary garment the DEC-077 capsule proxy stands for.
+            bool[] bodyMask = Band(playerMask, 0.20f, 0.60f, 0.20f, 0.80f);
+            bool[] playerRing = Ring(playerMask, zombieMask, 4, 10);
+            m.BodyPx = Count(bodyMask);
+            for (int s = 0; s < 3; s++)
+            {
+                rig.ApplySkin((PlayerSkin)s);
+                Color32[] frame = Capture(pose, dir != null ? Path.Combine(dir, "readability-characters-skin" + (s + 1) + ".png") : null);
+                float inner = MeanLuma(frame, playerMask);
+                float body = MeanLuma(frame, bodyMask);
+                float ring = MeanLuma(frame, playerRing);
+                m.Figure[s] = Mathf.Abs(inner - ring) / Mathf.Max(inner + ring, 1e-3f);
+                m.Body[s] = Mathf.Abs(body - ring) / Mathf.Max(body + ring, 1e-3f);
+                m.PlayerLuma[s] = body;
+                m.Surround = ring;
+            }
+
+            rig.ApplySkin(PlayerSkins.Default);
+            bool[] zombieRing = Ring(zombieMask, playerMask, 4, 10);
+            m.ZombieLuma = MeanLuma(full, zombieMask);
+            float zr = MeanLuma(full, zombieRing);
+            m.ZombieContrast = Mathf.Abs(m.ZombieLuma - zr) / Mathf.Max(m.ZombieLuma + zr, 1e-3f);
+            m.ZombieDeltaV = Mathf.Abs(MeanValue(full, zombieMask) - MeanValue(full, zombieRing));
+            return m;
+        }
+
+        private static float Dec077Mean(List<Dec077Sample> l, Func<Dec077Sample, float> f)
+        {
+            double sum = 0;
+            foreach (Dec077Sample x in l) sum += f(x);
+            return l.Count > 0 ? (float)(sum / l.Count) : 0f;
+        }
+
+        private static readonly double[] StudentT975 = { 0, 0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201 };
+
+        /// <summary>Half-width of the 95 % confidence interval of the mean (Student t, n − 1 degrees of freedom).</summary>
+        private static float Dec077Ci95(List<Dec077Sample> l, Func<Dec077Sample, float> f)
+        {
+            if (l.Count < 2) return 0f;
+            float mean = Dec077Mean(l, f);
+            double ss = 0;
+            foreach (Dec077Sample x in l) { double d = f(x) - mean; ss += d * d; }
+            double sd = Math.Sqrt(ss / (l.Count - 1));
+            double t = l.Count < StudentT975.Length ? StudentT975[l.Count] : 1.96;
+            return (float)(t * sd / Math.Sqrt(l.Count));
         }
 
         /// <summary>
