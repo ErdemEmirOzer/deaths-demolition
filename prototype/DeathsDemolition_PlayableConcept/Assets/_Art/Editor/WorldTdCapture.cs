@@ -88,9 +88,12 @@ namespace DD.Art.Pipeline.EditorTools
             var legacyRows = new StringBuilder();
             var splitRows = new StringBuilder();
             var gateRows = new StringBuilder();
-            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f, gateSum = 0f;
-            long gateBare = 0, gateSeen = 0;
-            int gatePoses = 0;
+            var gate1Rows = new StringBuilder();
+            var accentRows = new StringBuilder();
+            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f, gateSum = 0f, gate1Sum = 0f;
+            long gateBare = 0, gateSeen = 0, gate1Bare = 0, gate1Seen = 0;
+            int gatePoses = 0, gate1Poses = 0;
+            if (requireVegetation) SaveAccentMap(Path.Combine(dir, "accent-map.png"));
             foreach ((string name, Vector2 feet) in Poses)
             {
                 Vector3 ground = Ground(feet);
@@ -116,18 +119,34 @@ namespace DD.Art.Pipeline.EditorTools
                     gateSeen += bare.VegSeen;
                     gatePoses++;
                 }
+
+                if (bare.VegSeen1 > 0)
+                {
+                    float share1 = (float)bare.VegBare1 / bare.VegSeen1;
+                    gate1Rows.Append(gate1Rows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"bare\": " + F(share1) + ", \"bareCells\": " + bare.VegBare1 + ", \"seen\": " + bare.VegSeen1 + "}");
+                    gate1Sum += share1;
+                    gate1Bare += bare.VegBare1;
+                    gate1Seen += bare.VegSeen1;
+                    gate1Poses++;
+                }
+
+                if (requireVegetation) accentRows.Append(accentRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + bare.AccentGround);
             }
 
             int n = Poses.Length;
             string gate = gatePoses == 0 ? "null"
                 : "{\"metric\": \"" + VegGateMetric + "\", " + gateRows + ", \"mean\": " + F(gateSum / gatePoses) + ", \"pooled\": " + F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f) +
-                  ", \"poses\": " + gatePoses + ", \"limit\": " + F(VegGateLimit) + ", \"pass\": " + (gatePoses == n && gateSum / gatePoses <= VegGateLimit ? "true" : "false") + "}";
+                  ", \"poses\": " + gatePoses + ", \"limit\": " + F(VegGateLimit) + ", \"pass\": " + (gatePoses == n && gateSum / gatePoses <= VegGateLimit ? "true" : "false") +
+                  ", \"v1\": " + (gate1Poses == 0 ? "null" : "{\"metric\": \"" + VegGateMetricV1 + "\", " + gate1Rows + ", \"mean\": " + F(gate1Sum / gate1Poses) + ", \"pooled\": " +
+                                                         F(gate1Seen > 0 ? (float)gate1Bare / gate1Seen : 0f) + ", \"poses\": " + gate1Poses + "}") +
+                  ", \"accentGroundPx\": {" + accentRows + "}}";
             File.WriteAllText(Path.Combine(dir, "bare-ground.json"),
                 "{" + bareRows + ", \"mean\": " + F(bareSum / n) + ", \"metric\": \"" + BareMetric + "\", \"split\": {" + splitRows + ", \"mean\": {\"natural\": " + F(naturalSum / n) +
                 ", \"paved\": " + F(pavedSum / n) + "}}, \"legacyBlack\": {" + legacyRows + ", \"mean\": " + F(legacySum / n) + "}, \"gate\": " + gate + "}");
             if (gatePoses > 0)
                 Debug.Log("[TDCAP] vegetation-ground gate (" + VegGateMetric + "): mean " + F(gateSum / gatePoses) + " over " + gatePoses + " poses (limit " + F(VegGateLimit) + "), pooled " +
-                          F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f));
+                          F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f) + (gate1Poses > 0 ? "; " + VegGateMetricV1 + " mean " + F(gate1Sum / gate1Poses) + ", pooled " + F(gate1Seen > 0 ? (float)gate1Bare / gate1Seen : 0f) : "") +
+                          "; accent ground px {" + accentRows + "}");
             Debug.Log("[TDCAP] " + n + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / n) + " (" + BareMetric + "; natural " + F(naturalSum / n) +
                       ", paved " + F(pavedSum / n) + "; legacy black-threshold " + F(legacySum / n) + ")");
         }, requireVegetation);
@@ -229,6 +248,10 @@ namespace DD.Art.Pipeline.EditorTools
             public float Ground, Natural, Paved, LegacyBlack;
             /// <summary>The gate (<see cref="VegGateMetric"/>): pixels whose line of sight ends on vegetation ground, and those of them that show it bare.</summary>
             public int VegSeen, VegBare;
+            /// <summary>The same under <see cref="VegGateMetricV1"/> (w3's rule), reported beside the gate.</summary>
+            public int VegSeen1, VegBare1;
+            /// <summary>Pixels whose ground point carries a flower accent (HY / SL layer &gt; 0): the accents this pose can show.</summary>
+            public int AccentGround;
         }
 
         /// <summary>
@@ -237,7 +260,13 @@ namespace DD.Art.Pipeline.EditorTools
         /// A cell is vegetation ground when the grid marks it Ground and none of Path / Plaza / Water / Excluded / Roofed, and its
         /// final zone is one of <see cref="VegetationZones"/>. Gate: the mean of the poses' shares ≤ <see cref="VegGateLimit"/>.
         /// </summary>
-        public const string VegGateMetric = "veg-ground-v1";
+        public const string VegGateMetric = "veg-ground-v2";
+        /// <summary>
+        /// w3's rule (10.10), reported beside the gate: a ground-id pixel was always marched onto the height field, a cover pixel only
+        /// counted when its physics ray met the ground within 0.3 m — so cover over the greybox ground box's pits / mounds and plants
+        /// with colliders (bamboo culms, shrubs, crowns) fell out of the denominator and the share leaned bare (C-00 10.10: fix, report both).
+        /// </summary>
+        public const string VegGateMetricV1 = "veg-ground-v1";
         public const float VegGateLimit = 0.25f;
 
         public static readonly VegetationZone[] VegetationZones =
@@ -366,21 +395,36 @@ namespace DD.Art.Pipeline.EditorTools
             VegetationGrid grid = snap.Grid;
             Physics.SyncTransforms();
             Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
-            int seen = 0, bare = 0;
+            Color32[] mask1 = diagnosticPrefix != null ? new Color32[px.Length] : null;
+            byte[] hyLayer = snap.Field != null ? snap.Field.Layers[(int)VegetationType.Hydrangea] : null;
+            byte[] slLayer = snap.Field != null ? snap.Field.Layers[(int)VegetationType.SpiderLily] : null;
+            var foliage = new Dictionary<int, bool>();
+            int seen = 0, bare = 0, seen1 = 0, bare1 = 0, accent = 0;
             for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
                 int i = y * w + x;
                 GroundClass c = Classify(px[i]);
                 Ray ray = cam.ViewportPointToRay(new Vector3((x + 0.5f) / w, (y + 0.5f) / h, 0f));
-                int cell = -1;
-                if (Physics.Raycast(ray, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore))
+                bool hitAny = Physics.Raycast(ray, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore);
+                int k = hitAny ? CellOf(grid, hit.point) : -1;
+                bool nearGround = k >= 0 && Mathf.Abs(hit.point.y - grid.GroundY[k]) <= 0.3f;
+
+                // v1 (w3): the asymmetric rule, kept for the report
+                int cell1 = nearGround ? k : -1;
+                if (cell1 < 0 && c != GroundClass.Cover) cell1 = MarchGround(grid, ray);
+                bool veg1 = cell1 >= 0 && IsVegetationGround(grid.Flags[cell1], snap.FinalZone[cell1]);
+                if (veg1)
                 {
-                    int k = CellOf(grid, hit.point);
-                    if (k >= 0 && Mathf.Abs(hit.point.y - grid.GroundY[k]) <= 0.3f) cell = k;
+                    seen1++;
+                    if (c == GroundClass.Natural) bare1++;
                 }
 
-                if (cell < 0 && c != GroundClass.Cover) cell = MarchGround(grid, ray);
+                // v2: one rule for every pixel, whatever it shows. The sight line reaches the ground when it meets nothing, the greybox
+                // ground box (flat at y = 0 under the terrain's pits and mounds) or a plant (a collider under DD/Foliage Wind) — then
+                // the height field gives the ground point; a hit on anything else counts when it is on the ground (within 0.3 m),
+                // and a raised object (wall, roof, rock, lantern) hides the ground: not seen.
+                int cell = !hitAny || IsGroundBox(hit.collider) || IsFoliage(hit.collider, foliage) ? MarchGround(grid, ray) : nearGround ? k : -1;
                 bool veg = cell >= 0 && IsVegetationGround(grid.Flags[cell], snap.FinalZone[cell]);
                 if (veg)
                 {
@@ -388,12 +432,71 @@ namespace DD.Art.Pipeline.EditorTools
                     if (c == GroundClass.Natural) bare++;
                 }
 
+                if (cell >= 0 && ((hyLayer != null && hyLayer[cell] > 0) || (slLayer != null && slLayer[cell] > 0))) accent++;
                 if (mask != null) mask[i] = !veg ? new Color32(0, 0, 0, 255) : c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : new Color32(60, 160, 60, 255);
+                if (mask1 != null) mask1[i] = !veg1 ? new Color32(0, 0, 0, 255) : c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : new Color32(60, 160, 60, 255);
             }
 
             if (mask != null) Save(mask, diagnosticPrefix + "-veg-mask.png", w, h);
+            if (mask1 != null) Save(mask1, diagnosticPrefix + "-veg1-mask.png", w, h);
             result.VegSeen = seen;
             result.VegBare = bare;
+            result.VegSeen1 = seen1;
+            result.VegBare1 = bare1;
+            result.AccentGround = accent;
+        }
+
+        private const string FoliageShaderName = "DD/Foliage Wind";
+
+        /// <summary>The greybox walkable ground: one flat box (GreyboxV6Builder "Ground", top at y = 0) under the drawn terrain.</summary>
+        private static bool IsGroundBox(Collider col) => col is BoxCollider && col.gameObject.name == "Ground";
+
+        /// <summary>A plant's collider: its LOD group (or its own object) draws DD/Foliage Wind (cached per collider).</summary>
+        private static bool IsFoliage(Collider col, Dictionary<int, bool> cache)
+        {
+            int id = col.GetInstanceID();
+            if (cache.TryGetValue(id, out bool f)) return f;
+            LODGroup lod = col.GetComponentInParent<LODGroup>();
+            Transform root = lod != null ? lod.transform : col.transform;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    if (m != null && m.shader != null && m.shader.name == FoliageShaderName) { f = true; break; }
+                }
+
+                if (f) break;
+            }
+
+            cache[id] = f;
+            return f;
+        }
+
+        /// <summary>
+        /// The flower accents as placed (diagnostics, w4): a top-down map of the vegetation grid — ajisai cells by colour variant
+        /// (A blue-violet, B pink, C purple), SL cells by variant (higanbana red, hanashōbu violet / lilac, kurinsō magenta), the
+        /// rest grey for vegetation ground and black elsewhere — and the zoner's counts in the log.
+        /// </summary>
+        private static void SaveAccentMap(string path)
+        {
+            DD.Prototype.World.Vegetation.VegetationPreview.DiagnosticSnapshot snap = DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics;
+            if (snap == null || snap.Grid == null || snap.Field == null || snap.FinalZone == null) return;
+            VegetationGrid grid = snap.Grid;
+            byte[] hy = snap.Field.Layers[(int)VegetationType.Hydrangea], sl = snap.Field.Layers[(int)VegetationType.SpiderLily];
+            Color32[] hyCol = { new Color32(105, 93, 168, 255), new Color32(220, 90, 160, 255), new Color32(160, 82, 200, 255) };
+            Color32[] slCol = { new Color32(230, 40, 30, 255), new Color32(120, 70, 200, 255), new Color32(170, 120, 220, 255), new Color32(240, 60, 150, 255) };
+            var map = new Color32[grid.Width * grid.Height];
+            int hyCells = 0, slCells = 0;
+            for (int i = 0; i < map.Length; i++)
+            {
+                byte hint = snap.Field.VariantHint[i];
+                if (hy[i] > 0) { map[i] = hyCol[Mathf.Clamp((hint & 0x0F) - 1, 0, hyCol.Length - 1)]; hyCells++; }
+                else if (sl[i] > 0) { map[i] = slCol[Mathf.Clamp((hint >> 4) - 1, 0, slCol.Length - 1)]; slCells++; }
+                else map[i] = IsVegetationGround(grid.Flags[i], snap.FinalZone[i]) ? new Color32(70, 80, 70, 255) : new Color32(0, 0, 0, 255);
+            }
+
+            Save(map, path, grid.Width, grid.Height);
+            Debug.Log("[TDCAP] accents: " + DD.Prototype.World.Vegetation.VegetationZoner.LastAccents + " | grid cells HY " + hyCells + " SL " + slCells + " -> " + path);
         }
 
         private static int CellOf(VegetationGrid grid, Vector3 p)
