@@ -311,34 +311,43 @@ namespace DD.Prototype.World.Vegetation
             return new ZoneRecipe { zone = zone, density = new[] { ss, gm, gt, fe, lc, mo, hy, sl, kz, ml }, heightScale = heightScale, heightCap = heightCap };
         }
 
+        /// <remarks>
+        /// R3 10.10 (S-05, user item 1 "the map full, the ground in 3D grass and plants"; K/wp-092/evidence/s05-1010/ANALIZ.md): the
+        /// ground-id measure found 70 % of the bare vegetation ground where short grass was 0 — BuildingSurround (5.6 points of the
+        /// 8-pose mean, 49 % of its visible cells bare), MossCourt 2.6, Bamboo 1.4, PondBank 1.3, Lawn 1.0. Filled within the bible's
+        /// language: BuildingSurround SS 0 → 6 + MO 0.4 (the 0.6 m cap keeps the base readable; the amaochi drip strip stays
+        /// BareSoil), BuildingShadow SS 0 → 3, MossCourt MO 1.2 → 2.4 + SS 4 → 6 (a koke-niwa carpet), Bamboo floor ML 0 → 12
+        /// (1 litter patch/m²) + MO 0.4 → 0.6, PondBank SS 7 → 9, Lawn SS 10 → 12 + MO 0.25 → 0.4, Courtyard SS 4 → 6, plaza joints
+        /// SS 0.2 → 0.5 + MO 0.1 → 0.3 (≤ 12 cm tufts). Paths, paving, desire paths and karesansui stay as designed.
+        /// </remarks>
         public static ZoneRecipe[] DefaultZones()
         {
             return new[]
             {
                 //                          SS    GM    GT    FE    LC    MO    HY  SL  KZ    ML
-                Z(VegetationZone.Lawn,             10f,  1.0f, 0f,   0.1f, 0.2f, 0.25f, 0f, 0f, 0f,   0f),
+                Z(VegetationZone.Lawn,             12f,  1.0f, 0f,   0.1f, 0.2f, 0.4f,  0f, 0f, 0f,   0f),
                 Z(VegetationZone.Grove,            5f,   0f,   0f,   0.25f,0.4f, 0.6f,  0f, 0f, 0f,   0f, 0.8f),
                 Z(VegetationZone.GroveSkirt,       8f,   1.5f, 0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.3f, 0f,   0.4f,  0f, 0f, 1.2f, 0f),
+                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.3f, 0f,   0.6f,  0f, 0f, 1.2f, 12f),
                 Z(VegetationZone.BambooEdge,       0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 1.2f, 0f, 1f, 0.6f),
                 Z(VegetationZone.BambooPathSide,   3f,   0f,   0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 0.7f),
                 Z(VegetationZone.PondShore,        0f,   1.0f, 0f,   0.3f, 0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.PondBank,         7f,   1.5f, 0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 1f, 0.45f),
+                Z(VegetationZone.PondBank,         9f,   1.5f, 0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 1f, 0.45f),
                 Z(VegetationZone.PathEdge,         3f,   0f,   0f,   0f,   0f,   0.3f,  0f, 0f, 0f,   0f, 0.5f),
                 Z(VegetationZone.WallBase,         0f,   1.0f, 2.0f, 0.4f, 0f,   0f,    0f, 0f, 0f,   0f),
                 Z(VegetationZone.WallBaseShadow,   0f,   1.0f, 1.0f, 1.0f, 0f,   0f,    0f, 0f, 0.4f, 0f),
                 Z(VegetationZone.WallOuter,        10f,  1.0f, 0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.BuildingSurround, 0f,   0.6f, 0f,   0f,   0.3f, 0f,    0f, 0f, 0f,   0f, 1f, 0.6f),
-                Z(VegetationZone.BuildingShadow,   0f,   0f,   0f,   0.3f, 0f,   0.5f,  0f, 0f, 0.3f, 0f, 1f, 0.6f),
-                Z(VegetationZone.Courtyard,        4f,   0f,   0f,   0f,   0f,   0.8f,  0f, 0f, 0f,   0f, 0.7f, 0.5f),
+                Z(VegetationZone.BuildingSurround, 6f,   0.6f, 0f,   0f,   0.3f, 0.4f,  0f, 0f, 0f,   0f, 1f, 0.6f),
+                Z(VegetationZone.BuildingShadow,   3f,   0f,   0f,   0.3f, 0f,   0.5f,  0f, 0f, 0.3f, 0f, 1f, 0.6f),
+                Z(VegetationZone.Courtyard,        6f,   0f,   0f,   0f,   0f,   0.8f,  0f, 0f, 0f,   0f, 0.7f, 0.5f),
                 Z(VegetationZone.PlazaEdge,        0f,   0f,   0f,   0f,   0f,   0.6f,  0f, 0f, 0f,   0f),
                 Z(VegetationZone.BridgeApproach,   3f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f, 0.6f, 0.45f),
-                Z(VegetationZone.MossCourt,        4f,   0f,   0f,   0f,   0f,   1.2f,  0f, 0f, 0f,   0f, 0.7f, 0.15f),
+                Z(VegetationZone.MossCourt,        6f,   0f,   0f,   0f,   0f,   2.4f,  0f, 0f, 0f,   0f, 0.7f, 0.15f),
                 Z(VegetationZone.Karesansui,       0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
                 Z(VegetationZone.KaresansuiCollar, 0f,   0f,   0f,   0f,   0f,   1.0f,  0f, 0f, 0f,   0f, 1f, 0.05f),
                 Z(VegetationZone.BareSoil,         0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
                 // 08.10 (S-05): plaza joint tufts, base 0.3/m² (× mask_b.B: joint lines 255 ≈ ×2, stone faces 1 ≈ ×0), ≤ 12 cm.
-                Z(VegetationZone.PlazaJoint,       0.2f, 0f,   0f,   0f,   0f,   0.1f,  0f, 0f, 0f,   0f, 0.8f, 0.12f),
+                Z(VegetationZone.PlazaJoint,       0.5f, 0f,   0f,   0f,   0f,   0.3f,  0f, 0f, 0f,   0f, 0.8f, 0.12f),
                 Z(VegetationZone.DesirePath,       7f,   0f,   0f,   0f,   0f,   0.2f,  0f, 0f, 0f,   0f, 0.7f),
             };
         }
