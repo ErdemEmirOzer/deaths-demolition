@@ -133,14 +133,16 @@ namespace DD.Prototype.World.Vegetation
         {
             [Header("Hydrangea (HY) clusters — AD v1.2 (10.10)")]
             [Tooltip("World total of ajisai clusters (AD v1.2: 40–55; v1 30 at 8 m).")]
-            public int hydrangeaClusters = 48;
+            // w4 (C-00 10.10, K5 a must: "purple / pink / mauve clusters readable in the TD frames"): w3's 48 clusters of 2–4 plants
+            // read as single heads (0–1 cluster ≥ 4000 px per frame) — 120 clusters of 6–10 plants, Ø 1.6–2.4, groups of 2–4.
+            public int hydrangeaClusters = 120;
             [Tooltip("A group's first cluster keeps this far (m, centre to centre) from every cluster placed before it.")]
-            public float hydrangeaSpacing = 6f;
-            [Tooltip("Cluster radius (m): Ø 1.2–2.0.")]
-            public float hydrangeaRadiusMin = 0.6f, hydrangeaRadiusMax = 1.0f;
-            public int hydrangeaPlantsMin = 2, hydrangeaPlantsMax = 4;
+            public float hydrangeaSpacing = 3.5f;
+            [Tooltip("Cluster radius (m): Ø 1.6–2.4.")]
+            public float hydrangeaRadiusMin = 0.8f, hydrangeaRadiusMax = 1.2f;
+            public int hydrangeaPlantsMin = 6, hydrangeaPlantsMax = 10;
             [Tooltip("Clusters per asymmetric group.")]
-            public int hydrangeaGroupMin = 1, hydrangeaGroupMax = 3;
+            public int hydrangeaGroupMin = 2, hydrangeaGroupMax = 4;
             [Tooltip("Edge gap (m) between neighbouring clusters of one group.")]
             public float hydrangeaGroupGapMin = 0.3f, hydrangeaGroupGapMax = 1.0f;
             [Tooltip("Colour shares by variant: 0 A (water / shade), 1 B (sun), 2 C.")]
@@ -161,23 +163,23 @@ namespace DD.Prototype.World.Vegetation
                 new Vector4(-36f, -32f, -28f, -26f),
             };
             [Header("Hanashōbu (SL variants 1 / 2) shore strips — AD v1.2")]
-            public int irisStripsMin = 10, irisStripsMax = 16;
+            public int irisStripsMin = 18, irisStripsMax = 28;   // w4: 10–16 strips of 5–8 → 18–28 of 10–16 (K5)
             [Tooltip("Band (m from the water) the strips lie in (PondShore / PondBank).")]
             public float irisWaterMin = 0.5f, irisWaterMax = 1.2f;
             public float irisLengthMin = 1.5f, irisLengthMax = 4f, irisWidthMin = 0.4f, irisWidthMax = 0.6f;
-            public int irisPerStripMin = 5, irisPerStripMax = 8;
+            public int irisPerStripMin = 10, irisPerStripMax = 16;
             [Tooltip("Edge gap (m) between hanashōbu strips / to a higanbana strip.")]
-            public float irisGap = 3f, irisHiganbanaGap = 4f;
+            public float irisGap = 2f, irisHiganbanaGap = 4f;
             [Header("Kurinsō (SL variant 3) shade clusters — AD v1.2")]
-            public int primroseClustersMin = 12, primroseClustersMax = 20;
-            [Tooltip("Cluster radius (m): Ø 0.8–1.2.")]
-            public float primroseRadiusMin = 0.4f, primroseRadiusMax = 0.6f;
-            public int primrosePlantsMin = 5, primrosePlantsMax = 8;
+            public int primroseClustersMin = 24, primroseClustersMax = 36;   // w4: 12–20 of 5–8 → 24–36 of 9–14, Ø 1.0–1.6 (K5)
+            [Tooltip("Cluster radius (m): Ø 1.0–1.6.")]
+            public float primroseRadiusMin = 0.5f, primroseRadiusMax = 0.8f;
+            public int primrosePlantsMin = 9, primrosePlantsMax = 14;
             [Tooltip("Fuki (LC) leaves in a ring around the flowers.")]
             public int primroseLeavesMin = 3, primroseLeavesMax = 4;
             public float primroseLeafRing = 0.35f;
             [Tooltip("Centre distance (m) between kurinsō clusters.")]
-            public float primroseSpacing = 5f;
+            public float primroseSpacing = 3.5f;
             [Header("Flower ground (AD v1.2 exclusions)")]
             [Tooltip("Distance (m) a flower keeps from a path edge / a plaza edge.")]
             public float flowerPathClear = 0.8f, flowerPlazaClear = 1.5f;
@@ -187,8 +189,8 @@ namespace DD.Prototype.World.Vegetation
             public float flowerTallCorridorDistance = 1.5f, flowerTallCorridorHeight = 0.55f;
             [Tooltip("Edge gap (m) between two different accents (no shared cells, no colour clash).")]
             public float flowerAccentGap = 1f;
-            [Tooltip("Moss-court rim (m inside its edge) where ajisai may stand; their cells take this height cap (the court's 0.15 m would delete them).")]
-            public float mossCourtRim = 1f, mossCourtHydrangeaCap = 0.6f;
+            [Tooltip("Moss-court rim (m inside its edge) where ajisai may stand. An ajisai cell whose zone caps lower than mossCourtHydrangeaCap takes that cap (the court's 0.15 m would delete them; w4: the pond bank's 0.45 m squashed them to single heads).")]
+            public float mossCourtRim = 1f, mossCourtHydrangeaCap = 0.7f;
         }
 
         [Serializable]
@@ -380,14 +382,17 @@ namespace DD.Prototype.World.Vegetation
             s[(int)VegetationType.Hydrangea].farKeep = 1f;
             s[(int)VegetationType.SpiderLily].farKeep = 1f;
 
-            // AD v1.2 (10.10): kit tint + saturation ceiling (HSV s, sRGB).
-            Tone(s[(int)VegetationType.GrassShort], 0xDDFFDF, 0.48f);
-            Tone(s[(int)VegetationType.GrassMid], 0xDDFFDF, 0.48f);
-            Tone(s[(int)VegetationType.GrassTall], 0xE5FFE7, 0.42f);
-            Tone(s[(int)VegetationType.Fern], 0xEDFFEE, 0.50f);
-            Tone(s[(int)VegetationType.LeafClump], 0xEDFFEE, 0.50f);
-            Tone(s[(int)VegetationType.Moss], 0xEDFFF1, 0.50f);       // LOOK-BIBLE v1.1 0.42 → AD v1.2 0.50
-            Tone(s[(int)VegetationType.Kumazasa], 0xEDFFEE, 0.50f);
+            // AD v1.2 (10.10): kit tint + saturation ceiling (HSV s, sRGB). w4 (S-05, measured on the w3 TD frames, colour_gate.py):
+            // the v1.2 tints left the lit grass at hue 76–80° (yellow-green; K2 wants a 92–110° median) and P95 s 0.60 (≤ 0.50) —
+            // red × 0.62 / blue × 1.05 more in linear (v1.2 tint × that) and the ceilings × ~0.83 bring the modelled frame to
+            // ≈ 100° / P95 0.47–0.50. Luminance of a typical blade −6 %.
+            Tone(s[(int)VegetationType.GrassShort], 0xB3FFE4, 0.40f);
+            Tone(s[(int)VegetationType.GrassMid], 0xB3FFE4, 0.40f);
+            Tone(s[(int)VegetationType.GrassTall], 0xB9FFEC, 0.36f);
+            Tone(s[(int)VegetationType.Fern], 0xC0FFF3, 0.42f);
+            Tone(s[(int)VegetationType.LeafClump], 0xC0FFF3, 0.42f);
+            Tone(s[(int)VegetationType.Moss], 0xC0FFF6, 0.42f);
+            Tone(s[(int)VegetationType.Kumazasa], 0xC0FFF3, 0.42f);
 
             // AD v1.2 (10.10) tsuyu garden: per-variant petal colours on the flora atlas (see remarks for the measurements).
             Species hy = s[(int)VegetationType.Hydrangea];
@@ -437,30 +442,35 @@ namespace DD.Prototype.World.Vegetation
         /// BareSoil), BuildingShadow SS 0 → 3, MossCourt MO 1.2 → 2.4 + SS 4 → 6 (a koke-niwa carpet), Bamboo floor ML 0 → 12
         /// (1 litter patch/m²) + MO 0.4 → 0.6, PondBank SS 7 → 9, Lawn SS 10 → 12 + MO 0.25 → 0.4, Courtyard SS 4 → 6, plaza joints
         /// SS 0.2 → 0.5 + MO 0.1 → 0.3 (≤ 12 cm tufts). Paths, paving, desire paths and karesansui stay as designed.
+        /// w4 (C-00 10.10, ANALIZ-w3.md: the veg-ground gate measured 54 % bare, BuildingSurround 39 % of its visible cells,
+        /// MossCourt 43 %, the bamboo floor 85 %, PondBank / Lawn 27 %; flat moss texture counts bare, the answer is 3D tufts):
+        /// BuildingSurround SS 6 → 8, GM 0.6 → 2.5 (twice the footprint per instance), MO 0.4 → 0.8; MossCourt SS 6 → 9, MO 2.4 →
+        /// 3.0 (the species' quantisation ceiling); bamboo floor FE 0.3 → 0.8, MO 0.6 → 1.2, KZ 1.2 → 2.4 (sasa); PondBank SS 9 → 11,
+        /// GM 1.5 → 2; Lawn SS 12 → 13, GM 1 → 1.5; Courtyard SS 6 → 9.
         /// </remarks>
         public static ZoneRecipe[] DefaultZones()
         {
             return new[]
             {
                 //                          SS    GM    GT    FE    LC    MO    HY  SL  KZ    ML
-                Z(VegetationZone.Lawn,             12f,  1.0f, 0f,   0.1f, 0.2f, 0.4f,  0f, 0f, 0f,   0f),
+                Z(VegetationZone.Lawn,             13f,  1.5f, 0f,   0.1f, 0.2f, 0.4f,  0f, 0f, 0f,   0f),
                 Z(VegetationZone.Grove,            5f,   0f,   0f,   0.25f,0.4f, 0.6f,  0f, 0f, 0f,   0f, 0.8f),
                 Z(VegetationZone.GroveSkirt,       8f,   1.5f, 0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.3f, 0f,   0.6f,  0f, 0f, 1.2f, 12f),
+                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.8f, 0f,   1.2f,  0f, 0f, 2.4f, 12f),
                 Z(VegetationZone.BambooEdge,       0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 1.2f, 0f, 1f, 0.6f),
                 Z(VegetationZone.BambooPathSide,   3f,   0f,   0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 0.7f),
                 Z(VegetationZone.PondShore,        0f,   1.0f, 0f,   0.3f, 0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.PondBank,         9f,   1.5f, 0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 1f, 0.45f),
+                Z(VegetationZone.PondBank,         11f,  2.0f, 0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 1f, 0.45f),
                 Z(VegetationZone.PathEdge,         3f,   0f,   0f,   0f,   0f,   0.3f,  0f, 0f, 0f,   0f, 0.5f),
                 Z(VegetationZone.WallBase,         0f,   1.0f, 2.0f, 0.4f, 0f,   0f,    0f, 0f, 0f,   0f),
                 Z(VegetationZone.WallBaseShadow,   0f,   1.0f, 1.0f, 1.0f, 0f,   0f,    0f, 0f, 0.4f, 0f),
                 Z(VegetationZone.WallOuter,        10f,  1.0f, 0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.BuildingSurround, 6f,   0.6f, 0f,   0f,   0.3f, 0.4f,  0f, 0f, 0f,   0f, 1f, 0.6f),
+                Z(VegetationZone.BuildingSurround, 8f,   2.5f, 0f,   0f,   0.3f, 0.8f,  0f, 0f, 0f,   0f, 1f, 0.6f),
                 Z(VegetationZone.BuildingShadow,   3f,   0f,   0f,   0.3f, 0f,   0.5f,  0f, 0f, 0.3f, 0f, 1f, 0.6f),
-                Z(VegetationZone.Courtyard,        6f,   0f,   0f,   0f,   0f,   0.8f,  0f, 0f, 0f,   0f, 0.7f, 0.5f),
+                Z(VegetationZone.Courtyard,        9f,   0f,   0f,   0f,   0f,   0.8f,  0f, 0f, 0f,   0f, 0.7f, 0.5f),
                 Z(VegetationZone.PlazaEdge,        0f,   0f,   0f,   0f,   0f,   0.6f,  0f, 0f, 0f,   0f),
                 Z(VegetationZone.BridgeApproach,   3f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f, 0.6f, 0.45f),
-                Z(VegetationZone.MossCourt,        6f,   0f,   0f,   0f,   0f,   2.4f,  0f, 0f, 0f,   0f, 0.7f, 0.15f),
+                Z(VegetationZone.MossCourt,        9f,   0f,   0f,   0f,   0f,   3.0f,  0f, 0f, 0f,   0f, 0.7f, 0.15f),
                 Z(VegetationZone.Karesansui,       0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
                 Z(VegetationZone.KaresansuiCollar, 0f,   0f,   0f,   0f,   0f,   1.0f,  0f, 0f, 0f,   0f, 1f, 0.05f),
                 Z(VegetationZone.BareSoil,         0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),

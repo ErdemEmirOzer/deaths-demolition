@@ -43,13 +43,16 @@ Shader "DD/GroundTerrain"
         // R3 10.10 (user: "too much brown and yellow on the ground"; AD v1.2): clean greens, neutral / cool soil and dirt, less of
         // them (moss cover 0.12 → 0.30), litter cooled and halved; moss saturation 0.82 → 0.90 (AD MUST-1 ceiling). The builder
         // copies these defaults into V6_GroundTerrain.mat (WorldV5Terrain.BuildMaterial): the shader's defaults are the tuning.
+        // w4 (measured on the w3 TD frames, AD K2 "median hue 92–110°, P95 s ≤ 0.50"): the lit moss still read 63–67° (olive) — moss
+        // tints red × 0.60, overall × 1.05 (luminance kept), blue × 1.04 (the look's warm filter is back), saturation 0.90 → 0.72;
+        // modelled on the w3 pixels: ground median ≈ 96°, lit ≈ 94°, P95 s ≈ 0.47.
         [Header(Grade (linear))]
         _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.0
         _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 1.9
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.90
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.72
         // Tints and albedos are linear multipliers (Vector: a Color property would be sRGB-decoded in this Linear project).
-        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.82, 1.0, 0.98, 1)
-        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.92, 1.06, 0.82, 1)
+        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.52, 1.05, 1.07, 1)
+        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.58, 1.11, 0.90, 1)
         _SoilValue("Soil value", Range(0.1, 2)) = 0.42
         _SoilTint("Soil tint (linear)", Vector) = (0.88, 0.90, 0.95, 1)
         _DirtValue("Dirt value", Range(0.1, 2)) = 0.58

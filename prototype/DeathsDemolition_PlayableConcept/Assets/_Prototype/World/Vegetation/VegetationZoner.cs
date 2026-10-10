@@ -654,7 +654,9 @@ namespace DD.Prototype.World.Vegetation
             float HydrangeaMaxHeight(int j)
             {
                 float h = hySp.heightMax * field.HeightScaleAt(j);
-                float cap = zoneOf[j] == (byte)VegetationZone.MossCourt ? ac.mossCourtHydrangeaCap : field.HeightCapAt(j);
+                float cap = field.HeightCapAt(j);
+                // w4: any zone cap under the ajisai cap is lifted for the ajisai cell (moss court 0.15, pond bank 0.45, courtyard 0.5)
+                if (zoneOf[j] == (byte)VegetationZone.MossCourt || (cap > 0f && cap < ac.mossCourtHydrangeaCap)) cap = ac.mossCourtHydrangeaCap;
                 return cap > 0f ? Mathf.Min(h, cap) : h;
             }
 
@@ -668,6 +670,7 @@ namespace DD.Prototype.World.Vegetation
                         return true;
                     case VegetationZone.BuildingSurround:
                     case VegetationZone.BuildingShadow:
+                        return true;   // w4 (user "sprinkled in between"): along the whole building band, not only its corners
                     case VegetationZone.Courtyard:
                         return !anchor || Corner(grid, j, dist.Building);
                     case VegetationZone.MossCourt:
@@ -739,11 +742,8 @@ namespace DD.Prototype.World.Vegetation
                     int j = cl.Plants[k];
                     field.SetDensity(hy, j, perCell);
                     field.VariantHint[j] = VegetationPlacer.WithAccentVariant(field.VariantHint[j], VegetationType.Hydrangea, cl.Colour);
-                    if (zoneOf[j] == (byte)VegetationZone.MossCourt)
-                    {
-                        float cap = field.HeightCapAt(j);
-                        if (cap > 0f && cap < ac.mossCourtHydrangeaCap) field.SetHeight(j, field.HeightScaleAt(j), ac.mossCourtHydrangeaCap);
-                    }
+                    float cap = field.HeightCapAt(j);
+                    if (cap > 0f && cap < ac.mossCourtHydrangeaCap) field.SetHeight(j, field.HeightScaleAt(j), ac.mossCourtHydrangeaCap);
                 }
 
                 counts.HydrangeaPlants += cl.Plants.Count;
