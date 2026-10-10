@@ -191,6 +191,101 @@ class EntegreKapiTestleri(unittest.TestCase):
         r = self.run_int(*extra)
         return r, r.stdout + r.stderr
 
+    # ---------------------------------------------------------- gate 4c (C-00 10.10): the acoustic map is baked from its json
+    AC_JSON = "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Environment/World/V6/acoustic-spaces-v6.json"
+    AC_MAP = "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Audio/Resources/DD_AcousticSpaces.asset"
+    J1 = b'{"schema": "acoustic-v6", "spaces": []}\n'
+    J2 = b'{"schema": "acoustic-v6", "spaces": [{"id": "R1", "enclosure": "Room"}]}\n'
+
+    @staticmethod
+    def h16(b):
+        import hashlib
+        return hashlib.sha256(b).hexdigest()[:16]
+
+    @staticmethod
+    def map_bytes(h):
+        return ("%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n--- !u!114 &11400000\nMonoBehaviour:\n  m_Name: DD_AcousticSpaces\n"
+                "  _sourceHash: " + h + "\n  _worldScene: World_V6_Greybox\n  _spaces: []\n").encode()
+
+    def put(self, rel, data):
+        f = self.repo / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(data)
+
+    def ac_source(self, json=None, map_hash=None, main_pair=True, main_stale=False):
+        """main: the pair (json J1 + its map; stale = a wrong hash) unless main_pair=False. Branch feat writes the json and /
+        or the map when given, else only tools/a.txt."""
+        if main_pair:
+            self.put(self.AC_JSON, self.J1)
+            self.put(self.AC_MAP, self.map_bytes("0" * 16 if main_stale else self.h16(self.J1)))
+            self.git("add", self.AC_JSON, self.AC_MAP); self.git("commit", "-q", "-m", "baked pair")
+        self.git("checkout", "-q", "-b", "feat")
+        paths = []
+        if json is not None:
+            self.put(self.AC_JSON, json); paths.append(self.AC_JSON)
+        if map_hash is not None:
+            self.put(self.AC_MAP, self.map_bytes(map_hash)); paths.append(self.AC_MAP)
+        if not paths:
+            (self.repo / "tools" / "a.txt").write_text("feat\n"); paths.append("tools/a.txt")
+        self.git("add", *paths); self.git("commit", "-q", "-m", GOOD_SUBJ, "-m", GOOD_BODY)
+        self.git("checkout", "-q", "main")
+        r = self.run_int()
+        return r, r.stdout + r.stderr
+
+    def test_AkustikKapisi_JsonDegisirHaritaBayat_Cikis3(self):
+        """S-05 588a3b74's case: the json changes, the map keeps the old hash → every Unity run re-bakes a tracked file."""
+        r, out = self.ac_source(json=self.J2)
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: gate 4c: DD_AcousticSpaces.asset _sourceHash %s != sha256(acoustic-spaces-v6.json)[:16] %s"
+                      % (self.h16(self.J1), self.h16(self.J2)), out)
+
+    def test_AkustikKapisi_JsonVeHaritaBirlikte_Gecer(self):
+        r, out = self.ac_source(json=self.J2, map_hash=self.h16(self.J2))
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("gate 4c", out)
+
+    def test_AkustikKapisi_YalnizHaritaYanlisHash_Cikis3(self):
+        r, out = self.ac_source(map_hash="f" * 16)
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: gate 4c", out)
+
+    def test_AkustikKapisi_DokunmayanDal_BayatMaindeReddedilmez(self):
+        """a branch cut from an older (stale) main that touches neither file is not refused — the pair is main's business."""
+        r, out = self.ac_source(main_stale=True)
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("gate 4c", out)
+
+    def test_AkustikKapisi_BomluJson_BomsuzHashlenir(self):
+        """File.ReadAllText drops a UTF-8 BOM before Encoding.UTF8.GetBytes: the hash is the BOM-less bytes'."""
+        bom = b"\xef\xbb\xbf" + self.J2
+        r, out = self.ac_source(json=bom, map_hash=self.h16(self.J2))
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotEqual(self.h16(bom), self.h16(self.J2))
+
+    def test_AkustikKapisi_JsonVarHaritaYok_Cikis3(self):
+        r, out = self.ac_source(json=self.J2, main_pair=False)
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("acoustic-spaces-v6.json without DD_AcousticSpaces.asset", out)
+
+    def test_AkustikKapisi_GercekVeri_UnityPisirmesiyleAyniHash(self):
+        """the real pair: main's json + main's map pass (Unity's own bake, c94625a7); main's json + 3e44f614's stale map fail."""
+        real = TOOLS.parent
+        def show(ref, rel):
+            r = subprocess.run([REAL_GIT, "-C", str(real), "show", "%s:%s" % (ref, rel)], capture_output=True)
+            if r.returncode != 0:
+                self.skipTest("real repo objects not readable here (%s:%s)" % (ref, rel))
+            return r.stdout
+        jm, mm, mold = show("c94625a7", self.AC_JSON), show("c94625a7", self.AC_MAP), show("3e44f614", self.AC_MAP)
+        for stale, expect in ((False, 0), (True, 3)):
+            with self.subTest(stale=stale):
+                self.tearDown(); self.setUp()
+                self.git("checkout", "-q", "-b", "feat")
+                self.put(self.AC_JSON, jm); self.put(self.AC_MAP, mold if stale else mm)
+                self.git("add", self.AC_JSON, self.AC_MAP); self.git("commit", "-q", "-m", GOOD_SUBJ, "-m", GOOD_BODY)
+                self.git("checkout", "-q", "main")
+                r = self.run_int()
+                self.assertEqual(r.returncode, expect, r.stdout + r.stderr)
+
     def test_MesajKapisi_IyiKonuVeTestSatiri_Gecer(self):
         r, out = self.dry()
         self.assertEqual(r.returncode, 0, out)

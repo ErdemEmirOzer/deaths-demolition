@@ -6,6 +6,7 @@
 #   Gate:  single parent · source worktree clean (if the branch has one) · every changed path inside the
 #          allowed scope (Assets/_Prototype|_Art|TextMesh Pro, project README.md/PROTOTYPE-ONLY.md, planning/, tools/, wp-*/README*; more via
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
+#          · acoustic map baked from its source when the source touches it (gate 4c, C-00 10.10)
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers · commit-message format
 #          (Codex-audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
 #          with Test/Tests/Guarded, any case, or mentions EditMode/PlayMode); --subject-exempt "<reason>" skips it
@@ -182,6 +183,43 @@ if printf '%s\n' "${FILES[@]}" | grep -qE '^planning/0[01]-'; then
   done
   rm -rf "$T0"
   say "DEC/REQ numbering: checked"
+fi
+
+# --- gate 4c: the acoustic map is baked from its source (C-00 10.10; gt SHOULD-1 on c94625a7). AudioCatalogBuilder
+#     .BuildAcousticSpaces re-bakes DD_AcousticSpaces.asset whenever its _sourceHash != sha256(acoustic-spaces-v6.json)[:16]
+#     (File.ReadAllText drops a UTF-8 BOM, Encoding.UTF8.GetBytes adds none) — a stale pair rewrites a tracked file in every
+#     Unity run: main-ci refuses its dirty CI checkout (exit 3), the FINAL tree goes dirty. Checked only when the source
+#     touches either file (a branch cut from an older, stale main that touches neither is not refused); the pair after the
+#     integration = the source's version of a touched file, main's of the other.
+AC_JSON="prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Environment/World/V6/acoustic-spaces-v6.json"
+AC_MAP="prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Audio/Resources/DD_AcousticSpaces.asset"
+if printf '%s\n' "${FILES[@]}" | grep -qxF -e "$AC_JSON" -e "$AC_MAP"; then
+  T4="${TMPDIR:-/tmp}/dd-int-ac-$$"; mkdir -p "$T4"
+  for p in AC_JSON AC_MAP; do
+    ref=main; printf '%s\n' "${FILES[@]}" | grep -qxF "${(P)p}" && ref=$C
+    "${G[@]}" show "$ref:${(P)p}" > "$T4/$p" 2>/dev/null || rm -f "$T4/$p"
+  done
+  P=$(python3 - "$T4/AC_JSON" "$T4/AC_MAP" <<'PY'
+import hashlib, os, re, sys
+j, m = sys.argv[1:3]
+if not os.path.isfile(j):
+    sys.exit(0)   # no source after the integration: the bake writes nothing ("every point stays Open")
+if not os.path.isfile(m):
+    print("acoustic-spaces-v6.json without DD_AcousticSpaces.asset - bake it (AudioCatalogBuilder.BuildAcousticSpaces)"
+          " and commit it with the json"); sys.exit(1)
+b = open(j, "rb").read()
+if b.startswith(b"\xef\xbb\xbf"):
+    b = b[3:]
+want = hashlib.sha256(b).hexdigest()[:16]
+m_ = re.search(rb"^\s*_sourceHash:\s*(\S*)", open(m, "rb").read(), re.M)
+got = m_.group(1).decode() if m_ else "(none)"
+if got != want:
+    print("DD_AcousticSpaces.asset _sourceHash %s != sha256(acoustic-spaces-v6.json)[:16] %s - re-bake"
+          " (AudioCatalogBuilder.BuildAcousticSpaces) and commit the asset with the json" % (got, want)); sys.exit(1)
+PY
+) || fail "gate 4c: $P"
+  rm -rf "$T4"
+  say "acoustic map: baked from its source"
 fi
 
 # --- gate 5: tag
