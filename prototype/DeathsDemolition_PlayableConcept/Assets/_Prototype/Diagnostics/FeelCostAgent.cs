@@ -31,7 +31,7 @@ namespace DD.Prototype.Diagnostics
     [DefaultExecutionOrder(-32700)]
     public sealed class FeelCostAgent : MonoBehaviour
     {
-        private const int Frames = 3600, WarmFrames = 900, RoundFrames = 1800, Crowd = 60, Seed = 95060;
+        private const int Frames = 3600, WarmFrames = 900, RoundFrames = 1800, CrowdWanted = 60, Seed = 95060;
         private enum PhaseKind { Steady, NaturalRound, Compatibility, DspOnly }
         [Serializable] private sealed class StateProof
         {
@@ -62,7 +62,7 @@ namespace DD.Prototype.Diagnostics
             public string kind = "same-build-synthetic-steady-plus-natural-round-main-thread-feel-bundle";
             public string verdict = "UNMEASURED", cpuVerdict = "UNMEASURED", gcVerdict = "UNMEASURED";
             public string sourceSha, buildSha, buildStamp, error = "", scopeVersion = "wp095.cost.v2.c00-natural-round-compat-device";
-            public int seed = Seed, crowd = Crowd, attempt, nominalHz = 60, framesPerWindow = Frames;
+            public int seed = Seed, crowd, crowdWanted = CrowdWanted, safetyCeiling, attempt, nominalHz = 60, framesPerWindow = Frames;
             public string cpuMarker = FeelCostMeasurement.MarkerName, gcMarker = "GC.Alloc";
             public bool cpuRecorderValid, gcRecorderValid, cpuControlPass, gcControlPass, inputMatched, coverageComplete, durationMatched, provenanceMatched;
             public long cpuControlNs, cpuControlSamples, gcControlBytes;
@@ -110,6 +110,7 @@ namespace DD.Prototype.Diagnostics
         private Window _window;
         private PlayerRig _player;
         private Transform _target;
+        private int _crowd;
         private Vector3 _origin;
         private double _start;
         private int _oldCap, _oldVsync;
@@ -240,11 +241,16 @@ namespace DD.Prototype.Diagnostics
             if (CameraModeService.Current != CameraMode.TopDown) { _result.error = "TD required"; yield break; }
             _player = PlayerRegistry.Primary; _player.Health.DiagnosisInvulnerable = true;
             _origin = _player.transform.position;
-            EnemySpawnDirector.Instance.ForceActiveTarget(Crowd, steady);
-            int targetCount = steady ? Crowd : Math.Min(Crowd, EnemySpawnDirector.Instance.RoundPoolTotal);
+            // R3 FINAL c4093280: "60 crowd unavailable" twice - the game never holds more than RoundConfigSection.
+            // AbsoluteSafetyCeiling (40) alive, so the 60 of HIS-SOZLESMESI S6 could not be reached. The crowd is the game's own
+            // maximum, recorded beside the 60 asked for.
+            _result.safetyCeiling = EnemySpawnDirector.Instance.SafetyCeiling;
+            _crowd = Math.Min(CrowdWanted, _result.safetyCeiling); _result.crowd = _crowd;
+            EnemySpawnDirector.Instance.ForceActiveTarget(_crowd, steady);
+            int targetCount = steady ? _crowd : Math.Min(_crowd, EnemySpawnDirector.Instance.RoundPoolTotal);
             deadline = Time.realtimeSinceStartupAsDouble + 90d;
             while (EnemySpawnDirector.Instance.ActiveCount != targetCount && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
-            if (EnemySpawnDirector.Instance.ActiveCount != targetCount) { _result.error = "60 crowd unavailable"; yield break; }
+            if (EnemySpawnDirector.Instance.ActiveCount != targetCount) { _result.error = "crowd " + targetCount + " unavailable"; yield break; }
             _target = null;
             foreach (var z in ZombieEnemy.Live) if (z != null && z.IsAlive) { _target = z.transform; break; }
             MuzzleSystem.Ensure(); CameraFeelDriver.Ensure();
@@ -493,7 +499,7 @@ namespace DD.Prototype.Diagnostics
             for (int i = 0; i < _result.eventsExpected.Length; i++)
                 _result.inputMatched &= a.eventCalls[i] == _result.eventsExpected[i] && b.eventCalls[i] == _result.eventsExpected[i];
             _result.coverageComplete = a.samples == Frames && b.samples == Frames && a.roots > 0 && b.roots > 0 &&
-                a.crowdMin == Crowd && a.crowdMax == Crowd && b.crowdMin == Crowd && b.crowdMax == Crowd && a.routerOverflow == 0 && b.routerOverflow == 0 &&
+                a.crowdMin == _crowd && a.crowdMax == _crowd && b.crowdMin == _crowd && b.crowdMax == _crowd && a.routerOverflow == 0 && b.routerOverflow == 0 &&
                 a.tracerAttempts == 10 && b.tracerAttempts == 10 && a.tracerSpawns == 10 && b.tracerSpawns == 10 && b.visualBranches.localAdjusted > 0 && a.visualBranches.offSkip > 0 && missing.Count == 0;
             _result.productionDeviceMatched = a.deviceId != 0 && a.deviceId == b.deviceId && a.deviceLayout == b.deviceLayout &&
                 a.rumbleOwnerAvailable && b.rumbleOwnerAvailable && a.initialNativeDevice && b.initialNativeDevice && a.deviceChanges == 0 && b.deviceChanges == 0 && a.preferenceStable && b.preferenceStable &&
