@@ -52,7 +52,8 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsFalse(WorldTdCapture.IsVegetationGround(ground, (byte)z), z + " (tasarım gereği çıplak) bitki zemini sayıldı");
             Assert.IsFalse(WorldTdCapture.IsVegetationGround(0, (byte)VegetationZone.Lawn), "Ground bayrağı yok");
             Assert.AreEqual(0.25f, WorldTdCapture.VegGateLimit, 1e-6f);
-            Assert.AreEqual("veg-ground-v1", WorldTdCapture.VegGateMetric);
+            Assert.AreEqual("veg-ground-v2", WorldTdCapture.VegGateMetric);
+            Assert.AreEqual("veg-ground-v1", WorldTdCapture.VegGateMetricV1, "w3's rule stays reported beside the gate");
         }
     }
 }

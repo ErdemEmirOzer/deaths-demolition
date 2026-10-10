@@ -34,6 +34,7 @@ Shader "DD/World Vegetation"
         _PetalShift ("Petal shift (target lin rgb / ref luma, amount)", Vector) = (0, 0, 0, 0)
         _PetalKey ("Petal mask key (channel weights, gain)", Vector) = (0, 0, 0, 0)
         _PetalRect ("Petal atlas rect (u0, v0, u1, v1)", Vector) = (0, 0, 0, 0)
+        _YellowClamp ("Yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
     }
 

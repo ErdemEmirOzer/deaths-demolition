@@ -46,10 +46,14 @@ Shader "DD/GroundTerrain"
         // w4 (measured on the w3 TD frames, AD K2 "median hue 92–110°, P95 s ≤ 0.50"): the lit moss still read 63–67° (olive) — moss
         // tints red × 0.60, overall × 1.05 (luminance kept), blue × 1.04 (the look's warm filter is back), saturation 0.90 → 0.72;
         // modelled on the w3 pixels: ground median ≈ 96°, lit ≈ 94°, P95 s ≈ 0.47.
+        // w5 (w4 frames: ground median 94–109°, yet 16 % of the bare moss pixels in the yellow-brown band): red ≤ 0.45 × green (linear,
+        // ≈ sRGB 0.70), saturation 0.72 → 0.65; value × 1.2 (C-00 10.10, S-06 AD N2: the dark hero costume — linear Y ≈ 0.009 —
+        // melts into a shaded moss ring ≈ 0.03; solved on the ground side): cushion 4.0 → 4.8, patch 1.9 → 2.28.
         [Header(Grade (linear))]
-        _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.0
-        _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 1.9
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.72
+        _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.8
+        _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 2.28
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.65
+        _MossYellowClamp("Moss yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0.45
         // Tints and albedos are linear multipliers (Vector: a Color property would be sRGB-decoded in this Linear project).
         _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.52, 1.05, 1.07, 1)
         _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.58, 1.11, 0.90, 1)
@@ -129,7 +133,7 @@ Shader "DD/GroundTerrain"
             float4 _MaskBounds;
             float _MaskTexel;
             half _MossTile, _Moss2Tile, _SoilTile, _DirtTile, _GravelTile, _PebbleTile;
-            half _MossValue, _Moss2Value, _MossSaturation;
+            half _MossValue, _Moss2Value, _MossSaturation, _MossYellowClamp;
             half4 _MossTintShade, _MossTintSun;
             half _SoilValue; half4 _SoilTint;
             half _DirtValue; half4 _DirtTint;
@@ -310,6 +314,7 @@ Shader "DD/GroundTerrain"
                 half mossMix = smoothstep(0.35h, 0.65h, mix2);
                 half3 moss = lerp(m1, m2, mossMix);
                 moss = lerp(DDLuma(moss).xxx, moss, _MossSaturation) * lerp(_MossTintShade.rgb, _MossTintSun.rgb, tone);
+                if (_MossYellowClamp > 0.0h) moss.r = min(moss.r, moss.g * _MossYellowClamp);
                 half3 soil = SAMPLE_TEXTURE2D(_SoilMap, sampler_MossMap, uvSoil).rgb * _SoilValue * _SoilTint.rgb;
                 half3 dirt = SAMPLE_TEXTURE2D(_DirtMap, sampler_MossMap, uvDirt).rgb * _DirtValue * _DirtTint.rgb;
                 half3 gravel = SAMPLE_TEXTURE2D(_GravelMap, sampler_MossMap, uvGravel).rgb * _GravelValue;

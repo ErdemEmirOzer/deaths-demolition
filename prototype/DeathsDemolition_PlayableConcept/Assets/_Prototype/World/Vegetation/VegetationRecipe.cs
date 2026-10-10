@@ -46,6 +46,8 @@ namespace DD.Prototype.World.Vegetation
             public float hueJitterDegrees = 4f, valueJitter = 0.06f, saturationJitter = 0.03f;
             [Tooltip("Albedo saturation ceiling: HSV s of the sRGB albedo, the bible's unit (1 = none; the shader converts it for its linear albedo). AD v1.2: SS/GM 0.48, GT 0.42, FE/LC/MO/KZ 0.50.")]
             [Range(0f, 1f)] public float saturationCap = 1f;
+            [Tooltip("w5 (10.10): linear red ≤ green × this on the final albedo — the yellow / brown blade texels toward green (0 = off: flowers, litter).")]
+            [Range(0f, 1f)] public float yellowClamp;
             [Tooltip("AD v1.2 (10.10): tint (sRGB) on the kit family material copy (_BaseColor) — the one tone lever of a species whose atlas carries the colour (root / tip go white there). White = the atlas as authored (HY, SL, ML: the flowers and the litter keep their own colour).")]
             public Color kitTint = Color.white;
             [Tooltip("AD v1.2 (10.10) petal shift, per variant: target flower albedo (sRGB) of the masked atlas texels; alpha = amount (0 = the atlas as authored). A masked texel becomes target × its luma / petalRefLuma, so the atlas pattern is kept and the mean lands on the target.")]
@@ -185,6 +187,8 @@ namespace DD.Prototype.World.Vegetation
             public float flowerPathClear = 0.8f, flowerPlazaClear = 1.5f;
             [Tooltip("Distance (m) from a spawn point / a weapon or door point (weapons and doors: their own clear radius + the difference to 2.5 m).")]
             public float flowerSpawnClear = 3f, flowerPickupClear = 2.5f;
+            [Tooltip("w5 (10.10): flowers may stand inside the corridor only this close (m) to its edge — a border along the lanes, by water, walls and buildings (V6's corridor mask covers 100 % of the pond bank, 88 % of the building band, 80 % of the lawn).")]
+            public float flowerCorridorMargin = 1.2f;
             [Tooltip("Within this distance (m) of the corridor a flower may stand no taller than flowerTallCorridorHeight.")]
             public float flowerTallCorridorDistance = 1.5f, flowerTallCorridorHeight = 0.55f;
             [Tooltip("Edge gap (m) between two different accents (no shared cells, no colour clash).")]
@@ -386,13 +390,14 @@ namespace DD.Prototype.World.Vegetation
             // the v1.2 tints left the lit grass at hue 76–80° (yellow-green; K2 wants a 92–110° median) and P95 s 0.60 (≤ 0.50) —
             // red × 0.62 / blue × 1.05 more in linear (v1.2 tint × that) and the ceilings × ~0.83 bring the modelled frame to
             // ≈ 100° / P95 0.47–0.50. Luminance of a typical blade −6 %.
-            Tone(s[(int)VegetationType.GrassShort], 0xB3FFE4, 0.40f);
-            Tone(s[(int)VegetationType.GrassMid], 0xB3FFE4, 0.40f);
-            Tone(s[(int)VegetationType.GrassTall], 0xB9FFEC, 0.36f);
-            Tone(s[(int)VegetationType.Fern], 0xC0FFF3, 0.42f);
-            Tone(s[(int)VegetationType.LeafClump], 0xC0FFF3, 0.42f);
-            Tone(s[(int)VegetationType.Moss], 0xC0FFF6, 0.42f);
-            Tone(s[(int)VegetationType.Kumazasa], 0xC0FFF3, 0.42f);
+            // w5 (w4 frames: hue in band, P95 s 0.55–0.62 on the cover): ceilings × 0.8 (SS / GM 0.32, GT 0.29, others 0.34).
+            Tone(s[(int)VegetationType.GrassShort], 0xB3FFE4, 0.32f);
+            Tone(s[(int)VegetationType.GrassMid], 0xB3FFE4, 0.32f);
+            Tone(s[(int)VegetationType.GrassTall], 0xB9FFEC, 0.29f);
+            Tone(s[(int)VegetationType.Fern], 0xC0FFF3, 0.34f);
+            Tone(s[(int)VegetationType.LeafClump], 0xC0FFF3, 0.34f);
+            Tone(s[(int)VegetationType.Moss], 0xC0FFF6, 0.34f);
+            Tone(s[(int)VegetationType.Kumazasa], 0xC0FFF3, 0.34f);
 
             // AD v1.2 (10.10) tsuyu garden: per-variant petal colours on the flora atlas (see remarks for the measurements).
             Species hy = s[(int)VegetationType.Hydrangea];
@@ -408,10 +413,22 @@ namespace DD.Prototype.World.Vegetation
             return s;
         }
 
+        /// <summary>
+        /// w5 (C-00 10.10, S-06 AD N2 "the dark hero costume melts into the dark ground", to be solved on the ground side): the TD
+        /// cover's luminance × this (linear). The costume reads linear Y ≈ 0.009 against a shaded moss ring ≈ 0.03.
+        /// </summary>
+        public const float CoverLuminanceLift = 1.15f;
+        /// <summary>w5: the green species' yellow clamp (linear red ≤ green × this; 0.45 ≈ sRGB 0.70).</summary>
+        public const float GreenYellowClamp = 0.45f;
+
         private static void Tone(Species sp, int tint, float saturationCap)
         {
-            sp.kitTint = Hex(tint);
+            // the kit tint is sRGB (SetColor linearises): lift in linear, back to sRGB (> 1 allowed — _BaseColor is a multiplier)
+            Color lin = Hex(tint).linear * CoverLuminanceLift;
+            lin.a = 1f;
+            sp.kitTint = lin.gamma;
             sp.saturationCap = saturationCap;
+            sp.yellowClamp = GreenYellowClamp;
         }
 
         /// <summary>

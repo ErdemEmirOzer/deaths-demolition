@@ -41,6 +41,7 @@ CBUFFER_START(UnityPerMaterial)
     float4 _PetalShift;      // AD v1.2: target linear rgb ÷ reference petal luma, amount (0 = atlas as authored)
     float4 _PetalKey;        // AD v1.2: petal mask channel weights (xyz) on the linear texel, gain (w)
     float4 _PetalRect;       // AD v1.2: atlas UV rect the petal mask is limited to (u0, v0, u1, v1)
+    float _YellowClamp;      // w5 (10.10): linear red ≤ green × this (0 = off)
 CBUFFER_END
 
 float4 _DD_WindVector;
@@ -354,6 +355,10 @@ half3 DDVeg_Albedo(float2 uv, half4 vc, float3 hash, float3 rootWS, float gust)
     albedo *= 1.0 + (half)(hash.z * 2.0 - 1.0) * _ValueJitter + macro * 0.08;
     albedo *= 1.0 + lerp(_DD_VegTint.x, _DD_VegTint.y, (half)gust);   // gust sheen (WIND-SPEC §2)
     albedo = saturate(albedo);
+    // w5 (S-05 10.10, AD K1 / K3 measured on the w4 TD frames): the atlas' sun-bleached and dry blade texels still read 20–65°
+    // (the yellow-brown and gold bands; 6 % of the lit cover in td5) — red held to ≤ _YellowClamp × green (linear; 0.45 ≈ sRGB
+    // 0.70: hue ≥ ~75° before the warm sun). Off (0) for the flowers and the leaf litter.
+    if (_YellowClamp > 0.0) albedo.r = min(albedo.r, albedo.g * (half)_YellowClamp);
     // Saturation ceiling: pull toward grey at the same max. _SatCap is the bible's unit — HSV s of the sRGB albedo
     // (LOOK-BIBLE v1.1 MO 0.42; AD v1.2 SS/GM 0.48, GT 0.42, FE/LC/MO/KZ 0.50). The albedo here is linear, where the
     // same colour reads far more saturated (#3A462B: s 0.39 sRGB, 0.60 linear), so the ceiling is converted: with

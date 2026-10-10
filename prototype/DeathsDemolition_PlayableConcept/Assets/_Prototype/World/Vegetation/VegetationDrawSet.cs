@@ -262,6 +262,7 @@ namespace DD.Prototype.World.Vegetation
             mat.SetFloat("_ValueJitter", sp.valueJitter);
             mat.SetFloat("_SatJitter", sp.saturationJitter);
             mat.SetFloat("_SatCap", sp.saturationCap);
+            mat.SetFloat("_YellowClamp", sp.yellowClamp);   // w5 (10.10): K1 / K3
             mat.SetFloat("_FarKeep", sp.farKeep);
             if (!atlas) mat.SetFloat("_BumpScale", 0f);   // placeholders: no normal map, no tangents
             return mat;

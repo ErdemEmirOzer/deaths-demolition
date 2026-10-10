@@ -657,6 +657,8 @@ namespace DD.Prototype.World.Vegetation
                 float cap = field.HeightCapAt(j);
                 // w4: any zone cap under the ajisai cap is lifted for the ajisai cell (moss court 0.15, pond bank 0.45, courtyard 0.5)
                 if (zoneOf[j] == (byte)VegetationZone.MossCourt || (cap > 0f && cap < ac.mossCourtHydrangeaCap)) cap = ac.mossCourtHydrangeaCap;
+                // w5: in or near the corridor the ajisai is held to the corridor height instead of being dropped
+                if (Edge(grid, j, corridorSeed, half) <= ac.flowerTallCorridorDistance) cap = cap > 0f ? Mathf.Min(cap, ac.flowerTallCorridorHeight) : ac.flowerTallCorridorHeight;
                 return cap > 0f ? Mathf.Min(h, cap) : h;
             }
 
@@ -742,8 +744,10 @@ namespace DD.Prototype.World.Vegetation
                     int j = cl.Plants[k];
                     field.SetDensity(hy, j, perCell);
                     field.VariantHint[j] = VegetationPlacer.WithAccentVariant(field.VariantHint[j], VegetationType.Hydrangea, cl.Colour);
+                    // the cell's cap becomes the ajisai's own: lifted over a low zone cap (w4), held to the corridor height (w5)
+                    float want = HydrangeaMaxHeight(j);
                     float cap = field.HeightCapAt(j);
-                    if (cap > 0f && cap < ac.mossCourtHydrangeaCap) field.SetHeight(j, field.HeightScaleAt(j), ac.mossCourtHydrangeaCap);
+                    if (cap > 0f ? Mathf.Abs(cap - want) > 0.02f : want < hySp.heightMax * field.HeightScaleAt(j) - 1e-3f) field.SetHeight(j, field.HeightScaleAt(j), want);
                 }
 
                 counts.HydrangeaPlants += cl.Plants.Count;
@@ -900,9 +904,17 @@ namespace DD.Prototype.World.Vegetation
             VegetationRecipe.Transitions tr = recipe.transitions;
             float half = grid.Cell * 0.5f;
             var ok = new bool[grid.Count];
+            // w5 (10.10): the corridor's interior stays clear, its edge band takes flowers (V6's corridor mask covers 100 % of the pond
+            // bank, 88 % of the building band and 80 % of the lawn — excluding all of it left w4 with 6 ajisai clusters, 0 hanashōbu,
+            // 0 kurinsō). Edge = distance to the nearest cell outside the corridor (water, wall, building, path, open ground).
+            var outsideCorridor = new bool[grid.Count];
+            for (int i = 0; i < ok.Length; i++) outsideCorridor[i] = !corridorOf[i];
+            var outsideSeed = new int[grid.Count];
+            NearestSeeds(outsideCorridor, grid.Width, grid.Height, outsideSeed);
             for (int i = 0; i < ok.Length; i++)
             {
-                if (!grid.Growable(i) || zoneOf[i] == 0 || corridorOf[i] || clear[i] != 0) continue;
+                if (!grid.Growable(i) || zoneOf[i] == 0 || clear[i] != 0) continue;
+                if (corridorOf[i] && Edge(grid, i, outsideSeed, half) > ac.flowerCorridorMargin) continue;
                 if (!FlowerZone((VegetationZone)zoneOf[i]) || groveR[i] < tr.groveInner) continue;
                 if (Edge(grid, i, dist.Path, half) < ac.flowerPathClear || Edge(grid, i, dist.Plaza, half) < ac.flowerPlazaClear) continue;
                 // The rects / circles too: the zone priority puts shore and pond bank before the bridge approach.
