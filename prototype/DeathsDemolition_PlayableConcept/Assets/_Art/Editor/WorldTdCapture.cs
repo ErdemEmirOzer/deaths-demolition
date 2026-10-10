@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using DD.Prototype.World;
+using DD.Prototype.World.Vegetation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -86,7 +87,10 @@ namespace DD.Art.Pipeline.EditorTools
             var bareRows = new StringBuilder();
             var legacyRows = new StringBuilder();
             var splitRows = new StringBuilder();
-            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f;
+            var gateRows = new StringBuilder();
+            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f, gateSum = 0f;
+            long gateBare = 0, gateSeen = 0;
+            int gatePoses = 0;
             foreach ((string name, Vector2 feet) in Poses)
             {
                 Vector3 ground = Ground(feet);
@@ -103,12 +107,27 @@ namespace DD.Art.Pipeline.EditorTools
                 legacySum += bare.LegacyBlack;
                 naturalSum += bare.Natural;
                 pavedSum += bare.Paved;
+                if (bare.VegSeen > 0)
+                {
+                    float share = (float)bare.VegBare / bare.VegSeen;
+                    gateRows.Append(gateRows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"bare\": " + F(share) + ", \"bareCells\": " + bare.VegBare + ", \"seen\": " + bare.VegSeen + "}");
+                    gateSum += share;
+                    gateBare += bare.VegBare;
+                    gateSeen += bare.VegSeen;
+                    gatePoses++;
+                }
             }
 
             int n = Poses.Length;
+            string gate = gatePoses == 0 ? "null"
+                : "{\"metric\": \"" + VegGateMetric + "\", " + gateRows + ", \"mean\": " + F(gateSum / gatePoses) + ", \"pooled\": " + F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f) +
+                  ", \"poses\": " + gatePoses + ", \"limit\": " + F(VegGateLimit) + ", \"pass\": " + (gatePoses == n && gateSum / gatePoses <= VegGateLimit ? "true" : "false") + "}";
             File.WriteAllText(Path.Combine(dir, "bare-ground.json"),
                 "{" + bareRows + ", \"mean\": " + F(bareSum / n) + ", \"metric\": \"" + BareMetric + "\", \"split\": {" + splitRows + ", \"mean\": {\"natural\": " + F(naturalSum / n) +
-                ", \"paved\": " + F(pavedSum / n) + "}}, \"legacyBlack\": {" + legacyRows + ", \"mean\": " + F(legacySum / n) + "}}");
+                ", \"paved\": " + F(pavedSum / n) + "}}, \"legacyBlack\": {" + legacyRows + ", \"mean\": " + F(legacySum / n) + "}, \"gate\": " + gate + "}");
+            if (gatePoses > 0)
+                Debug.Log("[TDCAP] vegetation-ground gate (" + VegGateMetric + "): mean " + F(gateSum / gatePoses) + " over " + gatePoses + " poses (limit " + F(VegGateLimit) + "), pooled " +
+                          F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f));
             Debug.Log("[TDCAP] " + n + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / n) + " (" + BareMetric + "; natural " + F(naturalSum / n) +
                       ", paved " + F(pavedSum / n) + "; legacy black-threshold " + F(legacySum / n) + ")");
         }, requireVegetation);
@@ -208,6 +227,36 @@ namespace DD.Art.Pipeline.EditorTools
         public struct BareShare
         {
             public float Ground, Natural, Paved, LegacyBlack;
+            /// <summary>The gate (<see cref="VegGateMetric"/>): pixels whose line of sight ends on vegetation ground, and those of them that show it bare.</summary>
+            public int VegSeen, VegBare;
+        }
+
+        /// <summary>
+        /// C-00 10.10 decision (B) · the gate's scope: vegetation ground. Paths, paving, desire paths, the karesansui gravel, the amaochi
+        /// drip strip, water and the ground under roofs are designed bare surfaces (the user asked for more roads) and are not counted.
+        /// A cell is vegetation ground when the grid marks it Ground and none of Path / Plaza / Water / Excluded / Roofed, and its
+        /// final zone is one of <see cref="VegetationZones"/>. Gate: the mean of the poses' shares ≤ <see cref="VegGateLimit"/>.
+        /// </summary>
+        public const string VegGateMetric = "veg-ground-v1";
+        public const float VegGateLimit = 0.25f;
+
+        public static readonly VegetationZone[] VegetationZones =
+        {
+            VegetationZone.Lawn, VegetationZone.Grove, VegetationZone.GroveSkirt, VegetationZone.Bamboo, VegetationZone.BambooEdge,
+            VegetationZone.BambooPathSide, VegetationZone.PondBank, VegetationZone.PondShore, VegetationZone.PathEdge, VegetationZone.WallBase,
+            VegetationZone.WallBaseShadow, VegetationZone.WallOuter, VegetationZone.BuildingSurround, VegetationZone.BuildingShadow,
+            VegetationZone.Courtyard, VegetationZone.PlazaEdge, VegetationZone.BridgeApproach, VegetationZone.MossCourt,
+            VegetationZone.KaresansuiCollar,
+        };
+
+        private const VegetationGrid.Flag NotVegetationGround = VegetationGrid.Flag.Path | VegetationGrid.Flag.Plaza | VegetationGrid.Flag.Water |
+                                                                 VegetationGrid.Flag.Excluded | VegetationGrid.Flag.Roofed;
+
+        /// <summary>True when grid cell <paramref name="i"/> is vegetation ground (see <see cref="VegGateMetric"/>).</summary>
+        public static bool IsVegetationGround(ushort flags, byte finalZone)
+        {
+            if ((flags & (ushort)VegetationGrid.Flag.Ground) == 0 || (flags & (ushort)NotVegetationGround) != 0) return false;
+            return Array.IndexOf(VegetationZones, (VegetationZone)finalZone) >= 0;
         }
 
         /// <summary>
@@ -286,6 +335,7 @@ namespace DD.Art.Pipeline.EditorTools
                 result.Natural = (float)nat / px.Length;
                 result.Paved = (float)pav / px.Length;
                 result.Ground = result.Natural + result.Paved;
+                VegetationGround(cam, px, w, h, ref result, diagnosticPrefix);
                 return result;
             }
             finally
@@ -300,6 +350,69 @@ namespace DD.Art.Pipeline.EditorTools
                 UnityEngine.Object.DestroyImmediate(paved);
                 UnityEngine.Object.DestroyImmediate(water);
             }
+        }
+
+        /// <summary>
+        /// The gate pass over the id render's pixels (bottom-left origin, as GetPixels32): a physics ray per pixel centre (vegetation has
+        /// no colliders, so a ray through grass reaches the ground behind it). A hit within 0.3 m of the grid's ground height is ground;
+        /// a pixel that shows a ground id but whose ray meets an invisible collider first is placed on the ground by marching the grid's
+        /// height field. Seen = the ground point is vegetation ground; bare = it also shows a ground id. Needs the zoner's snapshot
+        /// (DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics, recorded inside <see cref="WithLook"/>); none → the gate is not measured.
+        /// </summary>
+        private static void VegetationGround(Camera cam, Color32[] px, int w, int h, ref BareShare result, string diagnosticPrefix)
+        {
+            DD.Prototype.World.Vegetation.VegetationPreview.DiagnosticSnapshot snap = DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics;   // qualified: this class has a VegetationPreview method
+            if (snap == null || snap.Grid == null || snap.FinalZone == null) return;
+            VegetationGrid grid = snap.Grid;
+            Physics.SyncTransforms();
+            Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
+            int seen = 0, bare = 0;
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int i = y * w + x;
+                GroundClass c = Classify(px[i]);
+                Ray ray = cam.ViewportPointToRay(new Vector3((x + 0.5f) / w, (y + 0.5f) / h, 0f));
+                int cell = -1;
+                if (Physics.Raycast(ray, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    int k = CellOf(grid, hit.point);
+                    if (k >= 0 && Mathf.Abs(hit.point.y - grid.GroundY[k]) <= 0.3f) cell = k;
+                }
+
+                if (cell < 0 && c != GroundClass.Cover) cell = MarchGround(grid, ray);
+                bool veg = cell >= 0 && IsVegetationGround(grid.Flags[cell], snap.FinalZone[cell]);
+                if (veg)
+                {
+                    seen++;
+                    if (c == GroundClass.Natural) bare++;
+                }
+
+                if (mask != null) mask[i] = !veg ? new Color32(0, 0, 0, 255) : c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : new Color32(60, 160, 60, 255);
+            }
+
+            if (mask != null) Save(mask, diagnosticPrefix + "-veg-mask.png", w, h);
+            result.VegSeen = seen;
+            result.VegBare = bare;
+        }
+
+        private static int CellOf(VegetationGrid grid, Vector3 p)
+        {
+            int cx = Mathf.FloorToInt((p.x - grid.Origin.x) / grid.Cell), cz = Mathf.FloorToInt((p.z - grid.Origin.y) / grid.Cell);
+            return cx < 0 || cz < 0 || cx >= grid.Width || cz >= grid.Height ? -1 : grid.Index(cx, cz);
+        }
+
+        /// <summary>The first grid cell whose ground the ray reaches (0.1 m steps over 120 m), or -1.</summary>
+        private static int MarchGround(VegetationGrid grid, Ray ray)
+        {
+            for (float t = 0f; t < 120f; t += 0.1f)
+            {
+                Vector3 p = ray.GetPoint(t);
+                int k = CellOf(grid, p);
+                if (k >= 0 && p.y <= grid.GroundY[k] + 0.02f) return k;
+            }
+
+            return -1;
         }
 
         public enum GroundClass { Cover, Natural, Paved }
@@ -472,10 +585,12 @@ namespace DD.Art.Pipeline.EditorTools
             cam.farClipPlane = 600f;
             cam.enabled = false;
             WorldAtmosphere.ConfigureCamera(cam);
-            IDisposable vegetation = null;
+            IDisposable vegetation = null, zoneSnapshot = null;
             try
             {
                 Scene world = SceneManager.GetActiveScene();
+                // C-00 10.10 (B): the gate reads the zoner's own grid and final zones — recorded while the preview populates
+                if (requireVegetation) zoneSnapshot = DD.Prototype.World.Vegetation.VegetationPreview.BeginDiagnostics();
                 vegetation = VegetationPreview(world, requireVegetation, out int tier, out int instances);
                 body(cam);
                 if (requireVegetation && writeCombinedContext)
@@ -500,6 +615,7 @@ namespace DD.Art.Pipeline.EditorTools
             finally
             {
                 vegetation?.Dispose();
+                zoneSnapshot?.Dispose();
                 if (grain != null) grain.active = grainWas;
                 UnityEngine.Object.DestroyImmediate(go);
                 UnityEngine.Object.DestroyImmediate(root);

@@ -1,5 +1,6 @@
 using System.Linq;
 using DD.Art.Pipeline.EditorTools;
+using DD.Prototype.World.Vegetation;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -33,6 +34,25 @@ namespace DD.Art.Tests.EditMode
             CollectionAssert.AreEquivalent(new[] { "DD/GroundMoss", "DD/GroundTerrain", "DD/GroundTiles", "DD/GroundBlend" },
                 WorldTdCapture.NaturalGroundShaders.Concat(WorldTdCapture.PavedGroundShaders).ToArray());
             Assert.AreEqual("ground-id-v2", WorldTdCapture.BareMetric);
+        }
+
+        /// <summary>C-00 10.10 decision (B): the gate's scope is vegetation ground — the designed bare surfaces (paths, paving, desire
+        /// paths, karesansui gravel, the amaochi drip strip, water, under roofs) are not counted.</summary>
+        [Test]
+        [Category("WP092")]
+        public void BitkiZemini_YolDosemeAsinmisRotaKaresansuiSayilmaz()
+        {
+            ushort ground = (ushort)VegetationGrid.Flag.Ground;
+            Assert.IsTrue(WorldTdCapture.IsVegetationGround(ground, (byte)VegetationZone.Lawn), "çim");
+            Assert.IsTrue(WorldTdCapture.IsVegetationGround(ground, (byte)VegetationZone.BuildingSurround), "bina çevresi");
+            Assert.IsTrue(WorldTdCapture.IsVegetationGround(ground, (byte)VegetationZone.MossCourt), "yosun bahçesi");
+            foreach (VegetationGrid.Flag f in new[] { VegetationGrid.Flag.Path, VegetationGrid.Flag.Plaza, VegetationGrid.Flag.Water, VegetationGrid.Flag.Excluded, VegetationGrid.Flag.Roofed })
+                Assert.IsFalse(WorldTdCapture.IsVegetationGround((ushort)(ground | (ushort)f), (byte)VegetationZone.Lawn), f + " bayraklı hücre bitki zemini sayıldı");
+            foreach (VegetationZone z in new[] { VegetationZone.Auto, VegetationZone.DesirePath, VegetationZone.BareSoil, VegetationZone.Karesansui, VegetationZone.PlazaJoint })
+                Assert.IsFalse(WorldTdCapture.IsVegetationGround(ground, (byte)z), z + " (tasarım gereği çıplak) bitki zemini sayıldı");
+            Assert.IsFalse(WorldTdCapture.IsVegetationGround(0, (byte)VegetationZone.Lawn), "Ground bayrağı yok");
+            Assert.AreEqual(0.25f, WorldTdCapture.VegGateLimit, 1e-6f);
+            Assert.AreEqual("veg-ground-v1", WorldTdCapture.VegGateMetric);
         }
     }
 }
