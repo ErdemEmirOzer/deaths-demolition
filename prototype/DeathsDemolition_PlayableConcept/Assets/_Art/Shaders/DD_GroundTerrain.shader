@@ -40,37 +40,40 @@ Shader "DD/GroundTerrain"
         _GravelTile("Gravel (the pebble set, small)", Range(0.2, 4)) = 0.42
         _PebbleTile("Pebble", Range(0.3, 4)) = 1.1
 
+        // R3 10.10 (user: "too much brown and yellow on the ground"; AD v1.2): clean greens, neutral / cool soil and dirt, less of
+        // them (moss cover 0.12 → 0.30), litter cooled and halved; moss saturation 0.82 → 0.90 (AD MUST-1 ceiling). The builder
+        // copies these defaults into V6_GroundTerrain.mat (WorldV5Terrain.BuildMaterial): the shader's defaults are the tuning.
         [Header(Grade (linear))]
         _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.0
         _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 1.9
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.82
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.90
         // Tints and albedos are linear multipliers (Vector: a Color property would be sRGB-decoded in this Linear project).
-        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.90, 1.0, 0.95, 1)
-        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (1.10, 1.05, 0.70, 1)
-        _SoilValue("Soil value", Range(0.1, 2)) = 0.5
-        _SoilTint("Soil tint (linear)", Vector) = (1.0, 0.93, 0.86, 1)
-        _DirtValue("Dirt value", Range(0.1, 2)) = 0.66
-        _DirtTint("Dirt tint (linear)", Vector) = (1.0, 0.95, 0.88, 1)
+        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.82, 1.0, 0.98, 1)
+        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.92, 1.06, 0.82, 1)
+        _SoilValue("Soil value", Range(0.1, 2)) = 0.42
+        _SoilTint("Soil tint (linear)", Vector) = (0.88, 0.90, 0.95, 1)
+        _DirtValue("Dirt value", Range(0.1, 2)) = 0.58
+        _DirtTint("Dirt tint (linear)", Vector) = (0.90, 0.92, 0.95, 1)
         _GravelValue("Gravel value", Range(0.1, 2)) = 0.5
         _GravelSaturation("Gravel / pebble saturation (garden grey)", Range(0, 1)) = 0.35
         _GravelTint("Gravel tint (linear; cool slate)", Vector) = (0.95, 1.0, 1.06, 1)
         _PebbleValue("Pebble value", Range(0.1, 2)) = 0.42
-        _MudTint("Mud albedo (linear)", Vector) = (0.026, 0.021, 0.016, 1)
+        _MudTint("Mud albedo (linear)", Vector) = (0.022, 0.021, 0.020, 1)
         _PavedUnder("Under-paving bed (linear × the gravel; seen only at a piece's edge, or before the kit is laid)", Vector) = (0.42, 0.42, 0.42, 1)
         _LitterFresh("Litter momiji (LOOK-BIBLE #6E4632, linear)", Vector) = (0.155, 0.061, 0.031, 1)
         _LitterDry("Litter momiji dry (#86603E, linear)", Vector) = (0.238, 0.117, 0.048, 1)
-        _LitterOld("Litter old (#6A5A44, linear)", Vector) = (0.144, 0.102, 0.058, 1)
+        _LitterOld("Litter old (cooled, AD v1.2: was #6A5A44; linear)", Vector) = (0.102, 0.090, 0.072, 1)
         _LitterBamboo("Litter bamboo (dry culm leaf, linear)", Vector) = (0.20, 0.17, 0.10, 1)
 
         [Header(Fields)]
         _ToneScale("Tone field (m)", Range(4, 40)) = 11.0
         _ToneValue("Tone value swing", Range(0, 0.4)) = 0.12
         _PatchScale("Moss / soil patch field (m)", Range(1, 20)) = 4.6
-        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.12
+        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.30
         _HeightBlend("Height-blend strength", Range(0, 2)) = 0.9
         _LeafScale("Leaf cell (m; a leaf ≈ 0.85 × 0.5 of it)", Range(0.03, 0.4)) = 0.09
-        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.55
-        _LeafMute("Leaf colour mute (toward its own luma)", Range(0, 1)) = 0.3
+        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.30
+        _LeafMute("Leaf colour mute (toward its own luma)", Range(0, 1)) = 0.5
 
         [Header(Relief)]
         _NormalStrength("Texture normal strength", Range(0, 2)) = 1.25
