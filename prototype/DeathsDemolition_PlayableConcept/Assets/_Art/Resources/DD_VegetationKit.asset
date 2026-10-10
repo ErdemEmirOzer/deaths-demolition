@@ -61,11 +61,15 @@ MonoBehaviour:
     models:
     - {fileID: 919132149155446097, guid: a6ebec54159b4d1a834b1cfa23d024a9, type: 3}
     - {fileID: 919132149155446097, guid: 940ddb318e384fada088ae84a576b2a0, type: 3}
+    - {fileID: 919132149155446097, guid: a6ebec54159b4d1a834b1cfa23d024a9, type: 3}
     material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
     atlasCarriesColour: 1
     cards: []
   - type: 7
     models:
+    - {fileID: 919132149155446097, guid: 646909bf250a46dfaf44af0eee78183a, type: 3}
+    - {fileID: 919132149155446097, guid: 646909bf250a46dfaf44af0eee78183a, type: 3}
+    - {fileID: 919132149155446097, guid: 646909bf250a46dfaf44af0eee78183a, type: 3}
     - {fileID: 919132149155446097, guid: 646909bf250a46dfaf44af0eee78183a, type: 3}
     material: {fileID: 2100000, guid: 34b781cddb844a4bb248c2288626c6d5, type: 2}
     atlasCarriesColour: 1

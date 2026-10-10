@@ -3,7 +3,7 @@
 
 // WP-093 · DD/World Vegetation core: material CBUFFER (SRP-Batcher layout, identical in every pass), the per-instance
 // hash (bit-identical to VegetationHash.Instance in C#), WIND-SPEC v1 wind / interaction deformation, distance density
-// shrink and the LOD dither cross-fade. Include after URP Core.hlsl.
+// shrink, the LOD dither cross-fade and (AD v1.2, 10.10) the per-variant petal shift. Include after URP Core.hlsl.
 //
 // Inputs: vertex colour "vc1" (AP-031): R bend weight (y/h)², G per-blade phase, B stiffness, A root AO.
 // Globals:  _DD_WindVector (WorldWind: dir.xy, strength, time) — the one wind (ADR-013-1);
@@ -38,6 +38,9 @@ CBUFFER_START(UnityPerMaterial)
     half _SatCap;
     float _VegMeshHeight;
     float4 _VegLod;          // lo (m), hi (m), half cross-fade (m), level
+    float4 _PetalShift;      // AD v1.2: target linear rgb ÷ reference petal luma, amount (0 = atlas as authored)
+    float4 _PetalKey;        // AD v1.2: petal mask channel weights (xyz) on the linear texel, gain (w)
+    float4 _PetalRect;       // AD v1.2: atlas UV rect the petal mask is limited to (u0, v0, u1, v1)
 CBUFFER_END
 
 float4 _DD_WindVector;
@@ -317,6 +320,22 @@ half3 DDVeg_RotateHue(half3 c, half degrees)
     return max(mul(toRGB, yiq), 0.0);
 }
 
+// AD v1.2 (10.10) tsuyu garden: one flower atlas, several flower colours. Inside _PetalRect, a texel whose key
+// (dot(linear rgb, _PetalKey.xyz) × _PetalKey.w: HY b − g, SL r − g) is positive takes the target × its own luma —
+// _PetalShift.rgb is the target already divided by the variant's mean petal luma, so the atlas pattern is kept and the
+// mean lands on the target. _PetalShift.w = amount; 0 (every non-flower draw, the red higanbana) returns the texel as is.
+// A uniform branch per draw; no keyword.
+half3 DDVeg_PetalShift(float2 uv, half3 tex)
+{
+    if (_PetalShift.w <= 0.0) return tex;
+    float2 inLo = step(_PetalRect.xy, uv);
+    float2 inHi = step(uv, _PetalRect.zw);
+    half inside = (half)(inLo.x * inLo.y * inHi.x * inHi.y);
+    half mask = saturate(dot(tex, (half3)_PetalKey.xyz) * (half)_PetalKey.w) * inside * (half)_PetalShift.w;
+    half texLuma = dot(tex, half3(0.2126h, 0.7152h, 0.0722h));
+    return lerp(tex, (half3)_PetalShift.rgb * texLuma, mask);
+}
+
 // uv.x ≥ 2: placeholder accent (2..3 A, ≥ 3 B) — never produced by the AP-031 atlas.
 half3 DDVeg_Albedo(float2 uv, half4 vc, float3 hash, float3 rootWS, float gust)
 {
@@ -325,7 +344,7 @@ half3 DDVeg_Albedo(float2 uv, half4 vc, float3 hash, float3 rootWS, float gust)
     if (hash.y < _DryFraction) albedo = lerp(albedo, _DryColor.rgb, saturate(t * 1.25));
     if (uv.x >= 2.0) albedo = uv.x >= 3.0 ? _AccentColorB.rgb : _AccentColor.rgb;
     half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
-    albedo *= tex.rgb * _BaseColor.rgb;
+    albedo *= DDVeg_PetalShift(uv, tex.rgb) * _BaseColor.rgb;
 
     // Per instance: hue ±, value ±, saturation ± (bible: SS ±4°, ±6 %, ±0.03).
     half macro = SAMPLE_TEXTURE2D_LOD(_DD_VegNoiseTex, sampler_DD_VegNoiseTex, rootWS.xz * 0.1, 0).r - 0.5;   // 10 m macro tone
@@ -335,11 +354,17 @@ half3 DDVeg_Albedo(float2 uv, half4 vc, float3 hash, float3 rootWS, float gust)
     albedo *= 1.0 + (half)(hash.z * 2.0 - 1.0) * _ValueJitter + macro * 0.08;
     albedo *= 1.0 + lerp(_DD_VegTint.x, _DD_VegTint.y, (half)gust);   // gust sheen (WIND-SPEC §2)
     albedo = saturate(albedo);
-    // LOOK-BIBLE v1.1 saturation ceiling (MO 0.42): pull toward grey at the same max, HSV s ≤ _SatCap.
+    // Saturation ceiling: pull toward grey at the same max. _SatCap is the bible's unit — HSV s of the sRGB albedo
+    // (LOOK-BIBLE v1.1 MO 0.42; AD v1.2 SS/GM 0.48, GT 0.42, FE/LC/MO/KZ 0.50). The albedo here is linear, where the
+    // same colour reads far more saturated (#3A462B: s 0.39 sRGB, 0.60 linear), so the ceiling is converted: with
+    // sRGB ≈ linear^(1/2), 1 − s_srgb = sqrt(min/max) → s_linear ≤ 1 − (1 − _SatCap)² (±0.04 s over vegetation albedo
+    // 0.05–0.3). AD v1.2 (10.10): the v1.1 test compared linear s against the sRGB number and greyed MO to ≈ 0.24.
     half mx = max(max(albedo.r, albedo.g), albedo.b);
     half mn = min(min(albedo.r, albedo.g), albedo.b);
     half sat = mx > 1e-4h ? (mx - mn) / mx : 0.0h;
-    if (sat > _SatCap) albedo = lerp(mx.xxx, albedo, _SatCap / sat);
+    half keep = 1.0h - (half)_SatCap;
+    half satCapLinear = 1.0h - keep * keep;
+    if (sat > satCapLinear) albedo = lerp(mx.xxx, albedo, satCapLinear / sat);
     return albedo;
 }
 

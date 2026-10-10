@@ -13,7 +13,8 @@ namespace DD.Prototype.World.Vegetation
     ///
     /// Render: CPU frustum culling per chunk (cached Plane[6]), LOD 0/1/2 by chunk distance (2 m dither cross-fade in the shader),
     /// distance density (first N of each hash-sorted chunk range; the shader shrinks each instance by the same hash), camera-height
-    /// density, Graphics.DrawMeshInstanced per group × LOD from build-time 1023-matrix pages. 0 B per call.
+    /// density, Graphics.DrawMeshInstanced per group × LOD from build-time 1023-matrix pages. 0 B per call. Each group's
+    /// property block (built once) carries its mesh height, LOD band and — AD v1.2 (10.10) — its variant's petal colour.
     /// Build also writes the ground-cover globals (_DD_VegCoverTex: grass cover 0..1 per 0.5 m) the ground shader uses to darken
     /// the soil and occlude its specular under grass (LOOK-BIBLE principle 1, P-05 note §2: SS–Soil ΔL* ≥ 8).
     /// </summary>
@@ -30,6 +31,10 @@ namespace DD.Prototype.World.Vegetation
         public static readonly int GroundId = Shader.PropertyToID("_DD_VegGround");
         private static readonly int MeshHeightId = Shader.PropertyToID("_VegMeshHeight");
         private static readonly int LodId = Shader.PropertyToID("_VegLod");
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        public static readonly int PetalShiftId = Shader.PropertyToID("_PetalShift");
+        private static readonly int PetalKeyId = Shader.PropertyToID("_PetalKey");
+        private static readonly int PetalRectId = Shader.PropertyToID("_PetalRect");
 
         private static Texture2D s_noise;
 
@@ -234,6 +239,18 @@ namespace DD.Prototype.World.Vegetation
             bool atlasColour = atlas && kit.atlasCarriesColour;
             mat.SetColor("_RootColor", atlasColour ? Color.white : sp.rootColor);
             mat.SetColor("_TipColor", atlasColour ? Color.white : sp.tipColor);
+            if (atlasColour)
+            {
+                // AD v1.2 (10.10): the atlas carries the colour, so the species tone is the copy's _BaseColor (sRGB → SetColor
+                // linearises). Alpha forced to 1: _BaseColor.a scales the alpha cut.
+                Color tint = sp.kitTint;
+                tint.a = 1f;
+                mat.SetColor(BaseColorId, tint);
+            }
+
+            // AD v1.2 (10.10) petal mask (per species); the per-variant colour rides on the group's property block.
+            mat.SetVector(PetalRectId, sp.petalRect);
+            mat.SetVector(PetalKeyId, sp.petalKey);
             mat.SetColor("_DryColor", sp.dryColor);
             mat.SetColor("_AccentColor", sp.accentColor);
             mat.SetColor("_AccentColorB", sp.accentColorB);
@@ -268,10 +285,13 @@ namespace DD.Prototype.World.Vegetation
                 _blocks[k] = new MaterialPropertyBlock[lods];
                 _pages[k] = new Matrix4x4[lods][][];
                 _scratchCount[k] = new int[lods];
+                // AD v1.2 (10.10): the variant's flower colour (HY ajisai A/B/C, SL hanashōbu / kurinsō), set once here.
+                Vector4 petal = VegetationRecipe.PetalShift(_recipe.Get(group.Type), group.Variant);
                 for (int l = 0; l < lods; l++)
                 {
                     var block = new MaterialPropertyBlock();
                     block.SetFloat(MeshHeightId, _nominal[t][group.Variant]);
+                    if (petal.w > 0f) block.SetVector(PetalShiftId, petal);
                     float lo = l == 0 ? 0f : l == 1 ? d1 : d2;
                     float hi = l == lods - 1 ? 100000f : l == 0 ? d1 : d2;
                     block.SetVector(LodId, new Vector4(lo, hi, hw, l));
