@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ba64e44008fd433583b197b4018e544, type: 3}
   m_Name: DD_AcousticSpaces
   m_EditorClassIdentifier: 
-  _sourceHash: b1a15d1fc40d9fa5
+  _sourceHash: 02335a71582ad9cb
   _worldScene: World_V6_Greybox
   _spaces:
   - id: R1_MainHall
@@ -29,7 +29,7 @@ MonoBehaviour:
     floor: 1.2
     ceiling: 7.7
   - id: R2_EastPavilion
-    enclosure: 2
+    enclosure: 3
     polygonXZ:
     - 30.8
     - 24.8
@@ -42,7 +42,7 @@ MonoBehaviour:
     floor: 0.25
     ceiling: 4.05
   - id: R3_Kura
-    enclosure: 2
+    enclosure: 3
     polygonXZ:
     - -44
     - 36
@@ -55,7 +55,7 @@ MonoBehaviour:
     floor: 0.3
     ceiling: 4.3
   - id: R4_TeaHouse
-    enclosure: 2
+    enclosure: 3
     polygonXZ:
     - -35
     - -39
@@ -93,6 +93,84 @@ MonoBehaviour:
     - 23
     floor: 0
     ceiling: 5
+  - id: B1
+    enclosure: 3
+    polygonXZ:
+    - 23
+    - -54.2
+    - 27.74
+    - -54.2
+    - 27.74
+    - -45.16
+    - 23
+    - -45.16
+    floor: 0.25
+    ceiling: 3.9
+  - id: B6
+    enclosure: 3
+    polygonXZ:
+    - 9.2
+    - -54.2
+    - 13.94
+    - -54.2
+    - 13.94
+    - -47.56
+    - 9.2
+    - -47.56
+    floor: 0.25
+    ceiling: 3.9
+  - id: B3
+    enclosure: 3
+    polygonXZ:
+    - -54.2
+    - -54.2
+    - -49.46
+    - -54.2
+    - -49.46
+    - -45.16
+    - -54.2
+    - -45.16
+    floor: 0.25
+    ceiling: 3.9
+  - id: B4
+    enclosure: 3
+    polygonXZ:
+    - -54.2
+    - -39.84
+    - -49.46
+    - -39.84
+    - -49.46
+    - -30.8
+    - -54.2
+    - -30.8
+    floor: 0.25
+    ceiling: 3.9
+  - id: B2
+    enclosure: 3
+    polygonXZ:
+    - 27.6
+    - 45.16
+    - 32.34
+    - 45.16
+    - 32.34
+    - 54.2
+    - 27.6
+    - 54.2
+    floor: 0.25
+    ceiling: 3.9
+  - id: B5
+    enclosure: 3
+    polygonXZ:
+    - 33
+    - 47.56
+    - 37.74
+    - 47.56
+    - 37.74
+    - 54.2
+    - 33
+    - 54.2
+    floor: 0.25
+    ceiling: 3.9
   - id: K1_WestKairo
     enclosure: 1
     polygonXZ:
@@ -236,3 +314,16 @@ MonoBehaviour:
     - 54.5
     floor: 0
     ceiling: 3.45
+  - id: G_Karamon
+    enclosure: 1
+    polygonXZ:
+    - -4
+    - -17.6
+    - 4
+    - -17.6
+    - 4
+    - -14.4
+    - -4
+    - -14.4
+    floor: 0
+    ceiling: 6
