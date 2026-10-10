@@ -46,6 +46,13 @@ namespace DD.Prototype.Feedback.Vfx
     {
         /// <summary>WP-092: 130 layout lamps + 7 tōrō + the axis / garden stones (was 40).</summary>
         public const int MaxFlames = 160;
+
+        /// <summary>
+        /// FINAL c4093280 perf (C-00 10.10): flame cards farther than this from the camera are hidden (0 = none). Set by
+        /// QualityModeApplier: 40 m in High top-down — the TD frame ends ~35 m out, so the cap only takes cards no one sees;
+        /// every other tier / mode 0. Applied on the flicker pass.
+        /// </summary>
+        public static float CardCullMetres;
         public const float RescanInterval = 5f;
         private const float LoopSeconds = 3600f;
         /// <summary>The firebox window of the AP-003B stone lantern sits just above the bounds centre (0.6 put the flame inside the roof mass).</summary>
@@ -775,7 +782,11 @@ namespace DD.Prototype.Feedback.Vfx
                 _sway[i] = wind * along + cross * side;
                 FlipbookEffect f = _flames[i];
                 if (f == null || !f.IsSpawned) continue;
-                if (haveCam && _mover[i] == null && (_anchors[i] - camera).sqrMagnitude > cull2) continue;   // far and still: last state holds
+                float d2 = haveCam ? (_anchors[i] - camera).sqrMagnitude : 0f;
+                bool hidden = haveCam && CardCullMetres > 0f && d2 > CardCullMetres * CardCullMetres;
+                f.SetHidden(hidden);
+                if (hidden) continue;
+                if (haveCam && _mover[i] == null && d2 > cull2) continue;   // far and still: last state holds
                 Transform ft = f.transform;
                 ft.position = _anchors[i] + _motion[i] + _sway[i];
                 ft.localScale = Vector3.one * (FlameScaleFor(s, scale) * _scale[i]);
@@ -1249,6 +1260,7 @@ namespace DD.Prototype.Feedback.Vfx
                 FlipbookEffect fx = _cards.Get(_anchors[i], Quaternion.identity);
                 if (fx == null) break;
                 fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres * FlameScale, FlameTint, 1f, 0f, LoopSeconds);
+                fx.SkipWhenInvisible = true;   // FINAL 10.10 perf: an off-screen flame skips its frame / facing update
                 _flames.Add(fx);
             }
 

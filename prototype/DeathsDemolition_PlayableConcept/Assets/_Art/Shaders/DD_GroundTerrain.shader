@@ -151,6 +151,11 @@ Shader "DD/GroundTerrain"
             half _Cull;
         CBUFFER_END
 
+        // FINAL c4093280 perf (C-00 10.10): High top-down "lite" path, a global set by QualityModeApplier (0 elsewhere): no moss
+        // bombing (the second moss / moss-normal read and its noise), no puddle noise, flat gravel / pebble normals, no tussock /
+        // clod relief noise. A uniform branch per draw — the whole ground takes one path.
+        float _DD_GroundLite;
+
         // Every layer set shares one repeat sampler (the moss map's: repeat, trilinear, aniso); the masks share the clamped one.
         TEXTURE2D(_MaskA);      SAMPLER(sampler_MaskA);
         TEXTURE2D(_MaskB);
@@ -310,8 +315,16 @@ Shader "DD/GroundTerrain"
 
                 // The cushion set repeats on a visible grid: a second read turned 37° at 1.37× breaks it in noise-shaped patches.
                 float2 uvMossB = DDRotate(xz, 0.6018, 0.7986) / (_MossTile * 1.37) + float2(0.31, 0.77);
-                half bomb = smoothstep(0.40h, 0.60h, DDTerrainField(xz, 2.9, float2(9.7, 2.1)));
-                half3 m1 = lerp(SAMPLE_TEXTURE2D(_MossMap, sampler_MossMap, uvMoss).rgb, SAMPLE_TEXTURE2D(_MossMap, sampler_MossMap, uvMossB).rgb, bomb) * _MossValue;
+                bool lite = _DD_GroundLite > 0.5;
+                half bomb = 0.0h;
+                half3 m1 = SAMPLE_TEXTURE2D(_MossMap, sampler_MossMap, uvMoss).rgb;
+                [branch] if (!lite)
+                {
+                    bomb = smoothstep(0.40h, 0.60h, DDTerrainField(xz, 2.9, float2(9.7, 2.1)));
+                    m1 = lerp(m1, SAMPLE_TEXTURE2D(_MossMap, sampler_MossMap, uvMossB).rgb, bomb);
+                }
+
+                m1 *= _MossValue;
                 half3 m2 = SAMPLE_TEXTURE2D(_Moss2Map, sampler_MossMap, uvMoss2).rgb * _Moss2Value;
                 half mossMix = smoothstep(0.35h, 0.65h, mix2);
                 half3 moss = lerp(m1, m2, mossMix);
@@ -387,7 +400,8 @@ Shader "DD/GroundTerrain"
 
                 // ---- wetness and puddles
                 half wet = saturate(_Wetness + B.b * 0.75h + A.b * 0.9h + hollow * 0.45h + dirtW * 0.2h);
-                half puddleNoise = DDTerrainField(xz, _PuddleScale, float2(5.3, 9.1));
+                half puddleNoise = 0.5h;
+                [branch] if (!lite) puddleNoise = DDTerrainField(xz, _PuddleScale, float2(5.3, 9.1));
                 half score = (A.b * 0.8h + hollow * _PuddleDip + B.b * 0.15h) * lerp(0.55h, 1.35h, puddleNoise);
                 half puddle = smoothstep(_PuddleThreshold, _PuddleThreshold + _PuddleRamp, score) * (1.0h - pavedCore) * (1.0h - gravelW * 0.5h);
                 wet = max(wet, smoothstep(_PuddleThreshold - 0.25h, _PuddleThreshold, score));
@@ -407,16 +421,27 @@ Shader "DD/GroundTerrain"
                 smoothness *= 1.0h - leaf * 0.5h;
 
                 // ---- normals: the layers' tangent-space maps (world X / Z frame), the bank, flattened by water
-                half3 nMoss = UnpackNormalScale(lerp(SAMPLE_TEXTURE2D(_MossNormal, sampler_MossMap, uvMoss), SAMPLE_TEXTURE2D(_MossNormal, sampler_MossMap, uvMossB), bomb), _NormalStrength);
+                half4 nMossRaw = SAMPLE_TEXTURE2D(_MossNormal, sampler_MossMap, uvMoss);
+                half3 nGravel = half3(0.0h, 0.0h, 1.0h), nPebble = half3(0.0h, 0.0h, 1.0h);
+                [branch] if (!lite)
+                {
+                    nMossRaw = lerp(nMossRaw, SAMPLE_TEXTURE2D(_MossNormal, sampler_MossMap, uvMossB), bomb);
+                    nGravel = UnpackNormalScale(SAMPLE_TEXTURE2D(_GravelNormal, sampler_MossMap, uvGravel), _NormalStrength);
+                    nPebble = UnpackNormalScale(SAMPLE_TEXTURE2D(_PebbleNormal, sampler_MossMap, uvPebble), _NormalStrength);
+                }
+
+                half3 nMoss = UnpackNormalScale(nMossRaw, _NormalStrength);
                 half3 nSoil = UnpackNormalScale(SAMPLE_TEXTURE2D(_SoilNormal, sampler_MossMap, uvSoil), _NormalStrength * 0.8h);
-                half3 nGravel = UnpackNormalScale(SAMPLE_TEXTURE2D(_GravelNormal, sampler_MossMap, uvGravel), _NormalStrength);
-                half3 nPebble = UnpackNormalScale(SAMPLE_TEXTURE2D(_PebbleNormal, sampler_MossMap, uvPebble), _NormalStrength);
                 half3 nTS = lerp(nSoil, nMoss, mossW);
                 nTS = lerp(nTS, lerp(nGravel, nPebble, B.a), gravelW);
                 // Tussocks on the moss, clods on the bare soil (not on paths, water or paving): the relief the 0.5 m mesh cannot carry.
                 half open = (1.0h - gravelW) * (1.0h - dirtW * 0.75h) * (1.0h - pavedCore) * (1.0h - puddle);
-                float2 tussock = DDBumpTilt(xz, _TussockScale, float2(13.7, 4.2)) * (_TussockSlope * mossW);
-                float2 clod = DDBumpTilt(xz, _ClodScale, float2(2.3, 17.9)) * (_ClodSlope * (1.0h - mossW));
+                float2 tussock = float2(0.0, 0.0), clod = float2(0.0, 0.0);
+                [branch] if (!lite)
+                {
+                    tussock = DDBumpTilt(xz, _TussockScale, float2(13.7, 4.2)) * (_TussockSlope * mossW);
+                    clod = DDBumpTilt(xz, _ClodScale, float2(2.3, 17.9)) * (_ClodSlope * (1.0h - mossW));
+                }
                 half2 bump = (half2)(-(tussock + clod)) * open;
                 nTS = normalize(half3(nTS.xy + bankTS.xy + bump, nTS.z));
                 nTS = normalize(lerp(nTS, half3(0, 0, 1), saturate(wet * 0.3h + puddle + mudW * 0.4h)));

@@ -55,6 +55,26 @@ namespace DD.Prototype.Rendering
         private static bool s_enabled = true;
         private static bool s_applyShadowDistance = true;
 
+        /// <summary>FINAL 10.10 perf: lantern flame cards farther than this are hidden in High top-down.</summary>
+        public const float HighTopDownFlameCullMetres = 40f;
+        private static readonly int GroundLiteId = Shader.PropertyToID("_DD_GroundLite");
+        /// <summary>Experiment flag (C-00 10.10): <c>-ddRenderScale v</c> (0.5..1); absent = the asset's own value.</summary>
+        public const string RenderScaleFlag = "-ddRenderScale";
+        private static readonly Dictionary<UniversalRenderPipelineAsset, float> s_originalRenderScales = new Dictionary<UniversalRenderPipelineAsset, float>(4);
+        private static float s_renderScaleOverride = ReadRenderScaleFlag();
+
+        private static float ReadRenderScaleFlag()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < args.Length; i++)
+            {
+                if (args[i] == RenderScaleFlag && float.TryParse(args[i + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
+                    return Mathf.Clamp(v, 0.5f, 1f);
+            }
+
+            return 0f;
+        }
+
         /// <summary>
         /// Measurement / test hook. False stops every write; the assets keep what they hold until <see cref="RestoreOriginals"/>
         /// (the "applier off" side of an A/B). Back to true on the next play session.
@@ -138,6 +158,14 @@ namespace DD.Prototype.Rendering
             }
 
             s_originalDistances.Clear();
+            foreach (KeyValuePair<UniversalRenderPipelineAsset, float> entry in s_originalRenderScales)
+            {
+                if (entry.Key != null && !Mathf.Approximately(entry.Key.renderScale, entry.Value)) entry.Key.renderScale = entry.Value;
+            }
+
+            s_originalRenderScales.Clear();
+            Shader.SetGlobalFloat(GroundLiteId, 0f);   // the High top-down switches never outlive the session
+            DD.Prototype.Feedback.Vfx.LanternFlames.CardCullMetres = 0f;
         }
 
         private static void Apply()
@@ -187,6 +215,18 @@ namespace DD.Prototype.Rendering
 
             LastAppliedShadowDistance = distance;
             SmallShadowCasters.Apply(tier, CameraModeService.Current);   // FINAL 10.10 perf: High top-down only
+
+            // FINAL 10.10 perf (C-00): High top-down lightening — the ground's lite path and the far lantern-card cull.
+            bool highTopDown = tier == QualityTier.Yuksek && CameraModeService.Current == CameraMode.TopDown;
+            Shader.SetGlobalFloat(GroundLiteId, highTopDown ? 1f : 0f);
+            DD.Prototype.Feedback.Vfx.LanternFlames.CardCullMetres = highTopDown ? HighTopDownFlameCullMetres : 0f;
+
+            // Experiment only (C-00 10.10): -ddRenderScale <0.5..1> on the command line sets the active asset's render scale.
+            if (s_renderScaleOverride > 0f)
+            {
+                if (!s_originalRenderScales.ContainsKey(asset)) s_originalRenderScales.Add(asset, asset.renderScale);
+                if (!Mathf.Approximately(asset.renderScale, s_renderScaleOverride)) asset.renderScale = s_renderScaleOverride;
+            }
         }
 
         private static void Arm()

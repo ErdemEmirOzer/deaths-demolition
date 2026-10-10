@@ -215,8 +215,18 @@ namespace DD.Prototype.Feedback.Vfx
             _alphaStepTo = Mathf.Clamp01(toAlpha);
         }
 
+        /// <summary>FINAL 10.10 perf: a looping card that no camera renders skips its frame / alpha / facing update (lantern flames).</summary>
+        public bool SkipWhenInvisible;
+
+        /// <summary>FINAL 10.10 perf: hides / shows the card's renderer without despawning it (the lantern High top-down cull).</summary>
+        public void SetHidden(bool hidden)
+        {
+            if (_renderer != null && _renderer.enabled == hidden) _renderer.enabled = !hidden;
+        }
+
         protected override void Tick(float t)
         {
+            if (SkipWhenInvisible && _loop && _renderer != null && !_renderer.isVisible) return;
             if (_growSeconds > 0f && Age <= _growSeconds + 0.05f)
             {
                 float u = Mathf.Clamp01(Age / _growSeconds);
@@ -282,6 +292,8 @@ namespace DD.Prototype.Feedback.Vfx
         protected override void OnDespawned()
         {
             base.OnDespawned();
+            SkipWhenInvisible = false;
+            if (_renderer != null) _renderer.enabled = true;
             _row = null;
         }
     }
