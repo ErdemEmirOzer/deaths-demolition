@@ -13,6 +13,8 @@
 *.shader        text eol=lf
 *.hlsl          text eol=lf
 *.cginc         text eol=lf
+*.compute       text eol=lf
+*.csv           text eol=lf
 *.uxml          text eol=lf
 *.uss           text eol=lf
 

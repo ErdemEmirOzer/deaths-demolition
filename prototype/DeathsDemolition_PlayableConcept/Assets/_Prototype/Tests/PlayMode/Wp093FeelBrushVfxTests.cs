@@ -507,8 +507,8 @@ namespace DD.Prototype.Tests.PlayMode
         public void Warmup_MultiAndShockRejectWrongShaderContract_OrReleaseFallback(int slot)
         {
             Hit(1); FeelEvents.RaiseExplosion(O, 2f, 0, default);
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit")
-                ?? Shader.Find("Unlit/Color") ?? Shader.Find("Hidden/InternalErrorShader");
+            // the project's shader library, not Shader.Find (ShaderLibraryTests: null in a build, a broken material in silence)
+            Shader shader = DD.Prototype.Rendering.PrototypeShaders.Unlit;
             Assert.That(shader, Is.Not.Null, "a real non-AP037 shader is needed for the negative fixture");
             Assert.That(shader, Is.Not.SameAs(_materials[slot].shader));
             Assert.That(shader.isSupported, Is.True, "negative fixture must fail for its shader contract, not platform support");

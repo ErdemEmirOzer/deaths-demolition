@@ -30,7 +30,9 @@ namespace DD.Art.Tests.EditMode
             ".cs", ".asmdef", ".asmref", ".json", ".md", ".txt", ".meta",
             ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc", ".controller", ".mask", ".anim",
             ".lighting",   // WP-029 LightingSettings (YAML text, like .asset); the binary LightingData.asset is covered by its own LFS rule
-            ".overrideController"   // WP-011C: AnimatorOverrideController is YAML text like .controller (S-06 924877cb; .gitattributes already text)
+            ".overrideController",   // WP-011C: AnimatorOverrideController is YAML text like .controller (S-06 924877cb; .gitattributes already text)
+            ".compute",   // R3 (WP-092 TdCoverMsaaReadback): HLSL compute source, text like .shader / .hlsl (.gitattributes text eol=lf)
+            ".csv"   // R3 (AP-033 animation LICENSES.csv): the license register rows are text (.gitattributes text eol=lf)
         };
 
         private static readonly Regex HexSha256 = new Regex("^[0-9a-f]{64}$", RegexOptions.Compiled);

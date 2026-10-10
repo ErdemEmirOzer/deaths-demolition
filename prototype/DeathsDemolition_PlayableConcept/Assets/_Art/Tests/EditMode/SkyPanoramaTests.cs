@@ -50,7 +50,12 @@ namespace DD.Art.Tests.EditMode
             ShaderData data = ShaderUtil.GetShaderData(shader);
             Assert.AreEqual(1, data.SubshaderCount, "tek SubShader");
             Assert.AreEqual(1, data.GetSubshader(0).PassCount, "tek pas");
-            Assert.AreEqual(0, (int)shader.keywordSpace.keywordCount, "anahtar yok: tek varyant");
+            // "No keyword" = none the shader declares: the engine adds its own built-in (XR stereo) keywords to every keyword space
+            // (CI e8fc3f70 counted 4 here with no #pragma multi_compile), as UiFxShaderTests already filters
+            var declared = new List<string>();
+            foreach (LocalKeyword k in shader.keywordSpace.keywords)
+                if (k.type == ShaderKeywordType.UserDefined) declared.Add(k.name);
+            Assert.IsEmpty(declared, "anahtar yok: tek varyant (shader'ın tanımladığı anahtarlar: " + string.Join(", ", declared) + "; uzaydaki hepsi: " + string.Join(", ", shader.keywordSpace.keywordNames) + ")");
 
             // The built-in's properties, one for one: the material's numbers keep their meaning ([Gamma] exposure, sRGB tint).
             Shader builtIn = Shader.Find(BuiltInPanoramic);

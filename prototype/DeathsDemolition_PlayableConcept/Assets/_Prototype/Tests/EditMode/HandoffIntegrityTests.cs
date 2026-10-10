@@ -36,6 +36,11 @@ namespace DD.Prototype.Tests.EditMode
     {
         private const string PrototypeRoot = "Assets/_Prototype";
 
+        /// <summary>R3 (WP-093): the art pipeline's runtime assembly is game code too — the V6 world's bootstrap
+        /// (Ap005WorldBootstrap.BuildNow → VegetationWorldHookup.Ensure) is where VegetationSystem.Ensure is called. Call sites
+        /// are counted there as well; the setup methods themselves are still only looked for under <see cref="PrototypeRoot"/>.</summary>
+        private const string ArtRuntimeRoot = "Assets/_Art/Runtime";
+
         // ============================================================ kaynak yukleme
 
         private static string[] s_cachedFiles;
@@ -57,6 +62,24 @@ namespace DD.Prototype.Tests.EditMode
                 .OrderBy(p => p)
                 .ToArray();
             return s_cachedFiles;
+        }
+
+        private static string[] s_cachedCallFiles;
+
+        /// <summary>Where a call counts: <see cref="KaynakDosyalar"/> plus the art runtime (game code, no tests, no editor).</summary>
+        private static string[] CagriKaynaklari()
+        {
+            if (s_cachedCallFiles != null)
+            {
+                return s_cachedCallFiles;
+            }
+
+            s_cachedCallFiles = KaynakDosyalar()
+                .Concat(Directory.GetFiles(ArtRuntimeRoot, "*.cs", SearchOption.AllDirectories)
+                    .Where(p => !p.Replace('\\', '/').Contains("/Tests/") && !p.Replace('\\', '/').Contains("/Editor/"))
+                    .OrderBy(p => p))
+                .ToArray();
+            return s_cachedCallFiles;
         }
 
         private static string Raw(string path)
@@ -287,7 +310,7 @@ namespace DD.Prototype.Tests.EditMode
                 : new Regex(@"(?<!\w)" + Regex.Escape(k.Tip) + @"\s*\.\s*" + Regex.Escape(k.Ad) + @"\s*\(");
             var niteliksiz = new Regex(@"(?<![\w.])" + Regex.Escape(k.Ad) + @"\s*\(");
 
-            foreach (string p in KaynakDosyalar())
+            foreach (string p in CagriKaynaklari())
             {
                 string code = CagriKodu(p);
 
