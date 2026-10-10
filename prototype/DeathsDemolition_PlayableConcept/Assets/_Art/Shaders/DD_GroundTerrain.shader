@@ -49,6 +49,8 @@ Shader "DD/GroundTerrain"
         // w5 (w4 frames: ground median 94–109°, yet 16 % of the bare moss pixels in the yellow-brown band): red ≤ 0.45 × green (linear,
         // ≈ sRGB 0.70), saturation 0.72 → 0.65; value × 1.2 (C-00 10.10, S-06 AD N2: the dark hero costume — linear Y ≈ 0.009 —
         // melts into a shaded moss ring ≈ 0.03; solved on the ground side): cushion 4.0 → 4.8, patch 1.9 → 2.28.
+        // w7 (td3, the bamboo path edges: yellow-brown 26 %, gold 4.4 %, visible soil 33 %): leaf cover 0.30 → 0.18, bamboo litter
+        // (0.20, 0.17, 0.10) → (0.15, 0.15, 0.11), off the yellow band.
         [Header(Grade (linear))]
         _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.8
         _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 2.28
@@ -70,7 +72,7 @@ Shader "DD/GroundTerrain"
         _LitterFresh("Litter momiji (LOOK-BIBLE #6E4632, linear)", Vector) = (0.155, 0.061, 0.031, 1)
         _LitterDry("Litter momiji dry (#86603E, linear)", Vector) = (0.238, 0.117, 0.048, 1)
         _LitterOld("Litter old (cooled, AD v1.2: was #6A5A44; linear)", Vector) = (0.102, 0.090, 0.072, 1)
-        _LitterBamboo("Litter bamboo (dry culm leaf, linear)", Vector) = (0.20, 0.17, 0.10, 1)
+        _LitterBamboo("Litter bamboo (dry culm leaf, linear; w7: off the yellow band)", Vector) = (0.15, 0.15, 0.11, 1)
 
         [Header(Fields)]
         _ToneScale("Tone field (m)", Range(4, 40)) = 11.0
@@ -79,7 +81,7 @@ Shader "DD/GroundTerrain"
         _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.30
         _HeightBlend("Height-blend strength", Range(0, 2)) = 0.9
         _LeafScale("Leaf cell (m; a leaf ≈ 0.85 × 0.5 of it)", Range(0.03, 0.4)) = 0.09
-        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.30
+        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.18
         _LeafMute("Leaf colour mute (toward its own luma)", Range(0, 1)) = 0.5
 
         [Header(Relief)]

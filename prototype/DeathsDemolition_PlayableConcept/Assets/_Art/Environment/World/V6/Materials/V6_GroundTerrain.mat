@@ -89,7 +89,7 @@ Material:
     - _GravelValue: 0.5
     - _HeightBlend: 0.9
     - _HollowAO: 0.18
-    - _LeafCover: 0.3
+    - _LeafCover: 0.18
     - _LeafMute: 0.5
     - _LeafScale: 0.09
     - _MaskTexel: 0.08300781
@@ -124,7 +124,7 @@ Material:
     m_Colors:
     - _DirtTint: {r: 0.9, g: 0.92, b: 0.95, a: 1}
     - _GravelTint: {r: 0.95, g: 1, b: 1.06, a: 1}
-    - _LitterBamboo: {r: 0.2, g: 0.17, b: 0.1, a: 1}
+    - _LitterBamboo: {r: 0.15, g: 0.15, b: 0.11, a: 1}
     - _LitterDry: {r: 0.238, g: 0.117, b: 0.048, a: 1}
     - _LitterFresh: {r: 0.155, g: 0.061, b: 0.031, a: 1}
     - _LitterOld: {r: 0.102, g: 0.09, b: 0.072, a: 1}

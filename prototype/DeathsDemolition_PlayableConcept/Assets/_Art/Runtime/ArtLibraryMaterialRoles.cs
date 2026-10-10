@@ -130,6 +130,11 @@ namespace DD.Art
         public const float CanopyHueShift = 5f;
         /// <summary>WP-092 R3 · Canopy saturation (AD 1.10): measured CIELAB chroma +9 % pine, +13 % bamboo (with the hue), +10 % groundcover.</summary>
         public const float CanopySaturation = 1.10f;
+        /// <summary>
+        /// w7 (S-05 10.10, the TD frames): the black pine crowns are the cover's most saturated pixels and still olive — td6's top 5 %
+        /// read hue 73° at s ≥ 0.62 (K2 P95 ≤ 0.50) under the (1.45, 1.40, 0.35) tint; +14° and × 0.95 for the pine only.
+        /// </summary>
+        public const float PineHueShift = 14f, PineSaturation = 0.95f;
         /// <summary>WP-092 R3 · Sakura crown saturation (AD 1.15): measured chroma +10 %; the pinks keep their hue (≈ 336–348°), the blood band stays as authored.</summary>
         public const float SakuraSaturation = 1.15f;
 
@@ -358,7 +363,8 @@ namespace DD.Art
                 // WP-092 R3 (AD) · black pine / bamboo crowns and the groundcover: a little toward blue-green, a little more vivid.
                 // Measured (atlas × tint, display HSV of the mean): pine 78.6° s 0.77 → 82.7° s 0.84 (CIELAB C* 32.8 → 35.9); bamboo
                 // 103.9° s 0.51 → 110.4° s 0.55 (C* 44.4 → 50.3); groundcover 93.6° s 0.33 → 99.2° s 0.35 (C* 23.9 → 26.3).
-                if (atlas == "bamboo_leaves" || atlas == "pine_needles" || atlas == "groundcover") { spec.HueShift = CanopyHueShift; spec.Saturation = CanopySaturation; }
+                if (atlas == "bamboo_leaves" || atlas == "groundcover") { spec.HueShift = CanopyHueShift; spec.Saturation = CanopySaturation; }
+                if (atlas == "pine_needles") { spec.HueShift = PineHueShift; spec.Saturation = PineSaturation; }   // w7
                 // Sakura sprigs × 1.15: C* 24.0 → 26.4, hue 348.0° → 347.7°; the 355–5° texels are not boosted (warm arc).
                 if (atlas == "sakura_sprigs") spec.Saturation = SakuraSaturation;
                 // Satsuki (AD): leaves × 1.10; the pale flowers (sRGB ≈ #DEC1D2, s 0.11, 4.3 % of the covered texels) recoloured to the AD's
@@ -378,7 +384,7 @@ namespace DD.Art
 
             // AP-023 v008 · the sugi LOD0 crown pads (AP023_M_pine_needles_pad_v001): the pine_needles atlas, front faces only.
             // WP-092 R3: graded like the pine_needles role it shares the atlas with.
-            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(1.45f, 1.40f, 0.35f, 1f), SingleSided = true, HueShift = CanopyHueShift, Saturation = CanopySaturation });
+            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(1.45f, 1.40f, 0.35f, 1f), SingleSided = true, HueShift = PineHueShift, Saturation = PineSaturation });
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
             rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });

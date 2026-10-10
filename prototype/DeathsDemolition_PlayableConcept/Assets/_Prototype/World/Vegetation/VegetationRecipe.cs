@@ -474,7 +474,7 @@ namespace DD.Prototype.World.Vegetation
                 Z(VegetationZone.Lawn,             13f,  1.5f, 0f,   0.1f, 0.2f, 0.4f,  0f, 0f, 0f,   0f),
                 Z(VegetationZone.Grove,            5f,   0f,   0f,   0.25f,0.4f, 0.6f,  0f, 0f, 0f,   0f, 0.8f),
                 Z(VegetationZone.GroveSkirt,       8f,   1.5f, 0f,   0f,   0f,   0f,    0f, 0f, 0f,   0f),
-                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.8f, 0f,   1.2f,  0f, 0f, 2.4f, 12f),
+                Z(VegetationZone.Bamboo,           0f,   0.2f, 0f,   0.8f, 0f,   1.6f,  0f, 0f, 2.4f, 4f),   // w7: litter 12 → 4, moss 1.2 → 1.6 (td3 K1 / K3 / K7)
                 Z(VegetationZone.BambooEdge,       0f,   0f,   0f,   0f,   0f,   0f,    0f, 0f, 1.2f, 0f, 1f, 0.6f),
                 Z(VegetationZone.BambooPathSide,   3f,   0f,   0f,   0f,   0f,   0.4f,  0f, 0f, 0f,   0f, 0.7f),
                 Z(VegetationZone.PondShore,        0f,   1.0f, 0f,   0.3f, 0f,   0f,    0f, 0f, 0f,   0f),
