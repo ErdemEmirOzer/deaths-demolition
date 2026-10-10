@@ -171,6 +171,7 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator Kalabalik40_Zincirler_SifirAyirma_ButceSure()
         {
             yield return MainMenu();
+            SecondaryChainDriver.CrowdLodForce = 0;   // WP-082 R3: this budget reads every body every frame (the crowd LOD has its own test)
             var visuals = new List<ZombieSkinnedVisual>();
             for (int i = 0; i < 40; i++) visuals.Add(ZombieOnStage(new Vector3((i % 8) * 1.5f, 0f, (i / 8) * 1.5f), (uint)(20 + i)));
             int served = 0;
@@ -228,6 +229,102 @@ namespace DD.Art.Tests.PlayMode
             Assert.GreaterOrEqual(positiveBytes, 64 * 1024, "pozitif kontrol: 64 KB görülmedi");
             // A per-step allocation would add ≥ bodySteps (2000) to the stepping frame; the gate leaves room only for frame noise.
             Assert.LessOrEqual(stepMin - controlMax, 20, "zincir adımı ayırıyor: " + bodySteps + " gövde adımında +" + (stepMin - controlMax));
+        }
+
+        /// <summary>
+        /// WP-082 R3 perf (C-00 11.10) · the crowd LOD: Yüksek + TopDown only; ranked from the eye, the nearest 12 bodies step every
+        /// frame, the next 16 every 2nd, the rest every 4th — per body exactly that cadence, fewer steps a frame than the 40 without it,
+        /// and the chains still inside the contract's angle limit (the carried time does not fling them).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Kalabalik40_KalabalikLod_YakinTamHiz_UzakSeyrek_SabitMaliyet()
+        {
+            Assert.IsTrue(SecondaryChainDriver.CrowdLodApplies(QualityTier.Yuksek, DD.Prototype.CameraSystem.CameraMode.TopDown), "Yüksek + TD");
+            Assert.IsFalse(SecondaryChainDriver.CrowdLodApplies(QualityTier.Sinematik, DD.Prototype.CameraSystem.CameraMode.TopDown), "Sinematik aynı kalır");
+            Assert.IsFalse(SecondaryChainDriver.CrowdLodApplies(QualityTier.Performans, DD.Prototype.CameraSystem.CameraMode.TopDown), "Performans aynı kalır");
+            Assert.IsFalse(SecondaryChainDriver.CrowdLodApplies(QualityTier.Yuksek, DD.Prototype.CameraSystem.CameraMode.ThirdPerson), "TP aynı kalır");
+            Assert.IsFalse(SecondaryChainDriver.CrowdLodApplies(QualityTier.Yuksek, DD.Prototype.CameraSystem.CameraMode.FirstPerson), "FP aynı kalır");
+
+            yield return MainMenu();
+            // far from the menu scene so only these 40 rank first; the eye sits off the grid's diagonal (no equal distances)
+            Vector3 o = new Vector3(500f, 0f, 500f);
+            var visuals = new List<ZombieSkinnedVisual>();
+            for (int i = 0; i < 40; i++) visuals.Add(ZombieOnStage(o + new Vector3((i % 8) * 1.5f, 0f, (i / 8) * 1.5f), (uint)(60 + i)));
+            var eye = new GameObject("WP082_LodEye");
+            _temp.Add(eye);
+            eye.transform.position = o + new Vector3(-6.3f, 14f, -2.1f);
+            SecondaryChainDriver.LodEyeOverride = eye.transform;
+            var drivers = new SecondaryChainDriver[visuals.Count];
+            for (int i = 0; i < visuals.Count; i++) drivers[i] = visuals[i].Chains;
+            Assert.GreaterOrEqual(SecondaryChainDriver.CrowdCount, 40, "kalabalık gövdeleri LOD sırasına kayıtlı değil");
+
+            // the expected rank / cadence by the driver's own rule (same positions, same arithmetic; no equal distances here)
+            var d2 = new float[drivers.Length];
+            for (int i = 0; i < drivers.Length; i++) d2[i] = (drivers[i].transform.position - eye.transform.position).sqrMagnitude;
+            var rank = new int[drivers.Length];
+            for (int i = 0; i < drivers.Length; i++) for (int k = 0; k < drivers.Length; k++) if (d2[k] < d2[i]) rank[i]++;
+            var stride = new int[drivers.Length];
+            for (int i = 0; i < drivers.Length; i++)
+                stride[i] = rank[i] < SecondaryChainDriver.LodFullBodies ? 1 : rank[i] < SecondaryChainDriver.LodFullBodies + SecondaryChainDriver.LodHalfBodies ? 2 : 4;
+
+            const int Warm = 8, Frames = 32;
+            double microsOff = 0, microsOn = 0;
+            SecondaryChainDriver.CrowdLodForce = 0;
+            int offMin = int.MaxValue;
+            for (int f = 0; f < Warm + Frames; f++)
+            {
+                for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 8 + i) % 2), Time.deltaTime);
+                yield return null;
+                if (f < Warm) continue;
+                int n = 0;
+                for (int i = 0; i < drivers.Length; i++) if (drivers[i].ServedLastFrame) n++;
+                offMin = Mathf.Min(offMin, n);
+                microsOff += SecondaryChainDriver.MicrosLastCompletedFrame;
+            }
+
+            Assert.AreEqual(40, offMin, "LOD kapalıyken her gövde her kare");
+            SecondaryChainDriver.CrowdLodForce = 1;
+            var steps = new int[drivers.Length];
+            int perMin = int.MaxValue, perMax = 0, perSum = 0;
+            for (int f = 0; f < Warm + Frames; f++)
+            {
+                for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 8 + i) % 2), Time.deltaTime);
+                yield return null;
+                if (f < Warm) continue;
+                int n = 0;
+                for (int i = 0; i < drivers.Length; i++) if (drivers[i].ServedLastFrame) { steps[i]++; n++; }
+                perMin = Mathf.Min(perMin, n); perMax = Mathf.Max(perMax, n); perSum += n;
+                microsOn += SecondaryChainDriver.MicrosLastCompletedFrame;
+            }
+
+            SecondaryChainDriver.CrowdLodForce = -1;
+            var wrong = new List<string>();
+            int[] tierCount = new int[5];
+            for (int i = 0; i < drivers.Length; i++)
+            {
+                tierCount[stride[i]]++;
+                if (steps[i] != Frames / stride[i] || drivers[i].LodRank != rank[i]) wrong.Add(i + ":r" + rank[i] + "/" + drivers[i].LodRank + ":" + stride[i] + "→" + steps[i]);
+                for (int c = 0; c < drivers[i].Chains.Length; c++)
+                {
+                    Vector3[] p = drivers[i].Particles(c);
+                    if (p == null) continue;
+                    foreach (Vector3 q in p) Assert.IsFalse(float.IsNaN(q.x) || float.IsInfinity(q.x), "zincir parçacığı sonlu değil");
+                    Assert.LessOrEqual(drivers[i].MaxAngleFromRest(c), drivers[i].Chains[c].maxAngleDegrees + 0.5f, drivers[i].Chains[c].name + " açı klampı (seyrek adım)");
+                }
+            }
+
+            float perMean = perSum / (float)Frames;
+            Debug.Log("[DD-TEST] wp082.chainlod tiers full/half/quarter=" + tierCount[1] + "/" + tierCount[2] + "/" + tierCount[4]
+                      + " stepsPerFrame mean=" + perMean.ToString("F1", CultureInfo.InvariantCulture) + " min=" + perMin + " max=" + perMax
+                      + " micros/frame off=" + (microsOff / Frames).ToString("F0", CultureInfo.InvariantCulture) + " on=" + (microsOn / Frames).ToString("F0", CultureInfo.InvariantCulture)
+                      + " wrong=" + wrong.Count);
+            Assert.AreEqual(SecondaryChainDriver.LodFullBodies, tierCount[1], "tam hız gövde sayısı");
+            Assert.AreEqual(SecondaryChainDriver.LodHalfBodies, tierCount[2], "yarım hız gövde sayısı");
+            Assert.IsEmpty(wrong, "gövde sırası / kadansı (i:r beklenen/gerçek:adım→sayılan): " + string.Join(" ", wrong));
+            // 12 + 16/2 + 12/4 = 23 every frame: the rank is the phase, so the count does not swing
+            Assert.AreEqual(23, perMin, "kare başı adım (en az)");
+            Assert.AreEqual(23, perMax, "kare başı adım (en çok)");
         }
     }
 }

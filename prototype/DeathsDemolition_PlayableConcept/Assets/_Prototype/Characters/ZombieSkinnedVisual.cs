@@ -405,9 +405,10 @@ namespace DD.Prototype.Characters
             if (_lookAt == null) _lookAt = _animator.GetComponent<CharacterLookAt>();
             if (_footIk == null) _footIk = _animator.GetComponent<FootIkAdapter>();
             if (_lod == null) _lod = GetComponent<CharacterAnimatorLod>();
-            // WP-032F: the secondary chains (mino / hair / ties) run on LOD0/1 bodies only, after the Animator; the pool reset restarts them
+            // WP-032F: the secondary chains (mino / hair / ties) run on LOD0/1 bodies only, after the Animator; the pool reset restarts them.
+            // WP-082 R3 perf: a crowd body — on Yüksek + TD the driver's crowd LOD slows the ones far from the camera.
             if (_chains == null) _chains = _animator.GetComponent<SecondaryChainDriver>();
-            if (_chains != null) _chains.Bind(() => _authored && (_lod == null || !_lod.Far));
+            if (_chains != null) _chains.Bind(() => _authored && (_lod == null || !_lod.Far), true);
             _telegraphLayer = -1;
             for (int i = 0; i < _animator.layerCount; i++)
             {
