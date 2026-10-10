@@ -242,6 +242,17 @@ namespace DD.Prototype.Navigation
             return null;
         }
 
+        /// <summary>
+        /// WP-096 R3 (5b4118c5; gt S2 EditMode test): the Bridge mouth that meters THIS body's crossing — none when its goal stands on the
+        /// deck itself (the AlternativeAhead rule's "deck is the destination"): that body walks on to it under the ordinary WP-030 queue
+        /// (son10b V6 Waterfall: bodies held still at both mouths with the target on the C8 deck).
+        /// </summary>
+        public NavRegionVolume FindBridgeMouth(Vector3 position, Vector3 nextCorner, Vector3 goal)
+        {
+            NavRegionVolume bridge = FindBridgeMouth(position, nextCorner);
+            return bridge != null && bridge.Contains(goal) ? null : bridge;
+        }
+
         /// <summary>Only a Bridge mouth on the next segment; a corner beyond the deck is supported.</summary>
         public NavRegionVolume FindBridgeMouth(Vector3 position, Vector3 nextCorner)
         {

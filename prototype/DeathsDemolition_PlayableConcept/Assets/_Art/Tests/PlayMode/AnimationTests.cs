@@ -268,6 +268,72 @@ namespace DD.Art.Tests.PlayMode
             Assert.Greater(stagger, 0, "kırılmada armorbreak_head klibi oynamadı");
         }
 
+        // ============================================================================ WP-096 R3: p3 near the player
+
+        /// <summary>
+        /// WP-096 R3 (REQ-046 0841b7dd; gt S1 / S2): a body engaging its target (≤ AttackRange × 1.6) plays no p3 start / stop / turn
+        /// through a whole swing — Recovery → walk is the edge that opened the live wall — while a far body sets off with one (control).
+        /// A Runner engaging the player still plays the stumble_recover reaction to its end: the clip AND its authored attach-out to the
+        /// gait, with no CancelTransition (gt S1: the clip name alone let the attach-out be cut). The tree stagger holds the Runner's
+        /// swing for the whole reaction, so the motor's only reason to cancel is the engaging rule.
+        /// </summary>
+        [Category("WP096")]
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator P3_MesgulGovdeBaslaDurDonOynamaz_UzakOynar_StumbleRecoverAttachOutKesilmez()
+        {
+            yield return RunAP005();
+            Vector3 p = PlayerRegistry.Primary.transform.position;
+            ZombieEnemy far = Spawn(EnemyTier.Standard, p + new Vector3(0f, 0f, 14f), Vector3.back);
+            ZombieEnemy near = Spawn(EnemyTier.Standard, p + new Vector3(1.4f, 0f, 0f), Vector3.left);
+            float engageNear = near.Stats.AttackRange * 1.6f;
+            int nearStarts0 = near.Skinned.TransitionStarts, farStarts0 = far.Skinned.TransitionStarts;
+            bool recovery = false, recoveryEnded = false;
+            float maxNear = 0f, t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 6f && !(recoveryEnded && far.Skinned.TransitionStarts > farStarts0))
+            {
+                maxNear = Mathf.Max(maxNear, Flat(near.transform.position, p));
+                if (near.AttackPhase == ZombieAttackPhase.Recovery) recovery = true;
+                else if (recovery) recoveryEnded = true;
+                yield return null;
+            }
+
+            // the edge after the swing: a few more frames for a start the motor would have begun
+            for (int i = 0; i < 20; i++) { maxNear = Mathf.Max(maxNear, Flat(near.transform.position, p)); yield return null; }
+            Debug.Log("[DD-TEST] wp096.p3.engage nearStarts=" + (near.Skinned.TransitionStarts - nearStarts0) + " farStarts=" + (far.Skinned.TransitionStarts - farStarts0)
+                      + " recoveryEnded=" + recoveryEnded + " maxNear=" + maxNear.ToString("F2", CultureInfo.InvariantCulture) + " engage=" + engageNear.ToString("F2", CultureInfo.InvariantCulture));
+            Assert.IsTrue(recoveryEnded, "yakın gövde 6 s içinde bir saldırıyı (Recovery → yürüyüş) bitirmedi — ölçülen kenar yok");
+            Assert.LessOrEqual(maxNear, engageNear, "yakın gövde meşgul bandından çıktı — ölçüm meşgul durumu değil");
+            Assert.AreEqual(0, near.Skinned.TransitionStarts - nearStarts0, "meşgul gövde p3 başla/dur/dön oynadı (REQ-046)");
+            Assert.Greater(far.Skinned.TransitionStarts - farStarts0, 0, "uzak gövde p3 kalkışıyla yola çıkmadı (kontrol)");
+
+            // the Runner's stumble_recover while engaging: clip + attach-out, never cancelled
+            ZombieEnemy runner = Spawn(EnemyTier.Special, p + new Vector3(-1.4f, 0f, 0f), Vector3.right);
+            float engageRunner = runner.Stats.AttackRange * 1.6f;
+            yield return null; yield return null;
+            int cancels0 = runner.Skinned.TransitionCancels, done0 = runner.Skinned.TransitionCompletions;
+            Assert.IsTrue(runner.ApplyTreeStagger(3f, Vector3.left), "tree stagger reddedildi");
+            yield return null;
+            Assert.IsTrue(runner.Skinned.StumbleRecoverActive && runner.Skinned.TransitionClip == "AP033_zombie_stumble_recover", "p3 stumble_recover başlamadı: " + runner.Skinned.TransitionClip);
+            bool attach = false; float maxRunner = 0f; t0 = Time.realtimeSinceStartup;
+            while (runner.Skinned.StumbleRecoverActive && Time.realtimeSinceStartup - t0 < 4f)
+            {
+                attach |= !runner.Skinned.TransitionActive;
+                maxRunner = Mathf.Max(maxRunner, Flat(runner.transform.position, p));
+                yield return null;
+            }
+
+            Debug.Log("[DD-TEST] wp096.p3.stumbleEngaged completions+" + (runner.Skinned.TransitionCompletions - done0) + " cancels+" + (runner.Skinned.TransitionCancels - cancels0)
+                      + " attachSeen=" + attach + " maxDist=" + maxRunner.ToString("F2", CultureInfo.InvariantCulture) + " engage=" + engageRunner.ToString("F2", CultureInfo.InvariantCulture));
+            Assert.IsFalse(runner.Skinned.StumbleRecoverActive, "stumble_recover 4 s içinde bitmedi");
+            Assert.LessOrEqual(maxRunner, engageRunner, "Runner meşgul bandından çıktı — ölçüm meşgul durumu değil");
+            Assert.AreEqual(1, runner.Skinned.TransitionCompletions - done0, "stumble_recover klibi sonuna kadar oynamadı");
+            Assert.IsTrue(attach, "attach-out penceresi görülmedi");
+            Assert.AreEqual(0, runner.Skinned.TransitionCancels - cancels0, "meşgulken stumble_recover ya da attach-out'u kesildi (gt S1)");
+        }
+
+        private static float Flat(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
+
         // ============================================================================ ölüm ×4
 
         [Category("WP018")]

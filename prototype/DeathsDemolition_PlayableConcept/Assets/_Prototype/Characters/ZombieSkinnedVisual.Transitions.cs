@@ -8,7 +8,7 @@ namespace DD.Prototype.Characters
         private static readonly int TransitionRateId = Animator.StringToHash(ZombieTransitionData.RateParameter);
         private static readonly int[] TransitionStates = MakeTransitionHashes(false), TransitionRightStates = MakeTransitionHashes(true);
         private CharacterAnimationSet.Entry _transitionEntry;
-        private int _transitionId = -1;
+        private int _transitionId = -1, _attachFromId = -1;
         private bool _transitionMirror, _intentMoving;
         private float _transitionFrame, _transitionRate = 1f, _transitionScale = 1f, _transitionYaw, _transitionCooldown, _attachRemaining;
         private Quaternion _transitionBasis;
@@ -19,6 +19,15 @@ namespace DD.Prototype.Characters
         public float TransitionYawDegrees => _transitionYaw;
         public int TransitionStarts { get; private set; }
         public int TransitionCompletions { get; private set; }
+        /// <summary>WP-096 R3 (gt S1): p3 transitions or attach-outs dropped before their end (CancelTransition on an active one). Readout / tests.</summary>
+        public int TransitionCancels { get; private set; }
+        /// <summary>
+        /// WP-096 R3 (gt S1): the stumble_recover reaction is playing — its clip OR its authored attach-out crossfade back to the gait.
+        /// ZombieEnemy keeps the transition motor allowed for both while the body engages its target; testing the clip name alone let
+        /// the attach-out be cut by CancelTransition's 0.1 s Locomotion crossfade the frame the clip ended.
+        /// </summary>
+        public bool StumbleRecoverActive => (_transitionEntry != null && _transitionId == StumbleRecoverId) || (_attachRemaining > 0f && _attachFromId == StumbleRecoverId);
+        private const int StumbleRecoverId = 9;   // ZombieTransitionData.Clips[9] = stumble_recover
         public float LastAttachOutPhase { get; private set; }
 
         private static int[] MakeTransitionHashes(bool right)
@@ -38,7 +47,7 @@ namespace DD.Prototype.Characters
             CancelTransition(false);
             for (int i = 0; i < _transitionEntries.Length; i++) _transitionEntries[i] = _animation.Find(ZombieTransitionData.Clips[i]);
             _intentMoving = false; _transitionCooldown = 0f; _attachRemaining = 0f;
-            TransitionStarts = 0; TransitionCompletions = 0; LastAttachOutPhase = 0f;
+            TransitionStarts = 0; TransitionCompletions = 0; TransitionCancels = 0; LastAttachOutPhase = 0f; _attachFromId = -1;
         }
         private bool BeginTransition(int id, bool mirror, float speed, Quaternion basis)
         {
@@ -130,6 +139,7 @@ namespace DD.Prototype.Characters
             float blend = (_transitionEntry.frames - 1 - data.blendOutStart) / (30f * _transitionRate);
             _animator.CrossFadeInFixedTime(CharacterAnimatorContract.LocomotionState, blend, 0,
                 data.attachOutPhase * Mathf.Max(0.01f, _animation.Find(CharacterAnimatorContract.ZombieGaitClips[attach]).seconds));
+            _attachFromId = _transitionId;
             _transitionEntry = null; _transitionId = -1; _transitionMirror = false;
             _attachRemaining = blend; _transitionCooldown = blend + 0.25f;
             ReleaseTransitionFeet();
@@ -152,9 +162,10 @@ namespace DD.Prototype.Characters
         private bool CancelTransition(bool returnToLocomotion)
         {
             bool active = _transitionEntry != null || _attachRemaining > 0f;
-            _transitionEntry = null; _transitionId = -1; _transitionMirror = false; _attachRemaining = 0f;
+            _transitionEntry = null; _transitionId = -1; _transitionMirror = false; _attachRemaining = 0f; _attachFromId = -1;
             if (_events != null) _events.ZombieTransitionMirrorState = 0;
             if (!active) return false;
+            TransitionCancels++;
             ReleaseTransitionFeet(); RefreshGaitClip();
             _animator.SetFloat(GaitId, _gait);
             _transitionCooldown = 0.25f;

@@ -316,6 +316,22 @@ namespace DD.Prototype.Tests.EditMode
             public Vector3 Beyond => Volume.center + Vector3.right * 4f;
         }
 
+        /// <summary>WP-096 R3 (5b4118c5, gt S2): a body whose goal stands on the deck is not held at the mouth — it walks on to the deck
+        /// under the ordinary WP-030 queue; a goal beyond the deck keeps the bridge v4 mouth hold.</summary>
+        [Test]
+        public void BridgeV4_GoalOnDeck_NoMouthHold_GoalBeyondDeck_Holds()
+        {
+            using (var f = new BridgeV4Fixture())
+            {
+                Vector3 farShore = f.Beyond + Vector3.right * 6f;
+                Assert.IsFalse(f.Volume.Contains(farShore));
+                Assert.AreSame(f.Volume, f.Profile.FindBridgeMouth(f.From, f.Beyond, farShore), "goal beyond the deck: the mouth meters the crossing");
+                Assert.IsTrue(f.Volume.Contains(f.Volume.center));
+                Assert.IsNull(f.Profile.FindBridgeMouth(f.From, f.Beyond, f.Volume.center), "goal on the deck: no mouth hold (WP-096 R3, V6 Waterfall)");
+                Assert.AreSame(f.Volume, f.Profile.FindBridgeMouth(f.From, f.Beyond), "the goal-free query is unchanged");
+            }
+        }
+
         [Test]
         public void BridgeV4_Mouth_CornerBeyondDeck_OrdinaryKindsExcluded()
         {

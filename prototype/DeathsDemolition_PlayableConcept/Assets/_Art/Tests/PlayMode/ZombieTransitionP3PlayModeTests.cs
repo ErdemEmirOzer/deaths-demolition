@@ -34,6 +34,39 @@ namespace DD.Art.Tests.PlayMode
         [TearDown]
         public void TearDown() { if (_body != null) Object.DestroyImmediate(_body); }
 
+        /// <summary>
+        /// WP-096 R3 fix2 (gt S2): an armour break, a heavy stagger and a stumble without the p3 stumble_recover (the fallback) each cut
+        /// a p3 start in mid-crossfade at once — the p3 move ends, the reaction's own crossfade replaces its trigger (one ReactionCuts),
+        /// and the base layer is in (or blending into) the reaction state within two frames. The death cut is Olum_DortKlip's.
+        /// </summary>
+        [Test]
+        public void P3_HeavyReactionsCutAStart_ArmorBreakStaggerStumbleFallback()
+        {
+            FieldInfo entriesField = typeof(ZombieSkinnedVisual).GetField("_transitionEntries", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(entriesField);
+            string[] states = { CharacterAnimatorContract.ArmorBreakState + "_0", CharacterAnimatorContract.StaggerState, CharacterAnimatorContract.StumbleState };
+            for (int k = 0; k < states.Length; k++)
+            {
+                _body.transform.rotation = Quaternion.identity;
+                _visual.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
+                if (k == 2) ((CharacterAnimationSet.Entry[])entriesField.GetValue(_visual))[9] = null;   // a set without the p3 stumble_recover
+                Assert.IsTrue((bool)Begin.Invoke(_visual, new object[] { 0, false, 2.7f, Quaternion.identity }), "start_walk");
+                for (int i = 0; i < 4; i++) { _visual.StepTransition(Vector3.forward, 2.7f, 2.7f, true, Dt, out _, out _); _animator.Update(Dt); }
+                Assert.IsTrue(_visual.TransitionActive && _animator.IsInTransition(0), states[k] + ": start_walk crossfade in progress");
+                int cuts = ZombieSkinnedVisual.ReactionCuts;
+                if (k == 0) _visual.PlayArmorBreak(0);
+                else if (k == 1) _visual.PlayHeavyStagger();
+                else _visual.PlayStumble();
+                _animator.Update(Dt); _animator.Update(Dt);
+                bool inState = _animator.GetCurrentAnimatorStateInfo(0).IsName(states[k])
+                               || (_animator.IsInTransition(0) && _animator.GetNextAnimatorStateInfo(0).IsName(states[k]));
+                Debug.Log("[DD-TEST] wp096.p3.cut " + states[k] + " cuts+" + (ZombieSkinnedVisual.ReactionCuts - cuts) + " active=" + _visual.TransitionActive + " inState=" + inState);
+                Assert.AreEqual(cuts + 1, ZombieSkinnedVisual.ReactionCuts, states[k] + ": one cut");
+                Assert.IsFalse(_visual.TransitionActive, states[k] + ": the p3 start ended");
+                Assert.IsTrue(inState, states[k] + " within two frames of the reaction");
+            }
+        }
+
         [Test]
         public void P3_EveryClip_RealAnimator_MotorYaw_AttachOut_AndMirror()
         {

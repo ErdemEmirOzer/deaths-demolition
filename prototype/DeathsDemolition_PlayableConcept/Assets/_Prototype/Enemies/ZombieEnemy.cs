@@ -1078,8 +1078,9 @@ namespace DD.Prototype.Enemies
             // stop / turn — the start_walk after a swing's Recovery drove the own velocity to the clip's ~0 opening for ~0.3 s, the
             // crowd layer pushed the front line out and aside, and the live wall let the player through (1.24 m, R2 0.60 m). Close
             // pressure stays on the WP-003 path, as v4's facing rule already leaves it (FacingRuleMinDistance); the stumble_recover
-            // reaction still plays.
-            bool stumbleRecover = _skinned != null && _skinned.TransitionClip == ZombieTransitionData.Clips[9];
+            // reaction still plays — its clip and its attach-out crossfade back to the gait (gt S1: the clip name alone let the attach-out
+            // be cut the frame the clip ended).
+            bool stumbleRecover = _skinned != null && _skinned.StumbleRecoverActive;
             bool engagingTarget = distance <= _attack.Range * WaitEngageRangeFactor;
             bool transitionMotor = _skinned != null && _skinned.StepTransition(walkHeading, walkSpeed, _groundForward,
                 (canWalk || stumbleRecover) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds && (!engagingTarget || stumbleRecover),

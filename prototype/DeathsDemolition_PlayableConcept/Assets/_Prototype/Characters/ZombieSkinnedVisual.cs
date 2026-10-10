@@ -836,7 +836,8 @@ namespace DD.Prototype.Characters
             return true;
         }
 
-        /// <summary>WP-096 R3: reactions that cut a base-layer blend (readout for the tests).</summary>
+        /// <summary>WP-096 R3: reactions that cut a base-layer blend — process-wide, never reset; tests read the change across one call
+        /// (ZombieTransitionP3PlayModeTests.P3_HeavyReactionsCutAStart).</summary>
         public static int ReactionCuts { get; private set; }
 
         private static int[] DeathStateHashes(int n)
@@ -1514,8 +1515,11 @@ namespace DD.Prototype.Characters
             _windowOpen = false;
             _animator.ResetTrigger(AttackId);
             if (BeginTransition(9, false, _topSpeed, transform.rotation)) return;   // the p3 stumble_recover is its own crossfade
+            // WP-096 R3 fix2 (gt S2 test): no p3 stumble_recover — the start / stop / turn in progress ends here as well; left running
+            // its motor kept stepping and its completion crossfaded the stumbling body back to Locomotion
+            bool cut = CancelTransition(false);
             _animator.SetTrigger(StumbleId);
-            CutTransitionInto(false, s_stumbleState, StumbleId, StumbleCutBlendSeconds);   // WP-096 R3: no p3 clip — still cut a base-layer blend
+            CutTransitionInto(cut, s_stumbleState, StumbleId, StumbleCutBlendSeconds);   // WP-096 R3: cut the p3 move or a base-layer blend
         }
 
         /// <summary>WP-032C: armour break by region — the full-body armorbreak_<region> clip; held like the heavy stagger until its end (0.6 s clip).</summary>
