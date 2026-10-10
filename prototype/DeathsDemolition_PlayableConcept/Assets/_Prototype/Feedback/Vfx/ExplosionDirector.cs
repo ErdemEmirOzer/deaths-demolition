@@ -45,6 +45,10 @@ namespace DD.Prototype.Feedback.Vfx
         public const float FireballSize = 3.6f;
         public const float FireballSeconds = 1.6f;
         public const float FireballLightScale = .65f;
+        /// <summary>AD 10.10 M1 (TD blast readability): from the top-down camera a Full rocket's fireball at the layered size peaked
+        /// at ≈ 1 m, smaller than the player and ≈ 9 % of the brush ring - three times the card (accepted ×2.5–×3.5); the small
+        /// preset keeps its size.</summary>
+        public const float TdRocketFireballScale = 3f;
         public const float FlashCardSize = 2f;
         public const float RingSize = 7f;
         public const float RingSeconds = .3f;
@@ -205,7 +209,8 @@ namespace DD.Prototype.Feedback.Vfx
                 // C-00 10.10 (user note 4, "stronger juice"): top-down too - the brush ring and light alone left the rocket almost
                 // invisible from the TD camera. The fireball card (small preset for a small blast) and a Full rocket's flash card
                 // draw with the brush layers; the light stays the brush's, the near-viewer edge smear the layered path's.
-                Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha * b.Guard);
+                float fireball = b.Full ? (brushOwned ? TdRocketFireballScale : 1f) : FireballLightScale;
+                Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * fireball, FireballSeconds, Color.white, alpha * b.Guard);
                 if (b.Full && alpha >= .99f && VfxTier.Current != VfxTierLevel.Performance
                     && Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FlashCardSize * b.Scale, 1f / 60f, new Color(1f, .75f, .45f) * 12f, 1f, true))
                     FlashCards++;
