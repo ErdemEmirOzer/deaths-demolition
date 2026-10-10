@@ -391,6 +391,49 @@ class CiSignalTrapTests(CiFixture):
         self.assertEqual(self.leases(), [])
         self.assertNotIn("through cleanup", err)
 
+    # --- WP-099 (C-00 10.10): main-ci refuses a SHA whose acoustic map is not baked — before any checkout, guard or Unity --
+    def acoustic_pair(self, stale):
+        """prepare(): main gains tools/qa/acoustic_bake.py and an acoustic pair (stale = a wrong _sourceHash); the CI sha and
+        the driver move to that commit."""
+        import hashlib
+        j = b'{"schema": "acoustic-v6", "spaces": []}\n'
+        h = "0" * 16 if stale else hashlib.sha256(j).hexdigest()[:16]
+        proj = self.repo / "prototype/DeathsDemolition_PlayableConcept/Assets"
+        jp, mp = proj / "_Art/Environment/World/V6/acoustic-spaces-v6.json", proj / "_Prototype/Audio/Resources/DD_AcousticSpaces.asset"
+        for f in (jp, mp):
+            f.parent.mkdir(parents=True, exist_ok=True)
+        jp.write_bytes(j)
+        mp.write_text("MonoBehaviour:\n  m_Name: DD_AcousticSpaces\n  _sourceHash: %s\n" % h)
+        (self.repo / "tools/qa").mkdir(exist_ok=True)
+        shutil.copy2(TOOLS / "qa/acoustic_bake.py", self.repo / "tools/qa/acoustic_bake.py")
+        self.git("add", "."); self.git("commit", "-q", "-m", "acoustic pair")
+        self.sha = self.git("rev-parse", "HEAD")
+        self.git("checkout", "-q", "--detach", "main", cwd=self.driver)
+
+    def test_MainCi_AkustikHaritaBayat_Cikis3CheckoutGuardUnityYok(self):
+        p = self.main_ci("pass", playmode=True, prepare=lambda: self.acoustic_pair(stale=True))
+        rc, out, err = self.finish(p)
+        self.assertEqual(rc, 3, out + err)
+        self.assertIn("acoustic map not baked at %s" % self.sha[:12], out + err)
+        self.assertIn("_sourceHash 0000000000000000 != sha256(acoustic-spaces-v6.json)[:16]", out + err)
+        self.assertEqual(self.lines("guard-calls.txt"), [])          # no guard window, so no Unity
+        self.assertFalse((self.log / "child-playmode.pid").exists())
+        self.assertNotEqual(self.git("rev-parse", "HEAD", cwd=self.ci), self.sha)   # the CI checkout never moved to it
+        self.assertEqual(self.leases(), [])
+
+    def test_MainCi_AkustikHaritaBayat_ExemptIleKosar(self):
+        p = self.main_ci("pass", playmode=True, prepare=lambda: self.acoustic_pair(stale=True),
+                         DD_CI_ACOUSTIC_EXEMPT="C-00: CI before the re-bake lands")
+        rc, out, err = self.finish(p)
+        self.assertEqual(rc, 0, out + err)
+        self.assertIn("DD_CI_ACOUSTIC_EXEMPT: C-00: CI before the re-bake lands", out + err)
+
+    def test_MainCi_AkustikHaritaPisirilmis_NormalYol(self):
+        p = self.main_ci("pass", playmode=True, prepare=lambda: self.acoustic_pair(stale=False))
+        rc, out, err = self.finish(p)
+        self.assertEqual(rc, 0, out + err)
+        self.assertIn("acoustic map: DD_AcousticSpaces.asset baked from acoustic-spaces-v6.json", out + err)
+
     # --- Codex-audit M-10: env scrub right before the tests -------------------------------------------------------------
     def assert_scrubbed(self, extra, cleared):
         rc, out, err = self.finish(self.main_ci("pass", playmode=True, DD_KEEP_ME="k", **extra))

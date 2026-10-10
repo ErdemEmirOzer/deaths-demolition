@@ -437,7 +437,7 @@ namespace DD.Prototype.UI
 
             if (Time.timeScale < 0.5f)
             {
-                return true;   // DEC-114 "koşu ve HUD": a run's pause and its round-end shop hold the world - no idle pass there
+                return true;   // DEC-114 (run and HUD scope): a run's pause and its round-end shop hold the world - no idle pass there
             }
 
             if (IdleScope != null && !icon.transform.IsChildOf(IdleScope))
