@@ -82,23 +82,24 @@ Material:
     - _DirectSmoothnessCap: 0.85
     - _DirectSpecMax: 0.25
     - _DirtTile: 3.7
-    - _DirtValue: 0.66
+    - _DirtValue: 0.58
     - _EnvSpecMax: 1.2
     - _GravelSaturation: 0.35
     - _GravelTile: 0.42
     - _GravelValue: 0.5
     - _HeightBlend: 0.9
     - _HollowAO: 0.18
-    - _LeafCover: 0.55
-    - _LeafMute: 0.3
+    - _LeafCover: 0.18
+    - _LeafMute: 0.5
     - _LeafScale: 0.09
     - _MaskTexel: 0.08300781
     - _Moss2Tile: 4.3
-    - _Moss2Value: 1.9
-    - _MossCover: 0.12
-    - _MossSaturation: 0.82
+    - _Moss2Value: 2.28
+    - _MossCover: 0.3
+    - _MossSaturation: 0.65
     - _MossTile: 3.4
-    - _MossValue: 4
+    - _MossValue: 4.8
+    - _MossYellowClamp: 0.45
     - _NormalStrength: 1.25
     - _PatchScale: 4.6
     - _PebbleTile: 1.1
@@ -111,7 +112,7 @@ Material:
     - _PuddleSmoothness: 0.92
     - _PuddleThreshold: 0.58
     - _SoilTile: 3.1
-    - _SoilValue: 0.5
+    - _SoilValue: 0.42
     - _ToneScale: 11
     - _ToneValue: 0.12
     - _TussockScale: 0.45
@@ -121,19 +122,19 @@ Material:
     - _WetSoil: 0.62
     - _Wetness: 0.3
     m_Colors:
-    - _DirtTint: {r: 1, g: 0.95, b: 0.88, a: 1}
+    - _DirtTint: {r: 0.9, g: 0.92, b: 0.95, a: 1}
     - _GravelTint: {r: 0.95, g: 1, b: 1.06, a: 1}
-    - _LitterBamboo: {r: 0.2, g: 0.17, b: 0.1, a: 1}
+    - _LitterBamboo: {r: 0.15, g: 0.15, b: 0.11, a: 1}
     - _LitterDry: {r: 0.238, g: 0.117, b: 0.048, a: 1}
     - _LitterFresh: {r: 0.155, g: 0.061, b: 0.031, a: 1}
-    - _LitterOld: {r: 0.144, g: 0.102, b: 0.058, a: 1}
+    - _LitterOld: {r: 0.102, g: 0.09, b: 0.072, a: 1}
     - _MaskBounds: {r: -85, g: -85, b: 170, a: 170}
-    - _MossTintShade: {r: 0.9, g: 1, b: 0.95, a: 1}
-    - _MossTintSun: {r: 1.1, g: 1.05, b: 0.7, a: 1}
-    - _MudTint: {r: 0.026, g: 0.021, b: 0.016, a: 1}
+    - _MossTintShade: {r: 0.52, g: 1.05, b: 1.07, a: 1}
+    - _MossTintSun: {r: 0.58, g: 1.11, b: 0.9, a: 1}
+    - _MudTint: {r: 0.022, g: 0.021, b: 0.02, a: 1}
     - _PavedUnder: {r: 0.42, g: 0.42, b: 0.42, a: 1}
     - _SmoothGravel: {r: 0.2, g: 0.58, b: 0, a: 0}
     - _SmoothMoss: {r: 0.1, g: 0.3, b: 0, a: 0}
     - _SmoothSoil: {r: 0.14, g: 0.52, b: 0, a: 0}
-    - _SoilTint: {r: 1, g: 0.93, b: 0.86, a: 1}
+    - _SoilTint: {r: 0.88, g: 0.9, b: 0.95, a: 1}
   m_BuildTextureStacks: []

@@ -4,6 +4,8 @@
 // receives main-light shadows (cascades / soft), additional lights (forward and Forward+), SSAO, fog, light cookies.
 // Casts no shadow: there is NO ShadowCaster pass (drawn with ShadowCastingMode.Off anyway). No Meta pass: the instances
 // are runtime-only and never lightmapped. Depth passes include only Core.hlsl + the core (no Shadows.hlsl).
+// AD v1.2 (10.10): _PetalShift / _PetalKey / _PetalRect recolour the flower texels per variant (ForwardLit albedo only);
+// all three live in the one UnityPerMaterial CBUFFER of the core, so every pass keeps the same layout (SRP Batcher).
 Shader "DD/World Vegetation"
 {
     Properties
@@ -12,7 +14,7 @@ Shader "DD/World Vegetation"
         _OrmMap ("ORM (R AO, G rough, B translucency)", 2D) = "white" {}
         _BumpMap ("Normal (OpenGL)", 2D) = "bump" {}
         _BumpScale ("Normal strength (0 = none: placeholders)", Float) = 0
-        _SatCap ("Saturation ceiling", Range(0, 1)) = 1
+        _SatCap ("Saturation ceiling (HSV s, sRGB)", Range(0, 1)) = 1
         _BaseColor ("Tint", Color) = (1, 1, 1, 1)
         _RootColor ("Root colour", Color) = (0.243, 0.290, 0.188, 1)
         _TipColor ("Tip colour", Color) = (0.384, 0.424, 0.282, 1)
@@ -29,6 +31,10 @@ Shader "DD/World Vegetation"
         _FarKeep ("Density at fade end", Range(0, 1)) = 0.35
         _VegMeshHeight ("LOD0 mesh height (m)", Float) = 0.15
         _VegLod ("LOD range (lo, hi, half fade, level)", Vector) = (0, 100000, 1, 0)
+        _PetalShift ("Petal shift (target lin rgb / ref luma, amount)", Vector) = (0, 0, 0, 0)
+        _PetalKey ("Petal mask key (channel weights, gain)", Vector) = (0, 0, 0, 0)
+        _PetalRect ("Petal atlas rect (u0, v0, u1, v1)", Vector) = (0, 0, 0, 0)
+        _YellowClamp ("Yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
     }
 

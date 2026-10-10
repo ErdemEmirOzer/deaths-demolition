@@ -11,6 +11,10 @@
 //            cards keep their coverage instead of thinning to nothing (handover 4.3)
 //   passes   ForwardLit · ShadowCaster · DepthOnly · DepthNormals (all wind-displaced)
 //   batching SRP Batcher: one UnityPerMaterial CBUFFER, no per-material globals
+//   grade    WP-092 R3 (user note 10.10, AD verdict): per-material albedo grade in ForwardLit — HSV hue shift, saturation that
+//            skips the warm arc, and a petal recolour/boost inside a texture-colour mask (DD_FoliageGrade). Every stage keeps the
+//            linear Rec.709 luminance of the albedo except the petal recolour; the defaults are the identity. No keyword: the
+//            stages sit behind uniform branches on the material constants.
 Shader "DD/Foliage Wind"
 {
     Properties
@@ -32,6 +36,16 @@ Shader "DD/Foliage Wind"
         _BackfaceLighting("Backface Lighting", Range(0.0, 1.0)) = 1.0
         // Ambient wrap for thin cards: lifts the unlit half so a crown reads as a volume
         _Translucency("Translucency", Range(0.0, 1.0)) = 0.25
+
+        // WP-092 R3 colour grade (DD_FoliageGrade). Defaults = the albedo as authored.
+        // Hue: HSV degrees, + = red → yellow → green → cyan (a positive shift moves a yellow-green crown away from yellow).
+        _HueShift("Hue Shift (HSV degrees)", Range(-30.0, 30.0)) = 0.0
+        // Saturation around the albedo's own luminance, in display (≈ gamma 2) space; a boost leaves the warm arc 355–65° alone.
+        _Saturation("Saturation", Range(0.0, 2.0)) = 1.0
+        // Petal mask (texture blue over green: satsuki pink, iris violet): linear multiplier on the masked albedo, then a
+        // luminance-keeping saturation boost (1 + _PetalBoost) inside the mask.
+        [HDR] _PetalColor("Petal Colour (linear multiplier)", Color) = (1,1,1,1)
+        _PetalBoost("Petal Boost", Range(0.0, 1.0)) = 0.0
 
         // Blending / state (same names as URP/Lit so the builder's common block applies)
         _WorkflowMode("WorkflowMode", Float) = 1.0
@@ -86,6 +100,10 @@ Shader "DD/Foliage Wind"
             half _WindScale;
             half _BackfaceLighting;
             half _Translucency;
+            half4 _PetalColor;
+            half _HueShift;
+            half _Saturation;
+            half _PetalBoost;
             half _WorkflowMode;
             half _Surface;
             half _Blend;
@@ -123,6 +141,84 @@ Shader "DD/Foliage Wind"
             float3 positionWS = TransformObjectToWorld(positionOS);
             float3 normalWS = TransformObjectToWorldNormal(normalOS);
             return positionWS + DD_WindDisplacement(positionWS, normalWS, color, _WindScale);
+        }
+
+        // ------------------------------------------------------------ WP-092 R3 colour grade
+        // Linear Rec.709 luminance: the hue and saturation stages hand back exactly this luminance, so the readability measures
+        // (DEC-077, linear ΔY between characters and their surroundings) read the graded foliage like the authored one.
+        static const float3 kDD_Luma = float3(0.2126729, 0.7151522, 0.0721750);
+
+        // Branchless RGB ↔ HSV (the Core Color.hlsl RgbToHsv / HsvToRgb form, own names); hue in [0, 1).
+        float3 DD_RgbToHsv(float3 c)
+        {
+            const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+            float4 p = lerp(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
+            float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
+            float d = q.x - min(q.w, q.y);
+            const float e = 1.0e-4;
+            return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+        }
+
+        float3 DD_HsvToRgb(float3 c)
+        {
+            const float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+            float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
+            return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
+        }
+
+        // 1 on the warm arc 355°…65° (blood/player red, oranges, browns, gold), fading to 0 over 350–355° and 65–75°.
+        // Art bible tone rules: no saturated gold (35–65°), the blood band (355–5°) is the characters'; brown is not "vivid".
+        float DD_WarmArc(float hue01)
+        {
+            float a = frac(hue01 + 5.0 / 360.0) * 360.0;   // 355° → 0°, 65° → 70°
+            a = a > 180.0 ? a - 360.0 : a;
+            return smoothstep(-5.0, 0.0, a) * (1.0 - smoothstep(70.0, 80.0, a));
+        }
+
+        // albedo: texture × _BaseColor (linear). texRgb: the authored texture colour, which alone decides the petal mask.
+        // Stage order: hue → saturation → petals. With the defaults every branch is skipped and the albedo is returned as is.
+        half3 DD_FoliageGrade(half3 albedo, half3 texRgb)
+        {
+            float3 c = (float3)albedo;
+            float lum = dot(c, kDD_Luma);
+
+            // Hue: rotate the HSV hue, then rescale to the original luminance (a uniform scale keeps hue and saturation).
+            if (_HueShift != 0.0)
+            {
+                float3 hsv = DD_RgbToHsv(c);
+                hsv.x = frac(hsv.x + (float)_HueShift * (1.0 / 360.0));
+                float3 r = DD_HsvToRgb(hsv);
+                c = r * (lum / max(dot(r, kDD_Luma), 1.0e-5));
+            }
+
+            // Saturation in display (≈ gamma 2) space, so 1.10 reads as ≈ +10 % CIELAB chroma (a linear-space lerp gives ≈ +19 %
+            // on the dark needle cards and drives their blue to zero); luminance restored as above. A boost skips the warm arc.
+            if (_Saturation != 1.0)
+            {
+                float k = (float)_Saturation;
+                if (k > 1.0)
+                {
+                    k = 1.0 + (k - 1.0) * (1.0 - DD_WarmArc(DD_RgbToHsv(c).x));
+                }
+
+                float3 g = sqrt(max(c, 0.0));
+                float gl = dot(g, kDD_Luma);
+                g = max(gl + (g - gl) * k, 0.0);
+                float3 r = g * g;
+                c = r * (lum / max(dot(r, kDD_Luma), 1.0e-5));
+            }
+
+            // Petals: blue over green in the authored texture (satsuki pink b − g ≈ 0.1, iris violet ≈ 0.25; leaves, stems and
+            // bark have b < g). The multiplier recolours, the boost saturates around the petal's own luminance.
+            if (_PetalBoost > 0.0 || dot(abs((float3)_PetalColor.rgb - 1.0), float3(1.0, 1.0, 1.0)) > 1.0e-4)
+            {
+                float m = smoothstep(0.015, 0.06, (float)texRgb.b - (float)texRgb.g);
+                c *= lerp(float3(1.0, 1.0, 1.0), (float3)_PetalColor.rgb, m);
+                float pl = dot(c, kDD_Luma);
+                c = max(pl + (c - pl) * (1.0 + (float)_PetalBoost * m), 0.0);
+            }
+
+            return (half3)c;
         }
         ENDHLSL
 
@@ -249,7 +345,8 @@ Shader "DD/Foliage Wind"
                 #endif
 
                 SurfaceData surfaceData = (SurfaceData)0;
-                surfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
+                // WP-092 R3: the per-material grade (identity at the defaults); the translucency term below reads the graded albedo too.
+                surfaceData.albedo = DD_FoliageGrade(albedoAlpha.rgb * _BaseColor.rgb, albedoAlpha.rgb);
                 surfaceData.alpha = alpha;
                 #if defined(_METALLICSPECGLOSSMAP)
                     half4 mask = SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, input.uv);

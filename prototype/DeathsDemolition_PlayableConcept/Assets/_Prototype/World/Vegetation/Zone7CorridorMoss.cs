@@ -109,9 +109,9 @@ namespace DD.Prototype.World.Vegetation
                 if (cap < species.heightMin * 0.5f) return false;
                 height = cap;
             }
-            byte hint = field.VariantHint[i];
-            int variant = hint > 0 ? Mathf.Min(hint - 1, species.variants - 1)
-                : Mathf.Min(species.variants - 1, (int)(VegetationHash.Cell01(i, slot, seed + 5) * species.variants));
+            // w5 (10.10): VariantHint carries the flower accents' colours (VegetationPlacer.AccentVariant) and the accents may now
+            // stand on the corridor's edge — the corridor moss picks by hash, as it always did on corridor cells (no hint was written there).
+            int variant = Mathf.Min(species.variants - 1, (int)(VegetationHash.Cell01(i, slot, seed + 5) * species.variants));
             float sy = height / nominal[variant];
             float sxz = Mathf.Lerp(1f, sy, 0.5f) * Mathf.Lerp(0.9f, 1.1f, VegetationHash.Cell01(i, slot, seed + 6));
             float rootY = field.GroundY[i];

@@ -51,10 +51,13 @@ Material:
     - _Cutoff: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _HueShift: 0
     - _Metallic: 1
     - _OcclusionStrength: 1
+    - _PetalBoost: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _Saturation: 1
     - _Smoothness: 1
     - _SmoothnessTextureChannel: 0
     - _SrcBlend: 1
@@ -66,4 +69,5 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _PetalColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -53,6 +53,11 @@ namespace DD.Art.Pipeline.EditorTools
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int SmoothnessChannelId = Shader.PropertyToID("_SmoothnessTextureChannel");
         private static readonly int CullId = Shader.PropertyToID("_Cull");
+        // WP-092 R3 · DD/Foliage Wind colour grade.
+        private static readonly int HueShiftId = Shader.PropertyToID("_HueShift");
+        private static readonly int SaturationId = Shader.PropertyToID("_Saturation");
+        private static readonly int PetalColorId = Shader.PropertyToID("_PetalColor");
+        private static readonly int PetalBoostId = Shader.PropertyToID("_PetalBoost");
 
         /// <summary>Keywords that must be off on every pipeline material regardless of role.</summary>
         private static readonly string[] AlwaysOff =
@@ -211,6 +216,44 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[ArtPipeline] Library materials: " + rows.Count + " in " + ArtPipelinePaths.Materials);
         }
 
+        /// <summary>
+        /// WP-092 R3 · Batch entry: <c>-executeMethod DD.Art.Pipeline.EditorTools.ArtMaterialBuilder.BuildAllLibraryRolesCli</c>.
+        /// Rebuilds every library role in place (GUIDs kept) and logs one line per role that carries a tint or a colour grade, read
+        /// back from the saved material, so the run's log is the evidence. Throws (non-zero exit) when DD/Foliage Wind lacks the
+        /// grade properties, i.e. the shader did not import / compile first.
+        /// </summary>
+        public static void BuildAllLibraryRolesCli()
+        {
+            BuildAllLibraryRoles();
+            int graded = 0;
+            IReadOnlyList<ArtLibraryMaterialRoles.Spec> rows = ArtLibraryMaterialRoles.All;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                ArtLibraryMaterialRoles.Spec spec = rows[i];
+                if (spec.Kind == ArtLibraryMaterialRoles.Kind.Flat || (spec.Tint == Color.white && !spec.HasColourGrade)) continue;
+                var m = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(spec.Role));
+                string line = "[ArtPipeline] wp092.r3.colour role=" + spec.Role + " tintLinear=" + Fmt(m.GetColor(BaseColorId).linear);
+                if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
+                {
+                    line += " hue=" + m.GetFloat(HueShiftId).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) +
+                            " sat=" + m.GetFloat(SaturationId).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) +
+                            " petalLinear=" + Fmt(m.GetColor(PetalColorId).linear) +
+                            " petalBoost=" + m.GetFloat(PetalBoostId).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                Debug.Log(line);
+                graded++;
+            }
+
+            Debug.Log("[ArtPipeline] wp092.r3.colour roles=" + rows.Count + " tintedOrGraded=" + graded);
+        }
+
+        private static string Fmt(Color c)
+        {
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            return "(" + c.r.ToString("0.000", inv) + "," + c.g.ToString("0.000", inv) + "," + c.b.ToString("0.000", inv) + ")";
+        }
+
         /// <summary>WP-013 shaders (Assets/_Art/Shaders). Same property names as URP/Lit, so the recipes below apply unchanged.</summary>
         public const string FoliageWindShaderName = "DD/Foliage Wind";
         public const string WaterShaderName = "DD/Water v1";
@@ -244,6 +287,12 @@ namespace DD.Art.Pipeline.EditorTools
             if (spec == null)
             {
                 throw new ArgumentNullException(nameof(spec));
+            }
+
+            if (spec.HasColourGrade && spec.Shader != ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
+            {
+                // WP-092 R3: the grade lives in DD/Foliage Wind only; on URP/Lit or water it would be silently dropped.
+                throw new InvalidOperationException("[ArtPipeline] Role '" + spec.Role + "' sets a colour grade but is authored on " + spec.Shader + "; only DD/Foliage Wind carries _HueShift / _Saturation / _PetalColor / _PetalBoost (use Tint on Lit roles).");
             }
 
             Shader shader = ResolveShader(spec.Shader);
@@ -305,6 +354,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
             {
                 ApplyFoliageWind(material, spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout);
+                ApplyColourGrade(material, spec);
             }
 
             if (spec.HasDetailNormal)
@@ -348,6 +398,25 @@ namespace DD.Art.Pipeline.EditorTools
             SetFloat(m, "_BackfaceLighting", 1f);
             SetFloat(m, "_Translucency", cutout ? 0.25f : 0f);
             SetFloat(m, "_AlphaToMask", cutout ? 1f : 0f);
+        }
+
+        /// <summary>
+        /// WP-092 R3 · The DD/Foliage Wind colour grade from the role row, written on every build including the identity values
+        /// (0 / 1 / white / 0), so a rebuild restores the contract after an Inspector edit. <c>_PetalColor</c> is a linear multiplier
+        /// handed over through <see cref="EncodeForColorProperty"/> like <c>_BaseColor</c>. A material whose shader lacks the
+        /// properties means the shader did not import or compile: that is an error, not a silent skip.
+        /// </summary>
+        private static void ApplyColourGrade(Material m, ArtLibraryMaterialRoles.Spec spec)
+        {
+            if (!m.HasProperty(HueShiftId) || !m.HasProperty(SaturationId) || !m.HasProperty(PetalColorId) || !m.HasProperty(PetalBoostId))
+            {
+                throw new InvalidOperationException("[ArtPipeline] '" + m.shader.name + "' has no colour-grade properties (_HueShift / _Saturation / _PetalColor / _PetalBoost) for role '" + spec.Role + "': import Assets/_Art/Shaders/DD_Foliage_Wind.shader first.");
+            }
+
+            m.SetFloat(HueShiftId, spec.HueShift);
+            m.SetFloat(SaturationId, spec.Saturation);
+            m.SetColor(PetalColorId, EncodeForColorProperty(spec.PetalColor));
+            m.SetFloat(PetalBoostId, spec.PetalBoost);
         }
 
         /// <summary>

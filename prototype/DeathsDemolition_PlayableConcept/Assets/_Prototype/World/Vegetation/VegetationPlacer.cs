@@ -153,8 +153,9 @@ namespace DD.Prototype.World.Vegetation
                             height = hCap;
                         }
 
-                        byte hint = field.VariantHint[i];
-                        int variant = hint > 0 ? Mathf.Min(hint - 1, variants - 1) : Mathf.Min(variants - 1, (int)(VegetationHash.Cell01(i, slot, seed + 5) * variants));
+                        int variant = IsAccent(t)
+                            ? AccentVariant(t, field.VariantHint[i], variants)
+                            : Mathf.Min(variants - 1, (int)(VegetationHash.Cell01(i, slot, seed + 5) * variants));
                         float nominal = Nominal(nominalHeight, t, variant, sp);
                         float sy = height / nominal;
                         float sxz = Mathf.Lerp(1f, sy, 0.5f) * Mathf.Lerp(0.9f, 1.1f, VegetationHash.Cell01(i, slot, seed + 6));
@@ -211,6 +212,33 @@ namespace DD.Prototype.World.Vegetation
 
             layout.Groups = groups;
             return layout;
+        }
+
+        // ------------------------------------------------------------------ accent variant hint (AD v1.2, 10.10)
+
+        /// <summary>
+        /// AD v1.2 (10.10): <see cref="VegetationDensityField.VariantHint"/> carries the flower accents' colour variant per
+        /// cell — HY (ajisai colour) in the low nibble, SL (higanbana / hanashōbu / kurinsō) in the high nibble, each value =
+        /// variant + 1. Only the accent species read it: a hint no longer steers the grass, moss or ferns that share the cell
+        /// (v1 applied one hint to every species). Zone7CorridorMoss still reads the raw byte for MO; the accents never write a
+        /// hint on a corridor cell (the only cells it adds moss to), so both pick the same MO variant there.
+        /// </summary>
+        public static bool IsAccent(int type) => type == (int)VegetationType.Hydrangea || type == (int)VegetationType.SpiderLily;
+
+        /// <summary>The accent's variant from the cell hint; no hint = variant 0 (the higanbana red, ajisai A) — never a hash pick, so no confetti.</summary>
+        public static int AccentVariant(int type, byte hint, int variants)
+        {
+            int nibble = type == (int)VegetationType.Hydrangea ? hint & 0x0F : type == (int)VegetationType.SpiderLily ? hint >> 4 : 0;
+            return nibble > 0 ? Mathf.Min(nibble - 1, Mathf.Max(1, variants) - 1) : 0;
+        }
+
+        /// <summary>The hint with the accent species' nibble set to <paramref name="variant"/> + 1 (other nibble kept).</summary>
+        public static byte WithAccentVariant(byte hint, VegetationType type, int variant)
+        {
+            int v = Mathf.Clamp(variant + 1, 1, 15);
+            if (type == VegetationType.Hydrangea) return (byte)((hint & 0xF0) | v);
+            if (type == VegetationType.SpiderLily) return (byte)((hint & 0x0F) | (v << 4));
+            return hint;
         }
 
         private static float Nominal(float[][] nominalHeight, int t, int variant, VegetationRecipe.Species sp)

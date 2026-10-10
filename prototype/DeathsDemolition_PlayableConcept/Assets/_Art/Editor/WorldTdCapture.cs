@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using DD.Prototype.World;
+using DD.Prototype.World.Vegetation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -73,8 +74,8 @@ namespace DD.Art.Pipeline.EditorTools
                         Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
                         diagnostics.MarkBareEntropy();
                         diagnostics.Label(name + "-bare-original");
-                        float bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
-                        File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare) + "}");
+                        BareShare bare = BareGroundShare(cam, Path.Combine(dir, name + "-bare"));
+                        File.WriteAllText(Path.Combine(dir, name + "-original-metric.json"), "{\"bare\": " + F(bare.Ground) + ", \"legacyBlack\": " + F(bare.LegacyBlack) + "}");
                         diagnostics.Capture(cam, name, feet, ground);
                     }
                 }, true, false);
@@ -84,7 +85,15 @@ namespace DD.Art.Pipeline.EditorTools
         {
             string dir = OutDir();
             var bareRows = new StringBuilder();
-            float bareSum = 0f;
+            var legacyRows = new StringBuilder();
+            var splitRows = new StringBuilder();
+            var gateRows = new StringBuilder();
+            var gate1Rows = new StringBuilder();
+            var accentRows = new StringBuilder();
+            float bareSum = 0f, legacySum = 0f, naturalSum = 0f, pavedSum = 0f, gateSum = 0f, gate1Sum = 0f;
+            long gateBare = 0, gateSeen = 0, gate1Bare = 0, gate1Seen = 0;
+            int gatePoses = 0, gate1Poses = 0;
+            if (requireVegetation) SaveAccentMap(Path.Combine(dir, "accent-map.png"));
             foreach ((string name, Vector2 feet) in Poses)
             {
                 Vector3 ground = Ground(feet);
@@ -93,13 +102,53 @@ namespace DD.Art.Pipeline.EditorTools
                 cam.fieldOfView = RigFov;
                 cam.transform.SetPositionAndRotation(focus + RigOffset, Quaternion.LookRotation(-RigOffset.normalized, Vector3.up));
                 Save(Grab(cam, Width, Height), Path.Combine(dir, name + ".png"));
-                float bare = BareGroundShare(cam, requireVegetation ? Path.Combine(dir, name + "-bare") : null);
-                bareRows.Append(bareRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare));
-                bareSum += bare;
+                BareShare bare = BareGroundShare(cam, requireVegetation ? Path.Combine(dir, name + "-bare") : null);
+                bareRows.Append(bareRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare.Ground));
+                legacyRows.Append(legacyRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + F(bare.LegacyBlack));
+                splitRows.Append(splitRows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"natural\": " + F(bare.Natural) + ", \"paved\": " + F(bare.Paved) + "}");
+                bareSum += bare.Ground;
+                legacySum += bare.LegacyBlack;
+                naturalSum += bare.Natural;
+                pavedSum += bare.Paved;
+                if (bare.VegSeen > 0)
+                {
+                    float share = (float)bare.VegBare / bare.VegSeen;
+                    gateRows.Append(gateRows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"bare\": " + F(share) + ", \"bareCells\": " + bare.VegBare + ", \"seen\": " + bare.VegSeen + "}");
+                    gateSum += share;
+                    gateBare += bare.VegBare;
+                    gateSeen += bare.VegSeen;
+                    gatePoses++;
+                }
+
+                if (bare.VegSeen1 > 0)
+                {
+                    float share1 = (float)bare.VegBare1 / bare.VegSeen1;
+                    gate1Rows.Append(gate1Rows.Length > 0 ? ", " : "").Append("\"" + name + "\": {\"bare\": " + F(share1) + ", \"bareCells\": " + bare.VegBare1 + ", \"seen\": " + bare.VegSeen1 + "}");
+                    gate1Sum += share1;
+                    gate1Bare += bare.VegBare1;
+                    gate1Seen += bare.VegSeen1;
+                    gate1Poses++;
+                }
+
+                if (requireVegetation) accentRows.Append(accentRows.Length > 0 ? ", " : "").Append("\"" + name + "\": " + bare.AccentGround);
             }
 
-            File.WriteAllText(Path.Combine(dir, "bare-ground.json"), "{" + bareRows + ", \"mean\": " + F(bareSum / Poses.Length) + "}");
-            Debug.Log("[TDCAP] " + Poses.Length + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / Poses.Length));
+            int n = Poses.Length;
+            string gate = gatePoses == 0 ? "null"
+                : "{\"metric\": \"" + VegGateMetric + "\", " + gateRows + ", \"mean\": " + F(gateSum / gatePoses) + ", \"pooled\": " + F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f) +
+                  ", \"poses\": " + gatePoses + ", \"limit\": " + F(VegGateLimit) + ", \"pass\": " + (gatePoses == n && gateSum / gatePoses <= VegGateLimit ? "true" : "false") +
+                  ", \"v1\": " + (gate1Poses == 0 ? "null" : "{\"metric\": \"" + VegGateMetricV1 + "\", " + gate1Rows + ", \"mean\": " + F(gate1Sum / gate1Poses) + ", \"pooled\": " +
+                                                         F(gate1Seen > 0 ? (float)gate1Bare / gate1Seen : 0f) + ", \"poses\": " + gate1Poses + "}") +
+                  ", \"accentGroundPx\": {" + accentRows + "}}";
+            File.WriteAllText(Path.Combine(dir, "bare-ground.json"),
+                "{" + bareRows + ", \"mean\": " + F(bareSum / n) + ", \"metric\": \"" + BareMetric + "\", \"split\": {" + splitRows + ", \"mean\": {\"natural\": " + F(naturalSum / n) +
+                ", \"paved\": " + F(pavedSum / n) + "}}, \"legacyBlack\": {" + legacyRows + ", \"mean\": " + F(legacySum / n) + "}, \"gate\": " + gate + "}");
+            if (gatePoses > 0)
+                Debug.Log("[TDCAP] vegetation-ground gate (" + VegGateMetric + "): mean " + F(gateSum / gatePoses) + " over " + gatePoses + " poses (limit " + F(VegGateLimit) + "), pooled " +
+                          F(gateSeen > 0 ? (float)gateBare / gateSeen : 0f) + (gate1Poses > 0 ? "; " + VegGateMetricV1 + " mean " + F(gate1Sum / gate1Poses) + ", pooled " + F(gate1Seen > 0 ? (float)gate1Bare / gate1Seen : 0f) : "") +
+                          "; accent ground px {" + accentRows + "}");
+            Debug.Log("[TDCAP] " + n + " TD poses -> " + dir + " bare-ground mean " + F(bareSum / n) + " (" + BareMetric + "; natural " + F(naturalSum / n) +
+                      ", paved " + F(pavedSum / n) + "; legacy black-threshold " + F(legacySum / n) + ")");
         }, requireVegetation);
 
         /// <summary>WP-092 B5 · One frame at the TD rig's angle from another offset (the ground study's close looks) → DD_TD_OUT/&lt;name&gt;.png.</summary>
@@ -183,13 +232,314 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[TDCAP] empty area " + json);
         }
 
+        /// <summary>The bare-ground metric's name in bare-ground.json (R3 10.10: what ground shows, by id, not by colour).</summary>
+        public const string BareMetric = "ground-id-v2";
+
+        /// <summary>Ground shaders: natural (moss, terrain: the vegetation's ground) and paved (plaza slate, path granite, route plates).</summary>
+        public static readonly string[] NaturalGroundShaders = { "DD/GroundMoss", "DD/GroundTerrain" };
+        public static readonly string[] PavedGroundShaders = { "DD/GroundTiles", "DD/GroundBlend" };
+
+        /// <summary>The id colours of the ground render: natural ground, paved ground (anything else is cover).</summary>
+        public static readonly Color32 NaturalId = new Color32(255, 0, 255, 255), PavedId = new Color32(0, 255, 255, 255);
+
+        /// <summary>One pose's bare ground: <see cref="Ground"/> = natural + paved (the gate value), and the legacy black-threshold share.</summary>
+        public struct BareShare
+        {
+            public float Ground, Natural, Paved, LegacyBlack;
+            /// <summary>The gate (<see cref="VegGateMetric"/>): pixels whose line of sight ends on vegetation ground, and those of them that show it bare.</summary>
+            public int VegSeen, VegBare;
+            /// <summary>The same under <see cref="VegGateMetricV1"/> (w3's rule), reported beside the gate.</summary>
+            public int VegSeen1, VegBare1;
+            /// <summary>Pixels whose ground point carries a flower accent (HY / SL layer &gt; 0): the accents this pose can show.</summary>
+            public int AccentGround;
+        }
+
         /// <summary>
-        /// WP-092 · The share of the TD frame that shows bare ground: the same pose rendered with every ground-shader renderer
-        /// (and the fog / shaft cards over it) hidden against a black clear; a pixel nothing else covers is bare ground.
-        /// Water, plants, props and buildings all count as covered. Very dark covered pixels can also satisfy the black threshold;
-        /// combined captures save the existing measurement render and its binary classification for diagnosis, without another render.
+        /// C-00 10.10 decision (B) · the gate's scope: vegetation ground. Paths, paving, desire paths, the karesansui gravel, the amaochi
+        /// drip strip, water and the ground under roofs are designed bare surfaces (the user asked for more roads) and are not counted.
+        /// A cell is vegetation ground when the grid marks it Ground and none of Path / Plaza / Water / Excluded / Roofed, and its
+        /// final zone is one of <see cref="VegetationZones"/>. Gate: the mean of the poses' shares ≤ <see cref="VegGateLimit"/>.
         /// </summary>
-        private static float BareGroundShare(Camera cam, string diagnosticPrefix)
+        public const string VegGateMetric = "veg-ground-v2";
+        /// <summary>
+        /// w3's rule (10.10), reported beside the gate: a ground-id pixel was always marched onto the height field, a cover pixel only
+        /// counted when its physics ray met the ground within 0.3 m — so cover over the greybox ground box's pits / mounds and plants
+        /// with colliders (bamboo culms, shrubs, crowns) fell out of the denominator and the share leaned bare (C-00 10.10: fix, report both).
+        /// </summary>
+        public const string VegGateMetricV1 = "veg-ground-v1";
+        public const float VegGateLimit = 0.25f;
+
+        public static readonly VegetationZone[] VegetationZones =
+        {
+            VegetationZone.Lawn, VegetationZone.Grove, VegetationZone.GroveSkirt, VegetationZone.Bamboo, VegetationZone.BambooEdge,
+            VegetationZone.BambooPathSide, VegetationZone.PondBank, VegetationZone.PondShore, VegetationZone.PathEdge, VegetationZone.WallBase,
+            VegetationZone.WallBaseShadow, VegetationZone.WallOuter, VegetationZone.BuildingSurround, VegetationZone.BuildingShadow,
+            VegetationZone.Courtyard, VegetationZone.PlazaEdge, VegetationZone.BridgeApproach, VegetationZone.MossCourt,
+            VegetationZone.KaresansuiCollar,
+        };
+
+        private const VegetationGrid.Flag NotVegetationGround = VegetationGrid.Flag.Path | VegetationGrid.Flag.Plaza | VegetationGrid.Flag.Water |
+                                                                 VegetationGrid.Flag.Excluded | VegetationGrid.Flag.Roofed;
+
+        /// <summary>True when grid cell <paramref name="i"/> is vegetation ground (see <see cref="VegGateMetric"/>).</summary>
+        public static bool IsVegetationGround(ushort flags, byte finalZone)
+        {
+            if ((flags & (ushort)VegetationGrid.Flag.Ground) == 0 || (flags & (ushort)NotVegetationGround) != 0) return false;
+            return Array.IndexOf(VegetationZones, (VegetationZone)finalZone) >= 0;
+        }
+
+        /// <summary>
+        /// WP-092 · The share of the TD frame that shows bare ground — the gate (C-00 08.10: mean ≤ 25 %, plaza ≤ 80 %).
+        /// R3 10.10 (<see cref="BareMetric"/>): an id render decides it. The ground renderers draw in flat unlit id colours (natural /
+        /// paved), the water flat white (cover, as before), fog / shaft cards hidden, black clear, no post, no fog, no MSAA, the
+        /// vegetation preview and every other renderer as they are: a pixel is bare when it shows a ground id. The legacy measure
+        /// (ground hidden, a pixel bare when its colour sums ≤ 6) is kept beside it: it also counted dark covered pixels — roof tile
+        /// channels, eaves and shaded interiors that the no-post render takes to 0 — as bare (Codex 08.10: 450 822 of 1 036 800
+        /// diagnostic pixels at exactly 0, cause unproven).
+        /// </summary>
+        private static BareShare BareGroundShare(Camera cam, string diagnosticPrefix)
+        {
+            var result = new BareShare { LegacyBlack = LegacyBlackShare(cam, diagnosticPrefix) };
+            Shader unlit = DD.Prototype.Rendering.PrototypeShaders.Unlit;
+            if (unlit == null) throw new InvalidOperationException("[TDCAP] the URP Unlit shader is missing from the shader library: no ground-id render");
+            var natural = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            var paved = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            var water = new Material(unlit) { hideFlags = HideFlags.HideAndDontSave };
+            SetUnlitColour(natural, NaturalId);
+            SetUnlitColour(paved, PavedId);
+            SetUnlitColour(water, new Color32(255, 255, 255, 255));
+            var swapped = new List<(Renderer renderer, Material[] materials)>();
+            var hidden = new List<Renderer>();
+            foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
+            {
+                if (!r.enabled || r.sharedMaterial == null) continue;
+                string shader = r.sharedMaterial.shader.name;
+                Material id = Array.IndexOf(NaturalGroundShaders, shader) >= 0 ? natural
+                    : Array.IndexOf(PavedGroundShaders, shader) >= 0 ? paved
+                    : shader.StartsWith("DD/Water", StringComparison.Ordinal) ? water : null;
+                if (id != null)
+                {
+                    Material[] was = r.sharedMaterials;
+                    var ids = new Material[was.Length];
+                    for (int i = 0; i < ids.Length; i++) ids[i] = id;
+                    r.sharedMaterials = ids;
+                    swapped.Add((r, was));
+                }
+                else if (shader == "DD/FogSheet" || shader == "DD/ShaftCard")
+                {
+                    r.enabled = false;
+                    hidden.Add(r);
+                }
+            }
+
+            CameraClearFlags flags = cam.clearFlags;
+            Color background = cam.backgroundColor;
+            bool fog = RenderSettings.fog;
+            var data = cam.GetUniversalAdditionalCameraData();
+            bool post = data != null && data.renderPostProcessing;
+            try
+            {
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                RenderSettings.fog = false;
+                if (data != null) data.renderPostProcessing = false;
+                int w = Width / 4, h = Height / 4;
+                Color32[] px = Grab(cam, w, h, 1);
+                int nat = 0, pav = 0;
+                Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    GroundClass c = Classify(px[i]);
+                    if (c == GroundClass.Natural) nat++;
+                    else if (c == GroundClass.Paved) pav++;
+                    if (mask != null) mask[i] = c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : c == GroundClass.Paved ? new Color32(128, 128, 128, 255) : new Color32(0, 0, 0, 255);
+                }
+
+                if (diagnosticPrefix != null)
+                {
+                    Save(px, diagnosticPrefix + "-id.png", w, h);
+                    Save(mask, diagnosticPrefix + "-id-mask.png", w, h);
+                }
+
+                result.Natural = (float)nat / px.Length;
+                result.Paved = (float)pav / px.Length;
+                result.Ground = result.Natural + result.Paved;
+                VegetationGround(cam, px, w, h, ref result, diagnosticPrefix);
+                return result;
+            }
+            finally
+            {
+                cam.clearFlags = flags;
+                cam.backgroundColor = background;
+                RenderSettings.fog = fog;
+                if (data != null) data.renderPostProcessing = post;
+                foreach ((Renderer r, Material[] was) in swapped) r.sharedMaterials = was;
+                foreach (Renderer r in hidden) r.enabled = true;
+                UnityEngine.Object.DestroyImmediate(natural);
+                UnityEngine.Object.DestroyImmediate(paved);
+                UnityEngine.Object.DestroyImmediate(water);
+            }
+        }
+
+        /// <summary>
+        /// The gate pass over the id render's pixels (bottom-left origin, as GetPixels32): a physics ray per pixel centre (vegetation has
+        /// no colliders, so a ray through grass reaches the ground behind it). A hit within 0.3 m of the grid's ground height is ground;
+        /// a pixel that shows a ground id but whose ray meets an invisible collider first is placed on the ground by marching the grid's
+        /// height field. Seen = the ground point is vegetation ground; bare = it also shows a ground id. Needs the zoner's snapshot
+        /// (DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics, recorded inside <see cref="WithLook"/>); none → the gate is not measured.
+        /// </summary>
+        private static void VegetationGround(Camera cam, Color32[] px, int w, int h, ref BareShare result, string diagnosticPrefix)
+        {
+            DD.Prototype.World.Vegetation.VegetationPreview.DiagnosticSnapshot snap = DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics;   // qualified: this class has a VegetationPreview method
+            if (snap == null || snap.Grid == null || snap.FinalZone == null) return;
+            VegetationGrid grid = snap.Grid;
+            Physics.SyncTransforms();
+            Color32[] mask = diagnosticPrefix != null ? new Color32[px.Length] : null;
+            Color32[] mask1 = diagnosticPrefix != null ? new Color32[px.Length] : null;
+            byte[] hyLayer = snap.Field != null ? snap.Field.Layers[(int)VegetationType.Hydrangea] : null;
+            byte[] slLayer = snap.Field != null ? snap.Field.Layers[(int)VegetationType.SpiderLily] : null;
+            var foliage = new Dictionary<int, bool>();
+            int seen = 0, bare = 0, seen1 = 0, bare1 = 0, accent = 0;
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int i = y * w + x;
+                GroundClass c = Classify(px[i]);
+                Ray ray = cam.ViewportPointToRay(new Vector3((x + 0.5f) / w, (y + 0.5f) / h, 0f));
+                bool hitAny = Physics.Raycast(ray, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore);
+                int k = hitAny ? CellOf(grid, hit.point) : -1;
+                bool nearGround = k >= 0 && Mathf.Abs(hit.point.y - grid.GroundY[k]) <= 0.3f;
+
+                // v1 (w3): the asymmetric rule, kept for the report
+                int cell1 = nearGround ? k : -1;
+                if (cell1 < 0 && c != GroundClass.Cover) cell1 = MarchGround(grid, ray);
+                bool veg1 = cell1 >= 0 && IsVegetationGround(grid.Flags[cell1], snap.FinalZone[cell1]);
+                if (veg1)
+                {
+                    seen1++;
+                    if (c == GroundClass.Natural) bare1++;
+                }
+
+                // v2: one rule for every pixel, whatever it shows. The sight line reaches the ground when it meets nothing, the greybox
+                // ground box (flat at y = 0 under the terrain's pits and mounds) or a plant (a collider under DD/Foliage Wind) — then
+                // the height field gives the ground point; a hit on anything else counts when it is on the ground (within 0.3 m),
+                // and a raised object (wall, roof, rock, lantern) hides the ground: not seen.
+                int cell = !hitAny || IsGroundBox(hit.collider) || IsFoliage(hit.collider, foliage) ? MarchGround(grid, ray) : nearGround ? k : -1;
+                bool veg = cell >= 0 && IsVegetationGround(grid.Flags[cell], snap.FinalZone[cell]);
+                if (veg)
+                {
+                    seen++;
+                    if (c == GroundClass.Natural) bare++;
+                }
+
+                if (cell >= 0 && ((hyLayer != null && hyLayer[cell] > 0) || (slLayer != null && slLayer[cell] > 0))) accent++;
+                if (mask != null) mask[i] = !veg ? new Color32(0, 0, 0, 255) : c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : new Color32(60, 160, 60, 255);
+                if (mask1 != null) mask1[i] = !veg1 ? new Color32(0, 0, 0, 255) : c == GroundClass.Natural ? new Color32(255, 255, 255, 255) : new Color32(60, 160, 60, 255);
+            }
+
+            if (mask != null) Save(mask, diagnosticPrefix + "-veg-mask.png", w, h);
+            if (mask1 != null) Save(mask1, diagnosticPrefix + "-veg1-mask.png", w, h);
+            result.VegSeen = seen;
+            result.VegBare = bare;
+            result.VegSeen1 = seen1;
+            result.VegBare1 = bare1;
+            result.AccentGround = accent;
+        }
+
+        private const string FoliageShaderName = "DD/Foliage Wind";
+
+        /// <summary>The greybox walkable ground: one flat box (GreyboxV6Builder "Ground", top at y = 0) under the drawn terrain.</summary>
+        private static bool IsGroundBox(Collider col) => col is BoxCollider && col.gameObject.name == "Ground";
+
+        /// <summary>A plant's collider: its LOD group (or its own object) draws DD/Foliage Wind (cached per collider).</summary>
+        private static bool IsFoliage(Collider col, Dictionary<int, bool> cache)
+        {
+            int id = col.GetInstanceID();
+            if (cache.TryGetValue(id, out bool f)) return f;
+            LODGroup lod = col.GetComponentInParent<LODGroup>();
+            Transform root = lod != null ? lod.transform : col.transform;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    if (m != null && m.shader != null && m.shader.name == FoliageShaderName) { f = true; break; }
+                }
+
+                if (f) break;
+            }
+
+            cache[id] = f;
+            return f;
+        }
+
+        /// <summary>
+        /// The flower accents as placed (diagnostics, w4): a top-down map of the vegetation grid — ajisai cells by colour variant
+        /// (A blue-violet, B pink, C purple), SL cells by variant (higanbana red, hanashōbu violet / lilac, kurinsō magenta), the
+        /// rest grey for vegetation ground and black elsewhere — and the zoner's counts in the log.
+        /// </summary>
+        private static void SaveAccentMap(string path)
+        {
+            DD.Prototype.World.Vegetation.VegetationPreview.DiagnosticSnapshot snap = DD.Prototype.World.Vegetation.VegetationPreview.LastDiagnostics;
+            if (snap == null || snap.Grid == null || snap.Field == null || snap.FinalZone == null) return;
+            VegetationGrid grid = snap.Grid;
+            byte[] hy = snap.Field.Layers[(int)VegetationType.Hydrangea], sl = snap.Field.Layers[(int)VegetationType.SpiderLily];
+            Color32[] hyCol = { new Color32(105, 93, 168, 255), new Color32(220, 90, 160, 255), new Color32(160, 82, 200, 255) };
+            Color32[] slCol = { new Color32(230, 40, 30, 255), new Color32(120, 70, 200, 255), new Color32(170, 120, 220, 255), new Color32(240, 60, 150, 255) };
+            var map = new Color32[grid.Width * grid.Height];
+            int hyCells = 0, slCells = 0;
+            for (int i = 0; i < map.Length; i++)
+            {
+                byte hint = snap.Field.VariantHint[i];
+                if (hy[i] > 0) { map[i] = hyCol[Mathf.Clamp((hint & 0x0F) - 1, 0, hyCol.Length - 1)]; hyCells++; }
+                else if (sl[i] > 0) { map[i] = slCol[Mathf.Clamp((hint >> 4) - 1, 0, slCol.Length - 1)]; slCells++; }
+                else map[i] = IsVegetationGround(grid.Flags[i], snap.FinalZone[i]) ? new Color32(70, 80, 70, 255) : new Color32(0, 0, 0, 255);
+            }
+
+            Save(map, path, grid.Width, grid.Height);
+            Debug.Log("[TDCAP] accents: " + DD.Prototype.World.Vegetation.VegetationZoner.LastAccents + " | grid cells HY " + hyCells + " SL " + slCells + " -> " + path);
+        }
+
+        private static int CellOf(VegetationGrid grid, Vector3 p)
+        {
+            int cx = Mathf.FloorToInt((p.x - grid.Origin.x) / grid.Cell), cz = Mathf.FloorToInt((p.z - grid.Origin.y) / grid.Cell);
+            return cx < 0 || cz < 0 || cx >= grid.Width || cz >= grid.Height ? -1 : grid.Index(cx, cz);
+        }
+
+        /// <summary>The first grid cell whose ground the ray reaches (0.1 m steps over 120 m), or -1.</summary>
+        private static int MarchGround(VegetationGrid grid, Ray ray)
+        {
+            for (float t = 0f; t < 120f; t += 0.1f)
+            {
+                Vector3 p = ray.GetPoint(t);
+                int k = CellOf(grid, p);
+                if (k >= 0 && p.y <= grid.GroundY[k] + 0.02f) return k;
+            }
+
+            return -1;
+        }
+
+        public enum GroundClass { Cover, Natural, Paved }
+
+        /// <summary>A pixel of the id render: an id colour within 24 per channel, anything else cover (lit, shaded, black or blended).</summary>
+        public static GroundClass Classify(Color32 c)
+        {
+            if (Near(c, NaturalId)) return GroundClass.Natural;
+            if (Near(c, PavedId)) return GroundClass.Paved;
+            return GroundClass.Cover;
+        }
+
+        private static bool Near(Color32 a, Color32 b) => Mathf.Abs(a.r - b.r) <= 24 && Mathf.Abs(a.g - b.g) <= 24 && Mathf.Abs(a.b - b.b) <= 24;
+
+        private static void SetUnlitColour(Material m, Color32 c)
+        {
+            m.SetColor("_BaseColor", c);
+            m.SetColor("_Color", c);
+            m.SetFloat("_Surface", 0f);   // opaque
+        }
+
+        /// <summary>The legacy measure (WP-092 08.10), kept for comparison: every ground-shader renderer (and the fog / shaft cards)
+        /// hidden against a black clear, a pixel bare when its colour sums ≤ 6 — dark covered pixels included.</summary>
+        private static float LegacyBlackShare(Camera cam, string diagnosticPrefix)
         {
             var hidden = new List<Renderer>();
             foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
@@ -338,10 +688,12 @@ namespace DD.Art.Pipeline.EditorTools
             cam.farClipPlane = 600f;
             cam.enabled = false;
             WorldAtmosphere.ConfigureCamera(cam);
-            IDisposable vegetation = null;
+            IDisposable vegetation = null, zoneSnapshot = null;
             try
             {
                 Scene world = SceneManager.GetActiveScene();
+                // C-00 10.10 (B): the gate reads the zoner's own grid and final zones — recorded while the preview populates
+                if (requireVegetation) zoneSnapshot = DD.Prototype.World.Vegetation.VegetationPreview.BeginDiagnostics();
                 vegetation = VegetationPreview(world, requireVegetation, out int tier, out int instances);
                 body(cam);
                 if (requireVegetation && writeCombinedContext)
@@ -366,6 +718,7 @@ namespace DD.Art.Pipeline.EditorTools
             finally
             {
                 vegetation?.Dispose();
+                zoneSnapshot?.Dispose();
                 if (grain != null) grain.active = grainWas;
                 UnityEngine.Object.DestroyImmediate(go);
                 UnityEngine.Object.DestroyImmediate(root);
@@ -426,9 +779,12 @@ namespace DD.Art.Pipeline.EditorTools
             return NavMesh.SamplePosition(new Vector3(xz.x, 0f, xz.y), out NavMeshHit h, 3f, NavMesh.AllAreas) ? h.position : new Vector3(xz.x, 0f, xz.y);
         }
 
-        private static Color32[] Grab(Camera cam, int w, int h)
+        private static Color32[] Grab(Camera cam, int w, int h) => Grab(cam, w, h, 4);
+
+        /// <summary>One render into a <paramref name="w"/>×<paramref name="h"/> ARGB32 target; <paramref name="msaa"/> 1 for the id render (no blended edges).</summary>
+        private static Color32[] Grab(Camera cam, int w, int h, int msaa)
         {
-            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = msaa };
             var read = new Texture2D(w, h, TextureFormat.RGBA32, false);
             try
             {

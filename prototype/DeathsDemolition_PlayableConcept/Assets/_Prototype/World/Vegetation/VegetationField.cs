@@ -143,7 +143,8 @@ namespace DD.Prototype.World.Vegetation
         public readonly byte[] HeightScale;
         /// <summary>0 = no cap, else value × <see cref="HeightCapStep"/> m.</summary>
         public readonly byte[] HeightCap;
-        /// <summary>0 = variant by hash, else variant + 1 (HY blue near water / shade, pink in sun).</summary>
+        /// <summary>Flower accents' colour variant (AD v1.2, 10.10): HY in the low nibble, SL in the high nibble, each variant + 1; 0 = none.
+        /// Read by the accent species only (VegetationPlacer.AccentVariant); the other species pick their variant by hash.</summary>
         public readonly byte[] VariantHint;
         public readonly float[] GroundY;
         public float DefaultGroundY;

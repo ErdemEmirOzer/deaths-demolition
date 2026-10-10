@@ -40,37 +40,49 @@ Shader "DD/GroundTerrain"
         _GravelTile("Gravel (the pebble set, small)", Range(0.2, 4)) = 0.42
         _PebbleTile("Pebble", Range(0.3, 4)) = 1.1
 
+        // R3 10.10 (user: "too much brown and yellow on the ground"; AD v1.2): clean greens, neutral / cool soil and dirt, less of
+        // them (moss cover 0.12 → 0.30), litter cooled and halved; moss saturation 0.82 → 0.90 (AD MUST-1 ceiling). The builder
+        // copies these defaults into V6_GroundTerrain.mat (WorldV5Terrain.BuildMaterial): the shader's defaults are the tuning.
+        // w4 (measured on the w3 TD frames, AD K2 "median hue 92–110°, P95 s ≤ 0.50"): the lit moss still read 63–67° (olive) — moss
+        // tints red × 0.60, overall × 1.05 (luminance kept), blue × 1.04 (the look's warm filter is back), saturation 0.90 → 0.72;
+        // modelled on the w3 pixels: ground median ≈ 96°, lit ≈ 94°, P95 s ≈ 0.47.
+        // w5 (w4 frames: ground median 94–109°, yet 16 % of the bare moss pixels in the yellow-brown band): red ≤ 0.45 × green (linear,
+        // ≈ sRGB 0.70), saturation 0.72 → 0.65; value × 1.2 (C-00 10.10, S-06 AD N2: the dark hero costume — linear Y ≈ 0.009 —
+        // melts into a shaded moss ring ≈ 0.03; solved on the ground side): cushion 4.0 → 4.8, patch 1.9 → 2.28.
+        // w7 (td3, the bamboo path edges: yellow-brown 26 %, gold 4.4 %, visible soil 33 %): leaf cover 0.30 → 0.18, bamboo litter
+        // (0.20, 0.17, 0.10) → (0.15, 0.15, 0.11), off the yellow band.
         [Header(Grade (linear))]
-        _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.0
-        _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 1.9
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.82
+        _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.8
+        _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 2.28
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.65
+        _MossYellowClamp("Moss yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0.45
         // Tints and albedos are linear multipliers (Vector: a Color property would be sRGB-decoded in this Linear project).
-        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.90, 1.0, 0.95, 1)
-        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (1.10, 1.05, 0.70, 1)
-        _SoilValue("Soil value", Range(0.1, 2)) = 0.5
-        _SoilTint("Soil tint (linear)", Vector) = (1.0, 0.93, 0.86, 1)
-        _DirtValue("Dirt value", Range(0.1, 2)) = 0.66
-        _DirtTint("Dirt tint (linear)", Vector) = (1.0, 0.95, 0.88, 1)
+        _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.52, 1.05, 1.07, 1)
+        _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.58, 1.11, 0.90, 1)
+        _SoilValue("Soil value", Range(0.1, 2)) = 0.42
+        _SoilTint("Soil tint (linear)", Vector) = (0.88, 0.90, 0.95, 1)
+        _DirtValue("Dirt value", Range(0.1, 2)) = 0.58
+        _DirtTint("Dirt tint (linear)", Vector) = (0.90, 0.92, 0.95, 1)
         _GravelValue("Gravel value", Range(0.1, 2)) = 0.5
         _GravelSaturation("Gravel / pebble saturation (garden grey)", Range(0, 1)) = 0.35
         _GravelTint("Gravel tint (linear; cool slate)", Vector) = (0.95, 1.0, 1.06, 1)
         _PebbleValue("Pebble value", Range(0.1, 2)) = 0.42
-        _MudTint("Mud albedo (linear)", Vector) = (0.026, 0.021, 0.016, 1)
+        _MudTint("Mud albedo (linear)", Vector) = (0.022, 0.021, 0.020, 1)
         _PavedUnder("Under-paving bed (linear × the gravel; seen only at a piece's edge, or before the kit is laid)", Vector) = (0.42, 0.42, 0.42, 1)
         _LitterFresh("Litter momiji (LOOK-BIBLE #6E4632, linear)", Vector) = (0.155, 0.061, 0.031, 1)
         _LitterDry("Litter momiji dry (#86603E, linear)", Vector) = (0.238, 0.117, 0.048, 1)
-        _LitterOld("Litter old (#6A5A44, linear)", Vector) = (0.144, 0.102, 0.058, 1)
-        _LitterBamboo("Litter bamboo (dry culm leaf, linear)", Vector) = (0.20, 0.17, 0.10, 1)
+        _LitterOld("Litter old (cooled, AD v1.2: was #6A5A44; linear)", Vector) = (0.102, 0.090, 0.072, 1)
+        _LitterBamboo("Litter bamboo (dry culm leaf, linear; w7: off the yellow band)", Vector) = (0.15, 0.15, 0.11, 1)
 
         [Header(Fields)]
         _ToneScale("Tone field (m)", Range(4, 40)) = 11.0
         _ToneValue("Tone value swing", Range(0, 0.4)) = 0.12
         _PatchScale("Moss / soil patch field (m)", Range(1, 20)) = 4.6
-        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.12
+        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.30
         _HeightBlend("Height-blend strength", Range(0, 2)) = 0.9
         _LeafScale("Leaf cell (m; a leaf ≈ 0.85 × 0.5 of it)", Range(0.03, 0.4)) = 0.09
-        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.55
-        _LeafMute("Leaf colour mute (toward its own luma)", Range(0, 1)) = 0.3
+        _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.18
+        _LeafMute("Leaf colour mute (toward its own luma)", Range(0, 1)) = 0.5
 
         [Header(Relief)]
         _NormalStrength("Texture normal strength", Range(0, 2)) = 1.25
@@ -123,7 +135,7 @@ Shader "DD/GroundTerrain"
             float4 _MaskBounds;
             float _MaskTexel;
             half _MossTile, _Moss2Tile, _SoilTile, _DirtTile, _GravelTile, _PebbleTile;
-            half _MossValue, _Moss2Value, _MossSaturation;
+            half _MossValue, _Moss2Value, _MossSaturation, _MossYellowClamp;
             half4 _MossTintShade, _MossTintSun;
             half _SoilValue; half4 _SoilTint;
             half _DirtValue; half4 _DirtTint;
@@ -304,6 +316,7 @@ Shader "DD/GroundTerrain"
                 half mossMix = smoothstep(0.35h, 0.65h, mix2);
                 half3 moss = lerp(m1, m2, mossMix);
                 moss = lerp(DDLuma(moss).xxx, moss, _MossSaturation) * lerp(_MossTintShade.rgb, _MossTintSun.rgb, tone);
+                if (_MossYellowClamp > 0.0h) moss.r = min(moss.r, moss.g * _MossYellowClamp);
                 half3 soil = SAMPLE_TEXTURE2D(_SoilMap, sampler_MossMap, uvSoil).rgb * _SoilValue * _SoilTint.rgb;
                 half3 dirt = SAMPLE_TEXTURE2D(_DirtMap, sampler_MossMap, uvDirt).rgb * _DirtValue * _DirtTint.rgb;
                 half3 gravel = SAMPLE_TEXTURE2D(_GravelMap, sampler_MossMap, uvGravel).rgb * _GravelValue;
