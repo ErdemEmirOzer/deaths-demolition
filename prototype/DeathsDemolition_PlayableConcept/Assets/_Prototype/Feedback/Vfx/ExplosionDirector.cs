@@ -174,8 +174,9 @@ namespace DD.Prototype.Feedback.Vfx
             if (_owner == null || !_owner.IsReady || mask == 0) return false;
             bool rocket = source == ExplosionSource.Rocket;
             bool brushOwned = FeelBrushVfxSystem.OwnsTdLayers;
-            // Reserve once before debris and the following FeelEvents ring/light are presented.
-            if (brushOwned && !FeelBrushVfxSystem.TryReserveExplosion(at, radius)) return true;
+            // Reserve once before debris and the following FeelEvents ring/light are presented. M-62: a rocket is never the one
+            // refused - with every slot held it takes over the oldest small blast's reservation.
+            if (brushOwned && !FeelBrushVfxSystem.TryReserveExplosion(at, radius, rocket)) return true;
             if (!rocket) mask &= 1 | 2 | 8;
             int full = 0;
             for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].Full) full++;
@@ -233,15 +234,20 @@ namespace DD.Prototype.Feedback.Vfx
                 ref Blast b=ref _blasts[i];if(!b.Active)continue;float age=now-b.Start;
                 if (b.BrushOwned)
                 {
-                    // FeelEvents owns the new ring/light. Retain this prewarmed AP010 debris/smoke owner once.
+                    // FeelEvents owns the new ring/light. Retain this prewarmed AP010 debris/smoke owner once - under the layered
+                    // path's rules: the smoke column is a rocket's and the debris a grounded Full rocket's (M-62: a small blast -
+                    // explosive rounds, bomblets, split rockets - keeps its brush ring, light and scorch; M-56: an air burst lays none).
                     if (age >= .033f && (b.Stages & 2) == 0)
                     {
                         b.Stages |= 2;
-                        B3Particles.Emit(_column, b.At + Vector3.up * .2f, Vector3.up * .45f,
-                            1.8f * b.Scale, 1.0f, new Color(.56f, .58f, .60f, .35f * b.Guard));
-                        Columns++;
+                        if (b.Rocket && (b.Mask & 4) != 0)
+                        {
+                            B3Particles.Emit(_column, b.At + Vector3.up * .2f, Vector3.up * .45f,
+                                1.8f * b.Scale, 1.0f, new Color(.56f, .58f, .60f, .35f * b.Guard));
+                            Columns++;
+                        }
                     }
-                    if (age >= .05f && (b.Stages & 4) == 0)
+                    if (age >= .05f && (b.Stages & 4) == 0 && b.Full && b.Grounded && (b.Mask & 4) != 0)
                     {
                         b.Stages |= 4;
                         int count = VfxTier.Pick(6, 9, 12);

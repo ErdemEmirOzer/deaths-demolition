@@ -12,7 +12,6 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Enemies;
 using DD.Prototype.Damage;
-using UnityEngine.InputSystem;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
@@ -300,10 +299,9 @@ namespace DD.Prototype.Diagnostics
             ResetPresentation();
             _phaseKind = kind; _plannedFrames = frames; _windowIndex = kind == PhaseKind.Steady ? side : kind == PhaseKind.NaturalRound ? side + 2 : kind == PhaseKind.Compatibility ? side + 4 : 6;
             _window = new Window { phase = kind.ToString(), layersOn = side == 1, plannedFrames = frames, logicalSeconds = frames / 60d, initialCrowdHash = CrowdHash(), before = State() };
-            Gamepad pad = Gamepad.current; var prefs = InputPreferencesStore.Current;
-            _window.deviceId = pad != null ? pad.deviceId : 0; _window.deviceLayout = pad != null ? pad.layout : "NONE";
-            _window.deviceInterface = pad != null ? pad.description.interfaceName : "NONE";
-            _window.initialNativeDevice = pad != null && pad.native; _window.initialRumbleEnabled = prefs.RumbleEnabled;
+            var prefs = InputPreferencesStore.Current;   // the pad through Input/FeelCostDevices (only Input/ reads the Input System)
+            FeelCostDevices.Read(out _window.deviceId, out _window.deviceLayout, out _window.deviceInterface, out _window.initialNativeDevice);
+            _window.initialRumbleEnabled = prefs.RumbleEnabled;
             _window.initialProfileRumble = FeelProfileTD.Active.rumble; _window.initialIntensity = prefs.RumbleIntensity; _window.rumbleOwnerAvailable = _rumble != null;
             FeelCostMeasurement.LayersOn = side == 1; FeelCostMeasurement.GateActive = true;
             FeelCostMeasurement.NaturalRoundPhase = kind == PhaseKind.NaturalRound;
@@ -372,13 +370,13 @@ namespace DD.Prototype.Diagnostics
         }
         private void ObserveDeviceFrame()
         {
-            Gamepad pad = Gamepad.current; var prefs = InputPreferencesStore.Current;
-            int id = pad != null ? pad.deviceId : 0;
-            if (id != _window.deviceId || (pad != null && pad.layout != _window.deviceLayout)) _window.deviceChanges++;
-            if (pad != null && pad.native) _window.nativeDeviceFrames++;
+            var prefs = InputPreferencesStore.Current;
+            FeelCostDevices.Read(out int id, out string layout, out _, out bool native);   // id 0 = no pad
+            if (id != _window.deviceId || (id != 0 && layout != _window.deviceLayout)) _window.deviceChanges++;
+            if (native) _window.nativeDeviceFrames++;
             if (prefs.RumbleEnabled != _window.initialRumbleEnabled || prefs.RumbleIntensity != _window.initialIntensity || FeelProfileTD.Active.rumble != _window.initialProfileRumble)
                 _window.preferenceStable = false;
-            if (pad != null && pad.native && !RunFlowClock.IsFrozen && prefs.RumbleEnabled && FeelProfileTD.Active.rumble) _window.eligibleFrames++;
+            if (native && !RunFlowClock.IsFrozen && prefs.RumbleEnabled && FeelProfileTD.Active.rumble) _window.eligibleFrames++;
         }
         private static StateProof State()
         {
@@ -407,7 +405,7 @@ namespace DD.Prototype.Diagnostics
                 gcBytes = FeelCostMeasurement.FrameGcBytes, stopwatchNs = FeelCostMeasurement.FrameStopwatchNs,
                 overheadNs = FeelCostMeasurement.FrameInstrumentationNs, crowd = crowd, errors = FeelCostMeasurement.ErrorBits,
                 phase = (int)RunDirector.Instance.Phase, pool = EnemySpawnDirector.Instance.RemainingInPool, killed = EnemySpawnDirector.Instance.KilledThisRound,
-                tracerAttempts = _window.tracerAttempts, tracerSpawns = _window.tracerSpawns, deviceId = Gamepad.current != null ? Gamepad.current.deviceId : 0,
+                tracerAttempts = _window.tracerAttempts, tracerSpawns = _window.tracerSpawns, deviceId = FeelCostDevices.PadId,
                 eligible = _window.eligibleFrames, visualInactive = HitStopService.FeelCostVisualInactive, visualZero = HitStopService.FeelCostVisualGroupZero,
                 visualMismatch = HitStopService.FeelCostVisualMismatch, visualGlobal = HitStopService.FeelCostVisualGlobalGuard,
                 visualLocal = HitStopService.FeelCostVisualLocalAdjusted, visualOff = HitStopService.FeelCostVisualOffSkip, visualNonpositive = HitStopService.FeelCostVisualNonpositiveDelta };

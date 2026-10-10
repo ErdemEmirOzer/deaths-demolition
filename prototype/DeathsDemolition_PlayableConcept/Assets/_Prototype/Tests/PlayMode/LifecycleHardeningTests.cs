@@ -232,8 +232,10 @@ namespace DD.Prototype.Tests.PlayMode
                 // WP-094 (08.10, K/wp-095/FEELEVENTS-LISTE.md): the FeelEvents bridge is process-long (0 in this difference);
                 // the HUD's listeners are scene-local and paired in OnDestroy - HudFeelSource's one PlayerDamaged bridge (made
                 // with the first HUD listener, dropped with the last) and RunHudScreen's eight moments, one each.
+                // WP-082 E5 (19d23458, R3 hero): PlayerSkinnedVisual ends a Special's magazine reload on FeelEvents.ReloadEnded -
+                // scene-local, paired in OnEnable / OnDisable / OnDestroy with the player rig (ReloadEnded 1 → 2).
                 { "FeelEvents.PlayerDamaged", 1 }, { "FeelEvents.RoundStarted", 1 }, { "FeelEvents.DryFire", 1 },
-                { "FeelEvents.ReloadEnded", 1 }, { "FeelEvents.EnemyHit", 1 }, { "FeelEvents.EnemyKilled", 1 },
+                { "FeelEvents.ReloadEnded", 2 }, { "FeelEvents.EnemyHit", 1 }, { "FeelEvents.EnemyKilled", 1 },
                 { "FeelEvents.MultiKill", 1 }, { "FeelEvents.LowHealth", 1 }, { "FeelEvents.LastZombie", 1 },
             };
             // Tamlık nöbetçisi (WP-007): tabloya girmeyen izlenen olay sessizce geçemez.
