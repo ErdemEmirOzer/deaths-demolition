@@ -29,7 +29,8 @@ namespace DD.Art.Tests.EditMode
             // Shader.passCount reads the ACTIVE subshader, which under -nographics is the fallback; read the authored subshader.
             int passes = ShaderUtil.GetShaderData(shader).GetSubshader(0).PassCount;
             Assert.AreEqual(4, passes, "ForwardLit + ShadowCaster + DepthOnly + DepthNormals bekleniyor.");
-            foreach (string prop in new[] { "_BaseMap", "_BaseColor", "_BumpMap", "_MetallicGlossMap", "_Cutoff", "_Cull", "_AlphaToMask", "_WindScale", "_BackfaceLighting", "_Translucency" })
+            // WP-092 R3: + the colour grade (_HueShift, _Saturation, _PetalColor, _PetalBoost; identity defaults).
+            foreach (string prop in new[] { "_BaseMap", "_BaseColor", "_BumpMap", "_MetallicGlossMap", "_Cutoff", "_Cull", "_AlphaToMask", "_WindScale", "_BackfaceLighting", "_Translucency", "_HueShift", "_Saturation", "_PetalColor", "_PetalBoost" })
             {
                 Assert.IsTrue(shader.FindPropertyIndex(prop) >= 0, "DD/Foliage Wind özelliği eksik: " + prop);
             }
@@ -63,6 +64,12 @@ namespace DD.Art.Tests.EditMode
                 if (m.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")) ihlaller.Add(rol + ": saydam olmamalı");
                 if (!m.enableInstancing) ihlaller.Add(rol + ": instancing kapalı");
                 if (cutout && m.renderQueue != (int)RenderQueue.AlphaTest) ihlaller.Add(rol + ": renderQueue " + m.renderQueue);
+                // WP-092 R3: the material carries its row's colour grade (identity rows included: 0 / 1 / white / 0).
+                if (Mathf.Abs(m.GetFloat("_HueShift") - spec.HueShift) > 0.01f) ihlaller.Add(rol + ": _HueShift " + m.GetFloat("_HueShift") + " (beklenen " + spec.HueShift + ")");
+                if (Mathf.Abs(m.GetFloat("_Saturation") - spec.Saturation) > 0.001f) ihlaller.Add(rol + ": _Saturation " + m.GetFloat("_Saturation") + " (beklenen " + spec.Saturation + ")");
+                if (Mathf.Abs(m.GetFloat("_PetalBoost") - spec.PetalBoost) > 0.001f) ihlaller.Add(rol + ": _PetalBoost " + m.GetFloat("_PetalBoost") + " (beklenen " + spec.PetalBoost + ")");
+                Color petal = m.GetColor("_PetalColor").linear;
+                if (Mathf.Abs(petal.r - spec.PetalColor.r) > 0.01f || Mathf.Abs(petal.g - spec.PetalColor.g) > 0.01f || Mathf.Abs(petal.b - spec.PetalColor.b) > 0.01f) ihlaller.Add(rol + ": _PetalColor lineer " + petal + " (beklenen " + spec.PetalColor + ")");
             }
 
             // Lit kalanlar gerçekten Lit (yosun, kabuk, taş): rüzgâr yalnız bitkide.

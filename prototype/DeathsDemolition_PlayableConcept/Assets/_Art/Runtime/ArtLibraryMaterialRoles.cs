@@ -83,6 +83,19 @@ namespace DD.Art
             /// <summary>WP-092 C · Linear multiplier of the emission map (<c>_EmissionColor</c> = white × this, HDR); baked into GI (BakedEmissive).</summary>
             public float EmissionIntensity;
 
+            /// <summary>WP-092 R3 · DD/Foliage Wind <c>_Saturation</c>: saturation around the albedo's own luminance (display space; a boost
+            /// leaves the warm arc 355–65° alone). 1 = as authored. Foliage-wind roles only (the builder refuses it on Lit / Water).</summary>
+            public float Saturation = 1f;
+            /// <summary>WP-092 R3 · <c>_HueShift</c>, HSV degrees, + = red → yellow → green → cyan (luminance kept). 0 = as authored.</summary>
+            public float HueShift;
+            /// <summary>WP-092 R3 · <c>_PetalColor</c>: linear multiplier on the albedo inside the petal mask (texture blue over green). White = none.</summary>
+            public Color PetalColor = Color.white;
+            /// <summary>WP-092 R3 · <c>_PetalBoost</c>: luminance-keeping saturation boost (1 + this) inside the petal mask. 0 = none.</summary>
+            public float PetalBoost;
+
+            /// <summary>WP-092 R3 · True when any colour-grade field leaves its identity value.</summary>
+            public bool HasColourGrade => Saturation != 1f || HueShift != 0f || PetalBoost != 0f || PetalColor != Color.white;
+
             public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap;
             public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasBaseColorMap => Kind != Kind.Flat;
@@ -106,6 +119,19 @@ namespace DD.Art
 
             return list.ToArray();
         }
+
+        // WP-092 R3 (user note 10.10: "more vivid plants and objects, too much brown-yellow, sprinkle purple / pink / mauve"; AD verdict:
+        // vivid = neutralise the brown-yellow, saturate the surfaces that carry colour). The grade values below were measured offline on
+        // the shipped atlases (alpha ≥ 0.5 texels, the shader's DD_FoliageGrade reproduced in Python): luminance (linear Rec.709) of every
+        // hue / saturation-graded texel is unchanged, so DEC-077's ΔY against the characters reads the same.
+
+        /// <summary>WP-092 R3 · Canopy hue shift (black pine, bamboo, groundcover): HSV +5° = away from yellow toward blue-green (the AD's
+        /// "−4…−6°, sarıdan uzak" in this property's sign; measured +4.3° pine / +6.6° bamboo / +5.0° groundcover display hue).</summary>
+        public const float CanopyHueShift = 5f;
+        /// <summary>WP-092 R3 · Canopy saturation (AD 1.10): measured CIELAB chroma +9 % pine, +13 % bamboo (with the hue), +10 % groundcover.</summary>
+        public const float CanopySaturation = 1.10f;
+        /// <summary>WP-092 R3 · Sakura crown saturation (AD 1.15): measured chroma +10 %; the pinks keep their hue (≈ 336–348°), the blood band stays as authored.</summary>
+        public const float SakuraSaturation = 1.15f;
 
         /// <summary>WP-017 · Linear multiplier of the AP-005B world plaster (measured: × 0.82 on the hf003 mean gives sRGB (203, 202, 193) ≈ #CDCBC1).</summary>
         public const float WorldPlasterTint = 0.82f;
@@ -225,7 +251,8 @@ namespace DD.Art
                 // colour stream and must not move).
                 rows.Add(new Spec { Role = "green_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "green_foliage_" + nn, Shader = ShaderKind.FoliageWind });
                 rows.Add(new Spec { Role = "green_foliage_" + nn + "_solid", Kind = Kind.Textured, TextureRole = "green_foliage_" + nn, Shader = ShaderKind.FoliageWind });
-                rows.Add(new Spec { Role = "sakura_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "sakura_foliage_" + nn, Shader = ShaderKind.FoliageWind });
+                // WP-092 R3: sakura crowns × 1.15 saturation (AD), as the AP-023 sprigs.
+                rows.Add(new Spec { Role = "sakura_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "sakura_foliage_" + nn, Shader = ShaderKind.FoliageWind, Saturation = SakuraSaturation });
             }
 
             // AP-003B recipes: culm roughness ramp 0.35..0.65 → smoothness ≈ 0.5; gravel 0.60..0.95 → ≈ 0.22.
@@ -243,7 +270,12 @@ namespace DD.Art
             // Tripo ORM carries no AO (R = 1) and metallic is forced to 0 in production.
             foreach (string prop in new[] { "tsukubai", "handcart", "strawbales", "barrels", "mossrock", "shed" })
             {
-                rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
+                var spec = new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop };
+                // WP-092 R3 · straw neutralised (AD: saturation ≈ −30 %, value ≈ −10 %, "(0.90, 0.90, 0.98) civarı" as stored): stored
+                // (0.905, 0.935, 1.000) keeps the straw hue (36.7° → 36.4°; the AD's example turns it orange-brown, 36.7° → 28.3°).
+                // Measured on the atlas mean: HSV s 0.271 → 0.188 (−31 %), V 0.413 → 0.371 (−10 %).
+                if (prop == "strawbales") spec.Tint = new Color(0.797f, 0.858f, 1.000f, 1f);
+                rows.Add(spec);
             }
 
             // WP-038I · AP-017 Phase 2 props (Tripo H3.1, 1K sets → Prop class 512): the same AP-005B path — ORM Packed → derived
@@ -290,8 +322,18 @@ namespace DD.Art
                 // DEC-102 AD MUST-C1 (25.09: sun-lit roof patch L ≤ 38, b ≤ +6; HF L35 a1 b3): the "brown roofs" were wood_planks on the
                 // kawara faces (ArtLibraryPrefabBuilder.MatchSlotsByFaces); on the tiles the AD's tint (0.50, 0.60, 0.85), the bake's
                 // smoothness kept (a glossier wet roof mirrors the cool zenith, a rougher one caught the sun 40° off: × 0.75 read b +9).
-                if (tile == "roof_tiles") spec.Tint = new Color(0.50f, 0.60f, 0.85f, 1f);
+                // WP-092 R3 (AD): ibushi silver-blue — stored _BaseColor (0.735, 0.798, 0.931) → (0.70, 0.78, 0.95), i.e. linear
+                // (0.50, 0.60, 0.85) → (0.448, 0.570, 0.890). Measured on the kawara atlas mean: hue 218.6° → 219.2°, HSV s 0.33 → 0.38,
+                // V 0.254 → 0.260, CIELAB L 21.1 → 20.6.
+                if (tile == "roof_tiles") spec.Tint = new Color(0.448f, 0.570f, 0.890f, 1f);
                 if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
+                // WP-092 R3 · tatami stays white: the interior tatami floor is walkable and shares the maps with the tawara straw, and the
+                // straw neutral tint (linear (0.787, 0.807, 0.977)) takes 19 % off its luminance (0.421 → 0.341) — DEC-077 ground, not changed.
+                // WP-092 R3 · shu lacquer (the gates' vermilion frame) a little more vivid inside the AD's 8–14° band: the authored atlas sits at
+                // 6.0° with 9.7 % of its texels in the forbidden 358–5° blood band. Linear (1, 0.81, 0.50): V unchanged (red channel × 1),
+                // HSV s 0.680 → 0.781 (+15 %), hue 6.0° → 10.0°; 98 % of texels in 8–14°, none in 358–5°.
+                if (tile == "vermilion") spec.Tint = new Color(1.00f, 0.81f, 0.50f, 1f);
+                // Walkable timber (wood_planks / wood_timber: decks, bridges, kairō floors, fence posts) stays white: value unchanged (DEC-077).
                 rows.Add(spec);
             }
 
@@ -308,11 +350,31 @@ namespace DD.Art
                 // the grazing cards mirrored the sky round the sun at 0.40 (needles are matte: 0.15) and the shaded crowns lost their green
                 // under the cool ambient (× 0.70 / 1.00 / 0.60 keeps them green).
                 if (atlas == "pine_needles") { spec.Smoothness = 0.15f; spec.Tint = new Color(1.45f, 1.40f, 0.35f, 1f); }   // M-46 (01.10, DEC-102 uygulama düzeltmesi): forest green 130–145°, no lime/neon
+
+                // WP-092 R3 (AD) · black pine / bamboo crowns and the groundcover: a little toward blue-green, a little more vivid.
+                // Measured (atlas × tint, display HSV of the mean): pine 78.6° s 0.77 → 82.7° s 0.84 (CIELAB C* 32.8 → 35.9); bamboo
+                // 103.9° s 0.51 → 110.4° s 0.55 (C* 44.4 → 50.3); groundcover 93.6° s 0.33 → 99.2° s 0.35 (C* 23.9 → 26.3).
+                if (atlas == "bamboo_leaves" || atlas == "pine_needles" || atlas == "groundcover") { spec.HueShift = CanopyHueShift; spec.Saturation = CanopySaturation; }
+                // Sakura sprigs × 1.15: C* 24.0 → 26.4, hue 348.0° → 347.7°; the 355–5° texels are not boosted (warm arc).
+                if (atlas == "sakura_sprigs") spec.Saturation = SakuraSaturation;
+                // Satsuki (AD): leaves × 1.10; the pale flowers (sRGB ≈ #DEC1D2, s 0.11, 4.3 % of the covered texels) recoloured to the AD's
+                // azalea pair A #AD507F (70 %) / B #99497E (30 %): the multiplier lands the petal mean on the 70/30 mix #A74E7F (HSV 327°,
+                // s 0.53, V 0.66); the authored shading spreads it 80 % nearest A / 20 % nearest B (p10–p90 s 0.49–0.64, V 0.61–0.69).
+                if (atlas == "satsuki") { spec.Saturation = CanopySaturation; spec.PetalColor = new Color(0.514f, 0.136f, 0.317f, 1f); }
+                // Pond iris (AD): the blue-violet flowers (247°, s 0.48) turned violet, petal mean exactly #6C4A94 (268°, s 0.50, V 0.58) with a
+                // 0.2 boost; the leaves and the cattail heads are outside the mask (largest change there 2.4e-5).
+                if (atlas == "reeds_iris") { spec.PetalColor = new Color(1.360f, 0.896f, 0.777f, 1f); spec.PetalBoost = 0.20f; }
+                // The hishigaki lattice card is the straw fence: neutralised like the straw (stored (0.905, 0.925, 0.980)): hue 42.1° → 42.6°,
+                // HSV s 0.219 → 0.152 (−31 %), V 0.621 → 0.560 (−10 %).
+                if (atlas == "hishigaki_card") spec.Tint = new Color(0.797f, 0.838f, 0.955f, 1f);
+                // momiji_sprigs keeps its authored colour (green leaves with red-brown tips; AD: the momiji keeps its own red), as do
+                // violet_sprigs and lotus.
                 rows.Add(spec);
             }
 
             // AP-023 v008 · the sugi LOD0 crown pads (AP023_M_pine_needles_pad_v001): the pine_needles atlas, front faces only.
-            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(1.45f, 1.40f, 0.35f, 1f), SingleSided = true });
+            // WP-092 R3: graded like the pine_needles role it shares the atlas with.
+            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(1.45f, 1.40f, 0.35f, 1f), SingleSided = true, HueShift = CanopyHueShift, Saturation = CanopySaturation });
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
             rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });
