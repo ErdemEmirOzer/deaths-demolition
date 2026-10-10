@@ -263,6 +263,26 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
+            // WP-092 AP-038 (9ab684e2, the V02 kairo door): a bounded library (Ap038BoundedImporter), not one of ArtLibraryPaths.Packages —
+            // its manifest's FBX join the family table here (WP-096 R3, CI e8fc3f70: hidden behind the clip-count assert until 254 held)
+            int ap038 = 0;
+            string ap038Json = ArtLibraryPaths.ManifestJson("AP-038");
+            if (File.Exists(ap038Json))
+            {
+                ArtLibraryManifest m38 = ArtLibraryManifest.FromJson(File.ReadAllText(ap038Json));
+                foreach (ArtLibraryManifest.Family f in m38.families)
+                foreach (ArtLibraryManifest.Variation v in f.variations)
+                {
+                    foreach (ArtLibraryManifest.Part part in v.parts)
+                    foreach (ArtLibraryManifest.Lod lod in part.lods)
+                        if (beklenen.Add(ArtLibraryPaths.Fbx("AP-038", f.family, lod.fbx))) ap038++;
+                    foreach (ArtLibraryManifest.Collider c in v.colliders)
+                        if (beklenen.Add(ArtLibraryPaths.Fbx("AP-038", f.family, c.fbx))) ap038++;
+                }
+
+                Assert.AreEqual(1, ap038, "AP-038: tek kapı FBX'i (AP023_kairo_door_V02; LOD'lar ve çarpıştırıcılar aynı dosyada)");
+            }
+
             // WP-038 (ADR-038-1): the AP-015P surface plates and water meshes listed by the surfaces manifest.
             int yuzey = 0;
             foreach (string f in ArtSurfaceImporter.ManifestFbxPaths()) if (beklenen.Add(f)) yuzey++;
@@ -277,7 +297,7 @@ namespace DD.Art.Tests.EditMode
             int klip = 0;
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
-            Assert.AreEqual(244, klip, "244 = 236 + AP-033 p2 zombie locomotion 8 (WP-096: lurch_B, drag_A/B, run_feral_B, run_stumble_A, walk_heavy_A/B, walk_stomp_B); 236 = 232 + AP-033 p1 zombie locomotion 4 (WP-096: lurch_A, limp_A, run_feral_A, walk_stomp_A); 232 = 222 + AP-022 player locomotion 10 (MUST-3/4); 222 = 217 + AP-022 zombie locomotion 5 (MUST-I1); 217 = 205 + FP Special 12; 205 = 203 + lmg_2 tray reloads 2; 203 = 194 + smg_2 FP 9 (WP-071 r2); 194 = 182 + TP Special family 12; 182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
+            Assert.AreEqual(254, klip, "254 = 244 + AP-033 p3 zombie transitions 10 (WP-096 185bbe6b: start_walk, start_run, stop_walk_l/r, stop_run_l/r, turn45_run_L, turn90_L, turn180_L, stumble_recover); 244 = 236 + AP-033 p2 zombie locomotion 8 (WP-096: lurch_B, drag_A/B, run_feral_B, run_stumble_A, walk_heavy_A/B, walk_stomp_B); 236 = 232 + AP-033 p1 zombie locomotion 4 (WP-096: lurch_A, limp_A, run_feral_A, walk_stomp_A); 232 = 222 + AP-022 player locomotion 10 (MUST-3/4); 222 = 217 + AP-022 zombie locomotion 5 (MUST-I1); 217 = 205 + FP Special 12; 205 = 203 + lmg_2 tray reloads 2; 203 = 194 + smg_2 FP 9 (WP-071 r2); 194 = 182 + TP Special family 12; 182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
             // WP-082 R3 · AP-026 v002 locomotion (AP026-loco-manifest.json): idle_03 + 24 loops + 48 starts + 48 stops = 121.
             int loco = 0;
             var locoManifest = ArtAnimationClipContract.LocoManifest();
