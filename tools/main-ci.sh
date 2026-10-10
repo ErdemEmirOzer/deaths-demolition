@@ -27,7 +27,8 @@
 # Env (Codex-audit M-10, C-00 30.09): right before the tests every variable the CI checkout's C# reads is unset except HOME
 # (dd_scrub_code_env); the cleared names go into summary.json envScrubbed / summary.md; git grep failure → 3.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
-#   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing · 65 a guard window NOT restored
+#   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, the SHA's acoustic map not baked from
+#   its json (WP-099 10.10, before any checkout) · 65 a guard window NOT restored
 #   (G4 D2 MUST-3a, C-00 01.10: a child still alive at cleanup, or a Unity has the CI checkout open / the check failed at the
 #   restore) — $OUT/userdata-NOT-RESTORED.txt, slot + lease kept, tell C-00; or such a marker unresolved under
 #   $OUT_ROOT/*/ at the start (no .resolved next to it — only C-00 writes it): nothing taken · 64 usage, unknown commit, an unrestored guard window of this SHA,
@@ -175,6 +176,16 @@ ci_project_open; OPEN=$?
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
 dd_log "main-ci driver=$CI_DRIVER head=$CI_DRIVER_HEAD toolsTree=$CI_TOOLS_TREE (= main:tools)"
+# WP-099 (C-00 10.10): a commit whose acoustic map is not baked from its json (tools/qa/acoustic_bake.py — the same check as
+# integrate.sh gate 4c, but on EVERY sha, merges included) would let Unity re-bake it and leave the CI checkout dirty: the
+# NEXT run would then refuse (exit 3 below). Refuse now, before any checkout or Unity, with the reason. C-00 may run it
+# anyway with DD_CI_ACOUSTIC_EXEMPT="<reason>" (logged); restore the re-baked file in the CI checkout afterwards.
+AC_TOOL="${0:A:h}/qa/acoustic_bake.py"
+if [ ! -f "$AC_TOOL" ]; then dd_log "WARNING acoustic check skipped: $AC_TOOL missing"
+elif AC=$(python3 "$AC_TOOL" tree "$DD_REPO" "$SHA" 2>&1); then dd_log "acoustic map: $AC"
+elif [ -n "${DD_CI_ACOUSTIC_EXEMPT:-}" ]; then dd_log "WARNING acoustic map NOT baked ($AC) — run anyway, DD_CI_ACOUSTIC_EXEMPT: $DD_CI_ACOUSTIC_EXEMPT"
+else dd_log "acoustic map not baked at ${SHA:0:12}: $AC — the run would leave the CI checkout dirty; refusing (DD_CI_ACOUSTIC_EXEMPT=\"<reason>\" overrides)"; exit 3
+fi
 
 # 1) CI worktree on the commit (detached; created once, then checkout only)
 if [ ! -e "$CI_DIR/.git" ]; then

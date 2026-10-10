@@ -1,12 +1,14 @@
 #!/bin/zsh
 # WP-043 · ADR-043-1 · tools/integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths <glob,…>] [--s01]
 #                                          [--message <tag msg>] [--repo DIR] [--no-post] [--subject-exempt <reason>]
+#                                          [--acoustic-exempt <reason>]
 #
 # C-00's integration gate as one command. DEFAULT IS DRY-RUN (checks + report). --apply integrates.
 #   Gate:  single parent · source worktree clean (if the branch has one) · every changed path inside the
 #          allowed scope (Assets/_Prototype|_Art|TextMesh Pro, project README.md/PROTOTYPE-ONLY.md, planning/, tools/, wp-*/README*; more via
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
-#          · acoustic map baked from its source when the source touches it (gate 4c, C-00 10.10)
+#          · acoustic map baked from its source when the source touches it (gate 4c, C-00 10.10; also on the merged index;
+#          --acoustic-exempt "<reason>" skips it, loudly)
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers · commit-message format
 #          (Codex-audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
 #          with Test/Tests/Guarded, any case, or mentions EditMode/PlayMode); --subject-exempt "<reason>" skips it
@@ -30,13 +32,14 @@ set -u
 setopt nullglob
 REPO_EXPLICIT=${DD_REPO:+1}   # DD_REPO from the caller's environment counts as explicit, like --repo
 source "${0:A:h}/dd-env.sh"
-SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0; EXEMPT=""; EXEMPT_SET=0
+SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0; EXEMPT=""; EXEMPT_SET=0; AC_EXEMPT=""; AC_EXEMPT_SET=0
 say() { [ "$VERBOSE" -eq 1 ] && echo "$@"; return 0; }   # informational lines only with --verbose (HIZLI HAT §7: 3-line output)
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift ;; --apply) APPLY=1 ;; --allow-paths) ALLOW="$2"; shift ;; --s01) S01=1 ;;
     --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; REPO_EXPLICIT=1; shift ;; --no-post) NOPOST=1 ;; --compile) COMPILE=1 ;; --verbose|-v) VERBOSE=1 ;;
     --subject-exempt) EXEMPT="${2-}"; EXEMPT_SET=1; [ $# -ge 2 ] && shift ;;
+    --acoustic-exempt) AC_EXEMPT="${2-}"; AC_EXEMPT_SET=1; [ $# -ge 2 ] && shift ;;
     -*) echo "unknown option: $1" >&2; exit 64 ;;
     *) [ -z "$SRC" ] && SRC="$1" || { echo "one source only" >&2; exit 64; } ;;
   esac
@@ -45,6 +48,7 @@ done
 [ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--subject-exempt reason] [--verbose]" >&2; exit 64; }
 # Codex-audit K-02 (C-00 30.09): the exemption is explicit and carries a reason — an empty one is a usage error.
 [ "$EXEMPT_SET" -eq 0 ] || [[ "$EXEMPT" == *[![:space:]]* ]] || { echo "--subject-exempt needs a non-empty reason" >&2; exit 64; }
+[ "$AC_EXEMPT_SET" -eq 0 ] || [[ "$AC_EXEMPT" == *[![:space:]]* ]] || { echo "--acoustic-exempt needs a non-empty reason" >&2; exit 64; }
 # S-09 / C-00 05.10: without --repo (or DD_REPO) the repository is its MAIN worktree, not the checkout this script runs
 # from — run from a (possibly dirty) linked worktree it used to judge that worktree as "main".
 REPO_DEFAULTED=0
@@ -187,39 +191,32 @@ fi
 
 # --- gate 4c: the acoustic map is baked from its source (C-00 10.10; gt SHOULD-1 on c94625a7). AudioCatalogBuilder
 #     .BuildAcousticSpaces re-bakes DD_AcousticSpaces.asset whenever its _sourceHash != sha256(acoustic-spaces-v6.json)[:16]
-#     (File.ReadAllText drops a UTF-8 BOM, Encoding.UTF8.GetBytes adds none) — a stale pair rewrites a tracked file in every
-#     Unity run: main-ci refuses its dirty CI checkout (exit 3), the FINAL tree goes dirty. Checked only when the source
-#     touches either file (a branch cut from an older, stale main that touches neither is not refused); the pair after the
-#     integration = the source's version of a touched file, main's of the other.
+#     — a stale pair rewrites a tracked file in every Unity run: main-ci refuses its dirty CI checkout (exit 3), the FINAL
+#     tree goes dirty. One check: tools/qa/acoustic_bake.py (main-ci runs it too, on every SHA — merges included). Here it
+#     runs only when the source touches either file (a branch cut from an older, stale main that touches neither is not
+#     refused); the pair after the integration = the source's version of a touched file, main's of the other — and after a
+#     cherry-pick the merged index is checked again before the commit (gate 4c gt SHOULD-2b). The json and the asset go in
+#     ONE commit; --acoustic-exempt "<reason>" lets a json-only commit through, loudly (the RESULT line), when its re-bake
+#     follows at once.
 AC_JSON="prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Environment/World/V6/acoustic-spaces-v6.json"
 AC_MAP="prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Audio/Resources/DD_AcousticSpaces.asset"
+AC_TOOL="${0:A:h}/qa/acoustic_bake.py"
+AC_CHECK=0
 if printf '%s\n' "${FILES[@]}" | grep -qxF -e "$AC_JSON" -e "$AC_MAP"; then
-  T4="${TMPDIR:-/tmp}/dd-int-ac-$$"; mkdir -p "$T4"
-  for p in AC_JSON AC_MAP; do
-    ref=main; printf '%s\n' "${FILES[@]}" | grep -qxF "${(P)p}" && ref=$C
-    "${G[@]}" show "$ref:${(P)p}" > "$T4/$p" 2>/dev/null || rm -f "$T4/$p"
-  done
-  P=$(python3 - "$T4/AC_JSON" "$T4/AC_MAP" <<'PY'
-import hashlib, os, re, sys
-j, m = sys.argv[1:3]
-if not os.path.isfile(j):
-    sys.exit(0)   # no source after the integration: the bake writes nothing ("every point stays Open")
-if not os.path.isfile(m):
-    print("acoustic-spaces-v6.json without DD_AcousticSpaces.asset - bake it (AudioCatalogBuilder.BuildAcousticSpaces)"
-          " and commit it with the json"); sys.exit(1)
-b = open(j, "rb").read()
-if b.startswith(b"\xef\xbb\xbf"):
-    b = b[3:]
-want = hashlib.sha256(b).hexdigest()[:16]
-m_ = re.search(rb"^\s*_sourceHash:\s*(\S*)", open(m, "rb").read(), re.M)
-got = m_.group(1).decode() if m_ else "(none)"
-if got != want:
-    print("DD_AcousticSpaces.asset _sourceHash %s != sha256(acoustic-spaces-v6.json)[:16] %s - re-bake"
-          " (AudioCatalogBuilder.BuildAcousticSpaces) and commit the asset with the json" % (got, want)); sys.exit(1)
-PY
-) || fail "gate 4c: $P"
-  rm -rf "$T4"
-  say "acoustic map: baked from its source"
+  if [ "$AC_EXEMPT_SET" -eq 1 ]; then
+    say "acoustic map: not checked (--acoustic-exempt: $AC_EXEMPT)"
+  elif [ ! -f "$AC_TOOL" ]; then
+    fail "gate 4c: $AC_TOOL missing — the integrating checkout must carry main's tools"
+  else
+    AC_CHECK=1
+    T4="${TMPDIR:-/tmp}/dd-int-ac-$$"; mkdir -p "$T4"
+    for p in AC_JSON AC_MAP; do
+      ref=main; printf '%s\n' "${FILES[@]}" | grep -qxF "${(P)p}" && ref=$C
+      "${G[@]}" show "$ref:${(P)p}" > "$T4/$p" 2>/dev/null || rm -f "$T4/$p"
+    done
+    if P=$(python3 "$AC_TOOL" files "$T4/AC_JSON" "$T4/AC_MAP"); then say "acoustic map: $P"; else fail "gate 4c: $P"; fi
+    rm -rf "$T4"
+  fi
 fi
 
 # --- gate 5: tag
@@ -248,8 +245,9 @@ SUBJ_RE='^(WP|AP)-[0-9]{3}[^:]*: .+ \(C-00 [0-9]{2}\.[0-9]{2}\)$'
 WIP_SUBJ_RE='^([^:]*[^[:alnum:]:])?WIP([^[:alnum:]:][^:]*)?:'
 WIP_BODY_RE='^[[:space:]]*(not for main([^[:alnum:]-]|$)|tests?:[[:space:]]*wip([^[:alnum:]]|$))'
 XNOTE=""
+[ "$AC_EXEMPT_SET" -eq 1 ] && XNOTE=" — acoustic gate 4c EXEMPT (--acoustic-exempt): $AC_EXEMPT"
 if [ "$EXEMPT_SET" -eq 1 ]; then
-  XNOTE=" — commit-message gate EXEMPT (--subject-exempt): $EXEMPT"
+  XNOTE="$XNOTE — commit-message gate EXEMPT (--subject-exempt): $EXEMPT"
   { print -r -- "$SUBJ" | grep -qiE "$WIP_SUBJ_RE" || "${G[@]}" log -1 --format=%b "$C" | grep -qiE "$WIP_BODY_RE"; } \
     && echo "WARNING: the exempted commit is WIP-labelled (review NIT-3) — $SUBJ"
 else
@@ -345,6 +343,10 @@ PY
   "${G[@]}" show ":planning/00-PROJECT-PLAN.md" > "$T1/00.md" 2>/dev/null; "${G[@]}" show ":planning/01-REQUIREMENTS.md" > "$T1/01.md" 2>/dev/null
   P=$(check_ids "$T1/00.md" "$T1/01.md") || { echo "DEC/REQ numbering after merge: $P"; rm -rf "$T1"; abort_pick || exit 7; exit 4; }
   rm -rf "$T1"
+  # gate 4c on the merged index (gt SHOULD-2b): git can merge a json the source and main both changed into a pair neither had
+  if [ "$AC_CHECK" -eq 1 ]; then
+    P=$(python3 "$AC_TOOL" index "$DD_REPO") || { echo "gate 4c after merge: $P"; abort_pick || exit 7; exit 4; }
+  fi
   "${G[@]}" commit -q -C "$C" || { echo "commit failed"; abort_pick || exit 7; exit 4; }
 fi
 NEW=$("${G[@]}" rev-parse main)

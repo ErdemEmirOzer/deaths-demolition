@@ -34,6 +34,8 @@ class EntegreKapiTestleri(unittest.TestCase):
         tools = self.root / "tools"; tools.mkdir()
         for name in ("integrate.sh", "dd-env.sh"):
             shutil.copy2(TOOLS / name, tools / name)
+        (tools / "qa").mkdir()
+        shutil.copy2(TOOLS / "qa" / "acoustic_bake.py", tools / "qa" / "acoustic_bake.py")   # gate 4c's check
         self.script = tools / "integrate.sh"
         self.repo = self.root / "repo"; self.repo.mkdir()
         (self.root / "home").mkdir(); (self.root / "bin").mkdir(); (self.root / "tmp").mkdir()
@@ -151,7 +153,7 @@ class EntegreKapiTestleri(unittest.TestCase):
         text = self.script.read_text(encoding="utf-8")
         self.assertNotIn("abort_pick; exit 4", text)
         code = [l for l in text.splitlines() if not l.lstrip().startswith("#")]
-        self.assertEqual(sum("abort_pick || exit 7; exit 4" in l for l in code), 6)   # 03/04+00/01/conflict/verify/ids/commit
+        self.assertEqual(sum("abort_pick || exit 7; exit 4" in l for l in code), 7)   # 03/04+00/01/conflict/verify/ids/4c/commit
         self.assertIn("7 rollback unverified / dirty", text)
 
     # ---------------------------------------------------------------- gate 4 secrets (C-00 05.10: case)
@@ -285,6 +287,81 @@ class EntegreKapiTestleri(unittest.TestCase):
                 self.git("checkout", "-q", "main")
                 r = self.run_int()
                 self.assertEqual(r.returncode, expect, r.stdout + r.stderr)
+
+    def commit_on(self, branch, files, msg=GOOD_SUBJ, body=GOOD_BODY, base=None):
+        """commit {path: bytes} on `branch` (created from `base` when given), back to main."""
+        if base is not None:
+            self.git("checkout", "-q", "-b", branch, base)
+        else:
+            self.git("checkout", "-q", branch)
+        for rel, data in files.items():
+            self.put(rel, data)
+        self.git("add", *files); self.git("commit", "-q", "-m", msg, "-m", body)
+        self.git("checkout", "-q", "main")
+
+    @staticmethod
+    def jlines(a, b):
+        """a multi-line json whose 'a' and 'b' sit far apart — git merges an edit of each side cleanly."""
+        return ('{\n "schema": "acoustic-v6",\n "a": %d,\n' % a + "".join(' "f%d": 0,\n' % i for i in range(8))
+                + ' "b": %d,\n "spaces": []\n}\n' % b).encode()
+
+    def test_AkustikKapisi_CherryPick_DokunulmayanDosyaMaininki(self):
+        """gate 4c gt SHOULD-2a: the source (cut from an older main) touches only the map; the json after the integration is
+        MAIN's (moved since), so the pair is main's json + the source's map."""
+        self.put(self.AC_JSON, self.J1); self.put(self.AC_MAP, self.map_bytes(self.h16(self.J1)))
+        self.git("add", self.AC_JSON, self.AC_MAP); self.git("commit", "-q", "-m", "pair v1")
+        old = self.git("rev-parse", "HEAD").strip()
+        self.commit_on("main", {self.AC_JSON: self.J2, self.AC_MAP: self.map_bytes(self.h16(self.J2))}, msg="pair v2")
+        self.commit_on("feat", {self.AC_MAP: self.map_bytes(self.h16(self.J2)) + b"  _note: x\n"}, base=old)
+        r = self.run_int()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)   # main's J2 + the source's map (hash J2): baked
+
+    def test_AkustikKapisi_ApplyBirlesikJsonBayat_Cikis4MainDegismez(self):
+        """gate 4c gt SHOULD-2b: main changed the json alone (stale), the source changed another part of it and baked its own
+        version — the pre-check passes, git merges both json edits, the merged index is not baked → rollback, exit 4."""
+        j0, jm, js, jmerged = self.jlines(0, 0), self.jlines(1, 0), self.jlines(0, 1), self.jlines(1, 1)
+        self.put(self.AC_JSON, j0); self.put(self.AC_MAP, self.map_bytes(self.h16(j0)))
+        self.git("add", self.AC_JSON, self.AC_MAP); self.git("commit", "-q", "-m", "pair 0")
+        base = self.git("rev-parse", "HEAD").strip()
+        self.commit_on("main", {self.AC_JSON: jm}, msg="main: json alone")
+        self.commit_on("feat", {self.AC_JSON: js, self.AC_MAP: self.map_bytes(self.h16(js))}, base=base)
+        before = self.git("rev-parse", "main").strip()
+        r = self.run_int("--apply")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 4, out)
+        self.assertIn("gate 4c after merge: DD_AcousticSpaces.asset _sourceHash %s != sha256(acoustic-spaces-v6.json)[:16] %s"
+                      % (self.h16(js), self.h16(jmerged)), out)
+        self.assertEqual(self.git("rev-parse", "main").strip(), before)
+        self.assertEqual(self.status(), "")
+
+    def test_AkustikKapisi_Exempt_GecerVeRESULTSatirindaYazar(self):
+        r, out = self.ac_source_args(("--acoustic-exempt", "re-bake follows in the next commit"), json=self.J2)
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("acoustic gate 4c EXEMPT (--acoustic-exempt): re-bake follows in the next commit", out)
+        self.assertNotIn("GATE FAIL", out)
+
+    def test_AkustikKapisi_ExemptBosGerekce_Cikis64(self):
+        r, out = self.ac_source_args(("--acoustic-exempt", "  "), json=self.J2)
+        self.assertEqual(r.returncode, 64, out)
+        self.assertIn("--acoustic-exempt needs a non-empty reason", out)
+
+    def test_AkustikKapisi_TamYol_BenzerAdTetiklemez(self):
+        """gate 4c gt NOTE-5: only the exact paths trigger it — a sibling file on a stale main is not the pair."""
+        self.put(self.AC_JSON, self.J1); self.put(self.AC_MAP, self.map_bytes("0" * 16))
+        self.git("add", self.AC_JSON, self.AC_MAP); self.git("commit", "-q", "-m", "stale pair")
+        self.commit_on("feat", {self.AC_JSON + ".bak": self.J2, self.AC_MAP + ".meta": b"fileFormatVersion: 2\n"}, base="main")
+        r = self.run_int()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("gate 4c", r.stdout + r.stderr)
+
+    def ac_source_args(self, extra, **kw):
+        """ac_source with extra integrate.sh arguments."""
+        orig = self.run_int
+        self.run_int = lambda *a, **k: orig(*(a + tuple(extra)), **k)
+        try:
+            return self.ac_source(**kw)
+        finally:
+            self.run_int = orig
 
     def test_MesajKapisi_IyiKonuVeTestSatiri_Gecer(self):
         r, out = self.dry()
