@@ -14,13 +14,20 @@ namespace DD.Prototype.Rendering
     /// 1b9c0fa8); every caster inside the shadow distance is drawn again per cascade. From the TD camera (15 m up) the shadow of
     /// an object under <see cref="MaxDiagonal"/> m (pebbles, small stones, buckets, bowls, small props) is a few pixels.
     /// Collected once per world scene (the scene of <see cref="WorldBakedProbes.Current"/>, MeshRenderers casting On, bounds
-    /// diagonal &lt; <see cref="MaxDiagonal"/>); switched on <see cref="QualityModeApplier"/>'s events (tier, camera mode, scene),
+    /// diagonal &lt; <see cref="MaxDiagonal"/>, or lower than <see cref="MaxFlatHeight"/>: a piece lying on the ground); switched on <see cref="QualityModeApplier"/>'s events (tier, camera mode, scene),
     /// never per frame. Any other tier or mode puts them back On — Cinematic, Performance, TP and FP are unchanged.
     /// </summary>
     public static class SmallShadowCasters
     {
         /// <summary>World-space bounds diagonal (m) under which a world renderer counts as small.</summary>
         public const float MaxDiagonal = 1.5f;
+
+        /// <summary>
+        /// Step 2 (S-01 static census 10.10: Layout v5 added +674 shadow-casting slots, ~390 of them flat ground pieces — ishidatami,
+        /// drain_channel, pond_stepstone, boardwalk, Ground_Stones, pond_shore_*): a renderer whose world bounds are lower than this
+        /// (m) lies on the ground; its shadow is invisible from the TD camera whatever its footprint.
+        /// </summary>
+        public const float MaxFlatHeight = 0.25f;
 
         private static readonly List<MeshRenderer> s_renderers = new List<MeshRenderer>(2048);
         private static Scene s_scene;
@@ -73,7 +80,8 @@ namespace DD.Prototype.Rendering
                 foreach (MeshRenderer r in roots[i].GetComponentsInChildren<MeshRenderer>(true))
                 {
                     if (r.shadowCastingMode != ShadowCastingMode.On) continue;
-                    if (r.bounds.size.sqrMagnitude >= max2) continue;
+                    Vector3 size = r.bounds.size;
+                    if (size.sqrMagnitude >= max2 && size.y >= MaxFlatHeight) continue;
                     s_renderers.Add(r);
                 }
             }
