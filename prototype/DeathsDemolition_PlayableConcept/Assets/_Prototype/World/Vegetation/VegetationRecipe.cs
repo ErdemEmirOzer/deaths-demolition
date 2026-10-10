@@ -271,6 +271,11 @@ namespace DD.Prototype.World.Vegetation
         [Range(0f, 1f)] public float groundOcclusionUnderGrass = 0.45f;
         [Tooltip("Ground smoothness × this at full cover (the direct back-lit specular).")]
         [Range(0f, 1f)] public float groundSmoothnessUnderGrass = 0.55f;
+        [Header("Cover on paving (AD S1, 10.10)")]
+        [Tooltip("The colour pass made the plaza / path / joint tufts read as green confetti on the stone: there the cover keeps its hue, saturation × this.")]
+        [Range(0f, 1f)] public float pavedCoverSaturation = 0.65f;
+        [Tooltip("… and value × this.")]
+        [Range(0f, 1f)] public float pavedCoverValue = 0.85f;
         [Range(0f, 1f)] public float alphaCutoff = 0.45f;
 
         private static VegetationRecipe s_default;

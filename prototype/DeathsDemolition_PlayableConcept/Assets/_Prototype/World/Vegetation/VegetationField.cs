@@ -146,6 +146,8 @@ namespace DD.Prototype.World.Vegetation
         /// <summary>Flower accents' colour variant (AD v1.2, 10.10): HY in the low nibble, SL in the high nibble, each variant + 1; 0 = none.
         /// Read by the accent species only (VegetationPlacer.AccentVariant); the other species pick their variant by hash.</summary>
         public readonly byte[] VariantHint;
+        /// <summary>1 = the cell is paving (plaza, path, plaza joint): the draw set mutes the cover there (AD S1, 10.10).</summary>
+        public readonly byte[] Paved;
         public readonly float[] GroundY;
         public float DefaultGroundY;
 
@@ -169,6 +171,7 @@ namespace DD.Prototype.World.Vegetation
             HeightScale = new byte[n];
             HeightCap = new byte[n];
             VariantHint = new byte[n];
+            Paved = new byte[n];
             GroundY = new float[n];
             for (int i = 0; i < n; i++) HeightScale[i] = 128;
         }

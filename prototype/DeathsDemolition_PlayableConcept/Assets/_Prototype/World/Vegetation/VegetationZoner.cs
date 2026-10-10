@@ -107,6 +107,8 @@ namespace DD.Prototype.World.Vegetation
             for (int i = 0; i < n; i++)
             {
                 field.GroundY[i] = float.IsNaN(grid.GroundY[i]) ? grid.DefaultGroundY : grid.GroundY[i];
+                // AD S1 (10.10): paving cells, for the draw set's muted cover tone (the joint tufts, the path-edge spill)
+                if (grid.Has(i, VegetationGrid.Flag.Plaza) || grid.Has(i, VegetationGrid.Flag.Path) || grid.Zone[i] == (byte)VegetationZone.PlazaJoint) field.Paved[i] = 1;
                 // 08.10 (S-05): mask zone 13 = plaza joint tufts — the one zone that grows ON the plaza.
                 bool joint = grid.Zone[i] == (byte)VegetationZone.PlazaJoint && JointGrowable(grid, i);
                 if (!grid.Growable(i) && !joint) continue;

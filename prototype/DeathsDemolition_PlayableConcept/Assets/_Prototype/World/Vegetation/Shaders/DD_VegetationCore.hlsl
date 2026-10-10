@@ -15,6 +15,9 @@ TEXTURE2D(_OrmMap);         SAMPLER(sampler_OrmMap);
 TEXTURE2D(_BumpMap);        SAMPLER(sampler_BumpMap);
 TEXTURE2D(_DD_VegPushTex);
 TEXTURE2D(_DD_VegNoiseTex); SAMPLER(sampler_DD_VegNoiseTex);
+TEXTURE2D(_DD_VegPavedTex); SAMPLER(sampler_DD_VegPavedTex);   // AD S1 (10.10): 1 = paving cell (VegetationDrawSet.BuildPaved)
+float4 _DD_VegPavedRect;     // origin x, z, 1 / size x, 1 / size z
+float4 _DD_VegPavedTone;     // saturation ×, value ×, on (0 = no mask bound)
 SAMPLER(sampler_point_repeat);
 
 CBUFFER_START(UnityPerMaterial)
@@ -359,6 +362,17 @@ half3 DDVeg_Albedo(float2 uv, half4 vc, float3 hash, float3 rootWS, float gust)
     // (the yellow-brown and gold bands; 6 % of the lit cover in td5) — red held to ≤ _YellowClamp × green (linear; 0.45 ≈ sRGB
     // 0.70: hue ≥ ~75° before the warm sun). Off (0) for the flowers and the leaf litter.
     if (_YellowClamp > 0.0) albedo.r = min(albedo.r, albedo.g * (half)_YellowClamp);
+    // AD S1 (10.10): cover rooted on paving (plaza, paths, joints) read as green confetti on the stone — hue kept, muted.
+    if (_DD_VegPavedTone.z > 0.5)
+    {
+        float2 puv = (rootWS.xz - _DD_VegPavedRect.xy) * _DD_VegPavedRect.zw;
+        half paved = SAMPLE_TEXTURE2D_LOD(_DD_VegPavedTex, sampler_DD_VegPavedTex, puv, 0).r;
+        if (paved > 0.5h)
+        {
+            half pl = dot(albedo, half3(0.2126h, 0.7152h, 0.0722h));
+            albedo = lerp(pl.xxx, albedo, (half)_DD_VegPavedTone.x) * (half)_DD_VegPavedTone.y;
+        }
+    }
     // Saturation ceiling: pull toward grey at the same max. _SatCap is the bible's unit — HSV s of the sRGB albedo
     // (LOOK-BIBLE v1.1 MO 0.42; AD v1.2 SS/GM 0.48, GT 0.42, FE/LC/MO/KZ 0.50). The albedo here is linear, where the
     // same colour reads far more saturated (#3A462B: s 0.39 sRGB, 0.60 linear), so the ceiling is converted: with

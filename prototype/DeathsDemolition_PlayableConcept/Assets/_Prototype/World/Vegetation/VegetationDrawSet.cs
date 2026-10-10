@@ -29,6 +29,9 @@ namespace DD.Prototype.World.Vegetation
         public static readonly int CoverTexId = Shader.PropertyToID("_DD_VegCoverTex");
         public static readonly int CoverRectId = Shader.PropertyToID("_DD_VegCoverRect");
         public static readonly int GroundId = Shader.PropertyToID("_DD_VegGround");
+        public static readonly int PavedTexId = Shader.PropertyToID("_DD_VegPavedTex");
+        public static readonly int PavedRectId = Shader.PropertyToID("_DD_VegPavedRect");
+        public static readonly int PavedToneId = Shader.PropertyToID("_DD_VegPavedTone");
         private static readonly int MeshHeightId = Shader.PropertyToID("_VegMeshHeight");
         private static readonly int LodId = Shader.PropertyToID("_VegLod");
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -57,6 +60,7 @@ namespace DD.Prototype.World.Vegetation
         private int[][] _scratchCount;
         private readonly Plane[] _planes = new Plane[6];
         private Texture2D _cover;
+        private Texture2D _paved;
 
         public VegetationDrawSet(VegetationRecipe recipe, VegetationKit kit)
         {
@@ -127,6 +131,7 @@ namespace DD.Prototype.World.Vegetation
             _builtTier = tier;
             BuildDrawData();
             BuildCover(tier);
+            BuildPaved();
         }
 
         public void Clear()
@@ -136,8 +141,11 @@ namespace DD.Prototype.World.Vegetation
             _builtTier = -1;
             VisibleInstances = DrawCalls = ChunksVisible = 0;
             Shader.SetGlobalVector(GroundId, Vector4.zero);
+            Shader.SetGlobalVector(PavedToneId, new Vector4(1f, 1f, 0f, 0f));
             Kill(_cover);
             _cover = null;
+            Kill(_paved);
+            _paved = null;
         }
 
         public void Dispose()
@@ -359,6 +367,36 @@ namespace DD.Prototype.World.Vegetation
             Shader.SetGlobalTexture(CoverTexId, _cover);
             Shader.SetGlobalVector(CoverRectId, new Vector4(f.Origin.x, f.Origin.y, 1f / sx, 1f / sz));
             Shader.SetGlobalVector(GroundId, new Vector4(_recipe.groundAlbedoUnderGrass, _recipe.groundOcclusionUnderGrass, _recipe.groundSmoothnessUnderGrass, 1f));
+        }
+
+        // ------------------------------------------------------------------ cover on paving (AD S1, 10.10)
+
+        /// <summary>
+        /// AD S1 (10.10): the paving cells (VegetationDensityField.Paved) as a global R8 mask; DD/World Vegetation mutes the cover whose
+        /// root stands on one (saturation × pavedCoverSaturation, value × pavedCoverValue, hue kept). Built once with the layout.
+        /// </summary>
+        private void BuildPaved()
+        {
+            VegetationDensityField f = _field;
+            Kill(_paved);
+            _paved = null;
+            if (f.Paved == null || f.Paved.Length != f.Count)
+            {
+                Shader.SetGlobalVector(PavedToneId, new Vector4(1f, 1f, 0f, 0f));
+                return;
+            }
+
+            var data = new byte[f.Count];
+            for (int i = 0; i < data.Length; i++) data[i] = f.Paved[i] != 0 ? (byte)255 : (byte)0;
+            _paved = new Texture2D(f.Width, f.Height, TextureFormat.R8, false, true)
+            {
+                name = "DD_VegPaved", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Point, hideFlags = HideFlags.HideAndDontSave
+            };
+            _paved.SetPixelData(data, 0);
+            _paved.Apply(false, false);
+            Shader.SetGlobalTexture(PavedTexId, _paved);
+            Shader.SetGlobalVector(PavedRectId, new Vector4(f.Origin.x, f.Origin.y, 1f / (f.Width * f.Cell), 1f / (f.Height * f.Cell)));
+            Shader.SetGlobalVector(PavedToneId, new Vector4(_recipe.pavedCoverSaturation, _recipe.pavedCoverValue, 1f, 0f));
         }
 
         /// <summary>Cover 0..1 at a world point from the CPU data (tests / bare-ground readouts); 0 outside or unbuilt.</summary>
