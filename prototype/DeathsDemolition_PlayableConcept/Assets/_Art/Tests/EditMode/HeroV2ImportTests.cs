@@ -268,6 +268,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2MetallicSmoothness, AssetDatabase.GetAssetPath(m.GetTexture("_MetallicGlossMap")));
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2MetallicSmoothness, AssetDatabase.GetAssetPath(m.GetTexture("_OcclusionMap")), "AO = türetilmiş haritanın G'si (ORM R)");
             Assert.IsTrue(m.IsKeywordEnabled("_NORMALMAP") && m.IsKeywordEnabled("_METALLICSPECGLOSSMAP") && m.IsKeywordEnabled("_OCCLUSIONMAP"));
+            // WP-082 R3 (C-00 10.10 · DEC-077): the TD readability albedo gain, grey and opaque (every skin rides it)
+            Color gain = m.GetColor("_BaseColor");
+            Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2BaseColorGain, gain.r, 1e-4f, "_BaseColor kazancı");
+            Assert.IsTrue(Mathf.Approximately(gain.r, gain.g) && Mathf.Approximately(gain.r, gain.b) && Mathf.Approximately(gain.a, 1f), "gri kazanç, alfa 1: " + gain);
             foreach (SkinnedMeshRenderer r in Visual().Renderers) Assert.AreSame(m, r.sharedMaterial, r.name);
 
             var baseColor = (TextureImporter)AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.HeroV2BaseColor);

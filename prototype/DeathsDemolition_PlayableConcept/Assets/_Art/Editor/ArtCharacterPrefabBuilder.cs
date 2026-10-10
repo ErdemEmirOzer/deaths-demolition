@@ -70,6 +70,14 @@ namespace DD.Art.Pipeline.EditorTools
         public const string HeroV2Skin3BaseColor = HeroV2Textures + "/T_hero_v2_skin3_BaseColor.png";
         public const string HeroV2Chains = HeroV2Folder + "/HeroV2-chains.json";
         public const string HeroV2Provenance = HeroV2Folder + "/HeroV2-provenance.json";
+        /// <summary>
+        /// WP-082 R3 (C-00 10.10 · DEC-077): M_player's _BaseColor gain over the hero atlas — the hero v2 costume read darker from the
+        /// TD camera than the pre-hero body (skin 1 body/crowd separation 0.099 → 0.058, line 0.08). An albedo gain keeps the light's
+        /// shaping (the TD key lifts the top faces most, the shadow side stays dark) and touches no texture, the ground or the zombies.
+        /// Every skin rides it (ApplySkin swaps _BaseMap only). 1.3 from the Okunabilirlik_DEC077_KahramanKazanciTaramasi sweep (one frozen
+        /// frame, 10.10): skin-1 body luma +0.048 over 1.0 (1.1 +0.018, 1.2 +0.036, 1.4 +0.060), the run-to-run spread of the reading ±0.04.
+        /// </summary>
+        public const float HeroV2BaseColorGain = 1.3f;
 
         /// <summary>WP-082 R3 · the hero's shipped maps: three AP-024 v003 sources, the derived MetallicSmoothness, the two D5 skin albedos.</summary>
         public static string[] HeroV2TextureFiles() => new[] { HeroV2BaseColor, HeroV2Normal, HeroV2Orm, HeroV2MetallicSmoothness, HeroV2Skin2BaseColor, HeroV2Skin3BaseColor };
@@ -150,6 +158,14 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.SaveAssets();
             BuildPlayerPrefab();
             BuildAssetSet();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        /// <summary>WP-082 R3 (DEC-077 readability) batch entry · M_player and M_player_fparms only; textures, prefabs and the asset set stay on disk.</summary>
+        public static void BuildPlayerMaterialsCli()
+        {
+            BuildPlayerMaterials();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -237,6 +253,7 @@ namespace DD.Art.Pipeline.EditorTools
             Material player = LoadOrCreateMaterial(PlayerMaterial, lit, "M_player");
             ArtMaterialBuilder.ApplyCommonPublic(player);
             ApplyCharacterMaps(player, Load<Texture2D>(HeroV2BaseColor), Load<Texture2D>(HeroV2Normal), Load<Texture2D>(HeroV2MetallicSmoothness));
+            player.SetColor("_BaseColor", new Color(HeroV2BaseColorGain, HeroV2BaseColorGain, HeroV2BaseColorGain, 1f));
             EditorUtility.SetDirty(player);
             // AP-022 FP arms v2 (WP-071): the FP-only arms (own UVs) — skin 1 albedo; FirstPersonArms swaps the albedo per skin
             Material fpArms = LoadOrCreateMaterial(PlayerFpArmsMaterial, lit, "M_player_fparms");

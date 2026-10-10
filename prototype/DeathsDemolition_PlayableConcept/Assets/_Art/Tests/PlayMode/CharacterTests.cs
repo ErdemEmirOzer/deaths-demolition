@@ -417,6 +417,104 @@ namespace DD.Art.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-082 R3 (C-00 10.10, DEC-077 skin 1 0.099 → 0.058 with hero v2) · calibration only: the DEC-077 scene, masks and body
+        /// band above, with the player's _BaseColor gain swept through a property block (the same gamma → linear path as the
+        /// material value). Logs body luma per gain and skin against the crowd luma; picks nothing, asserts nothing.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-082 R3 kalibrasyon — M_player _BaseColor kazancı taraması")]
+        [Timeout(600000)]
+        public IEnumerator Okunabilirlik_DEC077_KahramanKazanciTaramasi()
+        {
+            yield return RunAP005();
+            PlayerRig rig = PlayerRegistry.Primary;
+            PlayerSkinnedVisual pv = PlayerVisual();
+            Vector3 feet = rig.transform.position;
+            var zombies = new List<ZombieEnemy>();
+            for (int i = 0; i < 12; i++)
+            {
+                float a = i * Mathf.PI * 2f / 12f;
+                float r = 5f + (i % 3) * 2f;
+                ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, feet + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r), Quaternion.identity);
+                if (z != null) zombies.Add(z);
+            }
+
+            Assert.GreaterOrEqual(zombies.Count, 10, "kalabalık doğmadı");
+            Time.captureDeltaTime = 1f / 60f;
+            string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
+            if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp016-captures");
+            Directory.CreateDirectory(dir);
+            ArtVisualRegression.CameraPose pose = GameplayPose("characters-readability");
+            int warm = 0;
+            yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
+
+            var zombieRenderers = new List<SkinnedMeshRenderer>();
+            foreach (ZombieEnemy z in zombies) zombieRenderers.AddRange(z.GetComponentsInChildren<SkinnedMeshRenderer>(true));
+            var weaponRenderers = new List<Renderer>();
+            if (WeaponRegistry.ActiveController != null) WeaponRegistry.ActiveController.CollectWeaponRenderers(weaponRenderers);
+            foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = false;
+            Time.captureDeltaTime = 0f;
+            Time.timeScale = 0f;
+            var block = new MaterialPropertyBlock();
+            int baseColorId = Shader.PropertyToID("_BaseColor");
+            Color materialColor = pv.Renderers[0].sharedMaterial.GetColor(baseColorId);
+            try
+            {
+                Color32[] full = Capture(pose, null);
+                SetEnabled(pv.Renderers, false);
+                Color32[] noPlayer = Capture(pose, null);
+                SetEnabled(pv.Renderers, true);
+                SetEnabled(zombieRenderers, false);
+                Color32[] noZombies = Capture(pose, null);
+                SetEnabled(zombieRenderers, true);
+                bool[] playerMask = DiffFigure(full, noPlayer);
+                bool[] zombieMask = DiffFigure(full, noZombies);
+                bool[] bodyMask = Band(playerMask, 0.20f, 0.60f, 0.20f, 0.80f);
+                float zombieLuma = MeanLuma(full, zombieMask);
+                Debug.Log("[DD-TEST] wp082.read.sweep warm=" + warm + " playerPx=" + Count(playerMask) + " bodyPx=" + Count(bodyMask) + " zombiePx=" + Count(zombieMask) +
+                          " zombieLuma=" + zombieLuma.ToString("F3", CultureInfo.InvariantCulture) + " materialBaseColor=" + materialColor.r.ToString("F3", CultureInfo.InvariantCulture));
+                foreach (float gain in new[] { 1.00f, 1.10f, 1.20f, 1.30f, 1.40f })
+                {
+                    var row = new List<string>();
+                    for (int s = 0; s < 3; s++)
+                    {
+                        rig.ApplySkin((PlayerSkin)s);
+                        foreach (SkinnedMeshRenderer r in pv.Renderers)
+                        {
+                            if (r == null) continue;
+                            r.GetPropertyBlock(block);
+                            block.SetColor(baseColorId, new Color(gain, gain, gain, 1f));
+                            r.SetPropertyBlock(block);
+                        }
+
+                        Color32[] frame = Capture(pose, s == 0 ? Path.Combine(dir, "sweep-skin1-gain" + gain.ToString("F2", CultureInfo.InvariantCulture) + ".png") : null);
+                        float body = MeanLuma(frame, bodyMask);
+                        row.Add("skin" + (s + 1) + " body=" + body.ToString("F3", CultureInfo.InvariantCulture) + " sep=" + (body - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) +
+                                " figure=" + MeanLuma(frame, playerMask).ToString("F3", CultureInfo.InvariantCulture));
+                    }
+
+                    Debug.Log("[DD-TEST] wp082.read.sweep gain=" + gain.ToString("F2", CultureInfo.InvariantCulture) + " " + string.Join(" | ", row));
+                }
+            }
+            finally
+            {
+                foreach (SkinnedMeshRenderer r in pv.Renderers)
+                {
+                    if (r == null) continue;
+                    r.GetPropertyBlock(block);
+                    block.SetColor(baseColorId, materialColor);
+                    r.SetPropertyBlock(block);
+                }
+
+                rig.ApplySkin(PlayerSkins.Default);
+                Time.timeScale = 1f;
+                Time.captureDeltaTime = 0f;
+                foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = true;
+                foreach (ZombieEnemy z in zombies) if (z != null && z.IsAlive) z.Kill();
+            }
+        }
+
         // ------------------------------------------------------------------ pixel helpers
 
         internal static Color32[] Capture(ArtVisualRegression.CameraPose pose, string png)
