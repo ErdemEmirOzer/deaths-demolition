@@ -46,6 +46,8 @@ namespace DD.Prototype.Feedback
         public static bool Armed => s_armed;
         public static bool CpuValid => s_armed && s_cpu.Valid;
         public static bool GcValid => s_armed && s_gc.Valid;
+        /// <summary>The GC.Alloc recorder's sample unit: in a development Player a marker sample is its time (ns), not bytes.</summary>
+        public static ProfilerMarkerDataUnit GcUnit => s_armed && s_gc.Valid ? s_gc.UnitType : ProfilerMarkerDataUnit.Undefined;
         public static int ErrorBits { get; private set; } // 1 recorder,2 thread,4 depth,8 GC overflow,16 CPU sample,32 cold/unregistered callback,64 callback table overflow,128 exception/error
         public static int ExternalEvents { get; private set; }
         public static int CriticalEvents { get; private set; }

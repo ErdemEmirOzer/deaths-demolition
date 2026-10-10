@@ -64,6 +64,7 @@ namespace DD.Prototype.Diagnostics
             public string sourceSha, buildSha, buildStamp, error = "", scopeVersion = "wp095.cost.v2.c00-natural-round-compat-device";
             public int seed = Seed, crowd, crowdWanted = CrowdWanted, safetyCeiling, attempt, nominalHz = 60, framesPerWindow = Frames;
             public bool profilerEnabled;
+            public string gcUnit;
             public string cpuMarker = FeelCostMeasurement.MarkerName, gcMarker = "GC.Alloc";
             public bool cpuRecorderValid, gcRecorderValid, cpuControlPass, gcControlPass, inputMatched, coverageComplete, durationMatched, provenanceMatched;
             public long cpuControlNs, cpuControlSamples, gcControlBytes;
@@ -187,7 +188,12 @@ namespace DD.Prototype.Diagnostics
             using (FeelCostMeasurement.Enter(FeelCostPath.Control)) { _bait = new byte[65536]; _bait[0] = 1; GC.KeepAlive(_bait); }
             FeelCostMeasurement.Sampling = false;
             _result.gcControlBytes = FeelCostMeasurement.FrameGcBytes; _result.gcControlSamples = FeelCostMeasurement.FrameGcSamples;
-            _result.gcControlPass = _result.gcControlBytes >= 65536 && _result.gcControlSamples > 0;
+            // 9bdff9c6 run (10.10): with the Profiler on the 64 KiB control gave 1 sample of value 834 - the GC.Alloc MARKER sample
+            // carries its time (ns) in a development Player, not the bytes. The control asks for the allocation event (and 64 KiB
+            // only where the unit is bytes); acceptance stays "no allocation in a feel scope": any event fails (gcSamples, gcTotalB).
+            _result.gcUnit = FeelCostMeasurement.GcUnit.ToString();
+            _result.gcControlPass = _result.gcControlSamples > 0 && (FeelCostMeasurement.GcUnit == Unity.Profiling.ProfilerMarkerDataUnit.Bytes
+                ? _result.gcControlBytes >= 65536 : _result.gcControlBytes > 0);
             _bait = null; yield return null;
             if (!_result.cpuControlPass || !_result.gcControlPass || FeelCostMeasurement.ErrorBits != 0)
             { Fail("recorder positive control failed; no acceptance samples"); yield break; }
@@ -527,7 +533,7 @@ namespace DD.Prototype.Diagnostics
             if (roundValid)
             {
                 _result.roundCpuVerdict = _result.roundDeltaCpuMs <= .3d ? "PASS_SCOPED" : "FAIL_SCOPED";
-                _result.roundGcVerdict = rb.gcTotalB == 0 && rb.gcMaxB == 0 ? "PASS_SCOPED" : "FAIL_SCOPED";
+                _result.roundGcVerdict = rb.gcSamples == 0 && rb.gcTotalB == 0 && rb.gcMaxB == 0 ? "PASS_SCOPED" : "FAIL_SCOPED";
                 _result.roundVerdict = _result.roundCpuVerdict == "PASS_SCOPED" && _result.roundGcVerdict == "PASS_SCOPED" ? "PASS_SCOPED" : "FAIL_SCOPED";
             }
             int requestSlot = Array.IndexOf(_result.callbackNames, "LegacyHitStop.Request");
@@ -541,7 +547,7 @@ namespace DD.Prototype.Diagnostics
                 _result.inputMatched && _result.coverageComplete && _result.durationMatched && _result.productionDeviceMatched && roundValid;
             if (!valid) { _result.error = "production scope/control/input/coverage/device/round-state/duration/provenance incomplete; inspect phase raw fields"; return; }
             _result.cpuVerdict = _result.deltaCpuMs <= .3d && _result.roundDeltaCpuMs <= .3d ? "PASS_SCOPED" : "FAIL_SCOPED";
-            _result.gcVerdict = b.gcTotalB == 0 && b.gcMaxB == 0 && rb.gcTotalB == 0 && rb.gcMaxB == 0 ? "PASS_SCOPED" : "FAIL_SCOPED";
+            _result.gcVerdict = b.gcSamples == 0 && b.gcTotalB == 0 && b.gcMaxB == 0 && rb.gcSamples == 0 && rb.gcTotalB == 0 && rb.gcMaxB == 0 ? "PASS_SCOPED" : "FAIL_SCOPED";
             _result.verdict = _result.cpuVerdict == "PASS_SCOPED" && _result.gcVerdict == "PASS_SCOPED" ? "PASS_SCOPED" : "FAIL_SCOPED";
         }
         private static bool IsFullSha(string value)
