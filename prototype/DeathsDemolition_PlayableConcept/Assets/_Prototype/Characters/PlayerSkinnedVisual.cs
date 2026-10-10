@@ -1370,14 +1370,12 @@ namespace DD.Prototype.Characters
                     if (l == null || l.ringSlot < 1 || l.ringSlot > 3 || l.dirIndex < 0 || l.dirIndex > 7 || l.cycleSecondsNatural <= 0.01f) continue;
                     int b = (l.ringSlot - 1) * 8 + l.dirIndex;
                     if (_ringCycle[b] <= 0f) filled++;
-                    CharacterAnimationSet.Entry entry = _animation.Find(l.clip);
-                    // unitySpeedMps is measured on this Avatar at the imported clip's rate 1.
-                    // The controller's child timeScale changes cycle duration, not distance
-                    // per cycle. Use that measured hero distance once; template * k is only
-                    // the fallback when no valid imported measurement is available.
-                    float measuredStride = entry?.clip != null ? entry.unitySpeedMps * entry.clip.length : 0f;
-                    _ringStride[b] = measuredStride > 0f && !float.IsNaN(measuredStride) && !float.IsInfinity(measuredStride)
-                        ? measuredStride : l.strideCycleMTemplate * k;
+                    // LOCO-SOZLESME §4.1: S = stride_cycle_m_template · k — the same basis as the 1-D ring thresholds
+                    // (loco_constants threshold_mps_hero_est = template · k / T of each ring's fwd child), so a pure ring at
+                    // its threshold plays at LocoRate 1 (MUST-3) and the walk-ring foot-lock gate (LocoRate ≤ 1.05) opens.
+                    // The Natural24 unitySpeedMps (6dda0085) stay on the set for the builder pin and the diagnostics; using
+                    // them here (d0ecc296) without re-deriving the thresholds put the walk threshold at LocoRate 1.0675.
+                    _ringStride[b] = l.strideCycleMTemplate * k;
                     _ringCycle[b] = l.cycleSecondsNatural;
                 }
 
