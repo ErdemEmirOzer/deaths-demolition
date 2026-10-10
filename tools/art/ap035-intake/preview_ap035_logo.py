@@ -11,7 +11,9 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 PREV = os.path.join(OUT, "previews")
-W = "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/wp-098/worktree/prototype/DeathsDemolition_PlayableConcept"
+# the checkout this script lives in (was the wp-098 worktree, spelled out — test_dd_kadro: no KADRO path in a tool;
+# the five wallpapers are the same blobs on main)
+W = os.path.normpath(os.path.join(HERE, "..", "..", "..", "prototype", "DeathsDemolition_PlayableConcept"))
 ARTS = W + "/Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/"
 
 SUMI900 = (0x12, 0x10, 0x0F)

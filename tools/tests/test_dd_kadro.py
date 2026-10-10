@@ -11,11 +11,40 @@ sys.path.insert(0, str(TOOLS))
 import dd_paths  # noqa: E402
 
 ALLOWED = {"dd-env.sh", "dd_paths.py", "slot.sh", "README.md"}
+# C-00 10.10 (gt MUST-1 on S-01's withdrawn 7be539a7): an intake script whose OWN sha256 a committed record pins (the
+# record's EditMode test fails on any edit: "re-run bake --install after editing it") cannot take dd_paths without a
+# re-bake by its owner — its KADRO literal is tolerated only WHILE the file's sha256 equals the pin. Re-baked with an edited
+# script, the pin moves with it and the file is scanned like any other (drop the entry then).
+SHA_PINNED = {"art/ap035-intake/bake_ap035_logo.py":
+              "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/UI/Art/logo-intake.json"}   # S-09 AP-035
 # C-00 06.10 (user: no iCloud work on this machine) + gt 06.10 SHOULD: Desktop / Documents as a PATH component — after a
 # quote or a slash, or as a join() / joinpath() argument — and the iCloud Drive folders themselves
 # gt 07.10 NOTE: any case (APFS ignores it: ~/desktop is ~/Desktop), a bare `cd` / `pushd Desktop`, the glob `Desk*`
 OLD_PLACE = re.compile(r"""(["'/]\s*|(?:join|joinpath)\([^)]*?["']|\b(?:cd|pushd)\s+)(Desktop\b|Documents\b|Desk\*)(?!\s*&)"""
                        r"""|Mobile Documents|CloudDocs""", re.I)
+
+
+def pinned(rel):
+    """(file sha256, the record's pinned sha256 for tools/<rel>) — the record read from the tree, else from git HEAD."""
+    import hashlib, json
+    rec_rel = SHA_PINNED[rel]
+    rec = TOOLS.parent / rec_rel
+    text = rec.read_text(encoding="utf-8") if rec.is_file() else subprocess.run(
+        ["git", "-C", str(TOOLS.parent), "show", "HEAD:" + rec_rel], capture_output=True, text=True).stdout
+    want = None
+
+    def walk(o):
+        nonlocal want
+        if isinstance(o, dict):
+            if o.get("script") == "tools/" + rel and isinstance(o.get("sha256"), str):
+                want = o["sha256"]
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(json.loads(text) if text.strip() else {})
+    return hashlib.sha256((TOOLS / rel).read_bytes()).hexdigest(), want
 
 
 def strip_comment(line, suffix):
@@ -60,6 +89,9 @@ class DdKadroTests(unittest.TestCase):
         for f in sorted(TOOLS.rglob("*")):
             if not f.is_file() or f.suffix not in (".sh", ".py") or "tests" in f.relative_to(TOOLS).parts or f.name in ALLOWED:
                 continue
+            rel = f.relative_to(TOOLS).as_posix()
+            if rel in SHA_PINNED and len(set(pinned(rel))) == 1:   # the record still pins these exact bytes
+                continue
             for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
                 code = line.split("#", 1)[0] if f.suffix == ".sh" else line
                 if line.lstrip().startswith(("#", "*", '"""')):
@@ -71,6 +103,14 @@ class DdKadroTests(unittest.TestCase):
 
     # -- C-00 06.10 (user: "no iCloud work on this machine"): KADRO and the repo live under ~/Dev; iCloud's Desktop &
     # Documents may hold only symlinks for a while, or nothing — no tools code may depend on them ---------------------
+    def test_ShaSabitliIstisna_KayitHalaBuBaytlariSabitliyor(self):
+        """the exemption is live only while it is needed: every entry exists and its record pins its current bytes."""
+        for rel in SHA_PINNED:
+            self.assertTrue((TOOLS / rel).is_file(), rel)
+            have, want = pinned(rel)
+            self.assertIsNotNone(want, "%s: no sha256 pin for tools/%s — drop the exemption" % (SHA_PINNED[rel], rel))
+            self.assertEqual(want, have, "tools/%s no longer matches its pin — re-baked: use dd_paths, drop the entry" % rel)
+
     def test_KadroKokuDevAltinda(self):
         self.assertEqual("Dev/KADRO", dd_paths.KADRO_REL)
 
