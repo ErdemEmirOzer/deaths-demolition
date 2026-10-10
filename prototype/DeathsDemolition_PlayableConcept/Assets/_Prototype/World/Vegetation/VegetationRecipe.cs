@@ -165,11 +165,11 @@ namespace DD.Prototype.World.Vegetation
                 new Vector4(-36f, -32f, -28f, -26f),
             };
             [Header("Hanashōbu (SL variants 1 / 2) shore strips — AD v1.2")]
-            public int irisStripsMin = 18, irisStripsMax = 28;   // w4: 10–16 strips of 5–8 → 18–28 of 10–16 (K5)
-            [Tooltip("Band (m from the water) the strips lie in (PondShore / PondBank).")]
-            public float irisWaterMin = 0.5f, irisWaterMax = 1.2f;
-            public float irisLengthMin = 1.5f, irisLengthMax = 4f, irisWidthMin = 0.4f, irisWidthMax = 0.6f;
-            public int irisPerStripMin = 10, irisPerStripMax = 16;
+            public int irisStripsMin = 18, irisStripsMax = 28;   // w4: 10–16 strips of 5–8 → 18–28 (K5)
+            [Tooltip("Band (m from the water) the strips lie in (PondShore / PondBank). w6: 0.5–1.2 → 0.4–1.6 (a straight strip on a curved shore left the 0.7 m band).")]
+            public float irisWaterMin = 0.4f, irisWaterMax = 1.6f;
+            public float irisLengthMin = 1.2f, irisLengthMax = 2.5f, irisWidthMin = 0.4f, irisWidthMax = 0.6f;
+            public int irisPerStripMin = 8, irisPerStripMax = 14;
             [Tooltip("Edge gap (m) between hanashōbu strips / to a higanbana strip.")]
             public float irisGap = 2f, irisHiganbanaGap = 4f;
             [Header("Kurinsō (SL variant 3) shade clusters — AD v1.2")]
@@ -401,12 +401,13 @@ namespace DD.Prototype.World.Vegetation
 
             // AD v1.2 (10.10) tsuyu garden: per-variant petal colours on the flora atlas (see remarks for the measurements).
             Species hy = s[(int)VegetationType.Hydrangea];
-            hy.petalColours = new[] { Hex(0x695DA8), Hex(0xA35281), Hex(0x8B529E) };   // A water / shade, B sun, C
+            // w6 (K4 beacon reserve s > .55 ∧ v > .80: the sunlit pink reached it in td6, 377 px): value × 0.85, pink chroma a touch down
+            hy.petalColours = new[] { Hex(0x594F8F), Hex(0x8A4A6F), Hex(0x764686) };   // A water / shade, B sun, C (AD v1.2 #695DA8 / #A35281 / #8B529E)
             hy.petalRefLuma = new[] { 0.167f, 0.221f, 0.167f };                         // kit models [A (HA heads), B (HB heads), A]
             hy.petalRect = new Vector4(0.25f, 0.5f, 0.875f, 1f);                       // heads HA/HB (u .625–.875, v .75–1) ∪ LOD2 cards D3/D4
             hy.petalKey = new Vector4(0f, -1f, 1f, 40f);                               // b − g; 0.025 → full
             Species sl = s[(int)VegetationType.SpiderLily];
-            sl.petalColours = new[] { new Color(0f, 0f, 0f, 0f), Hex(0x6C4A94), Hex(0x825C9E), Hex(0xA14880) };   // higanbana (atlas), hanashōbu A / B, kurinsō
+            sl.petalColours = new[] { new Color(0f, 0f, 0f, 0f), Hex(0x6C4A94), Hex(0x825C9E), Hex(0x8E4272) };   // higanbana (atlas), hanashōbu A / B, kurinsō (w6: #A14880 × 0.88, K4)
             sl.petalRefLuma = new[] { 0f, 0.089f, 0.089f, 0.089f };
             sl.petalRect = new Vector4(0f, 0.625f, 0.25f, 0.75f);                       // crowns SL1 / SL2
             sl.petalKey = new Vector4(1f, -1f, 0f, 30f);                                // r − g; 0.033 → full

@@ -643,7 +643,9 @@ namespace DD.Prototype.World.Vegetation
             float hyRadiusMin = Mathf.Max(grid.Cell, ac.hydrangeaRadiusMin), hyRadiusMax = Mathf.Max(hyRadiusMin, ac.hydrangeaRadiusMax);
 
             // A cell takes a plant only where the placer keeps it (a cap under half the minimum height drops it).
-            bool HydrangeaCell(int j) => ground[j] && field.Layers[hy][j] == 0 && HydrangeaTall(j) && HydrangeaMaxHeight(j) >= hySp.heightMin * 0.5f + 1e-3f;
+            // w6: ajisai keep off the hanashōbu shore band (w5: 84 ajisai clusters took the pond banks, no iris strip found room)
+            bool HydrangeaCell(int j) => ground[j] && field.Layers[hy][j] == 0 && HydrangeaTall(j) && HydrangeaMaxHeight(j) >= hySp.heightMin * 0.5f + 1e-3f
+                                         && Edge(grid, j, dist.Water, half) > ac.irisWaterMax + ac.flowerAccentGap * 0.5f;
 
             bool HydrangeaTall(int j)
             {
@@ -656,7 +658,8 @@ namespace DD.Prototype.World.Vegetation
                 float h = hySp.heightMax * field.HeightScaleAt(j);
                 float cap = field.HeightCapAt(j);
                 // w4: any zone cap under the ajisai cap is lifted for the ajisai cell (moss court 0.15, pond bank 0.45, courtyard 0.5)
-                if (zoneOf[j] == (byte)VegetationZone.MossCourt || (cap > 0f && cap < ac.mossCourtHydrangeaCap)) cap = ac.mossCourtHydrangeaCap;
+                // w6: never inside the corridor — its own cap (0.45 m, Wp093VegetationTests corridor ceiling) stays the ajisai's there
+                if (!corridorOf[j] && (zoneOf[j] == (byte)VegetationZone.MossCourt || (cap > 0f && cap < ac.mossCourtHydrangeaCap))) cap = ac.mossCourtHydrangeaCap;
                 // w5: in or near the corridor the ajisai is held to the corridor height instead of being dropped
                 if (Edge(grid, j, corridorSeed, half) <= ac.flowerTallCorridorDistance) cap = cap > 0f ? Mathf.Min(cap, ac.flowerTallCorridorHeight) : ac.flowerTallCorridorHeight;
                 return cap > 0f ? Mathf.Min(h, cap) : h;
@@ -791,6 +794,9 @@ namespace DD.Prototype.World.Vegetation
                 if (normal.sqrMagnitude < 1e-6f) normal = Vector2.right;
                 normal.Normalize();
                 var along = new Vector2(-normal.y, normal.x);
+                // w6: the candidate cell may sit on either edge of the shore band — centre the strip on it (else half its footprint
+                // falls off the band and GroundShare refuses it: w5 placed none)
+                p += normal * ((ac.irisWaterMin + ac.irisWaterMax) * 0.5f - Edge(grid, i, dist.Water, half));
                 float length = Mathf.Lerp(ac.irisLengthMin, ac.irisLengthMax, VegetationHash.Cell01(i, 1, SaltIris));
                 float width = Mathf.Max(grid.Cell, Mathf.Lerp(ac.irisWidthMin, ac.irisWidthMax, VegetationHash.Cell01(i, 2, SaltIris)));
                 Vector2 a = p - along * (length * 0.5f), b = p + along * (length * 0.5f);
@@ -819,6 +825,14 @@ namespace DD.Prototype.World.Vegetation
                     case VegetationZone.BuildingShadow:
                     case VegetationZone.BambooEdge:
                         return true;
+                    // w6: V6 has almost none of the shadow zones above (~2 m² in all) — its shade is the building band's and the wall
+                    // base's shadow face (within 2 m) and the bamboo grove's edge (within 1.5 m of open ground)
+                    case VegetationZone.BuildingSurround:
+                    case VegetationZone.WallBase:
+                        return (Edge(grid, j, dist.Building, half) < 2f && ShadowFace(grid, j, dist.Building, shadowDir, tr.shadowFaceDot))
+                               || (Edge(grid, j, dist.Wall, half) < 2f && ShadowFace(grid, j, dist.Wall, shadowDir, tr.shadowFaceDot));
+                    case VegetationZone.Bamboo:
+                        return Edge(grid, j, dist.NonBamboo, half) < 1.5f;
                     case VegetationZone.PondBank:
                     {
                         // The sun-side bank: it slopes down to the water away from the sun, so its face is in shade.

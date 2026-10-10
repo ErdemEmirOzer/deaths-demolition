@@ -245,7 +245,8 @@ namespace DD.Art
                 string nn = n.ToString("00");
                 rows.Add(new Spec { Role = "bark_" + nn, Kind = Kind.Textured, TextureRole = "bark_" + nn });
                 rows.Add(new Spec { Role = "earth_" + nn, Kind = Kind.Textured, TextureRole = "earth_" + nn });
-                rows.Add(new Spec { Role = "moss_" + nn, Kind = Kind.Textured, TextureRole = "moss_" + nn });
+                // w6 (S-05 10.10, AD K1): the moss maps read hue 82–89° (s 0.62–0.70) and turn olive-yellow in the sun — red × 0.62 (linear)
+                rows.Add(new Spec { Role = "moss_" + nn, Kind = Kind.Textured, TextureRole = "moss_" + nn, Tint = new Color(0.62f, 1f, 0.95f, 1f) });
                 // WP-013: the foliage roles ride the wind shader (their meshes carry `_AP003_WIND`;
                 // moss stays Lit because the moss maps also dress lanterns and benches, which carry no
                 // colour stream and must not move).
@@ -327,6 +328,9 @@ namespace DD.Art
                 // V 0.254 → 0.260, CIELAB L 21.1 → 20.6.
                 if (tile == "roof_tiles") spec.Tint = new Color(0.448f, 0.570f, 0.890f, 1f);
                 if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
+                // w6 (S-05 10.10, AD K1): the pond's moss shelves (atlas mean hue 83°, s 0.44, v 0.43) read 56° in the sun — 79 % of td5's
+                // yellow-brown band; red × 0.60 (linear) brings them to the cover's green.
+                if (tile == "moss") spec.Tint = new Color(0.60f, 1f, 1f, 1f);
                 // WP-092 R3 · tatami stays white: the interior tatami floor is walkable and shares the maps with the tawara straw, and the
                 // straw neutral tint (linear (0.787, 0.807, 0.977)) takes 19 % off its luminance (0.421 → 0.341) — DEC-077 ground, not changed.
                 // WP-092 R3 · shu lacquer (the gates' vermilion frame) a little more vivid inside the AD's 8–14° band: the authored atlas sits at
