@@ -86,10 +86,13 @@ namespace DD.Art.Tests.PlayMode
             pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             SecondaryChainDriver chains = pv.Chains;
             Assert.IsNotNull(chains, "oyuncuda SecondaryChainDriver yok (AP-006C rig?)");
-            Assert.AreEqual(4, chains.Chains.Length, "sash / pouch / gourd / band");
+            // WP-082 R3: hero v2 drives only its weighted chain — HeroV2-chains.json: sash (max 50°); sec_band / pouch / gourd exist on
+            // the rig without geometry (AP-024 README), so there is no band to whip. The AP-006C body's four chains left with it.
+            Assert.AreEqual(1, chains.Chains.Length, "hero v2: yalnız sash (HeroV2-chains.json)");
             int sash = -1, band = -1;
             for (int i = 0; i < chains.Chains.Length; i++) { if (chains.Chains[i].name == "sash") sash = i; if (chains.Chains[i].name == "band") band = i; }
-            Assert.IsTrue(sash >= 0 && band >= 0);
+            Assert.IsTrue(sash >= 0, "sash zinciri yok");
+            float sashLimit = chains.Chains[sash].maxAngleDegrees;
             Time.captureDeltaTime = 1f / 60f;
             velocity = Vector3.forward * 6.2f;
             float maxSash = 0f, maxBand = 0f, minClr = float.MaxValue, tipTravel = 0f;
@@ -101,7 +104,7 @@ namespace DD.Art.Tests.PlayMode
                 if (f < 60) continue;
                 Assert.IsTrue(chains.ServedLastFrame, "oyuncu zincirleri servis edilmedi");
                 maxSash = Mathf.Max(maxSash, chains.MaxAngleFromRest(sash));
-                maxBand = Mathf.Max(maxBand, chains.MaxAngleFromRest(band));
+                if (band >= 0) maxBand = Mathf.Max(maxBand, chains.MaxAngleFromRest(band));
                 for (int c = 0; c < chains.Chains.Length; c++) minClr = Mathf.Min(minClr, chains.MinClearance(c));
                 Vector3[] p = chains.Particles(sash);
                 Vector3 tipLocal = pv.transform.InverseTransformPoint(p[p.Length - 1]);
@@ -112,26 +115,34 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < 30; i++) yield return null;
             // Whip = the largest frame-to-frame swing of the band (the idle sag sits ~35° from rest and a head jerk can shrink it —
             // the level says nothing, the rate does).
-            float bandBefore = chains.MaxAngleFromRest(band), prev = bandBefore, idleWhip = 0f;
-            for (int i = 0; i < 30; i++) { yield return null; float a = chains.MaxAngleFromRest(band); idleWhip = Mathf.Max(idleWhip, Mathf.Abs(a - prev)); prev = a; }
-            pv.PlayHurt(true);   // the upper-body blow (hurt_A): the head knock the hachimaki should answer
-            float maxHitBand = 0f, hitWhip = 0f;
-            for (int i = 0; i < 30; i++)
+            // hero v2 has no band chain: the whip reads n/a (−1) and is not gated
+            float bandBefore = band >= 0 ? chains.MaxAngleFromRest(band) : -1f, prev = bandBefore, idleWhip = 0f;
+            float maxHitBand = -1f, hitWhip = -1f;
+            if (band >= 0)
             {
-                yield return null;
-                float a = chains.MaxAngleFromRest(band);
-                maxHitBand = Mathf.Max(maxHitBand, a);
-                hitWhip = Mathf.Max(hitWhip, Mathf.Abs(a - prev));
-                prev = a;
+                for (int i = 0; i < 30; i++) { yield return null; float a = chains.MaxAngleFromRest(band); idleWhip = Mathf.Max(idleWhip, Mathf.Abs(a - prev)); prev = a; }
+                pv.PlayHurt(true);   // the upper-body blow (hurt_A): the head knock the hachimaki should answer
+                maxHitBand = 0f; hitWhip = 0f;
+                for (int i = 0; i < 30; i++)
+                {
+                    yield return null;
+                    float a = chains.MaxAngleFromRest(band);
+                    maxHitBand = Mathf.Max(maxHitBand, a);
+                    hitWhip = Mathf.Max(hitWhip, Mathf.Abs(a - prev));
+                    prev = a;
+                }
             }
             Debug.Log("[DD-TEST] wp032f.player sashMax=" + maxSash.ToString("F1", CultureInfo.InvariantCulture) + " bandMax=" + maxBand.ToString("F1", CultureInfo.InvariantCulture) + " minClr=" + (minClr * 100f).ToString("F1", CultureInfo.InvariantCulture)
                       + "cm sashTip=" + (tipTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm bandHit=" + maxHitBand.ToString("F1", CultureInfo.InvariantCulture) + " (before " + bandBefore.ToString("F1", CultureInfo.InvariantCulture) + ") whip=" + hitWhip.ToString("F1", CultureInfo.InvariantCulture) + "°/frame (idle " + idleWhip.ToString("F1", CultureInfo.InvariantCulture) + ")");
-            Assert.LessOrEqual(maxSash, 70f + 0.5f, "sash açı klampı (70°)");
-            Assert.LessOrEqual(maxBand, 80f + 0.5f, "band açı klampı (80°)");
+            Assert.LessOrEqual(maxSash, sashLimit + 0.5f, "sash açı klampı (" + sashLimit + "°)");
             Assert.GreaterOrEqual(minClr, 0.005f, "zincir gövde kapsülüne girdi (kontrat klerans ≥ +0,01 m)");
             Assert.Greater(tipTravel, 0.01f, "sash koşuda salınmadı");
-            // REPORTED (not a gate): the band already swings ~4°/frame with the idle aim sway; the blow's whip reads against that in the log.
-            Assert.Greater(hitWhip, 1f, "hachimaki darbede hareketsiz");
+            if (band >= 0)
+            {
+                Assert.LessOrEqual(maxBand, chains.Chains[band].maxAngleDegrees + 0.5f, "band açı klampı");
+                // REPORTED (not a gate): the band already swings ~4°/frame with the idle aim sway; the blow's whip reads against that in the log.
+                Assert.Greater(hitWhip, 1f, "hachimaki darbede hareketsiz");
+            }
         }
 
         [UnityTest]
@@ -287,13 +298,31 @@ namespace DD.Art.Tests.PlayMode
             SecondaryChainDriver.CrowdLodForce = 1;
             var steps = new int[drivers.Length];
             int perMin = int.MaxValue, perMax = 0, perSum = 0;
+            bool finite = true;
+            float worstOver = float.MinValue;
+            string worstChain = "";
             for (int f = 0; f < Warm + Frames; f++)
             {
                 for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 8 + i) % 2), Time.deltaTime);
                 yield return null;
                 if (f < Warm) continue;
                 int n = 0;
-                for (int i = 0; i < drivers.Length; i++) if (drivers[i].ServedLastFrame) { steps[i]++; n++; }
+                for (int i = 0; i < drivers.Length; i++)
+                {
+                    if (!drivers[i].ServedLastFrame) continue;
+                    steps[i]++; n++;
+                    // checked on the frame it stepped: a skipped body's particles are its last step's world points while the parent moved
+                    // on (its bones follow the parent rigidly in between), so they are not a pose to clamp-check
+                    for (int c = 0; c < drivers[i].Chains.Length; c++)
+                    {
+                        Vector3[] p = drivers[i].Particles(c);
+                        if (p == null) continue;
+                        foreach (Vector3 q in p) if (float.IsNaN(q.x) || float.IsInfinity(q.x)) finite = false;
+                        float over = drivers[i].MaxAngleFromRest(c) - drivers[i].Chains[c].maxAngleDegrees;
+                        if (over > worstOver) { worstOver = over; worstChain = drivers[i].Chains[c].name + "#" + i + "/s" + stride[i]; }
+                    }
+                }
+
                 perMin = Mathf.Min(perMin, n); perMax = Mathf.Max(perMax, n); perSum += n;
                 microsOn += SecondaryChainDriver.MicrosLastCompletedFrame;
             }
@@ -305,23 +334,18 @@ namespace DD.Art.Tests.PlayMode
             {
                 tierCount[stride[i]]++;
                 if (steps[i] != Frames / stride[i] || drivers[i].LodRank != rank[i]) wrong.Add(i + ":r" + rank[i] + "/" + drivers[i].LodRank + ":" + stride[i] + "→" + steps[i]);
-                for (int c = 0; c < drivers[i].Chains.Length; c++)
-                {
-                    Vector3[] p = drivers[i].Particles(c);
-                    if (p == null) continue;
-                    foreach (Vector3 q in p) Assert.IsFalse(float.IsNaN(q.x) || float.IsInfinity(q.x), "zincir parçacığı sonlu değil");
-                    Assert.LessOrEqual(drivers[i].MaxAngleFromRest(c), drivers[i].Chains[c].maxAngleDegrees + 0.5f, drivers[i].Chains[c].name + " açı klampı (seyrek adım)");
-                }
             }
 
             float perMean = perSum / (float)Frames;
             Debug.Log("[DD-TEST] wp082.chainlod tiers full/half/quarter=" + tierCount[1] + "/" + tierCount[2] + "/" + tierCount[4]
                       + " stepsPerFrame mean=" + perMean.ToString("F1", CultureInfo.InvariantCulture) + " min=" + perMin + " max=" + perMax
                       + " micros/frame off=" + (microsOff / Frames).ToString("F0", CultureInfo.InvariantCulture) + " on=" + (microsOn / Frames).ToString("F0", CultureInfo.InvariantCulture)
-                      + " wrong=" + wrong.Count);
+                      + " wrong=" + wrong.Count + " worstAngleOver=" + worstOver.ToString("F1", CultureInfo.InvariantCulture) + " (" + worstChain + ")");
             Assert.AreEqual(SecondaryChainDriver.LodFullBodies, tierCount[1], "tam hız gövde sayısı");
             Assert.AreEqual(SecondaryChainDriver.LodHalfBodies, tierCount[2], "yarım hız gövde sayısı");
             Assert.IsEmpty(wrong, "gövde sırası / kadansı (i:r beklenen/gerçek:adım→sayılan): " + string.Join(" ", wrong));
+            Assert.IsTrue(finite, "zincir parçacığı sonlu değil");
+            Assert.LessOrEqual(worstOver, 0.5f, worstChain + " açı klampı (adım karesinde)");
             // 12 + 16/2 + 12/4 = 23 every frame: the rank is the phase, so the count does not swing
             Assert.AreEqual(23, perMin, "kare başı adım (en az)");
             Assert.AreEqual(23, perMax, "kare başı adım (en çok)");
