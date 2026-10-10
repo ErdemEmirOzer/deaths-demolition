@@ -63,6 +63,7 @@ namespace DD.Prototype.Diagnostics
             public string verdict = "UNMEASURED", cpuVerdict = "UNMEASURED", gcVerdict = "UNMEASURED";
             public string sourceSha, buildSha, buildStamp, error = "", scopeVersion = "wp095.cost.v2.c00-natural-round-compat-device";
             public int seed = Seed, crowd, crowdWanted = CrowdWanted, safetyCeiling, attempt, nominalHz = 60, framesPerWindow = Frames;
+            public bool profilerEnabled;
             public string cpuMarker = FeelCostMeasurement.MarkerName, gcMarker = "GC.Alloc";
             public bool cpuRecorderValid, gcRecorderValid, cpuControlPass, gcControlPass, inputMatched, coverageComplete, durationMatched, provenanceMatched;
             public long cpuControlNs, cpuControlSamples, gcControlBytes;
@@ -114,6 +115,7 @@ namespace DD.Prototype.Diagnostics
         private Vector3 _origin;
         private double _start;
         private int _oldCap, _oldVsync;
+        private bool _oldProfiler;
         private float _oldScale, _oldFixed;
         private byte[] _bait;
 
@@ -146,6 +148,11 @@ namespace DD.Prototype.Diagnostics
             _oldCap = Application.targetFrameRate; _oldVsync = QualitySettings.vSyncCount;
             _oldScale = Time.timeScale; _oldFixed = Time.fixedDeltaTime;
             Application.targetFrameRate = 60; QualitySettings.vSyncCount = 0;
+            // R3 FINAL fix 37581477 run (10.10): in a development Player the built-in GC.Alloc marker yields samples only while the
+            // Profiler is on (the 64 KiB control read 0 - "recorder positive control failed"); PilotPerfProbe switches it on the same
+            // way for its GPU recorders. On for the whole run - the OFF and ON windows alike, so the ON − OFF delta stays fair.
+            _oldProfiler = UnityEngine.Profiling.Profiler.enabled; UnityEngine.Profiling.Profiler.enabled = true;
+            _result.profilerEnabled = UnityEngine.Profiling.Profiler.enabled;
             int rawCapacity = Frames * 2 + RoundFrames * 2 + 12;
             _rows = new Row[rawCapacity]; _pathRows = new int[rawCapacity * (int)FeelCostPath.Count];
             _result.paths = Enum.GetNames(typeof(FeelCostPath));
@@ -591,6 +598,7 @@ namespace DD.Prototype.Diagnostics
         {
             _collecting = false; Application.logMessageReceived -= OnLog; FeelCostMeasurement.Disarm();
             Application.targetFrameRate = _oldCap; QualitySettings.vSyncCount = _oldVsync;
+            UnityEngine.Profiling.Profiler.enabled = _oldProfiler;
             Time.timeScale = _oldScale; Time.fixedDeltaTime = _oldFixed;
         }
         private void OnApplicationQuit() { if (!_saved) { _result.error = "interrupted before complete pair"; Save(); } }
