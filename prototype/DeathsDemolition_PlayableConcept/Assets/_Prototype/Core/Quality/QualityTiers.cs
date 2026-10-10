@@ -1,4 +1,5 @@
 using System;
+using DD.Prototype.CameraSystem;
 using UnityEngine;
 
 namespace DD.Prototype.Core
@@ -99,6 +100,20 @@ namespace DD.Prototype.Core
         public static float ShadowDistance(QualityTier tier, float modeShadowDistance)
         {
             return Mathf.Min(ShadowDistanceCap[(int)tier], modeShadowDistance);
+        }
+
+        /// <summary>
+        /// FINAL c4093280 perf (C-00 10.10): High top-down shadow distance (m). The TD frame's far edge lies ≈ 32–35 m from the
+        /// camera (15 m up, 42° FOV, −49° pitch), so every caster 40–60 m out was drawn into the shadow map for nothing. High TD
+        /// read 9.6 ms against its 8.0 budget; Cinematic TD keeps the mode's 60 m.
+        /// </summary>
+        public const float TopDownHighShadowDistance = 40f;
+
+        /// <summary>The mode-aware decision: <see cref="ShadowDistance(QualityTier, float)"/>, and High top-down also caps at <see cref="TopDownHighShadowDistance"/>.</summary>
+        public static float ShadowDistance(QualityTier tier, CameraMode mode, float modeShadowDistance)
+        {
+            float distance = ShadowDistance(tier, modeShadowDistance);
+            return tier == QualityTier.Yuksek && mode == CameraMode.TopDown ? Mathf.Min(distance, TopDownHighShadowDistance) : distance;
         }
 
         /// <summary>Contract §3: min(tier cap, camera-mode cascade count).</summary>

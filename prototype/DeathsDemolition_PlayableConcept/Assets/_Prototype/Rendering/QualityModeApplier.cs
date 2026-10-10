@@ -96,6 +96,12 @@ namespace DD.Prototype.Rendering
             return Mathf.Max(0f, QualityTiers.ShadowDistance(tier, profile.ShadowDistance));
         }
 
+        /// <summary>The mode-aware decision the runtime writes (FINAL 10.10: High top-down caps at QualityTiers.TopDownHighShadowDistance).</summary>
+        public static float ShadowDistanceFor(QualityTier tier, CameraMode mode, CameraModeProfile profile)
+        {
+            return Mathf.Max(0f, QualityTiers.ShadowDistance(tier, mode, profile.ShadowDistance));
+        }
+
         /// <summary>Re-arms the subscriptions (remove-then-add) and applies the current tier × mode now. Play mode only.</summary>
         public static void ApplyNow()
         {
@@ -173,13 +179,14 @@ namespace DD.Prototype.Rendering
                 s_originalDistances.Add(asset, asset.shadowDistance);
             }
 
-            float distance = s_applyShadowDistance ? ShadowDistanceFor(tier, CameraModeService.CurrentProfile) : s_originalDistances[asset];
+            float distance = s_applyShadowDistance ? ShadowDistanceFor(tier, CameraModeService.Current, CameraModeService.CurrentProfile) : s_originalDistances[asset];
             if (!Mathf.Approximately(asset.shadowDistance, distance))
             {
                 asset.shadowDistance = distance;
             }
 
             LastAppliedShadowDistance = distance;
+            SmallShadowCasters.Apply(tier, CameraModeService.Current);   // FINAL 10.10 perf: High top-down only
         }
 
         private static void Arm()
