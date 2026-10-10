@@ -243,7 +243,19 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < 3; i++) yield return null;
             runner.PlayStumble();
             yield return null; yield return null;
-            Assert.IsTrue(In(runner.Animator, 0, C.StumbleState), "hit_special_stumble");
+            // WP-096 p3 (185bbe6b): with the AP-033 set the Runner stumble is the stumble_recover transition (its own p3 test covers the
+            // motor); the AP-009 hit_special_stumble stays the fallback when the set has no p3 clip
+            Assert.IsTrue(In(runner.Animator, 0, C.StumbleState) || In(runner.Animator, 0, "AP033_zombie_stumble_recover"), "hit_special_stumble ya da p3 stumble_recover");
+            // the p3 clip runs on the body motor's StepTransition (ZombieEnemy in game); this stage body has no motor — drive it the way
+            // the motor does (standing, allowed), until the clip ends and attaches out to Locomotion (son10b: 2 s timeout without it)
+            float stepT0 = Time.realtimeSinceStartup;
+            while (runner.TransitionActive && Time.realtimeSinceStartup - stepT0 < 3f)
+            {
+                runner.StepTransition(runner.transform.forward, 0f, 0f, true, Mathf.Max(Time.deltaTime, 1f / 120f), out _, out _);
+                yield return null;
+            }
+
+            Assert.IsFalse(runner.TransitionActive, "p3 stumble_recover 3 s içinde bitmedi");
             yield return CharacterTests.Bekle(() => runner.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !runner.Animator.IsInTransition(0), 2f, "stumble sonrası Locomotion");
         }
 

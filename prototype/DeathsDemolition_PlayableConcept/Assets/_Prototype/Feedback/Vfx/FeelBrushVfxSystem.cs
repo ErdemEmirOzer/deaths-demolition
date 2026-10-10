@@ -31,6 +31,8 @@ namespace DD.Prototype.Feedback.Vfx
         private static int FloorMask => (1 << 0) | PrototypeLayers.AimBlockMask;
         private static FeelBrushVfxSystem s_instance;
         public static FeelBrushVfxSystem Instance => s_instance;
+        /// <summary>Test seam (like <see cref="Warmup"/>): a fresh run's presentation - every slot, light and reservation free, alive again.</summary>
+        public void ResetForTest() => ResetRun();
         public static bool OwnsTdLayers => s_instance != null && s_instance.isActiveAndEnabled && s_instance.AssetsReady
             && CameraModeService.Current == CameraMode.TopDown;
 
@@ -57,7 +59,7 @@ namespace DD.Prototype.Feedback.Vfx
             public Light Light;
             public float Age, ReservationRemaining, Radius;
             public Vector3 Origin;
-            public bool Pending;
+            public bool Pending, Rocket;
             public int GroupId;
         }
 
@@ -83,6 +85,17 @@ namespace DD.Prototype.Feedback.Vfx
         public bool AssetsReady { get; private set; }
         public int LiveDroplets { get; private set; }
         public int LiveExplosions { get; private set; }
+        /// <summary>M-62: blast lights lit with a shadow now - Cinematic only, a rocket's only, at most one.</summary>
+        public int ShadowedLightsLit
+        {
+            get
+            {
+                int n = 0;
+                if (!_built) return 0;
+                for (int i = 0; i < _lights.Length; i++) if (_lights[i].Light.enabled && _lights[i].Light.shadows != LightShadows.None) n++;
+                return n;
+            }
+        }
         public int HitBursts { get; private set; }
         public int KillBursts { get; private set; }
         public int StainMarks { get; private set; }
@@ -215,7 +228,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (!_built) return;
             for (int i = 0; i < _slots.Length; i++) Hide(i);
             for (int i = 0; i < _lights.Length; i++)
-            { _lights[i].Light.enabled = false; _lights[i].ReservationRemaining = 0f; _lights[i].Pending = false; }
+            { _lights[i].Light.enabled = false; _lights[i].ReservationRemaining = 0f; _lights[i].Pending = false; _lights[i].Rocket = false; }
             LiveDroplets = 0; LiveExplosions = 0;
         }
         private void Hide(int index)
@@ -346,22 +359,35 @@ namespace DD.Prototype.Feedback.Vfx
             MultiRings++;
         }
         /// <summary>Shared admission for debris, ring and light. Holds each slot through the longest delayed debris layer.</summary>
-        public static bool TryReserveExplosion(Vector3 origin, float radius)
+        public static bool TryReserveExplosion(Vector3 origin, float radius) => TryReserveExplosion(origin, radius, false);
+
+        /// <summary>M-62 (C-00 30.09): a rocket's blast is never the one dropped - with all eight slots held it takes over the oldest
+        /// small blast's (explosive rounds, bomblets: its ring and light end, its debris was never a small blast's).</summary>
+        public static bool TryReserveExplosion(Vector3 origin, float radius, bool rocket)
         {
-            return s_instance != null && s_instance.ReserveExplosion(origin, radius) >= 0;
+            return s_instance != null && s_instance.ReserveExplosion(origin, radius, rocket) >= 0;
         }
-        private int ReserveExplosion(Vector3 origin, float radius)
+        private int ReserveExplosion(Vector3 origin, float radius, bool rocket)
         {
             if (!CanPlay) return -1;
-            for (int i = 0; i < _lights.Length; i++)
+            int index = -1, small = -1;
+            for (int i = 0; i < _lights.Length && index < 0; i++)
             {
                 BlastLight light = _lights[i];
-                if (light.ReservationRemaining > 0f) continue;
-                light.ReservationRemaining = ExplosionReservationSeconds; light.Origin = origin; light.Radius = radius;
-                light.Pending = true; light.GroupId = 0;
-                return i;
+                if (light.ReservationRemaining <= 0f) index = i;
+                else if (!light.Rocket && (small < 0 || light.ReservationRemaining < _lights[small].ReservationRemaining)) small = i;
             }
-            return -1;
+            if (index < 0 && rocket && small >= 0)
+            {
+                index = small;
+                _lights[index].Light.enabled = false;
+                if (_slots[BlastStart + index].Kind == Kind.Shock) { LiveExplosions--; Hide(BlastStart + index); }
+            }
+            if (index < 0) return -1;
+            BlastLight taken = _lights[index];
+            taken.ReservationRemaining = ExplosionReservationSeconds; taken.Origin = origin; taken.Radius = radius;
+            taken.Pending = true; taken.GroupId = 0; taken.Rocket = rocket;
+            return index;
         }
         private void OnExplosion(FeelExplosion explosion)
         {
@@ -372,7 +398,7 @@ namespace DD.Prototype.Feedback.Vfx
                     && Mathf.Abs(_lights[i].Radius - explosion.Radius) < .0001f)
                 { lightIndex = i; break; }
             // Direct FeelEvents publishers use the same budget as the legacy debris bridge.
-            if (lightIndex < 0) lightIndex = ReserveExplosion(explosion.Origin, explosion.Radius);
+            if (lightIndex < 0) lightIndex = ReserveExplosion(explosion.Origin, explosion.Radius, explosion.Source == ExplosionSource.Rocket);
             if (lightIndex < 0) return;
             var light = _lights[lightIndex]; light.Pending = false;
             if (Ground(explosion.Origin, out Vector3 point, out Vector3 normal))
@@ -387,7 +413,9 @@ namespace DD.Prototype.Feedback.Vfx
             light.Light.transform.position = explosion.Origin + Vector3.up * .3f;
             light.Light.range = 2.5f * Mathf.Max(.05f, explosion.Radius);
             light.Light.intensity = 30f * Mathf.Clamp01(GameFeelSettings.FlashScale);
-            light.Light.shadows = ExplosionDirector.LightCastsShadows ? LightShadows.Soft : LightShadows.None;
+            // M-62 (C-00 30.09, perf): only a rocket casts the Cinematic shadow, and only while no other blast light does (≤ 1).
+            light.Light.shadows = explosion.Source == ExplosionSource.Rocket && ExplosionDirector.LightCastsShadows && ShadowedLightsLit == 0
+                ? LightShadows.Soft : LightShadows.None;
             light.Light.enabled = true;
         }
         private void OnLast(FeelLastZombie last)

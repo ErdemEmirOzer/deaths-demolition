@@ -209,6 +209,10 @@ namespace DD.Prototype.Navigation
                     _bridgeAdmission = default;
                 }
                 NavRegionVolume bridge = profile.FindBridgeMouth(position, steeringTarget);
+                // WP-096 R3 (son10b V6 Waterfall / C8_Bridge stations: 5 bodies held still at both mouths, queue 3–7 s): the bridge queue
+                // meters a crossing; when the target stands on the deck itself (the AlternativeAhead rule's "deck is the destination") the
+                // body must reach it — the ordinary WP-030 queue below (creep, MaxQueueSeconds) applies, as in R2 (FINAL a1 PASS)
+                if (bridge != null && bridge.Contains(goal)) bridge = null;
                 if (bridge != null)
                 {
                     if (!ReferenceEquals(_bridgeTracked, bridge))

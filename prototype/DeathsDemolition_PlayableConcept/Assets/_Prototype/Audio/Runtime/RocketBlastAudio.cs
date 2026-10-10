@@ -17,6 +17,18 @@ namespace DD.Prototype.Audio
         private const int Capacity = 8;
         private const float SameBlastMeters = 0.2f;
 
+        // C-00 10.10 (CI e8fc3f70 red, Rl1_Bombacik "üç bombacık, üç küçük pop: 1 / 3"): the pops fall due by game time, the pool's
+        // same-sound retrigger gate (PopRetrigger) counts unscaled time. One long frame — the rocket's blast frame on a loaded host —
+        // lets game time jump past the 60–180 ms stagger, all three fall due in one Tick and the second and third hit the gate 0 s
+        // after the first: silent. CasingAudio's fix (06.10, KovanV2): a due pop inside the window since the last pop stays queued and
+        // plays on a later Tick, at most PopMaxHold after it fell due — a full cluster (Capacity) fits, nothing plays ever later.
+
+        /// <summary>The BombletPop placement's retrigger window (unscaled s); the queue waits it out instead of losing a pop to it.</summary>
+        public const float PopRetrigger = 0.03f;
+
+        /// <summary>The longest a due pop waits out the retrigger window (unscaled s): a full cluster, one window apart.</summary>
+        public const float PopMaxHold = Capacity * PopRetrigger;
+
         private struct Held
         {
             public CombatAudioCue Cue;
@@ -27,6 +39,7 @@ namespace DD.Prototype.Audio
         {
             public float At;
             public Vector3 Point;
+            public float DueSeen;   // unscaled time the queue first saw it due; −1 until then
         }
 
         private readonly Held[] _held = new Held[Capacity];
@@ -37,6 +50,7 @@ namespace DD.Prototype.Audio
         private int _popCount;
         private int _clusterIndex;
         private int _clusterFrame = -1;
+        private float _lastPopAt = float.NegativeInfinity;   // unscaled time of the last pop the pool took
         private bool _subscribed;
 
         public RocketBlastAudio(AudioClipLibrary library, WeaponFireAudio.PlayFunc play)
@@ -115,7 +129,7 @@ namespace DD.Prototype.Audio
             if (_popCount < Capacity)
             {
                 float delay = 0.06f + _clusterIndex * 0.05f + Random.value * 0.02f;   // 60–110 ms apart: a crackle, not a stack
-                _pops[_popCount++] = new Pop { At = Time.time + delay, Point = info.Origin };
+                _pops[_popCount++] = new Pop { At = Time.time + delay, Point = info.Origin, DueSeen = -1f };
             }
 
             _clusterIndex++;
@@ -136,17 +150,21 @@ namespace DD.Prototype.Audio
         public void Tick()
         {
             float now = Time.time;
+            float unscaledNow = Time.unscaledTime;
             for (int i = _popCount - 1; i >= 0; i--)
             {
                 if (_pops[i].At > now) continue;
+                if (_pops[i].DueSeen < 0f) _pops[i].DueSeen = unscaledNow;
+                if (unscaledNow - _lastPopAt < PopRetrigger && unscaledNow - _pops[i].DueSeen < PopMaxHold) continue;   // a later Tick plays it
                 Vector3 at = _pops[i].Point;
                 _pops[i] = _pops[--_popCount];
                 AudioPlacement p = AudioMixPlan.ProjectileImpact(AudioSoundId.BombletPop);
-                p.MinRetrigger = 0.03f;
+                p.MinRetrigger = PopRetrigger;
                 p.DuckCombat = 0.8f;
                 p.DuckSeconds = 0.2f;
                 if (_play(p, at, 1f, 60))
                 {
+                    _lastPopAt = unscaledNow;
                     Bomblets++;
                     LastSound = AudioSoundId.BombletPop;
                 }

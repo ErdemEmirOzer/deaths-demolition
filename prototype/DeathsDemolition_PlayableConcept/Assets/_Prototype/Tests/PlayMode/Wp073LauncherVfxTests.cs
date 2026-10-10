@@ -1,4 +1,5 @@
 using System.Collections;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Feedback;
@@ -18,8 +19,10 @@ namespace DD.Prototype.Tests.PlayMode
         private ExplosionDirector _blast;
         private float _flash;
         private Camera _cam, _previousCam;
+        private CameraMode _previousMode;
         [SetUp] public void Setup()
         {
+            _previousMode=CameraModeService.Current;
             _flash=GameFeelSettings.FlashScale;VfxTier.Override=VfxTierLevel.High;
             var vfx=HitFeedbackDirector.Instance.Vfx;Assert.IsTrue(vfx.IsReady);
             _rocket=RocketVisualSystem.Ensure();_blast=ExplosionDirector.Ensure(vfx);
@@ -27,11 +30,23 @@ namespace DD.Prototype.Tests.PlayMode
             // M-60: a fixed feedback camera 10 m behind the test spawn (billboard distance, edge smear, player guard read it).
             _previousCam=FeedbackCameraRef.Current;_cam=new GameObject("Wp073 launcher test camera").AddComponent<Camera>();_cam.enabled=false;
             _cam.transform.SetPositionAndRotation(new Vector3(0f,101f,190f),Quaternion.identity);FeedbackCameraRef.Set(_cam);
+            Kip(CameraMode.TopDown);
+        }
+        // R3 (user 06.10: the game and its tests are top-down): every test names its camera. Top-down, the WP-093 brush layers
+        // (FeelBrushVfxSystem, AP-037; feel contract §4.5) own the blast's ring and light and the director keeps the AP-010 smoke
+        // and debris; third person keeps the WP-073 layered presentation. The brush starts each test with its eight reservations
+        // free - a synchronous [Test] advances no frame, so an earlier test's would still be held (CI e8fc3f70: 6 order-dependent reds).
+        private void Kip(CameraMode mode)
+        {
+            CameraModeService.Request(mode,instant:true);Assert.AreEqual(mode,CameraModeService.Current,"kamera kipi");
+            FeelBrushVfxSystem.Instance?.ResetForTest();
+            Assert.AreEqual(mode==CameraMode.TopDown,FeelBrushVfxSystem.OwnsTdLayers,"patlamanın fırça katmanları yalnız Üstten'de sahip");
         }
         [TearDown] public void Cleanup()
         {
             ProjectileSystem.Clear();_rocket.Clear();_blast.Clear();GameFeelSettings.FlashScale=_flash;VfxTier.Override=null;
             ExplosionDirector.GuardChestOverride=null;FeedbackCameraRef.Set(_previousCam);if(_cam!=null)Object.DestroyImmediate(_cam.gameObject);
+            CameraModeService.Request(_previousMode,instant:true);FeelBrushVfxSystem.Instance?.ResetForTest();
         }
         private static int Spawn(float range=70f, float life=2.2f, ProjectileKind kind=ProjectileKind.Rocket)
         {
@@ -102,13 +117,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(full+2,_blast.FullPresentations);Assert.AreEqual(light+1,_blast.LightPresentations);
             _blast.Tick(Time.time+.3f);Assert.AreEqual(column+3,_blast.Columns);_blast.Tick(Time.time+2f);Assert.AreEqual(0,_blast.Pending);
         }
-        [UnityTest] public IEnumerator ReducedFlashes_PreservesColumnAndSoot_RemovesFlash()
+        [UnityTest] public IEnumerator ReducedFlashes_PreservesColumnAndSoot_RemovesFlash_Ustten() => ReducedFlashesCore(CameraMode.TopDown);
+        internal IEnumerator ReducedFlashesCore(CameraMode mode)
         {
+            Kip(mode);bool td=mode==CameraMode.TopDown;int ember=td?0:1;   // top-down: §4.5's brush ring and light, no embers
             var ground=GameObject.CreatePrimitive(PrimitiveType.Cube);ground.transform.position=new Vector3(0f,99.5f,200f);ground.transform.localScale=new Vector3(10f,1f,10f);Physics.SyncTransforms();
             int flashes=_blast.FlashCards,columns=_blast.Columns,scorches=_blast.Scorches,wet=_blast.WetRings,embers=_blast.EmberBursts,residues=_blast.Residues;
-            GameFeelSettings.FlashScale=.4f;Assert.IsTrue(_blast.Play(new Vector3(0f,100.1f,200f),5f,-1));_blast.Tick(Time.time+.3f);
+            GameFeelSettings.FlashScale=.4f;Assert.IsTrue(_blast.Play(new Vector3(0f,100.1f,200f),5f,-1));
+            if(td)   // top-down the flash is the brush blast light (FeelEvents, as HitFeedbackDirector.ReportExplosion raises it): 30 × FlashScale
+            {
+                FeelEvents.RaiseExplosion(new Vector3(0f,100.1f,200f),5f,0,ExplosionSource.Rocket);Light lit=null;
+                foreach(Light l in FeelBrushVfxSystem.Instance.GetComponentsInChildren<Light>(true))if(l.enabled){Assert.IsNull(lit,"tek fırça ışığı");lit=l;}
+                Assert.IsNotNull(lit,"Üstten: fırça patlama ışığı yanar");Assert.AreEqual(30f*.4f,lit.intensity,1e-4f,"ReduceFlashes: fırça ışığı × 0,4");
+            }
+            _blast.Tick(Time.time+.3f);
             Assert.AreEqual(flashes,_blast.FlashCards);Assert.AreEqual(columns+1,_blast.Columns);Assert.AreEqual(scorches+1,_blast.Scorches);
-            Assert.AreEqual(wet+1,_blast.WetRings);Assert.AreEqual(embers+1,_blast.EmberBursts);Assert.AreEqual(residues+1,_blast.Residues);
+            Assert.AreEqual(wet+1,_blast.WetRings);Assert.AreEqual(embers+ember,_blast.EmberBursts);Assert.AreEqual(residues+1,_blast.Residues);
             Object.Destroy(ground);yield return null;
         }
         [Test] public void PausedPresentation_DoesNotEmit()
@@ -189,12 +213,14 @@ namespace DD.Prototype.Tests.PlayMode
             try{Assert.IsFalse(RocketVisualSystem.TryAuthoredRocket(go,out _,out _,out _,out _));}
             finally{Object.DestroyImmediate(go);}
         }
-        [Test] public void CinematicSteam_IsDelayedAndOnlyRunsOnce()
+        [Test] public void CinematicSteam_IsDelayedAndOnlyRunsOnce_Ustten() => CinematicSteamCore(CameraMode.TopDown);
+        internal void CinematicSteamCore(CameraMode mode)
         {
-            VfxTier.Override=VfxTierLevel.Cinematic;int steam=_blast.SteamPuffs;
+            Kip(mode);bool td=mode==CameraMode.TopDown;int puffs=td?0:6;   // top-down: §4.5's brush ring and light, no steam
+            VfxTier.Override=VfxTierLevel.Cinematic;int steam=_blast.SteamPuffs,columns=_blast.Columns;
             _blast.Play(new Vector3(0f,100f,200f),5f,-1);_blast.Tick(Time.time+.19f);Assert.AreEqual(steam,_blast.SteamPuffs);
-            _blast.Tick(Time.time+.21f);Assert.AreEqual(steam+6,_blast.SteamPuffs);
-            _blast.Tick(Time.time+.21f);Assert.AreEqual(steam+6,_blast.SteamPuffs);
+            _blast.Tick(Time.time+.21f);Assert.AreEqual(steam+puffs,_blast.SteamPuffs);
+            _blast.Tick(Time.time+.21f);Assert.AreEqual(steam+puffs,_blast.SteamPuffs);if(td)Assert.AreEqual(columns+1,_blast.Columns,"duman sütunu bir kez");
         }
         [Test] public void TierSmokeLife_PreservesFlightIdentity()
         {
@@ -216,21 +242,36 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(scorch,_blast.Scorches);Assert.AreEqual(wet,_blast.WetRings);Assert.AreEqual(residue,_blast.Residues,"3 m hava patlaması: zemin katmanı yok");
             Object.Destroy(ground);yield return null;
         }
-        [Test] public void M62_TwoSmallThenRocket_RocketTakesTheFullSlot_SmallPlaysNoEmbersOrColumn()
+        [Test] public void M62_TwoSmallThenRocket_RocketTakesTheFullSlot_SmallPlaysNoEmbersOrColumn_Ustten() => M62TwoSmallThenRocketCore(CameraMode.TopDown);
+        internal void M62TwoSmallThenRocketCore(CameraMode mode)
         {
+            Kip(mode);int ember=mode==CameraMode.TopDown?0:1;   // top-down: §4.5, no embers at all
             int full=_blast.FullPresentations,light=_blast.LightPresentations,embers=_blast.EmberBursts,columns=_blast.Columns;
             Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));Assert.IsTrue(_blast.Play(new Vector3(4f,100f,200f),3f,-1,ExplosionSource.Small));
             Assert.IsTrue(_blast.Play(new Vector3(8f,100f,200f),5f,-1,ExplosionSource.Rocket));
             Assert.AreEqual(full+1,_blast.FullPresentations,"roket Full yuvasını alır");Assert.AreEqual(light+2,_blast.LightPresentations);
-            _blast.Tick(Time.time+.3f);Assert.AreEqual(embers+1,_blast.EmberBursts,"kor yalnız roket");Assert.AreEqual(columns+1,_blast.Columns,"sütun yalnız roket");
+            _blast.Tick(Time.time+.3f);Assert.AreEqual(embers+ember,_blast.EmberBursts,"kor yalnız roket");Assert.AreEqual(columns+1,_blast.Columns,"sütun yalnız roket");
         }
-        [Test] public void M62_CinematicExplosiveRounds_AtMostOneShadowedLight()
+        [Test] public void M62_CinematicExplosiveRounds_AtMostOneShadowedLight_Ustten() => M62ShadowCore(CameraMode.TopDown);
+        internal void M62ShadowCore(CameraMode mode)
         {
-            VfxTier.Override=VfxTierLevel.Cinematic;var lights=MuzzleSystem.Ensure();int peak=0;
-            for(int i=0;i<25;i++){_blast.Play(new Vector3(i%5*3f,100f,200f+i/5*3f),3f,-1,ExplosionSource.Small);peak=Mathf.Max(peak,lights.ShadowedLightsLit);}   // lmg_1 explosive rounds, 5 s × 5/s
+            Kip(mode);bool td=mode==CameraMode.TopDown;
+            VfxTier.Override=VfxTierLevel.Cinematic;var lights=MuzzleSystem.Ensure();var brush=FeelBrushVfxSystem.Instance;int peak=0;
+            System.Func<int> shadowed=()=>td?brush.ShadowedLightsLit:lights.ShadowedLightsLit;
+            for(int i=0;i<25;i++){Blast(td,new Vector3(i%5*3f,100f,200f+i/5*3f),3f,ExplosionSource.Small);peak=Mathf.Max(peak,shadowed());}   // lmg_1 explosive rounds, 5 s × 5/s
             Assert.AreEqual(0,peak,"küçük patlama gölgesiz");
-            _blast.Play(new Vector3(20f,100f,200f),5f,-1,ExplosionSource.Rocket);
-            Assert.AreEqual(ExplosionDirector.LightCastsShadows?1:0,lights.ShadowedLightsLit,"gölgeli ışık yalnız roket, ≤ 1");
+            int full=_blast.FullPresentations;
+            Blast(td,new Vector3(20f,100f,200f),5f,ExplosionSource.Rocket);
+            if(td)Assert.AreEqual(full+1,_blast.FullPresentations,"roket sunulur (sekiz fırça yuvası küçük patlamalarla dolu olsa da)");
+            Assert.AreEqual(ExplosionDirector.LightCastsShadows?1:0,shadowed(),"gölgeli ışık yalnız roket, ≤ 1");
+            if(!td)return;
+            Blast(td,new Vector3(26f,100f,200f),5f,ExplosionSource.Rocket);
+            Assert.AreEqual(ExplosionDirector.LightCastsShadows?1:0,shadowed(),"ikinci roket: gölgeli ışık yine ≤ 1");
+        }
+        // top-down HitFeedbackDirector.ReportExplosion's order: the director's reservation, then FeelEvents (the brush ring and light)
+        private void Blast(bool td,Vector3 at,float radius,ExplosionSource source)
+        {
+            _blast.Play(at,radius,-1,source);if(td)FeelEvents.RaiseExplosion(at,radius,0,source);
         }
         [Test] public void M58_ExhaustPoolIsEight_NinthRocketFliesWithoutCard()
         {
@@ -262,8 +303,16 @@ namespace DD.Prototype.Tests.PlayMode
             VfxTier.Override=VfxTierLevel.Performance;_rocket.Present(.05f);Assert.AreEqual(1,_rocket.BillboardRockets,"Performans: 15 m ötesi");
             VfxTier.Override=VfxTierLevel.High;_rocket.Present(.05f);Assert.AreEqual(0,_rocket.BillboardRockets,"Yüksek: 20 m ≤ 25 m mesh");Assert.AreEqual(1,_rocket.DrawnRockets);
         }
-        [Test] public void M60_NearBlast_EdgeSmear_UnderFourMetres_OffWithReducedFlashes()
+        [Test] public void M60_NearBlast_EdgeSmear_UnderFourMetres_OffWithReducedFlashes_Ustten()
         {
+            // top-down: the brush ring and light own the flash (§4.5) - no edge smear at any distance
+            _cam.transform.position=new Vector3(0f,100f,198f);int smears=_blast.EdgeSmears;
+            Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),5f,-1,ExplosionSource.Rocket));Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));
+            Assert.AreEqual(smears,_blast.EdgeSmears,"Üstten: kenar lekesi yok");Assert.IsFalse(_blast.EdgeSmearVisible);
+        }
+        internal void M60NearBlastThirdPersonCore()
+        {
+            Kip(CameraMode.ThirdPerson);
             _cam.transform.position=new Vector3(0f,100f,198f);int smears=_blast.EdgeSmears;
             Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(smears+1,_blast.EdgeSmears,"2 m roket");Assert.IsTrue(_blast.EdgeSmearVisible);
             Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));Assert.AreEqual(smears+2,_blast.EdgeSmears,"2 m küçük patlama");
@@ -280,5 +329,23 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_blast.Play(new Vector3(12f,101f,196f),5f,-1,ExplosionSource.Small));Assert.AreEqual(guarded+1,_blast.GuardedColumns,"yanda: örtmez");
             _blast.Tick(Time.time+.3f);Assert.AreEqual(columns+2,_blast.Columns,"sütun yine çizilir (yarı α)");
         }
+    }
+
+    /// <summary>
+    /// R3 (user 06.10 / 07.10: the tests run top-down only, FP / TP stay as they are): the WP-073 rows whose top-down twin differs,
+    /// kept under their original names in third person (the layered presentation; the brush owns the top-down blast). FPTP on the
+    /// CLASS - main-ci's PlayMode filter does not exclude a method-level FPTP inside a categorised fixture (07.10).
+    /// </summary>
+    [TestFixture, Category("WP073"), Category("FPTP")]
+    public sealed class Wp073LauncherVfxFptpTests
+    {
+        private readonly Wp073LauncherVfxTests _t=new Wp073LauncherVfxTests();
+        [SetUp] public void Setup()=>_t.Setup();
+        [TearDown] public void Cleanup()=>_t.Cleanup();
+        [UnityTest] public IEnumerator ReducedFlashes_PreservesColumnAndSoot_RemovesFlash()=>_t.ReducedFlashesCore(CameraMode.ThirdPerson);
+        [Test] public void CinematicSteam_IsDelayedAndOnlyRunsOnce()=>_t.CinematicSteamCore(CameraMode.ThirdPerson);
+        [Test] public void M62_TwoSmallThenRocket_RocketTakesTheFullSlot_SmallPlaysNoEmbersOrColumn()=>_t.M62TwoSmallThenRocketCore(CameraMode.ThirdPerson);
+        [Test] public void M62_CinematicExplosiveRounds_AtMostOneShadowedLight()=>_t.M62ShadowCore(CameraMode.ThirdPerson);
+        [Test] public void M60_NearBlast_EdgeSmear_UnderFourMetres_OffWithReducedFlashes()=>_t.M60NearBlastThirdPersonCore();
     }
 }

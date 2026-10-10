@@ -413,17 +413,32 @@ namespace DD.Prototype.Tests.PlayMode
             ZombieEnemy.OutOfWorldRemoved += removed;
             try
             {
-                float t0 = Time.realtimeSinceStartup;
-                while (Time.realtimeSinceStartup - t0 < 20f)
+                // WP-096 R3 (CI e8fc3f70: 13 within 6.5 m in a fixed 20 s on the merged R3 main — the wp-096 tip read 19): the crowd
+                // forms first (until 15 are within 6.5 m, ≤ 45 s), then a 10 s watch with the back row standing; the removal count
+                // covers the whole run. The ring series every 2 s says how fast it formed (the merged world / gaits).
+                float t0 = Time.realtimeSinceStartup, formedAt = -1f, nextLog = 0f;
+                var series = new System.Text.StringBuilder("[DD-OBS] wp096.p12.ring");
+                while (Time.realtimeSinceStartup - t0 < 45f && (formedAt < 0f || Time.realtimeSinceStartup - formedAt < 10f))
                 {
                     maxAlive = Math.Max(maxAlive, _director.ActiveCount);
-                    int ring = 0;
-                    foreach (ZombieEnemy z in ZombieEnemy.Live) if (z != null && z.IsAlive && Flat(z.transform.position, _rig.transform.position) <= 6.5f) ring++;
+                    int ring = 0, near12 = 0;
+                    foreach (ZombieEnemy z in ZombieEnemy.Live)
+                    {
+                        if (z == null || !z.IsAlive) continue;
+                        float d = Flat(z.transform.position, _rig.transform.position);
+                        if (d <= 6.5f) ring++;
+                        if (d <= 12f) near12++;
+                    }
+
                     maxRing = Math.Max(maxRing, ring);
+                    if (formedAt < 0f && ring >= 15) formedAt = Time.realtimeSinceStartup;
+                    if (Time.realtimeSinceStartup - t0 >= nextLog) { series.Append(" t" + nextLog.ToString("0") + "=" + ring + "/" + near12 + "/" + _director.ActiveCount); nextLog += 2f; }
                     yield return null;
                 }
 
-                Debug.Log("[DD-TEST] wp084.watchdog.guard maxAlive=" + maxAlive + " maxWithin6.5m=" + maxRing + " recoveries=" + ZombieEnemy.StuckRecoveries + " removals=" + ZombieEnemy.StuckRemovals);
+                Debug.Log(series.ToString());
+                Debug.Log("[DD-TEST] wp084.watchdog.guard maxAlive=" + maxAlive + " maxWithin6.5m=" + maxRing + " formedAt=" + (formedAt < 0f ? "never" : (formedAt - t0).ToString("0.0") + " s")
+                          + " recoveries=" + ZombieEnemy.StuckRecoveries + " removals=" + ZombieEnemy.StuckRemovals);
                 // a back row exists (the front ring round a player holds ~8–10): r9b 06.10 read 19 within 6.5 m in 20 s
                 Assert.GreaterOrEqual(maxRing, 15, "kaynak yok: oyuncunun çevresinde arka sıralı kalabalık oluşmadı");
                 Assert.AreEqual(0, ZombieEnemy.StuckRemovals, "kalabalıkta bekleyen gövde takılma sayılıp kaldırıldı");

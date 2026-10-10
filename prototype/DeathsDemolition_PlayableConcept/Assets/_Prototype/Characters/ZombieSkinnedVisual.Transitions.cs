@@ -147,16 +147,19 @@ namespace DD.Prototype.Characters
             _animator.CrossFade(CharacterAnimatorContract.LocomotionState, 0.12f, 0);
         }
         private void ReleaseTransitionFeet() { if (_footIk != null) { _footIk.NotifyLift(0); _footIk.NotifyLift(1); } }
-        private void CancelTransition(bool returnToLocomotion)
+        /// <summary>Drops the p3 start / stop / turn in progress. Returns true when one was active (its scripted crossfade may still be
+        /// running on the base layer — no any-state transition interrupts a scripted crossfade).</summary>
+        private bool CancelTransition(bool returnToLocomotion)
         {
             bool active = _transitionEntry != null || _attachRemaining > 0f;
             _transitionEntry = null; _transitionId = -1; _transitionMirror = false; _attachRemaining = 0f;
             if (_events != null) _events.ZombieTransitionMirrorState = 0;
-            if (!active) return;
+            if (!active) return false;
             ReleaseTransitionFeet(); RefreshGaitClip();
             _animator.SetFloat(GaitId, _gait);
             _transitionCooldown = 0.25f;
             if (returnToLocomotion) _animator.CrossFade(CharacterAnimatorContract.LocomotionState, 0.1f, 0);
+            return true;
         }
     }
 }

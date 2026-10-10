@@ -228,7 +228,10 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(over > 0 && add > 0, "katmanlar");
 
             // Let it walk, then a light hit from the left: the legs keep walking, the upper body reacts.
-            yield return CharacterTests.Bekle(() => z.Skinned.Animator.GetFloat(Animator.StringToHash(C.Speed01)) > 0.5f, 6f, "yürümeye başlamadı");
+            // WP-096 R3 (CI e8fc3f70): a body setting off plays the AP-033 p3 start (a base-layer state of its own) before it settles
+            // into Locomotion — the light hit lands on the settled walk, the read this test makes
+            yield return CharacterTests.Bekle(() => z.Skinned.Animator.GetFloat(Animator.StringToHash(C.Speed01)) > 0.5f && !z.Skinned.TransitionActive
+                                                    && an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), 6f, "yürümeye başlamadı (Locomotion'a oturmadı)");
             Vector3 before = z.transform.position;
             DamageResult r = z.ApplyHit(Hit(1f, BodyRegion.UpperBody, z.transform.right, 1.2f));
             Assert.IsFalse(r.Killed);

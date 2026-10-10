@@ -807,6 +807,44 @@ namespace DD.Prototype.Characters
         private static readonly int FlinchLegId = Animator.StringToHash(CharacterAnimatorContract.FlinchLeg);
         private static readonly int DieId = Animator.StringToHash(CharacterAnimatorContract.Die);
         private static readonly int DeathStyleId = Animator.StringToHash(CharacterAnimatorContract.DeathStyle);
+        /// <summary>WP-096 R3: Death_0 … Death_9 (the base layer's death states, DeathStyle = index) for the crossfade that cuts a p3 transition.</summary>
+        private static readonly int[] s_deathStates = DeathStateHashes(10);
+        /// <summary>WP-096 R3: the any-state transitions' fixed durations in DD_Zombie.controller (death / stagger 0.05 s, armour
+        /// break / stumble 0.04 s) — the cut crossfade blends like the transition it stands in for.</summary>
+        private const float DeathCutBlendSeconds = 0.05f, StaggerCutBlendSeconds = 0.05f, ArmorBreakCutBlendSeconds = 0.04f, StumbleCutBlendSeconds = 0.04f;
+        private static readonly int[] s_armorBreakStates =
+        {
+            Animator.StringToHash(CharacterAnimatorContract.ArmorBreakState + "_0"), Animator.StringToHash(CharacterAnimatorContract.ArmorBreakState + "_1"),
+            Animator.StringToHash(CharacterAnimatorContract.ArmorBreakState + "_2")
+        };
+        private static readonly int s_staggerState = Animator.StringToHash(CharacterAnimatorContract.StaggerState);
+        private static readonly int s_stumbleState = Animator.StringToHash(CharacterAnimatorContract.StumbleState);
+
+        /// <summary>
+        /// WP-096 R3 (CI e8fc3f70, C-00 10.10: a death or a heavy hit cuts the p3 move): a p3 start / stop / turn — or any blend on the base
+        /// layer — runs as a crossfade no any-state transition interrupts, so the reaction's trigger would wait it out (≤ 0.3 s) while the
+        /// body walks on. When <paramref name="wasTransition"/> or the base layer is blending, the reaction's own crossfade takes the
+        /// trigger's place (the trigger is reset so it cannot fire a second time). Returns true when it cut.
+        /// </summary>
+        private bool CutTransitionInto(bool wasTransition, int stateHash, int triggerId, float blendSeconds)
+        {
+            if (!_authored) return false;
+            if (!wasTransition && !_animator.IsInTransition(CharacterAnimatorContract.BaseLayer)) return false;
+            _animator.ResetTrigger(triggerId);
+            _animator.CrossFadeInFixedTime(stateHash, blendSeconds, CharacterAnimatorContract.BaseLayer, 0f);
+            ReactionCuts++;
+            return true;
+        }
+
+        /// <summary>WP-096 R3: reactions that cut a base-layer blend (readout for the tests).</summary>
+        public static int ReactionCuts { get; private set; }
+
+        private static int[] DeathStateHashes(int n)
+        {
+            var h = new int[n];
+            for (int i = 0; i < n; i++) h[i] = Animator.StringToHash(CharacterAnimatorContract.DeathState + "_" + i);
+            return h;
+        }
         private static readonly int RiseId = Animator.StringToHash(CharacterAnimatorContract.Rise);
         private static readonly int AliveId = Animator.StringToHash(CharacterAnimatorContract.Alive);
         private static readonly int TelegraphId = Animator.StringToHash(CharacterAnimatorContract.Telegraph);
@@ -1475,19 +1513,23 @@ namespace DD.Prototype.Characters
             if (!_authored || _dying) return;
             _windowOpen = false;
             _animator.ResetTrigger(AttackId);
-            if (!BeginTransition(9, false, _topSpeed, transform.rotation)) _animator.SetTrigger(StumbleId);
+            if (BeginTransition(9, false, _topSpeed, transform.rotation)) return;   // the p3 stumble_recover is its own crossfade
+            _animator.SetTrigger(StumbleId);
+            CutTransitionInto(false, s_stumbleState, StumbleId, StumbleCutBlendSeconds);   // WP-096 R3: no p3 clip — still cut a base-layer blend
         }
 
         /// <summary>WP-032C: armour break by region — the full-body armorbreak_<region> clip; held like the heavy stagger until its end (0.6 s clip).</summary>
         public void PlayArmorBreak(int region)
         {
-            CancelTransition(false);
+            bool cut = CancelTransition(false);
             if (!_authored || _dying) return;
             _windowOpen = false;
             _heavyStaggerUntil = Time.time + Mathf.Min(HeavyStaggerCapSeconds, ArmorBreakHoldSeconds);
             _animator.ResetTrigger(AttackId);
-            _animator.SetInteger(ArmorBreakRegionId, Mathf.Clamp(region, 0, 2));
+            int r = Mathf.Clamp(region, 0, 2);
+            _animator.SetInteger(ArmorBreakRegionId, r);
             _animator.SetTrigger(ArmorBreakId);
+            CutTransitionInto(cut, s_armorBreakStates[r], ArmorBreakId, ArmorBreakCutBlendSeconds);   // WP-096 R3
         }
 
         [PrototypeOnly(PendingDecisions.None, "WP-032C: seconds the body is held (no walk / attack) by an armorbreak clip = the clip length (v005b: 21 frames, peak hold). Clip length.", true)]
@@ -1496,18 +1538,22 @@ namespace DD.Prototype.Characters
         /// <summary>Full-body heavy stagger (armour break, ADR-018-2). Cancels the attack clip.</summary>
         public void PlayHeavyStagger()
         {
-            CancelTransition(false);
+            bool cut = CancelTransition(false);
             if (!_authored || _dying) return;
             _windowOpen = false;
             _heavyStaggerUntil = Time.time + HeavyStaggerCapSeconds;   // WP-040: held until stagger_end (or the cap)
             _animator.ResetTrigger(AttackId);
             _animator.SetTrigger(StaggerId);
+            CutTransitionInto(cut, s_staggerState, StaggerId, StaggerCutBlendSeconds);   // WP-096 R3
         }
 
         /// <summary>One of the four death clips; the body holds the last frame until death_end and the pool takes it.</summary>
         public void PlayDeath(int deathStyle)
         {
-            CancelTransition(false);
+            // WP-096 R3 (CI e8fc3f70, S-03 10.10): a p3 start / stop / turn runs as a scripted crossfade that no any-state transition
+            // interrupts — the Die trigger waited out the blend (≤ 0.3 s) while the body walked on, and a kill on a body that had just
+            // set off read Locomotion two frames later. A death during one cuts it with the death state's own crossfade below.
+            bool cut = CancelTransition(false);
             if (!_authored) return;
             ZombieSpecialVisual was = _special;   // WP-071: the Special deaths read it (arc / gel)
             _special = ZombieSpecialVisual.None;   // WP-032E: a netted / dazed body still dies at full speed
@@ -1525,6 +1571,8 @@ namespace DD.Prototype.Characters
             int style = SpecialDeathStyle(deathStyle, was);
             _animator.SetInteger(DeathStyleId, style);
             _animator.SetTrigger(DieId);
+            if (style >= 0 && style < s_deathStates.Length) CutTransitionInto(cut, s_deathStates[style], DieId, DeathCutBlendSeconds);
+
             BeginDeathClock(style, was);   // WP-071: onset clip → ragdoll hand-off
         }
 

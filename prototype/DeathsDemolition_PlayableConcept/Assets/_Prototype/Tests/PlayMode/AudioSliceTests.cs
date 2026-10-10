@@ -1362,11 +1362,86 @@ namespace DD.Prototype.Tests.PlayMode
             // Cluster 3: roketin patlaması mesafe katmanıyla bir kez, üç bombacık küçük pop dizisi (tam patlama yığını değil).
             int pops = _d.RocketBlasts.Bomblets;
             int detonations = DD.Prototype.Weapons.RocketImpacts.Detonations;
+            int ret0 = _d.WorldPool.RetriggerBlockedCount, dus0 = _d.WorldPool.DroppedCount;
             Firlat(_s.Zemin(0f, 14f), 3);
             yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.RocketImpacts.Detonations > detonations, 4f, "roket patlamadı");
-            yield return new WaitForSeconds(0.4f);
-            Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop");
+            // gt 10.10 SHOULD-1: wait on the pops themselves, bounded in real time — not 0.4 s of game time, which a second hitch
+            // could end before the held pops (≤ RocketBlastAudio.PopMaxHold, unscaled) play.
+            float bitis = Time.realtimeSinceStartup + 2f, enUzunKare = 0f;
+            while (_d.RocketBlasts.Bomblets < pops + 3 && Time.realtimeSinceStartup < bitis)
+            {
+                enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+                yield return null;
+            }
+
+            Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop" + BombacikTani(ret0, dus0, enUzunKare));
             Debug.Log("[DD-TEST] wp072rl1 duds=" + _d.RocketBlasts.Duds + " pops=" + _d.RocketBlasts.Bomblets);
+        }
+
+        /// <summary>
+        /// C-00 10.10 (CI e8fc3f70 red, Rl1_Bombacik "1 / 3"): one long frame right after the blast — game time +0.25 s per frame
+        /// here (> the 60–180 ms pop stagger), a hitch on a loaded host — lets all three pops fall due in one Tick; the pool's retrigger
+        /// gate counts unscaled time, so the second and third used to be refused 0 s after the first. All three are heard, within
+        /// RocketBlastAudio.PopMaxHold of falling due.
+        /// </summary>
+        [Category("WP021")]
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Rl1_Bombacik_UzunKare_UcPopDaDuyulur()
+        {
+            if (!_d.RocketBlasts.Active)
+            {
+                Assert.Fail("v021 bombacık kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 gogus = _s.Rig.transform.position + Vector3.up * 1.39f;
+            var def = DD.Prototype.Core.Weapons.Arsenal.Get(DD.Prototype.Core.Config.ClassicWeaponId.Rl1);
+            Vector3 hedef = _s.Zemin(0f, 14f);
+            var shot = new DD.Prototype.Weapons.ShotRequest
+            {
+                Origin = gogus, Direction = (hedef - gogus).normalized, Damage = def.fire.damage, Range = def.projectile.maxRange,
+                ImpactForce = def.projectile.impulse, Source = DD.Prototype.Damage.DamageSourceKind.Bullet,
+                Power = DD.Prototype.Feedback.WeaponPower.Heavy, PierceDamageFalloff = 1f
+            };
+            var launch = DD.Prototype.Weapons.ProjectileLaunch.From(def, DD.Prototype.Core.Config.ClassicWeaponId.Rl1, def.projectile.maxRange);
+            launch.ClusterBomblets = 3;
+
+            int pops = _d.RocketBlasts.Bomblets;
+            int detonations = DD.Prototype.Weapons.RocketImpacts.Detonations;
+            int ret0 = _d.WorldPool.RetriggerBlockedCount, dus0 = _d.WorldPool.DroppedCount;
+            float oncekiAdim = Time.captureDeltaTime;
+            try
+            {
+                DD.Prototype.Weapons.ProjectileSystem.Spawn(shot, launch);
+                yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.RocketImpacts.Detonations > detonations, 4f, "roket patlamadı");
+                // The pops are queued (game time + 60–180 ms). From the next frame on, game time jumps 0.25 s per frame: all three are
+                // due in one Tick, while unscaled time stays real.
+                Time.captureDeltaTime = 0.25f;
+                float basla = Time.realtimeSinceStartup, bitis = basla + 2f, enUzunKare = 0f;
+                while (_d.RocketBlasts.Bomblets < pops + 3 && Time.realtimeSinceStartup < bitis)
+                {
+                    enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+                    yield return null;
+                }
+
+                float sure = Time.realtimeSinceStartup - basla;
+                Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "Uzun karede üç bombacık üç pop (yeniden tetik kapısı ikinciyi / üçüncüyü yutmaz)."
+                    + BombacikTani(ret0, dus0, enUzunKare));
+                Assert.Less(sure, RocketBlastAudio.PopMaxHold + 0.25f, "pop'lar PopMaxHold içinde (+ kare payı) duyulur, sonsuz bekletilmez");
+                Debug.Log("[DD-TEST] wp097.rl1-uzun-kare pops=" + (_d.RocketBlasts.Bomblets - pops) + " real=" + sure.ToString("0.000") + " s");
+            }
+            finally
+            {
+                Time.captureDeltaTime = oncekiAdim;
+            }
+        }
+
+        /// <summary>gt 10.10 SHOULD-2: a bomblet red names its cause — the World pool's retrigger refusals and budget drops since the
+        /// blast, and the longest unscaled frame while the test waited.</summary>
+        private string BombacikTani(int ret0, int dus0, float enUzunKare)
+        {
+            return " · World havuzu: yeniden tetik reddi +" + (_d.WorldPool.RetriggerBlockedCount - ret0) + ", bütçe düşmesi +"
+                + (_d.WorldPool.DroppedCount - dus0) + " · en uzun kare " + (enUzunKare * 1000f).ToString("0") + " ms";
         }
 
         [Category("WP021")]
