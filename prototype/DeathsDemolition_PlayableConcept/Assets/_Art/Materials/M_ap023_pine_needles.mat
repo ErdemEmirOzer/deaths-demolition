@@ -49,13 +49,13 @@ Material:
     - _Cutoff: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _HueShift: 5
+    - _HueShift: 14
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _PetalBoost: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Saturation: 1.1
+    - _Saturation: 0.95
     - _Smoothness: 0.15
     - _SmoothnessTextureChannel: 0
     - _SrcBlend: 1
