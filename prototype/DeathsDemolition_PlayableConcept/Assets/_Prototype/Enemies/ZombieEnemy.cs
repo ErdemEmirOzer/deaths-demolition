@@ -1074,8 +1074,16 @@ namespace DD.Prototype.Enemies
             Vector3 commanded = walkHeading * walkSpeed;
             float transitionYawStep = 0f;
             Vector3 transitionVelocity = Vector3.zero;
+            // WP-096 R3 (REQ-046, S-02 10.10 root cause): a body engaging its target (UpdateWaiting's "engaging") plays no p3 start /
+            // stop / turn — the start_walk after a swing's Recovery drove the own velocity to the clip's ~0 opening for ~0.3 s, the
+            // crowd layer pushed the front line out and aside, and the live wall let the player through (1.24 m, R2 0.60 m). Close
+            // pressure stays on the WP-003 path, as v4's facing rule already leaves it (FacingRuleMinDistance); the stumble_recover
+            // reaction still plays.
+            bool stumbleRecover = _skinned != null && _skinned.TransitionClip == ZombieTransitionData.Clips[9];
+            bool engagingTarget = distance <= _attack.Range * WaitEngageRangeFactor;
             bool transitionMotor = _skinned != null && _skinned.StepTransition(walkHeading, walkSpeed, _groundForward,
-                (canWalk || _skinned.TransitionClip == ZombieTransitionData.Clips[9]) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds, dt, out transitionVelocity, out transitionYawStep);
+                (canWalk || stumbleRecover) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds && (!engagingTarget || stumbleRecover),
+                dt, out transitionVelocity, out transitionYawStep);
             if (transitionMotor) { ownVelocity = transitionVelocity; _steerSpeed = transitionVelocity.magnitude; }
 
             // The Runner's lunge adds committed forward speed during its active window.
