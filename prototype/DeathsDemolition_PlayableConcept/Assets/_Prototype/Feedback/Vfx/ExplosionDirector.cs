@@ -200,15 +200,21 @@ namespace DD.Prototype.Feedback.Vfx
             if (b.Full) FullPresentations++;
             else LightPresentations++;
             float alpha = GameFeelSettings.FlashScale;
-            if (!brushOwned && (mask & 1) != 0)
+            if ((mask & 1) != 0)
             {
+                // C-00 10.10 (user note 4, "stronger juice"): top-down too - the brush ring and light alone left the rocket almost
+                // invisible from the TD camera. The fireball card (small preset for a small blast) and a Full rocket's flash card
+                // draw with the brush layers; the light stays the brush's, the near-viewer edge smear the layered path's.
                 Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha * b.Guard);
                 if (b.Full && alpha >= .99f && VfxTier.Current != VfxTierLevel.Performance
                     && Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FlashCardSize * b.Scale, 1f / 60f, new Color(1f, .75f, .45f) * 12f, 1f, true))
                     FlashCards++;
-                if (!brushOwned) _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
-                // M-60 §1.5 l.105: rocket and small blasts alike; ReduceFlashes (the FlashScale test above) turns it off.
-                if (alpha >= .99f && NearViewer(at) && PlayEdgeSmear()) EdgeSmears++;
+                if (!brushOwned)
+                {
+                    _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
+                    // M-60 §1.5 l.105: rocket and small blasts alike; ReduceFlashes (the FlashScale test above) turns it off.
+                    if (alpha >= .99f && NearViewer(at) && PlayEdgeSmear()) EdgeSmears++;
+                }
             }
 
             if (!brushOwned && b.Grounded && (mask & 2) != 0)

@@ -245,11 +245,15 @@ namespace DD.Prototype.Tests.PlayMode
         [Test] public void M62_TwoSmallThenRocket_RocketTakesTheFullSlot_SmallPlaysNoEmbersOrColumn_Ustten() => M62TwoSmallThenRocketCore(CameraMode.TopDown);
         internal void M62TwoSmallThenRocketCore(CameraMode mode)
         {
-            Kip(mode);int ember=mode==CameraMode.TopDown?0:1;   // top-down: §4.5, no embers at all
-            int full=_blast.FullPresentations,light=_blast.LightPresentations,embers=_blast.EmberBursts,columns=_blast.Columns;
+            Kip(mode);bool td=mode==CameraMode.TopDown;int ember=td?0:1;   // top-down: §4.5, no embers at all
+            int full=_blast.FullPresentations,light=_blast.LightPresentations,embers=_blast.EmberBursts,columns=_blast.Columns,flashes=_blast.FlashCards;
+            var vfx=HitFeedbackDirector.Instance.Vfx;int played=vfx.Played;
             Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));Assert.IsTrue(_blast.Play(new Vector3(4f,100f,200f),3f,-1,ExplosionSource.Small));
             Assert.IsTrue(_blast.Play(new Vector3(8f,100f,200f),5f,-1,ExplosionSource.Rocket));
             Assert.AreEqual(full+1,_blast.FullPresentations,"roket Full yuvasını alır");Assert.AreEqual(light+2,_blast.LightPresentations);
+            // C-00 10.10 (user note 4): top-down draws the fireball cards with the brush layers again - three fireballs (two at the
+            // small preset) and the rocket's flash card (no ground here, so no ring either way)
+            if(td){Assert.AreEqual(flashes+1,_blast.FlashCards,"Üstten: roket flaş kartı");Assert.AreEqual(played+4,vfx.Played,"Üstten: 3 ateş topu + 1 flaş kartı");}
             _blast.Tick(Time.time+.3f);Assert.AreEqual(embers+ember,_blast.EmberBursts,"kor yalnız roket");Assert.AreEqual(columns+1,_blast.Columns,"sütun yalnız roket");
         }
         [Test] public void M62_CinematicExplosiveRounds_AtMostOneShadowedLight_Ustten() => M62ShadowCore(CameraMode.TopDown);
