@@ -1034,7 +1034,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-098B · pane taşıyıcısı ömrü (fırça kiti, KILAVUZ §3): kapalı gelişte taşıyıcı ve perde çizilmez; açılınca
-        /// çerçevesiz "PaneCard" (yıkama, çerçeve yok), perde kitin Pane α'sında ve metin zemini ≥ 0,945; her pane'de iz
+        /// çerçevesiz "PaneCard" (yıkama, çerçeve yok); K1 (8dfd23c6): Profil de her okunan pane gibi Window zemininde
+        /// (zemin kitin 0,95'i, taşıyıcının kendi Pane perdesi altında sönük) ve çizilen C1 tek başına ≥ 0,945; her pane'de iz
         /// bütçesi (başlık 1, ayırıcı ≤ 2, C8 ≤ 2, kenar ≤ 1, toplam ≤ 6); pane değişince eski içerik solarak gider
         /// (çapraz geçiş) ve sonra düşer; kapatınca PaneOpen hemen false, solma bitince taşıyıcı ve perde kapanır, içerik
         /// temizlenir. Süreler ≤ 0,35 s.
@@ -1069,9 +1070,18 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(UiBrushScrim.Pane, tasiyici.ScrimLevel, "menü pane'i: Pane perdesi");
             Assert.IsNull(kart.GetComponent<Image>(), "çerçevesiz kart");
             Assert.IsNull(kart.Find("Frame"), "A4 çerçevesi yok");
+            UiBrushPane zemin = menu.PaneGround;
+            Assert.IsNotNull(zemin, "okunan pane'lerin Window zemini (K1)");
             yield return new WaitForSecondsRealtime(bekle);
-            Assert.AreEqual(UiBrushTokens.ScrimPane, perde.color.a * perde.canvasRenderer.GetAlpha(), 0.01f, "perde kitin Pane α'sında (doğrusal 0,72)");
-            Assert.GreaterOrEqual(tasiyici.TextGroundAlpha, UiBrushTokens.TextGroundMin, "metin zemini perde ⊕ yıkama ≥ 0,945");
+            // WP-098B K1 (8dfd23c6, MainMenuPaneTests.Perde_ProfilDahilWindow_…): Profile stands on the Window ground like every
+            // reading pane - the AP-034 wash plateau is below 1, so the text ground is the C1 alone; the carrier's Pane C1 fades out.
+            float zeminA = zemin.Scrim.color.a * zemin.Scrim.canvasRenderer.GetAlpha();
+            float perdeA = perde.color.a * perde.canvasRenderer.GetAlpha();
+            Assert.IsTrue(zemin.IsOpen, "Profil: Window zemini açık (K1)");
+            Assert.AreEqual(UiBrushTokens.ScrimWindow, zeminA, 0.01f, "zemin kitin Window α'sında (doğrusal 0,95)");
+            Assert.AreEqual(0f, perdeA, 0.01f, "taşıyıcının Pane perdesi Window altında görünmez");
+            Assert.GreaterOrEqual(UiBrushTokens.Combined(perdeA, zeminA), UiBrushTokens.TextGroundMin, "yıkama saydam olsa da çizilen C1 ≥ 0,945");
+            Assert.GreaterOrEqual(tasiyici.TextGroundAlpha, UiBrushTokens.TextGroundMin, "taşıyıcının beyanı: perde ⊕ yıkama ≥ 0,945");
             CanvasGroup icerik = tasiyici.Content.GetComponent<CanvasGroup>();
             Assert.IsTrue(icerik == null || Mathf.Approximately(icerik.alpha, 1f), "içerik 0,35 s içinde yerinde");
 
@@ -1153,6 +1163,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsFalse(kart.gameObject.activeSelf, "solma bitince taşıyıcı kapandı (kitin cue'su)");
             Assert.IsFalse(perde.gameObject.activeSelf, "solma bitince perde kapandı");
+            Assert.IsFalse(zemin.IsOpen || zemin.Scrim.gameObject.activeSelf, "Window zemini de kapandı");
             Assert.AreEqual(0, tasiyici.Content.childCount, "içerik temizlendi");
             Debug.Log("[DD-TEST] wp098b.paneLifecycle=OK reducedMotion=" + UiMotion.ReducedMotion);
         }

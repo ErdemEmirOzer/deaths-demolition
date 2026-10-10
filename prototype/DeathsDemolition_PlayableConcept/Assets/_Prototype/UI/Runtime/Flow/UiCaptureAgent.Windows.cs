@@ -393,7 +393,7 @@ namespace DD.Prototype.UI
                         ",\"manualFlights\":" + _manualFlights + ",\"sweepFlights\":" + _sweepFlights + ",\"heldCounterSamples\":" + _heldSamples +
                         ",\"settled\":" + (settled ? "true" : "false") + ",\"screen\":\"" + Screen.width + "x" + Screen.height + "\"}");
                     Debug.Log("[UiCapture] G-M3 evidence target=" + _targetSeen + " manual=" + _manualFlights + " sweep=" + _sweepFlights +
-                        " heldSamples=" + _heldSamples + " settled=" + settled + "; inspect TSV/MP4, not a runtime PASS claim");
+                        " heldSamples=" + _heldSamples + " settled=" + settled + "; inspect TSV/MP4 - evidence only, not a runtime verdict");
                 }
             }
 

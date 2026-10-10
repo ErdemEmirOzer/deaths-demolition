@@ -129,14 +129,14 @@ namespace DD.Prototype.UI
         private UiButton _quitButton;
         private TMP_Text _buildNote;
 
-        // v4: the rail, the word beside its focused item, the open pane's tick, the level readout.
+        // v4: the rail, the word beside its focused item, the level readout. R3 (S-09 10.10, AD §14 / KILAVUZ §1): the open
+        // pane is marked by its icon's chosen state, the rail word and the pane's own title - the rail's C8 (PaneMark) is
+        // gone, so the menu's name stroke (M2) and the pane title share the window's brush budget (≤ 3) with the settings C8.
         private readonly List<UiIconButton> _rail = new List<UiIconButton>(8);
         private UiIconButton _railFocus;
         private RectTransform _railWordRect;
         private TMP_Text _railWord;
         private TMP_Text _railSub;
-        private UiBrushMark _paneMark;   // WP-098A (S-09 S4): the open pane's C8 under its rail icon (was the vermilion heading tick)
-        private UiButton _paneMarkOn;     // the rail item the C8 sits under (a redraw of the same pane lands it, no new stroke)
         private Image _railPad;
         private TMP_Text _level;
         private UiBar _xp;
@@ -599,11 +599,6 @@ namespace DD.Prototype.UI
             _railWordRect.sizeDelta = new Vector2(-(hit + (int)RailWordGap), wordLine + subLine);
             Band(_railWord.rectTransform, 0f, wordLine);
             Band(_railSub.rectTransform, wordLine, subLine);
-
-            // The open pane's mark: WP-098A (S-09 07.10 S4) the kit's C8 under its icon - the rail's one selection trace and
-            // the screen's vermilion (the heading tick it replaces counted the same). Hidden until a pane opens.
-            _paneMark = UiBrushKit.SelectionMark(column);
-            _paneMark.gameObject.name = "PaneMark";
 
             MoveRailWord(_rail[0]);
             UiInput.ChainVertical(false, _playButton, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, _quitButton);
@@ -1481,21 +1476,6 @@ namespace DD.Prototype.UI
         {
             bool entering = from != _pane;
             UiButton open = TabOf(_pane);
-            if (_paneMark != null)
-            {
-                if (open != null)
-                {
-                    // Inks in under a newly opened pane's icon (Reselect; a cut under RM); a redraw of the same pane lands it.
-                    _paneMark.Under((RectTransform)open.transform, open != _paneMarkOn);
-                }
-                else
-                {
-                    _paneMark.Hide(true);
-                }
-
-                _paneMarkOn = open;
-            }
-
             if (_profileTab != null)
             {
                 _profileTab.SetSelectedChoice(_pane == UiContext.Profile);
