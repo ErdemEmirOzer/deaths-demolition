@@ -40,6 +40,11 @@ namespace DD.Art.Tests.PlayMode
         private const float SahneZamanAsimi = 60f, KurulumZamanAsimi = 60f, OyuncuZamanAsimi = 30f, DolusZamanAsimi = 90f, YatismaZamanAsimi = 30f;
         internal const int W = 1920, H = 1080;
         private EnemySpawnDirector _director;
+        // WP-096 R3 (gt S4): what the DEC-077 test changed, restored in UnityTearDown as well — a timed-out iterator may skip its finally
+        private float? _dec077PhaseBefore;
+        private uint? _dec077SeedBefore;
+        private UnityEngine.Random.State? _dec077RandomBefore;
+        private bool _dec077PhaseSet;
         private readonly List<GameObject> _spawned = new List<GameObject>();
 
         [SetUp]
@@ -53,6 +58,7 @@ namespace DD.Art.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator UnityTearDown()
         {
+            Dec077Restore();
             Time.captureDeltaTime = 0f;
             if (_director != null) _director.ForceActiveTarget(0, false);
             RunFlowClock.ClearHolds();
@@ -299,15 +305,22 @@ namespace DD.Art.Tests.PlayMode
             //  2. the crowd's make-up — twelve bodies are one draw of the looks pool: at one phase the crowd luma read 0.12–0.27 by seed.
             //     The crowd is now the session's first Dec077Crowds × 12 bodies (the factory seed from its session-start value, the
             //     round director stopped and its own bodies gone), each crowd measured at every phase, the gates on the phase means;
-            //  3. the frame count — the streaming warm-up runs before any crowd exists, each crowd walks exactly Dec077SettleFrames at
-            //     1/60 and then holds its pose; the player keeps animating and is sampled Dec077SamplesPerPhase times per phase and crowd.
+            //  3. the frame count — the streaming warm-up runs before any crowd exists; each crowd walks at 1/60 until every body is out
+            //     of its p3 start and settled in Locomotion, Dec077WalkFrames more, then holds its pose (a fixed count froze it inside the
+            //     start); the player keeps animating and is sampled Dec077SamplesPerPhase times per phase and crowd.
             _director.StopRound();
             _director.ClearAllEnemies();
-            UnityEngine.Random.InitState(Dec077Seed);
-            FieldInfo seedField = typeof(EnemyFactory).GetField("s_seedCounter", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo seedField = Dec077SeedField();
             Assert.IsNotNull(seedField, "EnemyFactory.s_seedCounter yok — tohum sabitlenemez");
-            uint seedBefore = (uint)seedField.GetValue(null);
+            _dec077RandomBefore = UnityEngine.Random.state;
+            UnityEngine.Random.InitState(Dec077Seed);
+            _dec077SeedBefore = (uint)seedField.GetValue(null);
             seedField.SetValue(null, Dec077FactorySeed);
+            // gt S1: the looks come from the factory seed, the gait clip (s_gaitPick) and its phase / speed jitter (s_gaitOrdinal) from
+            // statics earlier spawns advance — reset, so a suite run freezes the same crowd an isolated run does
+            ZombieSkinnedVisual.ResetGaitOrdinalForTests();
+            _dec077PhaseBefore = CloudShadowDriver.ForcedPhase;
+            _dec077PhaseSet = true;
             Time.captureDeltaTime = 1f / 60f;
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
             if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp016-captures");
@@ -321,11 +334,12 @@ namespace DD.Art.Tests.PlayMode
             var weaponRenderers = new List<Renderer>();
             if (WeaponRegistry.ActiveController != null) WeaponRegistry.ActiveController.CollectWeaponRenderers(weaponRenderers);
             foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = false;
-            float? phaseBefore = CloudShadowDriver.ForcedPhase;
             int np = Dec077Phases.Length;
             var phaseSamples = new List<Dec077Sample>[np];
             for (int ph = 0; ph < np; ph++) phaseSamples[ph] = new List<Dec077Sample>(Dec077Crowds * Dec077SamplesPerPhase);
             var crowdPhaseSep = new float[Dec077Crowds, np];
+            var crowdPhaseCrowd = new float[Dec077Crowds, np];
+            var settleFrames = new int[Dec077Crowds];
             var zombies = new List<ZombieEnemy>();
             try
             {
@@ -353,7 +367,14 @@ namespace DD.Art.Tests.PlayMode
                     Time.timeScale = 1f;
                     Time.captureDeltaTime = 1f / 60f;
                     CloudShadowDriver.ForcedPhase = Dec077Phases[0];
-                    for (int f = 0; f < Dec077SettleFrames; f++) yield return null;
+                    // gt S2 (dec077settle60: a fixed 30 → 60 frames moved the worst phase 0.153 → 0.091 — the count froze the crowd inside
+                    // its AP-033 p3 start): the crowd freezes in its walk — every body out of its p3 move and settled in Locomotion, then
+                    // Dec077WalkFrames more (deterministic at 1/60)
+                    int settle = 0;
+                    while (settle < Dec077SettleMaxFrames && !Dec077CrowdWalking(zombies)) { settle++; yield return null; }
+                    Assert.IsTrue(Dec077CrowdWalking(zombies), "kalabalık " + c + " " + Dec077SettleMaxFrames + " karede yürüyüşe oturmadı");
+                    for (int f = 0; f < Dec077WalkFrames; f++) yield return null;
+                    settleFrames[c] = settle;
                     SetCrowdFrozen(zombies, true);
                     for (int ph = 0; ph < np; ph++)
                     {
@@ -371,6 +392,7 @@ namespace DD.Art.Tests.PlayMode
 
                         phaseSamples[ph].AddRange(crowd);
                         crowdPhaseSep[c, ph] = Dec077Mean(crowd, x => Mathf.Abs(x.PlayerLuma[0] - x.ZombieLuma));
+                        crowdPhaseCrowd[c, ph] = Dec077Mean(crowd, x => x.ZombieContrast);
                     }
                 }
 
@@ -387,12 +409,13 @@ namespace DD.Art.Tests.PlayMode
                     phaseCi[ph] = Dec077Ci95(l, x => Mathf.Abs(x.PlayerLuma[0] - x.ZombieLuma));
                     phaseCrowd[ph] = Dec077Mean(l, x => x.ZombieContrast);
                     var perCrowd = new System.Text.StringBuilder();
-                    for (int c = 0; c < Dec077Crowds; c++) perCrowd.Append(' ').Append(crowdPhaseSep[c, ph].ToString("F3", CultureInfo.InvariantCulture));
+                    for (int c = 0; c < Dec077Crowds; c++)
+                        perCrowd.Append(' ').Append(crowdPhaseSep[c, ph].ToString("F3", CultureInfo.InvariantCulture)).Append('/').Append(crowdPhaseCrowd[c, ph].ToString("F3", CultureInfo.InvariantCulture));
                     Debug.Log("[DD-TEST] wp016.readability.phase " + Dec077Phases[ph].ToString("F2", CultureInfo.InvariantCulture)
                               + " pL1=" + Dec077Mean(l, x => x.PlayerLuma[0]).ToString("F3", CultureInfo.InvariantCulture) + " zL=" + Dec077Mean(l, x => x.ZombieLuma).ToString("F3", CultureInfo.InvariantCulture)
                               + " sep1=" + phaseSep[ph, 0].ToString("F3", CultureInfo.InvariantCulture) + " ±" + phaseCi[ph].ToString("F3", CultureInfo.InvariantCulture)
                               + " sep2b=" + phaseSep[ph, 1].ToString("F3", CultureInfo.InvariantCulture) + " sep3=" + phaseSep[ph, 2].ToString("F3", CultureInfo.InvariantCulture)
-                              + " zombieCrowd=" + phaseCrowd[ph].ToString("F3", CultureInfo.InvariantCulture) + " sep1 per crowd:" + perCrowd);
+                              + " zombieCrowd=" + phaseCrowd[ph].ToString("F3", CultureInfo.InvariantCulture) + " sep1/zombieCrowd per crowd:" + perCrowd);
                 }
 
                 int worst = 0, worstCrowd = 0;
@@ -414,7 +437,7 @@ namespace DD.Art.Tests.PlayMode
                     for (int ph = 1; ph < np; ph++) sepWorst[s] = Mathf.Min(sepWorst[s], phaseSep[ph, s]);
                 }
 
-                Debug.Log("[DD-TEST] wp016.readability warm=" + warm + " crowds=" + Dec077Crowds + " phases=" + np + "x" + Dec077SamplesPerPhase + " seed=" + Dec077FactorySeed
+                Debug.Log("[DD-TEST] wp016.readability warm=" + warm + " settle=" + string.Join("/", settleFrames) + "+" + Dec077WalkFrames + " crowds=" + Dec077Crowds + " phases=" + np + "x" + Dec077SamplesPerPhase + " seed=" + Dec077FactorySeed
                           + " playerPx=" + Dec077Mean(all, x => x.PlayerPx).ToString("F0", CultureInfo.InvariantCulture)
                           + " bodyPx=" + Dec077Mean(all, x => x.BodyPx).ToString("F0", CultureInfo.InvariantCulture)
                           + " zombiePx=" + Dec077Mean(all, x => x.ZombiePx).ToString("F0", CultureInfo.InvariantCulture) +
@@ -466,8 +489,7 @@ namespace DD.Art.Tests.PlayMode
             }
             finally
             {
-                CloudShadowDriver.ForcedPhase = phaseBefore;
-                seedField.SetValue(null, seedBefore);
+                Dec077Restore();
                 Time.timeScale = 1f;
                 Time.captureDeltaTime = 0f;
                 foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = true;   // WP-059C
@@ -486,13 +508,42 @@ namespace DD.Art.Tests.PlayMode
         /// <summary>WP-075 direction §4: the cloud-cookie drift phases DEC-077 is measured at (each must pass).</summary>
         private static readonly float[] Dec077Phases = { 0f, 0.25f, 0.5f, 0.75f };
         private const int Dec077SamplesPerPhase = 3;   // per crowd and phase: the player's idle / aim pose, 0.2 s apart
-        private const int Dec077SettleFrames = 30;     // 0.5 s at 1/60 after each crowd spawns, then it holds its pose
+        private const int Dec077SettleMaxFrames = 240; // 4 s at 1/60: the crowd must be walking (p3 start over, Locomotion) by then
+        private const int Dec077WalkFrames = 10;       // then this many walk frames before it holds its pose
         private const int Dec077StepFrames = 12;       // 0.2 s between samples (the cookie phase is held)
 
         private struct Dec077Sample
         {
             public float PlayerPx, ZombiePx, BodyPx, Surround, ZombieLuma, ZombieContrast, ZombieDeltaV;
             public float[] Figure, Body, PlayerLuma;
+        }
+
+        private static FieldInfo Dec077SeedField() => typeof(EnemyFactory).GetField("s_seedCounter", BindingFlags.Static | BindingFlags.NonPublic);
+
+        /// <summary>WP-096 R3 (gt S3 / S4): the cookie phase, EnemyFactory's seed counter and UnityEngine.Random's state go back — from the
+        /// test's finally and again from UnityTearDown (each restores once).</summary>
+        private void Dec077Restore()
+        {
+            if (_dec077PhaseSet) { CloudShadowDriver.ForcedPhase = _dec077PhaseBefore; _dec077PhaseSet = false; _dec077PhaseBefore = null; }
+            if (_dec077SeedBefore.HasValue) { Dec077SeedField()?.SetValue(null, _dec077SeedBefore.Value); _dec077SeedBefore = null; }
+            if (_dec077RandomBefore.HasValue) { UnityEngine.Random.state = _dec077RandomBefore.Value; _dec077RandomBefore = null; }
+        }
+
+        private static readonly int Dec077Speed01Id = Animator.StringToHash(CharacterAnimatorContract.Speed01);
+
+        /// <summary>Every live body of the crowd walks: under way (Speed01 &gt; 0.5 — a fresh body stands in Locomotion before it sets
+        /// off), out of its p3 start and settled in the Locomotion state (not blending into it).</summary>
+        private static bool Dec077CrowdWalking(List<ZombieEnemy> zombies)
+        {
+            foreach (ZombieEnemy z in zombies)
+            {
+                if (z == null || !z.IsAlive || z.Skinned == null || z.Skinned.Animator == null) continue;
+                Animator an = z.Skinned.Animator;
+                if (an.GetFloat(Dec077Speed01Id) <= 0.5f || z.Skinned.TransitionActive || an.IsInTransition(0)
+                    || !an.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState)) return false;
+            }
+
+            return true;
         }
 
         /// <summary>The crowd holds its pose (no walk, no animation) while the player keeps animating between samples.</summary>
