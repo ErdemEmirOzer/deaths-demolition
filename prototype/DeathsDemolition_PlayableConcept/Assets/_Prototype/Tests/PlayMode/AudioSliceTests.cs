@@ -1362,10 +1362,19 @@ namespace DD.Prototype.Tests.PlayMode
             // Cluster 3: roketin patlaması mesafe katmanıyla bir kez, üç bombacık küçük pop dizisi (tam patlama yığını değil).
             int pops = _d.RocketBlasts.Bomblets;
             int detonations = DD.Prototype.Weapons.RocketImpacts.Detonations;
+            int ret0 = _d.WorldPool.RetriggerBlockedCount, dus0 = _d.WorldPool.DroppedCount;
             Firlat(_s.Zemin(0f, 14f), 3);
             yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.RocketImpacts.Detonations > detonations, 4f, "roket patlamadı");
-            yield return new WaitForSeconds(0.4f);
-            Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop");
+            // gt 10.10 SHOULD-1: wait on the pops themselves, bounded in real time — not 0.4 s of game time, which a second hitch
+            // could end before the held pops (≤ RocketBlastAudio.PopMaxHold, unscaled) play.
+            float bitis = Time.realtimeSinceStartup + 2f, enUzunKare = 0f;
+            while (_d.RocketBlasts.Bomblets < pops + 3 && Time.realtimeSinceStartup < bitis)
+            {
+                enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+                yield return null;
+            }
+
+            Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop" + BombacikTani(ret0, dus0, enUzunKare));
             Debug.Log("[DD-TEST] wp072rl1 duds=" + _d.RocketBlasts.Duds + " pops=" + _d.RocketBlasts.Bomblets);
         }
 
@@ -1399,6 +1408,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             int pops = _d.RocketBlasts.Bomblets;
             int detonations = DD.Prototype.Weapons.RocketImpacts.Detonations;
+            int ret0 = _d.WorldPool.RetriggerBlockedCount, dus0 = _d.WorldPool.DroppedCount;
             float oncekiAdim = Time.captureDeltaTime;
             try
             {
@@ -1407,10 +1417,16 @@ namespace DD.Prototype.Tests.PlayMode
                 // The pops are queued (game time + 60–180 ms). From the next frame on, game time jumps 0.25 s per frame: all three are
                 // due in one Tick, while unscaled time stays real.
                 Time.captureDeltaTime = 0.25f;
-                float basla = Time.realtimeSinceStartup, bitis = basla + 2f;
-                while (_d.RocketBlasts.Bomblets < pops + 3 && Time.realtimeSinceStartup < bitis) yield return null;
+                float basla = Time.realtimeSinceStartup, bitis = basla + 2f, enUzunKare = 0f;
+                while (_d.RocketBlasts.Bomblets < pops + 3 && Time.realtimeSinceStartup < bitis)
+                {
+                    enUzunKare = Mathf.Max(enUzunKare, Time.unscaledDeltaTime);
+                    yield return null;
+                }
+
                 float sure = Time.realtimeSinceStartup - basla;
-                Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "Uzun karede üç bombacık üç pop (yeniden tetik kapısı ikinciyi / üçüncüyü yutmaz).");
+                Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "Uzun karede üç bombacık üç pop (yeniden tetik kapısı ikinciyi / üçüncüyü yutmaz)."
+                    + BombacikTani(ret0, dus0, enUzunKare));
                 Assert.Less(sure, RocketBlastAudio.PopMaxHold + 0.25f, "pop'lar PopMaxHold içinde (+ kare payı) duyulur, sonsuz bekletilmez");
                 Debug.Log("[DD-TEST] wp097.rl1-uzun-kare pops=" + (_d.RocketBlasts.Bomblets - pops) + " real=" + sure.ToString("0.000") + " s");
             }
@@ -1418,6 +1434,14 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 Time.captureDeltaTime = oncekiAdim;
             }
+        }
+
+        /// <summary>gt 10.10 SHOULD-2: a bomblet red names its cause — the World pool's retrigger refusals and budget drops since the
+        /// blast, and the longest unscaled frame while the test waited.</summary>
+        private string BombacikTani(int ret0, int dus0, float enUzunKare)
+        {
+            return " · World havuzu: yeniden tetik reddi +" + (_d.WorldPool.RetriggerBlockedCount - ret0) + ", bütçe düşmesi +"
+                + (_d.WorldPool.DroppedCount - dus0) + " · en uzun kare " + (enUzunKare * 1000f).ToString("0") + " ms";
         }
 
         [Category("WP021")]
