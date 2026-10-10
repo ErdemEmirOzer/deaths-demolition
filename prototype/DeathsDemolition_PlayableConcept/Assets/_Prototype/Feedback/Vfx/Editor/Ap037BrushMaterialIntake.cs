@@ -18,13 +18,15 @@ namespace DD.Prototype.Feedback.Vfx.Editor
             "T_VFX_BrushShockRing_Mask", "T_VFX_BrushShockRing_Time", "T_VFX_InkDroplets_Atlas"
         };
         private static readonly string[] Materials = { "KillA", "KillB", "Stain", "Multi", "Shock", "Droplets" };
+        private const string ShaderPath = "Assets/_Prototype/Feedback/Shaders/DD_AP037_Brush.shader", ShaderName = "DeathsDemolition/VFX/AP037Brush";
         private static readonly int[] MaskIndices = { 0, 1, 2, 3, 5, 7 };
 
         [MenuItem("Deaths Demolition/VFX/Intake AP037 v001.1 materials")]
         public static void Build()
         {
-            Shader shader = Shader.Find("DeathsDemolition/VFX/AP037Brush");
-            if (shader == null) throw new InvalidOperationException("AP037 shader missing; import shader before intake.");
+            // by its asset path, not Shader.Find (ShaderLibraryTests): the intake names the one file it binds the materials to
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
+            if (shader == null || shader.name != ShaderName) throw new InvalidOperationException("AP037 shader missing at " + ShaderPath + " (" + ShaderName + "); import shader before intake.");
             // Validate the complete input set before changing importers or creating any materials.
             for (int i = 0; i < Textures.Length; i++)
                 if (AssetDatabase.LoadAssetAtPath<Texture2D>(TextureRoot + "/" + Textures[i] + ".png") == null)
