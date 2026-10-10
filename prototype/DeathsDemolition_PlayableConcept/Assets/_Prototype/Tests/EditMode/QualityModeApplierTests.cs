@@ -113,6 +113,26 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>FINAL 10.10 perf: the High × TopDown lite switch (planar off, small push map) is a play-mode state only and never
+        /// outlives <see cref="QualityModeApplier.RestoreOriginals"/>.</summary>
+        [Test]
+        public void EditModeda_YuksekTepedenHafifYol_KapaliKalir_RestoreTemizler()
+        {
+            CameraMode before = CameraModeService.Current;
+            try
+            {
+                CameraModeService.Request(CameraMode.TopDown, instant: true);
+                QualityModeApplier.ApplyNow();
+                Assert.IsFalse(QualityModeApplier.HighTopDownLite, "EditMode'da Yüksek × TD hafif yolu açıldı");
+                QualityModeApplier.RestoreOriginals();
+                Assert.IsFalse(QualityModeApplier.HighTopDownLite, "RestoreOriginals hafif yolu kapatmadı");
+            }
+            finally
+            {
+                CameraModeService.Request(before, instant: true);
+            }
+        }
+
         /// <summary>The active level's URP asset read through its serialized field (this assembly does not reference URP).</summary>
         private readonly struct RenderPipelineAssetProbe
         {

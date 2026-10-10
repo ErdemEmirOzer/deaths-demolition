@@ -12,6 +12,8 @@ namespace DD.Art
     /// <see cref="EnabledName"/>. DD/GroundTiles blends it into wet slate and puddles by Fresnel, which is what makes the court read
     /// wet from the steep gameplay cameras. Tier: Performance off · High 256 px tall without characters · Cinematic 1024 px with.
     /// The owner is the S-05 quality module. It re-reads the tier on <see cref="QualityTiers.Changed"/>.
+    /// FINAL 10.10 perf (C-00): off in High × TopDown (<see cref="DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite"/>) —
+    /// the nested render's cull and submit were ~0.9 ms of the main thread; the wet slate falls back to its probe reflection.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlanarReflection : MonoBehaviour
@@ -71,7 +73,7 @@ namespace DD.Art
         {
             if (s_rendering || cam == _reflection || !RendersWorld(cam)) return;
             QualityTier tier = QualityTiers.Current;
-            int height = HeightOf(tier);
+            int height = DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite ? 0 : HeightOf(tier);
             Shader.SetGlobalFloat(s_enabled, 0f);   // never sampled while the reflection itself renders
             if (height <= 0) return;
 

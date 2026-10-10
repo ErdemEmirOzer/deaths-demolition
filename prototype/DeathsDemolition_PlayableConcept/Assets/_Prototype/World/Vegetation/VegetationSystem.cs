@@ -331,9 +331,16 @@ namespace DD.Prototype.World.Vegetation
             _wind.ApplyGlobals(tier, reduced, baseDegrees, WorldWind.Strength);
         }
 
+        /// <summary>
+        /// The push map runs at its Performance size (map, world, interaction radius) in Performance and — FINAL 10.10 perf (C-00) —
+        /// in High × TopDown (<see cref="DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite"/>): the 256² float map's per-frame
+        /// copy and upload were ~0.4 ms of the main thread. Cinematic keeps the full map.
+        /// </summary>
+        private static bool SmallPush(int tier) => tier <= 0 || DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite;
+
         private void EnsurePushMap(int tier)
         {
-            int key = tier <= 0 ? 0 : 1;
+            int key = SmallPush(tier) ? 0 : 1;
             if (_push != null && _pushTier == key) return;
             _push?.Dispose();
             int size = key == 0 ? _wind.pushMapSizePerformance : _wind.pushMapSize;
@@ -358,7 +365,8 @@ namespace DD.Prototype.World.Vegetation
             map.Recenter(focus);
 
             int pushers = 0;
-            float radiusLimit = tier <= 0 ? _wind.performanceInteractionRadius : float.MaxValue;
+            bool small = SmallPush(tier);
+            float radiusLimit = small ? _wind.performanceInteractionRadius : float.MaxValue;
             float r2Limit = radiusLimit >= float.MaxValue ? float.MaxValue : radiusLimit * radiusLimit;
             if (StampActors && dt > 0f)
             {
@@ -396,7 +404,7 @@ namespace DD.Prototype.World.Vegetation
             Vector2 o = map.Origin;
             Shader.SetGlobalTexture(PushTexId, map.Texture);
             Shader.SetGlobalVector(PushRectId, new Vector4(o.x, o.y, map.WorldSize, map.Time));
-            Shader.SetGlobalVector(PushOnId, new Vector4(1f, map.Size, tier <= 0 ? _wind.performanceInteractionRadius : 100000f, 0f));
+            Shader.SetGlobalVector(PushOnId, new Vector4(1f, map.Size, small ? _wind.performanceInteractionRadius : 100000f, 0f));
             Shader.SetGlobalVector(PushFocusId, new Vector4(focus.x, focus.y, 0f, 0f));
         }
 

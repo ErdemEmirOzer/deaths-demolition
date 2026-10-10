@@ -57,6 +57,12 @@ namespace DD.Prototype.Rendering
 
         /// <summary>FINAL 10.10 perf: lantern flame cards farther than this are hidden in High top-down.</summary>
         public const float HighTopDownFlameCullMetres = 40f;
+
+        /// <summary>
+        /// FINAL 10.10 perf (C-00, profiler: the main thread is the limit): true while High × TopDown is applied. The planar
+        /// reflection stays off and the vegetation push map runs at its Performance size; false everywhere else (Cinematic unchanged).
+        /// </summary>
+        public static bool HighTopDownLite { get; private set; }
         private static readonly int GroundLiteId = Shader.PropertyToID("_DD_GroundLite");
         /// <summary>Experiment flag (C-00 10.10): <c>-ddRenderScale v</c> (0.5..1); absent = the asset's own value.</summary>
         public const string RenderScaleFlag = "-ddRenderScale";
@@ -165,6 +171,7 @@ namespace DD.Prototype.Rendering
 
             s_originalRenderScales.Clear();
             Shader.SetGlobalFloat(GroundLiteId, 0f);   // the High top-down switches never outlive the session
+            HighTopDownLite = false;
             DD.Prototype.Feedback.Vfx.LanternFlames.CardCullMetres = 0f;
         }
 
@@ -218,6 +225,7 @@ namespace DD.Prototype.Rendering
 
             // FINAL 10.10 perf (C-00): High top-down lightening — the ground's lite path and the far lantern-card cull.
             bool highTopDown = tier == QualityTier.Yuksek && CameraModeService.Current == CameraMode.TopDown;
+            HighTopDownLite = highTopDown;
             Shader.SetGlobalFloat(GroundLiteId, highTopDown ? 1f : 0f);
             DD.Prototype.Feedback.Vfx.LanternFlames.CardCullMetres = highTopDown ? HighTopDownFlameCullMetres : 0f;
 
