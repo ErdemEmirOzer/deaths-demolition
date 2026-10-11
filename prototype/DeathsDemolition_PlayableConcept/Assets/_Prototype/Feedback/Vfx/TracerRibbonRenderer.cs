@@ -46,9 +46,10 @@ namespace DD.Prototype.Feedback.Vfx
         /// The glow holds its strength along the tail (exp k <see cref="TdGlowFalloff"/>, the last <see cref="TdGlowRampShare"/>
         /// a ramp to 0): with the ribbons' k 3.2 / 40 % ramp most of the glow's length sat at α ≤ 0.3 and 4c108065 still measured
         /// S 0.17–0.32 - an orange tracer streak, not a fading wisp. The glow is 2.6 × the weapon's glow width (its soft edge
-        /// off the streak); a redder (1, .3, 0) read dusty pink at the low-α edge over the blue reflection (9e5c36f0, up to 21 %).</summary>
-        public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.8f, TdCoreTail = new Color(1f, .62f, .2f) * 1.2f,
-            TdGlowColor = new Color(1f, .42f, .02f);
+        /// off the streak); a redder (1, .3, 0) read dusty pink at the low-α edge over the blue reflection (9e5c36f0, up to 21 %).
+        /// The core's HDR ×1.4 (was 1.8): its bloom fringe washed the glow next to it pale yellow (9d37f19c).</summary>
+        public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.4f, TdCoreTail = new Color(1f, .62f, .2f) * 1f,
+            TdGlowColor = new Color(1f, .38f, 0f);
         private struct TdRound
         {
             public bool Alive, Sniper, Stopped, Pellet;
