@@ -628,6 +628,8 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < 20; i++) { pv.PlayFire(); yield return new WaitForSeconds(0.1f); }
             int beats = pv.FireTriggers - f0, skipped = pv.FireRetriggersSkipped - s0;
             float measured = pv.MeasuredFireInterval;
+            pv.PlayFire(); pv.PlayFire(); pv.PlayFire();   // S-02 B2: up to 3 shots in one frame (ClassicWeaponRuntime MaxShotsPerFrame)
+            float sameFrame = pv.MeasuredFireInterval;
             int r0 = pv.InstantReloads;
             pv.PlayReload(0.2f);
             bool reloadState = false;
@@ -644,6 +646,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(20, beats + skipped, "her atış ya bir vuruş ya da atlanan yeniden başlatma");
             Assert.That(beats, Is.InRange(8, 12), "10 atış/s'de 0,152 s taban: kabaca iki atışta bir ağır tepme");
             Assert.AreEqual(0.1f, measured, 0.02f, "ölçülen aralık gerçek atış aralığı");
+            Assert.Greater(sameFrame, 0f, "aynı karedeki atışlar ölçülen aralığı sıfırlamaz");
             Assert.AreEqual(1, instant, "0,2 s reload anlık sayılır");
             Assert.IsFalse(reloadState, "0,2 s reload klibi oynatmaz");
             pv.PlayReload(rl1.ammo.reloadTacSeconds);

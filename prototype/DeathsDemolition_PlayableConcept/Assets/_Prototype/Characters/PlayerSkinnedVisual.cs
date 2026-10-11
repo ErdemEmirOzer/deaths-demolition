@@ -665,9 +665,21 @@ namespace DD.Prototype.Characters
             get
             {
                 float def = _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.rpm > 0f ? 60f / _weaponDef.fire.rpm : 0.1f;
-                // WP-111 R4: an upgrade (WP-104) fires faster than the definition — the measured string wins when it is faster
+                // WP-111 R4 (S-02 B2): the live runtime's ShotInterval (1 / effective rate, the upgrades in) for the weapon this body holds,
+                // then the measured string when it is faster still
+                DD.Prototype.Weapons.ClassicWeaponRuntime classic = LiveClassic();
+                if (classic != null && classic.ShotInterval > 0f) def = classic.ShotInterval;
                 return _measuredFireInterval > 0f ? Mathf.Min(def, _measuredFireInterval) : def;
             }
+        }
+
+        /// <summary>WP-111 R4 (S-02 B2): the gameplay runtime of the weapon this body holds — null when the controller holds another one
+        /// (a stage body, a test that equips the visual alone), so the definition stands in.</summary>
+        private DD.Prototype.Weapons.ClassicWeaponRuntime LiveClassic()
+        {
+            if (_weaponController == null) _weaponController = GetComponentInParent<DD.Prototype.Weapons.WeaponController>();
+            DD.Prototype.Weapons.ClassicWeaponRuntime classic = _weaponController != null ? _weaponController.Classic : null;
+            return classic != null && _weaponDef != null && ReferenceEquals(classic.Definition, _weaponDef) ? classic : null;
         }
 
         /// <summary>WP-111 R4: the current v3 set's TP fire clip length (cached per set; 0 when none).</summary>
@@ -1022,7 +1034,8 @@ namespace DD.Prototype.Characters
             if (_lastFireCall >= 0f)
             {
                 float d = shotNow - _lastFireCall;
-                _measuredFireInterval = d > 0f && d < 1f ? (_measuredFireInterval > 0f ? Mathf.Lerp(_measuredFireInterval, d, 0.5f) : d) : 0f;
+                // S-02: up to 3 shots a frame (ClassicWeaponRuntime MaxShotsPerFrame) — a same-frame call keeps the measured string
+                if (d > 0f) _measuredFireInterval = d < 1f ? (_measuredFireInterval > 0f ? Mathf.Lerp(_measuredFireInterval, d, 0.5f) : d) : 0f;
             }
 
             _lastFireCall = shotNow;
@@ -1030,7 +1043,10 @@ namespace DD.Prototype.Characters
             // starts it. The shots arrive on frame boundaries (a 60 Hz frame can push the last one past count × interval): the window
             // reaches half-way into the gap before the next burst (burstDelaySeconds), which frame jitter never crosses.
             bool burstBeat = true;
-            if (_swHold == 0 && _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.fireMode == DD.Prototype.Core.Weapons.WeaponFireMode.Burst)
+            // WP-111 R4 (S-02 B2): the live fire mode — an upgrade turns ar_2's burst into auto (the definition still says Burst)
+            DD.Prototype.Weapons.ClassicWeaponRuntime liveClassic = LiveClassic();
+            DD.Prototype.Core.Weapons.WeaponFireMode fireMode = liveClassic != null ? liveClassic.FireMode : _weaponDef != null && _weaponDef.fire != null ? _weaponDef.fire.fireMode : DD.Prototype.Core.Weapons.WeaponFireMode.Auto;
+            if (_swHold == 0 && _weaponDef != null && _weaponDef.fire != null && fireMode == DD.Prototype.Core.Weapons.WeaponFireMode.Burst)
             {
                 float now = Time.time, window = Mathf.Max(0, _weaponDef.fire.burstCount - 1) * _weaponDef.fire.burstIntervalSeconds + 0.5f * _weaponDef.fire.burstDelaySeconds;
                 burstBeat = !(_burstStart >= 0f && now - _burstStart <= window);
