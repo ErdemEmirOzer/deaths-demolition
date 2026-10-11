@@ -2,12 +2,14 @@
 // with AVFoundation only (macOS built-in; nothing downloaded or installed). Builds on S-09's frames2mp4 (WP-081).
 //
 // usage: tdmux --frames <dir> --times <frames.tsv> --out <out.mp4> [--wav <file.wav> --wav-offset <s>]
-//              [--fps 30] [--mbps 16] [--audio-kbps 192]
+//              [--fps 30] [--mbps 16] [--audio-kbps 192] [--crop WxH [--crop-y px]]
 //   frames.tsv  "idx<TAB>t" per line: frame <dir>/f-<idx 6 digits>.jpg|png was grabbed t seconds after video t0
 //               (real time — the game is NOT slowed down, so the WAV stays in step).
 //   --wav-offset  seconds into the WAV that correspond to video t0 (positive: the WAV started earlier; negative: later).
 // The video is laid on a CONSTANT fps grid: grid frame k (time k/fps) shows the latest grabbed frame with t <= k/fps
 // (a skipped slot repeats the previous frame), so the MP4 plays at true speed and stays in sync with the audio.
+//   --crop      WP-110 (mk-capture): the output is the centred WxH window of every frame (no scaling; W, H even, ≤ the
+//               frame); --crop-y moves the window up (+) or down (−) by that many pixels, clamped to the frame.
 // exit: 0 written · 1 writer/reader failed · 2 no frames / bad input · 64 usage
 import AVFoundation
 import AppKit
@@ -52,7 +54,18 @@ guard let first = grabbed.first, let firstImage = NSImage(contentsOf: first.url)
       let firstCg = firstImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
     fail(2, "no frames listed in \(timesPath) were found in \(framesDir)")
 }
-let width = firstCg.width, height = firstCg.height
+let srcWidth = firstCg.width, srcHeight = firstCg.height
+var width = srcWidth, height = srcHeight, cropOriginY = 0
+if let crop = opts["crop"] {
+    let parts = crop.split(separator: "x").compactMap { Int($0) }
+    guard parts.count == 2, parts[0] > 0, parts[1] > 0, parts[0] % 2 == 0, parts[1] % 2 == 0,
+          parts[0] <= srcWidth, parts[1] <= srcHeight else { fail(64, "--crop \(crop): WxH, even, within \(srcWidth)x\(srcHeight)") }
+    width = parts[0]; height = parts[1]
+    // CoreGraphics origin is bottom-left: the window's bottom edge, moved up by --crop-y, kept inside the frame
+    let up = Int(opts["crop-y"] ?? "0") ?? 0
+    cropOriginY = min(max((srcHeight - height) / 2 + up, 0), srcHeight - height)
+}
+let cropOriginX = (srcWidth - width) / 2
 let duration = grabbed.last!.t + 1.0 / Double(fps)
 let gridFrames = Int((duration * Double(fps)).rounded(.down))
 
@@ -134,7 +147,7 @@ vInput.requestMediaDataWhenReady(on: DispatchQueue(label: "tdmux.video")) {
                                                 bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixel),
                                                 space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                                 bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
-                        context?.draw(cg, in: CGRect(x: 0, y: 0, width: width, height: height))
+                        context?.draw(cg, in: CGRect(x: -cropOriginX, y: -cropOriginY, width: srcWidth, height: srcHeight))
                         CVPixelBufferUnlockBaseAddress(pixel, [])
                         lastBuffer = pixel; lastUrl = url
                     }

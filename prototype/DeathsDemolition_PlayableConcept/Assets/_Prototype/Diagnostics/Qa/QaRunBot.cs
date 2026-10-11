@@ -73,6 +73,10 @@ namespace DD.Prototype.Qa
         public const string SpecialFlag = "-ddQaBotSpecial";
         /// <summary>WP-059: evidence runs only — this many seconds after run-ready the bot takes a lethal hit from the nearest zombie's side, so the death beat (hurt → collapse → overlay → Results) is captured as deathframe-* PNGs (with -ddQaBotFrames); the summary is marked and never a QA pass.</summary>
         public const string DieAfterFlag = "-ddQaBotDieAfter";
+        /// <summary>WP-110 (S-01 mk-capture, C-00 11.10): the classic weapon the run starts with — a <see cref="ClassicWeaponId"/> name
+        /// (case-insensitive) or its number; selected on the Selection screen and equipped through WeaponQaHooks once the run
+        /// fights (a sandbox profile has not unlocked the meta-tree weapons). Default: AssaultRifle, as before. A bad value fails the run.</summary>
+        public const string WeaponFlag = "-ddQaBotWeapon";
         public const int DefaultRounds = 8;
         public const int DefaultSeed = 26;
         public const float DefaultRoundTimeout = 420f;   // WP-044: round 8 (pool ~80, tier bodies) needs > 300 s at bot pace
@@ -118,6 +122,7 @@ namespace DD.Prototype.Qa
 
             Driver d = Arm(outDir, QaArgs.ArgInt(RoundsFlag, DefaultRounds, 1, 50), QaArgs.ArgInt(SeedFlag, DefaultSeed, 0, int.MaxValue),
                 QaArgs.ArgFloat(RoundTimeoutFlag, DefaultRoundTimeout, 30f, 3600f), true);
+            if (!string.IsNullOrEmpty(QaArgs.Arg(WeaponFlag))) d.ConfigureWeapon(QaArgs.Arg(WeaponFlag));   // WP-110
             d.ConfigureTierEvidence(QaArgs.ArgInt(StartRoundFlag, 1, 1, 50), QaArgs.Arg(FramesFlag), QaArgs.Arg(InvulnerableFlag) != null);   // WP-052
             d.ConfigureSpecialEvidence(QaArgs.Arg(SpecialFlag) != null);   // WP-055
             d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
@@ -483,6 +488,32 @@ namespace DD.Prototype.Qa
 
             public void ConfigureStability() { _stability = true; _invulnerable = true; }
             public void ConfigureWeaponCycle() { _weaponCycle = true; }
+
+            // ------------------------------------------------------------ WP-110 · fixed start weapon (mk-capture bot profiles)
+            private ClassicWeaponId? _weapon;
+            private string _weaponError;
+
+            public void ConfigureWeapon(string value)
+            {
+                ClassicWeaponId id;
+                if (TryParseWeapon(value, out id)) _weapon = id;
+                else _weaponError = WeaponFlag + " '" + value + "' is not a classic weapon (" + string.Join(", ", Enum.GetNames(typeof(ClassicWeaponId))) + ")";
+            }
+
+            /// <summary>A ClassicWeaponId name (case-insensitive) or a defined number.</summary>
+            public static bool TryParseWeapon(string value, out ClassicWeaponId id)
+            {
+                id = ClassicWeaponId.AssaultRifle;
+                if (string.IsNullOrEmpty(value)) return false;
+                int n;
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out n))
+                {
+                    id = (ClassicWeaponId)n;
+                    return Enum.IsDefined(typeof(ClassicWeaponId), id);
+                }
+
+                return Enum.TryParse(value, true, out id) && Enum.IsDefined(typeof(ClassicWeaponId), id);
+            }
             public void ConfigureRouteTour(string framesDir, string points = null)
             {
                 _routeDir = framesDir;
@@ -554,6 +585,14 @@ namespace DD.Prototype.Qa
                     Finish();
                     yield break;
                 }
+                if (_weaponError != null)
+                {
+                    _fail = _weaponError;   // WP-110: a bad -ddQaBotWeapon is a failed run, never a silent AssaultRifle
+                    Debug.LogError("[QaRunBot] " + _fail);
+                    Finish();
+                    yield break;
+                }
+
                 UnityEngine.Random.InitState(_seed);
                 _random = new System.Random(_seed);
                 _brain = new QaBotBrain(_seed);
@@ -566,7 +605,7 @@ namespace DD.Prototype.Qa
                     PrototypeUiFlow.GoToSelection();
                     yield return WaitForScene(PrototypeScenes.Selection, SceneTimeoutSeconds);
                     if (!string.IsNullOrEmpty(_fail)) { Finish(); yield break; }
-                    PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+                    PrototypeUiFlow.SelectedWeapon = _weapon ?? ClassicWeaponId.AssaultRifle;   // WP-110: -ddQaBotWeapon
                     UnityEngine.Random.InitState(_seed);   // the run's first draw happens after StartRun
                     PrototypeUiFlow.StartRun();
                     yield return WaitForScene(PrototypeScenes.Run, SceneTimeoutSeconds);
@@ -584,6 +623,12 @@ namespace DD.Prototype.Qa
                     RunDirector.Instance.BeginRound(_startRound);
                     yield return null;
                     Log("start-round " + RunDirector.Instance.Round + " (WP-052 tier evidence)");
+                }
+
+                if (_weapon.HasValue && !_weaponCycle)
+                {
+                    bool equipped = WeaponQaHooks.TrySetClassicWeapon(_weapon.Value);   // WP-110: the sandbox profile has not unlocked it
+                    Log("weapon " + _weapon.Value + (equipped ? " equipped (WP-110)" : " REFUSED by WeaponQaHooks (disabled?) — the run keeps " + WeaponRegistry.SelectedWeapon));
                 }
 
                 if (_invulnerable && PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null)
@@ -959,6 +1004,7 @@ namespace DD.Prototype.Qa
                 _roundStart = Time.unscaledTime;
                 _summary.rounds.Add(_current);
                 if (_weaponCycle) _current.weapon = CycleWeapon(round);
+                else if (_weapon.HasValue) _current.weapon = WeaponRegistry.SelectedWeapon.ToString();   // WP-110 fixed weapon
                 PickNewGoal();
             }
 

@@ -319,6 +319,21 @@ namespace DD.Prototype.CameraSystem
         public static bool SuppressLookAheadDev { get; set; }
 
         /// <summary>
+        /// WP-110 (S-01 mk-capture, dev only): when &gt; 0, the top-down camera's vertical field of view in degrees — the marketing
+        /// capture renders this camera into an off-screen portrait master and widens the view so the master's horizontal angle is
+        /// the game's own vertical one. 0 (default) = the configured FOV. Reset with the other statics; TP/FP never read it.
+        /// </summary>
+        public static float CaptureFovDev { get; set; }
+
+        /// <summary>WP-110 (dev only): the top-down camera's distance factor along its fixed offset (1 = configured; the S-11 Y/O/G
+        /// presets 0.6 / 0.8 / 1). The angle never changes. Reset with the other statics.</summary>
+        public static float CaptureDistanceScaleDev { get; set; } = 1f;
+
+        /// <summary>WP-110 (dev only): a world-space shift of the top-down pose (look room toward the threat; the capture agent
+        /// smooths it). Zero by default; reset with the other statics.</summary>
+        public static Vector3 CaptureFocusOffsetDev { get; set; }
+
+        /// <summary>
         /// WP-099 (dev only): the next top-down LateUpdate lands the focus on the follow target with no SmoothDamp lag (the same
         /// re-seed a mode entry does), e.g. right after a capture agent teleported the player.
         /// </summary>
@@ -456,6 +471,9 @@ namespace DD.Prototype.CameraSystem
             Active = null;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             SuppressLookAheadDev = false;   // WP-099
+            CaptureFovDev = 0f;   // WP-110
+            CaptureDistanceScaleDev = 1f;
+            CaptureFocusOffsetDev = Vector3.zero;
 #endif
         }
 
@@ -651,6 +669,9 @@ namespace DD.Prototype.CameraSystem
             // while RunFlowClock is frozen; reduced motion → 0.
             Vector3 lean = ComputeTopDownFeelLean();
             position = _focus + _lookAhead + lean + _offsetFromFocus * (1f - pushIn);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            position += _offsetFromFocus * ((1f - pushIn) * (CaptureDistanceScaleDev - 1f)) + CaptureFocusOffsetDev;   // WP-110 capture presets
+#endif
             rotation = _fixedRotation;
             fov = _fieldOfView;
         }
@@ -885,7 +906,11 @@ namespace DD.Prototype.CameraSystem
             }
 
             bool reduced = CameraModeService.Settings.ReducedMotion;
-            _camera.fieldOfView = fov + (reduced || mode == CameraMode.TopDown ? 0f : _fovPunch);
+            float fieldOfView = fov + (reduced || mode == CameraMode.TopDown ? 0f : _fovPunch);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (CaptureFovDev > 0f && mode == CameraMode.TopDown) fieldOfView = CaptureFovDev;   // WP-110 marketing master
+#endif
+            _camera.fieldOfView = fieldOfView;
             if (mode == CameraMode.TopDown && !CameraModeService.IsTransitioning)
             {
                 _camera.nearClipPlane = _nearClip;

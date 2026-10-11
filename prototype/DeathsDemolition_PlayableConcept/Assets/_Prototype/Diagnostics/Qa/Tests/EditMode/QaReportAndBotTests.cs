@@ -268,5 +268,18 @@ namespace DD.Prototype.Qa.Tests.EditMode
             for (int i = 0; i < r.gates.Count; i++) if (!r.gates[i].pass) return r.gates[i].id;
             return null;
         }
+
+        [Test]
+        public void SilahBayragi_AdNumaraBuyukKucuk_TanimsizRed()   // WP-110 -ddQaBotWeapon
+        {
+            DD.Prototype.Core.Config.ClassicWeaponId id;
+            Assert.IsTrue(QaRunBot.Driver.TryParseWeapon("Rl1", out id)); Assert.AreEqual(DD.Prototype.Core.Config.ClassicWeaponId.Rl1, id);
+            Assert.IsTrue(QaRunBot.Driver.TryParseWeapon("lmg1", out id)); Assert.AreEqual(DD.Prototype.Core.Config.ClassicWeaponId.Lmg1, id);
+            Assert.IsTrue(QaRunBot.Driver.TryParseWeapon("2", out id)); Assert.AreEqual(DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun, id);
+            foreach (string bad in new[] { "", null, "Bohiya", "99", "-1", "Rl1x" })
+            {
+                Assert.IsFalse(QaRunBot.Driver.TryParseWeapon(bad, out id), bad ?? "(null)");
+            }
+        }
     }
 }
