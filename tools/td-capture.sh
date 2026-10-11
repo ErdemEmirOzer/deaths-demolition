@@ -18,11 +18,12 @@
 #               screen, menu logo (held 4 s), first run seconds; capture.json video.phases holds loadingStart/loadingEnd/menu/fighting (s from t0)
 #   --scenario  R4 (S-06/S-01 11.10): a QaRunBot scenario the video plays instead of the free fight — passed on as
 #               -ddQaBotScenario <name> ([a-z0-9][a-z0-9-]*, e.g. crowdwalk); fighting video only; recorded in capture.json
+#               with the bot's bot/scenario.json stamps in video seconds (scenarioStamps); not completed → exit 1
 # Output: stills/<nn>-<key>.png + stills/contact.png + stills/poses.json · video/td-<label>.mp4 (+ frames/, audio.wav,
 #         sync.json, summary.json) · logs/ · ug/ (the guard window) · capture.json + SHA256SUMS.
 # Order (D8): guard snapshot --scope player FIRST (it holds the player slot), then each Player through tools/player-run.sh
 # (re-entrant on that slot), then restore — one shell. No Unity slot is taken (the Player is not Unity batch).
-# exit: 0 done · 1 a launch failed or produced nothing · 3 not a dev build · 30/31/65/75 guard (snapshot or restore;
+# exit: 0 done · 1 a launch failed or produced nothing / the --scenario was not completed · 3 not a dev build · 30/31/65/75 guard (snapshot or restore;
 #       restore 32 is accepted only via qa/oos_rule.py) · 64 usage · 128+n signal (the restore still runs)
 set -u
 setopt nullglob
@@ -31,7 +32,7 @@ source "$HERE/dd-env.sh"
 
 APP=""; WP=""; LABEL=""; POSES="$HERE/td-capture-poses.txt"; SEED=26; SECS=45; SIZE="1920x1080"; TIER="sinematik"; CROWD_WAIT=45; HUD=on; VFROM=fighting; SCEN=""; SCEN_SET=0
 DO_STILLS=1; DO_VIDEO=1; HOLD=1
-usage() { sed -n '5,21p' "$SELF" >&2; exit 64; }
+usage() { sed -n '5,22p' "$SELF" >&2; exit 64; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --app) APP="${2:-}"; shift ;; --wp) WP="${2:-}"; shift ;; --label) LABEL="${2:-}"; shift ;;
@@ -187,5 +188,10 @@ python3 -c 'import json, sys; sys.path.insert(0, sys.argv[2]); import manifest
 [ $GR -ne 0 ] && exit $GR
 # gt SHOULD-2 (08.10): a boot clip that never reached the menu or the run is no evidence
 [ $RC -eq 0 ] && python3 -c 'import json, sys; sys.exit(0 if "phase-missing" in ((json.load(open(sys.argv[1])).get("videoQuality") or {}).get("verdict") or "").split("+") else 1)' "$OUT/capture.json" 2>/dev/null && RC=1
+# R4 kit D2 (S-10 11.10, gt NOTE-1): a scenario video is evidence only when the bot says it played it to the end
+if [ $RC -eq 0 ] && [ -n "$SCEN" ]; then
+  played=$(python3 -c 'import json, sys; s = json.load(open(sys.argv[1])).get("scenarioStamps") or {}; print("ok" if s.get("played") else (s.get("reason") or "?"))' "$OUT/capture.json" 2>&1)
+  [ "$played" = ok ] || { echo "td-capture: scenario $SCEN not completed — $played (capture.json scenarioStamps)" >&2; RC=1; }
+fi
 [ $RC -eq 0 ] && dd_log "td-capture: done — $OUT"
 exit $RC

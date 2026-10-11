@@ -198,6 +198,30 @@ def warning_lines(q):
     return lines
 
 
+def scenario_record(out, name):
+    """R4 kit D2 (S-10 / S-06 11.10): what the bot's scenario did, read from <out>/bot/scenario.json (QaRunBot writes
+    completed + realtime stamps in Time.realtimeSinceStartupAsDouble, null = not reached). Each stamp is also given in
+    video seconds (minus video/sync.json t0.realtimeSinceStartup — the same process clock). played = the file names the
+    scenario asked for and completed is true. None when no scenario was asked for."""
+    if not name:
+        return None
+    s = read_json(out / "bot" / "scenario.json")
+    if not isinstance(s, dict):
+        return {"scenario": name, "played": False,
+                "reason": "bot/scenario.json missing — does this build's QaRunBot know -ddQaBotScenario %s?" % name}
+    t0 = ((read_json(out / "video" / "sync.json") or {}).get("t0") or {}).get("realtimeSinceStartup")
+    realtime = s.get("realtime") if isinstance(s.get("realtime"), dict) else {}
+    rec = {k: v for k, v in s.items() if k != "realtime"}
+    rec["realtime"] = realtime
+    rec["video"] = {k: (round(v - t0, 3) if isinstance(v, (int, float)) and isinstance(t0, (int, float)) else None)
+                    for k, v in realtime.items()}
+    rec["videoT0Realtime"] = t0
+    rec["played"] = s.get("scenario") == name and s.get("completed") is True
+    if not rec["played"]:
+        rec["reason"] = "scenario %r, completed %r" % (s.get("scenario"), s.get("completed"))
+    return rec
+
+
 def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
@@ -213,6 +237,7 @@ def main(argv):
         "tool": "tools/td-capture.sh (WP-099)", "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "app": a.app, "build": build_identity(a.app), "seed": int(a.seed), "size": a.size, "tier": a.tier,
         "holdSpawnsForStills": a.hold == "1", "scenario": a.scenario or None,
+        "scenarioStamps": scenario_record(out, a.scenario),
         "poses": {"file": a.poses, "sha256": sha(a.poses) if Path(a.poses).is_file() else None},
         "stills": read_json(out / "stills" / "poses.json"),
         "video": {"summary": read_json(out / "video" / "summary.json"), "probe": read_json(out / "video" / "probe.json"),
