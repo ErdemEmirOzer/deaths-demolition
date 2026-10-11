@@ -75,6 +75,7 @@ namespace DD.Prototype.CameraSystem
 
             PrototypeCameraRig rig = rigGo.AddComponent<PrototypeCameraRig>();
             rigGo.AddComponent<CameraOcclusionFader>();
+            rigGo.AddComponent<TreeCanopyReveal>();   // WP-109: top-down crowns thin over the hero (DD_TreeReveal.hlsl)
 
             rigGo.SetActive(true);
 

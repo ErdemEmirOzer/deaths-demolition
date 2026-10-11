@@ -11,6 +11,8 @@
 //            cards keep their coverage instead of thinning to nothing (handover 4.3)
 //   passes   ForwardLit · ShadowCaster · DepthOnly · DepthNormals (all wind-displaced)
 //   batching SRP Batcher: one UnityPerMaterial CBUFFER, no per-material globals
+//   reveal   WP-109 (R4): DD_TreeReveal.hlsl screen-door drops the cutout crown pixels between the top-down camera and the hero
+//            (ForwardLit, DepthOnly, DepthNormals; never the ShadowCaster). Globals; strength 0 = as authored.
 //   grade    WP-092 R3 (user note 10.10, AD verdict): per-material albedo grade in ForwardLit — HSV hue shift, saturation that
 //            skips the warm arc, and a petal recolour/boost inside a texture-colour mask (DD_FoliageGrade). Every stage keeps the
 //            linear Rec.709 luminance of the albedo except the petal recolour; the defaults are the identity. No keyword: the
@@ -79,6 +81,7 @@ Shader "DD/Foliage Wind"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
         #include "DD_Wind.hlsl"
+        #include "DD_TreeReveal.hlsl"   // WP-109: the top-down crown reveal (cutout cards only, not the shadow)
 
         // WP-075 (M-46, C-00 01.10): vegetation aerial perspective — a global, not per material (SRP Batcher unchanged). x = start,
         // y = end (m from the camera), z = the most it fades toward the fog colour; 0 (the default) leaves every foliage pixel as it was.
@@ -339,6 +342,9 @@ Shader "DD/Foliage Wind"
 
                 half4 albedoAlpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 half alpha = DD_FoliageAlpha(albedoAlpha.a);
+                #if defined(_ALPHATEST_ON)
+                    DD_TreeRevealClip(input.positionWS, input.positionCS);
+                #endif
 
                 #ifdef LOD_FADE_CROSSFADE
                     LODFadeCrossFade(input.positionCS);
@@ -532,6 +538,7 @@ Shader "DD/Foliage Wind"
             struct Varyings
             {
                 float2 uv         : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
                 float4 positionCS : SV_POSITION;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
@@ -544,6 +551,7 @@ Shader "DD/Foliage Wind"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 float3 positionWS = DD_DisplacedPositionWS(input.positionOS.xyz, input.normalOS, input.color);
                 output.positionCS = TransformWorldToHClip(positionWS);
+                output.positionWS = positionWS;
                 output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 return output;
             }
@@ -554,6 +562,7 @@ Shader "DD/Foliage Wind"
                 #if defined(_ALPHATEST_ON)
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
                     clip(alpha - _Cutoff);
+                    DD_TreeRevealClip(input.positionWS, input.positionCS);   // WP-109: the prepass drops what the colour pass drops
                 #endif
                 #ifdef LOD_FADE_CROSSFADE
                     LODFadeCrossFade(input.positionCS);
@@ -597,6 +606,7 @@ Shader "DD/Foliage Wind"
             {
                 float2 uv         : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
                 float4 positionCS : SV_POSITION;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
@@ -611,6 +621,7 @@ Shader "DD/Foliage Wind"
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.positionWS = positionWS;
                 return output;
             }
 
@@ -620,6 +631,7 @@ Shader "DD/Foliage Wind"
                 #if defined(_ALPHATEST_ON)
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
                     clip(alpha - _Cutoff);
+                    DD_TreeRevealClip(input.positionWS, input.positionCS);
                 #endif
                 #ifdef LOD_FADE_CROSSFADE
                     LODFadeCrossFade(input.positionCS);
