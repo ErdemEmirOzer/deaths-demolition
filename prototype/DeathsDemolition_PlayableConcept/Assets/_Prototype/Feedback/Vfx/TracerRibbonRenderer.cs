@@ -37,13 +37,13 @@ namespace DD.Prototype.Feedback.Vfx
         /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
         /// </summary>
         public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .017f, TdTailMin = 1.5f, TdTailMax = 4.5f,
-            TdSniperTailMax = 10f, TdCoreScale = 1.5f, TdCoreMin = .06f, TdSniperCoreMin = .07f, TdGlowScale = 2f, TdGlowAlpha = .8f;
-        /// <summary>AD 11.10 (M1 + S2/S3): one realistic top-down palette for every weapon - a white-hot core fading to warm yellow
-        /// (added: it stays white over blue water), a saturated orange glow drawn premultiplied (it tints the ground orange instead
-        /// of adding red to the blue sky reflection, which read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright"
-        /// (v × 0.017 s, 1.5–4.5 m).</summary>
-        public static readonly Color TdCoreHead = new Color(1f, .945f, .84f) * 2.5f, TdCoreTail = new Color(1f, .85f, .55f) * 1.5f,
-            TdGlowColor = new Color(1f, .5f, .04f);
+            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2f, TdGlowAlpha = .9f;
+        /// <summary>AD 11.10 (M1 + S2) and C-00 11.10: one realistic top-down palette for every weapon - a thin warm-yellow core
+        /// (added; thin so it does not wash the light stone white), a deep orange glow drawn premultiplied at α 0.9 (it tints the
+        /// ground orange - on the light stone the abb27729 glow measured S 0.16–0.33 and read pale beige; on the blue reflection the
+        /// added orange had read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright" (v × 0.017 s, 1.5–4.5 m).</summary>
+        public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.8f, TdCoreTail = new Color(1f, .62f, .2f) * 1.2f,
+            TdGlowColor = new Color(1f, .42f, .02f);
         private struct TdRound
         {
             public bool Alive, Sniper, Stopped, Pellet;
