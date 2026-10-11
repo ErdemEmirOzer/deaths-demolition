@@ -10,6 +10,7 @@ using DD.Prototype.Core;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.DebugTools;
+using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Enemies;
 using DD.Prototype.Navigation;
 using DD.Prototype.PlayerSystem;
@@ -61,6 +62,8 @@ namespace DD.Prototype.Diagnostics
     ///   -ddPilotWindowSeconds &lt;n&gt;        measurement window length (default 60)
     ///   -ddPilotWarmupSeconds &lt;n&gt;        warm-up after the load is reached (default 10)
     ///   -ddPilotStart &lt;x,z,yaw&gt;          WP-074 B9: measured pose on the NavMesh (≤ 2 m), sweep held off
+    ///   -ddPilotWeapon &lt;key&gt;             WP-111 R4: the classic weapon in hand (v3 key rl_1 … or a ClassicWeaponId name); unknown aborts
+    ///   -ddPilotAutoFire                   WP-111 R4: the hero fires at the nearest living body from the warm-up through the 04 window
     ///   -ddProfilePath &lt;file&gt;            redirect the profile file (keeps the real profile untouched)
     /// </summary>
     public static class PilotPerfProbe
@@ -138,6 +141,24 @@ namespace DD.Prototype.Diagnostics
         /// </summary>
         private const string StartFlag = "-ddPilotStart";
         private const float StartSampleMetres = 2f;
+
+        /// <summary>
+        /// WP-111 R4 (S-10 12.10, the tree end perf cell): <c>-ddPilotWeapon &lt;key&gt;</c> — the classic weapon the run measures, as its
+        /// v3 key (<c>rl_1</c>, <see cref="DD.Prototype.Core.Weapons.WeaponIdMigration"/>) or its <see cref="ClassicWeaponId"/> name
+        /// (<c>Rl1</c>), any case. An unknown key is logged and the run aborts at 01 (no silent fallback); the weapon actually in hand
+        /// is verified after the run reaches Fighting. Absent: AssaultRifle, the path unchanged.
+        /// </summary>
+        private const string WeaponFlag = "-ddPilotWeapon";
+
+        /// <summary>
+        /// WP-111 R4 (S-10 12.10): <c>-ddPilotAutoFire</c> — from the warm-up through the 04 window (its heap sub-window included) the
+        /// hero holds the trigger on the nearest living body, through the player's own input path (an <c>IInputSource</c> in
+        /// <c>InputSourceRegistry</c>, which WeaponController and PlayerAim read), so the upgrade tree's firing cost is in the window.
+        /// The magazine / reload cycle runs as the weapon defines it; only an empty reserve is topped up to the round's allowance
+        /// (counted: <c>reserveTopUps</c>), so the fire stays continuous. 04-window records weapon / autoFire / shots / blasts.
+        /// Absent: no shot is fired, as before.
+        /// </summary>
+        private const string AutoFireFlag = "-ddPilotAutoFire";
 
         /// <summary>The pilot scene by name: this assembly does not reference DD.Art, so the string is the contract.</summary>
         public const string PilotSceneName = "AP001_GoldenSlice";
@@ -221,8 +242,119 @@ namespace DD.Prototype.Diagnostics
             driver.VfxStress = Array.IndexOf(Environment.GetCommandLineArgs(), VfxStressFlag) >= 0;
             driver.HudAB = Array.IndexOf(Environment.GetCommandLineArgs(), HudAbFlag) >= 0;
             driver.ArmorAll = string.Equals(Arg(ArmorFlag), "all", StringComparison.OrdinalIgnoreCase);
+
+            // WP-111 R4 (S-10 12.10): the tree end cell's weapon and trigger. A flag given without a resolvable key is an error, never AssaultRifle.
+            string[] args = Environment.GetCommandLineArgs();
+            driver.WeaponAsked = Array.IndexOf(args, WeaponFlag) >= 0;
+            driver.WeaponArg = Arg(WeaponFlag);
+            if (driver.WeaponAsked)
+            {
+                driver.WeaponResolved = TryParseWeapon(driver.WeaponArg, out driver.WeaponId, out driver.WeaponKeyAsked);
+                if (!driver.WeaponResolved)
+                {
+                    Debug.LogError("[PilotPerfProbe] " + WeaponFlag + " '" + driver.WeaponArg + "' is not a classic weapon (a v3 key ar_1 … rl_1 or a ClassicWeaponId name); the run aborts, no fallback");
+                }
+            }
+
+            driver.AutoFire = Array.IndexOf(args, AutoFireFlag) >= 0;
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
+        }
+
+        // ================================================================ WP-111 R4: -ddPilotWeapon / -ddPilotAutoFire (pure parts)
+
+        /// <summary>The v3 keys of the classic roster; <see cref="DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId"/> maps each to its index (the authority).</summary>
+        private static readonly string[] s_classicKeys = { "ar_1", "smg_1", "sg_1", "ar_2", "smg_2", "sg_2", "lmg_1", "lmg_2", "sr_1", "rl_1" };
+
+        /// <summary>
+        /// <c>-ddPilotWeapon</c>'s value: a v3 key (<c>rl_1</c>) or a <see cref="ClassicWeaponId"/> name (<c>Rl1</c>), any case, surrounding
+        /// blanks ignored. Numbers and Specials are refused. False (id AssaultRifle, key null) for anything else.
+        /// </summary>
+        internal static bool TryParseWeapon(string raw, out ClassicWeaponId id, out string key)
+        {
+            id = ClassicWeaponId.AssaultRifle;
+            key = null;
+            string s = raw != null ? raw.Trim() : null;
+            if (string.IsNullOrEmpty(s))
+            {
+                return false;
+            }
+
+            if (DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(s.ToLowerInvariant(), out ClassicWeaponId byKey))
+            {
+                key = WeaponKey(byKey);
+                id = byKey;
+                return key != null;
+            }
+
+            foreach (ClassicWeaponId value in (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId)))
+            {
+                if (string.Equals(value.ToString(), s, StringComparison.OrdinalIgnoreCase))
+                {
+                    key = WeaponKey(value);
+                    id = key != null ? value : ClassicWeaponId.AssaultRifle;
+                    return key != null;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>The v3 key of a classic weapon (<c>Rl1</c> → <c>rl_1</c>); null for an index without one.</summary>
+        internal static string WeaponKey(ClassicWeaponId id)
+        {
+            for (int i = 0; i < s_classicKeys.Length; i++)
+            {
+                if (DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(s_classicKeys[i], out ClassicWeaponId k) && k == id)
+                {
+                    return s_classicKeys[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The v3 key for the records, the enum name for an index without one.</summary>
+        private static string KeyOrName(ClassicWeaponId id) => WeaponKey(id) ?? id.ToString();
+
+        // Window counters: FeelEvents.ShotFired (one per trigger pull, a shotgun's pellets are one) and FeelEvents.Explosion (every blast
+        // the feedback director reports, -ddPilotVfxStress's own included). Subscribed around the 04 window only (armed before its recorders
+        // start, zeroed as it opens, read and disarmed as it closes), through cached static delegates into int counters: nothing
+        // allocates per event, and the subscription's own delegate combine falls outside the window.
+        private static int s_windowShots;
+        private static int s_windowBlasts;
+        private static readonly Action<DD.Prototype.Feedback.FeelShot> s_onShot = OnWindowShot;
+        private static readonly Action<DD.Prototype.Feedback.FeelExplosion> s_onBlast = OnWindowBlast;
+
+        internal static int WindowShots => s_windowShots;
+        internal static int WindowBlasts => s_windowBlasts;
+
+        private static void OnWindowShot(DD.Prototype.Feedback.FeelShot shot) => s_windowShots++;
+
+        private static void OnWindowBlast(DD.Prototype.Feedback.FeelExplosion blast) => s_windowBlasts++;
+
+        /// <summary>Zeroes the counters (no allocation; the window's open).</summary>
+        internal static void ZeroWindowCounters()
+        {
+            s_windowShots = 0;
+            s_windowBlasts = 0;
+        }
+
+        /// <summary>Zeroes the counters and subscribes them (unsubscribe-then-subscribe: never twice).</summary>
+        internal static void ArmWindowCounters()
+        {
+            ZeroWindowCounters();
+            DD.Prototype.Feedback.FeelEvents.ShotFired -= s_onShot;
+            DD.Prototype.Feedback.FeelEvents.ShotFired += s_onShot;
+            DD.Prototype.Feedback.FeelEvents.Explosion -= s_onBlast;
+            DD.Prototype.Feedback.FeelEvents.Explosion += s_onBlast;
+        }
+
+        /// <summary>Unsubscribes the counters; their values stay readable until the next arm.</summary>
+        internal static void DisarmWindowCounters()
+        {
+            DD.Prototype.Feedback.FeelEvents.ShotFired -= s_onShot;
+            DD.Prototype.Feedback.FeelEvents.Explosion -= s_onBlast;
         }
 
         private static string Arg(string name)
@@ -443,6 +575,13 @@ namespace DD.Prototype.Diagnostics
             public float fractionOver33_333Ms;
             public string frameTimesCsv;
 
+            // ---- WP-111 R4 (S-10 12.10) 04 window: -ddPilotWeapon / -ddPilotAutoFire (the tree end perf cell)
+            public string weapon;                // the v3 key of the classic weapon in hand (ar_1 … rl_1)
+            public bool autoFire;                // -ddPilotAutoFire: the hero held the trigger through the window
+            public int shots;                    // FeelEvents.ShotFired inside the window (trigger pulls)
+            public int blasts;                   // FeelEvents.Explosion inside the window (-ddPilotVfxStress's included)
+            public int reserveTopUps;            // autofire: times an empty reserve was topped up to the round's allowance (warm-up to the 04 record)
+
             // ---- 04 window: load integrity
             public int activeMin;
             public int activeMax;
@@ -654,6 +793,35 @@ namespace DD.Prototype.Diagnostics
             public long MaxOrMinusOne => Valid && Samples > 0 ? Max : -1L;
         }
 
+        /// <summary>
+        /// WP-111 R4 (S-10 12.10): -ddPilotAutoFire's hand on the controls — the same <see cref="IInputSource"/> contract the device
+        /// adapter implements, so the shot runs the player's own fire path (WeaponController reads InputSourceRegistry.Current, PlayerAim
+        /// projects the pointer onto its aim plane) in every build this file compiles into. QaRunBot cannot be used: it is
+        /// DEVELOPMENT_BUILD-only and lives in DD.Prototype.Qa, which this assembly does not reference. A mouse player: pointer aim,
+        /// the trigger held (no press edges; a held trigger refires Single / Burst weapons at their cycle), never moving.
+        /// </summary>
+        private sealed class AutoFireInput : IInputSource
+        {
+            public bool Fire;
+            public Vector2 Pointer;
+            public bool IsEnabled => true;
+            public Vector2 Move => Vector2.zero;
+            public AimSourceKind AimKind => AimSourceKind.Pointer;
+            public Vector2 AimScreenPosition => Pointer;
+            public Vector2 AimStick => Vector2.zero;
+            public bool FireHeld => Fire;
+            public bool FirePressed => false;
+            public bool FireReleased => false;
+            public bool ReloadPressed => false;
+            public bool PausePressed => false;
+            public bool DebugPanelPressed => false;
+#pragma warning disable 67
+            public event Action<AimSourceKind> AimKindChanged;
+#pragma warning restore 67
+            public void Enable() { }
+            public void Disable() { }
+        }
+
         private sealed class Driver : MonoBehaviour
         {
             private const float SceneTimeoutSeconds = 60f;
@@ -693,6 +861,18 @@ namespace DD.Prototype.Diagnostics
             /// <summary>Binary Profiler log written during the window (null = off).</summary>
             internal string ProfilerLogPath;
 
+            // WP-111 R4 (S-10 12.10): -ddPilotWeapon / -ddPilotAutoFire (see WeaponFlag / AutoFireFlag).
+            internal bool WeaponAsked;
+            internal string WeaponArg;
+            internal bool WeaponResolved;
+            internal ClassicWeaponId WeaponId;
+            internal string WeaponKeyAsked;
+            internal bool AutoFire;
+            private AutoFireInput _fireInput;
+            private IInputSource _inputBefore;
+            private bool _fireTurnsView;
+            private int _reserveTopUps;
+
             internal void Configure(string outDir, string scene, float windowSeconds, float warmupSeconds, int resolutionWidth, int resolutionHeight, float lodBiasOverride)
             {
                 _lodBiasOverride = lodBiasOverride;
@@ -717,6 +897,13 @@ namespace DD.Prototype.Diagnostics
                 Debug.Log("[PilotPerfProbe] resolution requested " + _resolutionWidth + "x" + _resolutionHeight +
                           " -> screen " + Screen.width + "x" + Screen.height + " dpi=" + Screen.dpi.ToString("F0", CultureInfo.InvariantCulture));
 
+                // WP-111 R4 (S-10 12.10): an unknown -ddPilotWeapon is a broken invocation; the run never measures another weapon.
+                if (WeaponAsked && !WeaponResolved)
+                {
+                    yield return Abort("01-scene-ready", WeaponFlag + " '" + WeaponArg + "' is not a classic weapon (a v3 key ar_1 … rl_1 or a ClassicWeaponId name)");
+                    yield break;
+                }
+
                 // ---------------------------------------------------------------- flow: Boot -> MainMenu -> Selection -> scene
                 yield return WaitForScene(PrototypeScenes.MainMenu, SceneTimeoutSeconds);
                 if (_timedOut) { yield return Abort("01-scene-ready", _timeoutWhat); yield break; }
@@ -726,6 +913,10 @@ namespace DD.Prototype.Diagnostics
                 yield return WaitForScene(PrototypeScenes.Selection, SceneTimeoutSeconds);
                 if (_timedOut) { yield return Abort("01-scene-ready", _timeoutWhat); yield break; }
                 PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+                if (WeaponAsked)
+                {
+                    PrototypeUiFlow.SelectedWeapon = WeaponId;   // WP-111 R4: StartRun may still swap a locked pick (profile gate); checked at Fighting
+                }
 
                 float loadStart = Time.realtimeSinceStartup;
                 if (_scene == PrototypeScenes.Run)
@@ -759,6 +950,26 @@ namespace DD.Prototype.Diagnostics
                 EnemySpawnDirector dir = EnemySpawnDirector.Instance;
                 PlayerRig rig = PlayerRegistry.Primary;
                 rig.Health.DiagnosisInvulnerable = true;   // the probe player stands still under 40 bodies; keep the window alive
+
+                // WP-111 R4 (S-10 12.10): -ddPilotWeapon in hand. StartRun hands a weapon the (isolated) profile has not unlocked over to
+                // the first unlocked one, so the QA hook (enabled Arsenal classics, no profile gate) equips it now; anything else in hand aborts.
+                if (WeaponAsked)
+                {
+                    WeaponController wc = WeaponRegistry.ActiveController;
+                    if (wc.Classic.Id != WeaponId && !WeaponQaHooks.TrySetClassicWeapon(WeaponId))
+                    {
+                        yield return Abort("01-scene-ready", WeaponFlag + " " + WeaponKeyAsked + ": not an enabled Arsenal classic weapon (in hand: " + KeyOrName(wc.Classic.Id) + ")");
+                        yield break;
+                    }
+
+                    if (wc.Classic.Id != WeaponId)
+                    {
+                        yield return Abort("01-scene-ready", WeaponFlag + " " + WeaponKeyAsked + " asked, " + KeyOrName(wc.Classic.Id) + " in hand (no config entry for it, or a Special in hand)");
+                        yield break;
+                    }
+
+                    Debug.Log("[PilotPerfProbe] weapon " + WeaponKeyAsked + " in hand");
+                }
 
                 // WP-074 B9: -ddPilotStart x,z,yaw — the measured pose (the world's corners, the plaza), before anything is counted.
                 string start = Arg(StartFlag);
@@ -857,6 +1068,8 @@ namespace DD.Prototype.Diagnostics
                 Write(s2);
 
                 // ---------------------------------------------------------------- 03 warmup
+                // WP-111 R4 (S-10 12.10): the trigger goes down with the warm-up, so the window opens on a crowd already under fire.
+                if (AutoFire) BeginAutoFire();
                 t0 = Time.realtimeSinceStartup;
                 int warmFrames = 0;
                 double warmSum = 0d;
@@ -864,6 +1077,7 @@ namespace DD.Prototype.Diagnostics
                 {
                     warmFrames++;
                     warmSum += Time.unscaledDeltaTime * 1000f;
+                    if (AutoFire) StepAutoFire(rig);
                     yield return null;
                 }
 
@@ -894,6 +1108,7 @@ namespace DD.Prototype.Diagnostics
                     new Counter(ProfilerCategory.Internal, "Main Thread"),
                     new Counter(ProfilerCategory.Internal, "Render Thread")
                 };
+                ArmWindowCounters();   // WP-111 R4: subscribed before the recorders start (the delegate combine is not a window allocation)
                 for (int i = 0; i < counters.Length; i++) counters[i].Start();
                 CrowdSolver solver = CrowdService.Solver;
                 _frameMs.Clear();
@@ -929,6 +1144,8 @@ namespace DD.Prototype.Diagnostics
                 float sweepYaw0 = PrototypeCameraRig.Active != null ? PrototypeCameraRig.Active.ViewYaw : 0f;
                 long sweepOnScreenSum = 0;
                 int sweepSamples = 0;
+                ZeroWindowCounters();   // WP-111 R4: shots / blasts of exactly this window
+                // WP-104 (once TreeEvents.ProcCount / ShapedShots land on main): TreeEvents.ResetCounters() here, with the zero.
                 t0 = Time.realtimeSinceStartup;
                 while (true)
                 {
@@ -991,6 +1208,11 @@ namespace DD.Prototype.Diagnostics
                         StepVfxStress(Time.realtimeSinceStartup, rig);
                     }
 
+                    if (AutoFire)
+                    {
+                        StepAutoFire(rig);
+                    }
+
                     if (Time.realtimeSinceStartup - t0 >= _windowSeconds)
                     {
                         break;
@@ -1002,6 +1224,18 @@ namespace DD.Prototype.Diagnostics
                 float windowSeconds = Time.realtimeSinceStartup - t0;
                 int gen0InWindow = GC.CollectionCount(0) - gen0Before;
                 for (int i = 0; i < counters.Length; i++) counters[i].Stop();
+
+                // WP-111 R4 (S-10 12.10): no game code runs between the window's last frame and here, so the counts are the window's.
+                int windowShots = WindowShots;
+                int windowBlasts = WindowBlasts;
+                DisarmWindowCounters();
+                // WP-104 (once on main): read TreeEvents.ProcCount / TreeEvents.ShapedShots here (→ 04-window treeEvents / treeShapedShots).
+                string weaponKey = WeaponRegistry.ActiveController != null ? KeyOrName(WeaponRegistry.ActiveController.Classic.Id) : null;
+                if (AutoFire)
+                {
+                    Debug.Log("[PilotPerfProbe] autofire weapon=" + weaponKey + " shots=" + windowShots);   // the S-10 kit's needle (R4 treemax cell)
+                }
+
                 if (profilerLog)
                 {
                     UnityEngine.Profiling.Profiler.enabled = false;
@@ -1025,6 +1259,7 @@ namespace DD.Prototype.Diagnostics
                 while (Time.realtimeSinceStartup - subStart < 1f)
                 {
                     subFrames++;
+                    if (AutoFire) StepAutoFire(rig);   // WP-111 R4: the heap second is still under fire
                     yield return null;
                 }
 
@@ -1032,6 +1267,7 @@ namespace DD.Prototype.Diagnostics
                 long subGcDelta = GC.GetTotalMemory(false) - subGcBefore;
                 long subMonoDelta = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - subMonoBefore;
                 int subGen0 = GC.CollectionCount(0) - subGen0Before;
+                if (AutoFire) EndAutoFire();   // WP-111 R4: the trigger comes up; 04b onwards measure as before
 
                 Stage s4 = Capture("04-window");
                 FillVfxStage(s4);
@@ -1075,9 +1311,22 @@ namespace DD.Prototype.Diagnostics
                 s4.gcSubWindowMonoDelta = subMonoDelta;
                 s4.gcSubWindowGen0 = subGen0;
                 s4.gcSubWindowBytesPerSecond = subSeconds > 0f ? (long)(Math.Max(subGcDelta, subMonoDelta) / subSeconds) : 0L;
+                // WP-111 R4 (S-10 12.10): the tree end cell's fire record.
+                s4.weapon = weaponKey;
+                s4.autoFire = AutoFire;
+                s4.shots = windowShots;
+                s4.blasts = windowBlasts;
+                s4.reserveTopUps = _reserveTopUps;
                 // Integrity, not speed: enough frames to be a distribution, and the load the
                 // window was meant to measure actually present for (nearly) all of it.
                 s4.pass = frames >= s4.frameCountRequired && s4.loadIntegrityFraction >= LoadIntegrityRequired;
+                if (AutoFire)
+                {
+                    // WP-111 R4: under fire the measured load is the hero shooting into the pinned crowd. Bodies die and the director
+                    // refills them only as corpses free the ceiling, so exactly-40-for-every-frame cannot hold by construction; the
+                    // window is sound when it is long enough and the trigger really fired. The load numbers stay recorded (alive min/avg).
+                    s4.pass = frames >= s4.frameCountRequired && windowShots > 0;
+                }
                 s4.note = frames + " frames / " + windowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s uncapped (lodBias " + s4.lodBiasEffective.ToString("0.00", CultureInfo.InvariantCulture) + ", world " + s4.worldSource + "): mean " + s4.frameMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
                           " ms (" + s4.avgFps.ToString("F1", CultureInfo.InvariantCulture) + " fps) median " + s4.frameMedianMs.ToString("F2", CultureInfo.InvariantCulture) +
                           " p99 " + s4.frameP99Ms.ToString("F2", CultureInfo.InvariantCulture) + " p99filtered " + s4.frameP99FilteredMs.ToString("F2", CultureInfo.InvariantCulture) + " (stalls>33.3ms " + s4.framesExcludedAsStalls + ")" + " 1%low " + s4.frameWorst1PctMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
@@ -1095,6 +1344,11 @@ namespace DD.Prototype.Diagnostics
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
                 s4.note += " | camera " + s4.cameraMode + (sweep ? " sweep 360° onScreen mean " + s4.cameraSweepMeanOnScreen.ToString("F1", CultureInfo.InvariantCulture) : "");
                 s4.note += " | tier " + s4.qualityTier;
+                if (AutoFire)
+                {
+                    s4.note += " | autofire " + weaponKey + " shots " + windowShots + " blasts " + windowBlasts + " reserveTopUps " + _reserveTopUps +
+                               " (load integrity " + (s4.loadIntegrityFraction * 100f).ToString("F1", CultureInfo.InvariantCulture) + "% reported, not gating under fire)";
+                }
 
                 if (VfxStress)
                 {
@@ -1457,6 +1711,141 @@ namespace DD.Prototype.Diagnostics
                     s.bloodMergedQuads = blood.Merger != null ? blood.Merger.MergedQuads : 0;
                     if (blood.DecalPool != null) { s.bloodDecalSpawned = blood.DecalPool.CountSpawned; s.bloodDecalTotal = blood.DecalPool.CountTotal; }
                 }
+            }
+
+            // ================================================================ WP-111 R4 (S-10 12.10): -ddPilotAutoFire
+
+            /// <summary>
+            /// The trigger goes down: the probe's input source replaces the device adapter in <see cref="InputSourceRegistry"/> (the
+            /// one WeaponController and PlayerAim read; PlayerAim's own override stays as it is, null in a Player). Put back in
+            /// <see cref="EndAutoFire"/>.
+            /// </summary>
+            private void BeginAutoFire()
+            {
+                _inputBefore = InputSourceRegistry.Current;
+                _fireInput = new AutoFireInput { Fire = true, Pointer = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) };
+                InputSourceRegistry.SetCurrent(_fireInput);
+                // TP/FP aim along the view: the view turns to the target unless a -ddPilotStart pose or the 360° sweep owns it.
+                _fireTurnsView = !_start.set && !string.Equals(Arg(CameraSweepFlag), "1", StringComparison.Ordinal);
+                _reserveTopUps = 0;
+                Debug.Log("[PilotPerfProbe] auto-fire armed: " + KeyOrName(WeaponRegistry.ActiveController.Classic.Id) + " at the nearest living body (" +
+                          (CameraModeService.IsLookMode ? (_fireTurnsView ? "view turned to it" : "along the held view") : "pointer on it") + "), warm-up through the 04 window");
+            }
+
+            /// <summary>
+            /// One frame of auto-fire (allocation-free): the pointer (top-down) or the view (TP/FP) onto the nearest living body, the
+            /// trigger held, an empty reserve topped up to the round's allowance (the magazine and its reload stay the weapon's own).
+            /// </summary>
+            private void StepAutoFire(PlayerRig rig)
+            {
+                if (_fireInput == null || rig == null)
+                {
+                    return;
+                }
+
+                // Whatever installs another source meanwhile loses the trigger again the next frame (the WeaponAudioShowcase guard).
+                if (!ReferenceEquals(InputSourceRegistry.Current, _fireInput))
+                {
+                    InputSourceRegistry.SetCurrent(_fireInput);
+                }
+
+                PrototypeCameraRig view = PrototypeCameraRig.Active;
+                Vector3 hero = rig.transform.position;
+                ZombieEnemy target = NearestLiving(hero);
+                if (target != null && view != null)
+                {
+                    Vector3 at = target.transform.position;
+                    if (CameraModeService.IsLookMode)
+                    {
+                        float dx = at.x - hero.x, dz = at.z - hero.z;
+                        if (_fireTurnsView && dx * dx + dz * dz > 1e-4f)
+                        {
+                            view.SetViewAngles(Mathf.Atan2(dx, dz) * Mathf.Rad2Deg, 0f);
+                        }
+                    }
+                    else
+                    {
+                        at.y = rig.Aim != null ? rig.Aim.AimPlaneY : at.y + 1f;
+                        if (AimPlaneToScreen(view, at, out Vector2 screen))
+                        {
+                            _fireInput.Pointer = screen;
+                        }
+                    }
+                }
+
+                WeaponController wc = WeaponRegistry.ActiveController;
+                if (wc != null && !wc.Classic.ReserveInfinite && wc.Classic.ReserveAmmo <= 0)
+                {
+                    RunDirector run = RunDirector.Instance;
+                    wc.Classic.RefillReserveForRound(run != null ? Mathf.Max(1, run.Round) : 1);
+                    if (wc.Classic.ReserveAmmo > 0) _reserveTopUps++;
+                }
+            }
+
+            /// <summary>The trigger comes up and the device adapter goes back (unless something else replaced the probe's source meanwhile).</summary>
+            private void EndAutoFire()
+            {
+                if (_fireInput == null)
+                {
+                    return;
+                }
+
+                _fireInput.Fire = false;
+                if (ReferenceEquals(InputSourceRegistry.Current, _fireInput))
+                {
+                    InputSourceRegistry.SetCurrent(_inputBefore);
+                }
+
+                _fireInput = null;
+                _inputBefore = null;
+            }
+
+            /// <summary>The nearest living, not dying body on the ground plane; null when there is none.</summary>
+            private static ZombieEnemy NearestLiving(Vector3 from)
+            {
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                ZombieEnemy best = null;
+                float bestSq = float.MaxValue;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive || z.IsDying) continue;
+                    Vector3 p = z.transform.position;
+                    float dx = p.x - from.x, dz = p.z - from.z;
+                    float sq = dx * dx + dz * dz;
+                    if (sq < bestSq)
+                    {
+                        bestSq = sq;
+                        best = z;
+                    }
+                }
+
+                return best;
+            }
+
+            /// <summary>
+            /// The inverse of <see cref="PrototypeCameraRig.ScreenPointToAimPlane"/>: the pixel whose ray, rebuilt against the rig's
+            /// shake-free pose, meets the aim plane at <paramref name="world"/> — so the top-down fire kicks do not walk the aim.
+            /// False when the point is behind the camera.
+            /// </summary>
+            private static bool AimPlaneToScreen(PrototypeCameraRig view, Vector3 world, out Vector2 screen)
+            {
+                screen = default;
+                Camera cam = view.Camera;
+                if (cam == null)
+                {
+                    return false;
+                }
+
+                Vector3 local = Quaternion.Inverse(view.StableRotation) * (world - view.StablePosition);
+                Vector3 p = cam.WorldToScreenPoint(cam.transform.TransformPoint(local));
+                if (p.z <= 0f)
+                {
+                    return false;
+                }
+
+                screen = new Vector2(p.x, p.y);
+                return true;
             }
 
             /// <summary>
