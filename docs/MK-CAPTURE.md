@@ -12,6 +12,12 @@ export DD_GUARD_KNOWN_GOOD="…"   # R4 rule 1: the value in K/c-00/R3/KARAR-GUA
 zsh tools/mk-capture.sh --app "$K/wp-110/builds/dev-cur/DeathsDemolition.app" --wp wp-110 --label shoot-1 --segments segments.txt
 ```
 
+**R4 FINAL gate** (C-00 12.10, the user: the Instagram pictures are R4 as finished). A shoot runs only on a build of the R4
+FINAL PASS commit — `tools/build.sh dev` on that commit. The FINAL SHA is `--final-sha <sha>`, else `DD_R4_FINAL_SHA`, else the
+first word of `K/wp-110/FINAL-SHA.txt` (C-00 writes it at FINAL PASS; S-11's `ig_gate.py` reads the same file). The build's
+commit (`report.json` head) must be that commit, else the run is refused (64) before anything opens. A label starting with
+`dry` is a dry run: exempt, recorded `"dry": true` in `capture.json` (`finalGate` holds the check), and never published.
+
 Options: `--raw-gb 5` (raw bytes one segment may write, see Disk), `--ring-mb 640` (the preroll ring), `--hud-safe` (the
 HUD streams lay the HUD out inside the Reels safe rectangle x 0–960, y 250–1520 of 1080×1920 — S-11), `--formats`,
 `--window 960x540`, `--tier sinematik`, `--keep-frames`.
@@ -133,6 +139,6 @@ Exit codes:
 | 1 | a segment wrote no session, or a clip did not mux |
 | 3 | not a dev build |
 | 30 / 31 / 65 / 75 | guard (restore 32 is accepted only via `qa/oos_rule.py`) |
-| 64 | usage, `DD_GUARD_KNOWN_GOOD` not exported, or the snapshot without `kgSource=env` |
+| 64 | usage, `DD_GUARD_KNOWN_GOOD` not exported, the snapshot without `kgSource=env`, or the R4 FINAL gate (not a dry run and the build is not the FINAL commit) |
 | 74 | disk below 20 GB (or a raw budget below 1 GB) before a segment |
 | 128+n | signal (the restore still runs) |

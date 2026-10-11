@@ -113,7 +113,7 @@ class MkCaptureTests(unittest.TestCase):
         self.kproj = self.home / dd_paths.KADRO_REL / "context/projects/deaths-demolition"
         tools = self.root / "repo" / "tools"
         (tools / "qa").mkdir(parents=True)
-        for name in ("mk-capture.sh", "dd-env.sh"):
+        for name in ("mk-capture.sh", "dd-env.sh", "dd_paths.py"):   # dd_paths: the R4 FINAL gate reads K/wp-110/FINAL-SHA.txt
             shutil.copy2(TOOLS / name, tools / name)
         shutil.copytree(TOOLS / "mk-capture", tools / "mk-capture")
         shutil.copytree(TOOLS / "td-capture", tools / "td-capture")
@@ -137,12 +137,13 @@ class MkCaptureTests(unittest.TestCase):
     def env(self, **extra):
         e = {k: v for k, v in os.environ.items() if not k.startswith(("DD_", "FAKE_"))}
         e.update(HOME=str(self.home), TMPDIR=str(self.root), FAKE_LOG=str(self.log), DD_TD_CAPTURE_BIN=self.bins.name, DD_MK_MIN_FREE_GB="1",
+                 DD_R4_FINAL_SHA="abc123def",   # C-00 12.10: the fixture build IS the R4 FINAL commit (report.json head)
                  DD_GUARD_KNOWN_GOOD="Screenmanager Fullscreen mode=1;Screenmanager Resolution Width=1496")
         import PIL
         site = str(Path(PIL.__file__).resolve().parents[1])
         e["PYTHONPATH"] = site + (os.pathsep + e["PYTHONPATH"] if e.get("PYTHONPATH") else "")
         e.update(extra)
-        return e
+        return {k: v for k, v in e.items() if v is not None}   # None: leave the variable out
 
     def run_mk(self, *extra, label="m1", segs=None, **env):
         return subprocess.run(["zsh", str(self.script), "--app", str(self.app), "--wp", "wp-110", "--label", label,
@@ -227,6 +228,27 @@ class MkCaptureTests(unittest.TestCase):
         self.assertEqual(1, r.returncode, r.stdout + r.stderr)
         self.assertIn("a1: the tree preset did not apply — asked barrage_r15, applied None", r.stderr)
         self.assertNotIn("c1: the tree preset", r.stderr, "a segment without a preset is not checked")
+
+    def test_R4FinalKapisi_YalnizFinalBuildi_KuruKosuMuaf(self):
+        """C-00 12.10 (the user: the Instagram pictures are R4 as finished): a shoot only on the R4 FINAL PASS build — the
+        build's commit against --final-sha / DD_R4_FINAL_SHA / K/wp-110/FINAL-SHA.txt; a dry* label is exempt and recorded dry."""
+        r = self.run_mk(label="s1", DD_R4_FINAL_SHA=None)
+        self.assertEqual(64, r.returncode, r.stdout + r.stderr); self.assertIn("R4 FINAL SHA is unknown", r.stderr)
+        r = self.run_mk(label="s2", DD_R4_FINAL_SHA="fff0000")
+        self.assertEqual(64, r.returncode); self.assertIn("the build is abc123def", r.stderr)
+        self.assertEqual(64, self.run_mk("--final-sha", "zz", label="s3").returncode, "not hex")
+        self.assertEqual([], self.calls()); self.assertEqual([], self.guard_calls(), "refused before anything opened")
+        (self.kproj / "wp-110").mkdir(parents=True, exist_ok=True)
+        (self.kproj / "wp-110" / "FINAL-SHA.txt").write_text("abc123d R4 FINAL PASS (C-00)\n")
+        r = self.run_mk(label="s4", DD_R4_FINAL_SHA=None)
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        cap = json.loads((self.out("s4") / "capture.json").read_text())
+        self.assertEqual((False, "abc123d", "abc123def"), (cap["dry"], cap["finalGate"]["finalSha"], cap["finalGate"]["buildHead"]))
+        self.assertTrue(cap["finalGate"]["finalShaSource"].endswith("FINAL-SHA.txt"))
+        self.assertEqual(64, self.run_mk("--final-sha", "fff0000", label="s5", DD_R4_FINAL_SHA=None).returncode, "the flag wins over the file")
+        r = self.run_mk(label="dry-9", DD_R4_FINAL_SHA="fff0000")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertTrue(json.loads((self.out("dry-9") / "capture.json").read_text())["dry"], "a dry run is exempt and recorded dry")
 
     def test_KareleriSakla_HicbirSeySilinmez(self):
         r = self.run_mk("--keep-frames")

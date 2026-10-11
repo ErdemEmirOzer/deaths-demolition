@@ -6,7 +6,7 @@
 #
 # usage: mk-capture.sh --app <dev DeathsDemolition.app> --wp <wp-1NN> --label <label> --segments <file>
 #                      [--formats 1080x1920,1080x1440,1080x1350,1080x1080] [--tier sinematik] [--window 960x540] [--keep-frames]
-#                      [--raw-gb 5] [--ring-mb 640] [--hud-safe]
+#                      [--raw-gb 5] [--ring-mb 640] [--hud-safe] [--final-sha <R4 FINAL commit>]
 #   --segments  one segment per line, whitespace-separated columns (# comments; "-" = default):
 #                 name weapon start rounds life specials camera hud seconds clips music seed [threshold [mode [tree]]]
 #               name [a-z0-9-]+ · weapon a ClassicWeaponId name/number (QaRunBot -ddQaBotWeapon) · start: first round
@@ -33,7 +33,7 @@ SELF="${0:A}"; HERE="${SELF:h}"
 source "$HERE/dd-env.sh"
 
 APP=""; WP=""; LABEL=""; SEGS=""; FORMATS="1080x1920,1080x1440,1080x1350,1080x1080"; TIER="sinematik"; WIN="960x540"; KEEP=0
-RAWGB=5; RINGMB=640; HUDSAFE=0
+RAWGB=5; RINGMB=640; HUDSAFE=0; FINALSHA=""
 usage() { sed -n '7,23p' "$SELF" >&2; exit 64; }
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,6 +41,7 @@ while [ $# -gt 0 ]; do
     --segments) SEGS="${2:-}"; shift ;; --formats) FORMATS="${2:-}"; shift ;; --tier) TIER="${2:-}"; shift ;;
     --window) WIN="${2:-}"; shift ;; --keep-frames) KEEP=1 ;;
     --raw-gb) RAWGB="${2:-}"; shift ;; --ring-mb) RINGMB="${2:-}"; shift ;; --hud-safe) HUDSAFE=1 ;;
+    --final-sha) FINALSHA="${2:-}"; [ -n "$FINALSHA" ] || { echo "mk-capture: --final-sha needs a value" >&2; exit 64; }; shift ;;
     -h|--help) usage ;;
     *) echo "mk-capture: unknown option $1" >&2; usage ;;
   esac
@@ -57,6 +58,10 @@ done
   || { echo "mk-capture: --raw-gb 1..50, --ring-mb 32..2048" >&2; exit 64; }
 [ -n "${DD_GUARD_KNOWN_GOOD:-}" ] || { echo "mk-capture: R4 rule 1 — export DD_GUARD_KNOWN_GOOD first (K/c-00/R3/KARAR-GUARD-KG-10.10.md)" >&2; exit 64; }
 APP="${APP:A}"; SEGS="${SEGS:A}"
+# C-00 12.10 (the user: the Instagram pictures are R4 as finished): a shoot only on a build of the R4 FINAL PASS commit — a
+# label starting with dry is a dry run (exempt, recorded dry). Checked before anything opens (mk_manifest.py gate).
+GATE=$(PYTHONDONTWRITEBYTECODE=1 python3 "$HERE/mk-capture/mk_manifest.py" gate --app "$APP" --label "$LABEL" ${FINALSHA:+--final-sha "$FINALSHA"}) \
+  || { echo "mk-capture: R4 FINAL gate — $(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("verdict"))' "$GATE" 2>/dev/null || print -r -- "$GATE")" >&2; exit 64; }
 
 # --- the segment table (validated before anything opens) -------------------------------------------------------------
 typeset -a SEG_LINES
@@ -93,6 +98,7 @@ OUT="$DD_KPROJ/$WP/capture/$LABEL"
 [ -e "$OUT" ] && { echo "mk-capture: $OUT exists — an earlier capture is never overwritten; pick a new --label" >&2; exit 64; }
 mkdir -p "$OUT/logs"
 cp "$SEGS" "$OUT/segments.txt"
+print -r -- "$GATE" > "$OUT/logs/final-gate.json"
 DD_TIMELINE="$OUT/logs/timeline.txt"
 dd_log "mk-capture: app=$APP wp=$WP label=$LABEL segments=${#SEG_LINES} formats=$FORMATS tier=$TIER window=$WIN keepFrames=$KEEP"
 
