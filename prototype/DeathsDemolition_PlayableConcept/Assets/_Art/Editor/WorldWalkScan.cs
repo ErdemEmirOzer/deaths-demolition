@@ -95,6 +95,13 @@ namespace DD.Art.Pipeline.EditorTools
             string label = Arg("-ddLabel") ?? ("r" + radius.ToString("0.00", CultureInfo.InvariantCulture));
             Directory.CreateDirectory(outDir);
             EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
+            string nav = Arg("-ddNavProbe");   // "x0,z0,x1,z1" — NavMesh paths from the spawn to a 1 m grid in that rectangle
+            if (!string.IsNullOrEmpty(nav))
+            {
+                File.WriteAllText(Path.Combine(outDir, "nav-probe-" + label + ".txt"), NavProbe(nav, Path.Combine(outDir, "nav-probe-" + label + ".png")), new UTF8Encoding(false));
+                return;
+            }
+
             string probe = Arg("-ddProbe");
             if (!string.IsNullOrEmpty(probe))
             {
@@ -131,6 +138,38 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Diagnostics (WP-103): from the spawn's NavMesh point, a path to every 1 m point of the rectangle that samples onto the
+        /// NavMesh within 0.5 m — complete / partial / off-mesh counts and a PNG (green complete, orange partial, grey off-mesh).
+        /// </summary>
+        public static string NavProbe(string rect, string pngPath)
+        {
+            string[] f = rect.Split(',');
+            float x0 = float.Parse(f[0], CultureInfo.InvariantCulture), z0 = float.Parse(f[1], CultureInfo.InvariantCulture);
+            float x1 = float.Parse(f[2], CultureInfo.InvariantCulture), z1 = float.Parse(f[3], CultureInfo.InvariantCulture);
+            if (!UnityEngine.AI.NavMesh.SamplePosition(Spawn, out UnityEngine.AI.NavMeshHit s0, 3f, UnityEngine.AI.NavMesh.AllAreas)) return "no NavMesh at the spawn\n";
+            int w = Mathf.RoundToInt(x1 - x0) + 1, h = Mathf.RoundToInt(z1 - z0) + 1, complete = 0, partial = 0, off = 0;
+            var tex = new Texture2D(w * 6, h * 6, TextureFormat.RGBA32, false);
+            var px = new Color32[w * 6 * h * 6];
+            var path = new UnityEngine.AI.NavMeshPath();
+            for (int iz = 0; iz < h; iz++)
+            for (int ix = 0; ix < w; ix++)
+            {
+                var p = new Vector3(x0 + ix, 0f, z0 + iz);
+                Color32 c;
+                if (!UnityEngine.AI.NavMesh.SamplePosition(p, out UnityEngine.AI.NavMeshHit hit, 0.5f, UnityEngine.AI.NavMesh.AllAreas)) { off++; c = new Color32(70, 70, 70, 255); }
+                else if (UnityEngine.AI.NavMesh.CalculatePath(s0.position, hit.position, UnityEngine.AI.NavMesh.AllAreas, path) && path.status == UnityEngine.AI.NavMeshPathStatus.PathComplete) { complete++; c = new Color32(70, 170, 80, 255); }
+                else { partial++; c = new Color32(255, 150, 20, 255); }
+                for (int py = 0; py < 6; py++) for (int q = 0; q < 6; q++) px[(ix * 6 + q) + (iz * 6 + py) * w * 6] = c;
+            }
+
+            tex.SetPixels32(px);
+            tex.Apply(false);
+            File.WriteAllBytes(pngPath, tex.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(tex);
+            return string.Format(CultureInfo.InvariantCulture, "rect {0} · points {1}: complete {2}, partial/invalid {3}, off-mesh {4}\n", rect, w * h, complete, partial, off);
         }
 
         public static string Describe(Report r)
