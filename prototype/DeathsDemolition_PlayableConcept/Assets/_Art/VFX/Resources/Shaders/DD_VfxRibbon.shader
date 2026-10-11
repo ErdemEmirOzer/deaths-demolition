@@ -1,7 +1,7 @@
 // DD/VFX Ribbon — WP-073 · tracer / glint / pellet-bar ribbons (direction §1.2). One quad mesh (u 0 tail → 1 head, v −1..1
 // across) drawn instanced by TracerRibbonRenderer; the vertex stage builds a camera-facing strip between the per-instance
 // tail and head, never thinner than _MinPx on screen (K2: ≥ 2 px, so a far tracer stays a line, not a flicker). The
-// fragment stage: a full-intensity head bead, an exponential tail whose last 40 % stays ≤ 0.15, a soft cross-section, an
+// fragment stage: a full-intensity head bead, an exponential tail whose last 40 % stays ≤ 0.15 (_TailRampShare / _TailRampLevel), a soft cross-section, an
 // optional distance fade (pellet bars die out after 6 m) and the first-person near-camera ramp (α 0→1 over the first
 // 0.4 m from the muzzle, HDR × 0.15 inside 1.5 m of the eye → × 1 at 3 m, core ≤ 6 px), a segment shorter than 4 px on screen
 // (seen end-on) or a head-dot instance drawn as a soft round dot. Additive, HDR (bloom does the glow's core).
@@ -12,6 +12,9 @@ Shader "DD/VFX Ribbon"
     {
         _MinPx("Minimum width (px)", Float) = 2
         _TailFalloff("Tail falloff (exp k)", Float) = 3.2
+        // WP-095 R3 (C-00 11.10): the tail-end share held to a linear ramp and the ramp's top; 0.4 / 0.15 = every existing ribbon
+        _TailRampShare("Tail ramp share", Float) = 0.4
+        _TailRampLevel("Tail ramp level", Float) = 0.15
         // WP-095 R3 (AD 11.10 M1): additive by default (One / One, every existing ribbon); the top-down tracer glow uses a
         // premultiplied instance (One / OneMinusSrcAlpha) - added orange over the blue sky reflection read salmon-pink.
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src blend", Float) = 1
@@ -40,6 +43,8 @@ Shader "DD/VFX Ribbon"
             CBUFFER_START(UnityPerMaterial)
                 float _MinPx;
                 float _TailFalloff;
+                float _TailRampShare;
+                float _TailRampLevel;
             CBUFFER_END
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -136,7 +141,7 @@ Shader "DD/VFX Ribbon"
                 float t = saturate(i.uv.x);
                 float bead = tail.w;                                    // the head bead's share of the length
                 float body = exp(-(1.0 - t) * _TailFalloff);            // exponential tail
-                body = t < 0.4 ? min(body, 0.15 * (t / 0.4)) : body;   // the last 40 % stays ≤ 0.15
+                body = t < _TailRampShare ? min(body, _TailRampLevel * (t / max(_TailRampShare, 1e-4))) : body;   // the last 40 % stays ≤ 0.15 (defaults)
                 float a = t >= 1.0 - bead ? 1.0 : body;
                 float across = 1.0 - smoothstep(0.35, 1.0, abs(i.uv.y));
                 float3 rgb = lerp(tailColor.rgb, headColor.rgb, smoothstep(0.0, 1.0, t));

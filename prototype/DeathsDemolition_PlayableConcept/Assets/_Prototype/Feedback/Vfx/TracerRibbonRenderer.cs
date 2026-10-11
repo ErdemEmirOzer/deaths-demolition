@@ -32,18 +32,22 @@ namespace DD.Prototype.Feedback.Vfx
         /// <see cref="TdTailOutSeconds"/>; the tail trails the head by clamp(v × <see cref="TdTailSeconds"/>, 1.5, 6 m) (sniper ≤ 10 m).
         /// A white-hot core (<see cref="TdCoreHead"/> → <see cref="TdCoreTail"/>, the weapon's width ×<see cref="TdCoreScale"/>,
         /// ≥ <see cref="TdCoreMin"/>) and an orange glow (<see cref="TdGlowColor"/>, premultiplied, ×<see cref="TdGlowScale"/> wide and
-        /// ≥ 2.5 × the core, α <see cref="TdGlowAlpha"/>; none on Performance).
+        /// ≥ 2.5 × the core, α <see cref="TdGlowAlpha"/>, a flat tail; none on Performance).
         /// ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR and the glow. A shotgun pellet keeps its short warm bar
         /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
         /// </summary>
         public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .017f, TdTailMin = 1.5f, TdTailMax = 4.5f,
-            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2f, TdGlowAlpha = .9f;
+            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2f, TdGlowAlpha = 1f,
+            TdGlowFalloff = .5f, TdGlowRampShare = .15f;
         /// <summary>AD 11.10 (M1 + S2) and C-00 11.10: one realistic top-down palette for every weapon - a thin warm-yellow core
-        /// (added; thin so it does not wash the light stone white), a deep orange glow drawn premultiplied at α 0.9 (it tints the
+        /// (added; thin so it does not wash the light stone white), a deep orange glow drawn premultiplied at α 1 (it tints the
         /// ground orange - on the light stone the abb27729 glow measured S 0.16–0.33 and read pale beige; on the blue reflection the
-        /// added orange had read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright" (v × 0.017 s, 1.5–4.5 m).</summary>
+        /// added orange had read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright" (v × 0.017 s, 1.5–4.5 m).
+        /// The glow holds its strength along the tail (exp k <see cref="TdGlowFalloff"/>, the last <see cref="TdGlowRampShare"/>
+        /// a ramp to 0): with the ribbons' k 3.2 / 40 % ramp most of the glow's length sat at α ≤ 0.3 and 4c108065 still measured
+        /// S 0.17–0.32 - an orange tracer streak, not a fading wisp.</summary>
         public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.8f, TdCoreTail = new Color(1f, .62f, .2f) * 1.2f,
-            TdGlowColor = new Color(1f, .42f, .02f);
+            TdGlowColor = new Color(1f, .3f, 0f);
         private struct TdRound
         {
             public bool Alive, Sniper, Stopped, Pellet;
@@ -302,6 +306,9 @@ namespace DD.Prototype.Feedback.Vfx
                 // AD 11.10 M1: the TD glow is premultiplied (One / OneMinusSrcAlpha), the cores stay additive
                 _tdGlowMaterial = new Material(_material) { name = "DD_VfxRibbon TD glow (runtime)", hideFlags = HideFlags.DontSave };
                 _tdGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.One); _tdGlowMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                // the glow's tail: a flat exponential, its ramp starting where the curve is (no step)
+                _tdGlowMaterial.SetFloat("_TailFalloff", TdGlowFalloff); _tdGlowMaterial.SetFloat("_TailRampShare", TdGlowRampShare);
+                _tdGlowMaterial.SetFloat("_TailRampLevel", Mathf.Exp(-(1f - TdGlowRampShare) * TdGlowFalloff));
             }
 
             _block = new MaterialPropertyBlock();
