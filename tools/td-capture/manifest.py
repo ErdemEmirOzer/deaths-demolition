@@ -198,27 +198,67 @@ def warning_lines(q):
     return lines
 
 
+def _number(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)   # gt NOTE-1 (37daa37f): a bool is no second
+
+
+def _video_end(out):
+    """The last grabbed frame's t in video/frames.tsv (the MP4 runs to it), None without frames."""
+    last = None
+    try:
+        for line in (out / "video" / "frames.tsv").read_text(encoding="utf-8").splitlines():
+            cols = line.split("\t")
+            try:
+                last = max(last or 0.0, float(cols[1]))
+            except (IndexError, ValueError):
+                continue
+    except OSError:
+        return None
+    return last
+
+
 def scenario_record(out, name):
     """R4 kit D2 (S-10 / S-06 11.10): what the bot's scenario did, read from <out>/bot/scenario.json (QaRunBot writes
-    completed + realtime stamps in Time.realtimeSinceStartupAsDouble, null = not reached). Each stamp is also given in
-    video seconds (minus video/sync.json t0.realtimeSinceStartup — the same process clock). played = the file names the
-    scenario asked for and completed is true. None when no scenario was asked for."""
+    completed, realtime stamps in Time.realtimeSinceStartupAsDouble — null = not reached — and counters / flags at the top
+    level). Each realtime stamp is also given in video seconds (minus video/sync.json t0.realtimeSinceStartup — the same
+    process clock). played = the file names the scenario asked for, completed is true, the video t0 is known and every
+    reached stamp lies inside the video (0 … the last frame; gt SHOULD-1 37daa37f: a walk that began before t0 or ended
+    after the last frame is not in the clip). None when no scenario was asked for."""
     if not name:
         return None
-    s = read_json(out / "bot" / "scenario.json")
+    path = out / "bot" / "scenario.json"
+    s = read_json(path)
     if not isinstance(s, dict):
-        return {"scenario": name, "played": False,
-                "reason": "bot/scenario.json missing — does this build's QaRunBot know -ddQaBotScenario %s?" % name}
-    t0 = ((read_json(out / "video" / "sync.json") or {}).get("t0") or {}).get("realtimeSinceStartup")
+        why = ("bot/scenario.json unreadable or not a JSON object" if path.exists()
+               else "bot/scenario.json missing — does this build's QaRunBot know -ddQaBotScenario %s?" % name)
+        return {"scenario": name, "played": False, "reason": why}
+    sync = read_json(out / "video" / "sync.json")
+    t0obj = sync.get("t0") if isinstance(sync, dict) else None
+    t0 = t0obj.get("realtimeSinceStartup") if isinstance(t0obj, dict) else None
+    t0 = t0 if _number(t0) else None
     realtime = s.get("realtime") if isinstance(s.get("realtime"), dict) else {}
     rec = {k: v for k, v in s.items() if k != "realtime"}
     rec["realtime"] = realtime
-    rec["video"] = {k: (round(v - t0, 3) if isinstance(v, (int, float)) and isinstance(t0, (int, float)) else None)
-                    for k, v in realtime.items()}
+    rec["video"] = {k: (round(v - t0, 3) if _number(v) and t0 is not None else None) for k, v in realtime.items()}
     rec["videoT0Realtime"] = t0
-    rec["played"] = s.get("scenario") == name and s.get("completed") is True
-    if not rec["played"]:
-        rec["reason"] = "scenario %r, completed %r" % (s.get("scenario"), s.get("completed"))
+    end = _video_end(out)
+    rec["videoEndSeconds"] = None if end is None else round(end, 3)
+    reasons = []
+    if s.get("scenario") != name:
+        reasons.append("bot/scenario.json names %r, not %r" % (s.get("scenario"), name))
+    if s.get("completed") is not True:
+        reasons.append("completed %r" % (s.get("completed"),))
+    if t0 is None:
+        reasons.append("video t0 missing (video/sync.json t0.realtimeSinceStartup)")
+    elif end is None:
+        reasons.append("no video frames (video/frames.tsv)")
+    else:
+        outside = ["%s %.2f s" % (k, v) for k, v in rec["video"].items() if v is not None and not (0.0 <= v <= end)]
+        if outside:
+            reasons.append("outside the video 0..%.2f s: %s" % (end, ", ".join(outside)))
+    rec["played"] = not reasons
+    if reasons:
+        rec["reason"] = "; ".join(reasons)
     return rec
 
 

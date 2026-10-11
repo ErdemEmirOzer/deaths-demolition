@@ -51,8 +51,15 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
 - **Scenario video (R4, S-06 / S-01 11.10):** `--scenario <name>` makes the video's QA bot play a named QaRunBot scenario
   instead of the free fight (`-ddQaBotScenario <name>`, e.g. `crowdwalk`: the hero walks through a 40-zombie crowd under a
   tree crown, R4 kit D2). The name is `[a-z0-9][a-z0-9-]*`; it needs a fighting video (not `--stills-only` or
-  `--video-from boot`), otherwise exit 64. `capture.json` → `scenario` records the name asked for (null = free fight); the
-  bot's own output confirms that the build knows the scenario.
+  `--video-from boot`), otherwise exit 64. `capture.json` → `scenario` records the name asked for (null = free fight).
+  - `capture.json` → `scenarioStamps` is the bot's own record (`bot/scenario.json`, S-06): `completed`, the counters
+    (`crowdPlaced`, `arrived`, `walkSeconds`, `crowdWithin15m`), `realtime` (crowdwalkStart / crowdwalkEnd / canopyEnter /
+    canopyExit in the Player's clock, null = not reached) and the same stamps as `video` seconds of the MP4
+    (`videoEndSeconds` = its last frame).
+  - `played` is true only when the record names this scenario, `completed` is true, the video t0 is known and every reached
+    stamp lies inside the video (0 … `videoEndSeconds`). Otherwise `reason` says why and **td-capture exits 1**: a scenario
+    clip that does not show the scenario is no evidence. Retake with a longer `--video-seconds` when a stamp fell after the
+    last frame.
 - **Loading screen / menu clip:** `--video-only --video-from boot --video-seconds 30` records from Player start: the loading screen (intro → loop → exit), the main menu logo intro, then the first seconds of the run.
   - `capture.json` → `video.phases` holds `loadingStart`, `loadingEnd`, `menu`, `fighting` (real seconds from the MP4's t0; null when not seen).
   - S-09's still mode `-ddUiCapture loading` is separate.

@@ -70,15 +70,21 @@ elif wav:
     w.close(); off = 0.5
 phases = {"loadingStart": 0.0, "loadingEnd": 0.5, "menu": 0.5, "selectionRequested": 0.9, "selection": 1.0, "runRequested": 1.1,
           "fighting": None if os.environ.get("FAKE_BOOT_NOFIGHT") else 1.2} if flag("-ddTdCaptureMode") == "boot" else None
-(v / "sync.json").write_text(json.dumps({"t0": {"realtimeSinceStartup": 100.0}, "audio": {"wavOffsetSeconds": off, "sampleRate": 48000},
-                                         "phases": phases}))
+fs = os.environ.get("FAKE_SCEN", "")
+(v / "sync.json").write_text(json.dumps({"t0": "x" if fs == "badt0" else {"realtimeSinceStartup": 100.0},
+                                         "audio": {"wavOffsetSeconds": off, "sampleRate": 48000}, "phases": phases}))
 scen = flag("-ddQaBotScenario")
-if scen and os.environ.get("FAKE_SCEN") != "missing":   # S-06's QaRunBot scenario record (R4 kit D2)
+if scen and fs != "missing":   # S-06's QaRunBot scenario record (R4 kit D2, the real shape: 4 realtime stamps, counters on top)
     bot = Path(flag("-ddQaBot")); bot.mkdir(parents=True, exist_ok=True)
-    (bot / "scenario.json").write_text(json.dumps({"scenario": scen, "completed": os.environ.get("FAKE_SCEN") != "0",
-        "realtime": {"crowdPlaced": 101.0, "crowdwalkStart": 102.5, "crowdwalkEnd": 108.25, "canopyEnter": 109.0,
-                     "canopyExit": None if os.environ.get("FAKE_SCEN") == "0" else 111.5, "arrived": 112.0},
-        "walkSeconds": 5.75, "crowdWithin15m": 38}))
+    if fs == "garbage":
+        (bot / "scenario.json").write_text("{half")
+    else:
+        rt = {"crowdwalkStart": 99.5 if fs == "late" else 100.2, "crowdwalkEnd": 101.0, "canopyEnter": 101.2,
+              "canopyExit": None if fs == "0" else 101.8}
+        if fs == "bool":
+            rt["arrivedFlag"] = True
+        (bot / "scenario.json").write_text(json.dumps({"scenario": "other" if fs == "wrongname" else scen, "completed": fs != "0",
+            "realtime": rt, "crowdPlaced": 40, "arrived": fs != "0", "walkSeconds": 5.6, "crowdWithin15m": 38}))
 lag = float(os.environ.get("FAKE_AVDRIFT", "0"))   # the audio clock loses this much by t = 2 s
 os.environ.get("FAKE_NOANCHORS") or (v / "audio-sync.tsv").write_text("# t_seconds\twav_frames_captured\n" + "".join(
     "%.6f\t%d\n" % (t, 24000 + round((t - lag * t / 2) * 48000)) for t in (0.0, 1.0, 2.0)))
@@ -310,10 +316,9 @@ class TdCaptureTests(unittest.TestCase):
         rec = json.loads((self.out() / "capture.json").read_text())
         self.assertEqual("crowdwalk", rec["scenario"])
         st = rec["scenarioStamps"]   # S-10 / S-06 11.10: the bot's stamps, also in video seconds (t − video t0 100.0)
-        self.assertTrue(st["played"]); self.assertEqual(38, st["crowdWithin15m"])
-        self.assertEqual({"crowdPlaced": 1.0, "crowdwalkStart": 2.5, "crowdwalkEnd": 8.25, "canopyEnter": 9.0, "canopyExit": 11.5,
-                          "arrived": 12.0}, st["video"])
-        self.assertEqual(108.25, st["realtime"]["crowdwalkEnd"])
+        self.assertTrue(st["played"], st.get("reason")); self.assertEqual((38, 40, True), (st["crowdWithin15m"], st["crowdPlaced"], st["arrived"]))
+        self.assertEqual({"crowdwalkStart": 0.2, "crowdwalkEnd": 1.0, "canopyEnter": 1.2, "canopyExit": 1.8}, st["video"])
+        self.assertEqual(101.0, st["realtime"]["crowdwalkEnd"]); self.assertEqual(1.967, st["videoEndSeconds"])
         r = self.run_cap("--video-only", label="t2")   # without it: the free fight, no flag, scenario null
         self.assertEqual(0, r.returncode, r.stdout + r.stderr)
         self.assertNotIn("-ddQaBotScenario", self.calls()[-1])
@@ -331,6 +336,22 @@ class TdCaptureTests(unittest.TestCase):
         self.assertEqual(1, r.returncode, r.stdout + r.stderr)
         self.assertIn("bot/scenario.json missing", r.stderr)
         self.assertEqual(["snapshot", "restore"] * 2, [l.split()[0] for l in self.guard_calls()], "the restore runs every time")
+
+    def test_Senaryo_DamgaVideoDisinda_AdUyusmaz_BozukKayit_Cikis1_BoolSaniyeDegil(self):
+        """gt 37daa37f: SHOULD-1 a stamp outside the video (walk began before t0) is not in the clip; NOTE-3 a record for another
+        scenario; NOTE-2 a broken t0 / a half-written file never crashes the manifest; NOTE-1 a bool is no second."""
+        for i, (fake, needle) in enumerate((("late", "outside the video 0..1.97 s: crowdwalkStart -0.50 s"),
+                                            ("wrongname", "names 'other', not 'crowdwalk'"),
+                                            ("badt0", "video t0 missing"),
+                                            ("garbage", "unreadable or not a JSON object"))):
+            with self.subTest(fake=fake):
+                r = self.run_cap("--scenario", "crowdwalk", "--video-only", label="s%d" % i, FAKE_SCEN=fake)
+                self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+                self.assertIn(needle, r.stderr)
+                self.assertTrue((self.out("s%d" % i) / "SHA256SUMS").exists(), "the record is written whatever the bot wrote")
+        r = self.run_cap("--scenario", "crowdwalk", "--video-only", label="sb", FAKE_SCEN="bool")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertIsNone(json.loads((self.out("sb") / "capture.json").read_text())["scenarioStamps"]["video"]["arrivedFlag"])
 
     def test_Senaryo_KotuAdYaDaVideosuz_Cikis64HicbirSeyKosmaz(self):
         # gt MUST-1 (11.10): a name may not start with "-" — `--scenario --video-only` (value forgotten) used to swallow the
