@@ -34,7 +34,7 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(0, r.invisible + r.oversize, "görünmüyor ama geçilemiyor:" + unexplained);
             Assert.LessOrEqual(r.stepFail, StepFailCeiling, "çizili yapı boyunca kayıp duran adımlar arttı:" + unexplained);
-            Assert.Greater(r.reachableM2, 10500f, "bambu korusunun içi yürünebilir (WP-103 öncesi 10 074 m²)");
+            Assert.Greater(r.reachableM2, 10300f, "bambu korusunun içi yürünebilir (WP-103 öncesi 10 074 m², sonrası 10 486 m²)");
         }
     }
 }
