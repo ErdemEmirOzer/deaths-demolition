@@ -157,6 +157,15 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Run, nameof(RunAudioEvent.UpgradeSkipped), AudioSoundId.UiBack, U, false, ""),
             B(AudioEventSource.Run, nameof(RunAudioEvent.RunEnded), AudioSoundId.PlayerDeath, U, false, "stinger; music pulls back"),
 
+            // ---- WP-107 (R4) · wall buy (S-02 WallBuyEvents → AudioEventRouter, AP-011 v024 wb_*; IDS.md 1000–1004)
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Bought", AudioSoundId.WallBuyCoins, I, true, "the coins at o.StationWorld (Impact, 0.6 spatial, priority 70); the rack follows 0.1 s behind (next rows); the weapon's pickup / switch-in foley is the rig's (anim.pickup_grab / pickup_done / switch_ready) - never doubled here"),
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Bought → rack", AudioSoundId.WallBuyRack, I, true, "the weapon off its wooden rack, every classic weapon but rl_1 (AudioEventRouter.WallBuyRackFor)"),
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Bought rl_1 → heavy rack", AudioSoundId.WallBuyHeavy, I, true, "the rocket launcher's lacquered rack instead of WallBuyRack (priority 75)"),
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Refilled", AudioSoundId.WallBuyCoins, I, true, "the short transaction: the coins alone, −2.5 dB, +2 st (no rack)"),
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Denied", AudioSoundId.WallBuyDenied, I, true, "the station's refusal for every block (gold, full ammo, a Special in hand, the refund race), 0.25 s gate"),
+            B(AudioEventSource.Run, "WallBuyEvents.Resolved · Denied → UiDenied", AudioSoundId.UiDenied, U, false, "the interface's refusal over the station's (2D, AudioMixPlan.Ui)"),
+            B(AudioEventSource.Run, "WallBuyEvents.PromptChanged false→true", AudioSoundId.WallBuyPrompt, U, false, "a quiet 2D ping on the prompt's appearing edge only (an offer changing under it is not an edge), 1 s gate against the reach radius"),
+
             // ---- player (Player) --------------------------------------------------
             B(AudioEventSource.Player, "PlayerHealth.AnyDamaged", AudioSoundId.PlayerDamage, U, false, "severity + low-health gain"),
             B(AudioEventSource.Player, "PlayerHealth.AnyPlayerDied", AudioSoundId.PlayerDeath, U, false, ""),
@@ -303,6 +312,37 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ambience, "scatter.drip_slate", AudioSoundId.AmbDripSlate, A, true, "Look B: wet-slate drips in the scatter ring (v007)"),
             B(AudioEventSource.Ambience, "Pond.bed", AudioSoundId.AmbPondBed, A, true, "Look B: koi pond water bed at the pond (3D loop, distance-faded) (v007)"),
             B(AudioEventSource.Ambience, "WindChime.furin", AudioSoundId.AmbFurin, A, true, "WP-065C: AP-017 fūrin (eaves) ring with WorldWind.Strength, nearest chime ≤ 12 m, AmbienceDirector.TickFurin (v014)"),
+
+            // ---- WP-104 (R4) · the run tree (B0 TreeEvents → TreeAudio, AP-011 v024; IDS.md 1020–1063). Every TreeProcKind member is
+            // named in a "TreeEvents.Proc · …" row (EditMode coverage test). Gate = AudioMixPlan.TreeLod (unscaled); W = SFX-Player.
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Crit / CritRing", AudioSoundId.TreeCrit, T, true, "at the hit; one per frame, 0.06 s, ≤ 6/s, ≤ 2 alive (B4)"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Ignite", AudioSoundId.TreeFireIgnite, I, true, "at the body; ≤ 6/s, ≤ 3 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · FireGround", AudioSoundId.TreeFireLoop, I, true, "loop for the zone's life (TreeStats.FireGroundSeconds, else 4 s); zones ≤ 16 (B0 AreaZones), the 3 nearest heard; a republished zone ≤ 1.5 m away refreshes it"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Freeze", AudioSoundId.TreeIceFreeze, I, true, "at the body; ≤ 5/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Shatter", AudioSoundId.TreeIceShatter, I, true, "at the body; ≤ 6/s, ≤ 3 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · VenomCloud", AudioSoundId.TreePoisonLoop, I, true, "loop for the cloud's life (TreeStats.VenomCloudSeconds, else 5 s); shares the 3 field voices with FireGround"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ShockChain", AudioSoundId.TreeThunder, T, true, "Thunder Lord's crack over the chain (the hops stay ChainArc); ≤ 3/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ElementNova", AudioSoundId.TreeElementNova, T, true, "Primal Cataclysm; 1 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · MiniNuke", AudioSoundId.TreeMiniNuke, T, true, "≤ 1 per 3 s (unscaled; one refused ≤ 0.6 s early is held, not lost); short duck −3 dB combat / −6 dB beds / −2 dB music, 0.35 s"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · BlackHoleOpen", AudioSoundId.TreeBlackHoleLoop, T, true, "loop from open to BlackHoleCollapse (HoleSeconds, else 2.5 s; ends by itself 0.25 s after its life without a collapse); one hole"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · BlackHoleCollapse", AudioSoundId.TreeBlackHoleCollapse, T, true, "the collapse; the hole loop is cut in 120 ms"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · DoomsdayBell", AudioSoundId.TreeDoomsdayBell, T, true, "1 alive (8 s bell, Streaming); duck −2.5 dB combat / −8 dB beds / −4.4 dB music, 0.6 s"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ShieldBreak", AudioSoundId.TreeShieldBreak, W, true, "SFX-Player, near (0.2)"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Dodge", AudioSoundId.TreeDodge, W, true, "SFX-Player; ≤ 4/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Leech", AudioSoundId.TreeLifesteal, W, true, "SFX-Player; ≤ 5/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · UndyingOath", AudioSoundId.TreeUndying, W, true, "SFX-Player, priority 95"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · EndlessWindowOpen", AudioSoundId.TreeEndlessOn, W, true, "SFX-Player"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ExplosiveRound / ChainBlast / ClusterSplit", AudioSoundId.Explosion, T, true, "covered: the blast's own Explosion / BombletPop cue speaks (IDS.md: existing sounds, no new row)", true),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · EndlessWindowClose / OverclockPeak / SynergyFirstTrigger / None", AudioSoundId.None, T, false, "silent by design: HUD / VFX beats", true),
+            B(AudioEventSource.Run, "TreeEvents.NodePurchased", AudioSoundId.TreeStamp, U, false, "the tree screen's stamp (fixed gain, no LufsOf trim)"),
+            B(AudioEventSource.Run, "TreeEvents.SynergyUnlocked", AudioSoundId.TreeSynergy, U, false, "0.12 s after the stamp of the node that unlocked it"),
+            B(AudioEventSource.Run, "TreeEvents.AuraChanged (level up)", AudioSoundId.TreeAuraUp, W, false, "SFX-Player, 2D; only when the level (0–3) rises; a run start resets it"),
+            B(AudioEventSource.Run, "S-09 tree screen open (no event yet)", AudioSoundId.TreeOpen, U, false, "waits for S-09's open event (RAPOR: UiEvent.TreeOpened proposal)", true),
+            B(AudioEventSource.Run, "S-09 recommendation strip reroll (no event yet)", AudioSoundId.TreeReroll, U, false, "waits for S-09's reroll event (RAPOR: UiEvent.TreeRerolled proposal)", true),
+            B(AudioEventSource.Combat, "S-04 shield up (no event yet)", AudioSoundId.TreeShieldUp, W, true, "waits for S-04 (RAPOR: TreeProcKind.ShieldUp proposal); placement + LOD ready", true),
+            B(AudioEventSource.Combat, "S-04 shield hit (no event yet)", AudioSoundId.TreeShieldHit, W, true, "waits for S-04 (RAPOR: TreeProcKind.ShieldHit proposal); ≤ 5/s, ≤ 2 alive ready", true),
+            B(AudioEventSource.Combat, "S-02 ricochet bounce (no event yet)", AudioSoundId.TreeRicochet, I, true, "waits for S-02 (RAPOR: TreeProcKind.Ricochet proposal); ≤ 6/s, ≤ 2 alive ready", true),
+            B(AudioEventSource.Combat, "S-02 Barrage rl_1 mini rocket (no event yet)", AudioSoundId.TreeMiniRocket, I, true, "waits for S-02's PowerOverride fire path (RAPOR proposal); ≤ 8/s, ≤ 3 alive ready", true),
 
             // ---- WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI) — one row per UiEvent member;
             // reserved = the same frame already plays the sound through another row (single owner, no double).

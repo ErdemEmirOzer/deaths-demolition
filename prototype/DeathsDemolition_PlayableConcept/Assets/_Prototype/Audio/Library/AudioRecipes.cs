@@ -381,6 +381,10 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.MusicPercussion:
                 case AudioSoundId.MusicTension:
                 case AudioSoundId.MusicAccent:
+                // WP-104 (R4) · AP-011 v024: TreeAudio's looping sources (never the catalog's Loop flag)
+                case AudioSoundId.TreeFireLoop:
+                case AudioSoundId.TreePoisonLoop:
+                case AudioSoundId.TreeBlackHoleLoop:
                     return true;
                 default:
                     return false;

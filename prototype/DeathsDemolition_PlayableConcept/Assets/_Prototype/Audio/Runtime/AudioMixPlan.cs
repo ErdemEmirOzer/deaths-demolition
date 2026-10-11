@@ -682,6 +682,52 @@ namespace DD.Prototype.Audio
             return Interface(AudioSoundId.UiTransition, 0.55f, 85f, 0f, 1, 0.3f);
         }
 
+        /// <summary>WP-107 (R4): the rack starts this long after the coins (unscaled, AudioSource.PlayDelayed) - the payment leads.</summary>
+        public const float WallBuyRackDelay = 0.1f;
+
+        /// <summary>
+        /// WP-107 (R4) · AP-011 v024 wb_* (IDS.md 1000–1004): the wall buy station. Coins, rack, heavy rack and refusal are world
+        /// sounds on the Impact bus (wood, brass, lacquer: the station's material band) at the station - positional, but the player
+        /// stands at arm's length, so 0.6, not a far-field 0.85. Priced as payoffs (gold = 70; the heavy rack 75); one copy each
+        /// (a press is one event); no duck - a purchase is the player's own act, not a landmark the crowd gives way to. The prompt
+        /// ping is the interface's: 2D, quiet, a 1 s gate against a player standing on the reach radius.
+        /// </summary>
+        public static AudioPlacement WallBuy(AudioSoundId sound)
+        {
+            switch (sound)
+            {
+                case AudioSoundId.WallBuyPrompt:
+                    return Interface(sound, 0.45f, 45f, 0f, 1, 1.0f);
+                case AudioSoundId.WallBuyDenied:
+                {
+                    AudioPlacement p = Impact(sound, 0.8f, 60f, 1);
+                    p.Spatial = 0.6f;
+                    p.MinRetrigger = 0.25f;   // a mashed key is one refusal
+                    p.PitchJitter = 0.03f;
+                    return p;
+                }
+                case AudioSoundId.WallBuyRack:
+                case AudioSoundId.WallBuyHeavy:
+                {
+                    bool heavy = sound == AudioSoundId.WallBuyHeavy;
+                    AudioPlacement p = Impact(sound, heavy ? 1.0f : 0.9f, heavy ? 75f : 70f, 1);
+                    p.Spatial = 0.6f;
+                    p.MinRetrigger = 0.3f;
+                    p.PitchJitter = 0.02f;
+                    p.Delay = WallBuyRackDelay;
+                    return p;
+                }
+                default:   // WallBuyCoins
+                {
+                    AudioPlacement p = Impact(sound, 0.9f, 70f, 1);
+                    p.Spatial = 0.6f;
+                    p.MinRetrigger = 0.1f;
+                    p.PitchJitter = 0.03f;
+                    return p;
+                }
+            }
+        }
+
         /// <summary>WP-058C: the body's reaction to a Special (WP-055 sw_* beats) - positional, under the field touch, heavy tiers deeper.</summary>
         public static AudioPlacement SpecialReaction(AudioSoundId sound, EnemyTierWeight weight)
         {
@@ -718,6 +764,161 @@ namespace DD.Prototype.Audio
             AudioPlacement p = Target(sound, 0.6f, 36f, 6, 0.03f);
             p.Spatial = 0.9f;
             p.PitchJitter = 0.07f;
+            return p;
+        }
+
+        // ---- WP-104 (R4) · the run tree (TreeAudio; AP-011 v024 tree_* / fx_*, IDS.md 1020–1063) ------------------------
+
+        /// <summary>Field loops heard at once (fire ground / venom cloud): the nearest to the listener; B0 tracks up to AreaZones (16).</summary>
+        public const int TreeFieldVoices = 3;
+
+        /// <summary>Zone lives when the stats carry none (TreeStats.FireGroundSeconds / VenomCloudSeconds / HoleSeconds = 0): game seconds,
+        /// the tree data's own values (S-04 12.10: el_fire2 3 s, el_venom2 4 s, kx_hole 2.5 s).</summary>
+        public const float TreeFireGroundSeconds = 3f, TreeVenomCloudSeconds = 4f, TreeBlackHoleSeconds = 2.5f;
+
+        /// <summary>A zone event this close to a live zone of its kind refreshes it rather than opening a second (metres; or half its radius).</summary>
+        public const float TreeZoneMergeMeters = 1.5f;
+
+        /// <summary>No zone or hole outlives this (game seconds, and unscaled unpaused age): a sanity cap on the stats and on a lost end event.</summary>
+        public const float TreeZoneMaxSeconds = 20f;
+
+        /// <summary>Loop ramps (fade in, fade out at a zone's end), the hole's cut at its collapse, the hole's grace past its life (seconds).</summary>
+        public const float TreeLoopFadeIn = 0.25f, TreeLoopFadeOut = 0.4f, TreeHoleCollapseFade = 0.12f, TreeHoleGrace = 0.25f;
+
+        /// <summary>A synergy unlocked by the purchase that stamps its node lands just after the stamp (unscaled, PlayDelayed).</summary>
+        public const float TreeSynergyDelay = 0.12f;
+
+        /// <summary>
+        /// WP-104 (R4): where a tree sound sits. Three groups (S-08, data note 12.10):
+        /// - The tree screen (Open / Stamp / Synergy / Reroll): UI. Fixed gains; the stamp's set is quiet on file 1 (−26.9 LUFS) and
+        ///   is not trimmed by LufsOf.
+        /// - The player's own moments (Shield up / hit / break, Lifesteal, Dodge, Undying, AuraUp, EndlessOn): SFX-Player = the
+        ///   Weapon bus. Near (0.2), dry, never distance-darkened.
+        /// - Everything else: SFX-World. Impact for the bright material hits (ignite, freeze, shatter, ricochet, mini rocket, the
+        ///   fire / venom loops); Target for the heavy ones (crit, thunder, nova, nuke, the hole, the bell). Positional.
+        /// The LOD gate (<see cref="TreeLod"/>) is the retrigger authority, so the placements keep the pool's own gate at 20 ms and
+        /// their MaxInstances equal to the LOD's live ceiling. Mini Nuke and Doomsday duck briefly; nothing else does.
+        /// </summary>
+        public static AudioPlacement Tree(AudioSoundId sound)
+        {
+            switch (sound)
+            {
+                // ---- the tree screen (UI)
+                case AudioSoundId.TreeOpen: return Interface(sound, 0.70f, 60f, 0f, 1, 0.02f);
+                case AudioSoundId.TreeStamp: return Interface(sound, 1.00f, 64f, 0f, 2, 0.02f);
+                case AudioSoundId.TreeSynergy:
+                {
+                    AudioPlacement p = Interface(sound, 0.85f, 72f, 0f, 1, 0.02f);
+                    p.Delay = TreeSynergyDelay;
+                    return p;
+                }
+                case AudioSoundId.TreeReroll: return Interface(sound, 0.60f, 55f, 0f, 1, 0.02f);
+
+                // ---- the player's own (SFX-Player)
+                case AudioSoundId.TreeLifesteal: return TreePlayer(sound, 0.50f, 35f, 2);
+                case AudioSoundId.TreeDodge: return TreePlayer(sound, 0.60f, 45f, 2);
+                case AudioSoundId.TreeShieldHit: return TreePlayer(sound, 0.55f, 40f, 2);
+                case AudioSoundId.TreeShieldUp: return TreePlayer(sound, 0.70f, 60f, 1);
+                case AudioSoundId.TreeShieldBreak: return TreePlayer(sound, 0.90f, 80f, 1);
+                case AudioSoundId.TreeUndying: return TreePlayer(sound, 1.00f, 95f, 1);
+                case AudioSoundId.TreeEndlessOn: return TreePlayer(sound, 0.80f, 70f, 1);
+                case AudioSoundId.TreeAuraUp: return TreePlayer(sound, 0.80f, 70f, 2);
+
+                // ---- the world (SFX-World)
+                case AudioSoundId.TreeCrit: return TreeWorld(sound, AudioBus.Target, 0.60f, 40f, 2, 0.8f, 0.04f);
+                case AudioSoundId.TreeFireIgnite: return TreeWorld(sound, AudioBus.Impact, 0.70f, 45f, 3, 0.85f, 0.05f);
+                case AudioSoundId.TreeIceFreeze: return TreeWorld(sound, AudioBus.Impact, 0.75f, 50f, 2, 0.85f, 0.04f);
+                case AudioSoundId.TreeIceShatter: return TreeWorld(sound, AudioBus.Impact, 0.80f, 55f, 3, 0.85f, 0.05f);
+                case AudioSoundId.TreeRicochet: return TreeWorld(sound, AudioBus.Impact, 0.55f, 40f, 2, 0.85f, 0.06f);
+                case AudioSoundId.TreeMiniRocket: return TreeWorld(sound, AudioBus.Impact, 0.65f, 45f, 3, 0.7f, 0.04f);
+                case AudioSoundId.TreeThunder: return TreeWorld(sound, AudioBus.Target, 0.85f, 60f, 2, 0.8f, 0.03f);
+                case AudioSoundId.TreeElementNova: return TreeWorld(sound, AudioBus.Target, 0.95f, 75f, 1, 0.7f, 0.02f);
+                case AudioSoundId.TreeBlackHoleCollapse: return TreeWorld(sound, AudioBus.Target, 0.95f, 75f, 1, 0.75f, 0.02f);
+                case AudioSoundId.TreeMiniNuke:
+                {
+                    // Bigger than an Explosion, ducked shorter (S-08 "kısa duck"): −3 dB combat, −6 dB beds, −2 dB music for 0.35 s.
+                    AudioPlacement p = TreeWorld(sound, AudioBus.Target, 1.00f, 85f, 2, 0.6f, 0.02f);
+                    p.DuckAmbience = 0.5f;
+                    p.DuckCombat = 0.7f;
+                    p.DuckMusic = 0.8f;
+                    p.DuckSeconds = 0.35f;
+                    return p;
+                }
+                case AudioSoundId.TreeDoomsdayBell:
+                {
+                    // The bell's strike makes room, then rings over the fight (8 s): −2.5 dB combat, −8 dB beds, −4.4 dB music for 0.6 s.
+                    AudioPlacement p = TreeWorld(sound, AudioBus.Target, 1.00f, 90f, 1, 0.5f, 0.01f);
+                    p.DuckAmbience = 0.4f;
+                    p.DuckCombat = 0.75f;
+                    p.DuckMusic = 0.6f;
+                    p.DuckSeconds = 0.6f;
+                    return p;
+                }
+
+                // ---- loops (TreeAudio's looping sources read Bus / Gain / Spatial)
+                case AudioSoundId.TreeFireLoop: return TreeWorld(sound, AudioBus.Impact, 0.55f, 30f, 1, 0.9f, 0f);
+                case AudioSoundId.TreePoisonLoop: return TreeWorld(sound, AudioBus.Impact, 0.50f, 30f, 1, 0.9f, 0f);
+                case AudioSoundId.TreeBlackHoleLoop: return TreeWorld(sound, AudioBus.Target, 0.80f, 60f, 1, 0.8f, 0f);
+                default: return TreeWorld(sound, AudioBus.Impact, 0.60f, 40f, 2, 0.85f, 0.04f);
+            }
+        }
+
+        /// <summary>
+        /// WP-104 (R4) · B4 voice LOD per tree sound (TreeAudio enforces it before the pool): live ceiling, unscaled retrigger interval,
+        /// starts per any one-second window, and the hold of a landmark the clock refused a little early. The frequent ones are capped
+        /// hard (crit 6/s, leech 5/s, dodge 4/s, shield hit 5/s, ricochet 6/s); Mini Nuke is 1 per 3 s (held ≤ 0.6 s rather than lost:
+        /// the game's 3 s cooldown runs on game time; 2 alive, so its ~6 s clip never stretches the 3 s); Doomsday is 1 alive (its 8 s
+        /// bell). A ceiling of 1 with a long clip is a de facto interval (Nova, Undying, Aura): one big moment at a time.
+        /// </summary>
+        public static AudioVoiceLod TreeLod(AudioSoundId sound)
+        {
+            switch (sound)
+            {
+                case AudioSoundId.TreeCrit: return new AudioVoiceLod(2, 0.06f, 6, 0f);
+                case AudioSoundId.TreeLifesteal: return new AudioVoiceLod(2, 0.08f, 5, 0f);
+                case AudioSoundId.TreeDodge: return new AudioVoiceLod(2, 0.10f, 4, 0f);
+                case AudioSoundId.TreeShieldHit: return new AudioVoiceLod(2, 0.08f, 5, 0f);
+                case AudioSoundId.TreeRicochet: return new AudioVoiceLod(2, 0.06f, 6, 0f);
+                case AudioSoundId.TreeMiniRocket: return new AudioVoiceLod(3, 0.05f, 8, 0f);
+                case AudioSoundId.TreeFireIgnite: return new AudioVoiceLod(3, 0.05f, 6, 0f);
+                case AudioSoundId.TreeIceFreeze: return new AudioVoiceLod(2, 0.08f, 5, 0f);
+                case AudioSoundId.TreeIceShatter: return new AudioVoiceLod(3, 0.05f, 6, 0f);
+                case AudioSoundId.TreeThunder: return new AudioVoiceLod(2, 0.15f, 3, 0f);   // B0 ShockEventsPerSecond 6
+                case AudioSoundId.TreeElementNova: return new AudioVoiceLod(1, 0.5f, 2, 0f);
+                case AudioSoundId.TreeMiniNuke: return new AudioVoiceLod(2, 3f, 1, 0.6f);     // B0 NukeCooldownSeconds 3; 2 alive: a 6 s clip must not stretch the 3 s
+                case AudioSoundId.TreeBlackHoleCollapse: return new AudioVoiceLod(1, 0.3f, 2, 0f);
+                case AudioSoundId.TreeDoomsdayBell: return new AudioVoiceLod(1, 1f, 1, 0f);
+                case AudioSoundId.TreeShieldUp: return new AudioVoiceLod(1, 0.5f, 2, 0f);
+                case AudioSoundId.TreeShieldBreak: return new AudioVoiceLod(1, 0.3f, 2, 0f);
+                case AudioSoundId.TreeUndying: return new AudioVoiceLod(1, 1f, 1, 0f);
+                case AudioSoundId.TreeEndlessOn: return new AudioVoiceLod(1, 0.5f, 2, 0f);
+                case AudioSoundId.TreeAuraUp: return new AudioVoiceLod(2, 0.3f, 2, 0f);   // a 0 → 2 jump inside the first ring (2.9 s) still speaks
+                case AudioSoundId.TreeStamp: return new AudioVoiceLod(2, 0.08f, 8, 0f);
+                case AudioSoundId.TreeSynergy: return new AudioVoiceLod(1, 0.3f, 3, 0f);
+                case AudioSoundId.TreeOpen:
+                case AudioSoundId.TreeReroll: return new AudioVoiceLod(1, 0.2f, 4, 0f);
+                // The loops are not gated here: one looping source per heard zone (TreeFieldVoices) and one hole.
+                case AudioSoundId.TreeFireLoop:
+                case AudioSoundId.TreePoisonLoop:
+                case AudioSoundId.TreeBlackHoleLoop: return new AudioVoiceLod(1, 0f, 0, 0f);
+                default: return new AudioVoiceLod(2, 0.05f, 8, 0f);
+            }
+        }
+
+        private static AudioPlacement TreePlayer(AudioSoundId sound, float gain, float priority, int maxInstances)
+        {
+            AudioPlacement p = Weapon(sound, gain, priority, maxInstances, 0.02f);
+            p.Spatial = 0.2f;
+            p.PitchJitter = 0.03f;
+            return p;
+        }
+
+        private static AudioPlacement TreeWorld(AudioSoundId sound, AudioBus bus, float gain, float priority, int maxInstances, float spatial, float pitchJitter)
+        {
+            AudioPlacement p = bus == AudioBus.Target ? Target(sound, gain, priority, maxInstances, 0.02f) : Impact(sound, gain, priority, maxInstances);
+            p.Spatial = spatial;
+            p.MinRetrigger = 0.02f;
+            p.PitchJitter = pitchJitter;
             return p;
         }
 

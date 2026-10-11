@@ -113,6 +113,7 @@ namespace DD.Prototype.Audio
         private ImpactAudio _impacts;
         private RocketBlastAudio _rocketBlasts;
         private ProjectileFlightAudio _flight;
+        private TreeAudio _tree;   // WP-104 (R4)
         private readonly CombatAudioCue[] _heldImpacts = new CombatAudioCue[16];
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
@@ -190,6 +191,7 @@ namespace DD.Prototype.Audio
         private void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene from, UnityEngine.SceneManagement.Scene to)
         {
             _router?.Rearm();
+            _tree?.Rearm();   // WP-104 (R4): TreeEvents.ResetForTests (S-04 / S-07 SetUps) drops the bus under a live director
         }
 
         /// <summary>WP-072 B2 test / F1 surface: the player's casing landings.</summary>
@@ -206,6 +208,12 @@ namespace DD.Prototype.Audio
 
         /// <summary>WP-072 B5 test / F1 surface: projectile flight loops.</summary>
         public ProjectileFlightAudio Flight => _flight;
+
+        /// <summary>WP-104 (R4) test / F1 surface: the run tree's voice (procs, field and black hole loops, the tree screen).</summary>
+        public TreeAudio Tree
+        {
+            get { return _tree; }
+        }
 
         /// <summary>WP-072 B5 (STANDARDS §7): near ≤ 12 m, mid 12–35 m, far &gt; 35 m from the listener.</summary>
         public static AudioSoundId ExplosionLayer(float meters)
@@ -292,6 +300,7 @@ namespace DD.Prototype.Audio
             _ambience.SetListener(listenerPosition);   // WP-072 · DEC-102
             _router.SetListener(listenerPosition);
             _weaponFire.SetListener(listenerPosition);   // WP-085 B3: distance band
+            _tree = new TreeAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved, listenerPosition);   // WP-104 (R4)
 
             _world.Capacity = _configuredBudget;
             _bridge.Transition(AudioSnapshot.Menu, 0f);
@@ -352,6 +361,7 @@ namespace DD.Prototype.Audio
             _impacts?.Enable();   // WP-072 B3
             _rocketBlasts?.Enable();
             _flight?.Enable();    // WP-072 B5
+            _tree?.Enable();      // WP-104 (R4)
             AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
 
@@ -384,6 +394,7 @@ namespace DD.Prototype.Audio
             _impacts?.Disable();   // WP-072 B3
             _rocketBlasts?.Disable();
             _flight?.Disable();    // WP-072 B5
+            _tree?.Disable();      // WP-104 (R4)
             AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
 
@@ -481,6 +492,7 @@ namespace DD.Prototype.Audio
             if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
             if (!_paused) _rocketBlasts.Tick();    // WP-072 · rl_1: staggered bomblet pops
             if (!_paused) _special.Tick(dt);   // WP-072 B4: chain hops, shock / puddle loops
+            if (!_paused) _tree.Tick(dt);      // WP-104 (R4): field / black hole loops, held landmarks
             TickUiVoices(dt);
 
             if (_deathInkAt > 0f && Time.unscaledTime >= _deathInkAt)
@@ -843,6 +855,7 @@ namespace DD.Prototype.Audio
             // v003: entering the run is a screen transition (matrix §8).
             PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
             _music.OnRunStarted();   // WP-057: leave the results state
+            _tree?.ResetRun();       // WP-104 (R4): the aura starts again from 0
         }
 
         private void OnRoundStarted(int round)
@@ -1384,6 +1397,7 @@ namespace DD.Prototype.Audio
             _casings?.Clear();        // WP-072 B2
             _magDrops?.Clear();       // WP-097 K2
             _flight?.StopAll();       // WP-072 B5
+            _tree?.StopAll();         // WP-104 (R4)
             if (_loops.Count == 0)
             {
                 return;
@@ -1415,6 +1429,7 @@ namespace DD.Prototype.Audio
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Zombie vocals", () => _router.Describe(), -97));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Mixer", () => _bridge.Describe() + " · " + _listener.Describe(), -96));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Library", () => _library.DescribeMemory(), -96));
+            _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Run tree", () => _tree.Describe(), -96));   // WP-104 (R4)
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Buses", DescribeBuses, -95));
 
             _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Master volume",

@@ -173,6 +173,9 @@ namespace DD.Prototype.Audio
             CharacterAnimationEvents.Any += OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised += OnUiEvent;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-058 (WP-056 ADR-056-1)
+            DD.Prototype.Weapons.WallBuyEvents.Resolved += OnWallBuyResolved;        // WP-107 (R4): purchase / refill / denied at the station
+            DD.Prototype.Weapons.WallBuyEvents.PromptChanged += OnWallBuyPrompt;     // WP-107 (R4): the prompt's appearing edge
+            _wallBuyPromptVisible = DD.Prototype.Weapons.WallBuyEvents.CurrentPrompt.Visible;   // a prompt already up is not an edge
             Subscribed = true;
         }
 
@@ -196,6 +199,12 @@ namespace DD.Prototype.Audio
             EnemyCombatEvents.Raised += OnCombatBeat;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
+            // WP-107: WallBuyEvents.ResetStatics clears the bus at SubsystemRegistration only and ClearState keeps the listeners;
+            // remove-then-add keeps exactly one handler whichever way the bus was left.
+            DD.Prototype.Weapons.WallBuyEvents.Resolved -= OnWallBuyResolved;
+            DD.Prototype.Weapons.WallBuyEvents.Resolved += OnWallBuyResolved;
+            DD.Prototype.Weapons.WallBuyEvents.PromptChanged -= OnWallBuyPrompt;
+            DD.Prototype.Weapons.WallBuyEvents.PromptChanged += OnWallBuyPrompt;
             RearmCount++;
         }
 
@@ -216,6 +225,8 @@ namespace DD.Prototype.Audio
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised -= OnUiEvent;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
+            DD.Prototype.Weapons.WallBuyEvents.Resolved -= OnWallBuyResolved;
+            DD.Prototype.Weapons.WallBuyEvents.PromptChanged -= OnWallBuyPrompt;
             Subscribed = false;
         }
 
@@ -393,6 +404,89 @@ namespace DD.Prototype.Audio
         {
             // WP-072 B4: SW_ARC / SW_GEL (AP-011 v019) — SpecialAudio owns every Raiju / Namekuji usage voice.
             if (_special != null && _special.OnUsage(in e)) SpecialUsageCount++;
+        }
+
+        // ------------------------------------------------------------------ WP-107 (R4) · wall buy (S-02 WallBuyEvents, AP-011 v024 wb_*)
+
+        /// <summary>The refill's coins: the smaller transaction, lighter and shorter (−2.5 dB, +2 st ≈ 11 % shorter).</summary>
+        public const float WallBuyRefillGain = 0.75f, WallBuyRefillPitch = 1.1225f;
+
+        private bool _wallBuyPromptVisible;
+
+        /// <summary>Wall buy outcomes this router handled, counted before any gate: one per press proves one subscription (tests).</summary>
+        public int WallBuyOutcomes { get; private set; }
+
+        /// <summary>Wall buy voices played (coins, rack / heavy rack, denied, UiDenied, prompt ping). Test / F1 readout.</summary>
+        public int WallBuyVoices { get; private set; }
+
+        /// <summary>Prompt pings played - the prompt's false → true edge only.</summary>
+        public int WallBuyPromptPings { get; private set; }
+
+        /// <summary>The last wall buy sound played and where it was placed (the station; zero for the 2D prompt / UiDenied). Test readouts.</summary>
+        public AudioSoundId LastWallBuySound { get; private set; }
+        public Vector3 LastWallBuyAt { get; private set; }
+
+        /// <summary>The rack a bought weapon comes off: the rocket launcher's heavy lacquered rack, every other weapon's wooden one.</summary>
+        public static AudioSoundId WallBuyRackFor(ClassicWeaponId weapon)
+        {
+            return weapon == ClassicWeaponId.Rl1 ? AudioSoundId.WallBuyHeavy : AudioSoundId.WallBuyRack;
+        }
+
+        /// <summary>
+        /// One press at a station (<c>WallBuyEvents.Resolved</c>), at <c>StationWorld</c>. Bought: the coins, then the rack (the
+        /// rocket launcher's heavy rack) <see cref="AudioMixPlan.WallBuyRackDelay"/> behind so the payment leads. Refilled: the coins
+        /// alone, lighter. Denied (any block: gold, full ammo, a Special in hand, the refund race): the station's refusal plus the
+        /// interface's UiDenied. The weapon's own pickup / switch-in foley is the rig's (anim.pickup_grab / pickup_done /
+        /// switch_ready from <c>WeaponController.BuyClassic</c>) and is never played here - one equip sound, not two.
+        /// </summary>
+        private void OnWallBuyResolved(DD.Prototype.Weapons.WallBuyOutcome o)
+        {
+            WallBuyOutcomes++;
+            switch (o.Result)
+            {
+                case DD.Prototype.Weapons.WallBuyResult.Bought:
+                    PlayWallBuy(AudioMixPlan.WallBuy(AudioSoundId.WallBuyCoins), o.StationWorld, 1f, 70);
+                    PlayWallBuy(AudioMixPlan.WallBuy(WallBuyRackFor(o.Weapon)), o.StationWorld, 1f, 70);
+                    break;
+                case DD.Prototype.Weapons.WallBuyResult.Refilled:
+                {
+                    AudioPlacement p = AudioMixPlan.WallBuy(AudioSoundId.WallBuyCoins);
+                    p.Pitch = WallBuyRefillPitch;
+                    PlayWallBuy(p, o.StationWorld, WallBuyRefillGain, 65);
+                    break;
+                }
+                case DD.Prototype.Weapons.WallBuyResult.Denied:
+                    PlayWallBuy(AudioMixPlan.WallBuy(AudioSoundId.WallBuyDenied), o.StationWorld, 1f, 60);
+                    PlayWallBuy(AudioMixPlan.Ui(AudioSoundId.UiDenied), Vector3.zero, 1f, 60);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// The prompt's appearing edge (<c>WallBuyEvents.PromptChanged</c> false → true): a quiet 2D ping. An offer changing
+        /// under a visible prompt (cost, block) is not an edge; the placement's 1 s gate keeps a player on the reach radius quiet.
+        /// </summary>
+        private void OnWallBuyPrompt(DD.Prototype.Weapons.WallBuyPrompt prompt)
+        {
+            bool edge = prompt.Visible && !_wallBuyPromptVisible;
+            _wallBuyPromptVisible = prompt.Visible;
+            if (edge && PlayWallBuy(AudioMixPlan.WallBuy(AudioSoundId.WallBuyPrompt), Vector3.zero, 1f, 45))
+            {
+                WallBuyPromptPings++;
+            }
+        }
+
+        private bool PlayWallBuy(in AudioPlacement placement, Vector3 at, float gain, int priority)
+        {
+            if (!_play(placement, at, gain, priority))
+            {
+                return false;
+            }
+
+            WallBuyVoices++;
+            LastWallBuySound = placement.Sound;
+            LastWallBuyAt = at;
+            return true;
         }
 
         // ------------------------------------------------------------------ WP-021C · WP-022B UI events
