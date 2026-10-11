@@ -306,10 +306,16 @@ class TdCaptureTests(unittest.TestCase):
         self.assertIsNone(json.loads((self.out("t2") / "capture.json").read_text())["scenario"])
 
     def test_Senaryo_KotuAdYaDaVideosuz_Cikis64HicbirSeyKosmaz(self):
-        for extra in (["--scenario", "Crowd Walk"], ["--scenario", "a;b"], ["--scenario", "crowdwalk", "--stills-only"],
-                      ["--scenario", "crowdwalk", "--video-only", "--video-from", "boot", "--video-seconds", "30"]):
+        # gt MUST-1 (11.10): a name may not start with "-" — `--scenario --video-only` (value forgotten) used to swallow the
+        # next option, run a mangled video and end 0 without capture.json; gt SHOULD-2: a missing / empty value is no free fight
+        for i, extra in enumerate((["--scenario", "Crowd Walk"], ["--scenario", "a;b"], ["--scenario", "crowdwalk", "--stills-only"],
+                                   ["--scenario", "crowdwalk", "--video-only", "--video-from", "boot", "--video-seconds", "30"],
+                                   ["--scenario", "--video-only"], ["--scenario", "-x"], ["--scenario", "--with-enemies"],
+                                   ["--scenario", ""], ["--scenario"])):
             with self.subTest(extra=extra):
-                self.assertEqual(64, self.run_cap(*extra).returncode)
+                r = self.run_cap(*extra, label="bad%d" % i)
+                self.assertEqual(64, r.returncode, r.stdout + r.stderr)
+                self.assertIn("--scenario <name>", r.stderr)
         self.assertEqual([], self.calls()); self.assertEqual([], self.guard_calls())
 
     def test_VideoBoot_ModBoot_AsamalarCaptureJsonda(self):

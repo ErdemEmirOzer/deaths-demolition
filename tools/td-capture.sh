@@ -17,7 +17,7 @@
 #   --video-from  fighting (default): the MP4 starts in the run · boot (--video-seconds ≥ 30): from Player start — loading
 #               screen, menu logo (held 4 s), first run seconds; capture.json video.phases holds loadingStart/loadingEnd/menu/fighting (s from t0)
 #   --scenario  R4 (S-06/S-01 11.10): a QaRunBot scenario the video plays instead of the free fight — passed on as
-#               -ddQaBotScenario <name> ([a-z0-9-]+, e.g. crowdwalk); fighting video only; recorded in capture.json
+#               -ddQaBotScenario <name> ([a-z0-9][a-z0-9-]*, e.g. crowdwalk); fighting video only; recorded in capture.json
 # Output: stills/<nn>-<key>.png + stills/contact.png + stills/poses.json · video/td-<label>.mp4 (+ frames/, audio.wav,
 #         sync.json, summary.json) · logs/ · ug/ (the guard window) · capture.json + SHA256SUMS.
 # Order (D8): guard snapshot --scope player FIRST (it holds the player slot), then each Player through tools/player-run.sh
@@ -29,7 +29,7 @@ setopt nullglob
 SELF="${0:A}"; HERE="${SELF:h}"
 source "$HERE/dd-env.sh"
 
-APP=""; WP=""; LABEL=""; POSES="$HERE/td-capture-poses.txt"; SEED=26; SECS=45; SIZE="1920x1080"; TIER="sinematik"; CROWD_WAIT=45; HUD=on; VFROM=fighting; SCEN=""
+APP=""; WP=""; LABEL=""; POSES="$HERE/td-capture-poses.txt"; SEED=26; SECS=45; SIZE="1920x1080"; TIER="sinematik"; CROWD_WAIT=45; HUD=on; VFROM=fighting; SCEN=""; SCEN_SET=0
 DO_STILLS=1; DO_VIDEO=1; HOLD=1
 usage() { sed -n '5,21p' "$SELF" >&2; exit 64; }
 while [ $# -gt 0 ]; do
@@ -37,7 +37,7 @@ while [ $# -gt 0 ]; do
     --app) APP="${2:-}"; shift ;; --wp) WP="${2:-}"; shift ;; --label) LABEL="${2:-}"; shift ;;
     --poses) POSES="${2:-}"; shift ;; --seed) SEED="${2:-}"; shift ;; --video-seconds) SECS="${2:-}"; shift ;;
     --size) SIZE="${2:-}"; shift ;; --tier) TIER="${2:-}"; shift ;; --crowd-wait) CROWD_WAIT="${2:-}"; shift ;;
-    --hud) HUD="${2:-}"; shift ;; --video-from) VFROM="${2:-}"; shift ;; --scenario) SCEN="${2:-}"; shift ;;
+    --hud) HUD="${2:-}"; shift ;; --video-from) VFROM="${2:-}"; shift ;; --scenario) SCEN="${2:-}"; SCEN_SET=1; shift ;;
     --stills-only) DO_VIDEO=0 ;; --video-only) DO_STILLS=0 ;; --with-enemies) HOLD=0 ;;
     -h|--help) usage ;;
     *) echo "td-capture: unknown option $1" >&2; usage ;;
@@ -50,8 +50,10 @@ done
 [[ "$SEED" == <-> ]] && [[ "$SECS" == <-> ]] && (( SECS >= 10 && SECS <= 120 )) || { echo "td-capture: --seed integer, --video-seconds 10..120" >&2; exit 64; }
 [[ "$CROWD_WAIT" == <-> ]] && (( CROWD_WAIT >= 1 && CROWD_WAIT <= 120 )) || { echo "td-capture: --crowd-wait 1..120" >&2; exit 64; }
 [[ "$HUD" == (on|off) ]] && [[ "$VFROM" == (fighting|boot) ]] || { echo "td-capture: --hud on|off, --video-from fighting|boot" >&2; exit 64; }
-[ -z "$SCEN" ] || { [[ "$SCEN" =~ '^[a-z0-9-]+$' ]] && [ "$VFROM" = fighting ] && [ "$DO_VIDEO" -eq 1 ]; } \
-  || { echo "td-capture: --scenario <a-z0-9->, with a fighting video (not --stills-only / --video-from boot)" >&2; exit 64; }
+# gt MUST-1 (11.10): the name starts with a letter or digit — `--scenario --video-only` must not swallow the next option; an
+# empty or missing value is a usage error, never a silent free fight (gt SHOULD-2)
+[ "$SCEN_SET" -eq 0 ] || { [[ "$SCEN" =~ '^[a-z0-9][a-z0-9-]*$' ]] && [ "$VFROM" = fighting ] && [ "$DO_VIDEO" -eq 1 ]; } \
+  || { echo "td-capture: --scenario <name> ([a-z0-9][a-z0-9-]*), with a fighting video (not --stills-only / --video-from boot)" >&2; exit 64; }
 [ "$VFROM" = boot ] && [ "$DO_VIDEO" -eq 1 ] && (( SECS < 30 )) && { echo "td-capture: --video-from boot needs --video-seconds ≥ 30 (the run starts ~12–18 s in)" >&2; exit 64; }
 [[ "$SIZE" =~ '^[0-9]+x[0-9]+$' ]] || { echo "td-capture: --size WxH" >&2; exit 64; }
 W=${SIZE%x*}; H=${SIZE#*x}
@@ -62,7 +64,7 @@ OUT="$DD_KPROJ/$WP/capture/$LABEL"
 [ -e "$OUT" ] && { echo "td-capture: $OUT exists — an earlier capture is never overwritten; pick a new --label" >&2; exit 64; }
 mkdir -p "$OUT/logs" "$OUT/sandbox/ui" "$OUT/sandbox/telemetry"
 DD_TIMELINE="$OUT/logs/timeline.txt"
-dd_log "td-capture: app=$APP wp=$WP label=$LABEL seed=$SEED size=$SIZE tier=$TIER stills=$DO_STILLS video=$DO_VIDEO hold=$HOLD hud=$HUD videoFrom=$VFROM"
+dd_log "td-capture: app=$APP wp=$WP label=$LABEL seed=$SEED size=$SIZE tier=$TIER stills=$DO_STILLS video=$DO_VIDEO hold=$HOLD hud=$HUD videoFrom=$VFROM scenario=${SCEN:-none}"
 
 # the Swift helpers (built once per source hash; nothing installed)
 swift_bin() { local src="$HERE/td-capture/$1.swift" h bin

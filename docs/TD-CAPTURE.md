@@ -48,6 +48,11 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
   - Both mean: retake on a quieter machine (`--video-only`, new label), and don't judge sound against picture.
   - `summary.json`'s `audio.driftSeconds` is read after the frame drain and is misleading; use `videoQuality.avDrift`.
 - **HUD-less frames:** `--hud off` hides the in-run HUD in stills and video (for TopDown background plates). The dev watermark stays.
+- **Scenario video (R4, S-06 / S-01 11.10):** `--scenario <name>` makes the video's QA bot play a named QaRunBot scenario
+  instead of the free fight (`-ddQaBotScenario <name>`, e.g. `crowdwalk`: the hero walks through a 40-zombie crowd under a
+  tree crown, R4 kit D2). The name is `[a-z0-9][a-z0-9-]*`; it needs a fighting video (not `--stills-only` or
+  `--video-from boot`), otherwise exit 64. `capture.json` → `scenario` records the name asked for (null = free fight); the
+  bot's own output confirms that the build knows the scenario.
 - **Loading screen / menu clip:** `--video-only --video-from boot --video-seconds 30` records from Player start: the loading screen (intro → loop → exit), the main menu logo intro, then the first seconds of the run.
   - `capture.json` → `video.phases` holds `loadingStart`, `loadingEnd`, `menu`, `fighting` (real seconds from the MP4's t0; null when not seen).
   - S-09's still mode `-ddUiCapture loading` is separate.
