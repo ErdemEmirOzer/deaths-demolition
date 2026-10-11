@@ -58,8 +58,12 @@ namespace DD.Prototype.UI
         /// The halo underlay's dilate and softness in TMP SDF units (ScaleRatioC scales them to what the atlas holds). Softness
         /// 0: any softness is taken out of the solid reach (ScaleRatioC divides by dilate + softness); the SDF's own edge is the
         /// halo's anti-aliasing.
+        /// R4 WP-105 (C-00 12.10): 0.9, not 1 - at 1 the persistent HUD measured 1.50019 % of a 1080p screen at XXXVIII against
+        /// the 1.5 % cap (HudCoverageTests; the base was 1.43 %). ScaleRatioC divides by max(1, dilate + softness), so below 1
+        /// the reach shrinks with the dilate: ≈ 1.0 px round a 20 px word, ≈ 1.5 px round the 22 px gold. The contrast is the
+        /// halo's alpha over the world (HudOkunurlukTests.Hale_*), which this does not touch.
         /// </summary>
-        public const float HaloDilate = 1f;
+        public const float HaloDilate = 0.9f;
         public const float HaloSoftness = 0f;
 
         /// <summary>The material key's halo bit (buckets use bits 0-1).</summary>
