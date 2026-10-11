@@ -28,7 +28,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// video frame AND is measured; the weapon's fullest frame (most streak pixels) is saved as its still. Per frame, inside the
     /// 1.2 m-wide band from the muzzle to the zombie (the tracer layers only - see the dark frame):
     /// streak pixels (any channel ≥ 0.10 off the same pixel with the tracer layers held back — the tracer's own pixels),
-    /// their orange share (hue 8–34°, S ≥ 0.45), and the core's cross width (px, median over the band's sample columns).
+    /// their orange share (hue 8–34°, S ≥ 0.45) and saturated-warm share (hue 8–50°, S ≥ 0.45: the R3 streak sat at 36–42°), and
+    /// the core's cross width (px, median over the band's sample columns).
     /// Output DD_TD_MERMI101_DIR (else the temp cache): one still per weapon, video frames + frames.tsv (tdmux), mermi101.json (per
     /// weapon: frames with a streak, mean / max streak px, mean orange share, median core width px).
     /// Asserts that the frames and measures were recorded; the verdict is the AD's and the before/after comparison.
@@ -103,7 +104,7 @@ namespace DD.Prototype.Tests.PlayMode
                     ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, p + Vector3.right * 9f, Quaternion.LookRotation(Vector3.left));
                     Assert.IsNotNull(z, id + ": zombi doğmadı");
                     z.enabled = false;   // it stands as the target (no approach, no attack)
-                    int frames = 0, bestStreak = -1; long streakSum = 0; float orangeSum = 0f, metre = 0f;
+                    int frames = 0, bestStreak = -1; long streakSum = 0; float orangeSum = 0f, warmSum = 0f, metre = 0f;
                     var widths = new System.Collections.Generic.List<float>();
                     Color32[] best = null;
                     for (int f = 0; f <= 48; f++)
@@ -123,9 +124,9 @@ namespace DD.Prototype.Tests.PlayMode
                         videoFrame++;
                         Vector2 a = Px(cam, rig.transform.position + Vector3.up * 1.4f), b = Px(cam, chest);
                         metre = (Px(cam, chest + cam.transform.right) - b).magnitude;
-                        Measure(lit, dark, a, b, metre * .6f, out int streak, out float orange, out float width);
+                        Measure(lit, dark, a, b, metre * .6f, out int streak, out float orange, out float width, out float warm);
                         if (streak <= 0) continue;
-                        frames++; streakSum += streak; orangeSum += orange; widths.Add(width);
+                        frames++; streakSum += streak; orangeSum += orange; warmSum += warm; widths.Add(width);
                         if (streak > bestStreak) { bestStreak = streak; best = lit; }
                     }
                     if (best != null)
@@ -139,6 +140,7 @@ namespace DD.Prototype.Tests.PlayMode
                        .Append(", \"meanStreakPx\": ").Append(frames > 0 ? (streakSum / frames).ToString(CultureInfo.InvariantCulture) : "0")
                        .Append(", \"maxStreakPx\": ").Append(bestStreak < 0 ? 0 : bestStreak)
                        .Append(", \"meanOrangeShare\": ").Append((frames > 0 ? orangeSum / frames : 0f).ToString("0.###", CultureInfo.InvariantCulture))
+                       .Append(", \"meanSaturatedWarmShare\": ").Append((frames > 0 ? warmSum / frames : 0f).ToString("0.###", CultureInfo.InvariantCulture))
                        .Append(", \"medianCoreWidthPx\": ").Append((widths.Count > 0 ? widths[widths.Count / 2] : 0f).ToString("0.#", CultureInfo.InvariantCulture))
                        .Append(", \"pxPerMetre\": ").Append(metre.ToString("0.#", CultureInfo.InvariantCulture)).Append("},\n");
                     if (z != null) Object.Destroy(z.gameObject);
@@ -183,12 +185,12 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         // the band from the muzzle (a) to 1 m short of the target (b), half-width hw px
-        private static void Measure(Color32[] lit, Color32[] dark, Vector2 a, Vector2 b, float hw, out int streak, out float orange, out float width)
+        private static void Measure(Color32[] lit, Color32[] dark, Vector2 a, Vector2 b, float hw, out int streak, out float orange, out float width, out float warm)
         {
-            Vector2 ab = b - a; float len = ab.magnitude; streak = 0; orange = 0f; width = 0f;
+            Vector2 ab = b - a; float len = ab.magnitude; streak = 0; orange = 0f; width = 0f; warm = 0f;
             if (len < 10f) return;
             Vector2 dir = ab / len, side = new Vector2(-dir.y, dir.x);
-            int orangeN = 0;
+            int orangeN = 0, warmN = 0;
             var widths = new System.Collections.Generic.List<float>();
             for (float t = 0f; t < len; t += 1f)   // the dark frame differs only in the tracer layers: the hit card cancels out
             {
@@ -206,10 +208,13 @@ namespace DD.Prototype.Tests.PlayMode
                     streak++; across++;
                     Color.RGBToHSV(c, out float h, out float sat, out _);
                     if (sat >= .45f && h * 360f >= 8f && h * 360f <= 34f) orangeN++;
+                    // v5: the R3 streak measured hue 36–42° at S ≥ 0.45 (saturated amber) - the "too orange" the user saw; 8–34° missed it
+                    if (sat >= .45f && h * 360f >= 8f && h * 360f <= 50f) warmN++;
                 }
                 if (across > 0 && ((int)t % 4) == 0) widths.Add(across);
             }
             orange = streak > 0 ? orangeN / (float)streak : 0f;
+            warm = streak > 0 ? warmN / (float)streak : 0f;
             if (widths.Count > 0) { widths.Sort(); width = widths[widths.Count / 2]; }
         }
     }
