@@ -37,7 +37,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
         /// </summary>
         public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .017f, TdTailMin = 1.5f, TdTailMax = 4.5f,
-            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2f, TdGlowAlpha = 1f,
+            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2.6f, TdGlowAlpha = 1f,
             TdGlowFalloff = .5f, TdGlowRampShare = .15f;
         /// <summary>AD 11.10 (M1 + S2) and C-00 11.10: one realistic top-down palette for every weapon - a thin warm-yellow core
         /// (added; thin so it does not wash the light stone white), a deep orange glow drawn premultiplied at α 1 (it tints the
@@ -45,9 +45,10 @@ namespace DD.Prototype.Feedback.Vfx
         /// added orange had read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright" (v × 0.017 s, 1.5–4.5 m).
         /// The glow holds its strength along the tail (exp k <see cref="TdGlowFalloff"/>, the last <see cref="TdGlowRampShare"/>
         /// a ramp to 0): with the ribbons' k 3.2 / 40 % ramp most of the glow's length sat at α ≤ 0.3 and 4c108065 still measured
-        /// S 0.17–0.32 - an orange tracer streak, not a fading wisp.</summary>
+        /// S 0.17–0.32 - an orange tracer streak, not a fading wisp. The glow is 2.6 × the weapon's glow width (its soft edge
+        /// off the streak); a redder (1, .3, 0) read dusty pink at the low-α edge over the blue reflection (9e5c36f0, up to 21 %).</summary>
         public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.8f, TdCoreTail = new Color(1f, .62f, .2f) * 1.2f,
-            TdGlowColor = new Color(1f, .3f, 0f);
+            TdGlowColor = new Color(1f, .42f, .02f);
         private struct TdRound
         {
             public bool Alive, Sniper, Stopped, Pellet;
