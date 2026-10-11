@@ -6,6 +6,7 @@ using DD.Prototype.Economy;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rendering;
 using DD.Prototype.Rounds;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -24,6 +25,9 @@ namespace DD.Prototype.Weapons
     public sealed class WallBuyDirector : MonoBehaviour
     {
         public static WallBuyDirector Instance { get; private set; }
+
+        /// <summary>R4 rule (C-00 12.10): new per-frame code carries a marker - the reach check, the prompt and a press.</summary>
+        private static readonly ProfilerMarker s_updateMarker = new ProfilerMarker("WP107.WallBuy.Update");
 
         private readonly List<WallBuyStation> _stations = new List<WallBuyStation>();
         private WallBuyCatalog _catalog;
@@ -62,6 +66,11 @@ namespace DD.Prototype.Weapons
         }
 
         private void Update()
+        {
+            using (s_updateMarker.Auto()) Tick();
+        }
+
+        private void Tick()
         {
             if (!_built && !TryBuild()) return;
 
@@ -177,6 +186,7 @@ namespace DD.Prototype.Weapons
             _root = new GameObject("WallBuyStations").transform;
             _root.SetParent(transform, false);
 
+            WallBuyStationLibrary art = WallBuyStationLibrary.Current;   // WP-107B: the AP-040 bodies (placeholder racks without it)
             IReadOnlyList<WallBuyCatalog.StationRow> rows = _catalog.Stations;
             for (int i = 0; i < rows.Count; i++)
             {
@@ -187,7 +197,7 @@ namespace DD.Prototype.Weapons
                 go.transform.SetPositionAndRotation(Snap(new Vector3(row.x, 0f, row.z), _catalog.SnapRadius), Quaternion.Euler(0f, row.yaw, 0f));
                 var station = go.AddComponent<WallBuyStation>();
                 WeaponDefinition def = Arsenal.Get(weapon);
-                station.Init(row.id, weapon, def != null ? def.weaponId : row.weapon, def != null && def.IsWallBuyOnly, _wood, _plank, _sign, _lacquer);
+                station.Init(row.id, weapon, def != null ? def.weaponId : row.weapon, def != null && def.IsWallBuyOnly, art, _wood, _plank, _sign, _lacquer);
                 _stations.Add(station);
             }
 

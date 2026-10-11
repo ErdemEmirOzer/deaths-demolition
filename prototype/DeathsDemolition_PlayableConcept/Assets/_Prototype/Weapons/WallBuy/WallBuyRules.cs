@@ -22,17 +22,22 @@ namespace DD.Prototype.Weapons
             return Mathf.Max(1, Mathf.CeilToInt(price * Mathf.Clamp01(share) - 0.0001f));
         }
 
+        /// <param name="price">The weapon's price as charged (after the run tree's scale, WP-104 B2).</param>
+        /// <param name="refillCost">The ammo refill as charged; below 0 = <see cref="RefillCost"/> of <paramref name="price"/>.</param>
+        /// <param name="basePrice">The catalog price before any discount, for the HUD's seal; below 0 = <paramref name="price"/>.</param>
         public static WallBuyQuote Quote(ClassicWeaponId target, int price, float refillShare, bool available, bool specialActive,
-            bool hasClassic, ClassicWeaponId inHand, bool ammoFull, int balance)
+            bool hasClassic, ClassicWeaponId inHand, bool ammoFull, int balance, int refillCost = -1, int basePrice = -1)
         {
             bool refill = hasClassic && inHand == target;
             WallBuyAction action = refill ? WallBuyAction.Refill : WallBuyAction.Buy;
-            int cost = refill ? RefillCost(price, refillShare) : Mathf.Max(0, price);
-            if (!available || price <= 0) return new WallBuyQuote(action, cost, WallBuyBlock.Unavailable);
-            if (specialActive) return new WallBuyQuote(action, cost, WallBuyBlock.SpecialActive);
-            if (refill && ammoFull) return new WallBuyQuote(action, cost, WallBuyBlock.AmmoFull);
-            if (balance < cost) return new WallBuyQuote(action, cost, WallBuyBlock.NotEnoughGold);
-            return new WallBuyQuote(action, cost, WallBuyBlock.None);
+            int listed = basePrice < 0 ? price : basePrice;
+            int cost = refill ? (refillCost >= 0 ? refillCost : RefillCost(price, refillShare)) : Mathf.Max(0, price);
+            int baseCost = refill ? RefillCost(listed, refillShare) : Mathf.Max(0, listed);
+            if (!available || price <= 0) return new WallBuyQuote(action, cost, WallBuyBlock.Unavailable, baseCost);
+            if (specialActive) return new WallBuyQuote(action, cost, WallBuyBlock.SpecialActive, baseCost);
+            if (refill && ammoFull) return new WallBuyQuote(action, cost, WallBuyBlock.AmmoFull, baseCost);
+            if (balance < cost) return new WallBuyQuote(action, cost, WallBuyBlock.NotEnoughGold, baseCost);
+            return new WallBuyQuote(action, cost, WallBuyBlock.None, baseCost);
         }
 
         /// <summary>The run phases a station works in: the simulation runs (fighting, the countdown before a round).</summary>

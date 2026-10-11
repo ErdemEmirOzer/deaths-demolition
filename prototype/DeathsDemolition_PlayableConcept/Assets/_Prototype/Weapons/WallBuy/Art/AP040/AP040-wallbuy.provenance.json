@@ -1,0 +1,134 @@
+{
+ "schema": "dd.wp107b.ap040-wallbuy.provenance.v1",
+ "package": "AP-040",
+ "version": "v001",
+ "owner": "Codex",
+ "integration": "WP-107B (S-02)",
+ "delivery": "asset-production/AP-040/exports/v001",
+ "manifest": "AP040-manifest-v001.json",
+ "manifest_sha256": "11a391fd722c42e411306891455414717c44254487901b0d7fcc03e7c6a19500",
+ "integration_json_sha256": "6d6416ae815279a565047a0ed3b37af005712a6370eb73c9eeb197fca16d5196",
+ "decal_provenance_sha256": "bfc6be37ae932689906e42b2bc804ad83216ea41d0eb5ea8d175218fa3fd3f9c",
+ "note": "Files copied verbatim; sha256 checked against the delivery SHA256SUMS and the manifest. The shared atlas lives under Assets/_Prototype/Art/AP040/Shared (C-00: S-05 WP-108 reuses it).",
+ "files": [
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Models/AP040_wallbuy_board_V01.fbx",
+   "source": "AP-040/exports/v001/fbx/AP040_wallbuy_board_V01.fbx",
+   "bytes": 303884,
+   "sha256": "875330d48f9b4f7c9d8219b5c5166e7dfc6373385baf174e02eed5488ba6d782",
+   "role": "station:wallMount (D1 V01, 0.9 m wall mount)"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Models/AP040_wallbuy_board_V02.fbx",
+   "source": "AP-040/exports/v001/fbx/AP040_wallbuy_board_V02.fbx",
+   "bytes": 321884,
+   "sha256": "47b7812740e4cafad444d01cc17a194eb2e4f1803e509e5f68a228696b67cd2e",
+   "role": "station:standard (D1 V02, freestanding board)"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Models/AP040_wallbuy_shrine_V01.fbx",
+   "source": "AP-040/exports/v001/fbx/AP040_wallbuy_shrine_V01.fbx",
+   "bytes": 787132,
+   "sha256": "a74103d8c54426b157ad51995f1f03a57de903e3847073257b5123e7659491c2",
+   "role": "station:premium (D3 shrine, rocket launcher)"
+  },
+  {
+   "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_BaseColor.png",
+   "source": "AP-040/exports/v001/textures/T_AP040_Shared_BaseColor.png",
+   "bytes": 2215203,
+   "sha256": "43c3ac122f3c1bf26021f6c03a878ecd320a6c37cdbc987f0d1ba9ec5954da9f",
+   "role": "atlas:BaseColor (sRGB)"
+  },
+  {
+   "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_Normal.png",
+   "source": "AP-040/exports/v001/textures/T_AP040_Shared_Normal.png",
+   "bytes": 85914,
+   "sha256": "30d5a6a65576518b0749b9853c3d89e10ccde016004e07582e247ab21452f706",
+   "role": "atlas:Normal (OpenGL Y+, linear)"
+  },
+  {
+   "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_MaskMap.png",
+   "source": "AP-040/exports/v001/textures/T_AP040_Shared_MaskMap.png",
+   "bytes": 2364256,
+   "sha256": "a789494990b9c6d1eb18d512c7ddb396627c541aabe7c85217cd6185b0f723f1",
+   "role": "atlas:MaskMap (linear; R metallic, G AO, A smoothness)"
+  },
+  {
+   "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_Emission.png",
+   "source": "AP-040/exports/v001/textures/T_AP040_Shared_Emission.png",
+   "bytes": 370255,
+   "sha256": "02a277472f079b8005def52398bae7d8d67a46644d59c30cc89faa7aee97d02a",
+   "role": "atlas:Emission (sRGB)"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_ar_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_ar_1_Decal.png",
+   "bytes": 41991,
+   "sha256": "215dbcc25f1b6c757998f100e516935fa0363910ccddd2e0861155d893cf132a",
+   "role": "decal:ar_1"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_smg_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_smg_1_Decal.png",
+   "bytes": 66833,
+   "sha256": "bc1fc7c6aeb8b8dd66d5b6e078172ce5e5ed0e6ffa3ce8873f28602297b5a601",
+   "role": "decal:smg_1"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_sg_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_sg_1_Decal.png",
+   "bytes": 65190,
+   "sha256": "19ab443fca0d1b7b580df4321c369a5884cc2ae842784c90cc172151ee90373b",
+   "role": "decal:sg_1"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_ar_2_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_ar_2_Decal.png",
+   "bytes": 66229,
+   "sha256": "33ee60a2b790291d49f115ad1c2edeb6ca41293f8a21ded6b0ea8fad7bef598d",
+   "role": "decal:ar_2"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_smg_2_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_smg_2_Decal.png",
+   "bytes": 55804,
+   "sha256": "2c5b8170b5c1f753021a91650f94ad0908be86f268d0da2cf20fbd3d42beb2c0",
+   "role": "decal:smg_2"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_sg_2_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_sg_2_Decal.png",
+   "bytes": 65152,
+   "sha256": "c8dc89317556d09f5c5ae8cfef09bdb1df39869a2dfd37db44bd062457aae138",
+   "role": "decal:sg_2"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_lmg_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_lmg_1_Decal.png",
+   "bytes": 74488,
+   "sha256": "f14929a9a840d3b092cc6cf5b6310a694fe499f6e92aa131289fa74f00d75c05",
+   "role": "decal:lmg_1"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_lmg_2_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_lmg_2_Decal.png",
+   "bytes": 66736,
+   "sha256": "3d7bbcbf45425cf20f22c1593561266e68ce38d9b8675241e5a58e1508fe069f",
+   "role": "decal:lmg_2"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_sr_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_sr_1_Decal.png",
+   "bytes": 37778,
+   "sha256": "6079f7e94ff60e801ecc1d82477e8df0657dbb897f4e90ad57088655ab3ed13f",
+   "role": "decal:sr_1"
+  },
+  {
+   "repo": "Assets/_Prototype/Weapons/WallBuy/Art/AP040/Decals/T_wallbuy_rl_1_Decal.png",
+   "source": "AP-040/exports/v001/decals/T_wallbuy_rl_1_Decal.png",
+   "bytes": 64876,
+   "sha256": "003fbfd22f1ef434473d2bc6025c00fa7b827aea84dfb2caa56cbdacb36b0ddc",
+   "role": "decal:rl_1"
+  }
+ ]
+}

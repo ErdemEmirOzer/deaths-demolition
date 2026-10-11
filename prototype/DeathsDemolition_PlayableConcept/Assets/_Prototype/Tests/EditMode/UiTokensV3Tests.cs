@@ -251,7 +251,8 @@ namespace DD.Prototype.Tests.EditMode
             // this offer sells for gold); PauseScreen.cs - the run-so-far strip's gold counter. WP-098A: the brush kit's C21
             // counter picks its currency colour in the kit (UiBrushKit.BigCounter - the P0b half, UiBrushKit.Controls.cs). WP-098B:
             // ResultsScreen.cs is NOT here - its GOLD number is that kit Currency counter, and NEW BEST is words + the kit's C8 (G15).
-            { "StateGold", new[] { "UpgradeTree.cs", "PauseScreen.cs", "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs", "UiBrushKit.Controls.cs" } },
+            { "StateGold", new[] { "UpgradeTree.cs", "PauseScreen.cs", "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs", "UiBrushKit.Controls.cs",
+                "HudWallBuyPrompt.cs" /* WP-107B (S-09 12.10): gold is for money - the wall buy price digits */ } },
             { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.

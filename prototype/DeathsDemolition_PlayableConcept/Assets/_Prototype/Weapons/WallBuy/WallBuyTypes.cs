@@ -44,11 +44,15 @@ namespace DD.Prototype.Weapons
         public readonly int Cost;
         public readonly WallBuyBlock Block;
 
-        public WallBuyQuote(WallBuyAction action, int cost, WallBuyBlock block)
+        /// <summary>WP-107B: the price before the run tree's wall buy scale (Arms Dealer); equal to <see cref="Cost"/> without one.</summary>
+        public readonly int BaseCost;
+
+        public WallBuyQuote(WallBuyAction action, int cost, WallBuyBlock block, int baseCost = -1)
         {
             Action = action;
             Cost = cost;
             Block = block;
+            BaseCost = baseCost < 0 ? cost : baseCost;
         }
 
         public bool CanBuy => Block == WallBuyBlock.None;
@@ -69,6 +73,9 @@ namespace DD.Prototype.Weapons
         public readonly WallBuyBlock Block;
         public readonly Vector3 StationWorld;
 
+        /// <summary>WP-107B: the price before the run tree's discount (the HUD's discount seal shows when <see cref="Discounted"/>).</summary>
+        public readonly int BaseCost;
+
         public WallBuyPrompt(string stationId, ClassicWeaponId weapon, string weaponKey, WallBuyQuote quote, Vector3 stationWorld)
         {
             Visible = true;
@@ -79,7 +86,11 @@ namespace DD.Prototype.Weapons
             Cost = quote.Cost;
             Block = quote.Block;
             StationWorld = stationWorld;
+            BaseCost = quote.BaseCost;
         }
+
+        /// <summary>WP-107B: the run tree lowered the price (Arms Dealer).</summary>
+        public bool Discounted => Cost < BaseCost;
 
         /// <summary>The player has the gold (or nothing else stands in the way but other blocks).</summary>
         public bool Affordable => Block != WallBuyBlock.NotEnoughGold;
@@ -87,7 +98,7 @@ namespace DD.Prototype.Weapons
         public bool SameAs(in WallBuyPrompt other)
         {
             return Visible == other.Visible && StationId == other.StationId && Weapon == other.Weapon && Action == other.Action
-                   && Cost == other.Cost && Block == other.Block;
+                   && Cost == other.Cost && Block == other.Block && BaseCost == other.BaseCost;
         }
     }
 

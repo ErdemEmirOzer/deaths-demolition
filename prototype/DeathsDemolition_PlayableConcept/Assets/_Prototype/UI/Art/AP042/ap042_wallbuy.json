@@ -1,0 +1,268 @@
+{
+ "schema": "dd.wp107b.ap042-wallbuy.intake.v1",
+ "package": "AP-042",
+ "versions": [
+  "v001",
+  "v002"
+ ],
+ "integration": "WP-107B (S-02)",
+ "manifest_v001_sha256": "cca618530689bdda4a99c7394462e604147ba367249a49fed6c76ffc250cfdbd",
+ "manifest_v002_sha256": "7b05bf3b5d79978065c6fa028560944215b57ca1adfb8856560da3e1318e7129",
+ "nine_slice_sha256": "ca6ffafdbd272916041d5ad94b1b76bb36319c326214a506169f02996ce6ede9",
+ "border_order": "left,bottom,right,top (Unity Vector4, px)",
+ "safe_area_order": "x0,y0,x1,y1 px, top-left origin (AP-042 text_safe_top_left_px)",
+ "import": "UiArtImporter (Sprite Single, 100 ppu, no mips, Clamp, Bilinear, sRGB, max 1024); ArtAp040WallBuyBuilder adds spriteBorder, Full Rect mesh on the sliced frames and the Standalone BC7 override.",
+ "note": "Delivered files copied verbatim (sha256 checked against SHA256SUMS); the three _64 icon layers are derived here and carry their own sha256.",
+ "files": [
+  {
+   "name": "ap042_wallbuy_frame_purchase",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_frame_purchase.png",
+   "source": "AP-042/exports/v001/wallbuy/frame_purchase_768x192.png",
+   "bytes": 20241,
+   "sha256": "14facef803a7ee7969874adae9810bfd971712290654d5fa4180cbe533b0c4a3",
+   "role": "frame: purchase / ammo refill (frame_ammo_768x192.png is byte-identical, not copied)",
+   "size": [
+    768,
+    192
+   ],
+   "border_lbrt": [
+    96,
+    48,
+    96,
+    48
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    112,
+    48,
+    664,
+    144
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_frame_insufficient",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_frame_insufficient.png",
+   "source": "AP-042/exports/v001/wallbuy/frame_insufficient_768x192.png",
+   "bytes": 19994,
+   "sha256": "f1ee9141bcfed16e11a3b5e04cd6ee3b4774a635a02c9481b97dccacf5993276",
+   "role": "frame: refused (not enough gold)",
+   "size": [
+    768,
+    192
+   ],
+   "border_lbrt": [
+    96,
+    48,
+    96,
+    48
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    112,
+    48,
+    664,
+    144
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_price_tag",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_price_tag.png",
+   "source": "AP-042/exports/v001/wallbuy/price_tag_512x160.png",
+   "bytes": 23163,
+   "sha256": "e188d7f9d73a0beac6ad32e711707ed371487c1dfa057a6b29bf5761f15c688a",
+   "role": "price tag: coin in the left slice",
+   "size": [
+    512,
+    160
+   ],
+   "border_lbrt": [
+    144,
+    40,
+    48,
+    40
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    152,
+    40,
+    450,
+    120
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_price",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_price.png",
+   "source": "AP-042/exports/v001/wallbuy/icon_price_256.png",
+   "bytes": 25591,
+   "sha256": "eda0d99541f672c5e2962ad4d8ea0b3630afb7fe5eb1a16a55545bf61ea821e6",
+   "role": "icon: price",
+   "size": [
+    256,
+    256
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_ammo",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_ammo.png",
+   "source": "AP-042/exports/v001/wallbuy/icon_ammo_256.png",
+   "bytes": 10643,
+   "sha256": "82ae4d9f7646c3bb475c4077b0e64f23b80a911b14682d09d847e9a6ed09efca",
+   "role": "icon: ammo refill",
+   "size": [
+    256,
+    256
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_insufficient",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_insufficient.png",
+   "source": "AP-042/exports/v001/wallbuy/icon_insufficient_256.png",
+   "bytes": 23798,
+   "sha256": "449624f2e025a77d24804ca3876aef2a3603f6e700cc5167adb9f78d007f3fee",
+   "role": "icon: not enough gold",
+   "size": [
+    256,
+    256
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_seal_discount",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_seal_discount.png",
+   "source": "AP-042/exports/v002/wallbuy/seal_discount_broken_256.png",
+   "bytes": 23082,
+   "sha256": "b3c35125697efd8cf6bd11a3cf6a99e1e730790630215215862a0906b70b22ee",
+   "role": "seal: second discount (broken hanko), Simple overlay - never stretched",
+   "size": [
+    256,
+    256
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_price_64",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_price_64.png",
+   "source": "derived (WP-107B)",
+   "bytes": 2989,
+   "sha256": "2d8e4dd33fe27ccabd18ef131c49ae2653742141cec044f6307ff5fa94e88353",
+   "role": "icon layer 64 px (HUD prompt draws 26 px); Pillow 11.3.0 Lanczos, premultiplied alpha (RGBa)",
+   "size": [
+    64,
+    64
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_price.png",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_ammo_64",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_ammo_64.png",
+   "source": "derived (WP-107B)",
+   "bytes": 3077,
+   "sha256": "a7553e09a5f5f16968d9ec667949c6c2e229fbdfb4c8a799c246babbea05c00f",
+   "role": "icon layer 64 px (HUD prompt draws 26 px); Pillow 11.3.0 Lanczos, premultiplied alpha (RGBa)",
+   "size": [
+    64,
+    64
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_ammo.png",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ap042_wallbuy_icon_insufficient_64",
+   "repo": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_insufficient_64.png",
+   "source": "derived (WP-107B)",
+   "bytes": 3384,
+   "sha256": "acdfdb694782dd0f9837481ae8e477458585584efc08c42dd5e15c8c61417ddf",
+   "role": "icon layer 64 px (HUD prompt draws 26 px); Pillow 11.3.0 Lanczos, premultiplied alpha (RGBa)",
+   "size": [
+    64,
+    64
+   ],
+   "border_lbrt": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "derived_from": "Assets/_Prototype/UI/Art/Resources/UI/Hud/ap042_wallbuy_icon_insufficient.png",
+   "text_safe_top_left": [
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

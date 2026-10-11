@@ -77,7 +77,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private void Stand(WallBuyStation station)
         {
-            Vector3 front = station.transform.position + station.transform.forward * (WallBuyStation.RackDepth * 0.5f + 0.9f);
+            Vector3 front = station.transform.position + station.transform.forward * (station.FrontDepth + 0.9f);
             _rig.Teleport(front, Quaternion.LookRotation(-station.transform.forward));
         }
 
@@ -100,7 +100,7 @@ namespace DD.Prototype.Tests.PlayMode
                 WallBuyCatalog.StationRow row = catalog.Stations.First(r => r.id == s.Id);
                 Vector3 p = s.transform.position;
                 Assert.IsTrue(NavMesh.SamplePosition(p, out NavMeshHit hit, 0.6f, NavMesh.AllAreas), s.Id + " NavMesh'te değil (" + p + ")");
-                Vector3 approach = p + s.transform.forward * (WallBuyStation.RackDepth * 0.5f + 0.9f);
+                Vector3 approach = p + s.transform.forward * (s.FrontDepth + 0.9f);
                 Assert.IsTrue(NavMesh.SamplePosition(approach, out NavMeshHit front, 1.2f, NavMesh.AllAreas), s.Id + " önünde durulacak yer yok");
                 Assert.IsTrue(NavMesh.CalculatePath(startHit.position, front.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete,
                     s.Id + " başlangıçtan yürünerek ulaşılamıyor (" + path.status + ")");

@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe2b0bbd864d4f80ad47b4c9112e26d, type: 3}
+  m_Name: DD_WallBuyStations
+  m_EditorClassIdentifier: 
+  standard:
+    model: {fileID: 919132149155446097, guid: 2ba3ec39256b147788b41fb04481802d, type: 3}
+    weaponScale: 0.68
+    decalSize: 0.85
+    frontDepth: 0.31
+    lodScreenHeights:
+    - 0.4
+    - 0.15
+    - 0.02
+  premium:
+    model: {fileID: 919132149155446097, guid: a51b7b78c535c4a539bbae356b1cb308, type: 3}
+    weaponScale: 0.8
+    decalSize: 0.82
+    frontDepth: 0.5
+    lodScreenHeights:
+    - 0.4
+    - 0.15
+    - 0.02
+  wallMount:
+    model: {fileID: 919132149155446097, guid: af5b5c7fe28874ababe935e9946027a0, type: 3}
+    weaponScale: 0.68
+    decalSize: 0.85
+    frontDepth: 0.28
+    lodScreenHeights:
+    - 0.4
+    - 0.15
+    - 0.02
+  decals:
+  - weapon: 0
+    material: {fileID: 2100000, guid: 99c63e2126ccc4dc7baa8d1e2b626109, type: 2}
+  - weapon: 1
+    material: {fileID: 2100000, guid: 5d95de4b222374503b4c48276fcf0c98, type: 2}
+  - weapon: 2
+    material: {fileID: 2100000, guid: d069757e7ead142fab32cac8ffeb943a, type: 2}
+  - weapon: 3
+    material: {fileID: 2100000, guid: 36860ad48bfdb4b45b9a7a5e2fae3af8, type: 2}
+  - weapon: 4
+    material: {fileID: 2100000, guid: 445198c3ef9a04ce4b36ea30e1c7ab96, type: 2}
+  - weapon: 5
+    material: {fileID: 2100000, guid: ceed7b683977d4936b7c319f79c266cc, type: 2}
+  - weapon: 6
+    material: {fileID: 2100000, guid: aead2b5b2b1c14f9182c442e02f2c8ea, type: 2}
+  - weapon: 7
+    material: {fileID: 2100000, guid: 808eaa8970cf4439aa65cc36c3a7d3b8, type: 2}
+  - weapon: 8
+    material: {fileID: 2100000, guid: 29b205d14842946c98f01261346aecf3, type: 2}
+  - weapon: 9
+    material: {fileID: 2100000, guid: 1469defefd8804e71be275f9b4236668, type: 2}

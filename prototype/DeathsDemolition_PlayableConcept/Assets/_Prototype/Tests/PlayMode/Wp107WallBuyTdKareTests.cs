@@ -122,7 +122,7 @@ namespace DD.Prototype.Tests.PlayMode
                 int n = 3;
                 foreach (WallBuyStation s in director.Stations)
                 {
-                    rig.Teleport(s.transform.position + s.transform.forward * (WallBuyStation.RackDepth * 0.5f + 0.9f), Quaternion.LookRotation(-s.transform.forward));
+                    rig.Teleport(s.transform.position + s.transform.forward * (s.FrontDepth + 0.9f), Quaternion.LookRotation(-s.transform.forward));
                     for (int i = 0; i < 12; i++) yield return null;
                     Grab(n.ToString("00", CultureInfo.InvariantCulture) + "-" + s.Id, false);
                     n++;
@@ -132,7 +132,7 @@ namespace DD.Prototype.Tests.PlayMode
                 WallBuyStation smg = director.Stations.First(s => s.Weapon != controller.Classic.Id && s.Weapon != ClassicWeaponId.Rl1);
                 int price = director.Catalog.PriceOf(smg.Weapon);
                 wallet.Credit(price + director.Catalog.RefillPriceOf(smg.Weapon) + 40, GoldSource.EnemyPickup, wallet.NextTransactionId());
-                Vector3 front = smg.transform.position + smg.transform.forward * (WallBuyStation.RackDepth * 0.5f + 0.9f);
+                Vector3 front = smg.transform.position + smg.transform.forward * (smg.FrontDepth + 0.9f);
                 Vector3 startAt = front + smg.transform.forward * 4.5f;
                 rig.Teleport(startAt, Quaternion.LookRotation(-smg.transform.forward));
                 for (int i = 0; i < 10; i++) yield return null;
