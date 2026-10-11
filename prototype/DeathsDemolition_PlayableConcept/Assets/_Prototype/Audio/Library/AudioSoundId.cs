@@ -640,6 +640,108 @@ namespace DD.Prototype.Audio
         WeaponTailRlRelease = 951,
         WeaponTailRlRoom = 952,
 
+        // ---- WP-097 R4 (S-08 12.10) · AP-011 v024 new sounds, tools/audio/ap011_r4_import.py (contract K/wp-097/r4-bind/IDS.md):
+        // wall buy 1000–1004, difficulty mode 1010–1011, tree screen 1020–1023, tree procs 1030–1063. Rows in
+        // AP011-audio-manifest.json (ap011-v024); the catalog takes them on its next build (DD › Audio › Build Catalog).
+        /// <summary>R4 · AP-011 v024 wb_coins · WallBuyEvents.Resolved Bought/Refilled (wp-107-wallbuy)</summary>
+        WallBuyCoins = 1000,
+
+        /// <summary>R4 · AP-011 v024 wb_rack · Resolved Bought (silah)</summary>
+        WallBuyRack = 1001,
+
+        /// <summary>R4 · AP-011 v024 wb_denied · Resolved Denied</summary>
+        WallBuyDenied = 1002,
+
+        /// <summary>R4 · AP-011 v024 wb_heavy · Resolved Bought, roketatar istasyonu</summary>
+        WallBuyHeavy = 1003,
+
+        /// <summary>R4 · AP-011 v024 wb_prompt · PromptChanged false→true</summary>
+        WallBuyPrompt = 1004,
+
+        /// <summary>R4 · AP-011 v024 mode_hard · zorluk seçimi Hard (wp-102-difficulty)</summary>
+        ModeSelectHard = 1010,
+
+        /// <summary>R4 · AP-011 v024 mode_demolition · zorluk seçimi Demolition</summary>
+        ModeSelectDemolition = 1011,
+
+        /// <summary>R4 · AP-011 v024 tree_open · ağaç ekranı açılışı (S-09)</summary>
+        TreeOpen = 1020,
+
+        /// <summary>R4 · AP-011 v024 tree_stamp · TreeEvents.NodePurchased</summary>
+        TreeStamp = 1021,
+
+        /// <summary>R4 · AP-011 v024 tree_synergy · TreeEvents.SynergyUnlocked</summary>
+        TreeSynergy = 1022,
+
+        /// <summary>R4 · AP-011 v024 tree_reroll · öneri şeridi reroll (S-09)</summary>
+        TreeReroll = 1023,
+
+        /// <summary>R4 · AP-011 v024 fx_fire_ignite · TreeProcKind.Ignite</summary>
+        TreeFireIgnite = 1030,
+
+        /// <summary>R4 · AP-011 v024 fx_fire_loop · TreeProcKind.FireGround</summary>
+        TreeFireLoop = 1031,
+
+        /// <summary>R4 · AP-011 v024 fx_ice_freeze · TreeProcKind.Freeze</summary>
+        TreeIceFreeze = 1032,
+
+        /// <summary>R4 · AP-011 v024 fx_ice_shatter · TreeProcKind.Shatter</summary>
+        TreeIceShatter = 1033,
+
+        /// <summary>R4 · AP-011 v024 fx_poison · TreeProcKind.VenomCloud</summary>
+        TreePoisonLoop = 1034,
+
+        /// <summary>R4 · AP-011 v024 fx_thunder · TreeProcKind.ShockChain (Thunder Lord; zincirin kendisi mevcut ChainArc)</summary>
+        TreeThunder = 1035,
+
+        /// <summary>R4 · AP-011 v024 fx_cataclysm · TreeProcKind.ElementNova</summary>
+        TreeElementNova = 1036,
+
+        /// <summary>R4 · AP-011 v024 fx_crit · TreeProcKind.Crit / CritRing</summary>
+        TreeCrit = 1040,
+
+        /// <summary>R4 · AP-011 v024 fx_mininuke · TreeProcKind.MiniNuke</summary>
+        TreeMiniNuke = 1041,
+
+        /// <summary>R4 · AP-011 v024 fx_blackhole_loop · TreeProcKind.BlackHoleOpen (2,5 sn)</summary>
+        TreeBlackHoleLoop = 1042,
+
+        /// <summary>R4 · AP-011 v024 fx_blackhole_collapse · TreeProcKind.BlackHoleCollapse</summary>
+        TreeBlackHoleCollapse = 1043,
+
+        /// <summary>R4 · AP-011 v024 fx_doomsday_bell · TreeProcKind.DoomsdayBell</summary>
+        TreeDoomsdayBell = 1044,
+
+        /// <summary>R4 · AP-011 v024 fx_shield_up · (sözleşmede yok: kalkan açılışı — S-04'e sorulacak)</summary>
+        TreeShieldUp = 1050,
+
+        /// <summary>R4 · AP-011 v024 fx_shield_hit · (sözleşmede yok)</summary>
+        TreeShieldHit = 1051,
+
+        /// <summary>R4 · AP-011 v024 fx_shield_break · TreeProcKind.ShieldBreak</summary>
+        TreeShieldBreak = 1052,
+
+        /// <summary>R4 · AP-011 v024 fx_lifesteal · TreeProcKind.Leech</summary>
+        TreeLifesteal = 1053,
+
+        /// <summary>R4 · AP-011 v024 fx_dodge · TreeProcKind.Dodge</summary>
+        TreeDodge = 1054,
+
+        /// <summary>R4 · AP-011 v024 fx_undying · TreeProcKind.UndyingOath</summary>
+        TreeUndying = 1055,
+
+        /// <summary>R4 · AP-011 v024 fx_ricochet · (sözleşmede yok: sekme — S-02'ye sorulacak)</summary>
+        TreeRicochet = 1060,
+
+        /// <summary>R4 · AP-011 v024 fx_endless_on · TreeProcKind.EndlessWindowOpen</summary>
+        TreeEndlessOn = 1061,
+
+        /// <summary>R4 · AP-011 v024 fx_minirocket · (Barrage roketi: rl_1 PowerOverride ateş yolu — S-02)</summary>
+        TreeMiniRocket = 1062,
+
+        /// <summary>R4 · AP-011 v024 fx_aura_up · TreeEvents.AuraChanged (seviye artışı)</summary>
+        TreeAuraUp = 1063,
+
         /// <summary>WP-097 K1: label only — a slapback copy of the dry Fire clip (the clip is passed explicitly, no catalog row);
         /// keeps the Reflect pool's instance count and the telemetry apart from Fire.</summary>
         WeaponSlap = 990

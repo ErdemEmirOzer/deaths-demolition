@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac655ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
+  _manifestVersion: ap011-v024+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
+  _sourceHash: 882097840ce9914626c611d4ecfc02dc55ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
   _entries:
   - Sound: 10
     Clips:
@@ -5477,7 +5477,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.94
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording) \xB7 SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired \u2014 open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording)
+      \xB7 SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
+      v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired
+      \u2014 open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
     NoiseFloorDb: -90
     DcDb: -89.6
     Clipped: 0
@@ -5903,7 +5906,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.44
     TruePeakDb: -2.63
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording) \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05 retired \u2014 open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording)
+      \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
+      v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 /
+      Weapon_lmg2_TailOpen_05 retired \u2014 open RT60 0.547 / 0.546 s < 0.56 s (S4
+      spec), FINAL c4093280 G1"
     NoiseFloorDb: -88.5
     DcDb: -77
     Clipped: 0
@@ -8167,3 +8174,619 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: MagDropPistolDirt
+  - Sound: 1000
+    Clips:
+    - {fileID: 8300000, guid: 8e5c483f54079e384a40bf810157bce7, type: 3}
+    - {fileID: 8300000, guid: a404614630dc8b426eefa2cfe8836377, type: 3}
+    - {fileID: 8300000, guid: fe059dc30c83be1c3d03f74340c518ac, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id wb_coins \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at
+      0.84 s + 60 ms fade; _02 cut at 0.9 s + 80 ms fade; _03 cut at 0.7 s + 20 ms
+      fade \xB7 TP-limited (look-ahead \u2264 6 dB): _02 2.6 dB, _03 6 dB \xB7 house
+      chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file
+      1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA 585e3fa702f1\u2026"
+    NoiseFloorDb: -45.2
+    DcDb: -126.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1001
+    Clips:
+    - {fileID: 8300000, guid: 52aa193800c168231ba0e678630214bb, type: 3}
+    - {fileID: 8300000, guid: b370cb3858af86b77a638ee4140c5a35, type: 3}
+    - {fileID: 8300000, guid: 7141cb5125fbebd17b8cd33df3c32f38, type: 3}
+    Loop: 0
+    Lufs: -20.94
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id wb_rack \xB7 Adobe Firefly \xD73 (_01 _02 _03; firefly-ledger-r4.csv)
+      \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead \u2264 6 dB): _01
+      1.5 dB, _02 5.3 dB, _03 5.2 dB \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms
+      silence \xB7 noise floor not measurable (file 1 never rests under \u221260
+      dBFS in 100 ms: signal end to end) \u2192 continuous exemption \xB7 SHA f37a1882ad44\u2026"
+    NoiseFloorDb: -58.4
+    DcDb: -146.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1002
+    Clips:
+    - {fileID: 8300000, guid: 92953385445c9ed59646c03a0d27fbea, type: 3}
+    - {fileID: 8300000, guid: b78fd7ab9f5cc0938671540739eec81b, type: 3}
+    - {fileID: 8300000, guid: 01f1641b3104301834635e7a9401386d, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id wb_denied \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at
+      0.36 s + 30 ms fade; _02 cut at 0.22 s + 30 ms fade; _03 cut at 0.22 s + 30
+      ms fade \xB7 TP-limited (look-ahead \u2264 6 dB): _02 3.9 dB, _03 3.1 dB \xB7
+      house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable
+      (file 1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192
+      continuous exemption \xB7 SHA 3a2e6fb8ed88\u2026"
+    NoiseFloorDb: -39.7
+    DcDb: -86.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1003
+    Clips:
+    - {fileID: 8300000, guid: 75e4c607afa500a594db4135022727a6, type: 3}
+    - {fileID: 8300000, guid: aa9b7c508d5f479b1e1ffa86b179e63d, type: 3}
+    - {fileID: 8300000, guid: 242e515590bc78666a28effdad2e9853, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.59
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id wb_heavy \xB7 Adobe Firefly \xD72 (_02 _03; firefly-ledger-r4.csv)
+      \xB7 _01 derived (ap011_r4_derive.py seed 1058806986) from Sonniss GameAudioGDC
+      'Pole Position - MG 42 machine gun' \xB7 licences LICENSES-R4.csv \xB7 house
+      chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file
+      1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA aaddfdd60663\u2026"
+    NoiseFloorDb: -42.1
+    DcDb: -145.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: "_01 derived (Sonniss) \xB7 _02 single take (Firefly) \xB7 _03 single
+      take (Firefly)"
+  - Sound: 1004
+    Clips:
+    - {fileID: 8300000, guid: 55d414c0c6f0725923bccf0d2f8fb1a8, type: 3}
+    - {fileID: 8300000, guid: 82e753388d05a358ffff710d0653f68f, type: 3}
+    Loop: 0
+    Lufs: -22.41
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id wb_prompt \xB7 Adobe Firefly \xD72 (_01 _02; firefly-ledger-r4.csv)
+      \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead \u2264 6 dB): _01
+      2.6 dB \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor
+      not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal end
+      to end) \u2192 continuous exemption \xB7 SHA f82e0570934f\u2026"
+    NoiseFloorDb: -58.2
+    DcDb: -158.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1010
+    Clips:
+    - {fileID: 8300000, guid: 2e3a2ff1ecddff58b8ea03fea99f350d, type: 3}
+    - {fileID: 8300000, guid: f062d1a4f78c492f48d8ecdda8198949, type: 3}
+    - {fileID: 8300000, guid: 09335100855cf9fe11141d23e638f41e, type: 3}
+    Loop: 0
+    Lufs: -22.6
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id mode_hard \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -22 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA d3a6247438f3\u2026"
+    NoiseFloorDb: -53.9
+    DcDb: -141.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1011
+    Clips:
+    - {fileID: 8300000, guid: 75a567bd610e86caf673966752bcabb1, type: 3}
+    - {fileID: 8300000, guid: cb75694f741cc19334ba36ebe2f10295, type: 3}
+    - {fileID: 8300000, guid: c1d98effd4966ebad52d7ba4b6cad100, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id mode_demolition \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
+      -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 819111c1e9e7\u2026"
+    NoiseFloorDb: -63.6
+    DcDb: -147.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1020
+    Clips:
+    - {fileID: 8300000, guid: 2bc7f2a585a3273d58bc2c0a3be4aeee, type: 3}
+    - {fileID: 8300000, guid: 75140c86b12fc6e7a77ba75add513312, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -2.48
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id tree_open \xB7 _01 synthesis (ap011_r4_synth.py
+      seed 902121534) \xB7 _02 synthesis (ap011_r4_synth.py seed 2763772034) \xB7
+      licences LICENSES-R4.csv \xB7 edits: _01 last 0.12 s faded; _02 last 0.12 s
+      faded \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor
+      not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal end
+      to end) \u2192 continuous exemption \xB7 SHA 22d1aacf9a7f\u2026"
+    NoiseFloorDb: -36
+    DcDb: -173.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'synth: ap011_r4_synth.py (seeded)'
+  - Sound: 1021
+    Clips:
+    - {fileID: 8300000, guid: f56210d5bf5e03701018f2ee5224175d, type: 3}
+    - {fileID: 8300000, guid: 262bb0a8d2314fd96e721033e5cb95f1, type: 3}
+    - {fileID: 8300000, guid: 650bcdb9a92edf3746331bfccb4a9ffa, type: 3}
+    - {fileID: 8300000, guid: d5b0e7d229bdecddc4409e63b74941cc, type: 3}
+    Loop: 0
+    Lufs: -26.91
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id tree_stamp \xB7 Adobe Firefly \xD74 (_01 _02 _03
+      _04; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut
+      at 0.185 s + 20 ms fade; _03 cut at 0.35 s + 30 ms fade; _04 cut at 0.3 s +
+      30 ms fade \xB7 TP-limited (look-ahead \u2264 6 dB): _01 6 dB, _02 2.3 dB,
+      _03 5.2 dB, _04 6 dB \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7
+      noise floor not measurable (file 1 never rests under \u221260 dBFS in 100 ms:
+      signal end to end) \u2192 continuous exemption \xB7 SHA f245bbeedbd3\u2026"
+    NoiseFloorDb: -52.9
+    DcDb: -100.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1022
+    Clips:
+    - {fileID: 8300000, guid: 000544655abf292b27c79a94fe240f05, type: 3}
+    - {fileID: 8300000, guid: 1c54f8ccf65036464b9837ce9e7aac3f, type: 3}
+    - {fileID: 8300000, guid: a4b6eca7f057b3f056ffbdf1b9038c9f, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -3.62
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id tree_synergy \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -22 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 SHA 90101861218b\u2026"
+    NoiseFloorDb: -63.2
+    DcDb: -152.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1023
+    Clips:
+    - {fileID: 8300000, guid: 9ec652854d167c47e095ac3ddbd3f5e1, type: 3}
+    - {fileID: 8300000, guid: 42f483e53a43749c189b0aa47d1c2167, type: 3}
+    - {fileID: 8300000, guid: c466ab34ea5f6049134dde2fdb8e4028, type: 3}
+    Loop: 0
+    Lufs: -22.21
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id tree_reroll \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last 0.15
+      s faded \xB7 TP-limited (look-ahead \u2264 6 dB): _01 2.1 dB \xB7 house chain
+      -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
+      never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA ae8c832df902\u2026"
+    NoiseFloorDb: -42.7
+    DcDb: -119.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1030
+    Clips:
+    - {fileID: 8300000, guid: e516ca4db5d1bac4843e0311a6a08ea5, type: 3}
+    - {fileID: 8300000, guid: f6fd0f18225de6fd32b6f52e4f9d7e7e, type: 3}
+    - {fileID: 8300000, guid: ad2281bdabb77b89d86a0fe76afc3267, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.17
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_fire_ignite \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
+      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
+      never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA 5ea5191c811f\u2026"
+    NoiseFloorDb: -58.7
+    DcDb: -148.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1031
+    Clips:
+    - {fileID: 8300000, guid: 1d2a28ad0cc0d8d79fdd90d885f0e804, type: 3}
+    Loop: 1
+    Lufs: -22.09
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_fire_loop \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS / -1.5 dBTP, seamless
+      loop \xB7 SHA 9dfed25f8585\u2026"
+    NoiseFloorDb: -25.5
+    DcDb: -84.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1032
+    Clips:
+    - {fileID: 8300000, guid: 4970a05465fceb2c263b56b889640232, type: 3}
+    - {fileID: 8300000, guid: 433a6f29a03030dd494bf86a001fb323, type: 3}
+    - {fileID: 8300000, guid: 80637e109cf9a8ca772f21440eb9bc52, type: 3}
+    Loop: 0
+    Lufs: -20.97
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_ice_freeze \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
+      \u2264 6 dB): _03 4.1 dB \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence
+      \xB7 noise floor not measurable (file 1 never rests under \u221260 dBFS in
+      100 ms: signal end to end) \u2192 continuous exemption \xB7 SHA 9f4df1f0b36e\u2026"
+    NoiseFloorDb: -49.6
+    DcDb: -149.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1033
+    Clips:
+    - {fileID: 8300000, guid: 5e3c7de39ff3997dcffedaa9ae1e8237, type: 3}
+    - {fileID: 8300000, guid: d3371ab5d21d4d92f3e8e80526b6d51f, type: 3}
+    - {fileID: 8300000, guid: fe4f95a222956011867b92fe3d817c3e, type: 3}
+    Loop: 0
+    Lufs: -20.32
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_ice_shatter \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
+      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 253549039253\u2026"
+    NoiseFloorDb: -64.6
+    DcDb: -170.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1034
+    Clips:
+    - {fileID: 8300000, guid: 4cb477d0c0428d27a40e221f29f512fd, type: 3}
+    Loop: 1
+    Lufs: -20.31
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_poison \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS / -1.5 dBTP, seamless
+      loop \xB7 SHA 7553923edc60\u2026"
+    NoiseFloorDb: -25.3
+    DcDb: -135.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1035
+    Clips:
+    - {fileID: 8300000, guid: 95831728f1bf4e1bc1dfb5aa1b709119, type: 3}
+    - {fileID: 8300000, guid: 571f8fe3067d6797fe7b3759bff396a7, type: 3}
+    - {fileID: 8300000, guid: e351c032e738d720ad396c6eaf449c81, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_thunder \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA e0d44a9d2031\u2026"
+    NoiseFloorDb: -55.6
+    DcDb: -148.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1036
+    Clips:
+    - {fileID: 8300000, guid: 874f755ac3292f4dceed10bf7ce246a1, type: 3}
+    - {fileID: 8300000, guid: b09de4995ae35a637b9e17a5206a4d32, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.18
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_cataclysm \xB7 Adobe Firefly \xD71 (_02; firefly-ledger-r4.csv)
+      \xB7 _01 synthesis (ap011_r4_synth.py seed 3689099958) \xB7 licences LICENSES-R4.csv
+      \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable
+      (file 1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192
+      continuous exemption \xB7 SHA a9625a8f32e6\u2026"
+    NoiseFloorDb: -43.2
+    DcDb: -127.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: "_01 synth \xB7 _02 single take (Firefly)"
+  - Sound: 1040
+    Clips:
+    - {fileID: 8300000, guid: c254ef2793709afb2ba5f1d3a3463ef4, type: 3}
+    - {fileID: 8300000, guid: 0ad96aa9544e372bbf7e5d416685ed00, type: 3}
+    - {fileID: 8300000, guid: 0abe4be418031998ed179cdfdc1dcc87, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.31
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_crit \xB7 Adobe Firefly \xD73 (_01 _02 _03; firefly-ledger-r4.csv)
+      \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut at 0.35 s + 150 ms fade;
+      _03 HPF 150 Hz, cut at 0.4 s + 150 ms fade \xB7 house chain -20 LUFS / -1.5
+      dBTP, 8 ms silence \xB7 SHA 74cf1b7cb5ce\u2026"
+    NoiseFloorDb: -63.9
+    DcDb: -128.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1041
+    Clips:
+    - {fileID: 8300000, guid: 1bb622a710c2706cda21b16da8462993, type: 3}
+    - {fileID: 8300000, guid: bfeba64e0d788e88d13f009148ebdb1c, type: 3}
+    - {fileID: 8300000, guid: a0812b282a3656155b780157f232d06f, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.79
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_mininuke \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 SHA a0cdd7b7a431\u2026"
+    NoiseFloorDb: -62.7
+    DcDb: -144.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1042
+    Clips:
+    - {fileID: 8300000, guid: 949b4f6169f6eb25c7acd01237ce2a89, type: 3}
+    Loop: 1
+    Lufs: -20
+    TruePeakDb: -5.43
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_blackhole_loop \xB7 Adobe Firefly \xD71 (_01;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      / -1.5 dBTP, seamless loop \xB7 SHA 9cad8b10779b\u2026"
+    NoiseFloorDb: -24.1
+    DcDb: -135.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1043
+    Clips:
+    - {fileID: 8300000, guid: c83b387d3f318fe2976fe6ecaebf56af, type: 3}
+    - {fileID: 8300000, guid: ee9a43603a43e03c2cd056b82d6d7d31, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.51
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_blackhole_collapse \xB7 Adobe Firefly \xD71 (_01;
+      firefly-ledger-r4.csv) \xB7 _02 synthesis (ap011_r4_synth.py seed 313928833)
+      \xB7 licences LICENSES-R4.csv \xB7 edits: _02 last 0.4 s faded \xB7 house chain
+      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
+      never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA 20a168ef11f4\u2026"
+    NoiseFloorDb: -55.9
+    DcDb: -139.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: "_01 single take (Firefly) \xB7 _02 synth"
+  - Sound: 1044
+    Clips:
+    - {fileID: 8300000, guid: c607543bd4bfb36cc421275db7acb3eb, type: 3}
+    - {fileID: 8300000, guid: 7289737c7992bde91e7bd069652c5662, type: 3}
+    - {fileID: 8300000, guid: 2e1fa1cc4fa769cee06939feeadba1d6, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.19
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_doomsday_bell \xB7 Adobe Firefly \xD71 (_01;
+      firefly-ledger-r4.csv) \xB7 _02 synthesis (ap011_r4_synth.py seed 1233150013)
+      \xB7 _03 synthesis (ap011_r4_synth.py seed 1601769446) \xB7 licences LICENSES-R4.csv
+      \xB7 edits: _01 5 ms fade-in, last 1.5 s faded; _02 last 1.5 s faded; _03 last
+      1.5 s faded \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA d6efe827fc58\u2026"
+    NoiseFloorDb: -87.2
+    DcDb: -147.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: "_01 single take (Firefly) \xB7 _02 synth \xB7 _03 synth"
+  - Sound: 1050
+    Clips:
+    - {fileID: 8300000, guid: 9f5ae4ab5a027e0d785d16d197dcbae2, type: 3}
+    - {fileID: 8300000, guid: 952173781ca57b57c8bea1ca71b85043, type: 3}
+    - {fileID: 8300000, guid: 85c0477ea100f2be047132f06901695e, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -6.29
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_shield_up \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last 0.3
+      s faded \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor
+      not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal end
+      to end) \u2192 continuous exemption \xB7 SHA 3024a43cdbf1\u2026"
+    NoiseFloorDb: -55.4
+    DcDb: -146.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1051
+    Clips:
+    - {fileID: 8300000, guid: 4956f26d7725554ab48d6f3e455180c6, type: 3}
+    - {fileID: 8300000, guid: d23204193cf5e02df7e35adcdd653a25, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_shield_hit \xB7 Adobe Firefly \xD72 (_01 _02;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 HPF 100
+      Hz, cut at 0.4 s + 150 ms fade; _02 HPF 100 Hz, cut at 0.35 s + 100 ms fade
+      \xB7 TP-limited (look-ahead \u2264 6 dB): _02 2.3 dB \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA 5fdf7e216172\u2026"
+    NoiseFloorDb: -35.5
+    DcDb: -109.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1052
+    Clips:
+    - {fileID: 8300000, guid: 75c9344e61349578cd25e00d57accb3f, type: 3}
+    - {fileID: 8300000, guid: 9beb0af5fd8ce79baa23092724050dfc, type: 3}
+    - {fileID: 8300000, guid: c9d8cca580a3b42db3a378289aadb0b2, type: 3}
+    Loop: 0
+    Lufs: -21.52
+    TruePeakDb: -2.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_shield_break \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
+      -20 LUFS / -2.5 dBTP, 8 ms silence \xB7 SHA 194fc5808cd9\u2026"
+    NoiseFloorDb: -63.9
+    DcDb: -145.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1053
+    Clips:
+    - {fileID: 8300000, guid: fdd9ff4d0cef317418e262de314bae6d, type: 3}
+    - {fileID: 8300000, guid: 34cdb914a8135adb408c927611276f05, type: 3}
+    - {fileID: 8300000, guid: ac78b3b27b5417149b9b1b85a9858209, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.92
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_lifesteal \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      \xB7 _02 synthesis (ap011_r4_synth.py seed 3197181757) \xB7 _03 synthesis (ap011_r4_synth.py
+      seed 4204363375) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at 0.19
+      s + 20 ms fade \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise
+      floor not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal
+      end to end) \u2192 continuous exemption \xB7 SHA 082723f2175a\u2026"
+    NoiseFloorDb: -13.1
+    DcDb: -91.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "_01 single take (Firefly) \xB7 _02 synth \xB7 _03 synth"
+  - Sound: 1054
+    Clips:
+    - {fileID: 8300000, guid: 6f715602358202864c6855ad9d742143, type: 3}
+    - {fileID: 8300000, guid: 59f72a4620f43148fdc80b0bc36d229c, type: 3}
+    - {fileID: 8300000, guid: 6687a6f690702cf7bc1c65683c31b53d, type: 3}
+    - {fileID: 8300000, guid: 7aef12a4cff67dfe37c64224ca75f84a, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_dodge \xB7 Adobe Firefly \xD74 (_01 _02 _03 _04;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _04 cut at
+      0.27 s + 50 ms fade \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7
+      SHA 6c2350f7ac42\u2026"
+    NoiseFloorDb: -65.2
+    DcDb: -106
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1055
+    Clips:
+    - {fileID: 8300000, guid: 6fff479e8a71eb660da9af8516f5c5e7, type: 3}
+    - {fileID: 8300000, guid: a7e0fd579ac73451eb57ed1dff6f0b4f, type: 3}
+    - {fileID: 8300000, guid: dfb5663921c5da51aadee4b1a760f00e, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.17
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_undying \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 SHA 7eda5c820b22\u2026"
+    NoiseFloorDb: -62.3
+    DcDb: -149.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1060
+    Clips:
+    - {fileID: 8300000, guid: 2eeef1a3b18368bf3002d32819de9c46, type: 3}
+    - {fileID: 8300000, guid: ebaa2e4b76930b2fde974ced17e80d04, type: 3}
+    - {fileID: 8300000, guid: e0a5fa6ad046c5aaafa2f1712cc974ed, type: 3}
+    Loop: 0
+    Lufs: -25.02
+    TruePeakDb: -1.5
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_ricochet \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
+      \u2264 6 dB): _01 3.5 dB, _02 5.5 dB, _03 6 dB \xB7 house chain -20 LUFS /
+      -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA abc5ed22a389\u2026"
+    NoiseFloorDb: -55.8
+    DcDb: -133.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1061
+    Clips:
+    - {fileID: 8300000, guid: d626fd180230caeffd5931e44abef671, type: 3}
+    - {fileID: 8300000, guid: 4089598f7af7361719e8aee71b18c1aa, type: 3}
+    - {fileID: 8300000, guid: e4222102d48fece651d1a2ceb586b96e, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.06
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_endless_on \xB7 Adobe Firefly \xD73 (_01 _02
+      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 last
+      0.15 s faded; _03 last 0.15 s faded \xB7 house chain -20 LUFS / -1.5 dBTP,
+      8 ms silence \xB7 SHA a948601b18a2\u2026"
+    NoiseFloorDb: -64.7
+    DcDb: -147.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 1062
+    Clips:
+    - {fileID: 8300000, guid: 7ffc8498ca2abe233ebe19d5ec5df2d4, type: 3}
+    - {fileID: 8300000, guid: 90e171ca2d890e27d8ccd64061d788eb, type: 3}
+    - {fileID: 8300000, guid: b0999f55cd0ceb1c345a07f87b15506e, type: 3}
+    - {fileID: 8300000, guid: a7ccb86f8cacc6a5e85dc6b9439c89a1, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.45
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_minirocket \xB7 _01 derived (ap011_r4_derive.py
+      seed 4117573363) from Sonniss GameAudioGDC 'Pole Position - The Warfare 2 Library'
+      \xB7 _02 derived (ap011_r4_derive.py seed 1299717262) from Sonniss GameAudioGDC
+      'Pole Position - The Warfare 2 Library' \xB7 _03 derived (ap011_r4_derive.py
+      seed 688173611) from Sonniss GameAudioGDC 'Pole Position - The Warfare 2 Library'
+      \xB7 _04 derived (ap011_r4_derive.py seed 119547257) from Sonniss GameAudioGDC
+      'Pole Position - The Warfare 2 Library' \xB7 licences LICENSES-R4.csv \xB7
+      house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable
+      (file 1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192
+      continuous exemption \xB7 SHA 558ab5ca3f84\u2026"
+    NoiseFloorDb: -50.3
+    DcDb: -192.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived: ap011_r4_derive.py (Sonniss source, seeded)'
+  - Sound: 1063
+    Clips:
+    - {fileID: 8300000, guid: adc9f2ee37aa53ec90729758a03a95b1, type: 3}
+    - {fileID: 8300000, guid: c4e20b7d699a1879022ed41d3f24b679, type: 3}
+    - {fileID: 8300000, guid: 72d5a3267bb78d58aab4412b2fb1d1f0, type: 3}
+    Loop: 0
+    Lufs: -20.26
+    TruePeakDb: -4.79
+    Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
+      3eb3008247b6) \xB7 v024 id fx_aura_up \xB7 Adobe Firefly \xD73 (_01 _02 _03;
+      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 SHA 3b0cbfaa3287\u2026"
+    NoiseFloorDb: -68.8
+    DcDb: -153
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
