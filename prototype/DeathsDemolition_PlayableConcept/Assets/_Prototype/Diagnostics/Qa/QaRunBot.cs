@@ -64,6 +64,9 @@ namespace DD.Prototype.Qa
         /// (courtyard, horizon, corridor = R6 chūmon, kairo = K1 north end) by gamepad, captures one PNG per point into the given
         /// directory, records them in the summary and quits. Never a gameplay run; the A2 gameplay runs are unchanged.</summary>
         public const string RouteTourFlag = "-ddQaBotRouteTour";
+        /// <summary>WP-103 (R4 #4, S-05): <c>-ddQaBotRoutePoints "key,x,z:key,x,z"</c> — the route tour walks these points instead of the
+        /// four V6 evidence points (top-down pitch, no roof look-up); a walk video through the opened bamboo grove rides on it.</summary>
+        public const string RoutePointsFlag = "-ddQaBotRoutePoints";
         /// <summary>WP-044 K1: <c>-ddQaAllocScan N</c> — at round N (spawner on, crowd live) disable every Behaviour type in turn and sample 3 frames of GC (AllocationProbeTests pattern); writes alloc-scan.txt. The player is invulnerable during the scan; the run is a measurement, not a QA pass.</summary>
         public const string AllocScanFlag = "-ddQaAllocScan";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
@@ -120,7 +123,7 @@ namespace DD.Prototype.Qa
             d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
             if (QaArgs.Arg(StabilityFlag) != null) d.ConfigureStability();   // WP-064 / DEC-091
             if (QaArgs.Arg(WeaponCycleFlag) != null) d.ConfigureWeaponCycle();   // WP-078 A3
-            if (!string.IsNullOrEmpty(QaArgs.Arg(RouteTourFlag))) d.ConfigureRouteTour(QaArgs.Arg(RouteTourFlag));   // WP-078 D3c
+            if (!string.IsNullOrEmpty(QaArgs.Arg(RouteTourFlag))) d.ConfigureRouteTour(QaArgs.Arg(RouteTourFlag), QaArgs.Arg(RoutePointsFlag));   // WP-078 D3c, WP-103
             if (!string.IsNullOrEmpty(QaArgs.Arg(QaCrowdWalkScenario.Flag))) d.ConfigureScenario(QaArgs.Arg(QaCrowdWalkScenario.Flag));   // WP-111 R4 (S-06)
         }
 
@@ -480,7 +483,22 @@ namespace DD.Prototype.Qa
 
             public void ConfigureStability() { _stability = true; _invulnerable = true; }
             public void ConfigureWeaponCycle() { _weaponCycle = true; }
-            public void ConfigureRouteTour(string framesDir) { _routeDir = framesDir; }
+            public void ConfigureRouteTour(string framesDir, string points = null)
+            {
+                _routeDir = framesDir;
+                if (string.IsNullOrEmpty(points)) return;
+                var list = new System.Collections.Generic.List<RoutePoint>();
+                foreach (string item in points.Split(':'))
+                {
+                    string[] f = item.Split(',');
+                    if (f.Length < 3) continue;
+                    if (!float.TryParse(f[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x)) continue;
+                    if (!float.TryParse(f[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z)) continue;
+                    list.Add(new RoutePoint(f[0], x, z, 0f, 8f, 5f, false));
+                }
+
+                if (list.Count > 0) RoutePoints = list.ToArray();
+            }
             /// <summary>WP-111 R4 (S-06): an evidence scenario owns every frame after run-ready (<see cref="QaCrowdWalkScenario"/>); an unknown name is logged and ignored.</summary>
             public void ConfigureScenario(string name)
             {
@@ -1821,7 +1839,7 @@ namespace DD.Prototype.Qa
             /// <summary>C-00 30.09 R3 (V6): courtyard (0,−3) 0°, horizon (0,−3) 180°, corridor R6 chūmon (0,19), kairo K1 north end
             /// on the corridor's centre line (−33,15) 180° (the first pick −31 sat 0.6 m from the east wall and was never reached).
             /// Rig pitch + looks down; corridor/kairo look up under the roof. Each point is snapped to the NavMesh (≤ 2 m) at step start.</summary>
-            private static readonly RoutePoint[] RoutePoints =
+            private RoutePoint[] RoutePoints =   // WP-103: -ddQaBotRoutePoints replaces them for one run
             {
                 new RoutePoint("courtyard", 0f, -3f, 0f, 8f, 5f, false),
                 new RoutePoint("horizon", 0f, -3f, 180f, -3f, -3f, false),
