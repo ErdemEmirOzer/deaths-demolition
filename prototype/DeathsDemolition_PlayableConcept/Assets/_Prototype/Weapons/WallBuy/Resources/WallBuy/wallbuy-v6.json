@@ -1,6 +1,6 @@
 {
   "schema": "dd-wallbuy-v1",
-  "note": "WP-107 (R4, user 11.10 note 8): CoD Zombies wall buy on world V6. Prices: S-02 proposal on the WP-041 income model (R5 cumulative 424, R10 2151, R15 5855), S-04 to confirm. Stations: S-02 proposal (starter guns on the courtyard corners, the stronger ones further out, the rocket launcher in the far bamboo corner), S-05 places them for good. x / z are metres, yaw is the way the rack faces (degrees, 0 = +z); each point is snapped to the NavMesh within snapRadius.",
+  "note": "WP-107 (R4, user 11.10 note 8): CoD Zombies wall buy on world V6. Prices: S-02 proposal on the WP-041 income model (R5 cumulative 424, R10 2151, R15 5855), S-04 to confirm. Stations: S-02 proposal (starter guns on the courtyard rim west / east / south - the corner planters at (±9, ±9) blocked the racks' fronts, the stronger ones further out, the rocket launcher in the far bamboo corner), S-05 places them for good. x / z are metres, yaw is the way the rack faces (degrees, 0 = +z); each point is snapped to the NavMesh within snapRadius.",
   "refillShare": 0.5,
   "interactRadius": 2.2,
   "snapRadius": 4.0,
@@ -17,9 +17,9 @@
     { "weapon": "rl_1", "price": 2500 }
   ],
   "stations": [
-    { "id": "WB_CourtyardNW", "weapon": "ar_1", "x": -10.5, "z": 10.5, "yaw": 135 },
-    { "id": "WB_CourtyardNE", "weapon": "smg_1", "x": 10.5, "z": 10.5, "yaw": 225 },
-    { "id": "WB_CourtyardSE", "weapon": "sg_1", "x": 10.5, "z": -10.5, "yaw": 315 },
+    { "id": "WB_CourtyardWest", "weapon": "ar_1", "x": -13, "z": 0, "yaw": 90 },
+    { "id": "WB_CourtyardEast", "weapon": "smg_1", "x": 13, "z": 0, "yaw": 270 },
+    { "id": "WB_CourtyardSouth", "weapon": "sg_1", "x": 0, "z": -13, "yaw": 0 },
     { "id": "WB_PalaceWest", "weapon": "ar_2", "x": -16, "z": 24, "yaw": 180 },
     { "id": "WB_PalaceEast", "weapon": "lmg_2", "x": 16, "z": 24, "yaw": 180 },
     { "id": "WB_CorridorWest", "weapon": "lmg_1", "x": -40, "z": 8, "yaw": 90 },

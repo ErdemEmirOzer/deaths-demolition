@@ -152,7 +152,11 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 girdi.Yon = Vector2.zero;
+                bool walked = director.InReach == smg;
+                if (!walked) rig.Teleport(front, Quaternion.LookRotation(-smg.transform.forward));   // fallback: the walk did not reach (logged)
                 for (int i = 0; i < 18; i++) { Grab(i == 10 ? "20-istem" : null, true); yield return null; }
+                log.Append("    {\"walkedToStation\": ").Append(walked ? "true" : "false").Append("},\n");
+                Assert.AreEqual(smg, director.InReach, "istasyonun önünde değil");
                 director.TestPress = true;
                 for (int i = 0; i < 24; i++) { Grab(i == 12 ? "21-satin-alindi" : null, true); yield return null; }
 
