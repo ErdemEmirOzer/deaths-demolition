@@ -1,3 +1,4 @@
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -336,3 +337,4 @@ namespace DD.Prototype.Qa
         private static string V(Vector3 v) => QaArgs.F(v.x, 1) + "," + QaArgs.F(v.y, 1) + "," + QaArgs.F(v.z, 1);
     }
 }
+#endif
