@@ -30,29 +30,35 @@ namespace DD.Prototype.Feedback.Vfx
         /// orange-ish, realistic". The top-down tracer lived 0.04 s from birth (≈ 5 m at rifle speed) and was a 3 cm line. It now
         /// rides its projectile all the way to the impact (or the range end), then its tail runs into the stopped head over
         /// <see cref="TdTailOutSeconds"/>; the tail trails the head by clamp(v × <see cref="TdTailSeconds"/>, 1.5, 6 m) (sniper ≤ 10 m).
-        /// A warm white-hot core (the weapon's head → tail colours, ×<see cref="TdCoreScale"/> wide, ≥ <see cref="TdCoreMin"/>) and an
-        /// orange glow (the tail colour, ×<see cref="TdGlowScale"/> wide, α <see cref="TdGlowAlpha"/>; none on Performance).
+        /// A white-hot core (<see cref="TdCoreHead"/> → <see cref="TdCoreTail"/>, the weapon's width ×<see cref="TdCoreScale"/>,
+        /// ≥ <see cref="TdCoreMin"/>) and an orange glow (<see cref="TdGlowColor"/>, premultiplied, ×<see cref="TdGlowScale"/> wide and
+        /// ≥ 2.5 × the core, α <see cref="TdGlowAlpha"/>; none on Performance).
         /// ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR and the glow. A shotgun pellet keeps its short warm bar
         /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
         /// </summary>
-        public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .025f, TdTailMin = 1.5f, TdTailMax = 6f,
-            TdSniperTailMax = 10f, TdCoreScale = 1.5f, TdCoreMin = .05f, TdSniperCoreMin = .07f, TdGlowScale = 2f, TdGlowAlpha = .45f;
+        public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .017f, TdTailMin = 1.5f, TdTailMax = 4.5f,
+            TdSniperTailMax = 10f, TdCoreScale = 1.5f, TdCoreMin = .06f, TdSniperCoreMin = .07f, TdGlowScale = 2f, TdGlowAlpha = .8f;
+        /// <summary>AD 11.10 (M1 + S2/S3): one realistic top-down palette for every weapon - a white-hot core fading to warm yellow
+        /// (added: it stays white over blue water), a saturated orange glow drawn premultiplied (it tints the ground orange instead
+        /// of adding red to the blue sky reflection, which read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright"
+        /// (v × 0.017 s, 1.5–4.5 m).</summary>
+        public static readonly Color TdCoreHead = new Color(1f, .945f, .84f) * 2.5f, TdCoreTail = new Color(1f, .85f, .55f) * 1.5f,
+            TdGlowColor = new Color(1f, .5f, .04f);
         private struct TdRound
         {
             public bool Alive, Sniper, Stopped, Pellet;
             public int Id;
             public float Age, Speed, Target, StopAge, Core, Glow;
             public Vector3 Origin, Head, Direction;
-            public Color Color, Tail;
         }
         // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
         private static bool TdCoreLive(in TdRound r) => !(r.Pellet && (r.Head - r.Origin).sqrMagnitude >= PelletFadeDistance * PelletFadeDistance)
             && (r.Stopped ? r.Age - r.StopAge < TdTailOutSeconds : r.Age < TdMaxFlightSeconds);
         private void TdLook(ref TdRound r, VfxWeaponProfile profile)
         {
-            r.Sniper = profile.Class == VfxWeaponClass.Sniper; r.Color = profile.HeadColor; r.Tail = profile.TailColor;
+            r.Sniper = profile.Class == VfxWeaponClass.Sniper;
             r.Core = Mathf.Max(profile.CoreWidth * TdCoreScale, r.Sniper ? TdSniperCoreMin : TdCoreMin);
-            r.Glow = Mathf.Max(profile.GlowWidth * TdGlowScale, r.Core * 2f);
+            r.Glow = Mathf.Max(profile.GlowWidth * TdGlowScale, r.Core * 2.5f);
         }
         private readonly TdRound[] _tdRounds = new TdRound[TdCapacity];
         private int _tdSyntheticId;
@@ -145,8 +151,8 @@ namespace DD.Prototype.Feedback.Vfx
                 }
                 float length = (r.Head-tail).magnitude; if (length < .01f) continue;
                 float flash = Mathf.Clamp01(GameFeelSettings.FlashScale);
-                Color head = layer == 1 ? new Color(.48f,.50f,.52f) : layer == 2 ? r.Tail : r.Color * Mathf.Lerp(.6f, 1f, flash);
-                Color back = layer == 1 ? head : r.Tail;
+                Color head = layer == 1 ? new Color(.48f,.50f,.52f) : layer == 2 ? TdGlowColor : TdCoreHead * Mathf.Lerp(.6f, 1f, flash);
+                Color back = layer == 1 ? head : layer == 2 ? TdGlowColor : TdCoreTail * Mathf.Lerp(.6f, 1f, flash);
                 Write(n, 0, r.Head, tail, layer == 1 ? .12f : layer == 2 ? r.Glow : r.Core,
                     0f, length, 0f, 0f, 0f, head, back, false, false);
                 // Exact metre widths; TD does not inherit the older pixel floor/head dot.
@@ -159,7 +165,8 @@ namespace DD.Prototype.Feedback.Vfx
             _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
             _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
             _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
-            Graphics.DrawMeshInstanced(_quad, 0, _material, _matrices, n, _block, ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
+            Graphics.DrawMeshInstanced(_quad, 0, layer == 2 && _tdGlowMaterial != null ? _tdGlowMaterial : _material, _matrices, n, _block,
+                ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
             return n;
         }
         public const string ShaderName = "DD/VFX Ribbon";
@@ -203,7 +210,7 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Vector4[] _span = new Vector4[Capacity];
         private readonly Vector4[] _extra = new Vector4[Capacity];
         private MaterialPropertyBlock _block;
-        private Material _material;
+        private Material _material, _tdGlowMaterial;
         private Mesh _quad;
         private int _next;
         private int _live;
@@ -292,6 +299,9 @@ namespace DD.Prototype.Feedback.Vfx
             if (shader != null && shader.isSupported)
             {
                 _material = new Material(shader) { name = "DD_VfxRibbon (runtime)", enableInstancing = true, hideFlags = HideFlags.DontSave };
+                // AD 11.10 M1: the TD glow is premultiplied (One / OneMinusSrcAlpha), the cores stay additive
+                _tdGlowMaterial = new Material(_material) { name = "DD_VfxRibbon TD glow (runtime)", hideFlags = HideFlags.DontSave };
+                _tdGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.One); _tdGlowMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             }
 
             _block = new MaterialPropertyBlock();
@@ -316,6 +326,7 @@ namespace DD.Prototype.Feedback.Vfx
             s_instance = null;
             ProjectileDriver.DrawInterimTrails = true;
             if (_material != null) Destroy(_material);
+            if (_tdGlowMaterial != null) Destroy(_tdGlowMaterial);
             if (_quad != null) Destroy(_quad);
         }
 

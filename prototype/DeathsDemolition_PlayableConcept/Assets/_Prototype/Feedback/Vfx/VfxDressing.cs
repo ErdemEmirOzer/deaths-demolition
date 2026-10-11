@@ -736,8 +736,7 @@ namespace DD.Prototype.Feedback.Vfx
             // alone left a hit unreadable from the TD camera - the blood splash card draws with them (a kill: the death path).
             if (FeelBrushVfxSystem.OwnsTdLayers)
             {
-                if (!killed && _ready && !AuditMute && _blood.IsReady)
-                    _blood.PlayHitCard(point, normal, shotDirection, critical ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal);
+                if (!killed && _ready && !AuditMute) PlayTdHit(point, critical);
                 return true;
             }
             if (!_ready || AuditMute)
@@ -751,6 +750,37 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             return PlayBodyImpact(false, point, normal, critical ? 1.3f : 1f);
+        }
+
+        /// <summary>
+        /// User 10.10 / AD 11.10 M2: a top-down hit must read at the hit point, far out too. The brush drops are 2–8 cm and the
+        /// splash card lay along the shot normal (edge-on to the TD camera, dark red on a dark zombie): a camera-facing flesh impact
+        /// (<see cref="TdHitCardMetres"/>, the lighter AP-010 sheet) pulled <see cref="TdHitTowardCamera"/> toward the camera, and a
+        /// warm flash for <see cref="TdHitFlashSeconds"/> fading over its last 60 % (the fireball sheet's first frame held, HDR - the card
+        /// that made the TD blast flash read) - the flash is off with ReduceFlashes.
+        /// </summary>
+        public const float TdHitCardMetres = .7f, TdHitFlashMetres = .5f, TdHitFlashSeconds = .1f, TdHitTowardCamera = .2f;
+        /// <summary>The flesh card lifted so it reads on a dark zombie (a luminance step, not only a hue).</summary>
+        public static readonly Color TdHitCardTint = new Color(1.4f, .62f, .5f);
+        public int TdHitCards { get; private set; }
+        public int TdHitFlashes { get; private set; }
+        private void PlayTdHit(Vector3 point, bool critical)
+        {
+            Vector3 at = point + (FeedbackCameraRef.TryGetPosition(out Vector3 cam) ? (cam - point).normalized : Vector3.up) * TdHitTowardCamera;
+            if (VfxLibrary.TryGetPlayable(VfxIds.ImpactFlesh, out VfxCatalogEntry blood) || VfxLibrary.TryGetPlayable(VfxIds.BloodSplash01, out blood))
+            {
+                FlipbookEffect card = _flipbooks.Get(at, Quaternion.identity);
+                if (card != null) { card.Play(blood, FlipbookEffect.Facing.Camera, TdHitCardMetres * (critical ? 1.3f : 1f), TdHitCardTint, 1f, .3f); Played++; TdHitCards++; }
+            }
+            if (GameFeelSettings.FlashScale >= .99f && VfxLibrary.TryGetPlayable(VfxIds.Explosion, out VfxCatalogEntry flash))
+            {
+                FlipbookEffect fx = _flipbooks.Get(at, Quaternion.identity);
+                if (fx != null)
+                {
+                    fx.Play(flash, FlipbookEffect.Facing.Camera, TdHitFlashMetres * (critical ? 1.3f : 1f), new Color(1f, .78f, .5f) * 6f, 1f, .6f, TdHitFlashSeconds);   // bright, then fades over the last 60 %
+                    fx.HoldFrame(0); Played++; TdHitFlashes++;
+                }
+            }
         }
 
         /// <summary>Family 2: muzzle sheet parented to the muzzle (4 used cells of 16, manifest known issue 4).</summary>

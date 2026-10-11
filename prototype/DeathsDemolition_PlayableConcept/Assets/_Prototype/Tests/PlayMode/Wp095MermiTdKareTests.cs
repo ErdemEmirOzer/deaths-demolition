@@ -25,8 +25,9 @@ namespace DD.Prototype.Tests.PlayMode
     /// WP-095 R3 (user 10.10 via C-00: "the bullets stop half way, hit the enemy further on, the hit is not seen; more visible,
     /// orange-ish, realistic"): the before / after evidence of the top-down tracer and hit. The Run scene, top-down camera, the round
     /// held; one Standard zombie east of the player (A 6 m, B 12 m - the right half of the TD frame), the real weapon (the run's
-    /// classic, AR) fired through the test input with the cursor on the zombie's chest. Frames 2 / 5 / 9 / 14 at 60 Hz after the
-    /// trigger from the game camera, a contact sheet and per-frame counters (live TD tracers, drawn core / glow, TD hit cards).
+    /// classic, AR) fired through the test input with the cursor on the zombie's chest. Frames at 60 Hz after the
+    /// trigger (1–6, 9, 14) from the game camera, a contact sheet and per-frame counters (live TD tracers, drawn core / glow, TD hit
+    /// cards / flashes) with the zombie's chest and the player's screen points (the pixel measurements read them).
     /// Output: DD_TD_MERMI_DIR (else the temp cache). Asserts only that the frames and counters were recorded; what they show is
     /// the reviewer's.
     /// </summary>
@@ -34,8 +35,9 @@ namespace DD.Prototype.Tests.PlayMode
     [Category("Diagnostics")]
     public sealed class Wp095MermiTdKareTests
     {
-        private const int W = 1920, H = 1080, CW = 480, CH = 270;
-        private static readonly int[] Frames = { 2, 5, 9, 14 };
+        private const int W = 1920, H = 1080, CW = 240, CH = 135;
+        // AD 11.10 M2: the arrival frames (A f01–f02, B f03–f04) and the frames after them
+        private static readonly int[] Frames = { 1, 2, 3, 4, 5, 6, 9, 14 };
         // read by name so the same test also builds against the code before the user-10.10 change (the "before" set): -1 = none
         // The ribbons are Graphics.DrawMeshInstanced calls queued in the renderer's LateUpdate; a Camera.Render() from the test (after
         // Update, before LateUpdate - batch mode never returns WaitForEndOfFrame) would not include them. Queue this frame's TD draw
@@ -47,9 +49,9 @@ namespace DD.Prototype.Tests.PlayMode
             int layers = typeof(TracerRibbonRenderer).GetField("TdGlowAlpha") != null ? 3 : 2;
             for (int layer = 0; layer < layers; layer++) draw.Invoke(tracer, new object[] { layer });
         }
-        private static int HitCards(BloodSystem blood)
+        private static int Counter(VfxDressing vfx, string name)
         {
-            object v = blood != null ? typeof(BloodSystem).GetProperty("TdHitCards")?.GetValue(blood) : null;
+            object v = vfx != null ? typeof(VfxDressing).GetProperty(name)?.GetValue(vfx) : null;
             return v is int n ? n : -1;
         }
 
@@ -91,7 +93,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "TD kamera");
                 TracerRibbonRenderer tracer = Object.FindObjectOfType<TracerRibbonRenderer>();
                 Assert.IsNotNull(tracer, "TracerRibbonRenderer yok");
-                BloodSystem blood = HitFeedbackDirector.Instance != null ? HitFeedbackDirector.Instance.Vfx.Blood : null;
+                VfxDressing vfx = HitFeedbackDirector.Instance != null ? HitFeedbackDirector.Instance.Vfx : null;
                 string[] names = { "A-6m", "B-12m" };
                 float[] metres = { 6f, 12f };
                 for (int scene = 0; scene < 2; scene++)
@@ -103,7 +105,8 @@ namespace DD.Prototype.Tests.PlayMode
                     ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, p + Vector3.right * metres[scene], Quaternion.LookRotation(Vector3.left));
                     Assert.IsNotNull(z, names[scene] + ": zombi doğmadı");
                     Camera cam = PrototypeCameraRig.Active.Camera;
-                    int cards = HitCards(blood), frame = 0;
+                    int cards = Counter(vfx, "TdHitCards"), flashes = Counter(vfx, "TdHitFlashes"), frame = 0;
+                    Vector3 chest = Vector3.zero, feet = Vector3.zero;   // pixel coords of the capture (y from the top in the json)
                     for (int f = 0; f <= Frames[Frames.Length - 1]; f++)
                     {
                         if (z != null && z.IsAlive)
@@ -117,7 +120,10 @@ namespace DD.Prototype.Tests.PlayMode
                         {
                             RenderTexture old = cam.targetTexture;
                             QueueTracers(tracer);
-                            cam.targetTexture = target; cam.Render(); cam.targetTexture = old;
+                            cam.targetTexture = target;   // screen points in the capture's own pixels (RT bound)
+                            if (z != null) chest = cam.WorldToScreenPoint(z.transform.position + Vector3.up * 1.2f);
+                            feet = cam.WorldToScreenPoint(rig.transform.position + Vector3.up * 1.2f);
+                            cam.Render(); cam.targetTexture = old;
                             RenderTexture prev = RenderTexture.active; RenderTexture.active = target;
                             read.ReadPixels(new Rect(0, 0, W, H), 0, 0); read.Apply(); RenderTexture.active = prev;
                             string file = names[scene] + "-f" + Frames[frame].ToString("00", CultureInfo.InvariantCulture) + ".png";
@@ -127,7 +133,12 @@ namespace DD.Prototype.Tests.PlayMode
                                     sheet.SetPixel(frame * CW + x, (1 - scene) * CH + y, read.GetPixelBilinear((x + .5f) / CW, (y + .5f) / CH));
                             log.Append("    {\"file\": \"").Append(file).Append("\", \"liveTdTracers\": ").Append(tracer.LiveTdTracers)
                                .Append(", \"drawnCore\": ").Append(tracer.DrawnCore).Append(", \"drawnGlow\": ").Append(tracer.DrawnGlow)
-                               .Append(", \"tdHitCards\": ").Append(cards < 0 ? -1 : HitCards(blood) - cards)
+                               .Append(", \"tdHitCards\": ").Append(cards < 0 ? -1 : Counter(vfx, "TdHitCards") - cards)
+                               .Append(", \"tdHitFlashes\": ").Append(flashes < 0 ? -1 : Counter(vfx, "TdHitFlashes") - flashes)
+                               .Append(", \"zombieScreen\": [").Append(chest.x.ToString("0", CultureInfo.InvariantCulture)).Append(", ")
+                               .Append((H - chest.y).ToString("0", CultureInfo.InvariantCulture)).Append("]")
+                               .Append(", \"playerScreen\": [").Append(feet.x.ToString("0", CultureInfo.InvariantCulture)).Append(", ")
+                               .Append((H - feet.y).ToString("0", CultureInfo.InvariantCulture)).Append("]")
                                .Append(", \"zombieAlive\": ").Append(z != null && z.IsAlive ? "true" : "false").Append("},\n");
                             frame++;
                         }

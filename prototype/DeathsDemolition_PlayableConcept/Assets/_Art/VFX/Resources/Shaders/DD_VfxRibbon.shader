@@ -12,6 +12,10 @@ Shader "DD/VFX Ribbon"
     {
         _MinPx("Minimum width (px)", Float) = 2
         _TailFalloff("Tail falloff (exp k)", Float) = 3.2
+        // WP-095 R3 (AD 11.10 M1): additive by default (One / One, every existing ribbon); the top-down tracer glow uses a
+        // premultiplied instance (One / OneMinusSrcAlpha) - added orange over the blue sky reflection read salmon-pink.
+        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src blend", Float) = 1
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst blend", Float) = 1
     }
 
     SubShader
@@ -22,7 +26,7 @@ Shader "DD/VFX Ribbon"
         {
             Name "Ribbon"
             Tags { "LightMode" = "UniversalForward" }
-            Blend One One
+            Blend [_SrcBlend] [_DstBlend], Zero One
             ZWrite Off
             Cull Off
 
@@ -158,7 +162,7 @@ Shader "DD/VFX Ribbon"
                     rgb *= lerp(0.15, 1.0, saturate((eye - 1.5) / 1.5));                // FP: no blinding bar at the eye
                 }
 
-                return float4(rgb * alpha, 0.0);
+                return float4(rgb * alpha, alpha);   // premultiplied; the target's alpha is kept (Zero One)
             }
             ENDHLSL
         }
