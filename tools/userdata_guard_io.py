@@ -320,6 +320,29 @@ def typical_minutes(ledger, areas):
     return spans[len(spans) // 2] if spans else None
 
 
+FAIR_WARN_ENV = "DD_GUARD_FAIR_WARN_MIN"   # C-00 12.10 queue fairness: a window open longer than this while others wait
+FAIR_WARN_DEFAULT = 25.0
+
+
+def fair_warn_minutes():
+    try:
+        v = float(os.environ.get(FAIR_WARN_ENV, FAIR_WARN_DEFAULT))
+    except ValueError:
+        return FAIR_WARN_DEFAULT
+    return v if v > 0 else FAIR_WARN_DEFAULT
+
+
+def fairness_note(age, waiting, limit=None):
+    """C-00 12.10 (S-05's one editor window held the queue 1.5 h, 8 runs behind it): the warning a waiter prints when the
+    window ahead has been open longer than the limit (DD_GUARD_FAIR_WARN_MIN, 25 min) while ``waiting`` runs queue. A
+    warning only — nothing is ever closed for it."""
+    limit = fair_warn_minutes() if limit is None else limit
+    if age <= limit or waiting < 1:
+        return ""
+    return " — FAIRNESS: open %.0f min (> %.0f) with %d waiting — one Unity step per window (tools/ug-step.sh, C-00 12.10)" % (
+        age, limit, waiting)
+
+
 def age_minutes(utc, default=0.0):
     import calendar
     try:
@@ -483,6 +506,7 @@ def ledger_begin(ledger, record, po, waiter=None):
                 age, typical, " — then ~%.0f min for the %d ahead" % (typical * len(ahead), len(ahead)) if ahead else "")
         else:
             est = "~%.0f min" % (typical - age + typical * len(ahead))
+        est += fairness_note(age, max(len(tickets), len(ahead) + 1))
     else:
         t = ahead[0][1]
         first = "%s (pid %s, queued %.0f min)" % (t.get("dir"), (t.get("owner") or {}).get("pid"), age_minutes(t.get("utc")))

@@ -203,6 +203,31 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertEqual(75, code)
         self.assertIn("estimate overdue: open 60 min, typical 10 min", msg)
 
+    def test_Birim_Adalet_25dkUstuAcikPencere_BekleyenVarken_Uyari(self):
+        """C-00 12.10: a window open > 25 min while runs queue → the waiter's line says FAIRNESS (nothing is closed)."""
+        self.put_record(self.rec("B", self.foreign(), utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 40 * 60))))
+        code, msg = self.begin("N")
+        self.assertEqual(75, code)
+        self.assertIn("FAIRNESS: open 40 min (> 25) with 1 waiting", msg)
+        self.assertEqual(1, len(self.tickets()), "still queued, the window still open")
+        self.assertTrue((self.L / "windows" / "B.json").exists())
+        self.put_record(self.rec("B", self.foreign(), utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 10 * 60))))
+        self.assertNotIn("FAIRNESS", self.begin("N")[1], "10 min: no warning")
+
+    def test_Birim_Adalet_EsikEnvIleAyarlanir_BekleyenYoksaSessiz(self):
+        os.environ["DD_GUARD_FAIR_WARN_MIN"] = "5"
+        try:
+            self.assertIn("(> 5)", self.io.fairness_note(6.0, 2))
+            self.assertEqual("", self.io.fairness_note(4.0, 2))
+        finally:
+            del os.environ["DD_GUARD_FAIR_WARN_MIN"]
+        self.assertEqual("", self.io.fairness_note(90.0, 0), "nobody waits: no warning")
+        os.environ["DD_GUARD_FAIR_WARN_MIN"] = "abc"
+        try:
+            self.assertIn("(> 25)", self.io.fairness_note(30.0, 1), "a bad value falls back to 25")
+        finally:
+            del os.environ["DD_GUARD_FAIR_WARN_MIN"]
+
     def test_Birim_Tahmin_KapaliPencereYok_Unknown(self):
         self.put_record(self.rec("B", self.foreign()))
         self.assertIn("estimate unknown (no closed window over these areas yet)", self.begin("N")[1])

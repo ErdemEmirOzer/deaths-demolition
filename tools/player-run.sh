@@ -27,6 +27,14 @@ dd_disk_gate || exit $?   # C-00 30.09: no Player below 15 GiB free disk / under
 OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v "$$" )
 [ -n "$OTHERS" ] && dd_log "WARNING player-run: another Player is running (user's game or an unwrapped launch): $(echo "$OTHERS" | cut -c1-120 | tr '\n' ';')"
 [[ " $* " == *" -ddTelemetryDir "* ]] || dd_log "WARNING player-run: no -ddTelemetryDir — this run writes the real telemetry folder"
+# C-00 12.10 (WP-104 B1a, profile v6): a Player that opens the REAL profile migrates it to v6 and keeps a .v5.bak beside it,
+# so every tool Player runs on a sandbox — a launch without -ddProfilePath gets a fresh one here. Development and
+# release-probe (with its probe flag) Players honour it; a release Player cannot redirect its profile and ignores the flag.
+if [[ " $* " != *" -ddProfilePath "* ]]; then
+  SBX="${TMPDIR:-/tmp}/dd-player-run-$$-$(date +%s)"; mkdir -p "$SBX"
+  set -- "$@" -ddProfilePath "$SBX/prototype-profile.json"
+  dd_log "player-run: no -ddProfilePath — sandbox $SBX/prototype-profile.json (profile v6, C-00 12.10; a release Player ignores it)"
+fi
 dd_log "player-run: $BIN $*"
 "$BIN" "$@" &
 PID=$!
