@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """C-00 12.10 (queue fairness) · tools/guard-queue.py — who holds the user-data guard windows and who waits. Read-only.
 
-usage: python3 tools/guard-queue.py [--ledger L] [--json] [--waiting]
+usage: python3 tools/guard-queue.py [--ledger L] [--json] [--waiting [--areas editor,player] [--not-under PID]]
   --ledger   the guard's window ledger (default: $DD_GUARD_ROOT/ledger, else ~/.dd-userdata-guard of the passwd home —
              the same rule as tools/userdata-guard.sh)
   --json     the same report as JSON
-  --waiting  print only the number of queued runs (tools/ug-step.sh reads it)
+  --waiting  print only the number of queued runs; with --areas only the LIVE waiters over those areas, with --not-under
+             not the ones a process PID started (a step's own nested guard calls) — tools/ug-step.sh reads it (gt S-5 12.10)
 
 The report: every OPEN window (L/windows: id, areas, state, minutes open, the owner's pid and whether it is alive, DIR)
 and the QUEUE (L/queue tickets, FIFO: position, areas, minutes waiting, the waiter's pid and whether it is alive, DIR).
@@ -30,12 +31,19 @@ def default_ledger():
     return Path(root) / "ledger" if root else Path(io.pwhome()) / ".dd-userdata-guard"
 
 
+MISSING = object()
+
+
 def read_json(path):
+    """the JSON object, None when unreadable or not an object, MISSING when the file is gone (retired since listdir)."""
     try:
         with open(path, encoding="utf-8") as f:
-            return json.load(f)
+            d = json.load(f)
+    except FileNotFoundError:
+        return MISSING
     except (ValueError, OSError):
         return None
+    return d if isinstance(d, dict) else None
 
 
 def liveness(who, table):
@@ -54,10 +62,14 @@ def report(ledger):
         if not m:
             continue
         t = read_json(folder / name)
+        if t is MISSING:
+            continue
         if t is None:
             queue.append({"ns": int(m.group(1)), "id": m.group(2), "unreadable": True})
             continue
         waiter = t.get("waiter") or {}
+        if not isinstance(waiter, dict):
+            waiter = {}
         queue.append({"ns": int(m.group(1)), "id": t.get("id") or m.group(2), "dir": t.get("dir"),
                       "areas": t.get("windowAreas") or [], "waitingMin": round(io.age_minutes(t.get("utc")), 1),
                       "waiterPid": waiter.get("pid"), "waiter": liveness(waiter, table)})
@@ -69,13 +81,27 @@ def report(ledger):
         owner = io.record_owner(rec)
         age = io.age_minutes(rec.get("utc"))
         areas = set(rec.get("windowAreas") or [])
-        waiting = sum(1 for q in queue if not q.get("unreadable") and areas & set(q.get("areas") or []))
+        waiting = sum(1 for q in queue if not q.get("unreadable") and q.get("waiter") != "gone" and areas & set(q.get("areas") or []))
         windows.append({"id": rec.get("id"), "dir": rec.get("dir"), "areas": sorted(areas), "state": rec.get("state"),
                         "openMin": round(age, 1), "ownerPid": owner.get("pid"), "owner": liveness(owner, table),
                         "waitingBehind": waiting, "fairness": bool(io.fairness_note(age, waiting, limit))})
     windows.sort(key=lambda w: -w["openMin"])
     return {"ledger": str(ledger), "utc": io.utc_now(), "fairWarnMin": limit, "windows": windows,
-            "queue": [{k: v for k, v in q.items() if k != "ns"} for q in queue]}
+            "queue": [{k: v for k, v in q.items() if k != "ns"} for q in queue], "_table": table}
+
+
+def waiting_for(r, areas, not_under):
+    """gt S-5 (12.10): the runs that really wait for these areas — readable tickets over them whose waiter is alive and was
+    not started by not_under (a step's own nested guard calls queue too)."""
+    table = r["_table"]
+    n = 0
+    for q in r["queue"]:
+        if q.get("unreadable") or q.get("waiter") != "alive" or not set(q.get("areas") or []) & areas:
+            continue
+        if not_under and q.get("waiterPid") and int(not_under) in table.ancestors(int(q["waiterPid"])):
+            continue
+        n += 1
+    return n
 
 
 def text(r):
@@ -100,6 +126,8 @@ def main(argv=None):
     ap.add_argument("--ledger")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--waiting", action="store_true")
+    ap.add_argument("--areas")
+    ap.add_argument("--not-under", type=int)
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -107,9 +135,13 @@ def main(argv=None):
     ledger = Path(args.ledger) if args.ledger else default_ledger()
     r = report(ledger)
     if args.waiting:
-        print(len(r["queue"]))
+        if args.areas or args.not_under:
+            areas = set((args.areas or "editor,player").split(","))
+            print(waiting_for(r, areas, args.not_under))
+        else:
+            print(len(r["queue"]))
     elif args.json:
-        print(json.dumps(r, indent=2))
+        print(json.dumps({k: v for k, v in r.items() if k != "_table"}, indent=2))
     else:
         print(text(r))
     return 0

@@ -9,6 +9,9 @@
 # main-ci's PlayMode run can disturb an audio/focus test (WP-043D risk, accepted). Warns (does not refuse) when another Player is already running — the user's own game
 # or an unwrapped launch — and when -ddTelemetryDir is missing (the run would write the real telemetry
 # folder). User data is NOT guarded here: keep tools/userdata-guard.sh snapshot/restore around it.
+# C-00 12.10 (WP-104 B1a profile v6): a launch without -ddProfilePath gets a fresh, empty profile sandbox under $TMPDIR
+# (each launch its own — a multi-launch flow that needs one profile across launches passes its own path); UI data, telemetry
+# and PlayerPrefs are not redirected by this, and the sandbox folders are left for the caller / TMPDIR cleanup.
 # Y2 (C-00 30.09): INT/TERM/HUP to this wrapper are passed on to the Player (as TERM) and the wrapper waits for it — a
 # caller that stops its stage (rc.sh) or times a run out (wp064_run.py) leaves no orphan Player writing user data after
 # its guard restore.
