@@ -14,6 +14,10 @@ when all three hold:
      its mtime lies inside the span of ANOTHER player-scope guard window (window.json utc → its restore summary,
      ± SPAN_SLACK s) — that window's Player run or restore is the writer — and condition 3 holds for that window. The
      mtime must also lie inside this window's own span. A change outside every such window still fails.
+     R4 (C-00 11.10, S-07 wp101-once-v2): a window that will never restore is no candidate — one with a NOT-RESTORED
+     marker (resolved or not), one without a restore summary that the ledger lists as closed, or one whose owner process
+     (window.json receipt.owner pid + start) is gone. Of the windows holding the mtime, a restored one wins over an open
+     one, verified=1 first, then the tightest span (an abandoned 10.10 window used to shadow the real, verified writer).
 Anything else → FAIL (the caller stops, tell C-00). Player stages never come here: there 32 is a failure.
 Owning windows are looked up in the guard's window ledger first (G4 D8: L/windows + L/closed records name their DIR;
 L = $DD_GUARD_ROOT/ledger, else ~/.dd-userdata-guard of the passwd home), then — windows taken before D8 have no record —
@@ -27,6 +31,7 @@ import json
 import os
 import pwd
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -41,6 +46,7 @@ MTIME = re.compile(r"\bmtime (\d\d:\d\d:\d\d)Z")
 SUMMARY_UTC = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ) userdata-guard restore scope=")
 SPAN_SLACK = 0   # s (gt S-2, C-00 08.10: was 2 — a 2 s false-PASS band): whole seconds on both sides, the grant comes
                  # before any write of the run and the restore's summary line after its last write
+MARKER = "userdata-NOT-RESTORED.txt"   # guard_receipt.MARKER: the window was never restored (.resolved or not)
 BAD_NL = "$'\\n'"   # guard 52b7a00f..: the file ended in this literal instead of a newline (C-00 05.10) — read it too
 
 
@@ -158,13 +164,65 @@ def full_mtime(hms, own):
     return None
 
 
+def closed_dirs(ledgers):
+    """dirs the guard ledger lists as closed (L/closed records)."""
+    out = set()
+    for ledger in ledgers:
+        for rec in Path(ledger, "closed").glob("*.json"):
+            try:
+                d = json.loads(rec.read_text(encoding="utf-8")).get("dir")
+            except (ValueError, OSError):
+                continue
+            if d:
+                out.add(Path(d).resolve())
+    return out
+
+
+def owner_alive(window):
+    """True / False when window.json names its owner (receipt.owner pid + lstart, `ps -o lstart=` form), None if unknown."""
+    try:
+        owner = ((json.loads((window / "window.json").read_text(encoding="utf-8")).get("receipt") or {}).get("owner") or {})
+    except (OSError, ValueError, AttributeError):
+        return None
+    pid, lstart = owner.get("pid"), owner.get("lstart")
+    if not isinstance(pid, int) or not isinstance(lstart, str):
+        return None
+    env = {k: v for k, v in os.environ.items() if k != "TZ"}
+    env["LC_ALL"] = "C"
+    r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, env=env)
+    return r.returncode == 0 and " ".join(r.stdout.split()) == " ".join(lstart.split())
+
+
+def never_restores(window, closed):
+    """R4 (C-00 11.10): a window without a restore summary that will never get one — a NOT-RESTORED marker (resolved or
+    not), a closed ledger record, or an owner process that is gone."""
+    if (window / MARKER).exists():
+        return True
+    if window.resolve() in closed:
+        return True
+    return owner_alive(window) is False
+
+
 def window_at(t, roots, own, ledgers=()):
-    """another player-scope window whose span holds t (a window not restored yet counts while it is open)."""
+    """another player-scope window whose span holds t. A window not restored yet counts while it is open — never one that
+    will not restore (never_restores). Several: a restored one first (verified=1 first, then the tightest span), then an
+    open one (R4, C-00 11.10: an abandoned 10.10 window shadowed the real writer, S-07 wp101-once-v2)."""
+    closed = closed_dirs(ledgers)
+    restored, still_open = [], []
     for w in windows(roots, own, ledgers):
-        sp = span(w) if is_player_window(w) else None
-        if sp and sp[0] - SPAN_SLACK <= t and (sp[1] is None or t <= sp[1] + SPAN_SLACK):
-            return w
-    return None
+        if not is_player_window(w) or (w / MARKER).exists():
+            continue
+        sp = span(w)
+        if not sp or t < sp[0] - SPAN_SLACK:
+            continue
+        if sp[1] is not None:
+            if t <= sp[1] + SPAN_SLACK:
+                restored.append((verified(w) is not True, sp[1] - sp[0], str(w), w))
+        elif not never_restores(w, closed):
+            still_open.append((sp[0], str(w), w))
+    if restored:
+        return sorted(restored)[0][3]
+    return sorted(still_open)[-1][2] if still_open else None
 
 
 def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledgers=()):

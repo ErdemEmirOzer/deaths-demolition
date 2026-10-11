@@ -177,6 +177,63 @@ class OosRuleTests(unittest.TestCase):
         self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
         ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
 
+    # --- R4 (C-00 11.10, S-07 wp101-once-v2): windows that will never restore are no writers; a restored one wins ---------
+    def other(self, name, start, end=None, verified="verified=1", marker=False, resolved=False, owner=None):
+        """another player-scope window under the walk root: window.json utc start (+ receipt.owner), a restore summary at
+        end (None = none), the NOT-RESTORED marker (+ .resolved)."""
+        import json as _json
+        w = self.root / "wp-092" / "perf-td" / name / "ug"; w.mkdir(parents=True)
+        doc = {"scope": "player", "windowAreas": ["player"], "utc": "2026-10-05T%sZ" % start}
+        if owner:
+            doc["receipt"] = {"owner": {"pid": owner[0], "lstart": owner[1]}}
+        (w / "window.json").write_text(_json.dumps(doc))
+        if end is not None:
+            (w / "restore.txt").write_text("2026-10-05T%sZ userdata-guard restore scope=player touched=1 %s extraKeys=0\nexit=0\n" % (end, verified))
+        if marker:
+            (w / "userdata-NOT-RESTORED.txt").write_text("NOT restored\n")
+        if resolved:
+            (w / "userdata-NOT-RESTORED.resolved").write_text("C-00\n")
+        return w
+
+    def test_2b_IsaretliTerkPencere_AdayDegil_GercekVerifiedYazar(self):
+        self.span_case(mtime="12:05:00")   # the real writer: self.owner 12:03 → 12:05:01, verified=1
+        stale = self.other("18c8be11", "12:01:00", marker=True, resolved=True)   # opened before, never restored
+        ok, why = self.decide()
+        self.assertTrue(ok, why); self.assertIn(str(self.owner), why); self.assertNotIn(str(stale), why)
+
+    def test_2b_YalnizIsaretliTerkPencere_Kalir_YazarYok(self):
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")   # the real window does not hold it
+        self.other("18c8be11", "12:01:00", marker=True, resolved=True)
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
+
+    def test_2b_SahibiOlmusAcikPencere_AdayDegil_CanliSahipBeklenir(self):
+        import os as _os, subprocess as _sp
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
+        gone = _sp.Popen(["true"]); gone.wait()
+        dead = self.other("dead-owner", "12:01:00", owner=(gone.pid, "Mon Oct  5 15:01:00 2026"))
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
+        lstart = _sp.run(["ps", "-o", "lstart=", "-p", str(_os.getpid())], capture_output=True, text=True,
+                         env=dict({k: v for k, v in _os.environ.items() if k != "TZ"}, LC_ALL="C")).stdout.strip()
+        import json as _json
+        doc = _json.loads((dead / "window.json").read_text()); doc["receipt"]["owner"] = {"pid": _os.getpid(), "lstart": lstart}
+        (dead / "window.json").write_text(_json.dumps(doc))   # its owner is alive: still open, the writer, waited for
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("not restored yet", why); self.assertIn(str(dead), why)
+
+    def test_2b_DefterdeKapaliRestoresizPencere_AdayDegil(self):
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
+        closed = self.other("closed-no-summary", "12:01:00")
+        ledger = self.root / "ledger"; (ledger / "closed").mkdir(parents=True)
+        (ledger / "closed" / "c1.json").write_text('{"id": "c1", "dir": "%s"}' % closed)
+        ok, why = oos_rule.decide(self.ug, [self.root], wait=0, sleep=lambda s: None, ledgers=[ledger])
+        self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
+        ok, why = oos_rule.decide(self.ug, [self.root], wait=0, sleep=lambda s: None, ledgers=[])   # without the ledger: open
+        self.assertFalse(ok, why); self.assertIn("not restored yet", why)
+
+    def test_2b_AcikVeRestoreEdenPencere_RestoreEdenTercih(self):
+        self.span_case(mtime="12:05:00")   # self.owner restored verified 12:03 → 12:05:01
+        self.other("open-unknown-owner", "12:02:00")   # no restore, owner unknown: open
+        ok, why = self.decide(); self.assertTrue(ok, why); self.assertIn(str(self.owner), why)
+
     def test_SatirYok_Kalir(self):
         self.window(rows=())
         (self.ug / "out-of-scope-changed.txt").write_text("")
