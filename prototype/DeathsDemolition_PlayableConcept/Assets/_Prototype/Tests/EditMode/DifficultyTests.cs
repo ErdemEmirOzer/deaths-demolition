@@ -182,7 +182,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Less(Vector3.Distance(PursuitPlanner.OpenSide(new[] { 0, 1, 1, 1, 0, 1, 1, 1 }, Vector3.forward), Vector3.forward), 1e-3f, "iki açık yan: oyuncunun baktığı");
         }
 
-        /// <summary>C-00 KARAR-WP104 §11.3 / §11.5: R21+ health × 1.15^(R−20) and a late Elite / Ultra share (every mode); the mode
+        /// <summary>C-00 KARAR-WP104 §11.3 / §11.5 / 4 (12.10): R21+ health × 1.25^(R−20) and the late Elite / Ultra share 2.5 / 2.0 per
+        /// round (every mode); the mode
         /// gold scale exact over a run (the fraction carries); Demolition's opening gold.</summary>
         [Test]
         public void GecOyunCanEgrisi_GecElitUltraPayi_ModAltini()
@@ -190,14 +191,16 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeConfig c = PrototypeConfig.Active;
             for (int r = 1; r <= 20; r++)
                 Assert.AreEqual(1f + c.Rounds.HealthMultiplierPerRound * (r - 1), c.EnemyHealthMultiplier(r), 1e-4f, "R" + r + " doğrusal kalır");
-            Assert.AreEqual((1f + 0.12f * 20f) * 1.15f, c.EnemyHealthMultiplier(21), 1e-3f, "R21 × 1,15");
-            Assert.AreEqual((1f + 0.12f * 27f) * Mathf.Pow(1.15f, 8f), c.EnemyHealthMultiplier(28), 1e-2f, "R28 × 1,15^8");
+            Assert.AreEqual((1f + 0.12f * 20f) * 1.25f, c.EnemyHealthMultiplier(21), 1e-3f, "R21 × 1,25");
+            Assert.AreEqual((1f + 0.12f * 27f) * Mathf.Pow(1.25f, 8f), c.EnemyHealthMultiplier(28), 1e-2f, "R28 × 1,25^8");
             Assert.IsFalse(float.IsInfinity(c.EnemyHealthMultiplier(int.MaxValue)), "uç round sonlu");
             EnemyTierSettings elite = c.Enemies.Find(EnemyTier.Elite), ultra = c.Enemies.Find(EnemyTier.Ultra), std = c.Enemies.Find(EnemyTier.Standard);
             Assert.AreEqual(elite.SpawnWeightMax, elite.ResolveSpawnWeight(20), 1e-4f, "Elite R20 tavanda");
             Assert.Greater(elite.ResolveSpawnWeight(21), elite.SpawnWeightMax, "Elite R21 geç payı");
             Assert.Greater(ultra.ResolveSpawnWeight(25), ultra.SpawnWeightMax, "Ultra R25 geç payı");
             Assert.AreEqual(std.ResolveSpawnWeight(20), std.ResolveSpawnWeight(30), 1e-4f, "Standard'ın geç payı yok");
+            Assert.AreEqual(elite.SpawnWeightMax + 2.5f * 5f, elite.ResolveSpawnWeight(25), 1e-3f, "Elite geç payı 2,5/round (KARAR 4)");
+            Assert.AreEqual(ultra.SpawnWeightMax + 2.0f * 5f, ultra.ResolveSpawnWeight(25), 1e-3f, "Ultra geç payı 2,0/round (KARAR 4)");
 
             DifficultyService.Selected = DifficultyMode.Normal;
             DifficultyService.BeginRun();

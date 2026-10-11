@@ -118,7 +118,7 @@ MonoBehaviour:
       SpawnWeight: 9
       SpawnWeightGrowthPerRound: 1.6
       SpawnWeightMax: 26
-      LateSpawnWeightPerRound: 1.5
+      LateSpawnWeightPerRound: 2.5
       LateWeightFromRound: 21
       BodyRadius: 0.62
       SeparationMass: 2.2
@@ -145,7 +145,7 @@ MonoBehaviour:
       SpawnWeight: 3
       SpawnWeightGrowthPerRound: 0.7
       SpawnWeightMax: 12
-      LateSpawnWeightPerRound: 1
+      LateSpawnWeightPerRound: 2
       LateWeightFromRound: 21
       BodyRadius: 0.9
       SeparationMass: 5
@@ -181,7 +181,7 @@ MonoBehaviour:
     HealthMultiplierPerRound: 0.12
     DamageMultiplierPerRound: 0.08
     LateHealthFromRound: 21
-    LateHealthGrowth: 1.15
+    LateHealthGrowth: 1.25
     SpawnRefillInterval: 0.45
     RoundStartCountdown: 3
     MaxSpawnsPerRefillTick: 2
