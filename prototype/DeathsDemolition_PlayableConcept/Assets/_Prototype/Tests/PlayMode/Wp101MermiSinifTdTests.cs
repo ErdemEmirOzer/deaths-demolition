@@ -114,11 +114,13 @@ namespace DD.Prototype.Tests.PlayMode
                         girdi.AtesBasili = f < 48;
                         yield return null;
                         if ((f & 1) != 0) continue;
+                        // the dark frame FIRST: a DrawMeshInstanced queued for the lit render stays in every later render of this frame
+                        // (v3 grabbed it second and measured ≈ 20 px for a 280 px streak)
+                        Color32[] dark = Grab(cam, target, read, tracer, false);   // the same frame with the TD tracer layers held back
                         Color32[] lit = Grab(cam, target, read, tracer, true);
                         File.WriteAllBytes(Path.Combine(dir, "video", "f-" + videoFrame.ToString("000000", CultureInfo.InvariantCulture) + ".jpg"), read.EncodeToJPG(92));
                         tsv.Append(videoFrame).Append('\t').Append((videoFrame / 30f).ToString("0.####", CultureInfo.InvariantCulture)).Append('\n');
                         videoFrame++;
-                        Color32[] dark = Grab(cam, target, read, tracer, false);   // the same frame with the TD tracer layers held back
                         Vector2 a = Px(cam, rig.transform.position + Vector3.up * 1.4f), b = Px(cam, chest);
                         metre = (Px(cam, chest + cam.transform.right) - b).magnitude;
                         Measure(lit, dark, a, b, metre * .6f, out int streak, out float orange, out float width);
