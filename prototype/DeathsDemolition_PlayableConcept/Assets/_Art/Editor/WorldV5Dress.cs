@@ -1080,21 +1080,32 @@ namespace DD.Art.Pipeline.EditorTools
             GreyboxV6Builder.Crossing c8 = GreyboxV6Builder.Crossings[GreyboxV6Builder.C8Bridge], c1 = GreyboxV6Builder.Crossings[GreyboxV6Builder.C1Causeway];
             float span = c8.Length * 0.5f;
             foreach (float z in new[] { c8.Centre.y + span * 0.5f, c8.Centre.y - span * 0.5f })
-                Place(group, "plank_bridge", 1, Mz(c8.Centre.x, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(c8.Width / KitPlankWidth, span / KitPlankLength, 1f)), Vector3.zero, "structure");
+                ClipRailColliders(Place(group, "plank_bridge", 1, Mz(c8.Centre.x, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(c8.Width / KitPlankWidth, span / KitPlankLength, 1f)), Vector3.zero, "structure"));
             int slabs = C1SlabCount;
             float slab = c1.Length / slabs;
             for (int i = 0; i < slabs; i++)
                 Place(group, "slab_bridge", 1, Mz(c1.Centre.x, c1.Min.y + slab * 0.5f + slab * i, 0f, 0f) * Matrix4x4.Scale(new Vector3(c1.Width / KitSlabWidth, slab / KitSlabLength, 1f)), Vector3.zero, "structure");
         }
 
-        /// <summary>The west grove: its greybox blocks stay as the (invisible) collision, bamboo v2 clumps dress the solid cells, yotsume fences line the main lane — visual, no colliders.</summary>
+        /// <summary>
+        /// The west grove: bamboo v2 clumps dress the solid cells, yotsume fences line the main lane.
+        /// WP-103 (R4 #4, "where nothing is in the way, the hero walks"): the clumps and the fences keep their kit colliders — what is drawn
+        /// is what blocks, the gaps between the clumps walk (the hero and, through the NavMesh they carve, the zombies). The greybox blocks
+        /// stay as zone volumes on <see cref="PrototypeLayers.WorldZoneName"/> (renderer off, no collision): the vegetation zoning and the
+        /// ambience's grove beds still read them; bodies, bullets and the NavMesh no longer do.
+        /// </summary>
         private static void Grove(Transform dress, Transform greybox)
         {
             foreach (Transform t in Children(greybox))
-                if (t.name.StartsWith("Bamboo_", StringComparison.Ordinal)) t.GetComponent<MeshRenderer>().enabled = false;
+            {
+                if (!t.name.StartsWith("Bamboo_", StringComparison.Ordinal)) continue;
+                t.GetComponent<MeshRenderer>().enabled = false;
+                t.gameObject.layer = PrototypeLayers.WorldZone;
+                GameObjectUtility.SetStaticEditorFlags(t.gameObject, StaticEditorFlags.BatchingStatic);   // no longer NavigationStatic
+            }
+
             var group = new GameObject(GroveGroupName) { layer = PrototypeLayers.Environment }.transform;
             group.SetParent(dress, false);
-            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
             var rng = new System.Random(747);
             for (float x = -53.5f; x <= -38f; x += 3.2f)
             for (float z = -29.5f; z <= 29.5f; z += 3.2f)
@@ -1110,13 +1121,13 @@ namespace DD.Art.Pipeline.EditorTools
                 // rng sequence and every other clump stay put) leaves out GroveEdgeGap of the clumps within GroveEdgeBand m of a lane
                 // and GroveInnerGap deeper in.
                 if (GroveHash01(c) < (laneDistance < 3f + GroveEdgeBand ? GroveEdgeGap : GroveInnerGap)) continue;
-                Visual(Place(group, "bamboo_v2", v, Mz(c.x, c.y, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (float)s), Vector3.zero, "vegetation"));
+                Place(group, "bamboo_v2", v, Mz(c.x, c.y, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (float)s), Vector3.zero, "vegetation");
             }
 
             // The main lane (x −45) between its cross lanes: yotsume fence both sides, 1.8 m modules.
             foreach (float side in new[] { -1.9f, 1.9f })
             foreach ((float z0, float z1) in new[] { (-25f, -16.5f), (-11.5f, -2.5f), (2.5f, 11.5f), (16.5f, 25f) })
-                FenceRun(group, "fence_yotsume", new Vector2(-45f + side, z0), new Vector2(-45f + side, z1), true);
+                FenceRun(group, "fence_yotsume", new Vector2(-45f + side, z0), new Vector2(-45f + side, z1), false);
         }
 
         /// <summary>The service yard (1.8 m) and the R7 sakura court walls as kenninji fences on the same lines and gaps (kit colliders).</summary>
@@ -1195,6 +1206,44 @@ namespace DD.Art.Pipeline.EditorTools
                 Vector2 p = a + d * ((i + 0.5f) * w);
                 Place(parent, "wall_kit", 7, Mz(p.x, p.y, 0f, deg) * Matrix4x4.Scale(new Vector3(w / 3f, 1f, 1f)), Vector3.zero, "structure");
             }
+        }
+
+        /// <summary>
+        /// WP-103 (R4 #4): the plank bridge's rail colliders (the thin boxes, &lt; 0.3 m across the bridge) end where the drawn rail ends — the
+        /// kit's end segments ran ~0.17 m past it along the span (the walk scan stopped the hero at nothing at both landings and the middle).
+        /// </summary>
+        internal static int ClipRailColliders(GameObject span)
+        {
+            Renderer rail = null;
+            foreach (Renderer r in span.GetComponentsInChildren<Renderer>(true)) if (r.name == "rail_LOD0") { rail = r; break; }
+            if (rail == null) return 0;
+            Physics.SyncTransforms();
+            Bounds drawn = rail.bounds;
+            int clipped = 0;
+            foreach (BoxCollider box in span.GetComponentsInChildren<BoxCollider>(true))
+            {
+                Bounds b = box.bounds;
+                if (b.size.x >= 0.3f) continue;   // the deck and the landings span the bridge; rails are thin
+                float over = Mathf.Max(0f, b.max.z - drawn.max.z), under = Mathf.Max(0f, drawn.min.z - b.min.z);
+                if (over < 0.01f && under < 0.01f) continue;
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 unit = Vector3.zero;
+                    unit[i] = 1f;
+                    Vector3 w = box.transform.TransformVector(unit);
+                    if (Mathf.Abs(w.normalized.z) < 0.99f) continue;
+                    float metresPerUnit = w.magnitude, sign = Mathf.Sign(w.z);
+                    Vector3 size = box.size, centre = box.center;
+                    size[i] = Mathf.Max(0.01f, size[i] - (over + under) / metresPerUnit);
+                    centre[i] += sign * (under - over) / (2f * metresPerUnit);
+                    box.size = size;
+                    box.center = centre;
+                    clipped++;
+                    break;
+                }
+            }
+
+            return clipped;
         }
 
         /// <summary>An instance made visual only: its colliders off (the greybox collision or the NavMesh boundary rules there).</summary>

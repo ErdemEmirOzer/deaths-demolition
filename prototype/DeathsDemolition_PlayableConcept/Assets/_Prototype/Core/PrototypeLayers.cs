@@ -18,6 +18,9 @@ namespace DD.Prototype.Core
         public const string CameraOccluderName = "CameraOccluder";
         /// <summary>WP-071: ragdoll proxy bodies (collide with the world and each other; never with actors, hitboxes, projectiles).</summary>
         public const string RagdollName = "Ragdoll";
+        /// <summary>WP-103 (R4 #4): zone volumes that collide with nothing (the physics matrix clears layer 18 everywhere) — read only by the
+        /// world probes that ask for it by mask (the bamboo grove's blocks: vegetation zoning, surface tags), never by bodies, bullets or the NavMesh.</summary>
+        public const string WorldZoneName = "WorldZone";
 
         private static bool s_resolved;
 
@@ -30,6 +33,7 @@ namespace DD.Prototype.Core
         private static int s_environment;
         private static int s_cameraOccluder;
         private static int s_ragdoll;
+        private static int s_worldZone;
 
         public static int Player { get { Resolve(); return s_player; } }
         public static int Enemy { get { Resolve(); return s_enemy; } }
@@ -40,6 +44,7 @@ namespace DD.Prototype.Core
         public static int Environment { get { Resolve(); return s_environment; } }
         public static int CameraOccluder { get { Resolve(); return s_cameraOccluder; } }
         public static int Ragdoll { get { Resolve(); return s_ragdoll; } }
+        public static int WorldZone { get { Resolve(); return s_worldZone; } }
 
         /// <summary>What a player bullet is allowed to hit.</summary>
         public static int BulletHitMask => (1 << EnemyHitbox) | (1 << Environment) | (1 << CameraOccluder);
@@ -70,6 +75,7 @@ namespace DD.Prototype.Core
             s_environment = LayerMask.NameToLayer(EnvironmentName);
             s_cameraOccluder = LayerMask.NameToLayer(CameraOccluderName);
             s_ragdoll = LayerMask.NameToLayer(RagdollName);
+            s_worldZone = LayerMask.NameToLayer(WorldZoneName);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

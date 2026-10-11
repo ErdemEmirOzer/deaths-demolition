@@ -181,9 +181,11 @@ namespace DD.Prototype.World.Vegetation
         {
             int env = LayerMask.NameToLayer(DD.Prototype.Core.PrototypeLayers.EnvironmentName);
             int occ = LayerMask.NameToLayer(DD.Prototype.Core.PrototypeLayers.CameraOccluderName);
+            int zone = LayerMask.NameToLayer(DD.Prototype.Core.PrototypeLayers.WorldZoneName);   // WP-103: the grove's blocks (zone only, no collision)
             int m = 1;
             if (env >= 0) m |= 1 << env;
             if (occ >= 0) m |= 1 << occ;
+            if (zone >= 0) m |= 1 << zone;
             return m;
         }
 

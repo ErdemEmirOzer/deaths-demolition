@@ -121,15 +121,17 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(map);
             Assert.IsNotNull(map.Texture, "push map has no texture");
 
-            var at = new Vector2(1f, 2f);
+            // FINAL 10.10 perf: High × TopDown runs the Performance-size map (24 m), so the points sit relative to the window's centre
+            Vector2 centre = map.Origin + Vector2.one * (map.WorldSize * 0.5f);
+            Vector2 at = centre + new Vector2(1f, 2f);
             map.Stamp(at, Vector2.zero, 0.55f, 1f, 1.5f, 0.6f, 0f, 0.016f);
             float d0 = map.DisplacementAt(at);
             Assert.Greater(d0, 0f, "interaction value at the pusher is 0");
             Assert.Greater(map.FlattenAt(at), 0f, "no flatten at the pusher");
 
             // Explosion API: the blast core shoves at once.
-            VegetationSystem.Push(new Vector3(-4f, 0f, -3f), 3f, 1f);
-            Assert.Greater(map.DisplacementAt(new Vector2(-3f, -3f)), 0.5f, "VegetationSystem.Push did not shove the core");
+            VegetationSystem.Push(new Vector3(centre.x - 4f, 0f, centre.y - 3f), 3f, 1f);
+            Assert.Greater(map.DisplacementAt(centre + new Vector2(-3f, -3f)), 0.5f, "VegetationSystem.Push did not shove the core");
 
             for (int i = 0; i < 45; i++)
             {

@@ -127,12 +127,12 @@ namespace DD.Art.Pipeline.EditorTools
             public readonly SortedSet<string> SkippedFamilies = new SortedSet<string>(StringComparer.Ordinal);
             public int Skipped;
             public readonly List<string> BannedTops = new List<string>(), Warnings = new List<string>(), RaisedTops = new List<string>();
-            public int InnerFadesRemoved, WalkColliders, PartsOff;
+            public int InnerFadesRemoved, WalkColliders, PartsOff, StonesFitted;
             public override string ToString() => "layout v5: " + Buildings + " buildings (" + Bays + " bays), " + Items + " items, " + Lamps + " lamps (" + BakedLights + " baked lights, "
                                                  + PoolLamps + " pool, " + Emissive + " emissive, " + Unlit + " unlit), " + Ropes + " ropes, " + Cleared + " plants cleared, " + Skipped + " skipped"
                                                  + (SkippedFamilies.Count > 0 ? " [" + string.Join(", ", SkippedFamilies) + "]" : "") + ", " + RaisedTops.Count + " collider tops raised over the banned band, "
                                                  + BannedTops.Count + " banned collider tops, " + InnerFadesRemoved + " inner fade states folded into shells, " + WalkColliders + " road walk colliders, "
-                                                 + PartsOff + " kit collider parts off, " + Warnings.Count + " warnings";
+                                                 + PartsOff + " kit collider parts off, " + StonesFitted + " stones fitted, " + Warnings.Count + " warnings";
 
             /// <summary>Every warning and collider note, one per line (the builder logs it after the report line).</summary>
             public string Details()
@@ -332,6 +332,7 @@ namespace DD.Art.Pipeline.EditorTools
                 else
                 {
                     if (item.PartsOff.Length > 0) report.PartsOff += PartsOff(go, item);
+                    if (Array.IndexOf(StoneFitFamilies, item.Family) >= 0) report.StonesFitted += FitStoneCollider(go);
                     AuditTop(go, item, report);
                 }
                 report.Items++;
@@ -838,6 +839,29 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Collider c in go.GetComponentsInChildren<Collider>(true))   // anything not in the manifest's geometry list (roof, broken)
                 if (c.transform.parent == null || c.transform.parent.name != ArtLibraryPrefabBuilder.GeometryName) c.gameObject.SetActive(false);
             return kept;
+        }
+
+        /// <summary>WP-103 (R4 #4): the boulders whose kit box is wider than the stone (the walk scan stopped the hero up to 0.47 m short).</summary>
+        public static readonly string[] StoneFitFamilies = { "rock_large" };
+
+        /// <summary>
+        /// WP-103: the stone itself is the collision — a convex MeshCollider on the LOD0 mesh (beside its renderer), the kit boxes off.
+        /// Returns 1 when fitted, 0 when the piece has no LOD0 mesh (it keeps its box).
+        /// </summary>
+        internal static int FitStoneCollider(GameObject go)
+        {
+            MeshFilter lod0 = null;
+            foreach (MeshFilter mf in go.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh != null && mf.name.EndsWith("_LOD0", StringComparison.Ordinal)) { lod0 = mf; break; }
+            }
+
+            if (lod0 == null) return 0;
+            foreach (BoxCollider box in go.GetComponentsInChildren<BoxCollider>(true)) box.gameObject.SetActive(false);
+            var hull = lod0.gameObject.AddComponent<MeshCollider>();
+            hull.sharedMesh = lod0.sharedMesh;
+            hull.convex = true;
+            return 1;
         }
 
         /// <summary>The plan's colliderPartsOff: the kit colliders of those manifest parts go (a well's bucket under 0.30 m, a stall's stools).</summary>

@@ -2,10 +2,10 @@
     "schema": "dd.fptp-only/v1",
     "ruleVersion": 2,
     "world": "Assets/_Art/Scenes/World_V6_Greybox.unity",
-    "contentHash": "c657b09641645969db71b48cafe1c6b739b9dc10",
+    "contentHash": "2e451379644793b10854141874ff13b912562e0f",
     "rule": "move = movable unit (WorldFptpSplit.StaticPin null) with 0 px in every TD pose (2.4:1 + 16:9 crop, FOV +1.5deg, LOD0, fader emulated, opaque + transparent passes), 0 px in the plaza planar reflection, no shadow into a pose frustum (sun sweep to y -2, 60 m) and no shadow-casting point/spot light range on a pose",
     "units": 3403,
-    "moved": 167,
+    "moved": 168,
     "entries": [
         {
             "key": "Dress v5 (AP-023)/Ground_Terrain/GroundTerrain_0_0@0.00,0.00,0.00",
@@ -203,6 +203,14 @@
             "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_South@0.00,-1.00,-88.00",
             "family": "SM_SkirtWall",
             "fingerprint": "SM_SkirtWall|r1|t2|e0.0,180.0,0.0|s176.00,6.00,1.00|Move",
+            "mode": "Move",
+            "renderers": 1,
+            "triangles": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_West@-88.00,-1.00,0.00",
+            "family": "SM_SkirtWall",
+            "fingerprint": "SM_SkirtWall|r1|t2|e0.0,270.0,0.0|s176.00,6.00,1.00|Move",
             "mode": "Move",
             "renderers": 1,
             "triangles": 2

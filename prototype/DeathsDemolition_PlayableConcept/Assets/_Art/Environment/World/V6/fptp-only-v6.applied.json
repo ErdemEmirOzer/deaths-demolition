@@ -1,6 +1,6 @@
 {
     "schema": "dd.fptp-only/v1/applied",
-    "contentHash": "c657b09641645969db71b48cafe1c6b739b9dc10",
+    "contentHash": "2e451379644793b10854141874ff13b912562e0f",
     "reason": "fresh list",
     "entries": [
         {
@@ -152,6 +152,12 @@
             "mode": "Move",
             "parent": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)",
             "sibling": 2
+        },
+        {
+            "key": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)/Skirt_West@-88.00,-1.00,0.00",
+            "mode": "Move",
+            "parent": "Dress v5 (AP-023)/UnderstorySkirt (DEC-108)",
+            "sibling": 3
         },
         {
             "key": "Dress v5 (AP-023)/VistaForest/SM_black_pine_V04@-10.21,0.00,-77.70",

@@ -779,12 +779,22 @@ namespace DD.Art.Tests.EditMode
                 if (t.name.StartsWith("Pond", System.StringComparison.Ordinal) && t.name.EndsWith("_Water", System.StringComparison.Ordinal))
                     Assert.AreEqual(WorldV5Dress.WaterMaterialPath, AssetDatabase.GetAssetPath(t.GetComponent<MeshRenderer>().sharedMaterial), t.name);
                 if (t.name.StartsWith("Bamboo_", System.StringComparison.Ordinal))
-                    Assert.IsFalse(t.GetComponent<MeshRenderer>().enabled, t.name + ": blok yalnız çarpışma");
+                {
+                    Assert.IsFalse(t.GetComponent<MeshRenderer>().enabled, t.name + ": blok çizilmez");
+                    // WP-103 (R4 #4): the block is a zone volume — the vegetation zoning and the grove ambience read it, nothing collides with it
+                    Assert.AreEqual(DD.Prototype.Core.PrototypeLayers.WorldZone, t.gameObject.layer, t.name + ": WorldZone katmanında");
+                    Assert.IsTrue(Physics.GetIgnoreLayerCollision(DD.Prototype.Core.PrototypeLayers.Player, t.gameObject.layer), t.name + ": oyuncu çarpışmaz");
+                    Assert.IsTrue(Physics.GetIgnoreLayerCollision(DD.Prototype.Core.PrototypeLayers.Enemy, t.gameObject.layer), t.name + ": zombi çarpışmaz");
+                }
             }
 
             Assert.Greater(dress.transform.Find(WorldV5Dress.ShoreGroupName).childCount, 20, "havuz kıyıları");
             Assert.AreEqual(WorldV5Dress.BridgePieceCount, dress.transform.Find(WorldV5Dress.BridgeGroupName).childCount, "2 kalas + " + WorldV5Dress.C1SlabCount + " levha köprü");
             Assert.Greater(dress.transform.Find(WorldV5Dress.GroveGroupName).childCount, 40, "bambu kümeleri + çit");
+            // WP-103: what is drawn blocks — every grove clump and lane fence keeps an active kit collider
+            int groveColliders = 0;
+            foreach (Collider c in dress.transform.Find(WorldV5Dress.GroveGroupName).GetComponentsInChildren<Collider>(false)) groveColliders++;
+            Assert.Greater(groveColliders, 40, "koru kümeleri ve çitler çarpışır");
             // DEC-102 AD E: NE / SE side doors — 4 doors × (void + 3 frame pieces), visual only, on the tsuiji's inner face.
             Transform doors = dress.transform.Find(WorldV5Dress.SideDoorGroupName);
             Assert.IsNotNull(doors, "köşe yan kapıları");
