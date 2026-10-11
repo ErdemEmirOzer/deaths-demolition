@@ -1115,7 +1115,11 @@ namespace DD.Prototype.Qa
                             // WP-044: a player buys between rounds — the bot takes the cheapest affordable card once the offer is
                             // ready (shop.TryPurchase is the card button's own call; DEC-048 one purchase per round), then CONTINUE
                             RoundUpgradeShop shop = run.Shop;
-                            if (shop != null && shop.Status == UpgradeOfferStatus.Ready && !shop.IsLocked)
+                            if (QaTreeBot.BuyRound(shop, run.Round, _summary.seed, Log))
+                            {
+                                // WP-104 B5b: -ddQaBotTreeArch — the archetype bought on the feature tree (QaTreeBot), no v1 cards
+                            }
+                            else if (shop != null && shop.Status == UpgradeOfferStatus.Ready && !shop.IsLocked)
                             {
                                 // WP-064B: a simple player policy — damage and survival first, speed only up to two tiers —
                                 // and as many cards as the round allows (DEC-087: PurchaseLimit, shipped 2)
@@ -2901,6 +2905,7 @@ namespace DD.Prototype.Qa
                 {
                     Directory.CreateDirectory(_outDir);
                     File.WriteAllText(Path.Combine(_outDir, "bot-summary.json"), JsonUtility.ToJson(_summary, true));
+                    QaTreeBot.WriteReport(_outDir, _summary.deathRound, (int)DD.Prototype.Difficulty.DifficultyService.RunMode);   // WP-104 B5b
                     File.WriteAllText(Path.Combine(_outDir, "events.txt"), _events.ToString());
                     File.WriteAllText(Path.Combine(_outDir, "summary.txt"), SummaryLines());
                     QaReport report = QaReport.Create("QaRunBot", _seed);

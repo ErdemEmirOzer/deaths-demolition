@@ -204,6 +204,7 @@ namespace DD.Prototype.Rounds
             public bool OverclockPeaked;
             public float LastShotTime;
             public float SustainStart;
+            public Vector3 LastMuzzle;
         }
 
         private struct BodyState
@@ -519,10 +520,12 @@ namespace DD.Prototype.Rounds
 
         /// <summary>
         /// A round left the weapon (S-02: once per FireClassicOnce). Overclock's own clock: sustained fire starts at the first shot
-        /// after a pause longer than <see cref="OverclockResetSeconds"/>.
+        /// after a pause longer than <see cref="OverclockResetSeconds"/>. <paramref name="muzzle"/> (optional) is where the
+        /// OverclockPeak moment is drawn (S-07 12.10).
         /// </summary>
-        public static void OnShotFired(float now)
+        public static void OnShotFired(float now, Vector3 muzzle = default)
         {
+            s_shot.LastMuzzle = muzzle;
             if (now - s_shot.LastShotTime > OverclockResetSeconds || now < s_shot.LastShotTime) s_shot.SustainStart = now;
             s_shot.LastShotTime = now;
         }
@@ -572,7 +575,7 @@ namespace DD.Prototype.Rounds
             bool peak = OverclockScale(s, now) >= 1f + s.OverclockMax - Epsilon;
             if (peak == s_shot.OverclockPeaked) return;
             s_shot.OverclockPeaked = peak;
-            if (peak) Raise(TreeProcKind.OverclockPeak, default, 0f, TreeBranch.Speed, weapon.Id);
+            if (peak) Raise(TreeProcKind.OverclockPeak, s_shot.LastMuzzle, 0f, TreeBranch.Speed, weapon.Id);
         }
 
         // ------------------------------------------------------------------ shot: crit

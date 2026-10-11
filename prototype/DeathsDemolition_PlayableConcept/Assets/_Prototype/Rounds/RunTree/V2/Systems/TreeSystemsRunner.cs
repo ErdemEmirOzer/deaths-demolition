@@ -393,7 +393,7 @@ namespace DD.Prototype.Rounds
             {
                 Kind = kind, Point = point, Radius = radius, Damage = damage, Element = element,
                 Tier = (s.BranchTiers >> ((int)branch * 3)) & 7, Synergy = synergy, Weapon = CurrentWeapon,
-                Target = target as Component, Depth = depth, Seconds = seconds
+                Target = target != null ? target.Unit : null, Depth = depth, Seconds = seconds
             };
             TreeEvents.RaiseProc(in info);
         }

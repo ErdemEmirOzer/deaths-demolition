@@ -652,7 +652,7 @@ namespace DD.Prototype.Rounds
             _autoStartTimer += Time.unscaledDeltaTime;
             if (_autoStartTimer >= _autoStartDelay)
             {
-                StartRun(1);
+                StartRun(TreePresetsV2.RunStartRound);   // WP-104: -ddStartRound N (dev / release-probe only; 1 otherwise)
             }
         }
 

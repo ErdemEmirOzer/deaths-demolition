@@ -6,7 +6,7 @@ namespace DD.Prototype.Rounds
     /// <summary>
     /// WP-104 B1 · dev-only late-round builds (KARAR-WP104-11.10: approved; S-10 FINAL scenarios, S-11 WP-110 capture, the perf gate).
     /// <c>-ddTreePreset &lt;name&gt;</c> grants the preset's nodes free at run start; <c>-ddStartRound N</c> is read here and handed to
-    /// the round flow (the jump itself lands with B5 / S-01). Editor, development and release-probe builds only: the player path never sees it,
+    /// RunDirector (C-00 12.10: one hook, StartRun(RunStartRound)). Editor, development and release-probe builds only: the player path never sees it,
     /// and evidence of player behaviour is always taken without these flags.
     /// </summary>
     public static class TreePresetsV2
@@ -77,9 +77,45 @@ namespace DD.Prototype.Rounds
             return name != null && TryGet(name, out preset);
         }
 
+        /// <summary>
+        /// The round a run starts in: <c>-ddStartRound N</c> on dev / release-probe builds, else 1. RunDirector's one hook
+        /// (<c>StartRun(TreePresetsV2.RunStartRound)</c>); the round's pool, health and spawn mix start from N.
+        /// </summary>
+        public static int RunStartRound => Math.Max(1, StartRoundFromCommandLine());
+
+        /// <summary>
+        /// The gold a run started at <paramref name="startRound"/> brings: the Normal kill gold banked before that round
+        /// (run-tree-v2 devCumulativeGold) less what the preset's free nodes cost, never below 0. The caller applies the mode scale.
+        /// </summary>
+        public static int StartGold(int startRound, int presetCost)
+        {
+            if (startRound <= 1) return 0;
+            int[] cum = TreeCatalogV2.Document.devCumulativeGold;
+            if (cum == null || cum.Length == 0) return 0;
+            int banked = cum[Math.Min(cum.Length, startRound - 1) - 1];
+            return Math.Max(0, banked - Math.Max(0, presetCost));
+        }
+
+        /// <summary>Catalog price of the preset's nodes (what <see cref="Apply"/> grants free).</summary>
+        public static int CostOf(in Preset preset)
+        {
+            int sum = 0;
+            for (int i = 0; preset.Nodes != null && i < preset.Nodes.Length; i++)
+            {
+                TreeNodeDefV2 n = TreeCatalogV2.Find(preset.Nodes[i]);
+                if (n != null) sum += n.cost;
+            }
+
+            return sum;
+        }
+
+        /// <summary>Tests: the start round instead of the command line (null = command line).</summary>
+        public static int? TestStartRound { get; set; }
+
         /// <summary><c>-ddStartRound N</c> (dev only), 0 when absent.</summary>
         public static int StartRoundFromCommandLine()
         {
+            if (TestStartRound.HasValue) return TestStartRound.Value;
             if (!DevAllowed) return 0;
             string v = Arg("-ddStartRound");
             return v != null && int.TryParse(v, out int r) && r > 1 ? r : 0;

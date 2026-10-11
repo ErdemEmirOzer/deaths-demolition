@@ -1007,6 +1007,8 @@ namespace DD.Prototype.Tests.EditMode
         /// </summary>
         private sealed class FakeBody : ITreeStatusReceiver
         {
+            public Component Unit => null;
+
             public int TreeSlot { get; set; } = TreeStatusSystem.NoSlot;
             public EnemyTier Tier { get; set; }
             public bool IsAlive { get; set; } = true;

@@ -43,6 +43,9 @@ namespace DD.Prototype.Rounds
         /// <param name="ignoreCooldown">Frozen Gravity only (S-03 ApplyIce overload, 12.10): the freeze cooldown is skipped; tier rules stay.</param>
         IceResult ApplyIce(int stacks, bool ignoreCooldown = false);
 
+        /// <summary>The body as a scene object for TreeProcInfo.Target (S-07 12.10: the zombie, not the adapter); null in tests.</summary>
+        Component Unit { get; }
+
         /// <summary>Stun for <paramref name="seconds"/> (raw; the body applies StunHeavyShare to Elite / Ultra and Max(until)).</summary>
         bool ApplyStun(float seconds, TreeStunKind kind);
 

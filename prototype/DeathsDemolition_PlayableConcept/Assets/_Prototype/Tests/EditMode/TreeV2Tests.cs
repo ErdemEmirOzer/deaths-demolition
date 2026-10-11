@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DD.Prototype.Core.Config;
@@ -428,6 +429,22 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(TreeNodeState.Excluded, shock.State);
             Assert.AreEqual(Idx("el_ice"), shock.ClosedByIndex, "closed by the last element line bought");
             Assert.AreEqual(-1, heavy.ClosedByIndex);
+        }
+
+        [Test]
+        public void StartRound_GoldBankedLessPresetCost()
+        {
+            Assert.AreEqual(0, TreePresetsV2.StartGold(1, 0), "R1: nothing banked");
+            Assert.AreEqual(471, TreePresetsV2.StartGold(6, 0), "R1–R5");
+            Assert.AreEqual(6506, TreePresetsV2.StartGold(16, 0), "R1–R15");
+            Assert.IsTrue(TreePresetsV2.TryGet("barrage_r15", out TreePresetsV2.Preset barrage));
+            int cost = TreePresetsV2.CostOf(barrage);
+            Assert.Greater(cost, 0);
+            Assert.AreEqual(Math.Max(0, 6506 - cost), TreePresetsV2.StartGold(16, cost), "the preset's free nodes come out of the bank");
+            TreePresetsV2.TestStartRound = 12;
+            try { Assert.AreEqual(12, TreePresetsV2.RunStartRound); }
+            finally { TreePresetsV2.TestStartRound = null; }
+            Assert.AreEqual(1, TreePresetsV2.RunStartRound, "no flag: round 1");
         }
 
         [Test]

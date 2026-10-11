@@ -159,6 +159,8 @@ namespace DD.Prototype.Rounds
         public int elementCap = 2;
         public float goldScaleMax = 1.6f;
         public int[] auraThresholds;
+        /// <summary>Dev start round: Normal kill gold banked by the end of round 1, 2, … (index 0 = R1).</summary>
+        public int[] devCumulativeGold;
         public TreeFullAutoDefV2[] fullAuto;
         public TreeFullAutoDefV2 fullAutoDefault;
         public TreeNodeDefV2[] nodes;

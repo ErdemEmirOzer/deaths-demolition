@@ -241,7 +241,15 @@ namespace DD.Prototype.Rounds
             GoldWallet wallet = GoldService.Instance != null ? GoldService.Instance.Wallet : null;
             TreeAwakening awakening = AwakeningOverride ?? TreeAwakening.FromProfile(ProfileService.Current);
             TreeV2.Begin(Mathf.Max(0, runId), mode, wallet, RunTreeV2.ProfileOf(ShopWeapon), awakening);
-            if (TreePresetsV2.TryFromCommandLine(out TreePresetsV2.Preset preset)) TreePresetsV2.Apply(TreeV2, preset);
+            bool hasPreset = TreePresetsV2.TryFromCommandLine(out TreePresetsV2.Preset preset);
+            if (hasPreset) TreePresetsV2.Apply(TreeV2, preset);
+            // Dev -ddStartRound N: the gold banked before round N less the preset's free nodes, at the mode's gold scale.
+            int startGold = TreePresetsV2.StartGold(TreePresetsV2.RunStartRound, hasPreset ? TreePresetsV2.CostOf(preset) : 0);
+            if (startGold > 0 && wallet != null && wallet.IsOpen)
+            {
+                wallet.Credit(DD.Prototype.Difficulty.DifficultyService.ScaleGold(startGold), GoldSource.RunInitialization, wallet.NextTransactionId());
+                Debug.Log("[TreeV2] start round " + TreePresetsV2.RunStartRound + ": +" + startGold + " gold before the mode scale (dev only)");
+            }
         }
 
         /// <summary>WP-077: the equipped weapon the tree is built for. Null = WeaponRegistry.SelectedWeapon.</summary>

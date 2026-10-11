@@ -34,6 +34,8 @@ namespace DD.Prototype.Rounds
         {
             public ZombieEnemy Body;
 
+            public Component Unit => Body;
+
             public int TreeSlot { get; set; } = TreeStatusSystem.NoSlot;
             public EnemyTier Tier => Body.Tier;
             public bool IsAlive => Body != null && Body.IsAlive;
