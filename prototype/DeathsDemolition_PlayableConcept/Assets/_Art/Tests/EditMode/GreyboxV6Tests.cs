@@ -610,6 +610,19 @@ namespace DD.Art.Tests.EditMode
         }
 
         /// <summary>
+        /// FINAL 10.10 perf · High × TopDown: the planar reflection draws the sky only and renders again every
+        /// <see cref="PlanarReflection.SkyRefreshFrames"/> frames (and at once when the frame counter goes back).
+        /// </summary>
+        [Test]
+        public void PlanarYansima_YuksekTepeden_YalnizGok_SekizKaredeBirTazelenir()
+        {
+            Assert.AreEqual(8, PlanarReflection.SkyRefreshFrames);
+            Assert.IsFalse(PlanarReflection.SkyRefreshDue(107, 100, 8), "7 kare sonra yenilenmez");
+            Assert.IsTrue(PlanarReflection.SkyRefreshDue(108, 100, 8), "8 kare sonra yenilenir");
+            Assert.IsTrue(PlanarReflection.SkyRefreshDue(5, 100, 8), "sayaç geri giderse hemen yenilenir");
+        }
+
+        /// <summary>
         /// WP-074 B5b-1 · The AP-023 architecture shell (WorldV5Dress). Every dress piece is an AP-023 library prefab. The hall
         /// carries the whole kit recipe with five open bays (3 front + E + W, on R1's doors). The ring has 4 corners + 4 × 27 tsuiji.
         /// No greybox box is left where the kit stands. Every R1 door is a passage on the NavMesh: engawa → inside in under 4 m.

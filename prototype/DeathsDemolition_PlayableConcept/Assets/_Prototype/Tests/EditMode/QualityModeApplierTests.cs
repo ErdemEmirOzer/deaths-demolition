@@ -113,7 +113,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        /// <summary>FINAL 10.10 perf: the High × TopDown lite switch (planar off, small push map) is a play-mode state only and never
+        /// <summary>FINAL 10.10 perf: the High × TopDown lite switch (sky-only planar, small push map) is a play-mode state only and never
         /// outlives <see cref="QualityModeApplier.RestoreOriginals"/>.</summary>
         [Test]
         public void EditModeda_YuksekTepedenHafifYol_KapaliKalir_RestoreTemizler()

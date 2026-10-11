@@ -60,7 +60,8 @@ namespace DD.Prototype.Rendering
 
         /// <summary>
         /// FINAL 10.10 perf (C-00, profiler: the main thread is the limit): true while High × TopDown is applied. The planar
-        /// reflection stays off and the vegetation push map runs at its Performance size; false everywhere else (Cinematic unchanged).
+        /// reflection draws the sky only, every few frames, and the vegetation push map runs at its Performance size; false
+        /// everywhere else (Cinematic unchanged).
         /// </summary>
         public static bool HighTopDownLite { get; private set; }
         private static readonly int GroundLiteId = Shader.PropertyToID("_DD_GroundLite");

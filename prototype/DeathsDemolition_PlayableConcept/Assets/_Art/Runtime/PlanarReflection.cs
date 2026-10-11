@@ -12,8 +12,10 @@ namespace DD.Art
     /// <see cref="EnabledName"/>. DD/GroundTiles blends it into wet slate and puddles by Fresnel, which is what makes the court read
     /// wet from the steep gameplay cameras. Tier: Performance off · High 256 px tall without characters · Cinematic 1024 px with.
     /// The owner is the S-05 quality module. It re-reads the tier on <see cref="QualityTiers.Changed"/>.
-    /// FINAL 10.10 perf (C-00): off in High × TopDown (<see cref="DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite"/>) —
-    /// the nested render's cull and submit were ~0.9 ms of the main thread; the wet slate falls back to its probe reflection.
+    /// FINAL 10.10 perf (C-00): in High × TopDown (<see cref="DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite"/>) the
+    /// mirrored camera draws the sky only (culling mask 0) and renders every <see cref="SkyRefreshFrames"/> frames: the world's cull
+    /// and submit were ~0.9 ms of the main thread, and the top-down camera's yaw and pitch are fixed, so a reflected sky at infinity
+    /// does not change as it moves. The wet slate keeps its sky and clouds (with no reflection at all it read dry grey).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlanarReflection : MonoBehaviour
@@ -25,9 +27,14 @@ namespace DD.Art
         [SerializeField] private float _clipOffset = 0.03f;
         [SerializeField] private float _farClip = 180f;
 
+        /// <summary>High × TopDown: the sky-only reflection is rendered again after this many frames (cloud drift).</summary>
+        public const int SkyRefreshFrames = 8;
+
         private Camera _reflection;
         private RenderTexture _target;
         private static bool s_rendering;
+        private bool _skyValid;
+        private int _skyFrame;
 
         public float PlaneHeight { get => _planeHeight; set => _planeHeight = value; }
 
@@ -73,13 +80,21 @@ namespace DD.Art
         {
             if (s_rendering || cam == _reflection || !RendersWorld(cam)) return;
             QualityTier tier = QualityTiers.Current;
-            int height = DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite ? 0 : HeightOf(tier);
+            bool skyOnly = DD.Prototype.Rendering.QualityModeApplier.HighTopDownLite;
+            int height = HeightOf(tier);
             Shader.SetGlobalFloat(s_enabled, 0f);   // never sampled while the reflection itself renders
             if (height <= 0) return;
 
             EnsureTarget(cam, height);
+            if (skyOnly && _skyValid && !SkyRefreshDue(Time.frameCount, _skyFrame, SkyRefreshFrames))
+            {
+                Shader.SetGlobalTexture(s_texture, _target);   // the sky rendered a few frames ago is still the sky
+                Shader.SetGlobalFloat(s_enabled, 1f);
+                return;
+            }
+
             EnsureCamera();
-            Setup(cam, tier);
+            Setup(cam, tier, skyOnly);
             s_rendering = true;
             bool invert = GL.invertCulling;
             GL.invertCulling = !invert;
@@ -95,11 +110,16 @@ namespace DD.Art
                 s_rendering = false;
             }
 
+            _skyValid = skyOnly;
+            _skyFrame = Time.frameCount;
             Shader.SetGlobalTexture(s_texture, _target);
             Shader.SetGlobalFloat(s_enabled, 1f);
         }
 
-        private void Setup(Camera cam, QualityTier tier)
+        /// <summary>The sky-only reflection is due again: <paramref name="period"/> frames passed, or the frame counter went back.</summary>
+        public static bool SkyRefreshDue(int frame, int lastFrame, int period) => frame - lastFrame >= period || frame < lastFrame;
+
+        private void Setup(Camera cam, QualityTier tier, bool skyOnly)
         {
             _reflection.CopyFrom(cam);
             _reflection.targetTexture = _target;
@@ -107,7 +127,7 @@ namespace DD.Art
             _reflection.farClipPlane = Mathf.Min(cam.farClipPlane, _farClip);
             int mask = cam.cullingMask & ~(1 << 5);   // no UI
             if (!CharactersIn(tier)) mask &= ~((1 << PrototypeLayers.Player) | (1 << PrototypeLayers.Enemy) | (1 << PrototypeLayers.Ragdoll));
-            _reflection.cullingMask = mask;
+            _reflection.cullingMask = skyOnly ? 0 : mask;   // sky only: no renderer is culled or drawn, the skybox still is
 
             Vector4 plane = new Vector4(0f, 1f, 0f, -_planeHeight);
             Matrix4x4 mirror = Reflection(plane);
@@ -169,6 +189,7 @@ namespace DD.Art
 
         private void Release()
         {
+            _skyValid = false;
             if (_target != null)
             {
                 if (_reflection != null) _reflection.targetTexture = null;
