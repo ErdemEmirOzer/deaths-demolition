@@ -3674,21 +3674,19 @@
    "weapon": "lmg2",
    "event": "ClassicWeaponRelease",
    "files": [
-    "Weapon_lmg2_TailOpen_01.wav",
     "Weapon_lmg2_TailOpen_02.wav",
     "Weapon_lmg2_TailOpen_03.wav",
     "Weapon_lmg2_TailOpen_04.wav",
-    "Weapon_lmg2_TailOpen_05.wav",
     "Weapon_lmg2_TailOpen_06.wav"
    ],
    "loop": false,
-   "lufs": -30.91,
-   "codexLufs": -22.22,
-   "truePeakDb": -2.33,
+   "lufs": -24.44,
+   "codexLufs": -20.24,
+   "truePeakDb": -2.63,
    "bitDepth": 24,
-   "targetLufs": -30.91,
+   "targetLufs": -24.44,
    "ceilingDbtp": -1.0,
-   "noiseFloorDb": -85.2,
+   "noiseFloorDb": -88.5,
    "noiseFloorWindowMs": 20,
    "noiseFloorException": "",
    "dcDb": -77.0,
@@ -3700,17 +3698,15 @@
    "bus": "SFX-Player",
    "spatial": true,
    "overlay": [
-    "Weapon_lmg2_TailOpen_01.wav v003g-recut",
     "Weapon_lmg2_TailOpen_02.wav v003g-recut",
     "Weapon_lmg2_TailOpen_03.wav v003g-recut",
     "Weapon_lmg2_TailOpen_04.wav v003g-recut",
-    "Weapon_lmg2_TailOpen_05.wav v003g-recut",
     "Weapon_lmg2_TailOpen_06.wav v003g-recut"
    ],
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording) · SHA 82a9956d391c… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording) · SHA 82a9956d391c… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05 retired — open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280 G1"
   },
   {
    "sound": "WeaponRl1DistanceFar",
@@ -5303,12 +5299,11 @@
     "Weapon_smg2_TailOpen_02.wav",
     "Weapon_smg2_TailOpen_03.wav",
     "Weapon_smg2_TailOpen_04.wav",
-    "Weapon_smg2_TailOpen_05.wav",
-    "Weapon_smg2_TailOpen_06.wav"
+    "Weapon_smg2_TailOpen_05.wav"
    ],
    "loop": false,
    "lufs": -24.94,
-   "codexLufs": -21.71,
+   "codexLufs": -20.94,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.94,
@@ -5329,13 +5324,12 @@
     "Weapon_smg2_TailOpen_02.wav v003g-recut",
     "Weapon_smg2_TailOpen_03.wav v003g-recut",
     "Weapon_smg2_TailOpen_04.wav v003g-recut",
-    "Weapon_smg2_TailOpen_05.wav v003g-recut",
-    "Weapon_smg2_TailOpen_06.wav v003g-recut"
+    "Weapon_smg2_TailOpen_05.wav v003g-recut"
    ],
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording) · SHA 7c0ac57a62a4… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording) · SHA 7c0ac57a62a4… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired — open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
   },
   {
    "sound": "WeaponSr1DistanceFar",

@@ -777,6 +777,140 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Debug.Log("[DD-TEST] wp021.quality entries=" + manifest.entries.Length + " remeasured=" + olculen + " bitDepth=" + manifest.standard.bitDepth + " floorMax=" + manifest.standard.noiseFloorMaxDb + " q=" + AudioCatalogBuilder.SfxQuality + "/" + AudioCatalogBuilder.MusicQuality);
         }
 
+        /// <summary>
+        /// S-08 10.10 (FINAL c4093280 G1: S4 FAIL, openRt60MinS 0.545): every per-weapon AP-027 tail variation in the pool, measured
+        /// on its own with S4's method — 500–1000 Hz (4th-order Butterworth HP + LP), onset = first sample within 0.4 s above 10 % of
+        /// the band peak, Schroeder EDC over 3.0 s, T20 (−5 … −25 dB) × 3 — sits inside S4's spec band: open 0.56–1.08, corridor
+        /// 0.88–1.68, hall 1.28–2.28 s. S4 itself hears the median of four random picks per weapon and space, so one out-of-spec file
+        /// passes or fails by the draw (the same files read 0.656 in R2 FINAL and 0.545 in R3 FINAL); this checks each file.
+        /// R4 (S-08 11.10): the three files leave their pools. A re-cut that added a diffuse field at the pool's level (AP-027
+        /// v003h) failed the sound gate: the takes are dry, so the tail would be mostly synthetic.
+        /// </summary>
+        [Category("WP021")]
+        [Test]
+        public void AP027_KuyrukVaryasyonlari_TekTekS4Bandinda()
+        {
+            var manifest = JsonUtility.FromJson<AudioCatalogBuilder.Manifest>(File.ReadAllText(AudioCatalogBuilder.Ap027ManifestPath));
+            var bant = new Dictionary<string, (float lo, float hi)>
+            {
+                { "TailOpen", (0.56f, 1.08f) }, { "TailCorridor", (0.88f, 1.68f) }, { "TailHall", (1.28f, 2.28f) }
+            };
+            var hatalar = new List<string>();
+            int olculen = 0;
+            float enDusukAcik = float.MaxValue;
+            foreach (AudioCatalogBuilder.ManifestEntry m in manifest.entries)
+            {
+                if (!m.sound.StartsWith("Weapon", StringComparison.Ordinal)) continue;
+                string katman = null;
+                foreach (string k in bant.Keys)
+                {
+                    if (m.sound.EndsWith(k, StringComparison.Ordinal)) katman = k;
+                }
+
+                if (katman == null) continue;
+                (float lo, float hi) = bant[katman];
+                foreach (string f in m.files)
+                {
+                    float[] x = WavMono(Path.GetFullPath(AudioCatalogBuilder.Ap027AudioRoot + f), out int rate);
+                    float rt = DosyaKuyrukRt60(x, rate);
+                    olculen++;
+                    if (katman == "TailOpen") enDusukAcik = Mathf.Min(enDusukAcik, rt);
+                    if (rt < lo || rt > hi) hatalar.Add($"{m.sound} {f}: RT60 {rt:0.000} s, S4 bandı {lo:0.00}–{hi:0.00} s");
+                }
+            }
+
+            Assert.Greater(olculen, 100, "AP-027 kuyruk varyasyonu bulunamadı");
+            Assert.IsEmpty(hatalar, "S4 bandı dışında kuyruk varyasyonu (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
+            Debug.Log("[DD-TEST] wp097.s4-varyasyon measured=" + olculen + " openMin=" + enDusukAcik.ToString("0.000") + " s");
+        }
+
+        /// <summary>A 16- or 24-bit PCM WAV as a mono mean (channels averaged), the S4 test's input on the shipped file.</summary>
+        private static float[] WavMono(string path, out int rate)
+        {
+            byte[] b = File.ReadAllBytes(path);
+            int ch = 0, bits = 0, pos = 12, start = -1, len = 0;
+            rate = 0;
+            while (pos + 8 <= b.Length)
+            {
+                string id = System.Text.Encoding.ASCII.GetString(b, pos, 4);
+                int size = BitConverter.ToInt32(b, pos + 4);
+                if (id == "fmt ")
+                {
+                    ch = BitConverter.ToInt16(b, pos + 10);
+                    rate = BitConverter.ToInt32(b, pos + 12);
+                    bits = BitConverter.ToInt16(b, pos + 22);
+                }
+                else if (id == "data")
+                {
+                    start = pos + 8;
+                    len = Math.Min(size, b.Length - start);
+                    break;
+                }
+
+                pos += 8 + size + (size & 1);
+            }
+
+            Assert.That(start >= 0 && ch > 0 && (bits == 16 || bits == 24), path + ": PCM 16/24-bit WAV değil (" + bits + "-bit, " + ch + " kanal)");
+            int step = bits / 8, frames = len / (step * ch);
+            var x = new float[frames];
+            for (int i = 0; i < frames; i++)
+            {
+                float s = 0f;
+                for (int c = 0; c < ch; c++)
+                {
+                    int o = start + (i * ch + c) * step;
+                    s += bits == 24 ? (b[o] | (b[o + 1] << 8) | ((sbyte)b[o + 2] << 16)) / 8388608f : BitConverter.ToInt16(b, o) / 32768f;
+                }
+
+                x[i] = s / ch;
+            }
+
+            return x;
+        }
+
+        /// <summary>S4's tail RT60 on one file (AudioSliceTests.KuyrukRt60 with the cue at sample 0): band, onset, EDC 3.0 s, T20 × 3.</summary>
+        private static float DosyaKuyrukRt60(float[] x, int rate)
+        {
+            float[] b = RbjBiquad(RbjBiquad(RbjBiquad(RbjBiquad(x, rate, 500f, 0.5412f, true), rate, 500f, 1.3066f, true), rate, 1000f, 0.5412f, false), rate, 1000f, 1.3066f, false);
+            int search = (int)(0.4f * rate), n = (int)(3.0f * rate);
+            float bp = 0f;
+            for (int i = 0; i < Math.Min(b.Length, search + n); i++) bp = Mathf.Max(bp, Mathf.Abs(b[i]));
+            if (bp <= 0f) return 0f;
+            int on = 0;
+            while (on < Math.Min(search, b.Length) && Mathf.Abs(b[on]) < 0.1f * bp) on++;
+            double total = 0;
+            for (int i = on; i < Math.Min(on + n, b.Length); i++) total += (double)b[i] * b[i];   // past the file's end: silence (S4's take)
+            if (total <= 0) return 0f;
+            double rest = total;
+            int t5 = -1, t25 = -1;
+            for (int t = on; t < on + n && t25 < 0; t++)
+            {
+                if (t < b.Length) rest -= (double)b[t] * b[t];
+                double db = 10.0 * Math.Log10(Math.Max(rest, 1e-30) / total);
+                if (t5 < 0 && db <= -5.0) t5 = t;
+                if (db <= -25.0) t25 = t;
+            }
+
+            return t5 >= 0 && t25 > t5 ? 3f * (t25 - t5) / rate : 0f;
+        }
+
+        /// <summary>RBJ biquad, high- or low-pass, one pass (AudioSliceTests.Biquad, PlayMode).</summary>
+        private static float[] RbjBiquad(float[] x, int rate, float fc, float q, bool highPass)
+        {
+            double w = 2 * Math.PI * fc / rate, cw = Math.Cos(w), al = Math.Sin(w) / (2 * q);
+            double b0 = highPass ? (1 + cw) / 2 : (1 - cw) / 2, b1 = highPass ? -(1 + cw) : 1 - cw, b2 = b0, a0 = 1 + al, a1 = -2 * cw, a2 = 1 - al;
+            var y = new float[x.Length];
+            double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+            for (int i = 0; i < x.Length; i++)
+            {
+                double o = (b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
+                x2 = x1; x1 = x[i]; y2 = y1; y1 = o;
+                y[i] = (float)o;
+            }
+
+            return y;
+        }
+
         private static int WavBitDepth(string path)
         {
             using (var fs = File.OpenRead(path))
@@ -1166,7 +1300,12 @@ namespace DD.Prototype.Tests.EditMode.Audio
         {
             // WP-085 B5 (G4 = AP-027, C-00 05.10): every weapon's fire, mechanism, three space tails and two distance voices come
             // from the AP-027 import — in the catalog, resolved by the B3 layer path; casings per surface (none for RL1) and the
-            // LMGs' belt links likewise. LMG2 Fire_01 is out of the pool (peak-limited, ~3.5 dB quiet): 5 variants.
+            // LMGs' belt links likewise. LMG2 Fire_01 is out of the pool (peak-limited, ~3.5 dB quiet): 5 variants. WP-111 R4 (S-08
+            // 11.10): LMG2 TailOpen 01 / 05 and SMG2 TailOpen 06 are out too (RT60 under S4's open band): 4 and 5 variants.
+            var havuzDisi = new Dictionary<AudioSoundId, int>
+            {
+                { AudioSoundId.WeaponLmg2Fire, 5 }, { AudioSoundId.WeaponLmg2TailOpen, 4 }, { AudioSoundId.WeaponSmg2TailOpen, 5 }
+            };
             AudioCatalogBuilder.BuildCatalog();
             var katalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(AudioCatalogBuilder.CatalogPath);
             Assert.IsNotNull(katalog);
@@ -1208,7 +1347,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 foreach (AudioSoundId k in sesler)
                 {
                     Assert.IsTrue(kayit.TryGetValue(k, out AudioCatalog.Entry e), k + " katalogda yok");
-                    Assert.AreEqual(k == AudioSoundId.WeaponLmg2Fire ? 5 : 6, e.Clips.Length, k + ": varyant sayısı");
+                    Assert.AreEqual(havuzDisi.TryGetValue(k, out int beklenen) ? beklenen : 6, e.Clips.Length, k + ": varyant sayısı");
                     bool ap029 = v5.Contains(k.ToString());
                     StringAssert.Contains(ap029 ? "/AP029/" : "/AP027/", AssetDatabase.GetAssetPath(e.Clips[0]), k + (ap029 ? " AP-029'dan gelmeli (WP-097 K2 önceliği)" : " AP-027'den gelmeli"));
                 }

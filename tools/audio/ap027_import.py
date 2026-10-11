@@ -47,7 +47,10 @@ OVERLAYS = ["v003-recut", "v003b-recut", "v003c-recut", "v003d-recut", "v003e-re
             "v003f-recut", "v003g-recut"]   # v003g = all three tail classes phase-aligned 400–900 Hz (mono notch ≤ −6 dB)
 OVERLAY_EXCLUDE = {"v003b-recut": ("Weapon_ar1_Mechanical_",), "v003c-recut": ("Weapon_ar1_Mechanical_",)}
 # C-00 05.10: peak-limited, ~3.5 dB quiet — out of the random pool (the file stays in the export).
-POOL_EXCLUDE = ("Weapon_lmg2_Fire_01.wav",)
+# S-08 10.10 (FINAL c4093280 G1 S4 FAIL): open tails whose own RT60 (S4's method: 500–1000 Hz, Schroeder EDC 3.0 s, T20 × 3) sits
+# under the S4 spec's 0.56 s — lmg2 01 0.547, lmg2 05 0.546, smg2 06 0.550; the pool's other open tails read 0.65–0.94 s.
+POOL_EXCLUDE = ("Weapon_lmg2_Fire_01.wav",
+                "Weapon_lmg2_TailOpen_01.wav", "Weapon_lmg2_TailOpen_05.wav", "Weapon_smg2_TailOpen_06.wav")
 # Named, reasoned exceptions to the house noise-floor stamp gate (−60 dBFS); the EditMode gate honours and logs them.
 NOISE_FLOOR_EXCEPTION = {
     "WeaponAr1Mechanical": "v003-recut 114 ms bolt-return (C-00 05.10): the recording's own floor −59 dBFS in a −55 LUFS stem played "

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
   _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6197efd5c396b65db9d821240019456c66c867dde95efc144078d10cf940165be
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac655ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
   _entries:
   - Sound: 10
     Clips:
@@ -5474,13 +5474,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f90e4ecf0dcea4e4991c8c2e85dee5d8, type: 3}
     - {fileID: 8300000, guid: dccda4e30449143c69153462260ddfff, type: 3}
     - {fileID: 8300000, guid: 51090f50c079e4ee48e14607cc7fc16c, type: 3}
-    - {fileID: 8300000, guid: 813d07f3fb1804ef793e47763a35962f, type: 3}
     Loop: 0
     Lufs: -24.94
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording)
-      \xB7 SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording) \xB7 SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired \u2014 open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
     NoiseFloorDb: -90
     DcDb: -89.6
     Clipped: 0
@@ -5899,19 +5896,15 @@ MonoBehaviour:
     Layers: Weapon_lmg2_Mechanical
   - Sound: 671
     Clips:
-    - {fileID: 8300000, guid: 58eb5712868334794a499532f759bcfa, type: 3}
     - {fileID: 8300000, guid: 75dec9559e1f24c8299b22ce0e9751fd, type: 3}
     - {fileID: 8300000, guid: 6b5116744fa4b4848b4b9f13b7df0c7b, type: 3}
     - {fileID: 8300000, guid: 1a76a34e362e2450281b322d92036723, type: 3}
-    - {fileID: 8300000, guid: 3e0de8df27f2040d3b13aef98a97b18b, type: 3}
     - {fileID: 8300000, guid: 0aa4fa02188754998b258ea1842c5189, type: 3}
     Loop: 0
-    Lufs: -30.91
-    TruePeakDb: -2.33
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording)
-      \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
-    NoiseFloorDb: -85.2
+    Lufs: -24.44
+    TruePeakDb: -2.63
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording) \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05 retired \u2014 open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+    NoiseFloorDb: -88.5
     DcDb: -77
     Clipped: 0
     BitDepth: 24
