@@ -1095,6 +1095,124 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-102 measurement (Explicit, Diagnostics): does Demolition close the escape across layouts, not on one lucky seed? The
+        /// capture's eighteen-Standard ring (10–14 m) with the factory seed and the ring phase varied per seed, the player running up
+        /// the screen for 4 s, in four cells: Normal; Demolition; Demolition without cutters (CutShare 0 — the gt 12.10 control
+        /// cell); Demolition with the design's arrival rule (a cutter may arrive up to 0.3 s after the player, margin −0.3). The
+        /// numbers sit on a code-default DifficultyProfile instance (the shipped asset is never written). Logs per cell the player's
+        /// progress (mean, median, blocked share = under 15 m) and the run-corridor bodies; asserts only that every run ran.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-102 kesme ölçümü")]
+        [Category("Diagnostics")]
+        [Timeout(900000)]
+        public IEnumerator Zorluk_KesmeEtkisi_TohumTaramasi()
+        {
+            const int Tohum = 8;
+            yield return RunSahnesiniHazirla();
+            _can.DiagnosisInvulnerable = true;   // a measurement: every run must last the 4 s
+            if (EnemySpawnDirector.Instance != null) EnemySpawnDirector.Instance.StopRound();   // only the ring: the director adds no bodies
+            Vector3 merkez = _rig.transform.position;
+            Quaternion bakis = _rig.transform.rotation;
+            string[] hucreler = { "normal", "demolition", "demolition-cut0", "demolition-margin-0.3" };
+            var profiller = new List<DifficultyProfile>();
+            var rapor = new StringBuilder("[DD-TEST] wp102.cutsweep seeds=" + Tohum + " run=4s ring=18 Standard 10-14 m\n");
+            int kosu = 0;
+            try
+            {
+                for (int h = 0; h < hucreler.Length; h++)
+                {
+                    DifficultyProfile profil = ScriptableObject.CreateInstance<DifficultyProfile>();
+                    profiller.Add(profil);
+                    DifficultyModeSettings d = profil.For(DifficultyMode.Demolition);
+                    if (h == 2) d.CutShare = 0f;
+                    if (h == 3) d.CutArrivalMarginSeconds = -0.3f;
+                    DifficultyProfile.SetActiveForTests(profil);
+                    DifficultyService.Selected = h == 0 ? DifficultyMode.Normal : DifficultyMode.Demolition;
+                    DifficultyService.BeginRun();
+                    var ilerleme = new List<float>();
+                    float koridorOrt = 0f; int kesenOrnek = 0, ornek = 0;
+                    for (int s = 0; s < Tohum; s++)
+                    {
+                        _girdi.Yon = Vector2.zero;
+                        if (EnemySpawnDirector.Instance != null) { EnemySpawnDirector.Instance.StopRound(); EnemySpawnDirector.Instance.ClearAllEnemies(); }
+                        EnemyFactory.ClearAll();
+                        _rig.Teleport(merkez, bakis);
+                        yield return null;
+                        yield return null;
+                        EnemyFactory.ResetSeedForTests(1020u + (uint)s * 7u);
+                        var zler = new List<ZombieEnemy>();
+                        for (int i = 0; i < 18; i++)
+                        {
+                            float a = (i * 20f + 10f + s * 7.5f) * Mathf.Deg2Rad;
+                            float r = 10f + (i % 3) * 2f;
+                            ZombieEnemy z = Dogur(NavPathFollowerClamp(merkez + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r)), merkez);
+                            if (z != null) zler.Add(z);
+                        }
+
+                        yield return null;
+                        _girdi.Yon = new Vector2(0f, 1f);
+                        for (int k = 0; k < 240; k++)
+                        {
+                            yield return null;
+                            if ((k % 10) != 9) continue;
+                            Vector3 p = Yatay(_rig.transform.position);
+                            Vector3 v = Yatay(_rig.Motor.PlanarVelocity);
+                            Vector3 ileri = v.sqrMagnitude > 1f ? v.normalized : Vector3.forward;
+                            int koridor = 0;
+                            foreach (ZombieEnemy z in zler)
+                            {
+                                if (z == null || !z.IsAlive) continue;
+                                Vector3 dz = Yatay(z.transform.position) - p;
+                                float onde = Vector3.Dot(dz, ileri);
+                                if (onde > 0.5f && onde < 8f && Mathf.Abs(Vector3.Cross(ileri, dz).y) < 2f) koridor++;
+                                if (z.CutActive) kesenOrnek++;
+                            }
+
+                            koridorOrt += koridor;
+                            ornek++;
+                        }
+
+                        _girdi.Yon = Vector2.zero;
+                        ilerleme.Add(Vector3.Distance(Yatay(_rig.transform.position), Yatay(merkez)));
+                        kosu++;
+                    }
+
+                    DifficultyService.EndRun();
+                    ilerleme.Sort();
+                    float toplam = 0f; int kapali = 0;
+                    var satir = new StringBuilder();
+                    foreach (float x in ilerleme)
+                    {
+                        toplam += x;
+                        if (x < 15f) kapali++;
+                        satir.Append(x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)).Append(' ');
+                    }
+
+                    float medyan = 0.5f * (ilerleme[(Tohum - 1) / 2] + ilerleme[Tohum / 2]);
+                    rapor.Append("  ").Append(hucreler[h]).Append(" progress mean=").Append((toplam / Tohum).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))
+                         .Append(" median=").Append(medyan.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))
+                         .Append(" blocked(<15m)=").Append(kapali).Append('/').Append(Tohum)
+                         .Append(" corridor=").Append((ornek > 0 ? koridorOrt / ornek : 0f).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))
+                         .Append(" cutSamples=").Append(kesenOrnek)
+                         .Append(" | ").Append(satir).Append('\n');
+                }
+
+                Debug.Log(rapor.ToString());
+                Assert.AreEqual(hucreler.Length * Tohum, kosu, "koşuların hepsi bitmedi");
+            }
+            finally
+            {
+                _girdi.Yon = Vector2.zero;
+                DifficultyService.EndRun();
+                DifficultyService.Selected = DifficultyMode.Normal;
+                DifficultyProfile.SetActiveForTests(null);
+                foreach (DifficultyProfile pr in profiller) if (pr != null) UnityEngine.Object.Destroy(pr);
+                if (_can != null) _can.DiagnosisInvulnerable = false;
+            }
+        }
+
         private static ZombieEnemy HalkaDogur(Vector3 merkez, int i, int n)
         {
             float a = i * Mathf.PI * 2f / n;
