@@ -1,0 +1,40 @@
+{
+  "schema": "dd.wp107b.ap040-wallbuy.provenance.v1",
+  "package": "AP-040",
+  "version": "v001",
+  "delivery": "asset-production/AP-040/exports/v001",
+  "manifest": "AP040-manifest-v001.json",
+  "manifest_sha256": "11a391fd722c42e411306891455414717c44254487901b0d7fcc03e7c6a19500",
+  "owner": "S-02 (WP-107B) - shared with S-05 WP-108 (C-00 12.10: one copy, both bind these materials)",
+  "note": "AP-040 v001 shared atlas: the wall buy stations and the WP-108 world kit use it; materials M_AP040_Shared / M_AP040_Glow are built by ArtAp040WallBuyBuilder.",
+  "files": [
+    {
+      "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_BaseColor.png",
+      "source": "AP-040/exports/v001/textures/T_AP040_Shared_BaseColor.png",
+      "bytes": 2215203,
+      "sha256": "43c3ac122f3c1bf26021f6c03a878ecd320a6c37cdbc987f0d1ba9ec5954da9f",
+      "role": "atlas:BaseColor (sRGB)"
+    },
+    {
+      "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_Normal.png",
+      "source": "AP-040/exports/v001/textures/T_AP040_Shared_Normal.png",
+      "bytes": 85914,
+      "sha256": "30d5a6a65576518b0749b9853c3d89e10ccde016004e07582e247ab21452f706",
+      "role": "atlas:Normal (OpenGL Y+, linear)"
+    },
+    {
+      "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_MaskMap.png",
+      "source": "AP-040/exports/v001/textures/T_AP040_Shared_MaskMap.png",
+      "bytes": 2364256,
+      "sha256": "a789494990b9c6d1eb18d512c7ddb396627c541aabe7c85217cd6185b0f723f1",
+      "role": "atlas:MaskMap (linear; R metallic, G AO, A smoothness)"
+    },
+    {
+      "repo": "Assets/_Prototype/Art/AP040/Shared/Textures/T_AP040_Shared_Emission.png",
+      "source": "AP-040/exports/v001/textures/T_AP040_Shared_Emission.png",
+      "bytes": 370255,
+      "sha256": "02a277472f079b8005def52398bae7d8d67a46644d59c30cc89faa7aee97d02a",
+      "role": "atlas:Emission (sRGB)"
+    }
+  ]
+}
