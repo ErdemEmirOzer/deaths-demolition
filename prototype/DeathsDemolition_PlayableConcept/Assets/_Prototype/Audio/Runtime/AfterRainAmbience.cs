@@ -52,6 +52,9 @@ namespace DD.Prototype.Audio
         private readonly AudioVoicePool _pool;
         private readonly Transform _root;
         private readonly System.Random _rng = new System.Random(102);
+        private const float SpaceRefreshSeconds = 0.25f;   // WP-111 R4 perf D4
+        private AcousticSpace _space;
+        private float _spaceAge;
         private AudioSource _grove;
         private float _groveLevel;
         private float _birdCountdown = 4f, _dripCountdown = 1f, _gustCountdown = 8f, _leafDripAt = -1f;
@@ -90,7 +93,15 @@ namespace DD.Prototype.Audio
 
         public void Tick(float dt, float busGain, float bedLevel, bool fighting, Vector3 listener, AudioMixerGroup bedGroup, float ambienceDuck = 1f)
         {
-            AcousticSpace space = AcousticSpaces.At(listener);
+            // WP-111 R4 perf D4 (C-00 11.10): the listener's space at 4 Hz, not every frame (it changes as the player walks through a door).
+            _spaceAge -= dt;
+            if (_spaceAge <= 0f)
+            {
+                _space = AcousticSpaces.At(listener);
+                _spaceAge = SpaceRefreshSeconds;
+            }
+
+            AcousticSpace space = _space;
             LastSpace = space;
             bool inside = space != AcousticSpace.Open;
 
@@ -233,6 +244,7 @@ namespace DD.Prototype.Audio
             if (bird) _birdCountdown = 0f;
             if (drip) _dripCountdown = 0f;
             if (gust) _gustCountdown = 0f;
+            _spaceAge = 0f;   // WP-111 R4 perf D4: the next Tick re-reads the listener's space (tests force a resolver, then ForceDue)
         }
 
         public void Stop()

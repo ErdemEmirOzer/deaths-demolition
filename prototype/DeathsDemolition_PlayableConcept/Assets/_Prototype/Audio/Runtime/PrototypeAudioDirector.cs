@@ -5,6 +5,7 @@ using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace DD.Prototype.Audio
@@ -427,7 +428,20 @@ namespace DD.Prototype.Audio
 
         // ================================================================== per frame
 
+        // WP-111 R4 perf D3 (C-00 11.10): attribution — the director's frame and every combat cue it handles (a cue's sound work runs
+        // inside the emitter's own sample — weapon, hitscan, enemy — so without this marker it never shows as audio).
+        private static readonly ProfilerMarker s_updateMarker = new ProfilerMarker("DD.Audio.Director.Update");
+        private static readonly ProfilerMarker s_cueMarker = new ProfilerMarker("DD.Audio.Cue");
+
         private void Update()
+        {
+            using (s_updateMarker.Auto())
+            {
+                UpdateBody();
+            }
+        }
+
+        private void UpdateBody()
         {
             // Unscaled throughout. A hit stop drops the time scale to 0.06 for 45 ms and
             // audio must not stretch with it - the whole point of a hit stop is that the
@@ -574,6 +588,14 @@ namespace DD.Prototype.Audio
         private bool _releasingHeld;
 
         private void OnCombatCue(CombatAudioCue cue)
+        {
+            using (s_cueMarker.Auto())
+            {
+                OnCombatCueBody(cue);
+            }
+        }
+
+        private void OnCombatCueBody(CombatAudioCue cue)
         {
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             if (!_releasingHeld) AudioPlaybackTelemetry.RecordCombatCue(cue.Event, false);
