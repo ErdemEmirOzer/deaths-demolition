@@ -32,7 +32,9 @@ namespace DD.Prototype.Profile
         /// <summary>A weapon that opens on the level ladder (smg_1 L3, sg_1 L5; DEC-085) — no Ash, not bought.</summary>
         LadderWeapon = 3,
         /// <summary>A weapon this build does not carry (roster disabled / not in the arsenal).</summary>
-        NotInBuild = 4
+        NotInBuild = 4,
+        /// <summary>WP-107 (R4): bought at its wall during a run, never a starting weapon (rl_1).</summary>
+        WallBuyOnly = 5
     }
 
     [Serializable]

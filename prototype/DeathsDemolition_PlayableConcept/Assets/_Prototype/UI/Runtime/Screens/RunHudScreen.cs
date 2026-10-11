@@ -384,6 +384,7 @@ namespace DD.Prototype.UI
             BuildMarker();
             BuildReticle();
             BuildInkThreatChips();
+            HudWallBuyPrompt.Create(ScreenRect);   // WP-107 (R4): the wall buy prompt (S-02's placeholder view, S-09 styles it)
 
             // WP-094: this HUD is where the coins fly (its build empties the ledger - nothing in flight survives a rebuild).
             HudGoldTarget.Bind(this, _goldTarget, Canvas);

@@ -75,7 +75,9 @@ namespace DD.Prototype.Tests.EditMode
                     // WP-094 juice: the HUD's juice partial, its rules and its feel-event seam.
                     "Screens/RunHudScreen.Juice.cs", "Hud/HudJuiceRules.cs", "Hud/HudFeelSource.cs",
                     // WP-094 AP-032 v001: the HUD art's loader and layout.
-                    "Hud/HudArt.cs"
+                    "Hud/HudArt.cs",
+                    // WP-107 (R4): the wall buy prompt.
+                    "Hud/HudWallBuyPrompt.cs"
                 },
                 BrushLock = 3,
                 // WP-094 (S-09 decision (b)): the leaf glint (gold / Special) + the round seal's stamp (R3) - 1 → 2.

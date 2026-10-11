@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DD.Prototype.Achievements;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Rounds;
 using UnityEngine;
 
@@ -68,12 +69,12 @@ namespace DD.Prototype.Profile
         private const int FallbackLevelCap = 50;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Fallback unlock level for the Auto SMG. Request value: Profile Level 2; DEC-085 Ö-3 (user, 2026-09-17): 3.")]
-        private const int FallbackAutoSmgUnlockLevel = 3;
+            "Fallback unlock level for the Auto SMG. Request value: Profile Level 2; DEC-085 Ö-3 (user, 2026-09-17): 3; WP-107 (R4, user 11.10): open from the start.")]
+        private const int FallbackAutoSmgUnlockLevel = 1;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Fallback unlock level for the Combat Shotgun. Request value: Profile Level 3; DEC-085 Ö-3 (user, 2026-09-17): 5.")]
-        private const int FallbackCombatShotgunUnlockLevel = 5;
+            "Fallback unlock level for the Combat Shotgun. Request value: Profile Level 3; DEC-085 Ö-3 (user, 2026-09-17): 5; WP-107 (R4, user 11.10): open from the start.")]
+        private const int FallbackCombatShotgunUnlockLevel = 1;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
             "Fallback unlock level for the Explosion upgrade branch. Request value: Profile Level 2.")]
@@ -465,13 +466,32 @@ namespace DD.Prototype.Profile
         /// <summary>WP-077: the Selection lock line of a weapon ("PATH · 120 Kül · L11" / "Reach level N" / ready).</summary>
         public static MetaPathRules.WeaponLockInfo WeaponLock(ClassicWeaponId id)
         {
+            if (IsWallBuyOnly(id))
+            {
+                // WP-107 (R4): no level and no Ash opens it as a starting weapon - it is bought at its wall in a run.
+                return new MetaPathRules.WeaponLockInfo
+                {
+                    LevelGate = NotInBuildUnlockLevel, Status = RunTreeNodeStatus.Locked, LockReason = MetaLockReason.WallBuyOnly
+                };
+            }
+
             return MetaPathRules.WeaponLock(Current, ProfileProgression.NameOf(id), UnlockLevelFor(id));
         }
 
-        /// <summary>The access gate for weapons: reads the EARNED list, not the level (WP-009).</summary>
+        /// <summary>
+        /// The access gate for weapons: reads the EARNED list, not the level (WP-009). WP-107 (R4, user 11.10): a wall-buy-only
+        /// weapon (rl_1) is never a starting weapon, even in a profile that bought it on the old meta path.
+        /// </summary>
         public static bool IsWeaponUnlocked(ClassicWeaponId id)
         {
-            return ProfileProgression.IsWeaponEntitled(Current, id);
+            return !IsWallBuyOnly(id) && ProfileProgression.IsWeaponEntitled(Current, id);
+        }
+
+        /// <summary>WP-107 (R4): the weapon is bought at its wall during a run and can never start one (rl_1).</summary>
+        public static bool IsWallBuyOnly(ClassicWeaponId id)
+        {
+            WeaponDefinition d = Arsenal.Get(id);
+            return d != null && d.IsWallBuyOnly;
         }
 
         /// <summary>The access gate for upgrade branches: reads the EARNED list, not the level (WP-009).</summary>

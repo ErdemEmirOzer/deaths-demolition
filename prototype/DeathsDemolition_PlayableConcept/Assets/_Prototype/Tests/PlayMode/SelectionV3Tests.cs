@@ -184,7 +184,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreNotEqual(chosen, screen.StageIndex, "sahne odağı izler");
             string lockLine = screen.StageTexts[4].text;
-            Assert.IsTrue(lockLine.StartsWith("Reach profile level") || lockLine.Contains("PATH"), "kilit satırı (merdiven ya da PATH): " + lockLine);
+            // WP-107 (R4): the only locked row of a new profile is the rocket launcher - bought at its wall during a run.
+            Assert.IsTrue(lockLine.StartsWith("Reach profile level") || lockLine.Contains("PATH") || lockLine.StartsWith("Bought at its wall"),
+                "kilit satırı (merdiven, PATH ya da wall buy): " + lockLine);
             StringAssert.DoesNotContain("{", lockLine, "kilit satırı biçimlendi");
             TMP_TextCheck(screen, "kilitli odak");
             Canvas.ForceUpdateCanvases();

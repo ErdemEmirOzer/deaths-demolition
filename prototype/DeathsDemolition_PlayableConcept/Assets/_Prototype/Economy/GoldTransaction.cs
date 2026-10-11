@@ -48,7 +48,13 @@ namespace DD.Prototype.Economy
         TreeHearth = 7,
 
         /// <summary>WP-077 K10 Reforge ("Yeniden Dövme"): swapping an owned fork for its partner, at the partner's price, no refund.</summary>
-        TreeReforge = 8
+        TreeReforge = 8,
+
+        /// <summary>
+        /// WP-107 (R4, user 11.10 note 8 - the product decision): a weapon or its ammo bought at a wall station during the
+        /// run (CoD Zombies wall buy). A spend source reported inside "Gold Spent".
+        /// </summary>
+        WallBuy = 9
     }
 
     /// <summary>

@@ -528,6 +528,12 @@ namespace DD.Prototype.Rounds
             {
                 gameObject.AddComponent<GoldService>();
             }
+
+            // WP-107 (R4): the wall buy stations come with the run, like its wallet.
+            if (GetComponent<WallBuyDirector>() == null)
+            {
+                gameObject.AddComponent<WallBuyDirector>();
+            }
         }
 
         protected override void OnEnable()

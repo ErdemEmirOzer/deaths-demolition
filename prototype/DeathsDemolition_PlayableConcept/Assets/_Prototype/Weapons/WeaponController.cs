@@ -310,16 +310,72 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public void EquipClassic(ClassicWeaponId id, PrototypeConfig config = null)
         {
+            EquipClassicCore(id, config, true);
+        }
+
+        /// <summary>
+        /// WP-107 (R4, user 11.10 note 8): a weapon bought at a wall during the run (the product decision that ends REQ-050 /
+        /// REQ-051's one-weapon run). It swaps the classic weapon (a full magazine and this round's reserve) without writing
+        /// <see cref="WeaponRegistry.SelectedWeapon"/> - the next run still starts with the Prepare Run pick, and the run's
+        /// summary / mastery stay with it. The same weapon is an ammo refill (<see cref="RefillClassic"/>). Refused while a
+        /// Special is in hand (it parks the classic weapon).
+        /// </summary>
+        public bool BuyClassic(ClassicWeaponId id, int round)
+        {
+            if (SpecialWeaponActive)
+            {
+                return false;
+            }
+
+            if (_equipped && _equippedId == id)
+            {
+                return RefillClassic(round);
+            }
+
+            if (Config == null || Config.Weapons.FindExact(id) == null)
+            {
+                return false;
+            }
+
+            SkinnedVisual()?.PlayPickup();   // S-06 (R4): the upper body takes it off the wall, then the switch-in brings it up
+            EquipClassicCore(id, null, false);
+            _classic.RefillReserveForRound(round);
+            PublishClassicState(true);
+            return true;
+        }
+
+        /// <summary>WP-107 (R4): the wall buy ammo refill of the weapon in hand. False (nothing changes) while a Special is in hand or the ammo is already full.</summary>
+        public bool RefillClassic(int round)
+        {
+            if (SpecialWeaponActive || !_equipped || _classic.IsAmmoFull(round))
+            {
+                return false;
+            }
+
+            _classic.RefillFull(round);
+            PublishClassicState(true);
+            SkinnedVisual()?.PlayPickup();
+            return true;
+        }
+
+        /// <summary>WP-107 (R4): the classic weapon has a full magazine and this round's reserve.</summary>
+        public bool IsClassicAmmoFull(int round)
+        {
+            return _equipped && _classic.IsAmmoFull(round);
+        }
+
+        private bool EquipClassicCore(ClassicWeaponId id, PrototypeConfig config, bool rememberSelection)
+        {
             PrototypeConfig c = config != null ? config : Config;
             if (c == null)
             {
-                return;
+                return false;
             }
 
             ClassicWeaponSettings settings = c.Weapons.Find(id);
             if (settings == null)
             {
-                return;
+                return false;
             }
 
             bool switching = _equipped && _equippedId != settings.Id;
@@ -331,11 +387,12 @@ namespace DD.Prototype.Weapons
             _casingOwed = false;
             EnsureClassicModel();
 
-            WeaponRegistry.SelectedWeapon = _equippedId;
+            if (rememberSelection) WeaponRegistry.SelectedWeapon = _equippedId;   // WP-107: a wall buy keeps the run's pick
             WeaponEvents.PublishWeaponEquipped(_equippedId);
             PublishClassicState(true);
             if (switching) SkinnedVisual()?.PlaySwitchIn();   // WP-069 (S-06 B4b): the new weapon comes up
             if (switching) _clipMotionUntil = Time.time + FpClipMotionSeconds;   // WP-069 FP feel: the switch clip shows in FP
+            return true;
         }
 
         /// <summary>The player's authored body (the switch clips), found once.</summary>

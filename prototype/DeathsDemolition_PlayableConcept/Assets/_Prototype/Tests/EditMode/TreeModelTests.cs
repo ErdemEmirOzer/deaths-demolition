@@ -104,7 +104,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(EconomySimulator.TreeModel.ReferenceXpPerHour, reference.xpPerHour);
             Assert.LessOrEqual(reference.ringHours[0], 1.01f, "halka 1");
             Assert.LessOrEqual(reference.ring2HoursWithOneOffs, 12f, "halka 1+2 (tek seferlikler yarısı)");
-            Assert.GreaterOrEqual(reference.ringHours[2], 30f, "tüm meta 30+ saat");
+            // WP-107 (R4, kullanıcı 11.10 not 8): silah sayfasının Kül'ü (2 080) kalktı - tüm meta 26,3 saate indi; uzun kuyruğu
+            // WP-104'ün "Uyanış" sayfası (S-04, C-00 kararı 2) yeniden kurar. Eşik 25 saat.
+            Assert.GreaterOrEqual(reference.ringHours[2], 25f, "tüm meta 25+ saat (WP-107 sonrası)");
         }
     }
 }

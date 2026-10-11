@@ -70,6 +70,9 @@ namespace DD.Prototype.Economy
         /// <summary>Gold spent on paid offer rerolls (WP-008, DEC-050).</summary>
         public int SpentOnRerolls { get; private set; }
 
+        /// <summary>WP-107 (R4): gold spent at wall buy stations (weapons and ammo); inside <see cref="TotalSpent"/>.</summary>
+        public int SpentOnWallBuys { get; private set; }
+
         /// <summary>Accepted transactions this run. F1 readout and test evidence.</summary>
         public int AppliedTransactions => _applied.Count;
 
@@ -215,6 +218,9 @@ namespace DD.Prototype.Economy
                 case GoldSource.OfferReroll:
                     SpentOnRerolls += cost;
                     break;
+                case GoldSource.WallBuy:
+                    SpentOnWallBuys += cost;
+                    break;
             }
 
             _version++;
@@ -319,6 +325,7 @@ namespace DD.Prototype.Economy
             EarnedByAutoCollect = 0;
             SpentOnUpgrades = 0;
             SpentOnRerolls = 0;
+            SpentOnWallBuys = 0;
             _version = 0;
             _nextTransactionId = 1;
             _applied.Clear();

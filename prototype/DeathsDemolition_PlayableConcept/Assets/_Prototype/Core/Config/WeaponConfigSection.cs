@@ -86,7 +86,7 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.None, "WP-042: per-pellet jitter on the ring as a share of SpreadDegrees.", true)]
         public float PelletRingJitterShare = 0.10f;
 
-        [PrototypeOnly(PendingDecisions.ProfileXp, "Profile level required to unlock. AR=1, SMG=2, Shotgun=3.")]
+        [PrototypeOnly(PendingDecisions.ProfileXp, "Profile level required to unlock. AR=1, SMG=2, Shotgun=3; WP-107 (R4, user 11.10): every classic weapon but rl_1 at 1.")]
         public int UnlockProfileLevel = 1;
 
         /// <summary>
@@ -426,7 +426,7 @@ namespace DD.Prototype.Core.Config
                 RumbleMilliseconds = 45,
                 PelletRingRadiusShare = 0f,
                 PelletRingJitterShare = 0f,
-                UnlockProfileLevel = 3
+                UnlockProfileLevel = 1   // WP-107 (R4, user 11.10): open from the start (was DEC-085 L3)
             },
             new ClassicWeaponSettings
             {
@@ -451,7 +451,7 @@ namespace DD.Prototype.Core.Config
                 RumbleMilliseconds = 120,
                 PelletRingRadiusShare = 0.6f,
                 PelletRingJitterShare = 0.10f,
-                UnlockProfileLevel = 5
+                UnlockProfileLevel = 1   // WP-107 (R4, user 11.10): open from the start (was DEC-085 L5)
             }
         };
 

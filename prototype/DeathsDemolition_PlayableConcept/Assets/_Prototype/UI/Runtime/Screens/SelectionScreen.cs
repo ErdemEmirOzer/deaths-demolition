@@ -1307,6 +1307,11 @@ namespace DD.Prototype.UI
         private static string LockChip(ClassicWeaponId id)
         {
             MetaPathRules.WeaponLockInfo info = ProfileService.WeaponLock(id);
+            if (info.LockReason == MetaLockReason.WallBuyOnly)
+            {
+                return UiStrings.Get("selection.lock.wallbuy_chip", "WALL BUY");   // WP-107 (R4): rl_1 is bought in the run
+            }
+
             string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
             if (info.OnPath)
             {
@@ -1323,6 +1328,11 @@ namespace DD.Prototype.UI
         /// </summary>
         private static string LockLine(MetaPathRules.WeaponLockInfo info)
         {
+            if (info.LockReason == MetaLockReason.WallBuyOnly)
+            {
+                return UiStrings.Get("selection.lock.wallbuy", "Bought at its wall during a run. It is never a starting weapon.");
+            }
+
             string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
             if (!info.OnPath)
             {

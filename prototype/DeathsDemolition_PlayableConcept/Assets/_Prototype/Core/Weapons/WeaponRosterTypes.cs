@@ -40,7 +40,10 @@ namespace DD.Prototype.Core.Weapons
         ProfileLevel = 1,
 
         /// <summary>WP-069 B2b (DEC-095): opens through the WP-077 meta path — a Kül node with a level gate; never by the profile ladder.</summary>
-        MetaPath = 2
+        MetaPath = 2,
+
+        /// <summary>WP-107 (R4): never a starting weapon — bought in a run at its wall (rl_1).</summary>
+        WallBuy = 3
     }
 
     /// <summary>

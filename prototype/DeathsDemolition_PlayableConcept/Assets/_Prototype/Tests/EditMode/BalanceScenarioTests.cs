@@ -89,7 +89,8 @@ namespace DD.Prototype.Tests.EditMode
             else Assert.AreEqual(bS.rounds[0].sustainedDps, b34.rounds[0].sustainedDps, 1e-3f, "Ö-4 sevkte (WP-042): preset DPS'i değiştirmez");
             Assert.AreEqual(3, b34.unlockLevel); Assert.AreEqual(5, o34.weapons[2].unlockLevel);
             Assert.AreEqual(lvlOnce, bS.unlockLevel, "sevk raporu sevk seviyesini taşır");
-            Assert.AreEqual(3, lvlOnce, "DEC-085 Ö-3 sevk verisi: B seviye 3"); Assert.AreEqual(5, c.Weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "C seviye 5");
+            // WP-107 (R4, kullanıcı 11.10): sevkte merdiven yok - B ve C baştan açık; Ö-3 yalnız ne-olurdu önayarında (o34) kalır.
+            Assert.AreEqual(1, lvlOnce, "WP-107 sevk verisi: B seviye 1"); Assert.AreEqual(1, c.Weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "C seviye 1");
             // Ö-5: R8 override satırı Ultra ağırlığını/zırh tablosunu değiştirir → R8 bileşimi sevkten farklı.
             EconomySimulator.RoundRow s8 = shipped.weapons[0].rounds[7], o58 = o5.weapons[0].rounds[7];
             bool farkli = s8.tierCounts[3] != o58.tierCounts[3] || Mathf.Abs(s8.armouredShare[0] - o58.armouredShare[0]) > 0.01f;
@@ -162,8 +163,10 @@ namespace DD.Prototype.Tests.EditMode
                     Assert.AreEqual(level, ProfileService.UnlockLevelFor(d.Id), "merdiven = roster: " + d.Id);
                     UnlockDefinition u = UnlockCatalog.Find(ProfileProgression.NameOf(d.Id) ?? d.Id.ToString());
                     Assert.IsNotNull(u, "katalog girdisi: " + d.Id); Assert.AreEqual(level, u.NumericKey, "katalog = roster: " + d.Id);
-                    Assert.IsFalse(ProfileService.IsWeaponUnlocked(d.Id), "taze profilde kapalı: " + d.Id);
+                    Assert.IsTrue(ProfileService.IsWeaponUnlocked(d.Id), "WP-107: taze profilde açık: " + d.Id);
                 }
+
+                Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.Rl1), "WP-107: roketatar yalnız duvardan");
 
                 // Tam seviyeye çıkan bir koşu: her roster silahı Results'ta Weapon türünde, roster adıyla, bir kez.
                 // WP-069 B2b: the roster also lists the meta-path weapons (DEC-095, never on the ladder) — the full-level run targets the ladder ones.
@@ -172,13 +175,14 @@ namespace DD.Prototype.Tests.EditMode
                 RunRewardReport r = ProfileService.ApplyRun(new RunSummary { CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(), ReachedRound = 2, CompletedRounds = 1, CompletedRoundXp = xp, TotalXpEarned = xp, Weapon = ClassicWeaponId.AssaultRifle, EndReason = RunEndReason.PlayerDeath });
                 Assert.IsTrue(r.Applied); Assert.AreEqual(hedef, r.LevelAfter);
                 RunResultsData d2 = ProfileService.LastResults;
+                // WP-107 (R4): the ladder opens nothing any more - every weapon a run could list was open from the first load.
                 foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
                 {
                     if (!d.HasRuntimeId || d.UnlockKind != WeaponUnlockKind.ProfileLevel) continue;
                     Assert.IsTrue(ProfileService.IsWeaponUnlocked(d.Id), d.Id.ToString());
                     string ad = ProfileService.WeaponDisplayName(d.Id);
                     int adet = 0; foreach (RunResultsUnlock u in d2.NewUnlocks) if (u.Type == UnlockContentType.Weapon && u.Title == ad) adet++;
-                    Assert.AreEqual(1, adet, "Results'ta tam bir Weapon girdisi: " + ad);
+                    Assert.AreEqual(0, adet, "WP-107: Results'ta seviye açılışı yok: " + ad);
                 }
 
                 foreach (RunResultsUnlock u in d2.NewUnlocks)

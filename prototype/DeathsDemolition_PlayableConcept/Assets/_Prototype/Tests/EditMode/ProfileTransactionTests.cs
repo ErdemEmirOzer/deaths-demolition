@@ -475,7 +475,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Entitlement_ConfigEsigiYukselse_ReloadSonrasiDaAcikKalir()
         {
-            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
+            Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "WP-107: rl_1 dışındaki silahlar baştan açık");
             int hedef = Math.Max(ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg), ProfileService.UnlockLevelFor(UpgradeBranch.Explosion));
             int gerekliXp = 0; for (int l = 1; l < hedef; l++) gerekliXp += ProfileService.LevelRequirement(l);
             RunRewardReport r = ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, gerekliXp));
@@ -530,8 +530,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(ProfileStore.Save(disk).Success);
 
             YenidenYukle();
-            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
-            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.CombatShotgun));
+            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.Rl1), "bilinmeyen id bir şey açmaz (WP-107: roketatar yalnız duvardan)");
             Assert.IsFalse(ProfileService.IsBranchUnlocked(UpgradeBranch.Chain));
             Assert.IsTrue(ProfileService.Current.UnlockedWeapons.Contains("Bazooka"), "bilinmeyen id korunur");
 
@@ -628,10 +627,14 @@ namespace DD.Prototype.Tests.EditMode
         {
             // Kilitli silahla koşu başlatılamaz: StartRun seçimi ilk açık silaha çevirir (sahne yüklemesi
             // EditMode'da yalnız log'lanır; silah kararı yükleme öncesi verilir).
-            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.CombatShotgun;
-            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.CombatShotgun));
+            // WP-107 (R4): rl_1 dışındaki her silah baştan açık; roketatar hiçbir zaman başlangıç silahı değil.
+            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.Rl1;
+            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.Rl1));
             PrototypeUiFlow.StartRun();
-            Assert.AreEqual(ClassicWeaponId.AssaultRifle, PrototypeUiFlow.SelectedWeapon, "L1'de kilitli seçim ilk açık silaha döner");
+            Assert.AreEqual(ClassicWeaponId.AssaultRifle, PrototypeUiFlow.SelectedWeapon, "kilitli seçim (roketatar) ilk açık silaha döner");
+            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.CombatShotgun;
+            PrototypeUiFlow.StartRun();
+            Assert.AreEqual(ClassicWeaponId.CombatShotgun, PrototypeUiFlow.SelectedWeapon, "WP-107: L1'de Rappa seçilebilir");
 
             // Kazanılmış SMG (açılış seviyesi = liste/DEC-085 Ö-3), eşik sonradan 40'a çıkmış: seçim korunur (liste otoritedir).
             int smgSeviye = ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg);

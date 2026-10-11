@@ -1280,8 +1280,8 @@
     "tr": "İlk sıfırlama ücretsizdir."
   },
   "path.rule": {
-    "en": "The PATH never adds damage. It opens weapons, Special leanings and options.",
-    "tr": "YOL hasar eklemez. Silahları, Özel eğilimleri ve seçenekleri açar."
+    "en": "The PATH never adds damage. It opens Special leanings and options.",
+    "tr": "YOL hasar eklemez. Özel eğilimleri ve seçenekleri açar."
   },
   "path.apex.choose": {
     "en": "Choose one apex for this run.",
@@ -1320,72 +1320,72 @@
     "tr": "Shippu"
   },
   "tree.meta.weapon.smg_1.desc": {
-    "en": "Unlocks Shippu for selection before a run.",
-    "tr": "Shippu koşu öncesi seçime açılır."
+    "en": "Shippu is open from the start. Buy it at its wall during a run.",
+    "tr": "Shippu baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.sg_1.name": {
     "en": "Rappa",
     "tr": "Rappa"
   },
   "tree.meta.weapon.sg_1.desc": {
-    "en": "Unlocks Rappa for selection before a run.",
-    "tr": "Rappa koşu öncesi seçime açılır."
+    "en": "Rappa is open from the start. Buy it at its wall during a run.",
+    "tr": "Rappa baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.ar_2.name": {
     "en": "Sanren",
     "tr": "Sanren"
   },
   "tree.meta.weapon.ar_2.desc": {
-    "en": "Unlocks Sanren for selection before a run.",
-    "tr": "Sanren koşu öncesi seçime açılır."
+    "en": "Sanren is open from the start. Buy it at its wall during a run.",
+    "tr": "Sanren baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.lmg_1.name": {
     "en": "Mukade",
     "tr": "Mukade"
   },
   "tree.meta.weapon.lmg_1.desc": {
-    "en": "Unlocks Mukade for selection before a run.",
-    "tr": "Mukade koşu öncesi seçime açılır."
+    "en": "Mukade is open from the start. Buy it at its wall during a run.",
+    "tr": "Mukade baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.sr_1.name": {
     "en": "Tomi",
     "tr": "Tomi"
   },
   "tree.meta.weapon.sr_1.desc": {
-    "en": "Unlocks Tomi for selection before a run.",
-    "tr": "Tomi koşu öncesi seçime açılır."
+    "en": "Tomi is open from the start. Buy it at its wall during a run.",
+    "tr": "Tomi baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.smg_2.name": {
     "en": "Tetsui",
     "tr": "Tetsui"
   },
   "tree.meta.weapon.smg_2.desc": {
-    "en": "Unlocks Tetsui for selection before a run.",
-    "tr": "Tetsui koşu öncesi seçime açılır."
+    "en": "Tetsui is open from the start. Buy it at its wall during a run.",
+    "tr": "Tetsui baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.sg_2.name": {
     "en": "Nito",
     "tr": "Nito"
   },
   "tree.meta.weapon.sg_2.desc": {
-    "en": "Unlocks Nito for selection before a run.",
-    "tr": "Nito koşu öncesi seçime açılır."
+    "en": "Nito is open from the start. Buy it at its wall during a run.",
+    "tr": "Nito baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.lmg_2.name": {
     "en": "Kurogane",
     "tr": "Kurogane"
   },
   "tree.meta.weapon.lmg_2.desc": {
-    "en": "Unlocks Kurogane for selection before a run.",
-    "tr": "Kurogane koşu öncesi seçime açılır."
+    "en": "Kurogane is open from the start. Buy it at its wall during a run.",
+    "tr": "Kurogane baştan açıktır. Koşu sırasında duvarından da alınır."
   },
   "tree.meta.weapon.rl_1.name": {
     "en": "Bohiya",
     "tr": "Bohiya"
   },
   "tree.meta.weapon.rl_1.desc": {
-    "en": "Unlocks Bohiya for selection before a run.",
-    "tr": "Bohiya koşu öncesi seçime açılır."
+    "en": "Bohiya is bought at its wall during a run. It is never a starting weapon.",
+    "tr": "Bohiya koşu sırasında duvarından satın alınır. Başlangıç silahı olamaz."
   },
   "tree.meta.special.raiju.lure.name": {
     "en": "Raiju Lure",
@@ -1708,8 +1708,8 @@
     "tr": "Her koşu YOL için Kül kazandırır. Hangi kapıların açık olduğunu seviyen belirler."
   },
   "tips.025": {
-    "en": "The PATH never adds damage. It opens weapons, Special leanings and options.",
-    "tr": "YOL hasar eklemez. Silahları, Özel eğilimleri ve seçenekleri açar."
+    "en": "The PATH never adds damage. It opens Special leanings and options.",
+    "tr": "YOL hasar eklemez. Özel eğilimleri ve seçenekleri açar."
   },
   "tips.026": {
     "en": "Bohiya will not arm up close. Fired too near, the rocket drops and fizzles.",
@@ -1924,8 +1924,8 @@
     "tr": "ÇEKİRDEK"
   },
   "selection.carried": {
-    "en": "Carried for the whole run. It cannot be swapped.",
-    "tr": "Koşu boyunca taşınır. Değiştirilemez."
+    "en": "You start the run with it. Swap it at a wall buy for gold.",
+    "tr": "Koşuya bununla başlarsın. Duvardan altınla değiştirebilirsin."
   },
   "selection.lock.level": {
     "en": "Reach profile level {level} · you are level {current}",
@@ -2908,8 +2908,8 @@
     "tr": "KOŞUYU BAŞLAT"
   },
   "selection.subtitle": {
-    "en": "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped.",
-    "tr": "Kostüm yalnızca görünüştür. Klasik silah koşu boyunca taşınır ve değiştirilemez."
+    "en": "The skin is cosmetic. You start the run with this weapon and can swap it at a wall buy for gold.",
+    "tr": "Kostüm yalnızca görünüştür. Koşuya bu silahla başlarsın; duvardan altınla değiştirebilirsin."
   },
   "selection.title": {
     "en": "PREPARE YOUR RUN",
@@ -4126,5 +4126,33 @@
   "shop.report.none": {
     "en": "—",
     "tr": "—"
+  },
+  "selection.lock.wallbuy": {
+    "en": "Bought at its wall during a run. It is never a starting weapon.",
+    "tr": "Koşu sırasında duvarından satın alınır. Başlangıç silahı olamaz."
+  },
+  "selection.lock.wallbuy_chip": {
+    "en": "WALL BUY",
+    "tr": "DUVARDAN"
+  },
+  "wallbuy.buy": {
+    "en": "Buy {weapon} · {cost}",
+    "tr": "Satın al: {weapon} · {cost}"
+  },
+  "wallbuy.refill": {
+    "en": "Ammo · {cost}",
+    "tr": "Cephane · {cost}"
+  },
+  "wallbuy.not_enough_gold": {
+    "en": "Not enough gold",
+    "tr": "Yetersiz altın"
+  },
+  "wallbuy.ammo_full": {
+    "en": "Ammo full",
+    "tr": "Cephane dolu"
+  },
+  "wallbuy.special_active": {
+    "en": "Not while a Special is in hand",
+    "tr": "Özel silah eldeyken olmaz"
   }
 }

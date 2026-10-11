@@ -252,6 +252,7 @@ namespace DD.Prototype.Core.Weapons
             d.CoreBranches = def.upgrade.coreBranches != null ? (UpgradeBranch[])def.upgrade.coreBranches.Clone() : new UpgradeBranch[WeaponBranchContract.CoreBranchesPerWeapon];
             d.UnlockKind = def.unlock.kind == WeaponUnlockV3.Default ? WeaponUnlockKind.Default
                 : def.unlock.kind == WeaponUnlockV3.ProfileLevel ? WeaponUnlockKind.ProfileLevel
+                : def.unlock.kind == WeaponUnlockV3.WallBuy ? WeaponUnlockKind.WallBuy
                 : WeaponUnlockKind.MetaPath;
             WeaponSockets sockets = def.presentation.sockets;
             if (sockets != null)

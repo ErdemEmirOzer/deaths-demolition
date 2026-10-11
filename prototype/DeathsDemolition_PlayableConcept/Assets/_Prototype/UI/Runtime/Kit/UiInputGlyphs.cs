@@ -20,7 +20,9 @@ namespace DD.Prototype.UI
         Skip = 3,
         Reroll = 4,
         /// <summary>WP-068 slice 8 (E11): the HUD's EMPTY prompt - the Gameplay Reload action (R / pad West), rebindable.</summary>
-        Reload = 5
+        Reload = 5,
+        /// <summary>WP-107 (R4): the wall buy prompt - the Gameplay Interact action (E / pad South), rebindable.</summary>
+        Interact = 6
     }
 
     /// <summary>
@@ -196,6 +198,7 @@ namespace DD.Prototype.UI
                 case UiPromptAction.Skip: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("SPACE", false, 2.6f);
                 case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f, "Pad.FaceNorth") : new Glyph("R", false, 1.2f);
                 case UiPromptAction.Reload: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("R", false, 1.2f);
+                case UiPromptAction.Interact: return pad ? new Glyph("A", true, 1f, "Pad.FaceSouth") : new Glyph("E", false, 1.2f);
                 default: return new Glyph("?", true, 1f);
             }
         }
@@ -207,6 +210,7 @@ namespace DD.Prototype.UI
             {
                 case UiPromptAction.Pause: return PrototypeInputNames.ActionPause;
                 case UiPromptAction.Reload: return PrototypeInputNames.ActionReload;
+                case UiPromptAction.Interact: return PrototypeInputNames.ActionInteract;
                 default: return null;
             }
         }

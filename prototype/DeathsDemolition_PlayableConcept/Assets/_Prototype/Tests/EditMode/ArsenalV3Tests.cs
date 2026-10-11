@@ -125,8 +125,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(d.projectile.impulse, a.StaggerImpulse, 1e-5f, tag + "itki");
                 Assert.AreEqual(d.projectile.maxRange, a.Range, 1e-5f, tag + "menzil");
                 int ladder = d.unlock.kind == WeaponUnlockV3.Default ? 1
-                    : d.unlock.kind == WeaponUnlockV3.Meta ? ClassicWeaponSettings.NotOnProfileLadder : d.unlock.profileLevel;
-                Assert.AreEqual(ladder, a.UnlockProfileLevel, tag + "kilit seviyesi (DEC-095: meta ağacı silahı profil merdiveninde değil)");
+                    : d.unlock.kind == WeaponUnlockV3.Meta || d.unlock.kind == WeaponUnlockV3.WallBuy ? ClassicWeaponSettings.NotOnProfileLadder : d.unlock.profileLevel;
+                Assert.AreEqual(ladder, a.UnlockProfileLevel, tag + "kilit seviyesi (DEC-095 / WP-107: meta ya da wall buy silahı profil merdiveninde değil)");
                 Assert.Greater(a.RecoilRecoverySeconds, 0f, tag + "his satırı (sınıf kardeşi) bağlı");
             }
 
@@ -140,10 +140,11 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0.75f + 0.55f * 7, sg1.ReloadTime, 1e-4f, "tek-fişek: M3 alanı = boştan tam şarjör");
             Assert.AreEqual(80f, config.Weapons.Find(ClassicWeaponId.Sr1).Damage, 1e-5f, "DEC-105: Tomi 55 → 80");
             Assert.AreEqual(100, config.Weapons.Find(ClassicWeaponId.Lmg1).MagazineSize);
-            Assert.AreEqual(3, smg1.UnlockProfileLevel, "DEC-085 Ö-3: B seviye 3");
-            Assert.AreEqual(5, sg1.UnlockProfileLevel, "DEC-085 Ö-3: C seviye 5");
-            Assert.AreEqual(WeaponUnlockV3.Meta, Arsenal.Get("ar_2").unlock.kind, "yeni silahlar meta ağacıyla (DEC-095)");
-            Assert.AreEqual(10, Arsenal.Get("rl_1").unlock.metaCost, "meta bandı §6 tablosu");
+            // WP-107 (R4, kullanıcı 11.10 not 8): seviye merdiveni ve meta silah düğümleri kalktı - rl_1 dışındaki her klasik silah baştan açık.
+            Assert.AreEqual(1, smg1.UnlockProfileLevel, "WP-107: B baştan açık (DEC-085 Ö-3 L3 emekli)");
+            Assert.AreEqual(1, sg1.UnlockProfileLevel, "WP-107: C baştan açık (DEC-085 Ö-3 L5 emekli)");
+            Assert.AreEqual(WeaponUnlockV3.Default, Arsenal.Get("ar_2").unlock.kind, "WP-107: yeni silahlar da baştan açık");
+            Assert.AreEqual(WeaponUnlockV3.WallBuy, Arsenal.Get("rl_1").unlock.kind, "WP-107: roketatar yalnız duvardan satın alınır");
         }
 
         [Category("WP069")]

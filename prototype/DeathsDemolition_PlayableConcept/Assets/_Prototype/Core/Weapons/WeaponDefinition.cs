@@ -25,7 +25,8 @@ namespace DD.Prototype.Core.Weapons
 
     public enum WeaponSilhouetteV3 { Long = 0, LongX = 1, Medium = 2, ShortThick = 3, Heavy = 4, Tube = 5, Special = 6 }
 
-    public enum WeaponUnlockV3 { Default = 0, ProfileLevel = 1, Meta = 2 }
+    /// <summary>WP-107 (R4, user 11.10 note 8): <see cref="WallBuy"/> = never a starting weapon (no ladder, no meta path); bought in a run at its wall.</summary>
+    public enum WeaponUnlockV3 { Default = 0, ProfileLevel = 1, Meta = 2, WallBuy = 3 }
 
     public enum SpecialLimit { Time = 0, Ammo = 1, AmmoOrTime = 2 }
 
@@ -525,7 +526,7 @@ namespace DD.Prototype.Core.Weapons
                 PelletRingJitterShare = fire.ringJitterShare,
                 // DEC-095: a meta-tree weapon is not on the profile ladder (S-04 WP-077 grants it).
                 UnlockProfileLevel = unlock.kind == WeaponUnlockV3.Default ? 1
-                    : unlock.kind == WeaponUnlockV3.Meta ? ClassicWeaponSettings.NotOnProfileLadder
+                    : unlock.kind == WeaponUnlockV3.Meta || unlock.kind == WeaponUnlockV3.WallBuy ? ClassicWeaponSettings.NotOnProfileLadder
                     : Mathf.Max(1, unlock.profileLevel),
                 Definition = this
             };
@@ -572,6 +573,18 @@ namespace DD.Prototype.Core.Weapons
             unlock.profileLevel = 1;
             unlock.metaCost = metaBand;
         }
+
+        /// <summary>WP-107 (R4): bought in a run at its wall only — never a starting weapon, never on the ladder or the meta path.</summary>
+        public void SetUnlockWallBuy(int order)
+        {
+            unlock.kind = WeaponUnlockV3.WallBuy;
+            unlock.unlockOrder = order;
+            unlock.profileLevel = 1;
+            unlock.metaCost = 0;
+        }
+
+        /// <summary>WP-107 (R4): a weapon the player cannot start a run with (it is bought at its wall).</summary>
+        public bool IsWallBuyOnly => unlock != null && unlock.kind == WeaponUnlockV3.WallBuy;
 
         /// <summary>WP-069 B1 migration: the unlock block from an M3 settings entry (open by default, or its DEC-008 level).</summary>
         public void SetUnlockFromM3(ClassicWeaponSettings m3, bool openByDefault)

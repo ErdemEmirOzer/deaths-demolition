@@ -363,7 +363,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0, p.Achievements.Count);
             Assert.IsFalse(ProfileService.RecoveredFromCorruptSave, "eksik dosya hata değil, ilk açılış");
             Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AssaultRifle), "başlangıç silahı açık");
-            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
+            Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "WP-107: rl_1 dışındaki silahlar baştan açık");
+            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.Rl1), "WP-107: roketatar yalnız duvardan");
             Assert.IsNull(ProfileService.LastReport);
         }
 

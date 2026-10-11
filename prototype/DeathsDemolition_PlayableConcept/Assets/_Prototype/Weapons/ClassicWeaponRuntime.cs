@@ -345,9 +345,41 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            int target = Mathf.RoundToInt(d.ammo.reserve * (1f + Mathf.Max(0f, d.ammo.reserveRoundCoef) * Mathf.Max(0, round - 1)));
-            _reserve = Mathf.Max(_reserve, target);
+            _reserve = Mathf.Max(_reserve, ReserveAllowance(round));
             _floorTimer = 0f;
+        }
+
+        /// <summary>WP-069 B2: the reserve this round allows, reserve × (1 + coef × (round − 1)); 0 with an infinite reserve.</summary>
+        public int ReserveAllowance(int round)
+        {
+            WeaponDefinition d = Definition;
+            if (d == null || d.ammo.reserve < 0) return 0;
+            return Mathf.RoundToInt(d.ammo.reserve * (1f + Mathf.Max(0f, d.ammo.reserveRoundCoef) * Mathf.Max(0, round - 1)));
+        }
+
+        /// <summary>WP-107 (R4): a full magazine and at least this round's reserve - a wall buy refill would add nothing.</summary>
+        public bool IsAmmoFull(int round)
+        {
+            return _settings != null && Ammo >= MagazineSize && (ReserveInfinite || _reserve >= ReserveAllowance(round));
+        }
+
+        /// <summary>
+        /// WP-107 (R4): a wall buy ammo refill - a full magazine and the reserve topped up to this round's allowance (never
+        /// lowered). A reload in flight ends quietly: the magazine is full.
+        /// </summary>
+        public void RefillFull(int round)
+        {
+            if (_settings == null) return;
+            if (IsReloading)
+            {
+                IsReloading = false;
+                ReloadRemaining = 0f;
+                _shellSeconds = 0f;
+                LastReloadCompleted = true;
+            }
+
+            Ammo = MagazineSize;
+            RefillReserveForRound(round);
         }
 
         // ------------------------------------------------------------------ per frame

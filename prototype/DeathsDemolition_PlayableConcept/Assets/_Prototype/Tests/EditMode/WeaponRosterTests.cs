@@ -50,7 +50,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, WeaponRoster.Enabled[0].Id);
             Assert.AreEqual(ClassicWeaponId.AutoSmg, WeaponRoster.Enabled[1].Id);
             Assert.AreEqual(ClassicWeaponId.CombatShotgun, WeaponRoster.Enabled[2].Id);
-            Assert.IsTrue(WeaponRoster.IsEnabled(ClassicWeaponId.Rl1), "WP-069 B3: rl_1 seçimde (meta yolu)");
+            Assert.IsTrue(WeaponRoster.IsEnabled(ClassicWeaponId.Rl1), "WP-069 B3: rl_1 seçimde (WP-107: kilitli satır, yalnız duvardan)");
             for (int i = 3; i < WeaponRoster.Enabled.Count; i++)
             {
                 ClassicWeaponDefinition e = WeaponRoster.Enabled[i];
@@ -58,7 +58,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(def.weaponId, e.RosterKey);
                 Assert.AreEqual(def.sortOrder, e.SortOrder);
                 CollectionAssert.AreEqual(def.upgrade.coreBranches, e.CoreBranches, e.RosterKey + ": Arsenal çekirdek üçlüsü");
-                Assert.AreEqual(WeaponUnlockKind.MetaPath, e.UnlockKind, e.RosterKey + ": meta yolu (DEC-095)");
+                Assert.AreEqual(e.Id == ClassicWeaponId.Rl1 ? WeaponUnlockKind.WallBuy : WeaponUnlockKind.Default, e.UnlockKind,
+                    e.RosterKey + ": WP-107 - baştan açık, roketatar yalnız duvardan (DEC-095 meta yolu emekli)");
                 Assert.IsFalse(string.IsNullOrEmpty(e.ModelResource), e.RosterKey + ": sınıf kardeşinin blockout'u");
             }
 
@@ -152,8 +153,9 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.AreEqual(1, WeaponRoster.Find(ClassicWeaponId.AssaultRifle).UnlockLevel(config), "A açık.");
             Assert.AreEqual(WeaponUnlockKind.Default, WeaponRoster.Find(ClassicWeaponId.AssaultRifle).UnlockKind);
-            Assert.Greater(WeaponRoster.Find(ClassicWeaponId.AutoSmg).UnlockLevel(config), 1, "B profil seviyesiyle (DEC-008).");
-            Assert.Greater(WeaponRoster.Find(ClassicWeaponId.CombatShotgun).UnlockLevel(config), WeaponRoster.Find(ClassicWeaponId.AutoSmg).UnlockLevel(config));
+            // WP-107 (R4, kullanıcı 11.10): seviyeyle açılış kalktı - B ve C de seviye 1 (DEC-008 / DEC-085 merdiveni emekli).
+            Assert.AreEqual(1, WeaponRoster.Find(ClassicWeaponId.AutoSmg).UnlockLevel(config), "B baştan açık (WP-107).");
+            Assert.AreEqual(1, WeaponRoster.Find(ClassicWeaponId.CombatShotgun).UnlockLevel(config), "C baştan açık (WP-107).");
 
             // Selection source: enabled entries in order, default flagged once, D absent.
             IWeaponRosterSource src = WeaponRosterSource.Instance;

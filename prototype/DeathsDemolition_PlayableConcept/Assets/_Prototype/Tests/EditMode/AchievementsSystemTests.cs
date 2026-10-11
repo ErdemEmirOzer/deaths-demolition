@@ -583,7 +583,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(31, p.TotalKills); Assert.AreEqual(29, p.StandardKills); Assert.AreEqual(2, p.EliteKills); Assert.AreEqual(0, p.UnattributedKills);
             Assert.AreEqual(2, p.ArmorPiecesBroken); Assert.AreEqual(80, p.BestRunXp);
             CollectionAssert.AreEqual(new[] { "first_blood", "reach_round_5" }, p.Achievements);
-            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1" }, p.UnlockedWeapons, "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
+            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1", "sg_1", "ar_2", "smg_2", "sg_2", "lmg_1", "lmg_2", "sr_1" }, p.UnlockedWeapons,
+                "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer (ar_1, smg_1 dosyadan, sıra korunur); WP-107: yükleme rl_1 dışındaki silahları da verir");
             CollectionAssert.IsSubsetOf(new[] { "Piercing" }, p.UnlockedBranches, "seviye merdiveni yükleme sırasında ekleyebilir; dosyadaki kayıp yok");
             ProfileData ham; Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.ReadFile(TestPath, out ham));
             CollectionAssert.AreEqual(new[] { "Piercing" }, ham.UnlockedBranches, "diskteki v3 belge dokunulmadı (ilk save'e kadar)");

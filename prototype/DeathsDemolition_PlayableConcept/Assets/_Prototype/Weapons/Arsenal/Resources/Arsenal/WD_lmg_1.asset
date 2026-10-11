@@ -165,10 +165,10 @@ MonoBehaviour:
     explosionSemantics: 0
     forbiddenBranches: 
   unlock:
-    kind: 2
+    kind: 0
     unlockOrder: 4
     profileLevel: 1
-    metaCost: 4
+    metaCost: 0
     shopPriceBand: {x: 0, y: 0}
   presentation:
     audioId: 

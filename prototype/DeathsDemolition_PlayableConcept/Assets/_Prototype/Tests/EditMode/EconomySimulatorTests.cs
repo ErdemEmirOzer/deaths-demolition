@@ -51,11 +51,13 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, r.weapons.Length, "her etkin roster silahı");
             Assert.GreaterOrEqual(r.weapons.Length, 3);
             Assert.AreEqual("A", r.weapons[0].rosterKey); Assert.AreEqual(1, r.weapons[0].unlockLevel);
-            Assert.AreEqual(3, r.weapons[1].unlockLevel, "B seviye 3 (DEC-085 Ö-3, roster verisi)");
-            Assert.AreEqual(5, r.weapons[2].unlockLevel, "C seviye 5");
+            // WP-107 (R4, kullanıcı 11.10): rl_1 dışındaki her klasik silah baştan açık; roketatar merdivende değil, duvardan alınır.
+            Assert.AreEqual(1, r.weapons[1].unlockLevel, "B seviye 1 (WP-107)");
+            Assert.AreEqual(1, r.weapons[2].unlockLevel, "C seviye 1 (WP-107)");
             for (int i = 3; i < r.weapons.Length; i++)
             {
-                Assert.AreEqual(ClassicWeaponSettings.NotOnProfileLadder, r.weapons[i].unlockLevel, r.weapons[i].rosterKey + ": meta YOL silahı, merdivende yok");
+                int want = r.weapons[i].weapon == ClassicWeaponId.Rl1.ToString() ? ClassicWeaponSettings.NotOnProfileLadder : 1;
+                Assert.AreEqual(want, r.weapons[i].unlockLevel, r.weapons[i].rosterKey + ": WP-107");
             }
             CollectionAssert.AreEqual(new[] { 1, 3, 5, 8 }, r.introductionRound, "DEC-021/022 giriş roundları");
             PrototypeConfig config = PrototypeConfig.Active;

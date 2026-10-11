@@ -151,10 +151,9 @@ namespace DD.Prototype.Tests.EditMode
                 enYuksekUnlock = Mathf.Max(enYuksekUnlock, level);
             }
 
-            Assert.AreEqual(5, enYuksekUnlock, "En yüksek silah unlock seviyesi 5 olmalı (DEC-085 Ö-3).");
-            int tepeKumulatif = 0;
-            for (int l = 1; l < enYuksekUnlock; l++) tepeKumulatif += _prog.LevelRequirement(l);
-            Assert.Greater(tepeKumulatif, enAzToplam, "DEC-085 Ö-3: merdivenin tepesi en düşük XP'li R8 koşusunda açılmamalı.");
+            // WP-107 (R4, kullanıcı 11.10 not 8): silah merdiveni kalktı - rl_1 dışındaki her klasik silah seviye 1 (rl_1 merdivende
+            // değil, duvardan alınır). DEC-085 Ö-3'ün "merdivenin tepesi tek koşuda tükenmez" ölçümü bu yüzden düştü.
+            Assert.AreEqual(1, enYuksekUnlock, "WP-107: silah merdiveni yok, hepsi seviye 1.");
         }
 
         [Test]
@@ -162,8 +161,9 @@ namespace DD.Prototype.Tests.EditMode
         {
             var weapons = new WeaponConfigSection();
             Assert.AreEqual(1, weapons.Find(ClassicWeaponId.AssaultRifle).UnlockProfileLevel);
-            Assert.AreEqual(3, weapons.Find(ClassicWeaponId.AutoSmg).UnlockProfileLevel, "DEC-085 Ö-3: B seviye 3");
-            Assert.AreEqual(5, weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "DEC-085 Ö-3: C seviye 5");
+            Assert.AreEqual(1, weapons.Find(ClassicWeaponId.AutoSmg).UnlockProfileLevel, "WP-107: B baştan açık (DEC-085 Ö-3 L3 emekli)");
+            Assert.AreEqual(1, weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "WP-107: C baştan açık (DEC-085 Ö-3 L5 emekli)");
+            Assert.AreEqual(ClassicWeaponSettings.NotOnProfileLadder, weapons.Find(ClassicWeaponId.Rl1).UnlockProfileLevel, "WP-107: roketatar merdivende değil, duvardan");
         }
 
         [Test]
