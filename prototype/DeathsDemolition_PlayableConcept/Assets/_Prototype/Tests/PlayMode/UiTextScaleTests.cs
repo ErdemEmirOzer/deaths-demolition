@@ -216,6 +216,11 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
             yield return null;
+            // R4 WP-105: a later arrival types PLAY's word in through its clip (M6 / M7) - the clip widens from zero, so the
+            // word is measured once it is typed, not mid-motion (the cut read here on main 0f411f44 was the typing itself).
+            MainMenuScreen arrived = Object.FindObjectOfType<MainMenuScreen>();
+            RectTransform railClip = arrived != null && arrived.RailWord != null ? (RectTransform)arrived.RailWord.transform.parent : null;
+            yield return Bekle(() => railClip == null || railClip.sizeDelta.x >= -0.5f, 5f, "PLAY'in kelimesi yazılmadı");
             failures.AddRange(Truncated("mainmenu"));
 
             // Settings / Accessibility panes (measured captions, the HINTS row); Achievements (the row's title and

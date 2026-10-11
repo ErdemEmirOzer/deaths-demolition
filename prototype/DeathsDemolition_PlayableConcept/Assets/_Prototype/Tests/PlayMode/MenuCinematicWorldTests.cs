@@ -364,14 +364,23 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(0f, menu.PaneContentGroup.alpha, 1e-4f, "§5-4: içerik açılış karesinde α 0 kurulur");
                 Assert.AreEqual(0f, menu.PaneCardGroup.alpha, 1e-4f, "frameless taşıyıcı da açılış karesinde görünmez");
                 int openFrame = Time.frameCount;
-                yield return null;
-                yield return null;
-                Assert.Greater(Time.frameCount, openFrame);
-                yield return new WaitForSecondsRealtime(0.12f);
-                Assert.Greater(menu.PaneContentGroup.alpha + menu.PaneCardGroup.alpha, 0f, "hareket sonraki karelerde başladı");
+                float openAt = Time.realtimeSinceStartup;
+                // R4 WP-105: frame by frame up to the freeze - a fixed 2 frames + 0.12 s wait could step over the freeze
+                // (Screen 280 after the pane) when one batch frame runs long, and then the freeze frame was never seen.
+                float slowest = 0f;
+                while (cinematic.FreezeCaptures == freezes)
+                {
+                    Assert.Less(Time.realtimeSinceStartup - openAt, 5f, "donma kendi karesini tutmadı");
+                    yield return null;
+                    slowest = Mathf.Max(slowest, Time.unscaledDeltaTime);
+                }
 
-                yield return Bekle(() => cinematic.FreezeCaptures > freezes, 5f, "donma kendi karesini tutmadı");
+                Assert.AreEqual(freezes + 1, cinematic.FreezeCaptures, "tek donma");
+                Assert.Greater(Time.frameCount, openFrame + 1, "donma açılış karesinden sonra");
+                Assert.Greater(menu.PaneContentGroup.alpha + menu.PaneCardGroup.alpha, 0f, "hareket sonraki karelerde başladı");
                 int freezeFrame = Time.frameCount;   // this frame's Update set the capture up; it renders next
+                Debug.Log("[DD-TEST] wp105.freezeWait ms=" + ((Time.realtimeSinceStartup - openAt) * 1000f).ToString("F0")
+                          + " frames=" + (freezeFrame - openFrame) + " slowestMs=" + (slowest * 1000f).ToString("F0"));
                 RenderTexture held = cam.targetTexture;
                 Vector3 standing = cam.transform.position;
                 Assert.IsNotNull(held, "donma karesinde kamera tutulan hedefe çiziyor");
