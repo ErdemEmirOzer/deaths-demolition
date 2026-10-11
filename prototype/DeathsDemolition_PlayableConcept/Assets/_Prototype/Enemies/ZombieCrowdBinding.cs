@@ -97,6 +97,7 @@ namespace DD.Prototype.Enemies
             // WP-102: a non-flanking body of a Hard / Demolition run takes a role. Normal draws nothing more — its rolls are unchanged.
             _aiRole = ZombieAiRole.Chase;
             _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f; _nextPursuitCheck = 0f;
+            _pursuitBestDistance = float.MaxValue; _pursuitProgressAt = -1f;
             if (mode != null && _flankSign == 0)
             {
                 float u = random.Next01();
@@ -188,6 +189,15 @@ namespace DD.Prototype.Enemies
         private bool _cutActive;
         private float _leadScale = 1f;
         private static readonly float[] CutScales = { 1f, 1.6f, 2.4f };
+        private float _pursuitBestDistance = float.MaxValue, _pursuitProgressAt = -1f;
+
+        /// <summary>WP-102: a pursuit role is dropped when the body has not closed on the player by this much…</summary>
+        private const float PursuitProgressMetres = 0.75f;
+        /// <summary>…within this long (s): its goal is not getting it anywhere — it chases the target as in Normal from then on.</summary>
+        private const float PursuitStallSeconds = 3f;
+
+        /// <summary>WP-102 readout: pursuit roles dropped since start-up (a waiting body, or no progress) — evidence and tests.</summary>
+        public static int PursuitFallbacks { get; private set; }
 
         /// <summary>WP-102 readout: this life's AI role (Chase in Normal and for flankers).</summary>
         public ZombieAiRole AiRole => _aiRole;
@@ -196,11 +206,20 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-102 readout: the accepted cut point relative to the player (zero when not cutting).</summary>
         public Vector3 CutOffset => _cutOffset;
 
+        private void DropPursuitRole(string why, float distance)
+        {
+            Debug.Log("[DD-DIFF] pursuit.fallback " + _aiRole + " → Chase (" + why + ") tier=" + _tier + " dist=" + distance.ToString("F1") + " pos=" + transform.position.ToString("F1"));
+            _aiRole = ZombieAiRole.Chase;
+            _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f;
+            PursuitFallbacks++;
+        }
+
         /// <summary>WP-102 tests (InternalsVisibleTo): give this life a role, the next pursuit decision on the next goal read.</summary>
         internal void SetAiRoleForTests(ZombieAiRole role)
         {
             _aiRole = role;
             _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f; _nextPursuitCheck = 0f;
+            _pursuitBestDistance = float.MaxValue; _pursuitProgressAt = -1f;
             if (role != ZombieAiRole.Chase) _flankSign = 0;
         }
 
@@ -218,8 +237,17 @@ namespace DD.Prototype.Enemies
             Vector3 to = target - transform.position; to.y = 0f;
             float straight = CrowdFeelSettings.Active.FlankStraightRadius;
             float dist2 = to.sqrMagnitude;
-            if (dist2 <= straight * straight) return target;
+            if (dist2 <= straight * straight) { _pursuitProgressAt = -1f; return target; }
             float distance = Mathf.Sqrt(dist2);
+            // a waiting body (queued, or stalled in the crowd) is exempt from the stuck watchdog: a pursuit goal must never hold it
+            // there (bot b1 s26: the round's last body waited out of sight for ever) — and a goal that brings it no closer is dropped
+            float now = Time.time;
+            if (_pursuitProgressAt < 0f || distance < _pursuitBestDistance - PursuitProgressMetres) { _pursuitBestDistance = distance; _pursuitProgressAt = now; }
+            if (_waiting || now - _pursuitProgressAt > PursuitStallSeconds)
+            {
+                DropPursuitRole(_waiting ? "waiting" : "no progress", distance);
+                return target;
+            }
             if (Time.time >= _nextPursuitCheck) RefreshPursuitDecision(target, distance, mode);
             if (_cutActive) return target + _cutOffset;
             return target + PursuitPlanner.InterceptOffset(distance, PursuitPlanner.PlayerVelocity, _moveSpeed, mode.InterceptLeadMaxSeconds) * _leadScale;

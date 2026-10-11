@@ -869,6 +869,128 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-102 evidence (Explicit, DD_WP102_CAPTURE_DIR): the same eighteen-body crowd (factory seed fixed) in Normal and in
+        /// Demolition, the player running up the screen for 4 s. Writes &lt;dir&gt;/&lt;mode&gt;/frames/f-NNNNNN.jpg + frames.tsv (30 fps game time,
+        /// tools/td-capture/tdmux) and metrics.tsv: per frame the bodies inside the run corridor ahead (±2 m, 0.5–8 m) and the
+        /// player's progress. Demolition's accepted cut points are red discs on the ground. Measures; asserts only that it recorded.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-102 kanıt çekimi")]
+        [Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator Zorluk_KesmeKaniti_NormalVeDemolition_TdKareleri([Values(DifficultyMode.Normal, DifficultyMode.Demolition)] DifficultyMode mod)
+        {
+            string kok = Environment.GetEnvironmentVariable("DD_WP102_CAPTURE_DIR");
+            if (string.IsNullOrEmpty(kok)) kok = System.IO.Path.Combine(Application.temporaryCachePath, "wp102-capture");
+            string dir = System.IO.Path.Combine(kok, DifficultyService.Id(mod));
+            string kareler = System.IO.Path.Combine(dir, "frames");
+            System.IO.Directory.CreateDirectory(kareler);
+            yield return RunSahnesiniHazirla();
+            _can.DiagnosisInvulnerable = true;   // a capture: the run must last the 4 s
+            if (mod != DifficultyMode.Normal) { DifficultyService.Selected = mod; DifficultyService.BeginRun(); }
+            var isaretler = new List<GameObject>();
+            RenderTexture rt = null;
+            Texture2D tex = null;
+            try
+            {
+                EnemyFactory.ResetSeedForTests(1020u);
+                Vector3 merkez = _rig.transform.position;
+                var zler = new List<ZombieEnemy>();
+                for (int i = 0; i < 18; i++)
+                {
+                    float a = (i * 20f + 10f) * Mathf.Deg2Rad;
+                    float r = 10f + (i % 3) * 2f;
+                    ZombieEnemy z = Dogur(NavPathFollowerClamp(merkez + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r)), merkez);
+                    if (z != null) zler.Add(z);
+                }
+
+                Material kirmizi = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                kirmizi.SetColor("_BaseColor", new Color(0.95f, 0.1f, 0.08f, 1f));
+                for (int i = 0; i < 18; i++)
+                {
+                    GameObject disk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    UnityEngine.Object.Destroy(disk.GetComponent<Collider>());
+                    disk.transform.localScale = new Vector3(0.7f, 0.02f, 0.7f);
+                    disk.GetComponent<Renderer>().sharedMaterial = kirmizi;
+                    disk.SetActive(false);
+                    isaretler.Add(disk);
+                }
+
+                Camera cam = PrototypeCameraRig.Active.Camera;
+                rt = new RenderTexture(1280, 720, 24);
+                tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+                var tsv = new StringBuilder();
+                var metrik = new StringBuilder("frame\tt\tprogress\tcorridor\tcutters\n");
+                int yazilan = 0, enCokKoridor = 0;
+                _girdi.Yon = new Vector2(0f, 1f);
+                for (int k = 0; k < 240; k++)
+                {
+                    yield return null;
+                    if ((k & 1) != 0) continue;
+                    Vector3 p = Yatay(_rig.transform.position);
+                    Vector3 v = Yatay(_rig.Motor.PlanarVelocity);
+                    Vector3 ileri = v.sqrMagnitude > 1f ? v.normalized : Vector3.forward;
+                    int koridor = 0, kesen = 0, disk = 0;
+                    foreach (ZombieEnemy z in zler)
+                    {
+                        if (z == null || !z.IsAlive) continue;
+                        Vector3 d = Yatay(z.transform.position) - p;
+                        float onde = Vector3.Dot(d, ileri);
+                        float yan = Vector3.Cross(ileri, d).y;
+                        if (onde > 0.5f && onde < 8f && Mathf.Abs(yan) < 2f) koridor++;
+                        if (z.CutActive)
+                        {
+                            kesen++;
+                            if (disk < isaretler.Count)
+                            {
+                                Vector3 c = p + Yatay(z.CutOffset);
+                                c.y = _rig.transform.position.y + 0.03f;
+                                isaretler[disk].transform.position = c;
+                                isaretler[disk].SetActive(true);
+                                disk++;
+                            }
+                        }
+                    }
+
+                    for (int i = disk; i < isaretler.Count; i++) isaretler[i].SetActive(false);
+                    enCokKoridor = Mathf.Max(enCokKoridor, koridor);
+                    RenderTexture eski = cam.targetTexture;
+                    cam.targetTexture = rt;
+                    cam.Render();
+                    cam.targetTexture = eski;
+                    RenderTexture.active = rt;
+                    tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+                    tex.Apply(false);
+                    RenderTexture.active = null;
+                    System.IO.File.WriteAllBytes(System.IO.Path.Combine(kareler, "f-" + yazilan.ToString("000000") + ".jpg"), tex.EncodeToJPG(90));
+                    float t = yazilan / 30f;
+                    tsv.Append(yazilan).Append('\t').Append(t.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                    metrik.Append(yazilan).Append('\t').Append(t.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
+                          .Append(Vector3.Distance(p, Yatay(merkez)).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
+                          .Append(koridor).Append('\t').Append(kesen).Append('\n');
+                    yazilan++;
+                }
+
+                _girdi.Yon = Vector2.zero;
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "frames.tsv"), tsv.ToString());
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "metrics.tsv"), metrik.ToString());
+                Debug.Log("[DD-TEST] wp102.capture mode=" + DifficultyService.Id(mod) + " frames=" + yazilan + " maxCorridor=" + enCokKoridor
+                          + " progress=" + Vector3.Distance(Yatay(_rig.transform.position), Yatay(merkez)).ToString("F1") + " -> " + dir);
+                Assert.AreEqual(120, yazilan, "kareler kayıtta değil");
+            }
+            finally
+            {
+                _girdi.Yon = Vector2.zero;
+                foreach (GameObject g in isaretler) if (g != null) UnityEngine.Object.Destroy(g);
+                if (rt != null) UnityEngine.Object.Destroy(rt);
+                if (tex != null) UnityEngine.Object.Destroy(tex);
+                if (mod != DifficultyMode.Normal) DifficultyService.EndRun();
+                DifficultyService.Selected = DifficultyMode.Normal;
+                if (_can != null) _can.DiagnosisInvulnerable = false;
+            }
+        }
+
         private static ZombieEnemy HalkaDogur(Vector3 merkez, int i, int n)
         {
             float a = i * Mathf.PI * 2f / n;
