@@ -447,8 +447,8 @@ namespace DD.Prototype.Tests.PlayMode
             var zler = new List<ZombieEnemy>();
             for (int i = 0; i < 10; i++)
             {
-                float a = i * Mathf.PI * 2f / 10f;
-                zler.Add(Dogur(EnemyTier.Standard, _rig.transform.position + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 12f));
+                float aci = i * Mathf.PI * 2f / 10f;
+                zler.Add(Dogur(EnemyTier.Standard, _rig.transform.position + new Vector3(Mathf.Sin(aci), 0f, Mathf.Cos(aci)) * 12f));
             }
 
             // neutral calls (S-04 makes none without the tree; even if it did, nothing moves)
