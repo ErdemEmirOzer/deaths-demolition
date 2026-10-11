@@ -52,6 +52,37 @@ namespace DD.Art.Tests.EditMode
             StringAssert.DoesNotContain("DD_TreeRevealClip", PassBody(source, "ShadowCaster"), "the crown's shadow must not thin");
         }
 
+        // C-00 11.10: the west bamboo grove is walkable (WP-103) - its culms (opaque Foliage Wind) thin too, behind a keyword only
+        // they carry (a discard in every solid foliage variant would cost hidden-surface removal for nothing)
+        [Test]
+        public void BambooCulms_ThinBehindTheirOwnKeyword()
+        {
+            string source = File.ReadAllText(ShaderPath);
+            foreach (string pass in new[] { "ForwardLit", "DepthOnly", "DepthNormals" })
+            {
+                string body = PassBody(source, pass);
+                StringAssert.Contains("#pragma shader_feature_local_fragment _TREE_REVEAL_SOLID", body, pass);
+                StringAssert.Contains("defined(_TREE_REVEAL_SOLID)", body, pass + ": the solid reveal branch");
+            }
+            StringAssert.DoesNotContain("_TREE_REVEAL_SOLID", PassBody(source, "ShadowCaster"));
+            Material culm = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Art/Materials/M_ap023_bamboo_culm.mat");
+            Assert.IsNotNull(culm, "M_ap023_bamboo_culm");
+            Assert.IsTrue(culm.IsKeywordEnabled("_TREE_REVEAL_SOLID"), "the grove culms thin over the hero");
+            Assert.IsFalse(culm.IsKeywordEnabled("_ALPHATEST_ON"), "the culm stays an opaque material");
+            // AD r2 MUST-2 (pose 3 bark loss 0.238): the tree bark thins too - Foliage Wind, the solid reveal, no wind
+            foreach (string bark in new[] { "M_ap023_bark_maple", "M_ap023_bark_pine", "M_ap023_bark_sakura", "M_bark_01", "M_bark_02", "M_bark_03" })
+            {
+                Material m = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Art/Materials/" + bark + ".mat");
+                Assert.IsNotNull(m, bark);
+                Assert.AreEqual("DD/Foliage Wind", m.shader.name, bark);
+                Assert.IsTrue(m.IsKeywordEnabled("_TREE_REVEAL_SOLID"), bark + ": thins over the hero");
+                Assert.AreEqual(0f, m.GetFloat("_WindScale"), bark + ": trunks never sway");
+                Assert.IsTrue(m.IsKeywordEnabled("_NORMALMAP"), bark + ": keeps its normal map");
+            }
+            Material fence = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Art/Materials/M_bamboo_culm.mat");
+            if (fence != null) Assert.IsFalse(fence.IsKeywordEnabled("_TREE_REVEAL_SOLID"), "the M3 culm (fence, crates) stays as authored");
+        }
+
         [Test]
         public void Reveal_IsAGlobal_NotAMaterialProperty()
         {
@@ -67,7 +98,7 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void Shape_IsALightTouch()
         {
-            Assert.That(TreeCanopyReveal.DroppedShare, Is.InRange(.4f, .8f), "hafif: the crown still reads");
+            Assert.That(TreeCanopyReveal.DroppedShare, Is.InRange(.4f, .8f), "hafif: the crown still reads (AD r2: .78 = the roofs' α .22)");
             Assert.That(TreeCanopyReveal.Radius, Is.InRange(1.5f, 4f));
             Assert.Less(TreeCanopyReveal.SoftRim, TreeCanopyReveal.Radius);
             Assert.That(TreeCanopyReveal.FadeSeconds, Is.InRange(.05f, .5f));

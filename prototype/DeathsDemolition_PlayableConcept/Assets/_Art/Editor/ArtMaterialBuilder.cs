@@ -355,6 +355,9 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 ApplyFoliageWind(material, spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout);
                 ApplyColourGrade(material, spec);
+                SetFloat(material, "_WindScale", spec.WindScale);   // WP-109: the bark rides Foliage Wind with no wind
+                // WP-109: an opaque role that thins over the hero in top-down (the cutout crowns always do)
+                if (spec.RevealSolid) material.EnableKeyword("_TREE_REVEAL_SOLID"); else material.DisableKeyword("_TREE_REVEAL_SOLID");
             }
 
             if (spec.HasDetailNormal)

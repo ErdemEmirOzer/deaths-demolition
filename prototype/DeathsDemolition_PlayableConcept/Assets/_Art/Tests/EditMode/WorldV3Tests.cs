@@ -164,13 +164,22 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void PropMateryalleri_OrmV002_OcclusionBagli_TuretilmisMaskeGKanaliAO()
         {
-            int bound = 0, windRoles = 0, ap023 = 0, ap023Wind = 0, ap030 = 0;
+            int bound = 0, windRoles = 0, ap023 = 0, ap023Wind = 0, ap023Bark = 0, ap030 = 0;
             foreach (string role in ArtLibraryMaterialRoles.PackedTextureRoles())
             {
                 if (!ArtTextureRepack.CarriesOcclusion(role)) continue;
                 bool kit = role.StartsWith("ap023_", StringComparison.Ordinal);   // WP-074 B5: the AP-023 kit's ORM carries AO too
                 var m = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(role));
                 Assert.IsNotNull(m, role);
+                if (ArtLibraryMaterialRoles.Get(role).Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind && ArtLibraryMaterialRoles.Get(role).RevealSolid
+                    && role.IndexOf("bark", StringComparison.Ordinal) >= 0)
+                {
+                    // WP-109: the bark moved to DD/Foliage Wind for the crown reveal and keeps its ORM AO there (_OCCLUSIONMAP)
+                    Assert.AreEqual(m.GetTexture("_MetallicGlossMap"), m.GetTexture("_OcclusionMap"), role + ": AO aynı maskenin G kanalı");
+                    Assert.IsTrue(m.IsKeywordEnabled("_OCCLUSIONMAP"), role);
+                    if (kit) ap023Bark++; else bound++;
+                    continue;
+                }
                 if (ArtLibraryMaterialRoles.Get(role).Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
                 {
                     // WP-038L: the AP-017 furin hangs on DD/Foliage Wind (no occlusion slot) — the derived mask still binds as MetallicSmoothness.
@@ -188,7 +197,9 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(14, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I) + 4 Faz 2b Lit prop rolü (WP-038L)");
             Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
-            Assert.AreEqual(22, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel); v007 + trim = 21; v016 (B9) + bark_maple (momiji gövdesi) = 22");
+            Assert.AreEqual(19, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel); v007 + trim = 21; v016 (B9) + bark_maple (momiji gövdesi) = 22; WP-109: − 3 kabuk (Foliage Wind'e) = 19");
+            Assert.AreEqual(3, ap023Bark, "WP-109: AP-023 kabukları (maple, pine, sakura) Foliage Wind'de, AO korunur");
+            Assert.AreEqual(22, ap023 + ap023Bark, "WP-074 B5 + WP-109: AP-023 ORM AO'lu karo + kabuk toplamı değişmez");
             Assert.AreEqual(1, ap023Wind, "WP-074 B5: AP-023 bamboo_culm rüzgâr gölgelendiricisinde");
             Assert.AreEqual(9, ap030, "WP-092 C: AP-030 iç mekân + lamba atlası (ORM AO'lu); v002 + ishidatami, gravel, dirt, boardwalk, drain, puddle, props = 9");
         }

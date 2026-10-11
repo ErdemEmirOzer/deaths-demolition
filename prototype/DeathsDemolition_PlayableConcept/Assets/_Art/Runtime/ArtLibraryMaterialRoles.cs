@@ -94,6 +94,14 @@ namespace DD.Art
             public float PetalBoost;
 
             /// <summary>WP-092 R3 · True when any colour-grade field leaves its identity value.</summary>
+            /// <summary>WP-109 (C-00 11.10) · an opaque DD/Foliage Wind role that thins over the hero in top-down like the cutout crowns
+            /// (keyword _TREE_REVEAL_SOLID): the grove's bamboo culms.</summary>
+            public bool RevealSolid;
+
+            /// <summary>DD/Foliage Wind roles: the wind multiplier (_WindScale); 0 for the bark (WP-109: it rides Foliage Wind for the
+            /// reveal only, the trunks never sway).</summary>
+            public float WindScale = 1f;
+
             public bool HasColourGrade => Saturation != 1f || HueShift != 0f || PetalBoost != 0f || PetalColor != Color.white;
 
             public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap;
@@ -248,7 +256,8 @@ namespace DD.Art
             for (int n = 1; n <= 3; n++)
             {
                 string nn = n.ToString("00");
-                rows.Add(new Spec { Role = "bark_" + nn, Kind = Kind.Textured, TextureRole = "bark_" + nn });
+                // WP-109 (AD r2 MUST-2): the bark thins over the hero with the crowns - DD/Foliage Wind for _TREE_REVEAL_SOLID only (no wind)
+                rows.Add(new Spec { Role = "bark_" + nn, Kind = Kind.Textured, TextureRole = "bark_" + nn, Shader = ShaderKind.FoliageWind, RevealSolid = true, WindScale = 0f });
                 rows.Add(new Spec { Role = "earth_" + nn, Kind = Kind.Textured, TextureRole = "earth_" + nn });
                 // w6 (S-05 10.10, AD K1): the moss maps read hue 82–89° (s 0.62–0.70) and turn olive-yellow in the sun — red × 0.62 (linear)
                 rows.Add(new Spec { Role = "moss_" + nn, Kind = Kind.Textured, TextureRole = "moss_" + nn, Tint = new Color(0.62f, 1f, 0.95f, 1f) });
@@ -321,6 +330,8 @@ namespace DD.Art
                                              "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "trim", "vermilion", "washi", "wood_planks", "wood_timber" })
             {
                 var spec = new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile };
+                // WP-109 (AD r2 MUST-2): the tree bark thins over the hero with the crowns (DD/Foliage Wind for the reveal only, no wind)
+                if (tile.StartsWith("bark_", System.StringComparison.Ordinal)) { spec.Shader = ShaderKind.FoliageWind; spec.RevealSolid = true; spec.WindScale = 0f; }
                 // WP-075 DEC-101 (HF-like overcast): the roofs read dark cool grey (the tiles took the warm sun as brown) and the plaster
                 // wet pale grey-beige, not bright cream (its sheet averages sRGB 0.79 / 0.77 / 0.73).
                 // DEC-102 r2 (C-00 25.09: the roofs read brown in the default-path frame; HF v002 shows dark grey-blue kawara) on v007's 4K
@@ -347,7 +358,7 @@ namespace DD.Art
             }
 
             // DEC-101: the culms read as pale sticks in the dark grove — × 0.65.
-            rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind, Tint = new Color(0.75f, 0.75f, 0.75f, 1f) });   // DEC-102 r2: 0.65 → 0.75
+            rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind, Tint = new Color(0.75f, 0.75f, 0.75f, 1f), RevealSolid = true });   // DEC-102 r2: 0.65 → 0.75; WP-109 the grove culms thin over the hero
             rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
             foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "lotus", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
             {

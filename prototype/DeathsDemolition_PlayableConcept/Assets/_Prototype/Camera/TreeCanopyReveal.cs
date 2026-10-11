@@ -27,13 +27,13 @@ namespace DD.Prototype.CameraSystem
         /// <summary>The focus over the follow target's root, as CameraOcclusionFader's probe (chest height).</summary>
         public const float FocusHeight = 1.1f;
         /// <summary>Radius of the revealed disc at the focus (m): the hero's silhouette with a weapon and a step of room.</summary>
-        public const float Radius = 2.4f;
+        public const float Radius = 2.2f;   // AD r2 SHOULD (2.4 → 2.2, the rim 1.2 → 1.4: the outer edge stays 3.6 m, a longer ramp)
         /// <summary>The disc's soft rim (m): the thinning ramps from none at <see cref="Radius"/> to full this far inside it.</summary>
-        public const float SoftRim = 1.2f;
+        public const float SoftRim = 1.4f;
         /// <summary>Share of the crown's pixels dropped at the disc's core — "hafif": the crown still reads, the hero shows through.</summary>
-        public const float DroppedShare = .75f;   // r1 .65: the hero read dim under a dense momiji (wp109-r1 frames)
+        public const float DroppedShare = .78f;   // r1 .65 read dim under a dense momiji; AD r2 SHOULD .78 = the roofs' α .22
         /// <summary>Only foliage this far over the focus thins (fully 0.5 m higher): the canopy, never the shrub at the hero's knee.</summary>
-        public const float MinHeightOverFocus = .9f;
+        public const float MinHeightOverFocus = .6f;   // AD r2 SHOULD (.9 → .6, ≈ 1.9 m: a low sakura crown over the hero thins too)
         /// <summary>Strength ease in and out (s), the roofs' occlusion fade time.</summary>
         public const float FadeSeconds = .15f;
 

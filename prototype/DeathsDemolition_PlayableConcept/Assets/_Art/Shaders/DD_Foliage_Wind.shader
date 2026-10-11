@@ -12,7 +12,9 @@
 //   passes   ForwardLit · ShadowCaster · DepthOnly · DepthNormals (all wind-displaced)
 //   batching SRP Batcher: one UnityPerMaterial CBUFFER, no per-material globals
 //   reveal   WP-109 (R4): DD_TreeReveal.hlsl screen-door drops the cutout crown pixels between the top-down camera and the hero
-//            (ForwardLit, DepthOnly, DepthNormals; never the ShadowCaster). Globals; strength 0 = as authored.
+//            (ForwardLit, DepthOnly, DepthNormals; never the ShadowCaster). Globals; strength 0 = as authored. An opaque material
+//            joins only with _TREE_REVEAL_SOLID (the bamboo culms, C-00 11.10): a discard in every solid foliage variant would cost
+//            the tile GPUs' hidden-surface removal for nothing.
 //   grade    WP-092 R3 (user note 10.10, AD verdict): per-material albedo grade in ForwardLit — HSV hue shift, saturation that
 //            skips the warm arc, and a petal recolour/boost inside a texture-colour mask (DD_FoliageGrade). Every stage keeps the
 //            linear Rec.709 luminance of the albedo except the petal recolour; the defaults are the identity. No keyword: the
@@ -31,6 +33,8 @@ Shader "DD/Foliage Wind"
         _BumpScale("Scale", Float) = 1.0
         _BumpMap("Normal Map", 2D) = "bump" {}
         _OcclusionStrength("Strength", Range(0.0, 1.0)) = 1.0
+        // WP-109: the bark rides this shader for the reveal and keeps its ORM AO (URP/Lit's _OcclusionMap.g)
+        _OcclusionMap("Occlusion", 2D) = "white" {}
 
         // Wind (per material multiplier on the global; 0 freezes a material)
         _WindScale("Wind Scale", Range(0.0, 2.0)) = 1.0
@@ -90,6 +94,7 @@ Shader "DD/Foliage Wind"
         TEXTURE2D(_BaseMap);            SAMPLER(sampler_BaseMap);
         TEXTURE2D(_BumpMap);            SAMPLER(sampler_BumpMap);
         TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
+        TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -240,6 +245,8 @@ Shader "DD/Foliage Wind"
             #pragma target 3.0
             #pragma vertex FoliageVertex
             #pragma fragment FoliageFragment
+            #pragma shader_feature_local_fragment _TREE_REVEAL_SOLID
+            #pragma shader_feature_local_fragment _OCCLUSIONMAP
 
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
@@ -342,7 +349,7 @@ Shader "DD/Foliage Wind"
 
                 half4 albedoAlpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 half alpha = DD_FoliageAlpha(albedoAlpha.a);
-                #if defined(_ALPHATEST_ON)
+                #if defined(_ALPHATEST_ON) || defined(_TREE_REVEAL_SOLID)
                     DD_TreeRevealClip(input.positionWS, input.positionCS);
                 #endif
 
@@ -363,7 +370,12 @@ Shader "DD/Foliage Wind"
                     surfaceData.smoothness = _Smoothness;
                 #endif
                 surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
-                surfaceData.occlusion = 1.0h;
+                #if defined(_OCCLUSIONMAP)
+                    // WP-109: URP/Lit's occlusion (the ORM mask's G) for the bark that moved here for the reveal
+                    surfaceData.occlusion = LerpWhiteTo(SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, input.uv).g, _OcclusionStrength);
+                #else
+                    surfaceData.occlusion = 1.0h;
+                #endif
                 surfaceData.emission = half3(0.0h, 0.0h, 0.0h);
                 #if defined(_NORMALMAP)
                     surfaceData.normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
@@ -518,6 +530,7 @@ Shader "DD/Foliage Wind"
             #pragma target 3.0
             #pragma vertex DepthVertex
             #pragma fragment DepthFragment
+            #pragma shader_feature_local_fragment _TREE_REVEAL_SOLID
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_instancing
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
@@ -563,6 +576,8 @@ Shader "DD/Foliage Wind"
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
                     clip(alpha - _Cutoff);
                     DD_TreeRevealClip(input.positionWS, input.positionCS);   // WP-109: the prepass drops what the colour pass drops
+                #elif defined(_TREE_REVEAL_SOLID)
+                    DD_TreeRevealClip(input.positionWS, input.positionCS);
                 #endif
                 #ifdef LOD_FADE_CROSSFADE
                     LODFadeCrossFade(input.positionCS);
@@ -585,6 +600,7 @@ Shader "DD/Foliage Wind"
             #pragma target 3.0
             #pragma vertex DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
+            #pragma shader_feature_local_fragment _TREE_REVEAL_SOLID
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_instancing
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
@@ -631,6 +647,8 @@ Shader "DD/Foliage Wind"
                 #if defined(_ALPHATEST_ON)
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
                     clip(alpha - _Cutoff);
+                    DD_TreeRevealClip(input.positionWS, input.positionCS);
+                #elif defined(_TREE_REVEAL_SOLID)
                     DD_TreeRevealClip(input.positionWS, input.positionCS);
                 #endif
                 #ifdef LOD_FADE_CROSSFADE

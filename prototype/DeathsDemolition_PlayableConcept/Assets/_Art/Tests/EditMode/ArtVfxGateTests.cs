@@ -45,7 +45,7 @@ namespace DD.Art.Tests.EditMode
         public void BitkiMateryalleri_FoliageWindUzerinde_KesimVeCiftYuzDogru()
         {
             string[] roller = ArtLibraryMaterialRoles.RolesOn(ArtLibraryMaterialRoles.ShaderKind.FoliageWind);
-            Assert.AreEqual(24, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23; WP-092 C AP-030 v002: + ap030_props_cloth (çamaşır / noren kumaşı) = 24.");
+            Assert.AreEqual(30, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23; WP-092 C AP-030 v002: + ap030_props_cloth (çamaşır / noren kumaşı) = 24; WP-109 (AD r2 MUST-2): + 6 kabuk (bark_01..03, ap023_bark_maple/pine/sakura; yalnız taç saydamlığı için, rüzgârsız) = 30.");
             var ihlaller = new List<string>();
             foreach (string rol in roller)
             {
@@ -57,7 +57,7 @@ namespace DD.Art.Tests.EditMode
                 if (m.IsKeywordEnabled("_ALPHATEST_ON") != cutout) ihlaller.Add(rol + ": _ALPHATEST_ON " + m.IsKeywordEnabled("_ALPHATEST_ON") + " (beklenen " + cutout + ")");
                 if (Mathf.Abs(m.GetFloat("_Cull") - (cutout && !spec.SingleSided ? 0f : 2f)) > 0.01f) ihlaller.Add(rol + ": _Cull " + m.GetFloat("_Cull"));
                 if (Mathf.Abs(m.GetFloat("_AlphaToMask") - (cutout ? 1f : 0f)) > 0.01f) ihlaller.Add(rol + ": _AlphaToMask " + m.GetFloat("_AlphaToMask"));
-                if (Mathf.Abs(m.GetFloat("_WindScale") - 1f) > 0.01f) ihlaller.Add(rol + ": _WindScale " + m.GetFloat("_WindScale"));
+                if (Mathf.Abs(m.GetFloat("_WindScale") - spec.WindScale) > 0.01f) ihlaller.Add(rol + ": _WindScale " + m.GetFloat("_WindScale") + " (beklenen " + spec.WindScale + ")");
                 if (Mathf.Abs(m.GetFloat("_BackfaceLighting") - 1f) > 0.01f) ihlaller.Add(rol + ": _BackfaceLighting " + m.GetFloat("_BackfaceLighting"));
                 if (m.GetTexture("_BaseMap") == null) ihlaller.Add(rol + ": _BaseMap yok");
                 if (spec.HasNormalMap != m.IsKeywordEnabled("_NORMALMAP")) ihlaller.Add(rol + ": _NORMALMAP " + m.IsKeywordEnabled("_NORMALMAP"));
@@ -73,7 +73,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             // Lit kalanlar gerçekten Lit (yosun, kabuk, taş): rüzgâr yalnız bitkide.
-            foreach (string rol in new[] { "moss_01", "bark_01", "stone_weathered", "gravel", "plaster_hf003" })
+            foreach (string rol in new[] { "moss_01", "earth_01", "stone_weathered", "gravel", "plaster_hf003" })   // WP-109: bark_01 moved to Foliage Wind (reveal)
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(rol));
                 if (m == null || m.shader == null || m.shader.name != ArtMaterialBuilder.LitShaderName) ihlaller.Add(rol + ": URP/Lit olmalı");
