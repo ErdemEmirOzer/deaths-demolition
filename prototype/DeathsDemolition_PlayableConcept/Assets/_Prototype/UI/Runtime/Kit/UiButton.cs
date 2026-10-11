@@ -270,6 +270,15 @@ namespace DD.Prototype.UI
         /// </summary>
         public System.Action DeniedPress;
 
+        /// <summary>
+        /// WP-105 (SHOULD-8): the control's own activation cue - <see cref="UiEvent.ButtonPress"/> and
+        /// <see cref="UiSoundKind.Confirm"/> - on a press it acts on. Default on. A screen turns it off where its handler
+        /// voices the outcome itself: Selection's locked weapon row stays interactable (its stage explains the lock) and
+        /// refuses with Denied, so a Confirm in the same frame said yes and no at once. A control with no handler never
+        /// plays it either (an achievement row: the press does nothing, so nothing is confirmed).
+        /// </summary>
+        public bool ConfirmCue { get; set; } = true;
+
         private void Activate()
         {
             if (!IsActive())
@@ -287,13 +296,16 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            UiEvents.Raise(UiEvent.ButtonPress, name);
-            UiSound.Play(UiSoundKind.Confirm);
-
             Action handler = _onClick;
             if (handler == null)
             {
-                return;
+                return;   // WP-105 (SHOULD-8): nothing happens, so nothing is confirmed - no ButtonPress, no Confirm
+            }
+
+            if (ConfirmCue)
+            {
+                UiEvents.Raise(UiEvent.ButtonPress, name);
+                UiSound.Play(UiSoundKind.Confirm);
             }
 
             try

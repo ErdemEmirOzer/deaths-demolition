@@ -22,16 +22,19 @@ namespace DD.Prototype.UI
     ///   RUN REPORT     - 7 columns: the weapon row (identity glyph, name, build), COMBAT and RUN rows side by side, the
     ///                    kill-XP note at the foot
     ///   REWARDS        - 5 columns: EXPERIENCE (+XP, breakdown, level line, the XP bar revealed before → after, LEVEL UP
-    ///                    stamp), PATH +Ash, then the unlocks and achievements that fit - measured, the rest summarised
-    ///   footer         - the save note and MAIN MENU (the kit's C11, Menu.Home)
+    ///                    stamp), the Awakening line (+Ash · the balance), then the unlocks and achievements that fit -
+    ///                    measured, the rest summarised
+    ///   footer         - the save note, MAIN MENU (C11, Menu.Home, the pad's Cancel glyph) and PLAY AGAIN (the primary C11,
+    ///                    Menu.Retry, the pad's Submit glyph - WP-105 §C3: back to Prepare Run on the last choice)
     /// Trace budget (KILAVUZ §1): title brush 1 + C8 1 = 2; vermilion 1 (the C8 core).
     ///
     /// CHOREOGRAPHY (≤ 2.2 s after the curtain opens, E26): the three blocks stagger in; the four numbers count up from 0
     /// 120 ms apart over 400 ms each on one motion timeline (all four landed by 0.76 s, WP-098B ≤ 1.5 s), each landing
     /// with a short punch and a counter tok (UiEvent.CounterRolling once, CounterSettled per landing - S-08's map); the
     /// XP bar reveals, LEVEL UP stamps, each unlock / achievement stamps 120 ms apart, NEW BEST last (its C8 inks in under
-    /// the words). The first Submit or click skips to the end state; MAIN MENU takes the focus at the end, so the second
-    /// press leaves. Reduced Motion shows the end state at once (the counters at their final value, no punch, the C8 drawn).
+    /// the words). The first Submit, click or Cancel skips to the end state (WP-105); PLAY AGAIN takes the focus at the end
+    /// (WP-105 §C3), so the second Submit goes back to Prepare Run and the second Cancel to the main menu (with the Back
+    /// cue). Reduced Motion shows the end state at once (the counters at their final value, no punch, the C8 drawn).
     ///
     /// EVERYTHING IS A SNAPSHOT: the screen reads <see cref="ProfileService.LastReport"/> once through
     /// <see cref="ResultsViewModel"/>; the profile was written before this scene existed, so nothing here can write it,
@@ -40,9 +43,20 @@ namespace DD.Prototype.UI
     public sealed class ResultsScreen : UiScreen
     {
         private const float RowHeight = 40f;
-        private const float RewardEntryHeight = 92f; // AD v004 MUST-5: two-line detail, no truncation (24 title + 44 detail + 2·12)
-        private const float RewardTitleBand = 24f;
-        private const float RewardDetailBand = 44f;
+
+        /// <summary>
+        /// WP-105 (V-45): a reward entry is as tall as its measured words (XS above and below, the glyph slot at least) -
+        /// no longer a fixed 92 band that let one entry and "and 2 more" stand over an empty third of the block. This is
+        /// only the reservation the XP block keeps for the first entry: a two-line detail (title 24 + detail 44 + 2·XS).
+        /// </summary>
+        private const float RewardEntryEstimate = 76f;
+
+        /// <summary>
+        /// WP-105 (V-45): the reward glyph's square slot (text-scaled); the words start after it on every entry. With XS above
+        /// and below, a one-line entry is 56 at text 1.0 (the audit's row: 48 + 2·4), where the fixed band was 92.
+        /// </summary>
+        private const float RewardMark = 48f;
+
         private const float FooterHeight = 88f;      // the kit's 64 high C11 + XL
         private const float ReportShare = 0.58f;     // 7 of 12 columns (+ half a gutter)
         private const float WeaponRowHeight = 52f;
@@ -100,7 +114,9 @@ namespace DD.Prototype.UI
         private ResultsViewModel _model;
         private UiBrushPane _pane;
         private RectTransform _page;   // the pane's clipped content: every block of the screen lives here
-        private UiButton _continueButton;
+        private UiButton _mainMenuButton;
+        private UiButton _playAgainButton;   // WP-105 (§C3): the primary action; null on the empty state
+        private UiButton _focusButton;       // PLAY AGAIN, else MAIN MENU: the end state's focus and the pad's reclaim
         private readonly UiCounter[] _tiles = new UiCounter[4];
         private UiTimeline _count;
         private Image _clockRoll;      // disabled; its fill is the time roll's progress, driven by UiMotion
@@ -138,6 +154,17 @@ namespace DD.Prototype.UI
         /// <summary>NEW BEST's C8 (null when the run set no best) - tests.</summary>
         public UiBrushMark NewBestMark => _newBestMark;
 
+        /// <summary>WP-105 (V-45): the reward entries printed (tests); the rest are the "and N more" line.</summary>
+        public int RewardsShown => _rewardCards.Count;
+
+        /// <summary>WP-105 (V-45): every new unlock and achievement of the run (tests).</summary>
+        public int RewardsTotal => _model != null ? _model.NewUnlocks.Count + _model.NewAchievements.Count : 0;
+
+        /// <summary>WP-105 (§C3): PLAY AGAIN - the primary C11 (null on the empty state); MAIN MENU the secondary (tests).</summary>
+        public UiButton PlayAgainButton => _playAgainButton;
+
+        public UiButton MainMenuButton => _mainMenuButton;
+
         protected override UiContext BaseContext => UiContext.RunResults;
 
         /// <summary>WP-098B: the v2 backdrop (veils, petals, foot rule) gives way to the world plate - <see cref="BuildWorldPlate"/>.</summary>
@@ -167,13 +194,17 @@ namespace DD.Prototype.UI
             RectTransform tiles = BuildTiles(top, out float tilesHeight);
             top += tilesHeight + (int)UiSpace.XL;
 
+            // WP-105 (§C3, V-02): the footer is built first - its band is measured (two C11 and the save note, which goes
+            // above the buttons when it does not fit beside them), and the blocks' room runs to it.
+            float footerBand = BuildFooter(false, true);
+
             RectTransform report = PageColumn("Report", 0f, ReportShare, top, FooterHeight);
             RectTransform rewards = PageColumn("Rewards", ReportShare + 0.02f, 1f, top, FooterHeight);
             // E26: the blocks take their content's height (one height for both, capped by the room) - no empty block. The
             // reward entries are fitted against the same capped room, so none is ever clipped by the cap.
-            // AD 12c MUST-4: the room runs to the footer's own band (the kit's control height) + L.
-            float room = _page.rect.height - top - UiBrushTokens.ControlHeight - (int)UiSpace.L;
-            float reportHeight = BuildReport(report);
+            // AD 12c MUST-4: the room runs to the footer's own band + L.
+            float room = _page.rect.height - top - footerBand - (int)UiSpace.L;
+            float reportHeight = BuildReport(report, room);
             float rewardsHeight = BuildRewards(rewards, room);
 
             float blocks = Mathf.Min(room, Mathf.Max(reportHeight, rewardsHeight));
@@ -188,9 +219,7 @@ namespace DD.Prototype.UI
                 UiFactory.Group(rewards.gameObject)
             });
 
-            BuildFooter(false);
-
-            // The window opens with the screen: the input is live at once, but nothing is focused - MAIN MENU takes the focus
+            // The window opens with the screen: the input is live at once, but nothing is focused - PLAY AGAIN takes the focus
             // only when the beats end (Finish), so the first press skips them instead of leaving.
             _pane.Open(null);
         }
@@ -436,7 +465,7 @@ namespace DD.Prototype.UI
 
         // ============================================================ run report
 
-        private float BuildReport(RectTransform column)
+        private float BuildReport(RectTransform column, float room)
         {
             RectTransform host = BlockHost(column);   // AD R1-D SHOULD: one padding, one header baseline with REWARDS
             var stack = new UiStack(host);
@@ -486,8 +515,17 @@ namespace DD.Prototype.UI
             BuildRowColumn(rows, 0.52f, 1f, UiStrings.Get("results.run", "RUN"), _model.Economy, UiType.Body);
             stack.Gap(UiSpace.M);
 
-            TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextSecondary);
-            stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            // WP-105 (V-02): the kill-XP note carries information - MenuSmall (it was Caption 14), as tall as its words at the
+            // block's width; printed only where the block's room still holds it (the block clips, it never pushes).
+            TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.MenuSmall, UiColor.TextSecondary);
+            float noteHeight = Measured(note, _model.CombatNote, host.rect.width);
+            if (string.IsNullOrEmpty(_model.CombatNote) || stack.Cursor + noteHeight + BlockPad > room)
+            {
+                Discard(note.gameObject);
+                return stack.Cursor + BlockPad;
+            }
+
+            stack.Add((RectTransform)note.transform, noteHeight);
             return stack.Cursor + BlockPad;
         }
 
@@ -558,25 +596,39 @@ namespace DD.Prototype.UI
             TMP_Text xpValue = UiFactory.Numeric("Total", xpRow, _model.TotalXp, UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
             RectTransform valueRect = UiFactory.Fill((RectTransform)xpValue.transform);
             valueRect.offsetMax = new Vector2(-(unitWidth + (int)UiSpace.S), 0f);
-            // What must follow the breakdown (AD 12b MUST-1 / 12c MUST-4: the first card, its "and N more", the forward
+            // What must follow the breakdown (AD 12b MUST-1 / 12c MUST-4: the first card, its "and N more", the Awakening
             // line - never traded for the breakdown): measured first, so the rows take what is left.
             float rowBand = UiFactory.ScaledBand(32f);
-            // A caption's band here is its line box: LineHeight(Caption) is already text-scaled (FontSize × TextScale), and
-            // ScaledBand over it scaled the text scale in twice (45 px for a 36 px line at 1.25) - 12c MUST-4's missing 13 px.
-            float captionBand = UiFactory.LineHeight(UiType.Caption);
-            float nextLine = captionBand;
-            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.LineHeight(UiType.Label) : 0f)
+            // WP-105 (V-02): the information lines of this block - the XP progress under the bar, the Awakening line and
+            // "and N more" - are MenuSmall (they were Caption 14 / Label 15), each band its words measured at the block's
+            // width (U2: GetPreferredValues, at least one line). Built here, placed below.
+            float width = host.rect.width;
+            TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.MenuSmall, UiColor.TextSecondary);
+            float captionBand = Measured(barCaption, _model.ProgressCaption, width);
+            // WP-105 (C-00 11.10 decision 2): the Awakening line (+Ash · the balance) takes the PATH line's place and the level
+            // gate's "Next unlock" line's (the gate opens no weapon now). Words only - the Awakening page is S-04 B1's.
+            TMP_Text awakening = null;
+            float awakeningBand = 0f;
+            if (!string.IsNullOrEmpty(_model.AwakeningLine))
+            {
+                awakening = UiFactory.Label("Awakening", host, _model.AwakeningLine, UiType.MenuSmall, UiColor.TextPrimary);
+                awakeningBand = Measured(awakening, _model.AwakeningLine, width);
+            }
+
+            float after = (awakening != null ? (int)UiSpace.S + awakeningBand : 0f)
                           + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
-            float entry = UiFactory.ScaledBand(RewardEntryHeight);
-            float more = captionBand;
+            float entry = UiFactory.ScaledBand(RewardEntryEstimate);
             int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
+            // The summary's band: the taller of its two wordings ("N new, …" and "and N more, …") at the most it can count.
+            float more = listed == 0 ? 0f : Mathf.Max(
+                Measured(barCaption, RewardsSummary(listed, 0), width),
+                Measured(barCaption, RewardsSummary(listed, 1), width));
             float listFirst = listed == 0
                 ? UiFactory.LineHeight(UiType.Body)
                 : entry + (int)UiSpace.S + (listed > 1 ? more : 0f);
             float levelBlock = (int)UiSpace.M + UiFactory.LineHeight(UiType.H3) + (int)UiSpace.S + 14f
                                + (int)UiSpace.XS + captionBand;
-            float forward = string.IsNullOrEmpty(_model.NextUnlockLine) ? 0f : nextLine;
-            float tail = levelBlock + forward + after + listFirst + BlockPad;
+            float tail = levelBlock + after + listFirst + BlockPad;
             int rowsFit = Mathf.Max(0, Mathf.FloorToInt((blockRoom - stack.Cursor - tail) / rowBand));
             for (int i = 0; i < _model.XpBreakdown.Count; i++)
             {
@@ -612,27 +664,16 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.S);
             // AD R1-D MUST-1: BarXp is Sakura400 - on Results sakura belongs to NEW / NEW BEST, so the bar fills cream.
             _xpBar = UiFactory.Bar("XpBar", host, UiColor.TextPrimary, 14f);
+            ShowBarTrack(_xpBar);
             _xpBar.EnableGhost();
             _xpBar.SetValue(_model.ProgressBefore01 >= 0f ? _model.ProgressBefore01 : 0f, true);
             stack.Add((RectTransform)_xpBar.transform, 14f);
             stack.Gap(UiSpace.XS);
-            TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)barCaption.transform, captionBand);
-            // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings - only while the list below still gets its
-            // first card and its "and N more" (or its one line: the empty state) inside the block's room (AD 12b MUST-1).
-            if (!string.IsNullOrEmpty(_model.NextUnlockLine)
-                && stack.Cursor + nextLine + after + listFirst + BlockPad <= blockRoom)
-            {
-                TMP_Text next = UiFactory.Label("NextUnlock", host, _model.NextUnlockLine, UiType.Caption, UiColor.TextSecondary);
-                stack.Add((RectTransform)next.transform, nextLine);
-            }
-
-            if (_model.AshEarned > 0)
+            if (awakening != null)
             {
                 stack.Gap(UiSpace.S);
-                TMP_Text ash = UiFactory.Label("Path", host,
-                    UiStrings.Get("path.results.delta", "PATH +{value} Ash").Replace("{value}", _model.AshEarned.ToString()), UiType.Label, UiColor.TextPrimary);
-                stack.Add((RectTransform)ash.transform, UiFactory.LineHeight(UiType.Label));
+                stack.Add((RectTransform)awakening.transform, awakeningBand);
             }
 
             stack.Gap(UiSpace.M);
@@ -649,34 +690,55 @@ namespace DD.Prototype.UI
                 return stack.Cursor + BlockPad;
             }
 
-            // "and N more" is reserved only when not every entry fits (a single unlock gets its card, not "1 new").
-            int fits = Mathf.Max(0, Mathf.FloorToInt(room / (entry + (int)UiSpace.S)));
-            if (fits < total)
-            {
-                fits = Mathf.Max(0, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
-            }
+            // WP-105 (V-45): unlocks first, then achievements, each at its measured height, for as long as it fits; an entry
+            // with more after it also keeps the "and N more" line's band (RewardFits) - so the line shows only when an entry
+            // really does not fit, never while the block has room (a single unlock gets its card, not "1 new"). The entry
+            // that did not fit is the one built for nothing: it goes at once.
+            int unlocks = _model.NewUnlocks.Count;
+            float used = 0f;
             int shown = 0;
-            for (int i = 0; i < _model.NewUnlocks.Count && shown < fits; i++, shown++)
+            for (int i = 0; i < total; i++)
             {
-                AddReward(ref stack, host, _model.NewUnlocks[i], UiColor.TextSecondary, false, entry);   // 12b MUST-2: cream frame
-            }
+                bool achievement = i >= unlocks;
+                ProfileUnlockEntry reward = achievement ? _model.NewAchievements[i - unlocks] : _model.NewUnlocks[i];
+                // 12b MUST-2: an unlock's accent is cream; an achievement keeps its state tint.
+                RectTransform card = BuildRewardEntry(host, reward, achievement ? UiColor.StateSuccess : UiColor.TextSecondary);
+                float height = card.sizeDelta.y;   // the entry's measured band (BuildRewardEntry), read before the stack places it
+                if (!RewardFits(used, height, i == total - 1, room, (int)UiSpace.S, more))
+                {
+                    Discard(card.gameObject);
+                    break;
+                }
 
-            for (int i = 0; i < _model.NewAchievements.Count && shown < fits; i++, shown++)
-            {
-                AddReward(ref stack, host, _model.NewAchievements[i], UiColor.StateSuccess, true, entry);
+                AddReward(ref stack, card, achievement, height);
+                used += height + (int)UiSpace.S;
+                shown++;
             }
 
             if (total > shown)
             {
                 // No card fits (a short screen at Mac): one line names them instead of a card cut by the block.
-                string line = shown == 0
-                    ? UiStrings.Get("results.unlocked_count", "{value} new, already added to your profile").Replace("{value}", total.ToString())
-                    : ResultsViewModel.Overflow(total - shown + ResultsViewModel.MaxRewardEntries);
-                TMP_Text rest = UiFactory.Label("More", host, line, UiType.Caption, UiColor.TextSecondary);
-                stack.Add((RectTransform)rest.transform, more);
+                string line = RewardsSummary(total, shown);
+                TMP_Text rest = UiFactory.Label("More", host, line, UiType.MenuSmall, UiColor.TextSecondary);   // WP-105 (V-02)
+                stack.Add((RectTransform)rest.transform, Mathf.Max(more, Measured(rest, line, width)));
             }
 
             return stack.Cursor + BlockPad;
+        }
+
+        /// <summary>The summary of the entries not printed: "N new, …" when none is, else "and N more, …".</summary>
+        private static string RewardsSummary(int total, int shown)
+        {
+            return shown == 0
+                ? UiStrings.Get("results.unlocked_count", "{value} new, already added to your profile").Replace("{value}", total.ToString())
+                : ResultsViewModel.Overflow(total - shown + ResultsViewModel.MaxRewardEntries);
+        }
+
+        /// <summary>WP-105 (V-02): a text's band at <paramref name="width"/> - its words measured (U2: GetPreferredValues), at least one line.</summary>
+        private static float Measured(TMP_Text text, string words, float width)
+        {
+            float line = LineOf(text);
+            return string.IsNullOrEmpty(words) ? line : Mathf.Max(line, Mathf.Ceil(text.GetPreferredValues(words, width, 0f).y));
         }
 
         /// <summary>
@@ -723,9 +785,9 @@ namespace DD.Prototype.UI
             return valued + zeroBefore < fit;
         }
 
-        private void AddReward(ref UiStack stack, RectTransform host, ProfileUnlockEntry entry, UiColor accent, bool achievement, float height)
+        /// <summary>Places a built entry at its measured <paramref name="height"/> and hides it until its stamp beat.</summary>
+        private void AddReward(ref UiStack stack, RectTransform card, bool achievement, float height)
         {
-            RectTransform card = BuildRewardEntry(host, entry, accent);
             stack.Add(card, height);
             stack.Gap(UiSpace.S);
             CanvasGroup group = UiFactory.Group(card.gameObject);
@@ -736,60 +798,154 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// A new unlock or achievement: the medallion or unlock glyph, its name and detail, the NEW chip. WP-098B (KILAVUZ §1
-        /// "iz, yüzey değil"): no card under it any more - no raised fill, no accent frame - and the NEW chip holds still
-        /// (no motion behind words); the achievement's state tint stays on its name and medallion.
+        /// WP-105 (V-45): whether the next reward entry, <paramref name="height"/> tall, prints under the
+        /// <paramref name="used"/> part of the list's <paramref name="room"/>. An entry with more after it also keeps the
+        /// "and N more" line's band under it (<paramref name="gap"/> + <paramref name="moreLine"/>), so the summary always
+        /// has its place; the last entry needs none. The summary therefore shows only when an entry really does not fit.
+        /// </summary>
+        public static bool RewardFits(float used, float height, bool last, float room, float gap, float moreLine)
+        {
+            float need = used + height + (last ? 0f : gap + moreLine);
+            return need <= room + 0.5f;   // half a pixel of float slack: a band that fits exactly fits
+        }
+
+        /// <summary>How many of <paramref name="heights"/> print, in order - the rule BuildRewards applies one entry at a time (tests).</summary>
+        public static int RewardsThatFit(IList<float> heights, float room, float gap, float moreLine)
+        {
+            float used = 0f;
+            for (int i = 0; i < heights.Count; i++)
+            {
+                if (!RewardFits(used, heights[i], i == heights.Count - 1, room, gap, moreLine))
+                {
+                    return i;
+                }
+
+                used += heights[i] + gap;
+            }
+
+            return heights.Count;
+        }
+
+        /// <summary>An entry built and then not placed: out of sight at once, gone at the frame's end (build time only).</summary>
+        private static void Discard(GameObject entry)
+        {
+            entry.SetActive(false);
+            if (Application.isPlaying)
+            {
+                Destroy(entry);
+            }
+            else
+            {
+                DestroyImmediate(entry);
+            }
+        }
+
+        /// <summary>
+        /// A new unlock or achievement: the medallion or unlock glyph, its name and detail, NEW. WP-098B (KILAVUZ §1
+        /// "iz, yüzey değil"): no card under it any more - no raised fill, no accent frame; the achievement's state tint
+        /// stays on its name and medallion.
+        /// WP-105 (V-45): the entry is as tall as its words. The name and the detail wrap at the text column's width and are
+        /// measured there (GetPreferredValues - U2: never a character count), the glyph keeps one text-scaled slot, and the
+        /// band is XS above and below the taller of the two. The card's sizeDelta.y carries that height to the caller (the
+        /// stack overwrites it when it places the card); everything inside hangs from the top, so a taller band only adds air.
+        /// WP-105 (V-46): NEW is the word itself - TextPrimary, MenuSmall, no fill - not a 12 px light word on a sakura pill.
         /// </summary>
         private RectTransform BuildRewardEntry(RectTransform host, ProfileUnlockEntry entry, UiColor accent)
         {
             // AD 12b MUST-2 (§2.1): an unlock reads a TextPrimary name and its glyph in the content's own tint (a weapon's
-            // identity tint); sakura is the NEW chip's alone. Achievements keep their state tint.
+            // identity tint). Achievements keep their state tint.
             bool achievement = accent == UiColor.StateSuccess;
             UiColor nameColour = achievement ? accent : UiColor.TextPrimary;
             RectTransform card = UiFactory.NewRect("Reward", host);
-            RectTransform content = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.M));
+            RectTransform content = UiFactory.NewRect("Content", card);
+            UiFactory.Fill(content);
+            content.offsetMin = new Vector2((int)UiSpace.M, (int)UiSpace.XS);
+            content.offsetMax = new Vector2(-(int)UiSpace.M, -(int)UiSpace.XS);
+            UiFactory.ClipContent(content);
 
-            float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
             string typeLabel = string.Empty;
             Sprite markSprite = achievement
                 ? UiArt.Medal(_model.MedalFor(entry.Title))
                 : _model.UnlockSpriteFor(entry.Title, out typeLabel);
-            Image mark = UiFactory.NewImage("Mark", content, achievement ? accent : _model.UnlockTintFor(entry.Title), markSprite);
-            mark.preserveAspect = true;
-            var markRect = (RectTransform)mark.transform;
-            markRect.anchorMin = new Vector2(0f, 0.5f);
-            markRect.anchorMax = new Vector2(0f, 0.5f);
-            markRect.pivot = new Vector2(0f, 0.5f);
-            markRect.sizeDelta = new Vector2(markSize, markSize);
-            markRect.anchoredPosition = Vector2.zero;
-
+            float markSize = UiFactory.ScaledBand(RewardMark);
             float textLeft = markSize + (int)UiSpace.M;
+
+            // NEW at the right: its measured word decides where the text column ends.
+            string newWord = UiStrings.Get("tree.flag.new", "NEW");
+            TMP_Text badge = UiFactory.Label("New", content, newWord, UiType.MenuSmall, UiColor.TextPrimary, TextAnchor.MiddleRight);
+            badge.enableWordWrapping = false;
+            badge.overflowMode = TextOverflowModes.Overflow;   // one word: it never vanishes under Truncate
+            Vector2 badgeSize = badge.GetPreferredValues(newWord);
+            float badgeWidth = Mathf.Ceil(badgeSize.x) + 1f;
+            float badgeLine = Mathf.Max(LineOf(badge), Mathf.Ceil(badgeSize.y));   // the word as drawn: a dotted capital in TR is measured too
+            float textRight = badgeWidth + (int)UiSpace.L;
+            float textWidth = Mathf.Max(1f, host.rect.width - 2f * (int)UiSpace.M - textLeft - textRight);
+
             string titleText = ProfileContentCopy.RewardTitle(entry);
             if (!string.IsNullOrEmpty(typeLabel))
             {
                 titleText = ProfileContentCopy.CosmeticName(titleText);
             }
 
-            TMP_Text title = UiFactory.Label("Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, nameColour, TextAnchor.LowerLeft);
-            RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
-            titleRect.offsetMin = new Vector2(textLeft, UiFactory.ScaledBand(RewardDetailBand));
-            titleRect.offsetMax = new Vector2(-64f, 0f);
+            TMP_Text title = UiFactory.Label("Title", content, titleText, UiType.BodyStrong, nameColour, TextAnchor.UpperLeft);
+            float titleHeight = Mathf.Max(LineOf(title), Mathf.Ceil(title.GetPreferredValues(titleText, textWidth, 0f).y));
 
             string localizedDetail = ProfileContentCopy.RewardDetail(entry);
             string detailText = string.IsNullOrEmpty(typeLabel) ? localizedDetail : typeLabel + "  ·  " + localizedDetail;
-            TMP_Text detail = UiFactory.Label("Detail", content, UiFactory.Clip(detailText, 120), UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
-            RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-            detailRect.offsetMin = new Vector2(textLeft, 0f);
-            detailRect.offsetMax = new Vector2(-64f, -UiFactory.ScaledBand(RewardTitleBand));
+            TMP_Text detail = UiFactory.Label("Detail", content, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
+            float detailHeight = string.IsNullOrEmpty(detailText)
+                ? 0f
+                : Mathf.Max(LineOf(detail), Mathf.Ceil(detail.GetPreferredValues(detailText, textWidth, 0f).y));
 
-            // AD v004 MUST-1: NEW is one token everywhere - ink on sakura - whatever the card's accent.
-            TMP_Text badge = UiFactory.Chip("New", content, UiStrings.Get("tree.flag.new", "NEW"), UiColor.AccentSakura, UiColor.SurfaceBase, 56f, 24f);
-            var badgeRect = (RectTransform)badge.transform.parent;
-            badgeRect.anchorMin = new Vector2(1f, 0.5f);
-            badgeRect.anchorMax = new Vector2(1f, 0.5f);
-            badgeRect.pivot = new Vector2(1f, 0.5f);
-            badgeRect.anchoredPosition = Vector2.zero;
+            // The taller of the glyph and the words sets the inner band; each part is centred on it from the top.
+            float words = titleHeight + detailHeight;
+            float inner = Mathf.Max(markSize, words);
+            float wordsTop = Mathf.Floor((inner - words) * 0.5f);
+            HangText(title.rectTransform, textLeft, textRight, wordsTop, titleHeight);
+            HangText(detail.rectTransform, textLeft, textRight, wordsTop + titleHeight, detailHeight);
+
+            Image mark = UiFactory.NewImage("Mark", content, achievement ? accent : _model.UnlockTintFor(entry.Title), markSprite);
+            mark.preserveAspect = true;
+            var markRect = (RectTransform)mark.transform;
+            markRect.anchorMin = new Vector2(0f, 1f);
+            markRect.anchorMax = new Vector2(0f, 1f);
+            markRect.pivot = new Vector2(0f, 1f);
+            markRect.sizeDelta = new Vector2(markSize, markSize);
+            markRect.anchoredPosition = new Vector2(0f, -Mathf.Floor((inner - markSize) * 0.5f));
+
+            RectTransform badgeRect = badge.rectTransform;
+            badgeRect.anchorMin = new Vector2(1f, 1f);
+            badgeRect.anchorMax = new Vector2(1f, 1f);
+            badgeRect.pivot = new Vector2(1f, 1f);
+            badgeRect.sizeDelta = new Vector2(badgeWidth, badgeLine);
+            badgeRect.anchoredPosition = new Vector2(0f, -Mathf.Floor((inner - badgeLine) * 0.5f));
+
+            card.sizeDelta = new Vector2(0f, Mathf.Ceil(inner + 2f * (int)UiSpace.XS));
             return card;
+        }
+
+        /// <summary>A text strip across the content less <paramref name="left"/> / <paramref name="right"/>, <paramref name="top"/> below its top.</summary>
+        private static void HangText(RectTransform rect, float left, float right, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(left, -(top + height));
+            rect.offsetMax = new Vector2(-right, -top);
+        }
+
+        /// <summary>
+        /// WP-105 (V-47): the XP bar's empty part reads - its track is the kit's line tone (UiBrushTokens.LineColour, the
+        /// InkLine stand-in the C6 hairline and the C14 rail use), not BarTrack, which is the Window scrim's own ink.
+        /// </summary>
+        private static void ShowBarTrack(UiBar bar)
+        {
+            Transform track = bar.transform.Find("Track");
+            Image image = track != null ? track.GetComponent<Image>() : null;
+            if (image != null)
+            {
+                image.color = UiBrushTokens.LineColour();
+            }
         }
 
         // ========================================================= choreography
@@ -920,7 +1076,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The end state: every value final, every stamp shown, MAIN MENU focused (the second press leaves).</summary>
+        /// <summary>The end state: every value final, every stamp shown, PLAY AGAIN focused (the second press acts).</summary>
         private void Finish()
         {
             _playing = false;
@@ -947,9 +1103,9 @@ namespace DD.Prototype.UI
 
             InkNewBest(false);   // a skip / Reduced Motion: the C8 lands drawn (a cut), never an ink-in after the skip
 
-            if (_continueButton != null)
+            if (_focusButton != null)
             {
-                UiInput.Focus(_continueButton);
+                UiInput.Focus(_focusButton);   // WP-105 (§C3): PLAY AGAIN - the pad's Submit starts the next run's preparation
             }
         }
 
@@ -977,7 +1133,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>Skips the choreography to its end state (the first Submit / click; tests).</summary>
+        /// <summary>Skips the choreography to its end state (the first Submit / click / Cancel; tests).</summary>
         public void Skip()
         {
             if (!_playing)
@@ -997,52 +1153,127 @@ namespace DD.Prototype.UI
         // =================================================================== chrome
 
         /// <summary>
-        /// The save note and MAIN MENU - the kit's C11 (Menu.Home glyph + the word, unfilled, 64 high, as wide as its word);
-        /// focus on it is the kit's cream brackets. The note takes the row's width up to the button.
+        /// The save note, MAIN MENU and PLAY AGAIN - the kit's C11s (glyph + word, unfilled, 64 high, as wide as their word);
+        /// focus on them is the kit's cream brackets. WP-105 (§C3, C-00 11.10 decision 3): PLAY AGAIN is the primary - at the
+        /// right edge, the pad's Submit glyph outside its left edge (Selection's START RUN) - and goes back to Prepare Run on
+        /// the last choice (PrototypeUiFlow.GoToSelection: the session's skin and weapon); MAIN MENU is the secondary, with
+        /// the pad's Cancel glyph (Cancel does the same, Update). The two are one explicit Left / Right pair.
+        /// WP-105 (V-02): the save note is MenuSmall (it was Caption 14). It stands beside the buttons when one line of it fits
+        /// there, else on its own band above them at the page's width (measured, U2). Returns the footer's band, which the
+        /// blocks' room runs to. <paramref name="playAgain"/> false (the empty state): MAIN MENU alone.
         /// </summary>
-        private void BuildFooter(bool focusNow)
+        private float BuildFooter(bool focusNow, bool playAgain)
         {
             RectTransform footer = UiFactory.NewRect("Footer", _page);
             footer.anchorMin = new Vector2(0f, 0f);
             footer.anchorMax = new Vector2(1f, 0f);
             footer.pivot = new Vector2(0.5f, 0f);
-            footer.sizeDelta = new Vector2(0f, UiBrushTokens.ControlHeight);
             footer.anchoredPosition = Vector2.zero;
 
-            UiButton continueButton = UiBrushKit.Button(footer, "MainMenu", "common.main_menu", "MAIN MENU", "Menu.Home", PrototypeUiFlow.GoToMainMenu);
-            RectTransform rect = (RectTransform)continueButton.transform;
-            float width = rect.sizeDelta.x;   // the kit's measured width
-            rect.anchorMin = new Vector2(1f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-
-            TMP_Text note = UiFactory.Label(
-                "FooterNote", footer, _model.FooterNote, UiType.Caption,
-                _model.SaveFailed ? UiColor.StateWarning : UiColor.TextSecondary, TextAnchor.MiddleLeft);
-            RectTransform noteRect = UiFactory.Fill((RectTransform)note.transform);
-            noteRect.offsetMax = new Vector2(-(width + (int)UiSpace.XL), 0f);
-
-            if (focusNow)
+            float used = 0f;   // the footer's right part the buttons and their glyphs take
+            UiButton again = null;
+            if (playAgain)
             {
-                SetInitialFocus(continueButton);
+                again = UiBrushKit.Button(footer, "PlayAgain", "results.play_again", "PLAY AGAIN", "Menu.Retry", PrototypeUiFlow.GoToSelection);
+                used = DockRight(again, used);
+                used += PromptBeside(again, UiPromptAction.Submit, false) + (int)UiSpace.XL;
             }
 
-            _continueButton = continueButton;
+            UiButton mainMenu = UiBrushKit.Button(footer, "MainMenu", "common.main_menu", "MAIN MENU", "Menu.Home", PrototypeUiFlow.GoToMainMenu);
+            used += PromptBeside(mainMenu, UiPromptAction.Cancel, true);
+            used = DockRight(mainMenu, used);
+
+            string words = _model.FooterNote;
+            TMP_Text note = UiFactory.Label(
+                "FooterNote", footer, words, UiType.MenuSmall,
+                _model.SaveFailed ? UiColor.StateWarning : UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            float control = UiBrushTokens.ControlHeight;
+            float beside = Mathf.Max(1f, _page.rect.width - used - (int)UiSpace.XL);
+            float band = control;
+            RectTransform noteRect = note.rectTransform;
+            if (Measured(note, words, beside) <= control)
+            {
+                // One line beside the buttons, on their band.
+                noteRect.anchorMin = new Vector2(0f, 0f);
+                noteRect.anchorMax = new Vector2(1f, 0f);
+                noteRect.pivot = new Vector2(0f, 0f);
+                noteRect.offsetMin = Vector2.zero;
+                noteRect.offsetMax = new Vector2(-(used + (int)UiSpace.XL), control);
+            }
+            else
+            {
+                // Its own band above the buttons, at the page's width.
+                float height = Measured(note, words, _page.rect.width);
+                note.alignment = TextAlignmentOptions.TopLeft;
+                noteRect.anchorMin = new Vector2(0f, 1f);
+                noteRect.anchorMax = new Vector2(1f, 1f);
+                noteRect.pivot = new Vector2(0.5f, 1f);
+                noteRect.offsetMin = new Vector2(0f, -height);
+                noteRect.offsetMax = Vector2.zero;
+                band = height + (int)UiSpace.S + control;
+            }
+
+            footer.sizeDelta = new Vector2(0f, band);
+
+            // The pad: MAIN MENU ⇄ PLAY AGAIN (explicit, no wrap); PLAY AGAIN takes the focus at the end (Finish).
+            if (again != null)
+            {
+                UiInput.LinkHorizontal(mainMenu, null, again);
+                UiInput.LinkHorizontal(again, mainMenu, null);
+            }
+
+            _mainMenuButton = mainMenu;
+            _playAgainButton = again;
+            _focusButton = again != null ? again : mainMenu;
+            if (focusNow)
+            {
+                SetInitialFocus(_focusButton);
+            }
+
+            return band;
+        }
+
+        /// <summary>A footer C11 docked to the footer's bottom, <paramref name="from"/> in from its right edge; returns the new edge.</summary>
+        private static float DockRight(UiButton button, float from)
+        {
+            var rect = (RectTransform)button.transform;
+            float width = rect.sizeDelta.x;   // the kit's measured width
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-from, 0f);
+            return from + width;
         }
 
         /// <summary>
-        /// Cancel = the one action on this screen (MAIN MENU). While the choreography plays, the first Submit / click
-        /// skips it (MAIN MENU is not focused yet, so that press cannot leave); after it, focus is reclaimed for the pad.
+        /// The pad's glyph for <paramref name="action"/> just outside the button - its right edge (<paramref name="right"/>,
+        /// the kit's Back) or its left (Selection's START RUN), so the C11 keeps its measured width and stays unfilled.
+        /// Returns the room it takes (0 when the device glyphs are not available).
+        /// </summary>
+        private static float PromptBeside(UiButton button, UiPromptAction action, bool right)
+        {
+            UiPrompt prompt = UiInputGlyphs.Build("Prompt", button.transform, action, UiColor.TextPrimary, UiColor.SurfaceInset);
+            if (prompt == null)
+            {
+                return 0f;
+            }
+
+            var rect = (RectTransform)prompt.transform;
+            rect.anchorMin = new Vector2(right ? 1f : 0f, 0.5f);
+            rect.anchorMax = new Vector2(right ? 1f : 0f, 0.5f);
+            rect.pivot = new Vector2(right ? 0f : 1f, 0.5f);
+            rect.anchoredPosition = new Vector2(right ? (int)UiSpace.S : -(int)UiSpace.S, 0f);
+            return UiInputGlyphs.ReservedWidth(action) + (int)UiSpace.S;
+        }
+
+        /// <summary>
+        /// While the choreography plays, the first Submit, click or Cancel skips it (no button is focused yet, so that
+        /// press cannot leave). WP-105 (SHOULD-7): Cancel used to leave at once, before the rewards, the unlocks and NEW BEST
+        /// were ever seen - and this screen cannot be opened again. After the beats, Cancel = the one action on this screen
+        /// (MAIN MENU) with the Back cue, as on Selection; focus is reclaimed for the pad.
         /// </summary>
         private void Update()
         {
-            if (UiInput.CancelPressed())
-            {
-                PrototypeUiFlow.GoToMainMenu();
-                return;
-            }
-
             if (_clockRolling)
             {
                 TickClock();
@@ -1050,7 +1281,7 @@ namespace DD.Prototype.UI
 
             if (_playing)
             {
-                if (UiInput.SubmitPressed() || Input.GetMouseButtonDown(0))
+                if (UiInput.CancelPressed() || UiInput.SubmitPressed() || Input.GetMouseButtonDown(0))
                 {
                     Skip();
                 }
@@ -1058,7 +1289,14 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            UiInput.ReclaimFocus(_continueButton);
+            if (UiInput.CancelPressed())
+            {
+                UiSound.Play(UiSoundKind.Back);
+                PrototypeUiFlow.GoToMainMenu();
+                return;
+            }
+
+            UiInput.ReclaimFocus(_focusButton);
         }
 
         /// <summary>
@@ -1085,8 +1323,8 @@ namespace DD.Prototype.UI
             TMP_Text body = UiFactory.Label("Body", host, _model.EmptyBody, UiType.Body, UiColor.TextSecondary);
             stack.Add((RectTransform)body.transform, UiFactory.LineHeight(UiType.Body) * 2f);
 
-            BuildFooter(true);
-            _pane.Open(_continueButton);   // nothing plays here: MAIN MENU is the window's focus at once
+            BuildFooter(true, false);   // no run behind it: MAIN MENU alone (PLAY AGAIN would promise a run that is not there)
+            _pane.Open(_focusButton);   // nothing plays here: MAIN MENU is the window's focus at once
         }
 
         // =================================================================== helpers

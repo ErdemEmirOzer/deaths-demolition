@@ -77,8 +77,15 @@ namespace DD.Prototype.UI
         public bool LeveledUp;
         public int LevelsGained;
 
-        /// <summary>12b (AD R1-D SHOULD-1, E26): "Next unlock: Hinawa at level 3 · 2 levels away", or empty when none is left.</summary>
-        public string NextUnlockLine = string.Empty;
+        /// <summary>
+        /// WP-105 (C-00 11.10 decision 2): the Awakening line - "AWAKENING +15 Ash · 45 Ash in total" - in place of the PATH
+        /// line and of the level gate's "Next unlock" line (weapons no longer open by level). Empty when the run earned no Ash
+        /// and the balance is unknown or 0. Words only: the Awakening page comes with S-04 B1, the line is not a control.
+        /// </summary>
+        public string AwakeningLine = string.Empty;
+
+        /// <summary>WP-105: the profile's Ash after this run (ProfileService.Current.AshBalance); -1 when not known.</summary>
+        public int AshBalance = -1;
         public float ProgressAfter01;
         public string ProgressCaption = string.Empty;
         public string LevelUpChip = string.Empty;
@@ -246,7 +253,36 @@ namespace DD.Prototype.UI
             return string.IsNullOrEmpty(sourceId) || !UiStrings.Has(key) ? null : UiStrings.Get(key, sourceId);
         }
 
-        /// <summary>The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder), as the forward-look line.</summary>
+        /// <summary>
+        /// WP-105 (C-00 11.10 decision 2): the Awakening line. "AWAKENING +{earned} Ash" when the run added Ash, the balance
+        /// after it ("{balance} Ash in total") when it is known and above 0, joined by a middle dot; with a balance but nothing
+        /// earned the line opens with the word AWAKENING alone. Empty when there is neither.
+        /// </summary>
+        public static string DescribeAwakening(int earned, int balance)
+        {
+            string head = earned > 0
+                ? UiStrings.Format("awakening.results.delta", "value", earned.ToString(), "AWAKENING +{value} Ash")
+                : null;
+            string total = balance > 0
+                ? UiStrings.Format("awakening.results.balance", "value", balance.ToString(), "{value} Ash in total")
+                : null;
+            if (head == null && total == null)
+            {
+                return string.Empty;
+            }
+
+            if (head == null)
+            {
+                head = UiStrings.Get("awakening.title", "AWAKENING");
+            }
+
+            return total == null ? head : head + "  ·  " + total;
+        }
+
+        /// <summary>
+        /// The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder). WP-105: no longer on
+        /// Results (the level gate opens no weapon now - C-00 11.10 decision 2); kept for the profile ladder's own tests.
+        /// </summary>
         public static string NextUnlockFor(int level, IProfileLookup lookup)
         {
             if (lookup == null)
@@ -360,10 +396,11 @@ namespace DD.Prototype.UI
             UiStrings.Get("results.empty.body", "This screen is filled in the moment a run ends. Start one from the main menu and it will " +
             "come back here by itself.");
 
-        /// <summary>Builds the model with the profile's own weapon names.</summary>
+        /// <summary>Builds the model with the profile's own weapon names and its Ash balance.</summary>
         public static ResultsViewModel From(RunRewardReport report)
         {
-            return From(report, ProfileService.WeaponDisplayName);
+            ProfileData profile = report != null && report.HasRun ? ProfileService.Current : null;
+            return From(report, ProfileService.WeaponDisplayName, profile != null ? profile.AshBalance : -1);
         }
 
         /// <summary>
@@ -371,6 +408,15 @@ namespace DD.Prototype.UI
         /// tested without a loaded config.
         /// </summary>
         public static ResultsViewModel From(RunRewardReport report, Func<ClassicWeaponId, string> weaponName)
+        {
+            return From(report, weaponName, -1);
+        }
+
+        /// <summary>
+        /// Builds the model. WP-105: <paramref name="ashBalance"/> is the profile's Ash after the run (-1 = unknown) - read
+        /// by the caller, so the model stays testable without a profile.
+        /// </summary>
+        public static ResultsViewModel From(RunRewardReport report, Func<ClassicWeaponId, string> weaponName, int ashBalance)
         {
             var model = new ResultsViewModel();
 
@@ -393,6 +439,8 @@ namespace DD.Prototype.UI
                 ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
             model.AshEarned = Mathf.Max(0, report.AshEarned);
+            model.AshBalance = ashBalance;
+            model.AwakeningLine = DescribeAwakening(model.AshEarned, ashBalance);
             bool atCap = UiLevelCap.IsCap(report.LevelRequirementAfter);   // R1-B P2: the bar is full at the cap, not 40 / int.MaxValue
             model.ProgressBefore01 = report.LevelBefore == report.LevelAfter && report.LevelRequirementAfter > 0
                 ? (atCap ? 1f : Mathf.Clamp01(report.XpIntoLevelBefore / (float)report.LevelRequirementAfter))
@@ -441,7 +489,9 @@ namespace DD.Prototype.UI
             model.XpBreakdown.Add(new UiStatLine(
                 UiStrings.Get("results.xp.kills", "Kills") + Count(summary.TotalKills),
                 "+" + report.KillXp));
-            model.XpBreakdown.Add(new UiStatLine(UiStrings.Get("results.xp.other", "Gold, Upgrades, Time"), "+0", UiColor.TextMuted));
+            // WP-105 (SHOULD-11): TextMuted read 3.57:1 on the Window scrim; the "+0" says the zero itself, so its tone is
+            // TextSecondary (5.10:1) like the row's words - no tone below 4.5:1 on Results.
+            model.XpBreakdown.Add(new UiStatLine(UiStrings.Get("results.xp.other", "Gold, Upgrades, Time"), "+0", UiColor.TextSecondary));
 
             model.TotalXp = "+" + report.TotalXpEarned;
             model.Applied = report.Applied;
@@ -461,7 +511,6 @@ namespace DD.Prototype.UI
                 ? UiLevelCap.Caption()
                 : UiStrings.Format("profile.progress", "value", report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter,
                     "next", (report.LevelAfter + 1).ToString(), "{value} XP towards level {next}");
-            model.NextUnlockLine = NextUnlockFor(report.LevelAfter, ProfileServiceLookup.Instance);
 
             model.LevelUpChip = report.LeveledUp
                 ? report.LevelsGained > 1
@@ -553,6 +602,10 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// The loadout on the reason line: the weapon · the build. WP-105 (V-47): the run's time is the TIME counter's
+        /// number (HeroSeconds); the line no longer repeats it as "0:12 played".
+        /// </summary>
         public static string DescribeLoadout(in RunSummary summary, Func<ClassicWeaponId, string> weaponName)
         {
             string weapon = weaponName != null ? weaponName(summary.Weapon) : summary.Weapon.ToString();
@@ -560,7 +613,7 @@ namespace DD.Prototype.UI
                 ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
 
-            return weapon + "   ·   " + build + "   ·   " + UiStrings.Format("results.played", "value", FormatDuration(summary.RunDuration), "{value} played");
+            return weapon + "   ·   " + build;
         }
 
         public static string FormatDuration(float seconds)

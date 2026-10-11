@@ -59,6 +59,7 @@ namespace DD.Prototype.Tests.PlayMode
         private const float MotionSettle = 0.4f;
 
         private bool _reducedMotion;
+        private string _language;
 
         [SetUp]
         public void SetUp()
@@ -66,6 +67,7 @@ namespace DD.Prototype.Tests.PlayMode
             // The machine's saved UI settings may have Reduced Motion on; the motion tests set it themselves.
             _reducedMotion = UiMotion.ReducedMotion;
             UiMotion.ReducedMotion = false;
+            _language = UiStrings.Language;
         }
 
         [TearDown]
@@ -73,6 +75,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             LogAssert.ignoreFailingMessages = false;
             UiMotion.ReducedMotion = _reducedMotion;
+            UiStrings.Language = _language;   // WP-105: the TR case sets the mirror only (the settings file is never written)
             UiSettings.TextScale = 1f;
             UiSettings.UiScale = 1f;
             PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
@@ -171,7 +174,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreSame(camera.Mark, FirstSelectionMark(pause), "grubun tek C8'i");
             Assert.AreEqual("Setting.CAMERA SHAKE", pause.ShakeSlider.name, "kaydırıcı adı");
             Assert.AreEqual("Resume", pause.ResumeButton.name);
-            Assert.AreEqual("MainMenu", pause.MainMenuButton.name);
+            // WP-105 (V-42): the foot button ends the run and is named for it (was "MainMenu"; the old accessor stays).
+            Assert.AreEqual("EndRun", pause.EndRunButton.name);
+            Assert.AreSame(pause.EndRunButton, pause.MainMenuButton, "eski erişim adı aynı düğmeyi verir (çekim ajanları)");
         }
 
         /// <summary>
@@ -210,7 +215,25 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.AreEqual(1f, slider.Value, 0.0001f, "eski değer kaydırıcıda 1");
                 Assert.AreEqual(1f, DD.Prototype.CameraSystem.PrototypeCameraRig.GetShakeIntensity(), 0.0001f, "eski değer kameraya 1 olarak geri yazıldı");
-                Assert.AreEqual("1.00", slider.ValueText, "değer metni");
+                // WP-105 (NICE-3, V-04): the kit's percentage, in the language's order - never the invariant "1.00".
+                Assert.AreEqual(UiStrings.Percent(100), slider.ValueText, "değer metni yüzde (kitin diğer kaydırıcıları gibi)");
+                string dil = UiStrings.Language;
+                try
+                {
+                    UiStrings.Language = UiStrings.English;
+                    slider.SetValue(0.7f, false);
+                    Assert.AreEqual("70%", slider.ValueText, "EN 70%");
+                    UiStrings.Language = UiStrings.Turkish;
+                    slider.SetValue(1f, false);
+                    Assert.AreEqual("%100", slider.ValueText, "TR %100 (\"1.00\" değil)");
+                    slider.SetValue(0.7f, false);
+                    Assert.AreEqual("%70", slider.ValueText, "TR %70 (\"0.70\" değil)");
+                }
+                finally
+                {
+                    UiStrings.Language = dil;
+                    slider.SetValue(1f, false);
+                }
             }
             finally
             {
@@ -236,12 +259,12 @@ namespace DD.Prototype.Tests.PlayMode
             UiEvents.Raised += record;
             try
             {
-                // Default focus and the explicit chain, top to bottom as drawn: RESUME ↓ CAMERA ↓ SHAKE ↓ MAIN MENU.
+                // Default focus and the explicit chain, top to bottom as drawn: RESUME ↓ CAMERA ↓ SHAKE ↓ END RUN.
                 Assert.AreSame(pause.ResumeButton.gameObject, events.currentSelectedGameObject, "varsayılan odak RESUME");
                 AssertKosebentSarar((RectTransform)events.currentSelectedGameObject.transform, "AD M1 açılış");   // C7 ⊇ seçili (+8)
                 UnityEngine.UI.Navigation resume = pause.ResumeButton.navigation;
                 Assert.AreEqual(UnityEngine.UI.Navigation.Mode.Explicit, resume.mode, "açık nav zinciri");
-                Assert.IsNull(resume.selectOnUp, "üstten alta sarma yok (RESUME ↑ MAIN MENU'ye düşmez)");
+                Assert.IsNull(resume.selectOnUp, "üstten alta sarma yok (RESUME ↑ END RUN'a düşmez)");
                 UiBrushChoiceGroup camera = pause.CameraSegments;
                 Assert.AreSame(camera[camera.Selected], resume.selectOnDown, "RESUME ↓ mevcut kamera segmenti");
                 for (int i = 0; i < camera.Count; i++)
@@ -252,10 +275,10 @@ namespace DD.Prototype.Tests.PlayMode
                 Selectable belowCamera = pause.ShakeSlider.interactable ? (Selectable)pause.ShakeSlider : pause.MainMenuButton;
                 for (int i = 0; i < camera.Count; i++)
                 {
-                    Assert.AreSame(belowCamera, camera[i].navigation.selectOnDown, "segment ↓ kaydırıcı (yoksa MAIN MENU)");
+                    Assert.AreSame(belowCamera, camera[i].navigation.selectOnDown, "segment ↓ kaydırıcı (yoksa END RUN)");
                 }
 
-                Assert.AreSame(belowCamera, pause.MainMenuButton.navigation.selectOnUp, "MAIN MENU ↑");
+                Assert.AreSame(belowCamera, pause.MainMenuButton.navigation.selectOnUp, "END RUN ↑");
                 Assert.IsNull(pause.MainMenuButton.navigation.selectOnDown, "alttan başa sarma yok");
 
                 // The old CloseConfirm raised DialogClosed on every unpause, open dialog or not.
@@ -268,9 +291,9 @@ namespace DD.Prototype.Tests.PlayMode
                 events.SetSelectedGameObject(pause.MainMenuButton.gameObject);   // as a pad / a click leaves it
                 pause.MainMenuButton.OnSubmit(null);
                 yield return null;
-                Assert.IsTrue(pause.IsConfirming, "MAIN MENU onayı açar");
+                Assert.IsTrue(pause.IsConfirming, "END RUN onayı açar");
                 Assert.AreEqual(1, opened);
-                Assert.AreSame(pause.Confirmation.Secondary.gameObject, events.currentSelectedGameObject, "onayda varsayılan odak KEEP PLAYING");
+                Assert.AreSame(pause.Confirmation.Secondary.gameObject, events.currentSelectedGameObject, "onayda varsayılan odak güvenli eylem (RESUME)");
                 Assert.AreEqual(PauseScreen.ConfirmName, pause.Confirmation.name, "kök eski adını korur");
                 Assert.AreEqual("Cancel", pause.Confirmation.Secondary.name, "güvenli eylem eski adıyla");
                 Assert.AreEqual("Confirm", pause.Confirmation.Primary.name);
@@ -280,7 +303,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(layer != null && layer.overrideSorting, "onay kendi tuval katmanında (kapalı kurulsa da: em-1 #2)");
                 Assert.AreEqual(UiTokens.SortingDialog, layer.sortingOrder, "diyalog sırası");
 
-                // Cancel (pad B / Esc): the confirmation closes, the pause stays, focus goes back to MAIN MENU.
+                // Cancel (pad B / Esc): the confirmation closes, the pause stays, focus goes back to END RUN.
                 UiInput.SimulateCancelNextFrame();
                 yield return null;
                 yield return null;
@@ -296,6 +319,67 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.IsFalse(pause.IsPaused, "onay kapalıyken iptal devam ettirir");
                 Assert.AreEqual(1, closed, "unpause ikinci bir DialogClosed yaymaz");
+            }
+            finally
+            {
+                UiEvents.Raised -= record;
+            }
+        }
+
+        /// <summary>
+        /// WP-105 (V-42 + NICE-4) in both languages: one action, one name. The foot button is END RUN (the confirmation's
+        /// own word and the Menu.EndRun glyph - it read MAIN MENU / ANA MENÜ with the home glyph and hid the loss); the
+        /// confirmation's safe action is the panel's RESUME / DEVAM ET (it read KEEP PLAYING / OYNAMAYA DEVAM) and it
+        /// resumes play with one DialogClosed; the panel's RESUME and the safe action share their glyph too.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Duraklat_KosuyuBitirDugmesi_TekAd_GuvenliEylemDevamEt_OyunaDoner_EN() { yield return OneNamePerAction(UiStrings.English); }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Duraklat_KosuyuBitirDugmesi_TekAd_GuvenliEylemDevamEt_OyunaDoner_TR() { yield return OneNamePerAction(UiStrings.Turkish); }
+
+        private static IEnumerator OneNamePerAction(string language)
+        {
+            yield return Open(1f, 1f, language);
+            PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
+            Assert.AreEqual(language, UiStrings.Language, "the run was built in " + language);
+            Assert.IsTrue(PauseScreen.IsOpen, "IsOpen = the navigation model's Paused overlay (V-41's HUD reads it)");
+
+            UiButton endRun = pause.EndRunButton;
+            Assert.AreEqual(UiStrings.Get("pause.confirm.end", "END RUN"), endRun.LabelText.text, language + ": the button says END RUN");
+            Assert.AreNotEqual(UiStrings.Get("common.main_menu", "MAIN MENU"), endRun.LabelText.text, language + ": not MAIN MENU");
+            Transform glyph = endRun.transform.Find("Glyph");
+            if (UiArt.HasIcon("Menu.EndRun"))
+            {
+                Assert.IsNotNull(glyph, language + ": END RUN has its glyph");
+                Assert.AreSame(UiArt.Icon("Menu.EndRun"), glyph.GetComponent<Image>().sprite, language + ": the Menu.EndRun glyph (not Menu.Home)");
+            }
+
+            int closed = 0;
+            System.Action<UiEvent, string> record = (e, detail) =>
+            {
+                if (e == UiEvent.DialogClosed && detail == PauseScreen.ConfirmName) closed++;
+            };
+
+            UiEvents.Raised += record;
+            try
+            {
+                endRun.OnSubmit(null);
+                yield return null;
+                Assert.IsTrue(pause.IsConfirming, language + ": END RUN asks first");
+                Assert.AreEqual(endRun.LabelText.text, pause.Confirmation.Primary.LabelText.text, language + ": the button and the destructive action share one name");
+                Assert.AreEqual(UiStrings.Get("pause.resume", "RESUME"), pause.Confirmation.Secondary.LabelText.text, language + ": the safe action is RESUME / DEVAM ET");
+                Assert.AreEqual(pause.ResumeButton.LabelText.text, pause.Confirmation.Secondary.LabelText.text, language + ": the panel's RESUME and the safe action share one name");
+                Assert.AreNotEqual(UiStrings.Get("pause.confirm.keep", "KEEP PLAYING"), pause.Confirmation.Secondary.LabelText.text, language + ": no second name");
+
+                pause.Confirmation.Secondary.OnSubmit(null);
+                yield return null;
+                Assert.IsFalse(pause.IsConfirming, language + ": RESUME closes the confirmation");
+                Assert.IsFalse(pause.IsPaused, language + ": RESUME resumes play, as its word says");
+                Assert.IsFalse(PauseScreen.IsOpen, language + ": the overlay is gone");
+                Assert.AreEqual(1, closed, language + ": one DialogClosed");
             }
             finally
             {
@@ -373,10 +457,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(1f, pause.PanelGroup.alpha, 1e-3f, "azaltılmış hareket: açılış süresi 0");
             pause.MainMenuButton.OnSubmit(null);
             Assert.IsTrue(pause.IsConfirming, "azaltılmış hareket: onay ilk karede açık");
-            Assert.AreSame(pause.Confirmation.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "odak ilk karede KEEP PLAYING");
+            Assert.AreSame(pause.Confirmation.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "odak ilk karede RESUME");
             pause.Confirmation.Secondary.OnSubmit(null);
-            Assert.IsFalse(pause.IsConfirming, "KEEP PLAYING kapatır");
-            Assert.IsTrue(pause.IsPaused);
+            Assert.IsFalse(pause.IsConfirming, "RESUME onayı kapatır");
+            // WP-105 (NICE-4): the safe action is RESUME - it resumes play, as the panel's RESUME does (KEEP PLAYING only
+            // went back to the panel). Cancel stays one step back (Duraklat_DialogClosed_…).
+            Assert.IsFalse(pause.IsPaused, "RESUME oyuna döner");
         }
 
         /// <summary>
@@ -443,6 +529,258 @@ namespace DD.Prototype.Tests.PlayMode
             yield return new WaitForSecondsRealtime(MotionSettle);
             yield return null;
             AssertKosebentSarar(pause.ResumeRect, "yeniden açılış (PaneIn bitti)");
+        }
+
+        // ------------------------------------------------------------------ WP-105 · Ek 11.10 (§C2 settings, §C5 focus loss)
+
+        private static readonly string[][] SettingsRows =
+        {
+            // object name (the main menu's), key (the main menu's), the screen's fallback
+            new[] { "Setting.MASTER VOLUME", "settings.row.master_volume", "MASTER VOLUME" },
+            new[] { "Setting.MUSIC VOLUME", "settings.row.music_volume", "MUSIC" },
+            new[] { "Setting.EFFECTS VOLUME", "settings.row.effects_volume", "EFFECTS" },
+            new[] { "Setting.UI SOUNDS", "settings.row.ui_sounds", "UI SOUNDS" },
+            new[] { "Setting.TEXT SCALE", "access.row.text_scale", "TEXT SCALE" },
+            new[] { "ReduceFlashes", "access.row.reduce_flashes", "REDUCE FLASHES" },
+            new[] { "ReducedMotion", "access.row.reduced_motion", "REDUCED MOTION" },
+        };
+
+        /// <summary>
+        /// WP-105 (§C2, V-40; C-00 11.10 decision): SETTINGS beside RESUME (the menu's word, Menu.Settings; RESUME → SETTINGS,
+        /// its ↓ the camera row) opens the run's settings inside the pause: the menu's rows under the menu's keys and object
+        /// names, one explicit chain from the C10 Back, no key binding. A slider and a toggle write UiSettings (a temp settings
+        /// file - the player's is never written). Cancel, Esc (Pause + Cancel in one frame) and the C10 go one step back to the
+        /// pause's own page, focus on SETTINGS; a pause closed on the settings page opens on its own page next time.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Duraklat_Ayarlar_MenuSatirlariAcilir_IptalEscGeriTekAdim()
+        {
+            string settingsFile = UseTempSettings();
+            IInputSource input = InputSourceRegistry.Current;
+            try
+            {
+                yield return Open(1f, 1f);
+                PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
+                EventSystem events = EventSystem.current;
+                UiButton settings = pause.SettingsButton;
+                Assert.IsNotNull(settings, "SETTINGS");
+                Assert.AreEqual("Settings", settings.name);
+                Assert.AreEqual(UiStrings.Get("menu.tab.settings", "SETTINGS"), settings.LabelText.text, "the menu's word");
+                Transform glyph = settings.transform.Find("Glyph");
+                if (UiArt.HasIcon("Menu.Settings"))
+                {
+                    Assert.IsNotNull(glyph);
+                    Assert.AreSame(UiArt.Icon("Menu.Settings"), glyph.GetComponent<Image>().sprite, "Menu.Settings");
+                }
+
+                UiBrushChoiceGroup camera = pause.CameraSegments;
+                Assert.AreSame(settings, pause.ResumeButton.navigation.selectOnRight, "RESUME → SETTINGS");
+                Assert.AreSame(pause.ResumeButton, settings.navigation.selectOnLeft, "SETTINGS ← RESUME");
+                Assert.AreSame(camera[camera.Selected], settings.navigation.selectOnDown, "SETTINGS ↓ the camera row");
+                Assert.AreSame(camera[camera.Selected], pause.ResumeButton.navigation.selectOnDown, "RESUME ↓ unchanged");
+                pause.ResumeRect.GetWorldCorners(s_a);
+                ((RectTransform)settings.transform).GetWorldCorners(s_b);
+                Assert.AreEqual(s_a[1].y, s_b[1].y, 1f, "SETTINGS on RESUME's row");
+                Assert.Greater(s_b[0].x, s_a[2].x, "SETTINGS right of RESUME");
+
+                settings.OnSubmit(null);
+                yield return null;
+                Assert.IsTrue(pause.IsSettingsOpen, "SETTINGS opens the page");
+                Assert.IsTrue(pause.IsPaused);
+                Assert.IsTrue(pause.SettingsPage.gameObject.activeInHierarchy);
+                Assert.IsFalse(pause.ResumeButton.gameObject.activeInHierarchy, "the pause's own page yields its column");
+                Assert.IsFalse(pause.EndRunButton.gameObject.activeInHierarchy);
+                Assert.IsFalse(pause.ShakeSlider.gameObject.activeInHierarchy);
+                Assert.AreEqual(SettingsRows[0][0], events.currentSelectedGameObject.name, "focus on the first row");
+
+                Selectable previous = pause.SettingsBackButton;
+                Assert.IsNotNull(previous, "the page's C10 Back");
+                foreach (string[] row in SettingsRows)
+                {
+                    Transform t = FindUnder(pause.SettingsPage, row[0]);
+                    Assert.IsNotNull(t, row[0] + " (the menu's object name)");
+                    Assert.IsTrue(HasText(t, UiStrings.Get(row[1], row[2])), row[0] + ": the menu's word (" + row[1] + ")");
+                    Selectable control = t.GetComponent<Selectable>();
+                    Assert.IsNotNull(control, row[0] + ": a pad stop");
+                    Assert.AreSame(control, previous.navigation.selectOnDown, row[0] + ": ↓ from the row above");
+                    Assert.AreSame(previous, control.navigation.selectOnUp, row[0] + ": ↑ back");
+                    previous = control;
+                }
+
+                Assert.IsNull(previous.navigation.selectOnDown, "no wrap from the last row");
+                foreach (UiButton button in pause.SettingsPage.GetComponentsInChildren<UiButton>(true))
+                {
+                    Assert.IsFalse(button.name.StartsWith("Bind.", System.StringComparison.Ordinal), "no key binding in the pause (it stays in the main menu)");
+                }
+
+                // The rows write UiSettings (the temp file).
+                UiSlider music = FindUnder(pause.SettingsPage, "Setting.MUSIC VOLUME").GetComponent<UiSlider>();
+                float musicBefore = UiSettings.MusicVolume;
+                music.Step(musicBefore > 0.5f ? -1 : +1);
+                Assert.AreNotEqual(musicBefore, UiSettings.MusicVolume, "MUSIC moves UiSettings.MusicVolume");
+                Assert.AreEqual(music.Value, UiSettings.MusicVolume, 0.026f, "on the 5 % steps");
+                UiSwitch flashes = FindUnder(pause.SettingsPage, "ReduceFlashes").GetComponent<UiSwitch>();
+                bool flashesBefore = UiSettings.ReduceFlashes;
+                flashes.Toggle();
+                Assert.AreEqual(!flashesBefore, UiSettings.ReduceFlashes, "REDUCE FLASHES writes UiSettings.ReduceFlashes");
+                flashes.Toggle();
+                Assert.AreEqual(flashesBefore, UiSettings.ReduceFlashes);
+
+                // Cancel: one step back - the page, not the pause.
+                UiInput.SimulateCancelNextFrame();
+                yield return null;
+                yield return null;
+                Assert.IsFalse(pause.IsSettingsOpen, "Cancel closes the settings page");
+                Assert.IsTrue(pause.IsPaused, "and only the page");
+                Assert.IsTrue(pause.ResumeButton.gameObject.activeInHierarchy, "the pause's own page is back");
+                Assert.AreSame(settings.gameObject, events.currentSelectedGameObject, "focus back on SETTINGS");
+
+                // Esc = the Pause key + Cancel in one frame: still one step.
+                settings.OnSubmit(null);
+                yield return null;
+                Assert.IsTrue(pause.IsSettingsOpen);
+                var esc = new PauseTusuGirdi();
+                InputSourceRegistry.SetCurrent(esc);
+                esc.PauseFrame = Time.frameCount + 1;
+                UiInput.SimulateCancelNextFrame();
+                yield return null;
+                yield return null;
+                Assert.IsFalse(pause.IsSettingsOpen, "Esc closes the settings page");
+                Assert.IsTrue(pause.IsPaused, "the same press does not resume");
+                InputSourceRegistry.SetCurrent(input);
+
+                // The C10 Back.
+                settings.OnSubmit(null);
+                yield return null;
+                pause.SettingsBackButton.OnSubmit(null);
+                Assert.IsFalse(pause.IsSettingsOpen, "the C10 Back closes the page");
+                Assert.IsTrue(pause.IsPaused);
+
+                // Closed on the settings page, the next pause opens on its own page.
+                settings.OnSubmit(null);
+                yield return null;
+                pause.SetPaused(false);
+                yield return new WaitForSecondsRealtime(MotionSettle);
+                pause.SetPaused(true);
+                yield return null;
+                Assert.IsFalse(pause.IsSettingsOpen, "a new pause opens on its own page");
+                Assert.AreSame(pause.ResumeButton.gameObject, events.currentSelectedGameObject, "RESUME focused");
+            }
+            finally
+            {
+                InputSourceRegistry.SetCurrent(input);
+                RestoreSettings(settingsFile);
+            }
+        }
+
+        /// <summary>
+        /// WP-105 (§C2) at the Mac setting in Turkish (UI 1.2 × text 1.25): the settings page stays inside the pane on the left
+        /// column and none of its words is cut (the rows scroll inside the kit's C35 where they outgrow the window).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Duraklat_Ayarlar_MacTR_Metin125_SayfaPanedeKelimelerButun()
+        {
+            string settingsFile = UseTempSettings();
+            try
+            {
+                yield return Open(1.2f, 1.25f, UiStrings.Turkish);
+                PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
+                pause.SettingsButton.OnSubmit(null);
+                yield return null;
+                Assert.IsTrue(pause.IsSettingsOpen);
+                pause.PanelRect.GetWorldCorners(s_b);
+                pause.SettingsPage.GetWorldCorners(s_a);
+                Assert.IsTrue(s_a[0].y >= s_b[0].y - 1f && s_a[1].y <= s_b[1].y + 1f && s_a[0].x >= s_b[0].x - 1f && s_a[2].x <= s_b[2].x + 1f,
+                    "the page inside the pane");
+                int words = 0;
+                foreach (TMPro.TMP_Text text in pause.SettingsPage.GetComponentsInChildren<TMPro.TMP_Text>(false))
+                {
+                    if (string.IsNullOrEmpty(text.text))
+                    {
+                        continue;
+                    }
+
+                    text.ForceMeshUpdate();
+                    Assert.IsFalse(text.isTextTruncated, "mac-tr: " + text.name + " is whole (" + text.text + ")");
+                    words++;
+                }
+
+                Assert.Greater(words, SettingsRows.Length, "every row's word and its value are on the page");
+                Debug.Log("[DD-TEST] wp105.pause-settings mac-tr page=" + pause.SettingsPage.rect.size + " words=" + words);
+            }
+            finally
+            {
+                RestoreSettings(settingsFile);
+            }
+        }
+
+        /// <summary>
+        /// WP-105 (§C5, KOD SHOULD-9; C-00 11.10 decision 5): a lost window focus pauses a live run; focus coming back resumes
+        /// nothing (the player says RESUME); with the rule off (automation) nothing happens. The rule itself is
+        /// UiPauseFocusRuleTests' (batch mode turns it off, so the suite forces it here).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Duraklat_OdakKaybi_KosudaDuraklatir_OdakDonunceDevamEtmez_OtomasyondaKapali()
+        {
+            yield return Open(1f, 1f);
+            PauseScreen pause = Object.FindObjectOfType<PauseScreen>();
+            pause.SetPaused(false);
+            yield return new WaitForSecondsRealtime(MotionSettle);
+            Assert.IsFalse(pause.IsPaused);
+            try
+            {
+                PauseScreen.FocusPauseOverride = true;
+                pause.SendMessage("OnApplicationFocus", false);
+                Assert.IsTrue(pause.IsPaused, "focus lost in a live run: paused");
+                Assert.IsTrue(PauseScreen.IsOpen);
+                pause.SendMessage("OnApplicationFocus", true);
+                yield return null;
+                Assert.IsTrue(pause.IsPaused, "focus back: still paused (no auto-resume)");
+
+                pause.SetPaused(false);
+                yield return new WaitForSecondsRealtime(MotionSettle);
+                PauseScreen.FocusPauseOverride = false;
+                pause.SendMessage("OnApplicationFocus", false);
+                Assert.IsFalse(pause.IsPaused, "the rule off (automation): no pause");
+            }
+            finally
+            {
+                PauseScreen.FocusPauseOverride = null;
+            }
+        }
+
+        /// <summary>A settings file of the test's own: the player's ui-settings.json is never written (§4.14).</summary>
+        private static string UseTempSettings()
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dd-wp105-pause-settings-" + System.Guid.NewGuid().ToString("N") + ".json");
+            UiSettings.SetPathOverride(path);
+            return path;
+        }
+
+        private static void RestoreSettings(string path)
+        {
+            UiSettings.SetPathOverride(null);
+            UiSettings.EnsureLoaded();
+            if (System.IO.File.Exists(path))
+            {
+                System.IO.File.Delete(path);
+            }
+        }
+
+        private static Transform FindUnder(Transform root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == name)
+                {
+                    return t;
+                }
+            }
+
+            return null;
         }
 
         [UnityTest]
@@ -519,12 +857,16 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
             UiButton quit = RailQuit(Object.FindObjectOfType<MainMenuScreen>());
-            FieldInfo field = typeof(UiButton).GetField("_onClick", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(field, "UiButton._onClick");
-            var onClick = field.GetValue(quit) as System.Action;
-            Assert.IsNotNull(onClick, "QUIT'in eylemi var");
-            Assert.AreEqual(nameof(PrototypeUiFlow.RequestQuit), onClick.Method.Name,
-                "raydaki QUIT doğrudan çıkmaz, önce sorar (MainMenuScreen: PrototypeUiFlow.Quit → PrototypeUiFlow.RequestQuit)");
+            // R4 WP-105 (r4-tests): the handler's method name stopped being RequestQuit when menu v5 (bc3a10b3) wrapped every rail
+            // action in its ink splash (AddRail's lambda) - the rule is the behaviour: a press opens the confirm, the game stays.
+            Assert.IsFalse(PrototypeUiFlow.QuitConfirmOpen);
+            quit.OnSubmit(null);
+            yield return null;
+            Assert.IsTrue(PrototypeUiFlow.QuitConfirmOpen, "raydaki QUIT doğrudan çıkmaz, önce sorar (PrototypeUiFlow.RequestQuit)");
+            Assert.IsTrue(Application.isPlaying, "çıkılmadı");
+            PrototypeUiFlow.QuitConfirmation.Secondary.OnSubmit(null);   // NO - never its QUIT here
+            yield return null;
+            Assert.IsFalse(PrototypeUiFlow.QuitConfirmOpen, "HAYIR kapatır");
         }
 
         private static UiButton RailQuit(MainMenuScreen menu)
@@ -626,12 +968,17 @@ namespace DD.Prototype.Tests.PlayMode
             return null;
         }
 
-        private static IEnumerator Open(float uiScale, float textScale)
+        private static IEnumerator Open(float uiScale, float textScale, string language = null)
         {
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
             UiSettings.UiScale = uiScale;
             UiSettings.TextScale = textScale;
+            if (language != null)
+            {
+                UiStrings.Language = language;   // WP-105: the mirror only, before the run scene builds the pause (TearDown restores)
+            }
+
             PrototypeUiFlow.GoToSelection();
             yield return SahneyiBekle(PrototypeScenes.Selection);
             PrototypeUiFlow.StartRun();

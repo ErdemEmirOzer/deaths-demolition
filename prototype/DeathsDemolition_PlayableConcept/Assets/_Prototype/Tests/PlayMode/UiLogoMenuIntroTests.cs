@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 using static DD.Prototype.Tests.PlayMode.LifecycleTestKit;
 
 namespace DD.Prototype.Tests.PlayMode
@@ -78,17 +79,30 @@ namespace DD.Prototype.Tests.PlayMode
             return intro;
         }
 
-        private static TMP_Text Title()
+        /// <summary>R4 WP-105: the menu's title is the wordmark + seal lockup ("Title", MainMenuScreen.BuildTitle).</summary>
+        private static RectTransform Title()
         {
             MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
             Assert.IsNotNull(menu, "the menu screen");
-            foreach (TMP_Text t in menu.GetComponentsInChildren<TMP_Text>(true))
+            foreach (RectTransform t in menu.GetComponentsInChildren<RectTransform>(true))
             {
                 if (t.name == "Title") return t;
             }
 
             Assert.Fail("the menu title");
             return null;
+        }
+
+        /// <summary>The lockup's least drawn opacity: each part's colour × renderer alpha (the logo intro's group is read apart).</summary>
+        private static float Drawn(RectTransform title)
+        {
+            float least = 1f;
+            foreach (Image part in title.GetComponentsInChildren<Image>(true))
+            {
+                least = Mathf.Min(least, part.color.a * part.canvasRenderer.GetAlpha());
+            }
+
+            return least;
         }
 
         [UnityTest]
@@ -123,7 +137,7 @@ namespace DD.Prototype.Tests.PlayMode
                 StartIntro();
                 yield return Bekle(() => UiLogoMenuIntro.Current != null && UiLogoMenuIntro.Current.Running, 5f, "the intro starts");
                 UiLogoMenuIntro intro = UiLogoMenuIntro.Current;
-                TMP_Text title = Title();
+                RectTransform title = Title();
                 float t0 = intro.Logo.Timeline.IntroStart;
                 Assert.IsTrue(EventSystem.current == null || EventSystem.current.sendNavigationEvents, "menu input stays enabled; the menu owns skipping");
                 int both = 0, frames = 0;
@@ -131,7 +145,7 @@ namespace DD.Prototype.Tests.PlayMode
                 while (UiLogoMenuIntro.Current == intro && UiFxGlobals.Now - t0 < 5f)
                 {
                     float logo = intro.Logo != null ? intro.Logo.Alpha : 0f;
-                    float titleAlpha = intro.TitleAlpha * title.color.a * title.canvasRenderer.GetAlpha();
+                    float titleAlpha = intro.TitleAlpha * Drawn(title);
                     maxLogo = Mathf.Max(maxLogo, logo);
                     if (logo >= 0.95f && titleAlpha >= 0.95f) both++;
                     frames++;
@@ -149,7 +163,7 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.IsTrue(EventSystem.current == null || EventSystem.current.sendNavigationEvents, "navigation remains enabled after it");
                 Assert.IsNull(title.GetComponent<CanvasGroup>(), "the title's temporary group is gone");
-                Assert.AreEqual(1f, title.color.a * title.canvasRenderer.GetAlpha(), 0.01f, "the title stands");
+                Assert.AreEqual(1f, Drawn(title), 0.01f, "the title stands");
             }
             finally
             {

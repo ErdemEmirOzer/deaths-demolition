@@ -626,6 +626,8 @@ namespace DD.Prototype.Tests.EditMode
 
                 MainMenuScreen.PaneLook.BindStatus(true, true, true, "W", out icon, out word);
                 Assert.AreEqual(UiStrings.Get("controls.listening", "PRESS A KEY"), word, "dinlerken sözcük");
+                MainMenuScreen.PaneLook.BindStatus(true, true, false, false, "A", out icon, out word);
+                Assert.AreEqual(UiStrings.Get("controls.listening.pad", "PRESS A BUTTON · MENU CANCELS"), word, "R4 WP-105: pad yuvası düğme ister, Menü iptal eder");
                 MainMenuScreen.PaneLook.BindStatus(false, true, true, "W", out icon, out word);
                 Assert.AreEqual(MainMenuScreen.PaneLook.ConflictGlyph, icon, "çakışma uyarı glifinde (bildirim sözcüklerle)");
                 Assert.AreEqual("W", word, "yuvanın değeri tuşun adı");

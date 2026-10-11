@@ -375,6 +375,28 @@ namespace DD.Prototype.Tests.EditMode
             return brightest;
         }
 
+        /// <summary>
+        /// R4 WP-105 (user note 6: "the logo sits inside the round progress ring, not above it") · the loading logo's seal lands
+        /// on the ring's centre and its ink stays inside the ring's clear middle (the brush stroke's inner edge measured at 0.86 of
+        /// the radius on the r4-audit-before frame: Ø 206 of 240); the wordmark keeps its place over the ring.
+        /// </summary>
+        [Test]
+        public void LogoMuhru_HalkaninIcinde_YaziHalkaninUstunde()
+        {
+            const float InnerShare = 0.86f;
+            float scale = UiCurtain.LogoScale;
+            float sealCentre = UiCurtain.LogoBottom + (UiLogoAnimator.SealCentreAboveFoot - UiCurtain.LogoSealLanding) * scale;
+            Assert.AreEqual(UiCurtain.LogoRingLift, sealCentre, 0.01f, "the seal lands on the ring's centre");
+
+            float sealInk = UiLogoAnimator.SealSpriteSize * (738f / 768f) * scale;
+            float clear = UiCurtain.RingSize * InnerShare;
+            Debug.Log("[DD-TEST] wp105.loadingSeal ink=" + sealInk.ToString("F1") + " clear=" + clear.ToString("F1") + " landing=" + UiCurtain.LogoSealLanding.ToString("F1"));
+            Assert.LessOrEqual(sealInk, clear - 2f * (int)UiSpace.M, "the seal's ink clears the ring's inner edge by ≥ 16 px a side");
+
+            float wordmarkFoot = UiCurtain.LogoBottom;
+            Assert.GreaterOrEqual(wordmarkFoot, UiCurtain.LogoRingLift + UiCurtain.RingSize * 0.5f + UiCurtain.LogoGap - 0.01f, "the wordmark stands over the ring");
+        }
+
         private static Vector2 ToUv(Vector2 screen, float push, Rect uv)
         {
             Vector2 local = new Vector2(0.5f + (screen.x - 0.5f) / push, 0.5f + (screen.y - 0.5f) / push);

@@ -151,6 +151,12 @@ namespace DD.Prototype.UI
         public static readonly Rect WordmarkRect = new Rect(480f, 638f, 960f, 360f);
         public const float SealCentreX = 960f;
 
+        /// <summary>
+        /// The seal layer's resting centre above the composition's foot (the root's pivot), spec px: the root is pivoted at
+        /// its bottom centre, so a caller that wants the seal somewhere puts the foot this far below it (× its scale).
+        /// </summary>
+        public const float SealCentreAboveFoot = CompositionHeight - (UiLogoTimeline.SealRestTop + UiLogoTimeline.SealLayerSize * 0.5f - CompositionTop);
+
         /// <summary>Bake placement (logo-intake.json placement, spec px; centre offsets y up): the sprites around the seal layer's centre.</summary>
         public const float SealSpriteSize = 481.494f;
         public static readonly Vector2 GlowSize = new Vector2(574.738f, 574.738f);
@@ -193,6 +199,8 @@ namespace DD.Prototype.UI
         private bool _cueRaised;
         private bool _eraseSet;
         private float _lastAlpha = -1f;
+        private float _sealLanding;
+        private Vector2 _ringRest, _ashRest, _sparksRest;
 
         /// <summary>Raised once when a menu intro's logo lands (the impact): the caller rings the BootLogo bell (K12).</summary>
         public event Action Impact;
@@ -244,6 +252,23 @@ namespace DD.Prototype.UI
         /// <summary>K3: the load may activate now (true when the logo is not in its intro).</summary>
         public bool CanLeave => _timeline.CanLeave(UiFxGlobals.Now);
 
+        /// <summary>
+        /// R4 WP-105 (user note 6) · how far below its canonical rest the seal lands, spec px (y down). 0 is the canonical
+        /// composition (seal over wordmark: the menu intro); the loading screen sets it so the seal sits inside the progress
+        /// ring under the wordmark. The impact ring and the loop's ash / sparks move with the seal; the wordmark stays.
+        /// </summary>
+        public float SealLanding => _sealLanding;
+
+        /// <summary>Sets <see cref="SealLanding"/> (spec px, y down; the fall is stretched, the bounce kept: UiLogoTimeline.LandedTop).</summary>
+        public void SetSealLanding(float specPx)
+        {
+            _sealLanding = Mathf.Max(0f, specPx);
+            Vector2 down = new Vector2(0f, -_sealLanding);
+            _ring.rectTransform.anchoredPosition = _ringRest + down;
+            ((RectTransform)_ash.transform).anchoredPosition = _ashRest + down;
+            ((RectTransform)_sparks.transform).anchoredPosition = _sparksRest + down;
+        }
+
         /// <summary>The seal's centre, the wordmark rect (tests / captures: where the logo is on the canvas).</summary>
         public RectTransform WordmarkRectTransform => _wordmark != null ? _wordmark.rectTransform : null;
         public RectTransform SealRectTransform => _seal != null ? _seal.rectTransform : null;
@@ -267,6 +292,7 @@ namespace DD.Prototype.UI
             _ring = Art("ImpactRing", _shake, null);
             PlaceTopLeft(_ring.rectTransform, SealCentreX - CompositionLeft, UiLogoTimeline.SealRestTop + UiLogoTimeline.SealLayerSize * 0.5f - CompositionTop, 0f, 0f);
             _ring.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            _ringRest = _ring.rectTransform.anchoredPosition;
 
             _sealLayer = UiFactory.NewRect("SealLayer", _shake);
             _sealLayer.anchorMin = _sealLayer.anchorMax = new Vector2(0f, 1f);
@@ -290,6 +316,8 @@ namespace DD.Prototype.UI
             // loop direction is down) - ash cream, sparks ember.
             _ash = Particles("Ash", AshCount, 7f, -AshDrift / UiLogoTimeline.LoopSeconds, AshTint);
             _sparks = Particles("Sparks", SparkCount, 5f, -1.6f * AshDrift / UiLogoTimeline.LoopSeconds, Ember);
+            _ashRest = ((RectTransform)_ash.transform).anchoredPosition;
+            _sparksRest = ((RectTransform)_sparks.transform).anchoredPosition;
         }
 
         private Image Art(string name, Transform parent, Sprite sprite)
@@ -483,6 +511,12 @@ namespace DD.Prototype.UI
 
             // the seal: drop, squash (bottom-centre pivot, spec y down -> anchored y up)
             bool sealOn = UiLogoTimeline.SealPose(spec, out float bottom, out float sx, out float sy, out float glow);
+            if (_sealLanding > 0f)
+            {
+                float top = bottom - UiLogoTimeline.SealLayerSize * sy;
+                bottom = UiLogoTimeline.LandedTop(top, spec, _sealLanding) + UiLogoTimeline.SealLayerSize * sy;
+            }
+
             _sealLayer.anchoredPosition = new Vector2(SealCentreX - CompositionLeft, -(bottom - CompositionTop));
             _sealLayer.localScale = new Vector3(sx, sy, 1f);
             SetAlpha(_backing, sealOn ? 1f : 0f);

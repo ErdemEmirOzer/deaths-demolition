@@ -538,19 +538,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void KontrolAdlari_TR_AnahtardanGelir_EN_ServisAdi_YuzTuslariKalir()
+        public void KontrolAdlari_IkiDildeAnahtardanGelir_HamAdKalmaz_HarfTusuKalir()
         {
             // AD d109 SHOULD-7c: the Controls pane named gamepad / mouse controls in English in Turkish.
+            // R4 WP-105 (V-29): English read the Input System's raw names ("Button West", "Escape") - both languages read the pack.
             UiStrings.Language = UiStrings.Turkish;
-            Assert.AreEqual("Sağ Tetik", MainMenuScreen.ControlName("<Gamepad>/rightTrigger", "Right Trigger"));
+            Assert.AreEqual("RT", MainMenuScreen.ControlName("<Gamepad>/rightTrigger", "Right Trigger"), "the pad's own label");
             Assert.AreEqual("Sol Çubuk", MainMenuScreen.ControlName("<Gamepad>/leftStick", "Left Stick"));
-            Assert.AreEqual("Yön Yukarı", MainMenuScreen.ControlName("<Gamepad>/dpad/up", "D-Pad Up"));
+            Assert.AreEqual(UiStrings.Get("input.control.dpad.up", "D-Pad Up"), MainMenuScreen.ControlName("<Gamepad>/dpad/up", "D-Pad Up"));
             Assert.AreEqual("Sol Tık", MainMenuScreen.ControlName("<Mouse>/leftButton", "Left Button"));
             Assert.AreEqual("Boşluk", MainMenuScreen.ControlName("<Keyboard>/space", "Space"));
-            Assert.AreEqual("A", MainMenuScreen.ControlName("<Gamepad>/buttonSouth", "A"), "a face button keeps its device letter");
+            Assert.AreEqual("X", MainMenuScreen.ControlName("<Gamepad>/buttonWest", "Button West"), "V-29: no raw device name");
             Assert.AreEqual("W", MainMenuScreen.ControlName("<Keyboard>/w", "W"), "a letter key keeps its letter");
             UiStrings.Language = UiStrings.English;
-            Assert.AreEqual("Right Trigger", MainMenuScreen.ControlName("<Gamepad>/rightTrigger", "Right Trigger"), "English keeps the service's name");
+            Assert.AreEqual("X", MainMenuScreen.ControlName("<Gamepad>/buttonWest", "Button West"), "V-29: English reads the pack too");
+            Assert.AreEqual("Esc", MainMenuScreen.ControlName("<Keyboard>/escape", "Escape"));
+            Assert.AreEqual("Left Click", MainMenuScreen.ControlName("<Mouse>/leftButton", "Left Button"));
+            Assert.AreEqual("W", MainMenuScreen.ControlName("<Keyboard>/w", "W"), "a letter key keeps its letter");
         }
 
         [Test]

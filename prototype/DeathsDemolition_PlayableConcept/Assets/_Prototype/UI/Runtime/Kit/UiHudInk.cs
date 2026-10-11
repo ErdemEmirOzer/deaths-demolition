@@ -38,6 +38,33 @@ namespace DD.Prototype.UI
 
         private static readonly Dictionary<long, Material> s_materials = new Dictionary<long, Material>();
 
+        /// <summary>
+        /// WP-105 (R4 audit V-52 / V-53): the HALO weight - the same HudInk, as a ring round every letter instead of an edge
+        /// plus a contact shadow. The words the player reads under fire (RELOAD, LOW AMMO, LOW, SURROUNDED ...) and the HUD's
+        /// secondary lines (the weapon line, "/ max", the gold, "recovery in") measured 1.84–3.61:1 over the bright courtyard
+        /// stone with the base ink: its outline is ≈ 0.5 px at 15 px on the Text face (padding 6 at 44 pt) and eats into the
+        /// face by about as much. The halo is the underlay, centred (no offset) and dilated to the atlas's reach, in HudInk at
+        /// the outline's alpha: it is drawn BEHIND the face (it never thins a stem), fills the letters' counters, and reaches
+        /// (estimated from the atlases' gradient scales and TMP's ScaleRatioC) ≈ 1.1 px solid round a 20 px word on the Text
+        /// face (GS 7 at 44 pt) and ≈ 1.7 px round a 22 px numeral on the Numeric face (GS 13 at 64 pt), against ≈ 0.5 px for
+        /// the base outline - the most the two distance fields hold (ScaleRatioC clamps any larger dilate back to it; a wider
+        /// halo needs a Text SDF with more padding). The outline runs at width 0: the halo is the ground, and the face
+        /// keeps its full weight. Not a surface: the ink follows the letters and nothing else (KIT-KILAVUZU: a trace, not a surface).
+        /// The menus keep <see cref="Apply"/>; only the HUD's alert and secondary words call this.
+        /// </summary>
+        public const float HaloAlpha = UiTokens.HudInkAlpha;
+
+        /// <summary>
+        /// The halo underlay's dilate and softness in TMP SDF units (ScaleRatioC scales them to what the atlas holds). Softness
+        /// 0: any softness is taken out of the solid reach (ScaleRatioC divides by dilate + softness); the SDF's own edge is the
+        /// halo's anti-aliasing.
+        /// </summary>
+        public const float HaloDilate = 1f;
+        public const float HaloSoftness = 0f;
+
+        /// <summary>The material key's halo bit (buckets use bits 0-1).</summary>
+        private const long HaloKeyBit = 8L;
+
         /// <summary>Give a label the HUD ink at its current font size (call after the size is set; not per frame).</summary>
         public static void Apply(TMP_Text text)
         {
@@ -64,6 +91,91 @@ namespace DD.Prototype.UI
             {
                 text.fontSharedMaterial = material;
             }
+        }
+
+        /// <summary>
+        /// WP-105: give a HUD label the halo (see <see cref="HaloAlpha"/>). One material per face, built once per process; call
+        /// after the size is set, never per frame. A face whose shader has no underlay keeps the base ink.
+        /// </summary>
+        public static void ApplyHalo(TMP_Text text)
+        {
+            if (text == null || text.font == null || text.font.material == null)
+            {
+                return;
+            }
+
+            long key = ((long)text.font.GetInstanceID() << 4) | HaloKeyBit;
+            Material material;
+            if (!s_materials.TryGetValue(key, out material) || material == null)
+            {
+                material = BuildHalo(text.font);
+                s_materials[key] = material;
+            }
+
+            if (material == null)
+            {
+                Apply(text);
+                return;
+            }
+
+            if (text.fontSharedMaterial != material)
+            {
+                text.fontSharedMaterial = material;
+            }
+        }
+
+        /// <summary>The label wears the halo material (tests, captures).</summary>
+        public static bool HasHalo(TMP_Text text)
+        {
+            if (text == null || text.font == null)
+            {
+                return false;
+            }
+
+            Material material;
+            return s_materials.TryGetValue(((long)text.font.GetInstanceID() << 4) | HaloKeyBit, out material) && material != null &&
+                   text.fontSharedMaterial == material;
+        }
+
+        private static Material BuildHalo(TMP_FontAsset font)
+        {
+            Material face = font.material;
+            if (!face.HasProperty(ShaderUtilities.ID_UnderlayColor) || !face.HasProperty(ShaderUtilities.ID_UnderlayDilate))
+            {
+                return null;
+            }
+
+            Color ink = UiTokens.Get(UiColor.HudInk);
+            ink.a = HaloAlpha;
+            var material = new Material(face) { name = font.name + " (HudInk halo)", hideFlags = HideFlags.DontSave };
+            // OUTLINE_ON stays on at width 0 (the face draws exactly as with no outline): the mobile SDF shader's keywords are
+            // shader_feature, so a player build holds only the combinations some build material uses. OUTLINE_ON + UNDERLAY_ON
+            // ships (TMP's own "LiberationSans SDF - Drop Shadow" in Resources - the pair Apply has always run on);
+            // UNDERLAY_ON alone has no build material and could be stripped.
+            material.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            if (material.HasProperty(ShaderUtilities.ID_OutlineWidth))
+            {
+                material.SetFloat(ShaderUtilities.ID_OutlineWidth, 0f);
+            }
+
+            if (material.HasProperty(ShaderUtilities.ID_OutlineColor))
+            {
+                material.SetColor(ShaderUtilities.ID_OutlineColor, ink);
+            }
+
+            if (material.HasProperty(ShaderUtilities.ID_FaceDilate))
+            {
+                material.SetFloat(ShaderUtilities.ID_FaceDilate, 0f);
+            }
+
+            material.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            material.SetColor(ShaderUtilities.ID_UnderlayColor, ink);
+            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
+            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, 0f);
+            material.SetFloat(ShaderUtilities.ID_UnderlayDilate, HaloDilate);
+            material.SetFloat(ShaderUtilities.ID_UnderlaySoftness, HaloSoftness);
+            ShaderUtilities.UpdateShaderRatios(material);
+            return material;
         }
 
         private static Material Build(TMP_FontAsset font, Bucket bucket)

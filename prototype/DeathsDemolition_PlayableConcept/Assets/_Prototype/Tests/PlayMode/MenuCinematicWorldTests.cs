@@ -156,14 +156,14 @@ namespace DD.Prototype.Tests.PlayMode
                 float alpha = backdrop.WorldCornerAlphaAt(true, root.rect.xMax - local.x, root.rect.yMax - local.y);
                 Assert.GreaterOrEqual(alpha, MenuLook.CornerAlpha - 1e-3f, "the readout's corner " + corner + " stands on the full lift");
             }
-            TMP_Text title = null;
-            foreach (TMP_Text text in menu.GetComponentsInChildren<TMP_Text>(false))
+            RectTransform title = null;   // R4 WP-105: the wordmark + seal lockup
+            foreach (RectTransform rect in menu.GetComponentsInChildren<RectTransform>(false))
             {
-                title = text.name == "Title" ? text : title;
+                title = rect.name == "Title" ? rect : title;
             }
 
             Assert.IsNotNull(title, "the menu's title");
-            title.rectTransform.GetWorldCorners(corners);
+            title.GetWorldCorners(corners);
             foreach (Vector3 corner in corners)
             {
                 Vector2 local = root.InverseTransformPoint(corner);

@@ -213,6 +213,50 @@ namespace DD.Prototype.UI
             model.SelectedBadge = source.SelectedBadge ?? string.Empty;
             return model;
         }
+
+        /// <summary>
+        /// R4 WP-105 (SHOULD-2) · as <see cref="AchievementsViewModel.KeepNew"/>: the Profile pane marks its content seen after the
+        /// first build, so choosing a title (a redraw) cleared every NEW - the visit's NEW titles and badges stay flagged.
+        /// </summary>
+        public void KeepNew(HashSet<string> visit, bool capture)
+        {
+            if (visit == null)
+            {
+                return;
+            }
+
+            if (capture)
+            {
+                visit.Clear();
+            }
+
+            int count = Keep(Titles, "title:", visit, capture) + Keep(Badges, "badge:", visit, capture);
+            if (!capture)
+            {
+                NewCount = count;
+            }
+        }
+
+        private static int Keep(List<UiCosmeticLine> lines, string kind, HashSet<string> visit, bool capture)
+        {
+            int count = 0;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                UiCosmeticLine line = lines[i];
+                if (capture && line.IsNew)
+                {
+                    visit.Add(kind + line.Id);
+                }
+                else if (!capture && visit.Contains(kind + line.Id))
+                {
+                    line.IsNew = true;
+                }
+
+                count += line.IsNew ? 1 : 0;
+            }
+
+            return count;
+        }
     }
 
     /// <summary>
@@ -391,10 +435,11 @@ namespace DD.Prototype.UI
 
             model.Progress.Add(new UiStatLine(UiStrings.Get("stats.profile_level", "Profile Level"), profile.ProfileLevel.ToString()));
             model.Progress.Add(new UiStatLine(UiStrings.Get("stats.lifetime_xp", "Lifetime XP"), profile.TotalXpEarned.ToString()));
-            model.Progress.Add(new UiStatLine(UiStrings.Get("stats.best_run_xp", "Best Single Run XP"), profile.BestRunXp.ToString()));
+            // R4 WP-105 (V-04, ux-writer §1): a value that never formed reads "—" (as on Profile); a counted total of zero reads 0.
+            model.Progress.Add(new UiStatLine(UiStrings.Get("stats.best_run_xp", "Best Single Run XP"), profile.RunsPlayed > 0 ? profile.BestRunXp.ToString() : "—"));
 
             model.Runs.Add(new UiStatLine(UiStrings.Get("stats.runs_played", "Runs Played"), profile.RunsPlayed.ToString()));
-            model.Runs.Add(new UiStatLine(UiStrings.Get("stats.highest_round", "Highest Round"), profile.HighestRound.ToString()));
+            model.Runs.Add(new UiStatLine(UiStrings.Get("stats.highest_round", "Highest Round"), profile.HighestRound > 0 ? profile.HighestRound.ToString() : "—"));
             model.Runs.Add(new UiStatLine(UiStrings.Get("stats.rounds_completed", "Rounds Completed"), profile.RoundsCompleted.ToString()));
 
             model.Kills.Add(new UiStatLine(UiStrings.Get("stats.total_kills", "Total Kills"), profile.TotalKills.ToString(), UiColor.TextPrimary, true));
@@ -491,11 +536,56 @@ namespace DD.Prototype.UI
             }
 
             model.NewCount = source.NewCount;
-            model.Progress = model.Defined == 0
-                ? string.Empty
-                : UiStrings.Format("ach.progress", "value", model.Earned.ToString(), "total", model.Defined.ToString(), "{value} of {total} earned")
-                  + (model.NewCount > 0 ? UiStrings.Format("ach.progress_new", "value", model.NewCount.ToString(), "  ·  {value} new") : string.Empty);
+            model.Progress = ProgressLine(model.Earned, model.Defined, model.NewCount);
             return model;
+        }
+
+        private static string ProgressLine(int earned, int defined, int newCount)
+        {
+            return defined == 0
+                ? string.Empty
+                : UiStrings.Format("ach.progress", "value", earned.ToString(), "total", defined.ToString(), "{value} of {total} earned")
+                  + (newCount > 0 ? UiStrings.Format("ach.progress_new", "value", newCount.ToString(), "  ·  {value} new") : string.Empty);
+        }
+
+        /// <summary>
+        /// R4 WP-105 (SHOULD-2: the pane marks everything seen right after its first build, so a page turn lost every NEW and
+        /// the "· N new" count) · <paramref name="capture"/> (the pane's entry): the NEW ids of this visit go into
+        /// <paramref name="visit"/>; a redraw in the same visit (a page, a language) flags them NEW again and recounts.
+        /// </summary>
+        public void KeepNew(HashSet<string> visit, bool capture)
+        {
+            if (visit == null)
+            {
+                return;
+            }
+
+            if (capture)
+            {
+                visit.Clear();
+            }
+
+            int count = 0;
+            for (int i = 0; i < Lines.Count; i++)
+            {
+                UiAchievementLine line = Lines[i];
+                if (capture && line.IsNew)
+                {
+                    visit.Add(line.Id);
+                }
+                else if (!capture && visit.Contains(line.Id))
+                {
+                    line.IsNew = true;
+                }
+
+                count += line.IsNew ? 1 : 0;
+            }
+
+            if (!capture && count != NewCount)
+            {
+                NewCount = count;
+                Progress = ProgressLine(Earned, Defined, NewCount);
+            }
         }
 
         public static AchievementsViewModel From(ProfileData profile, IReadOnlyList<AchievementSettings> definitions)

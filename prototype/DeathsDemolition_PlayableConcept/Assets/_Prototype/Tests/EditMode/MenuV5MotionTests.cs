@@ -100,6 +100,32 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== tokens
 
+        /// <summary>
+        /// R4 WP-105 (user note 6: "the main menu's Deaths Demolition is the loading screen's own, with the logo beside it") ·
+        /// the title lockup is the AP-035 wordmark + seal side by side, as wide as the spine (never wider), in AP-042's proportions
+        /// (seal box 400 / 522 of the wordmark's, gap 48 / 522), capped at the 1080p size on a wide page; both sprites resolve.
+        /// </summary>
+        [Test]
+        public void Baslik_WordmarkVeMuhur_OmurgaGenisliginde_MurekkepBoylariEsit()
+        {
+            foreach (float spine in new[] { 324f, 366f, MainMenuScreen.TitleLockupReferenceWidth, 640f })
+            {
+                Vector2 size = MainMenuScreen.TitleLockup(spine, out Vector2 seal, out Vector2 word);
+                Assert.LessOrEqual(size.x, spine + 1f, "spine " + spine + ": the lockup stays in the spine");
+                Assert.AreEqual(seal.x + MainMenuScreen.TitleGap(word.y) + word.x, size.x, 0.01f, "seal + gap + wordmark");
+                Assert.AreEqual(word.x / word.y, MainMenuScreen.WordmarkAspect, 0.02f, "the wordmark keeps its 2048:768");
+                Assert.AreEqual(400f / 522f, seal.y / word.y, 0.02f, "AP-042 title-lockup-layout: the seal's box is 400 / 522 of the wordmark's");
+                Assert.LessOrEqual(size.y, MainMenuScreen.TitleLockupMaxHeight, "capped on a wide page");
+                Debug.Log("[DD-TEST] wp105.titleLockup spine=" + spine + " seal=" + seal + " wordmark=" + word + " size=" + size);
+            }
+
+            Vector2 ref1080 = MainMenuScreen.TitleLockup(MainMenuScreen.TitleLockupReferenceWidth, out _, out Vector2 w1080);
+            Assert.GreaterOrEqual(w1080.y * (650f / 768f), 96f, "1080p: the wordmark's two lines ≥ 96 px of ink (the v4 Display title's; ink 650 of the sprite's 768)");
+            Assert.IsNotNull(Resources.Load<Sprite>(UiLogoAssets.WordmarkResource), "the loading screen's wordmark sprite");
+            Assert.IsNotNull(Resources.Load<Sprite>(UiLogoAssets.SealResource), "the loading screen's seal sprite");
+            Assert.Greater(ref1080.x, 0f);
+        }
+
         [Test]
         public void Tokenlar_DEC114_IkonAilesi_Sweep_MenuButcesi()
         {

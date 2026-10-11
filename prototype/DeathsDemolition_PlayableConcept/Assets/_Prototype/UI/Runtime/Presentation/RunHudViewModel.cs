@@ -411,7 +411,12 @@ namespace DD.Prototype.UI
 
             // The status line changes far less often than the number, and its regen
             // countdown is shown to a tenth, so it is compared at that resolution.
-            int regenTenths = snapshot.SecondsUntilRegen > 0f ? Mathf.CeilToInt(snapshot.SecondsUntilRegen * 10f) : 0;
+            // WP-105 V-54 (R4 audit: "100 / 100" over "recovery in 4.3s"): the countdown is the wait before health comes
+            // BACK, so it is shown only while the readout is short of its maximum. PlayerHealth keeps counting after a hit
+            // whatever heals the player in the meantime (a pickup, a kill heal, the F1 / capture invulnerability that resets
+            // the wait without a loss), so at full health the snapshot can still carry seconds - the line stays empty then.
+            bool full = max > 0 && current >= max;
+            int regenTenths = snapshot.SecondsUntilRegen > 0f && !full ? Mathf.CeilToInt(snapshot.SecondsUntilRegen * 10f) : 0;
 
             if (snapshot.IsDead != _dead || snapshot.IsRegenerating != _regenerating || regenTenths != _regenTenths)
             {
@@ -474,7 +479,7 @@ namespace DD.Prototype.UI
         private static string RegenText(int regenTenths)
         {
             // M-65: the language's number form (TR "2,5"); the bare ToString("0.0") also followed the machine's culture.
-            return UiStrings.Format("hud.health.recovery_in", "value", UiStrings.Number(regenTenths / 10f, "0.0"), "recovery in {value}s");
+            return UiStrings.Format("hud.health.recovery_in", "value", UiStrings.Number(regenTenths / 10f, "0.0"), "recovery in {value} s");
         }
 
         private static string RegenTextFor(int regenTenths)

@@ -1310,6 +1310,7 @@ namespace DD.Prototype.UI
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
+            UpdatePauseHide();    // WP-105 V-41: the HUD steps out from under the pause (RunHudScreen.Ink)
             TickJuice();          // WP-094: the heartbeat's clock, the ladder's return, the weapon swap's stamp
         }
 

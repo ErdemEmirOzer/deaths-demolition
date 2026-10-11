@@ -44,11 +44,16 @@ namespace DD.Prototype.UI
     /// WP-098B (AP-028 pause / pause-confirm; brush kit KILAVUZ §3 + §5): the panel is a frameless
     /// <see cref="UiBrushPane"/> on the Window scrim - its left edge trace, the Menu.Pause title with its brush,
     /// RESUME, the CAMERA segments (all three modes visible, C-00 07.10; the one C8 under the current mode), the
-    /// shake slider and MAIN MENU in the left column, the run so far in the right. Trace budget: title 1 + C8 1 +
+    /// shake slider and END RUN in the left column, the run so far in the right. Trace budget: title 1 + C8 1 +
     /// edge 1 = 3. END THIS RUN? is the kit's Confirm (Confirm scrim; the destructive action says itself in a word
-    /// and an icon, never a colour; KEEP PLAYING focused). Cancel (pad B / Esc) closes the confirmation, else
+    /// and an icon, never a colour; RESUME focused). Cancel (pad B / Esc) closes the confirmation, else
     /// resumes; Esc is both Pause and Cancel - one press is one step back. The chain is explicit, RESUME focused
     /// first; the kit opens the panel inside 0.35 s (Reduced Motion: at once).
+    ///
+    /// WP-105 (V-42, NICE-4): one action, one name. The foot button ends the run, so it says so - END RUN with the
+    /// Menu.EndRun glyph, the confirmation's own words (it used to read MAIN MENU and hide the loss). The confirmation's
+    /// safe action is RESUME (pause.resume), the panel's first button: it resumes play, as the word says (it read KEEP
+    /// PLAYING and only went back to the panel). Cancel stays one step back - the confirmation only.
     /// </summary>
     public sealed class PauseScreen : UiScreen
     {
@@ -90,7 +95,25 @@ namespace DD.Prototype.UI
         private UiModal _confirm;
 
         private UiButton _resumeButton;
-        private UiButton _mainMenuButton;
+        private UiButton _endRunButton;
+
+        // WP-105 (§C2, C-00 11.10 decision): SETTINGS beside RESUME opens a settings page inside the pause - audio, text
+        // scale, flashes, motion; the kit's rows bound to UiSettings (no key binding: that stays in the main menu).
+        private UiButton _settingsButton;
+        private RectTransform _settingsPage;
+        private UiIconButton _settingsBack;
+        private UiScrollView _settingsScroll;
+        private UiSlider _masterVolume;
+        private UiSlider _musicVolume;
+        private UiSlider _effectsVolume;
+        private UiSlider _uiVolume;
+        private UiSlider _textScale;
+        private UiSwitch _reduceFlashes;
+        private UiSwitch _reducedMotion;
+        private bool _settingsOpen;
+        private float _leftWidth;   // the left column's width and the rows' top, from the last LayoutPanel
+        private float _rowsTop;
+        private static readonly float[] TextScaleStops = { 1f, 1.1f, 1.25f };   // the menu's E8 stops: 100 / 110 / 125
 
         private UiSlider _shakeSlider;
         private bool _shakeAvailable = true;
@@ -153,6 +176,16 @@ namespace DD.Prototype.UI
             get { return _paused; }
         }
 
+        /// <summary>
+        /// WP-105 (V-41, for the HUD - section D): true while a pause is up. It is the navigation model's Paused overlay
+        /// (entered on open, left on close and on END RUN), so a screen can read it - and follow it through
+        /// <see cref="UiNavigation.Changed"/> - without finding this one. No state of its own.
+        /// </summary>
+        public static bool IsOpen
+        {
+            get { return UiNavigation.IsPaused; }
+        }
+
         /// <summary>The CAMERA segments (tests, captures).</summary>
         public UiButton CameraButton(CameraMode mode)
         {
@@ -203,7 +236,7 @@ namespace DD.Prototype.UI
             get { return (RectTransform)_resumeButton.transform; }
         }
 
-        /// <summary>WP-098B: RESUME, the shake slider, MAIN MENU and the END THIS RUN? confirmation (tests, captures).</summary>
+        /// <summary>WP-098B: RESUME, the shake slider, END RUN and the END THIS RUN? confirmation (tests, captures).</summary>
         public UiButton ResumeButton
         {
             get { return _resumeButton; }
@@ -214,9 +247,39 @@ namespace DD.Prototype.UI
             get { return _shakeSlider; }
         }
 
+        /// <summary>WP-105 (V-42): the foot button - END RUN, it opens END THIS RUN? (object "EndRun").</summary>
+        public UiButton EndRunButton
+        {
+            get { return _endRunButton; }
+        }
+
+        /// <summary>The same END RUN button under its pre-WP-105 name (the capture agents and older suites ask for it).</summary>
         public UiButton MainMenuButton
         {
-            get { return _mainMenuButton; }
+            get { return _endRunButton; }
+        }
+
+        /// <summary>WP-105 (§C2): SETTINGS - the C11 beside RESUME (object "Settings").</summary>
+        public UiButton SettingsButton
+        {
+            get { return _settingsButton; }
+        }
+
+        /// <summary>WP-105 (§C2): the settings page (null until first opened) and whether it is the page on show (tests).</summary>
+        public RectTransform SettingsPage
+        {
+            get { return _settingsPage; }
+        }
+
+        public bool IsSettingsOpen
+        {
+            get { return _settingsOpen; }
+        }
+
+        /// <summary>WP-105 (§C2): the page's C10 Back (null until first opened).</summary>
+        public UiButton SettingsBackButton
+        {
+            get { return _settingsBack != null ? _settingsBack.Button : null; }
         }
 
         public UiModal Confirmation
@@ -243,7 +306,10 @@ namespace DD.Prototype.UI
 
         // ============================================================ END THIS RUN? (shared with the QUIT confirm)
 
-        /// <summary>WP-098B (AP-028 pause-confirm, C31): END THIS RUN? - the loss and what is kept; KEEP PLAYING is the safe action.</summary>
+        /// <summary>
+        /// WP-098B (AP-028 pause-confirm, C31): END THIS RUN? - the loss and what is kept. WP-105 (NICE-4): the safe action
+        /// is RESUME (pause.resume) - the panel's own word for going back to play, not a second name (KEEP PLAYING).
+        /// </summary>
         public static UiBrushConfirm EndRunSpec
         {
             get
@@ -259,8 +325,8 @@ namespace DD.Prototype.UI
                     ConfirmKey = "pause.confirm.end",
                     ConfirmFallback = "END RUN",
                     ConfirmIcon = "Menu.EndRun",
-                    CancelKey = "pause.confirm.keep",
-                    CancelFallback = "KEEP PLAYING",
+                    CancelKey = "pause.resume",
+                    CancelFallback = "RESUME",
                     CancelIcon = "Menu.Resume",
                     Destructive = true,
                 };
@@ -269,7 +335,8 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// The kit's Confirm for END THIS RUN? on <paramref name="screenRoot"/>, closed: <paramref name="onEnd"/> is END RUN,
-        /// <paramref name="onKeep"/> KEEP PLAYING (and Cancel). Public so the EditMode suite builds the very dialog the screen does.
+        /// <paramref name="onKeep"/> RESUME (and the modal's own Cancel). Public so the EditMode suite builds the very dialog
+        /// the screen does.
         /// </summary>
         public static UiModal CreateEndRunConfirm(RectTransform screenRoot, Action onEnd, Action onKeep)
         {
@@ -331,7 +398,7 @@ namespace DD.Prototype.UI
         protected override void Build()
         {
             BuildPausePanel();
-            _confirm = CreateEndRunConfirm(ScreenRect, ConfirmQuit, OnConfirmClosed);
+            _confirm = CreateEndRunConfirm(ScreenRect, ConfirmQuit, ResumeFromConfirm);
 
             // WP-098B (T3, UiTextScaleTests at 1.25): the screen is built closed. The kit keeps a pane's root active while the
             // caller builds (TMP measures only active text) and turns it off only from a Close - which a pane that has never
@@ -369,7 +436,7 @@ namespace DD.Prototype.UI
             {
                 if (_paused)
                 {
-                    UiInput.ReclaimFocus(IsConfirming ? _confirm.Secondary : _resumeButton);
+                    UiInput.ReclaimFocus(IsConfirming ? _confirm.Secondary : _settingsOpen ? (Selectable)_masterVolume : _resumeButton);
                 }
 
                 return;
@@ -377,7 +444,16 @@ namespace DD.Prototype.UI
 
             if (IsConfirming)
             {
-                _confirm.HandleCancel();
+                // WP-105: one step back - the confirmation only, with the Back cue. Not the modal's HandleCancel: that is its
+                // safe action, which now resumes play (RESUME), and a Cancel must never take two steps.
+                CloseConfirm();
+                UiSound.Play(UiSoundKind.Back);
+                return;
+            }
+
+            if (_paused && _settingsOpen)
+            {
+                CloseSettings();   // WP-105 (§C2): one step back - the settings page, to the pause's own page
                 return;
             }
 
@@ -434,6 +510,7 @@ namespace DD.Prototype.UI
                 // content's centre (x 840-1080, y 512-585 at 1920×1080, under the shake value) - and stayed there.
                 _contentRest = _pane.Content.anchoredPosition;
                 _pane.Open(null);
+                ShowSettingsPage(false);   // WP-105: every pause opens on its own page (a settings page left open stays behind)
                 RefreshShake();
                 RefreshRun();
                 LayoutPanel();
@@ -460,16 +537,20 @@ namespace DD.Prototype.UI
         /// <summary>
         /// WP-098B: the explicit pad / keyboard chain (no automatic navigation), top to bottom as drawn: RESUME ↓ the
         /// current CAMERA segment (Left / Right walk the three, the kit's wiring) ↓ the shake slider (Left / Right move its
-        /// value) ↓ MAIN MENU; Up walks back; no wrap from the foot to the top, so a stray Up on RESUME never lands on MAIN
-        /// MENU. A greyed slider (no camera rig) is stepped over. Re-linked on every open: the slider's state and the
+        /// value) ↓ END RUN; Up walks back; no wrap from the foot to the top, so a stray Up on RESUME never lands on END
+        /// RUN. A greyed slider (no camera rig) is stepped over. Re-linked on every open: the slider's state and the
         /// current camera mode can change between pauses.
         /// </summary>
         private void LinkNavigation()
         {
             Selectable shake = _shakeSlider.interactable ? _shakeSlider : null;
             Selectable camera = _camera[Mathf.Clamp(_camera.Selected, 0, _camera.Count - 1)];
-            UiInput.ChainVertical(false, _resumeButton, camera, shake, _mainMenuButton);
-            _camera.LinkVertical(_resumeButton, shake != null ? shake : _mainMenuButton);
+            UiInput.ChainVertical(false, _resumeButton, camera, shake, _endRunButton);
+            _camera.LinkVertical(_resumeButton, shake != null ? shake : _endRunButton);
+            // WP-105 (§C2): SETTINGS sits beside RESUME - RESUME → SETTINGS, SETTINGS ← RESUME, its ↓ the camera row like RESUME's.
+            UiInput.LinkHorizontal(_resumeButton, null, _settingsButton);
+            UiInput.LinkHorizontal(_settingsButton, _resumeButton, null);
+            UiInput.LinkVertical(_settingsButton, null, camera);
         }
 
         /// <summary>
@@ -609,7 +690,7 @@ namespace DD.Prototype.UI
             // pressed on the dialog cannot walk the focus onto RESUME behind the scrim.
             SetContentInput(false);
 
-            // DialogOpened, KEEP PLAYING focused (the safe action), focus handed back to MAIN MENU on close.
+            // DialogOpened, RESUME focused (the safe action), focus handed back to END RUN on close.
             _confirm.Open();
         }
 
@@ -628,13 +709,23 @@ namespace DD.Prototype.UI
             OnConfirmClosed();
         }
 
-        /// <summary>KEEP PLAYING / Cancel / the Pause key: the confirmation is gone, the panel takes input again.</summary>
+        /// <summary>Cancel / the Pause key: the confirmation is gone, the panel takes input again.</summary>
         private void OnConfirmClosed()
         {
             if (_paused && _pane.IsOpen)
             {
                 SetContentInput(true);
             }
+        }
+
+        /// <summary>
+        /// WP-105 (NICE-4): the confirmation's RESUME (the modal has closed itself) - back to play, exactly as the panel's
+        /// RESUME: the hold, the blur and the overlay go, the Back cue plays, focus returns to what it was before the pause.
+        /// </summary>
+        private void ResumeFromConfirm()
+        {
+            OnConfirmClosed();
+            SetPaused(false);
         }
 
         private void SetContentInput(bool value)
@@ -661,7 +752,7 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// KILAVUZ §3 / §5: Window scrim (text sits on it directly, no wash), the left edge trace, the Menu.Pause title with
-        /// its brush; RESUME, CAMERA (C17 segments), CAMERA SHAKE (C14) and MAIN MENU on the left, the run so far on the
+        /// its brush; RESUME, CAMERA (C17 segments), CAMERA SHAKE (C14) and END RUN on the left, the run so far on the
         /// right. The pane fills the screen less a Page margin at the sides and a Section margin above and below; the rows
         /// are placed in <see cref="LayoutPanel"/>.
         /// </summary>
@@ -679,6 +770,8 @@ namespace DD.Prototype.UI
             _title = UiBrushKit.Title(host, "pause.title", "PAUSED", "Menu.Pause");
 
             _resumeButton = UiBrushKit.Button(host, "Resume", "pause.resume", "RESUME", "Menu.Resume", Resume);
+            // WP-105 (§C2, V-40): the settings of a run - sound, text, flashes, motion - without ending it; the menu's word.
+            _settingsButton = UiBrushKit.Button(host, "Settings", "menu.tab.settings", "SETTINGS", "Menu.Settings", OpenSettings);
 
             _cameraLabel = UiFactory.Label("CameraLabel", host, UiStrings.Get("camera.title", "CAMERA"), UiType.H1, UiColor.TextPrimary);
             _cameraLabel.enableWordWrapping = false;
@@ -698,7 +791,9 @@ namespace DD.Prototype.UI
                 Mathf.Clamp(PrototypeCameraRig.GetShakeIntensity(), 0f, ShakeMax), ShakeStep, FormatShake, OnShakeChanged,
                 UiBrushTokens.SegmentWidth * CameraModeKeys.Length);
 
-            _mainMenuButton = UiBrushKit.Button(host, "MainMenu", "common.main_menu", "MAIN MENU", "Menu.Home", OpenConfirm);
+            // WP-105 (V-42): the button ends the run, so it is called that - the confirmation's own word and glyph (it read
+            // MAIN MENU with the home glyph and hid the loss until the dialog).
+            _endRunButton = UiBrushKit.Button(host, "EndRun", "pause.confirm.end", "END RUN", "Menu.EndRun", OpenConfirm);
 
             BuildRunColumn(host);
         }
@@ -724,7 +819,7 @@ namespace DD.Prototype.UI
         /// <summary>
         /// WP-098B: the two columns, measured live (open time, never per frame). Left: the title's band, RESUME, CAMERA and
         /// its segments, the caption (the longest of the three reserved, so the slider does not jump as focus walks the
-        /// segments), the slider, and MAIN MENU docked to the foot - the slack collects in ONE band above it (AD R1-A
+        /// segments), the slider, and END RUN docked to the foot - the slack collects in ONE band above it (AD R1-A
         /// SHOULD-3). Right: the run so far from RESUME's top. Kit controls keep the size the kit gave them; only their
         /// place is set here.
         /// </summary>
@@ -737,7 +832,11 @@ namespace DD.Prototype.UI
             float left = Mathf.Max(cameraRow.rect.width, Mathf.Min(UiBrushTokens.ListWidth, width * 0.6f));
 
             float top = _title.Height + (int)UiSpace.XXL;
-            float y = PlaceAt((RectTransform)_resumeButton.transform, 0f, top) + (int)UiSpace.XXL;
+            var resume = (RectTransform)_resumeButton.transform;
+            float y = PlaceAt(resume, 0f, top) + (int)UiSpace.XXL;
+            PlaceAt((RectTransform)_settingsButton.transform, resume.rect.width + (int)UiSpace.XL, top);   // WP-105: beside RESUME
+            _leftWidth = left;
+            _rowsTop = top;
             y = Place(_cameraLabel.rectTransform, 0f, y, left, Line(_cameraLabel)) + (int)UiSpace.S;
             y = PlaceAt(cameraRow, 0f, y) + (int)UiSpace.S;
 
@@ -752,7 +851,7 @@ namespace DD.Prototype.UI
             y = Place(_cameraCaption.rectTransform, 0f, y, left, Mathf.Max(Line(_cameraCaption), captionH)) + (int)UiSpace.XL;
             y = PlaceAt((RectTransform)_shakeSlider.transform, 0f, y);
 
-            var menu = (RectTransform)_mainMenuButton.transform;
+            var menu = (RectTransform)_endRunButton.transform;
             float foot = Mathf.Max(y + (int)UiSpace.XL, height - menu.rect.height);
             PlaceAt(menu, 0f, foot);
 
@@ -813,6 +912,315 @@ namespace DD.Prototype.UI
             return Mathf.Max(Line(text), Mathf.Ceil(text.GetPreferredValues(text.text, width, 0f).y));
         }
 
+        // ========================================================== settings page (WP-105 §C2)
+
+        /// <summary>
+        /// WP-105 (§C2, V-40, KOD NICE-10; C-00 11.10 decision): SETTINGS opens the run's settings inside the pause - the
+        /// page takes the left column's place (the run so far stays on the right), the pause's title above it. Built on the
+        /// first open, its values re-read on every open. Focus goes to its first row; Cancel / B, the Pause key and the C10
+        /// Back go back to the pause's own page, focus on SETTINGS.
+        /// </summary>
+        private void OpenSettings()
+        {
+            if (!_paused || IsConfirming || _settingsOpen)
+            {
+                return;
+            }
+
+            if (_settingsPage == null)
+            {
+                BuildSettingsPage();
+            }
+
+            PlaceSettingsPage();
+            RefreshSettings();
+            ShowSettingsPage(true);
+            UiInput.Focus(_masterVolume);
+        }
+
+        /// <summary>Back to the pause's own page with the Back cue, focus on SETTINGS (Cancel, the Pause key, the C10).</summary>
+        private void CloseSettings()
+        {
+            if (!_settingsOpen)
+            {
+                return;
+            }
+
+            ShowSettingsPage(false);
+            UiSound.Play(UiSoundKind.Back);
+            UiInput.Focus(_settingsButton);
+        }
+
+        /// <summary>One page at a time: the settings page, or the left column's own controls (RESUME … END RUN).</summary>
+        private void ShowSettingsPage(bool open)
+        {
+            _settingsOpen = open && _settingsPage != null;
+            if (_settingsPage != null)
+            {
+                _settingsPage.gameObject.SetActive(_settingsOpen);
+            }
+
+            bool main = !_settingsOpen;
+            _resumeButton.gameObject.SetActive(main);
+            _settingsButton.gameObject.SetActive(main);
+            _cameraLabel.gameObject.SetActive(main);
+            _camera.gameObject.SetActive(main);
+            _cameraCaption.gameObject.SetActive(main);
+            _shakeSlider.gameObject.SetActive(main);
+            _endRunButton.gameObject.SetActive(main);
+        }
+
+        /// <summary>The page on the left column, from RESUME's top to the pane's foot (measured on every open).</summary>
+        private void PlaceSettingsPage()
+        {
+            float height = Mathf.Max(1f, _pane.Content.rect.height - _rowsTop);
+            Place(_settingsPage, 0f, _rowsTop, Mathf.Max(1f, _leftWidth), height);
+        }
+
+        /// <summary>
+        /// The page: its word (H1, like CAMERA) with the kit's C10 Back and the pad's Cancel glyph at its right, then a C35
+        /// scroller (the rows outgrow a Mac window at text 1.25) with two section heads and the rows - AUDIO: MASTER, MUSIC,
+        /// EFFECTS, UI SOUNDS; ACCESSIBILITY: TEXT SCALE (+ its note), REDUCE FLASHES, REDUCED MOTION. The rows are the kit's
+        /// C14 / C15 under the main menu's own keys and object names, bound to UiSettings like the menu's (volumes on 5 %
+        /// steps, text scale on the menu's three stops). One explicit vertical chain, Back first, no wrap; Left / Right on a
+        /// slider move its value (the kit's). Camera shake stays on the pause's page, where it has always been.
+        /// </summary>
+        private void BuildSettingsPage()
+        {
+            _settingsPage = UiFactory.NewRect("SettingsPage", _pane.Content);
+            PlaceSettingsPage();
+            float width = _settingsPage.rect.width;
+
+            UiIconButton back = UiBrushKit.Back(_settingsPage, CloseSettings);
+            back.Button.ConfirmCue = false;   // WP-105 (SHOULD-8): its one voice is CloseSettings' Back cue
+            var backRect = (RectTransform)back.transform;
+            float prompt = UiInputGlyphs.ReservedWidth(UiPromptAction.Cancel) + (int)UiSpace.S;   // its Cancel glyph, outside its right edge
+            backRect.anchorMin = new Vector2(1f, 1f);
+            backRect.anchorMax = new Vector2(1f, 1f);
+            backRect.pivot = new Vector2(1f, 1f);
+            backRect.anchoredPosition = new Vector2(-prompt, 0f);
+
+            string word = UiStrings.Get("menu.tab.settings", "SETTINGS");
+            TMP_Text heading = UiFactory.Label("Heading", _settingsPage, word, UiType.H1, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            heading.enableWordWrapping = false;
+            float headBand = Mathf.Max(Line(heading), UiBrushTokens.ControlHeight);
+            Place(heading.rectTransform, 0f, 0f, Mathf.Max(1f, width - backRect.sizeDelta.x - prompt - (int)UiSpace.XL), headBand);
+
+            _settingsScroll = UiBrushKit.Scroll(_settingsPage, "SettingsScroll");
+            var scrollRect = (RectTransform)_settingsScroll.transform;
+            scrollRect.offsetMax = new Vector2(0f, -(headBand + (int)UiSpace.L));
+            RectTransform content = _settingsScroll.Content;
+            float rows = Mathf.Max(1f, width - UiScrollView.Gutter);
+            var stack = new UiStack(content);
+
+            SettingsSection(ref stack, content, "settings.section.audio", "AUDIO", false);
+            _masterVolume = SettingsRow(ref stack, UiBrushKit.Slider(content, "Setting.MASTER VOLUME", "settings.row.master_volume", "MASTER VOLUME",
+                0f, 1f, UiSettings.MasterVolume, 0f, Percent, v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f, rows));
+            _musicVolume = SettingsRow(ref stack, UiBrushKit.Slider(content, "Setting.MUSIC VOLUME", "settings.row.music_volume", "MUSIC",
+                0f, 1f, UiSettings.MusicVolume, 0f, Percent, v => UiSettings.MusicVolume = Mathf.Round(v * 20f) / 20f, rows));
+            _effectsVolume = SettingsRow(ref stack, UiBrushKit.Slider(content, "Setting.EFFECTS VOLUME", "settings.row.effects_volume", "EFFECTS",
+                0f, 1f, UiSettings.EffectsVolume, 0f, Percent, v => UiSettings.EffectsVolume = Mathf.Round(v * 20f) / 20f, rows));
+            _uiVolume = SettingsRow(ref stack, UiBrushKit.Slider(content, "Setting.UI SOUNDS", "settings.row.ui_sounds", "UI SOUNDS",
+                0f, 1f, UiSettings.UiVolume, 0f, Percent, v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f, rows));
+
+            SettingsSection(ref stack, content, "menu.tab.accessibility", "ACCESSIBILITY", true);
+            _textScale = SettingsRow(ref stack, UiBrushKit.Slider(content, "Setting.TEXT SCALE", "access.row.text_scale", "TEXT SCALE",
+                UiSettings.TextScaleMin, UiSettings.TextScaleMax, UiSettings.TextScale, 0f, Percent, v => UiSettings.TextScale = v, rows));
+            _textScale.SetStops(TextScaleStops);
+            string note = UiStrings.Get("access.note.text_scale", "Body, label and caption text. It applies to the next screen you open.");
+            TMP_Text noteText = UiFactory.Label("TextNote", content, note, UiType.MenuSmall, UiColor.TextSecondary);
+            stack.Add(noteText.rectTransform, Mathf.Max(Line(noteText), Mathf.Ceil(noteText.GetPreferredValues(note, rows, 0f).y)));
+            stack.Gap(UiSpace.S);
+            _reduceFlashes = UiBrushKit.Toggle(content, "ReduceFlashes", "access.row.reduce_flashes", "REDUCE FLASHES", UiSettings.ReduceFlashes,
+                on => UiSettings.ReduceFlashes = on, rows);
+            SettingsRow(ref stack, _reduceFlashes.transform);
+            _reducedMotion = UiBrushKit.Toggle(content, "ReducedMotion", "access.row.reduced_motion", "REDUCED MOTION", UiSettings.ReducedMotion,
+                on => UiSettings.ReducedMotion = on, rows);
+            SettingsRow(ref stack, _reducedMotion.transform);
+
+            _settingsScroll.SetContentHeight(stack.Cursor);
+            _settingsScroll.TrackSelectables();
+            UiInput.ChainVertical(false, back.Button, _masterVolume, _musicVolume, _effectsVolume, _uiVolume, _textScale,
+                _reduceFlashes.Button, _reducedMotion.Button);
+            _settingsBack = back;
+        }
+
+        /// <summary>A C14 / C15 row on the page's stack: the kit's row height (MenuBody's line box at the text scale), its step's air under it.</summary>
+        private static T SettingsRow<T>(ref UiStack stack, T row) where T : Component
+        {
+            SettingsRow(ref stack, row.transform);
+            return row;
+        }
+
+        private static void SettingsRow(ref UiStack stack, Transform row)
+        {
+            stack.Add((RectTransform)row, UiBrushTokens.RowHeight(UiType.MenuBody, UiBrushTokens.RowHit));
+            stack.Cursor += UiBrushTokens.RowStep - UiBrushTokens.RowHit;
+        }
+
+        /// <summary>A section head as the menu draws it: the word (MenuSmall, TextSecondary), then the plain C6 rule to the edge (no brush, no budget).</summary>
+        private static void SettingsSection(ref UiStack stack, RectTransform content, string key, string fallback, bool gapBefore)
+        {
+            if (gapBefore)
+            {
+                stack.Gap(UiSpace.S);
+            }
+
+            string word = UiStrings.Get(key, fallback);
+            RectTransform head = UiFactory.NewRect("Section." + fallback, content);
+            TMP_Text label = UiFactory.Label("Label", head, word, UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            label.enableWordWrapping = false;
+            UiFactory.Fill(label.rectTransform);
+            stack.Add(head, Line(label));
+            float x = Mathf.Ceil(label.GetPreferredValues(word).x) + (int)UiSpace.M;
+            RectTransform rule = UiBrushKit.Hairline(head, 1f).rectTransform;
+            rule.anchorMin = new Vector2(0f, 0.5f);
+            rule.anchorMax = new Vector2(1f, 0.5f);
+            rule.pivot = new Vector2(0f, 0.5f);
+            rule.offsetMin = new Vector2(x, -0.5f);
+            rule.offsetMax = new Vector2(0f, 0.5f);
+            stack.Gap(UiSpace.XS);
+        }
+
+        /// <summary>The rows show what UiSettings holds now (the F1 panel or another screen may have moved a value); no notify.</summary>
+        private void RefreshSettings()
+        {
+            _masterVolume.SetValue(UiSettings.MasterVolume, false);
+            _musicVolume.SetValue(UiSettings.MusicVolume, false);
+            _effectsVolume.SetValue(UiSettings.EffectsVolume, false);
+            _uiVolume.SetValue(UiSettings.UiVolume, false);
+            _textScale.SetValue(UiSettings.TextScale, false);
+            _reduceFlashes.Set(UiSettings.ReduceFlashes, false);
+            _reducedMotion.Set(UiSettings.ReducedMotion, false);
+        }
+
+        /// <summary>A 0-1 value as the kit's sliders write it: EN "70%", TR "%70" (UiStrings.Percent).</summary>
+        private static string Percent(float value)
+        {
+            return UiStrings.Percent(Mathf.RoundToInt(value * 100f));
+        }
+
+        // ============================================================ focus loss (WP-105 §C5)
+
+        /// <summary>
+        /// WP-105 (§C5, KOD SHOULD-9; C-00 11.10 decision 5): the window losing focus (alt-tab, a notification) pauses a live
+        /// run - with runInBackground on, the horde kept coming behind the player's back. Focus coming back resumes nothing:
+        /// the player says RESUME. Off in automation (<see cref="FocusPauseAllowed"/>).
+        /// </summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus || _paused || !FocusPauseEnabled || !CanOpen())
+            {
+                return;
+            }
+
+            SetPaused(true);
+        }
+
+        private static int s_focusPause;   // 0 = not read yet, 1 = on, -1 = off (the command line does not change in a session)
+
+        /// <summary>Tests: force the focus-loss pause on or off; null = the rule (<see cref="FocusPauseAllowed"/>).</summary>
+        internal static bool? FocusPauseOverride;
+
+        /// <summary>Whether a focus loss pauses this session's runs (read once).</summary>
+        public static bool FocusPauseEnabled
+        {
+            get
+            {
+                if (FocusPauseOverride.HasValue)
+                {
+                    return FocusPauseOverride.Value;
+                }
+
+                if (s_focusPause == 0)
+                {
+                    string[] args;
+                    try
+                    {
+                        args = Environment.GetCommandLineArgs();
+                    }
+                    catch (Exception)
+                    {
+                        args = null;
+                    }
+
+                    s_focusPause = FocusPauseAllowed(Application.isBatchMode, args) ? 1 : -1;
+                }
+
+                return s_focusPause > 0;
+            }
+        }
+
+        /// <summary>
+        /// Automation flags that run the game unfocused: -ddNoFocusPause (the explicit switch), the UI capture agents
+        /// (-ddUiCapture…, -ddUiFxCapture…, -ddUiKit…, -ddUiPerf, -ddCapture), the QA bot and its runs (QaRunBot's -ddQaBot,
+        /// every -ddQa…), the TopDown capture (-ddTd…), the pilot / perf / VFX / showcase / feel-cost runs. Any -dd…Probe flag
+        /// counts too. A player's own launch (and a guarded playtest's -ddTelemetryDir / -ddProfilePath) keeps the pause.
+        /// </summary>
+        private static readonly string[] FocusPauseOffFlags =
+        {
+            "-ddNoFocusPause", "-ddUiCapture", "-ddUiFxCapture", "-ddUiKit", "-ddUiPerf", "-ddCapture", "-ddQa", "-ddTd",
+            "-ddPilot", "-ddVfx", "-ddWeaponShowcase", "-ddFeelCost", "-ddCinePerf"
+        };
+
+        /// <summary>
+        /// WP-105 (§C5): the rule - off in batch mode, under the test runner (-runTests) and with any automation flag
+        /// (<see cref="FocusPauseOffFlags"/> as prefixes, or a -dd…Probe flag); on otherwise. Pure, for the EditMode suite.
+        /// </summary>
+        public static bool FocusPauseAllowed(bool batchMode, string[] args)
+        {
+            if (batchMode)
+            {
+                return false;
+            }
+
+            if (args == null)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                string arg = args[i];
+                if (string.IsNullOrEmpty(arg))
+                {
+                    continue;
+                }
+
+                if (string.Equals(arg, "-runTests", StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                if (!arg.StartsWith("-dd", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (arg.IndexOf("Probe", StringComparison.Ordinal) >= 0)
+                {
+                    return false;
+                }
+
+                for (int f = 0; f < FocusPauseOffFlags.Length; f++)
+                {
+                    if (arg.StartsWith(FocusPauseOffFlags[f], StringComparison.Ordinal))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetFocusPause()
+        {
+            s_focusPause = 0;
+            FocusPauseOverride = null;
+        }
+
         // ==================================================================== shake
 
         private void OnShakeChanged(float value)
@@ -820,10 +1228,15 @@ namespace DD.Prototype.UI
             PrototypeCameraRig.SetShakeIntensity(value);
         }
 
-        /// <summary>The slider's value text: "1.00", or "—" when there is no rig to write to (the error state says so).</summary>
+        /// <summary>
+        /// The slider's value text, or "—" when there is no rig to write to (the error state says so). WP-105 (NICE-3, V-04):
+        /// a percentage like every other slider of the kit (UiSlider's own default, HEAD BOB "100%") in the language's
+        /// order - EN "70%", TR "%70" - never the invariant "0.70" (TR writes its decimals with a comma). The scale is the
+        /// shake multiplier: 1 = 100%.
+        /// </summary>
         private string FormatShake(float value)
         {
-            return _shakeAvailable ? value.ToString("0.00") : "—";
+            return _shakeAvailable ? UiStrings.Percent(Mathf.RoundToInt(value * 100f)) : "—";
         }
 
         /// <summary>

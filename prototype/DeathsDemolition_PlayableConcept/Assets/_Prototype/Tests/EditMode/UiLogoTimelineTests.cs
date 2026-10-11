@@ -191,6 +191,41 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0, seen, "2000 ticks allocate nothing");
         }
 
+        /// <summary>
+        /// R4 WP-105 (user note 6) · a seal that lands lower (the loading ring) still starts its fall where the spec does, lands
+        /// on the impact frame at rest + landing and keeps the spec's own bounce; landing 0 is the canonical pose.
+        /// </summary>
+        [Test]
+        public void Muhur_AsagiIner_DususBasiAyni_CarpmadaHedefte_SekmeGenligiKorunur()
+        {
+            const float landing = 1000f;
+            float Top(float frame)
+            {
+                UiLogoTimeline.SealPose(Spec(frame), out float bottom, out _, out float sy, out _);
+                return bottom - UiLogoTimeline.SealLayerSize * sy;
+            }
+
+            for (float f = 30f; f <= 60f; f += 0.5f)
+            {
+                Assert.AreEqual(Top(f), UiLogoTimeline.LandedTop(Top(f), Spec(f), 0f), 1e-4f, "landing 0: the canonical pose at frame " + f);
+            }
+
+            Assert.AreEqual(Top(39f), UiLogoTimeline.LandedTop(Top(39f), Spec(39f), landing), 1e-3f, "the fall starts where the spec starts it");
+            Assert.AreEqual(UiLogoTimeline.SealRestTop + landing, UiLogoTimeline.LandedTop(Top(47f), Spec(47f), landing), 1e-3f, "the impact frame lands at rest + landing");
+            for (float f = 47f; f <= 60f; f += 0.5f)
+            {
+                Assert.AreEqual(Top(f) + landing, UiLogoTimeline.LandedTop(Top(f), Spec(f), landing), 1e-3f, "the bounce keeps its amplitude at frame " + f);
+            }
+
+            float last = float.MinValue;
+            for (float f = 39f; f < 47f; f += 0.25f)
+            {
+                float top = UiLogoTimeline.LandedTop(Top(f), Spec(f), landing);
+                Assert.GreaterOrEqual(top, last - 1e-3f, "the stretched fall only goes down (frame " + f + ")");
+                last = top;
+            }
+        }
+
         private static float Spec(float frame)
         {
             return (frame - 1f) / UiLogoTimeline.Fps;

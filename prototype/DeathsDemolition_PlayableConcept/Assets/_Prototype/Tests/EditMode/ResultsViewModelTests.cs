@@ -144,7 +144,11 @@ namespace DD.Prototype.Tests.EditMode
 
             StringAssert.Contains("Weapon:AssaultRifle", vm.Loadout);
             StringAssert.Contains(ozet.BuildDescription, vm.Loadout);
-            StringAssert.Contains("2:35 played", vm.Loadout, "155.7 s → 2:35");
+            // WP-105 (V-47): the run's time is the TIME counter's (HeroSeconds → "2:35"); the reason line does not repeat it.
+            StringAssert.DoesNotContain("played", vm.Loadout, "süre neden satırında tekrar yazılmaz");
+            StringAssert.DoesNotContain("2:35", vm.Loadout);
+            Assert.AreEqual(155, vm.HeroSeconds, "155.7 s → TIME karosu");
+            Assert.AreEqual("2:35", ResultsViewModel.FormatDuration(vm.HeroSeconds));
 
             // Gold hiçbir XP satırında görünmez; "+0" satırı gold/upgrade/süre için açıkça yazılır.
             Assert.AreEqual("+45", vm.XpBreakdown[0].Value);
@@ -152,6 +156,86 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("+0", vm.XpBreakdown[2].Value);
             StringAssert.Contains("Gold", vm.XpBreakdown[2].Label);
             Assert.AreEqual("+62", vm.TotalXp);
+        }
+
+        /// <summary>
+        /// WP-105 (SHOULD-11): Results stands on the Window scrim with no wash - TextMuted read 3.57:1 there. The "+0" row
+        /// (gold, upgrades, time) is TextSecondary like its words; no line of the model asks for TextMuted.
+        /// </summary>
+        [Test]
+        public void Sonuc_SifirXpSatiri_TextSecondary_TextMutedHicYok()
+        {
+            ResultsViewModel vm = ResultsViewModel.From(Rapor(Ozet(), 45, 17), SilahAdi);
+            Assert.AreEqual("+0", vm.XpBreakdown[2].Value);
+            Assert.AreEqual(UiColor.TextSecondary, vm.XpBreakdown[2].Color, "+0 değeri TextSecondary (≥ 4,5:1)");
+            foreach (System.Collections.Generic.List<UiStatLine> lines in new[] { vm.Combat, vm.Economy, vm.XpBreakdown })
+            {
+                foreach (UiStatLine line in lines)
+                {
+                    Assert.AreNotEqual(UiColor.TextMuted, line.Color, line.Label + ": Sonuç'ta TextMuted yok");
+                }
+            }
+        }
+
+        /// <summary>
+        /// WP-105 (V-45): the reward list's fit rule (ResultsScreen.RewardFits / RewardsThatFit). Entries print in order
+        /// while they fit; one with more after it also keeps the "and N more" band (gap + line), the last one needs none -
+        /// so the summary shows only when an entry really does not fit. The 21-results case: three one-line entries
+        /// (56 px each at text 1.0) in the ≈ 200 px list now all print (the fixed 92 px band printed one + "and 2 more").
+        /// </summary>
+        [Test]
+        public void Sonuc_OdulSigdirma_YerVarkenHepsi_OzetYalnizSigmayinca()
+        {
+            const float gap = 8f, more = 28f;
+            Assert.AreEqual(3, ResultsScreen.RewardsThatFit(new[] { 56f, 56f, 56f }, 200f, gap, more), "21-results: üçü de sığar, özet yok");
+            Assert.AreEqual(1, ResultsScreen.RewardsThatFit(new[] { 92f, 92f, 92f }, 200f, gap, more), "eski sabit 92 bant: biri + özet");
+
+            // Exactly three: the last needs no summary band (3·56 + 2·8 = 184).
+            Assert.AreEqual(3, ResultsScreen.RewardsThatFit(new[] { 56f, 56f, 56f }, 184f, gap, more), "son giriş özet payı istemez");
+            // Four in the same room: three cannot leave the summary its band, so two print and "and 2 more".
+            Assert.AreEqual(2, ResultsScreen.RewardsThatFit(new[] { 56f, 56f, 56f, 56f }, 184f, gap, more), "sığmayan varsa özet bandı korunur");
+            // Mixed heights (a two-line detail): measured, never a fixed band.
+            Assert.AreEqual(3, ResultsScreen.RewardsThatFit(new[] { 56f, 78f, 56f }, 206f, gap, more), "56 + 8 + 78 + 8 + 56 = 206");
+            Assert.AreEqual(2, ResultsScreen.RewardsThatFit(new[] { 56f, 78f, 56f }, 205f, gap, more), "üçüncü 1 px sığmaz: iki + özet (150 + 28 ≤ 205)");
+            // One entry, no room for it: none print (the screen writes "N new" instead of a cut card).
+            Assert.AreEqual(0, ResultsScreen.RewardsThatFit(new[] { 80f }, 60f, gap, more));
+            Assert.AreEqual(1, ResultsScreen.RewardsThatFit(new[] { 60f }, 60f, gap, more), "tam sığan tek giriş basılır");
+            Assert.AreEqual(0, ResultsScreen.RewardsThatFit(new float[0], 100f, gap, more));
+
+            // The per-step rule the screen applies while it builds.
+            Assert.IsTrue(ResultsScreen.RewardFits(0f, 56f, false, 92f, gap, more), "56 + 8 + 28 = 92 sığar");
+            Assert.IsFalse(ResultsScreen.RewardFits(0f, 56f, false, 91f, gap, more), "özet bandı yoksa sonrası olan giriş basılmaz");
+            Assert.IsTrue(ResultsScreen.RewardFits(0f, 56f, true, 56f, gap, more), "son giriş yalnız kendi yüksekliğini ister");
+        }
+
+        /// <summary>
+        /// WP-105 (C-00 11.10 decision 2): the Awakening line takes the PATH line's place and the level gate's "Next unlock"
+        /// line's - "AWAKENING +N Ash", the balance after the run beside it, the word alone when only the balance is there;
+        /// nothing when there is neither. The balance comes from the caller (ProfileService.Current at runtime).
+        /// </summary>
+        [Test]
+        public void Sonuc_UyanisSatiri_KazancVeBakiye_YoksaBos()
+        {
+            string delta = UiStrings.Format("awakening.results.delta", "value", "15", "AWAKENING +{value} Ash");
+            string total = UiStrings.Format("awakening.results.balance", "value", "45", "{value} Ash in total");
+            string word = UiStrings.Get("awakening.title", "AWAKENING");
+            Assert.AreEqual(delta + "  ·  " + total, ResultsViewModel.DescribeAwakening(15, 45), "kazanç · bakiye");
+            Assert.AreEqual(delta, ResultsViewModel.DescribeAwakening(15, -1), "bakiye bilinmiyor: yalnız kazanç");
+            Assert.AreEqual(word + "  ·  " + total, ResultsViewModel.DescribeAwakening(0, 45), "kazanç yok: sözcük · bakiye");
+            Assert.AreEqual(string.Empty, ResultsViewModel.DescribeAwakening(0, 0), "ikisi de yok: satır yok");
+            Assert.AreEqual(string.Empty, ResultsViewModel.DescribeAwakening(0, -1));
+            StringAssert.DoesNotContain("PATH", ResultsViewModel.DescribeAwakening(15, 45), "YOL / PATH yok");
+
+            RunRewardReport.Draft taslak = Taslak(Ozet(), 45, 17);
+            taslak.AshEarned = 15;
+            ResultsViewModel vm = ResultsViewModel.From(taslak.Seal(), SilahAdi, 45);
+            Assert.AreEqual(15, vm.AshEarned);
+            Assert.AreEqual(45, vm.AshBalance);
+            Assert.AreEqual(delta + "  ·  " + total, vm.AwakeningLine);
+
+            vm = ResultsViewModel.From(Rapor(Ozet(), 45, 17), SilahAdi);
+            Assert.AreEqual(-1, vm.AshBalance, "bakiyesiz aşırı yükleme: bilinmiyor");
+            Assert.AreEqual(string.Empty, vm.AwakeningLine, "Kül yok, bakiye yok: satır yok");
         }
 
         [Test]
@@ -200,7 +284,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(vm.LeveledUp);
             Assert.AreEqual(2, vm.LevelsGained);
             Assert.AreEqual("LEVEL 1  →  LEVEL 3", vm.LevelLine);
-            Assert.AreEqual("LEVEL UP  x2", vm.LevelUpChip);
+            Assert.AreEqual("LEVEL UP  ×2", vm.LevelUpChip);   // R4 WP-105 (ux-writer §8): the multiplication sign
             Assert.IsTrue(vm.Celebrate);
             Assert.AreEqual("40 / 175 XP towards level 4", vm.ProgressCaption);
 

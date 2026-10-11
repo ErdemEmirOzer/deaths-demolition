@@ -1168,6 +1168,145 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp098b.paneLifecycle=OK reducedMotion=" + UiMotion.ReducedMotion);
         }
 
+        /// <summary>
+        /// R4 WP-105 (KOD MUST-2) · Kontroller'de bir tuş dinlenirken Cancel (Esc / pad B) pane'i kapatmaz - iptal ya da yeni
+        /// bağlama dinlemenin işidir; dinleme sürerken menü tıklama ve gezinme almaz; pane kapanınca dinleme biter, gezinme döner.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Kontroller_TusDinlerkenCancel_PaneKapanmaz_PaneKapanincaDinlemeBiter()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            yield return null;
+            MainMenuScreen menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            DD.Prototype.Core.InputAbstraction.IInputRemapService remap =
+                DD.Prototype.Inputs.PrototypeInputInstaller.Instance != null ? DD.Prototype.Inputs.PrototypeInputInstaller.Instance.Remap : null;
+            Assert.IsNotNull(remap, "the input service (the Controls pane binds through it)");
+
+            menu.ShowPane(UiContext.Controls);
+            yield return new WaitForSecondsRealtime(MainMenuScreen.PaneLook.MaxSeconds + 0.15f);
+            UiButton slot = null;
+            foreach (UiButton b in menu.GetComponentsInChildren<UiButton>(false))
+            {
+                if (b.name.StartsWith("Bind.", StringComparison.Ordinal) && b.IsInteractable())
+                {
+                    slot = b;
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(slot, "a binding slot");
+            slot.OnSubmit(null);
+            yield return null;
+            Assert.IsTrue(remap.IsRebinding, "the slot listens");
+            CanvasGroup screenGroup = menu.GetComponentInChildren<Canvas>().GetComponent<CanvasGroup>();
+            Assert.IsTrue(screenGroup == null || !screenGroup.blocksRaycasts, "listening: no click reaches the menu (a mouse button is a binding only)");
+            Assert.IsTrue(EventSystem.current == null || !EventSystem.current.sendNavigationEvents, "listening: no navigation");
+
+            UiInput.SimulateCancelNextFrame();
+            yield return null;
+            yield return null;
+            Assert.AreEqual(UiContext.Controls, menu.Pane, "Cancel while listening keeps the Controls pane");
+            Assert.IsTrue(menu.PaneOpen);
+
+            menu.ShowPane(UiContext.MainMenu);
+            yield return null;
+            Assert.IsFalse(remap.IsRebinding, "closing the pane ends the listening");
+            Assert.IsTrue(EventSystem.current == null || EventSystem.current.sendNavigationEvents, "navigation is back");
+            Assert.IsTrue(screenGroup == null || screenGroup.blocksRaycasts, "clicks are back");
+        }
+
+        /// <summary>
+        /// R4 WP-105 · pane'lerin UX düzeltmeleri: (SHOULD-1) her pane başlığında fareyle kapatan C10 GERİ, pad'de durak değil;
+        /// (SHOULD-5) pane açıkken seçili ray ikonu krem, diğerleri geri çekilir, kapanınca hepsi döner; (SHOULD-4) başarımların
+        /// son sayfasında odak boşa düşmez; (MUST-1) Profil'de kilitli bir seçenek seçiliyken odak "tutulmuş" sayılır (geri atılmaz).
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Paneler_GeriDugmesi_RayTonu_SonSayfaOdagi_KilitliSatirOdagi()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            yield return null;
+            MainMenuScreen menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            float bekle = MainMenuScreen.PaneLook.MaxSeconds + 0.15f;
+
+            // SHOULD-5: the rail's tone follows the open pane.
+            menu.ShowPane(UiContext.Profile);
+            yield return new WaitForSecondsRealtime(bekle);
+            foreach (UiIconButton icon in menu.Rail)
+            {
+                Assert.IsTrue(icon.Receded, icon.name + ": a pane is open - the rail steps back (the chosen glyph stays cream)");
+            }
+
+            // MUST-1: a locked option selected on purpose is held, not lost.
+            Transform kart = PaneParcasi(menu, MainMenuScreen.PaneLook.CardName);
+            UiButton locked = null;
+            foreach (UiButton b in kart.GetComponentsInChildren<UiButton>(false))
+            {
+                if (b.name.StartsWith("Option.", StringComparison.Ordinal) && !b.IsInteractable())
+                {
+                    locked = b;
+                    break;
+                }
+            }
+
+            if (locked != null)
+            {
+                EventSystem.current.SetSelectedGameObject(locked.gameObject);
+                yield return null;
+                Assert.IsTrue(UiInput.FocusLost(), "a non-interactable selection reads lost to the plain rule");
+                Assert.IsTrue(UiInput.HeldUnder(kart), "MUST-1: under the open pane it is held - PaneWatch does not throw it back");
+                Assert.AreSame(locked.gameObject, EventSystem.current.currentSelectedGameObject, "the locked row keeps the focus");
+            }
+            else
+            {
+                Debug.Log("[DD-TEST] wp105.lockedOption none on this profile (MUST-1 check skipped)");
+            }
+
+            // SHOULD-1: the pane's Back closes it with the mouse.
+            Transform back = PaneParcasi(menu, MainMenuScreen.PaneBackName);
+            Assert.IsNotNull(back, "the pane's C10 Back");
+            UiButton backButton = back.GetComponent<UiButton>();
+            Assert.IsNotNull(backButton);
+            Assert.AreEqual(UnityEngine.UI.Navigation.Mode.None, backButton.navigation.mode, "mouse-only: the pad's way out is its B");
+            backButton.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+            yield return null;
+            Assert.IsFalse(menu.PaneOpen, "Back closes the pane");
+            yield return new WaitForSecondsRealtime(bekle);
+            foreach (UiIconButton icon in menu.Rail)
+            {
+                Assert.IsFalse(icon.Receded, icon.name + ": no pane - the rail stands whole");
+            }
+
+            // SHOULD-4: the last achievements page keeps a focus.
+            menu.ShowPane(UiContext.Achievements);
+            yield return new WaitForSecondsRealtime(bekle);
+            for (int turns = 0; turns < 40; turns++)
+            {
+                Transform next = PaneParcasi(menu, "Pager.Next");
+                UiButton nextButton = next != null ? next.GetComponent<UiButton>() : null;
+                if (nextButton == null || !nextButton.IsInteractable())
+                {
+                    break;
+                }
+
+                UiInput.Focus(nextButton);
+                nextButton.OnSubmit(null);
+                yield return null;
+                yield return null;
+            }
+
+            GameObject focused = EventSystem.current.currentSelectedGameObject;
+            Assert.IsNotNull(focused, "SHOULD-4: on the last page the focus is somewhere");
+            Selectable focusedSelectable = focused.GetComponent<Selectable>();
+            Assert.IsTrue(focusedSelectable != null && focusedSelectable.IsInteractable(), "SHOULD-4: on a live control (the other pager), not the greyed one");
+            Debug.Log("[DD-TEST] wp105.paneUx back=ok rail=ok lastPageFocus=" + focused.name);
+        }
+
         /// <summary>Bir StatRow'da anahtar/değer çifti var mı (Row/Key, Row/Value).</summary>
         private static bool SatirDegeri(MainMenuScreen menu, string anahtar, string deger)
         {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -27,8 +28,25 @@ namespace DD.Prototype.UI
         /// the legacy button by name and never throws when the axis is missing. Never true
         /// while the load error stands (R1-E B2): it has no safe "back", so the screen under
         /// it must not take one.
+        /// R4 WP-105 (KOD NICE-8): never true while the curtain covers either (from the moment it starts closing until it is
+        /// half open again): the screen under it is leaving or not shown yet, so a "back" there would play its sound, start a
+        /// load that is ignored, or open a dialog under the cover. The curtain's own read is <see cref="CurtainCancelPressed"/>.
         /// </summary>
         public static bool CancelPressed()
+        {
+            if (UiCurtain.IsCovering)
+            {
+                return false;
+            }
+
+            return CurtainCancelPressed();
+        }
+
+        /// <summary>
+        /// R4 WP-105 (NICE-8) · Cancel as the curtain itself reads it (the boot seal's skip): pressed this frame even while the
+        /// curtain covers. Still never true under the load error (R1-E B2). Screens read <see cref="CancelPressed"/>.
+        /// </summary>
+        public static bool CurtainCancelPressed()
         {
             if (UiCurtain.LoadErrorOpen)
             {
@@ -97,10 +115,17 @@ namespace DD.Prototype.UI
         /// <summary>
         /// WP-068 R1-D: true on the frame Submit was pressed (Return / Space / gamepad south) - the Results choreography's
         /// skip. Same probe-once rule as <see cref="CancelPressed"/>.
+        /// R4 WP-105 (NICE-8): never true while the curtain covers (as <see cref="CancelPressed"/>). The held state
+        /// (<see cref="SubmitHeld"/>, the hold controls and the boot seal's skip) is not filtered.
         /// </summary>
         public static bool SubmitPressed()
         {
             SubmitHeld();   // probes the button once
+            if (UiCurtain.IsCovering)
+            {
+                return false;
+            }
+
             if (s_submitButtonState > 0)
             {
                 return Input.GetButtonDown(SubmitButton);
@@ -172,10 +197,20 @@ namespace DD.Prototype.UI
         /// input arrives (any axis, Submit or Cancel): a mouse user who clicked empty
         /// space and then picked up the pad gets a visible cursor on the first press
         /// instead of a dead first press. Call once per frame from a screen's Update.
+        /// R4 WP-105 (KOD SHOULD-13, NICE-8): where the focus may go is <see cref="ReclaimTarget"/> - while a modal stands, only
+        /// into the modal (a screen under it reclaims for the modal, never behind it; a selection left behind the modal
+        /// counts as lost), and nothing under a closing or closed curtain except the curtain's own load error.
         /// </summary>
         public static void ReclaimFocus(Selectable fallback)
         {
-            if (fallback == null || !FocusLost())
+            Selectable target = ReclaimTarget(fallback);
+            if (target == null)
+            {
+                return;
+            }
+
+            UiModal modal = TopModal;
+            if (!FocusLost() && (modal == null || HeldUnder(modal.transform)))
             {
                 return;
             }
@@ -195,8 +230,113 @@ namespace DD.Prototype.UI
 
             if (moved)
             {
-                Focus(fallback);
+                Focus(target);
             }
+        }
+
+        // ============================================== R4 WP-105 · focus ownership under a modal and the curtain
+
+        private static readonly List<UiModal> s_modals = new List<UiModal>(4);
+
+        /// <summary>
+        /// R4 WP-105 (KOD SHOULD-13) · <see cref="UiModal.Open"/> registers its modal: from now on the modal owns the focus
+        /// (<see cref="ReclaimTarget"/>). The last one opened is on top. Build or press time, never per frame.
+        /// </summary>
+        public static void ModalOpened(UiModal modal)
+        {
+            if (modal == null)
+            {
+                return;
+            }
+
+            s_modals.Remove(modal);
+            s_modals.Add(modal);
+        }
+
+        /// <summary>R4 WP-105 · <see cref="UiModal.Close"/> (and the load error's HideError) gives the focus back to the screens.</summary>
+        public static void ModalClosed(UiModal modal)
+        {
+            s_modals.Remove(modal);
+        }
+
+        /// <summary>
+        /// R4 WP-105 · the modal on top: the last one opened that is still open and on screen (a destroyed one is dropped, a
+        /// hidden one skipped); null when none stands. A walk over at most a few entries, no allocation.
+        /// </summary>
+        public static UiModal TopModal
+        {
+            get
+            {
+                for (int i = s_modals.Count - 1; i >= 0; i--)
+                {
+                    UiModal modal = s_modals[i];
+                    if (modal == null)
+                    {
+                        s_modals.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (modal.gameObject.activeInHierarchy)
+                    {
+                        return modal;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// R4 WP-105 (KOD SHOULD-13, NICE-8) · where a reclaim asked for <paramref name="fallback"/> may put the focus:
+        ///   * the curtain covers (closing, closed or opening) and no load error stands: nowhere (null) - the screen under it
+        ///     is leaving or not revealed yet, and the pad's next Submit would press a button nobody sees;
+        ///   * a modal stands: the fallback when it is inside the modal, otherwise the modal's own safe action (the screen
+        ///     under it asks, the modal answers - focus never goes behind a dialog);
+        ///   * otherwise the fallback.
+        /// </summary>
+        public static Selectable ReclaimTarget(Selectable fallback)
+        {
+            if (UiCurtain.IsCovering && !UiCurtain.LoadErrorOpen)
+            {
+                return null;
+            }
+
+            UiModal modal = TopModal;
+            if (modal != null)
+            {
+                return fallback != null && fallback.transform.IsChildOf(modal.transform) ? fallback : modal.DefaultFocus;
+            }
+
+            return fallback;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetModals()
+        {
+            s_modals.Clear();
+        }
+
+        /// <summary>
+        /// R4 WP-105 (MUST-1) · as <see cref="ReclaimFocus(Selectable)"/>, but a selection still active under
+        /// <paramref name="keepUnder"/> is held, not lost - even when it is not interactable (a locked row the pad walked onto on
+        /// purpose: its explicit navigation leads there and its reason shows on focus).
+        /// </summary>
+        public static void ReclaimFocus(Selectable fallback, Transform keepUnder)
+        {
+            if (HeldUnder(keepUnder))
+            {
+                return;
+            }
+
+            ReclaimFocus(fallback);
+        }
+
+        /// <summary>The current selection is active under <paramref name="root"/> (interactable or not): focus held there, not lost.</summary>
+        public static bool HeldUnder(Transform root)
+        {
+            EventSystem system = EventSystem.current;
+            GameObject current = system != null ? system.currentSelectedGameObject : null;
+            return root != null && current != null && current.activeInHierarchy && current.transform.IsChildOf(root);
         }
 
         /// <summary>

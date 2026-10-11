@@ -19,6 +19,9 @@ namespace DD.Prototype.UI
         public float MasterVolume = 1f;
         /// <summary>WP-068 U8: UI sounds (Interface bus) on their own slider, 0..1.</summary>
         public float UiVolume = 1f;
+        /// <summary>R4 WP-105 (C-00 11.10 §C4): music and effects on their own sliders, 0..1 (older files: the initialiser stands).</summary>
+        public float MusicVolume = 1f;
+        public float EffectsVolume = 1f;
         public int Quality = -1;
         public bool ReducedMotion;
 
@@ -81,6 +84,8 @@ namespace DD.Prototype.UI
             UiScale = Mathf.Clamp(UiScale, UiTheme.UiScaleMin, UiTheme.UiScaleMax);
             MasterVolume = Mathf.Clamp01(MasterVolume);
             UiVolume = Mathf.Clamp01(UiVolume);
+            MusicVolume = Mathf.Clamp01(MusicVolume);
+            EffectsVolume = Mathf.Clamp01(EffectsVolume);
             return this;
         }
     }
@@ -113,6 +118,12 @@ namespace DD.Prototype.UI
 
         /// <summary>WP-068 U8: raised with the new UI-sounds volume (0..1); the audio module applies it to the Interface bus.</summary>
         public static event Action<float> UiVolumeChanged;
+
+        /// <summary>R4 WP-105 (§C4): raised with the new music volume (0..1); the audio module (S-08) applies it to the music group.</summary>
+        public static event Action<float> MusicVolumeChanged;
+
+        /// <summary>R4 WP-105 (§C4): raised with the new effects volume (0..1); the audio module (S-08) applies it to the effects group.</summary>
+        public static event Action<float> EffectsVolumeChanged;
 
         /// <summary>Raised with the new quality level index. S-01 may react beyond QualitySettings.</summary>
         public static event Action<int> QualityChanged;
@@ -177,6 +188,52 @@ namespace DD.Prototype.UI
                 s_data.MasterVolume = clamped;
                 ApplyVolume();
                 MasterVolumeChanged?.Invoke(clamped);
+                Persist();
+            }
+        }
+
+        /// <summary>R4 WP-105 (§C4): the MUSIC slider, persisted with the device preferences; S-08 reads it at start and on change.</summary>
+        public static float MusicVolume
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.MusicVolume;
+            }
+            set
+            {
+                EnsureLoaded();
+                float clamped = Mathf.Clamp01(value);
+                if (Mathf.Approximately(clamped, s_data.MusicVolume))
+                {
+                    return;
+                }
+
+                s_data.MusicVolume = clamped;
+                MusicVolumeChanged?.Invoke(clamped);
+                Persist();
+            }
+        }
+
+        /// <summary>R4 WP-105 (§C4): the EFFECTS slider (weapons, the dead, the world - not the UI sounds, not the music).</summary>
+        public static float EffectsVolume
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.EffectsVolume;
+            }
+            set
+            {
+                EnsureLoaded();
+                float clamped = Mathf.Clamp01(value);
+                if (Mathf.Approximately(clamped, s_data.EffectsVolume))
+                {
+                    return;
+                }
+
+                s_data.EffectsVolume = clamped;
+                EffectsVolumeChanged?.Invoke(clamped);
                 Persist();
             }
         }
@@ -560,6 +617,8 @@ namespace DD.Prototype.UI
             s_data.UiScale = loaded != null ? loaded.UiScale : defaultScale;
             s_data.MasterVolume = loaded != null ? loaded.MasterVolume : 1f;
             s_data.UiVolume = loaded != null ? Mathf.Clamp01(loaded.UiVolume) : 1f;   // older files: the field initialiser (1) stands
+            s_data.MusicVolume = loaded != null ? Mathf.Clamp01(loaded.MusicVolume) : 1f;
+            s_data.EffectsVolume = loaded != null ? Mathf.Clamp01(loaded.EffectsVolume) : 1f;
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
             UiMotion.ReducedMotion = s_data.ReducedMotion;
             s_data.Telemetry = loaded == null || loaded.Telemetry;
@@ -726,6 +785,8 @@ namespace DD.Prototype.UI
             s_data.UiScale = 1f;
             s_data.MasterVolume = 1f;
             s_data.UiVolume = 1f;
+            s_data.MusicVolume = 1f;
+            s_data.EffectsVolume = 1f;
             s_data.Quality = -1;
             s_data.ReducedMotion = false;
             UiMotion.ReducedMotion = false;
@@ -743,6 +804,8 @@ namespace DD.Prototype.UI
             CameraChanged = null;
             MasterVolumeChanged = null;
             UiVolumeChanged = null;
+            MusicVolumeChanged = null;
+            EffectsVolumeChanged = null;
             QualityChanged = null;
         }
     }

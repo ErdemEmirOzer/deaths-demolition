@@ -111,8 +111,9 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.IsNotNull(clip);
-            TMPro.TMP_Text title = clip.GetComponentInChildren<TMPro.TMP_Text>();
-            Assert.AreEqual(title.rectTransform.sizeDelta.x, clip.sizeDelta.x, 0.5f, "M2: başlık tam açıldı");
+            RectTransform title = (RectTransform)clip.Find("Title");   // R4 WP-105: the wordmark + seal lockup
+            Assert.IsNotNull(title, "the lockup in its clip");
+            Assert.AreEqual(title.sizeDelta.x, clip.sizeDelta.x, 0.5f, "M2: başlık tam açıldı");
             Assert.IsTrue(menu.TitleStrokeMark.Visible, "M2: başlığın fırça çizgisi");
 
             // A later arrival this session (M6): no replay.

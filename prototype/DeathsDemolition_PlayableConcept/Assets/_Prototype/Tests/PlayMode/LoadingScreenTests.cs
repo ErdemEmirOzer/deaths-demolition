@@ -238,11 +238,14 @@ namespace DD.Prototype.Tests.PlayMode
             try
             {
                 UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f); // SCREEN by the table
+                UiLoadingTips.ResetSession();   // this session's earlier loads must not have used every tip up
                 float t0 = Time.realtimeSinceStartup;
                 PrototypeUiFlow.GoToSelection();
                 UiCurtain curtain = UiCurtain.Instance;
                 Assert.IsTrue(curtain.GroupVisible, "RM: grup t0'da dinlenmede (kapılar kesildi)");
-                Assert.IsNotEmpty(curtain.TipText, "RM: ipucu şeridi RM satırını taşır");
+                // R4 WP-105 (KOD SHOULD-6): under RM the strip carries the tip itself (still text, not motion) - the HINT the
+                // flow marked as seen is the one on screen.
+                Assert.IsTrue(IsLoadingTip(curtain.TipText), "RM: şerit ipucunun kendisini taşır: '" + curtain.TipText + "'");
                 float enteringAt = -1f;
                 float deadline = Time.realtimeSinceStartup + 60f;
                 while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
@@ -259,6 +262,103 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 UiMotion.ReducedMotion = reduced;
             }
+        }
+
+        /// <summary>
+        /// R4 WP-105 (KOD SHOULD-6): Reduced Motion no longer swaps the tip for a fixed line - the strip shows the tip it was
+        /// given, and a loading screen given no tip (Boot, Results, the Pause abort) shows no strip at all.
+        /// </summary>
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AzHareket_IpucuGorunur_IpucuYoksaSeritYok()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = true;
+            UiCurtain curtain = UiCurtain.Instance;
+            try
+            {
+                string tip = UiStrings.Get(UiLoadingTips.All[0].Key, UiLoadingTips.All[0].Text);
+                curtain.Close(true);
+                curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Selection), string.Empty, tip, false);
+                yield return null;
+                Assert.AreEqual(tip, curtain.TipText, "RM: ipucu görünür");
+
+                curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false, UiCurtain.ResultsKeyArt);
+                yield return null;
+                Assert.IsEmpty(curtain.TipText, "RM: ipucu istenmeyen ekranda şerit yok");
+            }
+            finally
+            {
+                UiMotion.ReducedMotion = reduced;
+                curtain.Open(true);
+            }
+        }
+
+        /// <summary>
+        /// R4 WP-105 (KOD NICE-8): while the curtain covers, the keyboard / pad Cancel and Submit do not reach the screen under
+        /// it (the menu's open pane stays open, no reclaim lands there); the curtain's own read still sees the press (the boot
+        /// seal's skip). With the curtain open the same press reaches the menu again.
+        /// </summary>
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Perde_Kapaliyken_IptalVeOnay_AlttakiEkranaUlasmaz_PerdeninKendiOkumasiGorur()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiFactory.EnsureEventSystem();
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            menu.ShowPane(UiContext.Settings);
+            yield return null;
+            Assert.AreEqual(UiContext.Settings, UiNavigation.Layer);
+
+            UiCurtain curtain = UiCurtain.Instance;
+            curtain.Close(true);
+            Assert.IsTrue(UiCurtain.IsCovering);
+            UnityEngine.UI.Selectable behind = menu.GetComponentInChildren<UnityEngine.UI.Selectable>();
+            Assert.IsNull(UiInput.ReclaimTarget(behind), "örtü altında ekranın geri alımı yok");
+            try
+            {
+                UiInput.SimulateCancelNextFrame();
+                yield return null;
+                Assert.IsFalse(UiInput.CancelPressed(), "örtü altında ekran Cancel'ı görmez");
+                Assert.IsTrue(UiInput.CurtainCancelPressed(), "perdenin kendi okuması basışı görür (açılış mührünü atlama)");
+                Assert.IsFalse(UiInput.SubmitPressed(), "örtü altında Submit de yutulur");
+                yield return null;
+                Assert.AreEqual(UiContext.Settings, UiNavigation.Layer, "örtü altındaki menü geri almadı");
+            }
+            finally
+            {
+                curtain.Open(true);
+            }
+
+            yield return null;
+            Assert.IsFalse(UiCurtain.IsCovering);
+            Assert.AreSame(behind, UiInput.ReclaimTarget(behind), "perde açıkken ekranın geri alımı yine kendi");
+            UiInput.SimulateCancelNextFrame();
+            yield return null;
+            yield return null;
+            Assert.AreEqual(UiContext.None, UiNavigation.Layer, "perde açıkken aynı basış menüye ulaşır (pane kapanır)");
+        }
+
+        private static bool IsLoadingTip(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return false;
+            }
+
+            foreach (UiTip tip in UiLoadingTips.All)
+            {
+                if (text == UiStrings.Get(tip.Key, tip.Text))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static IEnumerator OlumeKadar()

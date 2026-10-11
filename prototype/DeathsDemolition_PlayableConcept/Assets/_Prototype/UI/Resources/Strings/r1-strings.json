@@ -1307,6 +1307,18 @@
     "en": "PATH +{value} Ash",
     "tr": "YOL +{value} Kül"
   },
+  "awakening.title": {
+    "en": "AWAKENING",
+    "tr": "UYANIŞ"
+  },
+  "awakening.results.delta": {
+    "en": "AWAKENING +{value} Ash",
+    "tr": "UYANIŞ +{value} Kül"
+  },
+  "awakening.results.balance": {
+    "en": "{value} Ash in total",
+    "tr": "toplam {value} Kül"
+  },
   "tree.meta.weapon.ar_1.name": {
     "en": "Hinawa",
     "tr": "Hinawa"
@@ -1477,11 +1489,11 @@
   },
   "tree.meta.passive.econ.cheap_reroll.name": {
     "en": "Cheaper Reroll",
-    "tr": "Ucuz Reroll"
+    "tr": "Ucuz Yeniden Çekme"
   },
   "tree.meta.passive.econ.cheap_reroll.desc": {
     "en": "Reroll costs {value} gold instead of {base}.",
-    "tr": "Reroll {base} yerine {value} altın."
+    "tr": "Yeniden çekme {base} yerine {value} altın."
   },
   "tree.meta.passive.econ.hearth_slope.name": {
     "en": "Banked Hearth",
@@ -1605,15 +1617,15 @@
   },
   "tree.meta.passive.qol.round_report.name": {
     "en": "Round Report",
-    "tr": "Tur Raporu"
+    "tr": "Round Raporu"
   },
   "tree.meta.passive.qol.round_report.desc": {
     "en": "After each round, one line: kills by type, damage taken, gold earned and how fast you killed Elites.",
-    "tr": "Her tur sonunda tek satır: türe göre öldürmeler, aldığın hasar, kazandığın altın ve Elite'leri ne kadar sürede öldürdüğün."
+    "tr": "Her round sonunda tek satır: türe göre öldürmeler, aldığın hasar, kazandığın altın ve Elitleri ne kadar sürede öldürdüğün."
   },
   "tips.001": {
     "en": "Change the camera from the Pause menu: top-down, third-person or first-person.",
-    "tr": "Kamerayı Pause menüsünden değiştir: tepeden, üçüncü şahıs ya da birinci şahıs."
+    "tr": "Kamerayı Duraklat menüsünden değiştir: tepeden, üçüncü şahıs ya da birinci şahıs."
   },
   "tips.002": {
     "en": "Top-down reads the crowd best. First-person aims best but sees nothing behind you.",
@@ -1685,7 +1697,7 @@
   },
   "tips.019": {
     "en": "A pinned node comes in the next offer once it is reachable. Rerolls keep it.",
-    "tr": "İşaretli düğüm erişilebilir olunca sonraki teklifte gelir. Reroll onu değiştirmez."
+    "tr": "İşaretli düğüm erişilebilir olunca sonraki teklifte gelir. Yeniden çekme onu değiştirmez."
   },
   "tips.020": {
     "en": "The Hearth sits outside the cards and never runs out. Stoke it when gold piles up.",
@@ -1931,6 +1943,10 @@
     "en": "Reach profile level {level} · you are level {current}",
     "tr": "Profil seviyesi {level} gerekir · şu an {current}"
   },
+  "selection.lock.chip": {
+    "en": "LEVEL {level}",
+    "tr": "SEVİYE {level}"
+  },
   "selection.not_in_build": {
     "en": "Not in this build.",
     "tr": "Bu sürümde yok."
@@ -1949,7 +1965,7 @@
   },
   "tree.lock.special": {
     "en": "Opens when you pick up a Special this run.",
-    "tr": "Bu koşuda bir Special aldığında açılır."
+    "tr": "Bu koşuda bir Özel silah aldığında açılır."
   },
   "tree.lock.pending": {
     "en": "Not in this build yet.",
@@ -1957,7 +1973,7 @@
   },
   "tree.picks_used": {
     "en": "This round's picks are used.",
-    "tr": "Bu round'un seçimleri kullanıldı."
+    "tr": "Bu roundun seçimleri kullanıldı."
   },
   "tree.refuse.gold": {
     "en": "Not enough gold for that yet. Nothing was taken.",
@@ -1985,7 +2001,7 @@
   },
   "tree.refuse.reforge_early": {
     "en": "Reforge opens from round 5.",
-    "tr": "Yeniden Dövme 5. round'dan itibaren açılır."
+    "tr": "Yeniden Dövme 5. rounddan itibaren açılır."
   },
   "tree.refuse.no_run": {
     "en": "No run is in progress.",
@@ -2112,16 +2128,16 @@
     "tr": "Bunlar oyunun nasıl sunulduğunu değiştirir, nasıl oynandığını asla."
   },
   "access.note.flashes": {
-    "en": "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen.",
-    "tr": "Hasar ve son saniye parlamaları %40'ta. Kan ve dünya değişmez. Kamera sarsıntısının duraklatma ekranında kendi kaydırıcısı var."
+    "en": "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider in the Pause menu.",
+    "tr": "Hasar ve son saniye parlamaları %40'ta. Kan ve dünya değişmez. Kamera sarsıntısının Duraklat menüsünde kendi kaydırıcısı var."
   },
   "access.note.palette": {
     "en": "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays red; every state also has a shape and a word.",
     "tr": "Renk körü dostu palet can, kazanılmış ve açık durumları yeşilden maviye taşır. Tehlike kırmızı kalır; her durumun ayrıca bir şekli ve bir kelimesi vardır."
   },
   "access.note.reduced_motion": {
-    "en": "Pulses hold still, screen fades are instant and the menu petals stop drifting.",
-    "tr": "Nabızlar durur, ekran geçişleri anlık olur ve menü yaprakları süzülmeyi bırakır."
+    "en": "Pulses hold still, screen fades are instant; the menu camera, ash and leaves stop.",
+    "tr": "Nabızlar durur, ekran geçişleri anlık olur; menü kamerası, kül ve yapraklar sabit kalır."
   },
   "access.note.text_scale": {
     "en": "Body, label and caption text. It applies to the next screen you open.",
@@ -2192,8 +2208,8 @@
     "tr": "UYARI"
   },
   "ach.auto_note": {
-    "en": "Achievements unlock by themselves at the end of a run. There is nothing to claim.",
-    "tr": "Başarımlar koşu sonunda kendiliğinden açılır. Alınacak bir şey yok."
+    "en": "Achievements unlock by themselves at the end of a run.",
+    "tr": "Başarımlar koşu sonunda kendiliğinden açılır."
   },
   "ach.earned": {
     "en": "EARNED",
@@ -2210,6 +2226,10 @@
   "ach.in_progress": {
     "en": "IN PROGRESS",
     "tr": "SÜRÜYOR"
+  },
+  "ach.not_started": {
+    "en": "NOT STARTED",
+    "tr": "BAŞLANMADI"
   },
   "ach.next": {
     "en": "NEXT",
@@ -2268,8 +2288,8 @@
     "tr": "OYUN KUMANDASI"
   },
   "controls.intro": {
-    "en": "Select a slot and press the key or button you want. Escape cancels. Overrides are saved on this machine.",
-    "tr": "Bir yuva seç ve istediğin tuşa ya da düğmeye bas. Escape iptal eder. Değişiklikler bu makinede kaydedilir."
+    "en": "Select a slot and press the key or button you want. Esc or the Menu button cancels. Overrides are saved on this machine.",
+    "tr": "Bir yuva seç ve istediğin tuşa ya da düğmeye bas. Esc ya da Menü düğmesi iptal eder. Değişiklikler bu makinede kaydedilir."
   },
   "controls.keyboard": {
     "en": "KEYBOARD",
@@ -2278,6 +2298,10 @@
   "controls.listening": {
     "en": "PRESS A KEY",
     "tr": "BİR TUŞA BAS"
+  },
+  "controls.listening.pad": {
+    "en": "PRESS A BUTTON · MENU CANCELS",
+    "tr": "BİR DÜĞMEYE BAS · MENÜ İPTAL EDER"
   },
   "controls.no_service": {
     "en": "Input service not running.",
@@ -2309,11 +2333,11 @@
   },
   "hud.banner.round": {
     "en": "ROUND {value}",
-    "tr": "RAUND {value}"
+    "tr": "ROUND {value}"
   },
   "hud.banner.round_clear": {
     "en": "ROUND {value} CLEAR",
-    "tr": "RAUND {value} TEMİZ"
+    "tr": "ROUND {value} TEMİZ"
   },
   "hud.banner.round_complete": {
     "en": "ROUND {value} COMPLETE",
@@ -2356,7 +2380,7 @@
     "tr": "TOPARLANIYOR"
   },
   "hud.health.recovery_in": {
-    "en": "recovery in {value}s",
+    "en": "recovery in {value} s",
     "tr": "{value} sn içinde toparlanma"
   },
   "hud.special.active": {
@@ -2460,8 +2484,8 @@
     "tr": "YÜKLENEMEDİ"
   },
   "loading.error.to_menu": {
-    "en": "RETURN TO MAIN MENU",
-    "tr": "ANA MENÜYE DÖN"
+    "en": "MAIN MENU",
+    "tr": "ANA MENÜ"
   },
   "loading.percent": {
     "en": "LOADING · {0}%",
@@ -2474,6 +2498,10 @@
   "loading.stalled": {
     "en": "Loading is taking longer than usual.",
     "tr": "Yükleme her zamankinden uzun sürüyor."
+  },
+  "loading.stalled.wait": {
+    "en": "Still loading. If it stays stuck, a way out appears.",
+    "tr": "Hâlâ yükleniyor. Takılı kalırsa bir çıkış yolu belirir."
   },
   "loading.tip.ctrl.01": {
     "en": "Holding fire keeps firing. Every classic weapon is automatic.",
@@ -2491,13 +2519,17 @@
     "en": "There is no dash and no dodge. Footwork is the only evasion.",
     "tr": "Atılma da kaçınma da yok. Tek kaçış ayak oyunudur."
   },
+  "loading.tip.ctrl.05": {
+    "en": "Holding fire keeps firing. Single-shot and burst weapons refire at their own pace.",
+    "tr": "Ateşi basılı tut, ateş sürer. Tek ve seri atışlı silahlar kendi hızında yeniden ateşler."
+  },
   "loading.tip.econ.01": {
     "en": "Each round ends with three upgrade cards. Up to two of them can be bought.",
     "tr": "Her round üç geliştirme kartıyla biter. En fazla ikisi alınabilir."
   },
   "loading.tip.econ.02": {
     "en": "One paid reroll per round, only before a purchase. It swaps one or two cards.",
-    "tr": "Round başına bir ücretli reroll, yalnızca alımdan önce. Bir ya da iki kartı değiştirir."
+    "tr": "Round başına bir ücretli yeniden çekme, yalnız alımdan önce. Bir ya da iki kart değişir."
   },
   "loading.tip.econ.03": {
     "en": "Unspent gold carries into the next round.",
@@ -2510,6 +2542,10 @@
   "loading.tip.econ.05": {
     "en": "Armour an enemy spawned with adds gold. Breaking the plate never lowers the reward.",
     "tr": "Düşmanın doğduğu zırh altın ekler. Plakayı kırmak ödülü asla düşürmez."
+  },
+  "loading.tip.econ.06": {
+    "en": "Each round ends with three upgrade cards. Buy up to two, or three in rounds 10 to 13.",
+    "tr": "Her round üç geliştirme kartıyla biter. En fazla ikisi alınır; 10–13. roundlarda üçü."
   },
   "loading.tip.surv.01": {
     "en": "Health regenerates after a few seconds without damage. A new hit resets the wait.",
@@ -2550,6 +2586,10 @@
   "loading.tip.sw.06": {
     "en": "A drop's beacon blinks faster as its ground timer runs out.",
     "tr": "Yerdeki silahın işareti, süresi azaldıkça daha hızlı yanıp söner."
+  },
+  "loading.tip.sw.07": {
+    "en": "Hold fire to charge Raiju. The orb's hit starts a chain of up to eight enemies.",
+    "tr": "Raiju'yu şarj etmek için ateşi basılı tut. Küre vurunca zincir sekiz düşmana dek sıçrar."
   },
   "loading.tip.tier.01": {
     "en": "A zombie deals damage only when its swing lands. Contact alone does nothing.",
@@ -2764,8 +2804,8 @@
     "tr": "KOŞU {value}. ROUNDDA BİTTİ"
   },
   "results.footer.none": {
-    "en": "Rewards are granted automatically. There is nothing to claim.",
-    "tr": "Ödüller otomatik verilir. Alınacak bir şey yok."
+    "en": "Rewards are granted automatically.",
+    "tr": "Ödüller otomatik verilir."
   },
   "results.gold_collected": {
     "en": "Gold Collected",
@@ -2784,16 +2824,16 @@
     "tr": "SEVİYE ATLADIN"
   },
   "results.level_up_many": {
-    "en": "LEVEL UP  x{value}",
-    "tr": "SEVİYE ATLADIN  x{value}"
+    "en": "LEVEL UP  ×{value}",
+    "tr": "SEVİYE ATLADIN  ×{value}"
   },
   "results.no_run": {
     "en": "NO RUN RECORDED",
     "tr": "KAYITLI KOŞU YOK"
   },
   "results.outcome.applied": {
-    "en": "Everything above is already saved to your profile. There is nothing to claim.",
-    "tr": "Yukarıdaki her şey profiline zaten kaydedildi. Alınacak bir şey yok."
+    "en": "Everything above is already saved to your profile.",
+    "tr": "Yukarıdaki her şey profiline zaten kaydedildi."
   },
   "results.outcome.duplicate": {
     "en": "This run was already recorded in your profile. Nothing was added twice.",
@@ -2944,12 +2984,12 @@
     "tr": "TÜRKÇE"
   },
   "settings.note.camera": {
-    "en": "Third and first person only; switch the view in Pause. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends.",
-    "tr": "Yalnızca üçüncü ve birinci şahısta; görünümü Pause'da değiştir. Dar görüş alanı daha çok baş dönmesi yapar; Azaltılmış Hareket (Erişilebilirlik) kafa sallantısını 0'a çeker ve geçişleri keser."
+    "en": "Third and first person only; switch the view in the Pause menu. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends.",
+    "tr": "Yalnızca üçüncü ve birinci şahısta; görünümü Duraklat menüsünde değiştir. Dar görüş alanı daha çok baş dönmesi yapar; Azaltılmış Hareket (Erişilebilirlik) kafa sallantısını 0'a çeker ve geçişleri keser."
   },
   "settings.note.hints": {
-    "en": "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.",
-    "tr": "İlk üç koşuda, oyunda ve yükleme ekranlarında kısa ipuçları. Kapalıyken kurallar kalır."
+    "en": "In your first three runs, loading screens show beginner hints first. Off: rule tips only.",
+    "tr": "İlk üç koşunda yükleme ekranı önce başlangıç ipuçları gösterir. Kapalıyken yalnız kural ipuçları."
   },
   "settings.note.hud_frame": {
     "en": "On a screen wider than 16:9, the HUD's corners move in to a centred 16:9 frame.",
@@ -3018,6 +3058,14 @@
   "settings.row.master_volume": {
     "en": "MASTER VOLUME",
     "tr": "ANA SES"
+  },
+  "settings.row.music_volume": {
+    "en": "MUSIC",
+    "tr": "MÜZİK"
+  },
+  "settings.row.effects_volume": {
+    "en": "EFFECTS",
+    "tr": "EFEKTLER"
   },
   "settings.row.quality": {
     "en": "QUALITY",
@@ -3113,7 +3161,7 @@
   },
   "shop.intro.one": {
     "en": "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.",
-    "tr": "Bu round bir geliştirme al ya da önce teklifi bir kez reroll et. Harcanmayan altın sonraki rounda geçer."
+    "tr": "Bu round bir geliştirme al ya da önce teklifi bir kez yeniden çek. Harcanmayan altın sonraki rounda geçer."
   },
   "shop.maxed.body": {
     "en": "Every upgrade branch is already at its maximum tier, so this round has no card to offer. Your gold carries into the next round.",
@@ -3153,7 +3201,7 @@
   },
   "shop.note.choose_one": {
     "en": "Choose one upgrade, or reroll once, then continue.",
-    "tr": "Bir geliştirme seç ya da bir kez reroll yap, sonra devam et."
+    "tr": "Bir geliştirme seç ya da bir kez yeniden çek, sonra devam et."
   },
   "shop.note.no_gold": {
     "en": "No gold collected this round, so nothing can be bought yet. A new offer appears next round.",
@@ -3217,11 +3265,11 @@
   },
   "shop.refuse.reroll_failed": {
     "en": "The reroll could not be built. Nothing was spent and your reroll is kept.",
-    "tr": "Reroll oluşturulamadı. Hiçbir şey harcanmadı ve reroll hakkın duruyor."
+    "tr": "Yeniden çekme yapılamadı. Hiçbir şey harcanmadı ve yeniden çekme hakkın duruyor."
   },
   "shop.refuse.reroll_gold": {
     "en": "Not enough gold to reroll. Nothing was spent.",
-    "tr": "Reroll için altın yetmiyor. Hiçbir şey harcanmadı."
+    "tr": "Yeniden çekmek için altın yetmiyor. Hiçbir şey harcanmadı."
   },
   "shop.refuse.reroll_locked": {
     "en": "The offer is locked after a purchase. Nothing was spent.",
@@ -3229,43 +3277,43 @@
   },
   "shop.refuse.reroll_nothing": {
     "en": "There is no other upgrade to swap in. Nothing was spent and your reroll is kept.",
-    "tr": "Yerine konacak başka geliştirme yok. Hiçbir şey harcanmadı ve reroll hakkın duruyor."
+    "tr": "Yerine konacak başka geliştirme yok. Hiçbir şey harcanmadı ve yeniden çekme hakkın duruyor."
   },
   "shop.refuse.reroll_other": {
     "en": "That reroll could not be completed. Nothing was spent.",
-    "tr": "O reroll tamamlanamadı. Hiçbir şey harcanmadı."
+    "tr": "Yeniden çekme tamamlanamadı. Hiçbir şey harcanmadı."
   },
   "shop.refuse.reroll_used": {
     "en": "You already rerolled this round. Nothing was spent.",
-    "tr": "Bu round zaten reroll yaptın. Hiçbir şey harcanmadı."
+    "tr": "Bu round zaten yeniden çektin. Hiçbir şey harcanmadı."
   },
   "shop.reroll": {
     "en": "REROLL",
-    "tr": "REROLL"
+    "tr": "YENİDEN ÇEK"
   },
   "shop.reroll.cost": {
     "en": "REROLL · {value} GOLD · ONCE",
-    "tr": "REROLL · {value} ALTIN · BİR KEZ"
+    "tr": "YENİDEN ÇEK · {value} ALTIN · BİR KEZ"
   },
   "shop.reroll.locked": {
     "en": "REROLL · LOCKED",
-    "tr": "REROLL · KİLİTLİ"
+    "tr": "YENİDEN ÇEK · KİLİTLİ"
   },
   "shop.reroll.need": {
     "en": "REROLL · NEED {value} GOLD",
-    "tr": "REROLL · {value} ALTIN GEREK"
+    "tr": "YENİDEN ÇEK · {value} ALTIN GEREK"
   },
   "shop.reroll.nothing": {
     "en": "REROLL · NOTHING TO SWAP",
-    "tr": "REROLL · DEĞİŞECEK KART YOK"
+    "tr": "YENİDEN ÇEK · DEĞİŞECEK KART YOK"
   },
   "shop.reroll.unavailable": {
     "en": "REROLL · UNAVAILABLE",
-    "tr": "REROLL · KULLANILAMAZ"
+    "tr": "YENİDEN ÇEK · KULLANILAMAZ"
   },
   "shop.reroll.used": {
     "en": "REROLL · USED THIS ROUND",
-    "tr": "REROLL · BU ROUND KULLANILDI"
+    "tr": "YENİDEN ÇEK · BU ROUND KULLANILDI"
   },
   "shop.spent": {
     "en": "SPENT THIS ROUND",
@@ -3301,7 +3349,7 @@
   },
   "shop.state.picks_used": {
     "en": "All picks for this round are used. Continue to the next round.",
-    "tr": "Bu round'un tüm seçimleri kullanıldı. Sonraki rounda devam et."
+    "tr": "Bu roundun tüm seçimleri kullanıldı. Sonraki rounda devam et."
   },
   "shop.state.purchased": {
     "en": "Bought this round. It is already applied to your weapon.",
@@ -3397,11 +3445,11 @@
   },
   "shop.intro.many": {
     "en": "Buy up to {count} upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round.",
-    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Harcanmayan altın sonraki rounda geçer."
+    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez yeniden çek. Harcanmayan altın sonraki rounda geçer."
   },
   "shop.note.choose_many": {
     "en": "Choose up to {count} upgrades, or reroll once first, then continue.",
-    "tr": "En çok {count} geliştirme seç ya da önce bir kez reroll et, sonra devam et."
+    "tr": "En çok {count} geliştirme seç ya da önce bir kez yeniden çek, sonra devam et."
   },
   "shop.refuse.limit": {
     "en": "All {count} picks for this round are used. The offer is locked; nothing was spent.",
@@ -3564,7 +3612,7 @@
     "tr": "Geliştirme dalı - artık round sonunda sunulabilir"
   },
   "results.reward.weapon_roster": {
-    "en": "Classic weapon - opens at profile level {level} (weapon roster)",
+    "en": "Classic weapon - unlocks at profile level {level} (weapon roster)",
     "tr": "Klasik silah - {level}. profil seviyesinde açılır (silah listesi)"
   },
   "profile.content.title_first_blood.detail": {
@@ -3779,9 +3827,17 @@
     "en": "{value} HP/s",
     "tr": "{value} HP/sn"
   },
+  "stat.fmt.deg_per_second": {
+    "en": "{value}°/s",
+    "tr": "{value}°/sn"
+  },
   "results.killer.self": {
     "en": "YOUR OWN {weapon}",
     "tr": "KENDİ {weapon} ATIŞIN"
+  },
+  "results.play_again": {
+    "en": "PLAY AGAIN",
+    "tr": "TEKRAR OYNA"
   },
   "hud.death.self": {
     "en": "your own {weapon}",
@@ -3953,7 +4009,7 @@
   },
   "profile.content.title_executioner.name": {
     "en": "Executioner",
-    "tr": "Cellat"
+    "tr": "Executioner"
   },
   "profile.content.title_ironclad.name": {
     "en": "Ironclad",
@@ -3977,7 +4033,7 @@
   },
   "shop.intro.late": {
     "en": "Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first.",
-    "tr": "Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et."
+    "tr": "Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez yeniden çek."
   },
   "shop.intro.late_last": {
     "en": "Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks.",
@@ -3985,7 +4041,7 @@
   },
   "shop.intro.late_next": {
     "en": "Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks.",
-    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki roundda geç round bonusu var: {bonus} seçim."
+    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez yeniden çek. Sonraki roundda geç round bonusu var: {bonus} seçim."
   },
   "profile.progress.max": {
     "en": "Max level reached",
@@ -4000,28 +4056,28 @@
     "tr": "Sağ Çubuk"
   },
   "input.control.leftStickPress": {
-    "en": "Left Stick Press",
-    "tr": "Sol Çubuk Basışı"
+    "en": "LS",
+    "tr": "LS"
   },
   "input.control.rightStickPress": {
-    "en": "Right Stick Press",
-    "tr": "Sağ Çubuk Basışı"
+    "en": "RS",
+    "tr": "RS"
   },
   "input.control.leftTrigger": {
-    "en": "Left Trigger",
-    "tr": "Sol Tetik"
+    "en": "LT",
+    "tr": "LT"
   },
   "input.control.rightTrigger": {
-    "en": "Right Trigger",
-    "tr": "Sağ Tetik"
+    "en": "RT",
+    "tr": "RT"
   },
   "input.control.leftShoulder": {
-    "en": "Left Shoulder",
-    "tr": "Sol Omuz"
+    "en": "LB",
+    "tr": "LB"
   },
   "input.control.rightShoulder": {
-    "en": "Right Shoulder",
-    "tr": "Sağ Omuz"
+    "en": "RB",
+    "tr": "RB"
   },
   "input.control.dpad": {
     "en": "D-Pad",
@@ -4029,39 +4085,39 @@
   },
   "input.control.dpad.up": {
     "en": "D-Pad Up",
-    "tr": "Yön Yukarı"
+    "tr": "Yukarı Yön Tuşu"
   },
   "input.control.dpad.down": {
     "en": "D-Pad Down",
-    "tr": "Yön Aşağı"
+    "tr": "Aşağı Yön Tuşu"
   },
   "input.control.dpad.left": {
     "en": "D-Pad Left",
-    "tr": "Yön Sol"
+    "tr": "Sol Yön Tuşu"
   },
   "input.control.dpad.right": {
     "en": "D-Pad Right",
-    "tr": "Yön Sağ"
+    "tr": "Sağ Yön Tuşu"
   },
   "input.control.leftButton": {
-    "en": "Left Button",
+    "en": "Left Click",
     "tr": "Sol Tık"
   },
   "input.control.rightButton": {
-    "en": "Right Button",
+    "en": "Right Click",
     "tr": "Sağ Tık"
   },
   "input.control.middleButton": {
-    "en": "Middle Button",
+    "en": "Middle Click",
     "tr": "Orta Tık"
   },
   "input.control.forwardButton": {
-    "en": "Forward",
-    "tr": "İleri Tuşu"
+    "en": "Mouse Forward",
+    "tr": "Fare İleri"
   },
   "input.control.backButton": {
-    "en": "Back",
-    "tr": "Geri Tuşu"
+    "en": "Mouse Back",
+    "tr": "Fare Geri"
   },
   "input.control.scroll": {
     "en": "Scroll",
@@ -4080,11 +4136,11 @@
     "tr": "Sağ Shift"
   },
   "input.control.leftCtrl": {
-    "en": "Left Control",
+    "en": "Left Ctrl",
     "tr": "Sol Ctrl"
   },
   "input.control.rightCtrl": {
-    "en": "Right Control",
+    "en": "Right Ctrl",
     "tr": "Sağ Ctrl"
   },
   "input.control.leftAlt": {
@@ -4094,6 +4150,110 @@
   "input.control.rightAlt": {
     "en": "Right Alt",
     "tr": "Sağ Alt"
+  },
+  "input.control.buttonSouth": {
+    "en": "A",
+    "tr": "A"
+  },
+  "input.control.buttonEast": {
+    "en": "B",
+    "tr": "B"
+  },
+  "input.control.buttonWest": {
+    "en": "X",
+    "tr": "X"
+  },
+  "input.control.buttonNorth": {
+    "en": "Y",
+    "tr": "Y"
+  },
+  "input.control.leftStick.up": {
+    "en": "Left Stick Up",
+    "tr": "Sol Çubuk Yukarı"
+  },
+  "input.control.leftStick.down": {
+    "en": "Left Stick Down",
+    "tr": "Sol Çubuk Aşağı"
+  },
+  "input.control.leftStick.left": {
+    "en": "Left Stick Left",
+    "tr": "Sol Çubuk Sola"
+  },
+  "input.control.leftStick.right": {
+    "en": "Left Stick Right",
+    "tr": "Sol Çubuk Sağa"
+  },
+  "input.control.rightStick.up": {
+    "en": "Right Stick Up",
+    "tr": "Sağ Çubuk Yukarı"
+  },
+  "input.control.rightStick.down": {
+    "en": "Right Stick Down",
+    "tr": "Sağ Çubuk Aşağı"
+  },
+  "input.control.rightStick.left": {
+    "en": "Right Stick Left",
+    "tr": "Sağ Çubuk Sola"
+  },
+  "input.control.rightStick.right": {
+    "en": "Right Stick Right",
+    "tr": "Sağ Çubuk Sağa"
+  },
+  "input.control.start": {
+    "en": "Menu",
+    "tr": "Menü"
+  },
+  "input.control.select": {
+    "en": "View",
+    "tr": "Görünüm"
+  },
+  "input.control.escape": {
+    "en": "Esc",
+    "tr": "Esc"
+  },
+  "input.control.enter": {
+    "en": "Enter",
+    "tr": "Enter"
+  },
+  "input.control.numpadEnter": {
+    "en": "Num Enter",
+    "tr": "Num Enter"
+  },
+  "input.control.tab": {
+    "en": "Tab",
+    "tr": "Tab"
+  },
+  "input.control.backspace": {
+    "en": "Backspace",
+    "tr": "Backspace"
+  },
+  "input.control.capsLock": {
+    "en": "Caps Lock",
+    "tr": "Caps Lock"
+  },
+  "input.control.upArrow": {
+    "en": "Up Arrow",
+    "tr": "Yukarı Ok"
+  },
+  "input.control.downArrow": {
+    "en": "Down Arrow",
+    "tr": "Aşağı Ok"
+  },
+  "input.control.leftArrow": {
+    "en": "Left Arrow",
+    "tr": "Sol Ok"
+  },
+  "input.control.rightArrow": {
+    "en": "Right Arrow",
+    "tr": "Sağ Ok"
+  },
+  "input.control.scroll.up": {
+    "en": "Scroll Up",
+    "tr": "Tekerlek Yukarı"
+  },
+  "input.control.scroll.down": {
+    "en": "Scroll Down",
+    "tr": "Tekerlek Aşağı"
   },
   "shop.report.standard": {
     "en": "STANDARD {value}",

@@ -73,6 +73,95 @@ namespace DD.Prototype.UI
         private Vector3 _parallaxCameraAt;
         private float _parallaxTime = -1f;
 
+        // ---- WP-105 (R4 UX audit, part D: HUD legibility - AUDIT-VISUAL §15 V-52 / V-53 / V-41)
+
+        /// <summary>
+        /// V-52: the words the player has to catch mid-fight - EMPTY / RELOAD with the reload key, LOW AMMO, the health LOW,
+        /// SURROUNDED / BEHIND YOU / ELITE NEARBY and SPECIAL WEAPON ENDING (and SUSPENDED, which shares the ammo word's slot) -
+        /// are at least this tall at 1080p (ref px; Body 18 × 1.1), before TextScale. They were Label 15 (≈ 13 px as drawn).
+        /// Each carries the HUD halo (UiHudInk.ApplyHalo). All of them show in the danger posture (scale 1) but SUSPENDED.
+        /// </summary>
+        public const float AlertWordPx = 20f;
+
+        /// <summary>
+        /// V-53: the secondary lines - the weapon and build line, "/ max" beside the health and the magazine, "recovery in" -
+        /// are at least this tall as DRAWN at 1080p, in the halo. Those in the health and weapon clusters are drawn at
+        /// <see cref="CalmPostureScale"/> in calm, so their size is this over it (16 → 18); the gold numeral (NumericM 22, no
+        /// posture) only takes the halo.
+        /// </summary>
+        public const float SecondaryTextPx = 16f;
+
+        /// <summary>V-52: the reload key's chip is this share of the alert word's size (a 30 px chip round a 20 px word).</summary>
+        public const float AlertPromptShare = 1.5f;
+
+        /// <summary>The calm posture's draw scale of the health and weapon clusters (tests: a secondary line's drawn size).</summary>
+        public const float CalmPostureScale = CalmScale;
+
+        /// <summary>The "recovery in" / death line's centre above the health cluster's bottom (the old 18 px row's middle).</summary>
+        public const float HealthStateCentre = 9f;
+
+        /// <summary>The weapon and build line's bottom in its cluster (unchanged since 8-R; the line box grows upward).</summary>
+        public const float WeaponCalmBottom = 118f;
+
+        /// <summary>
+        /// The line's bottom for a box <paramref name="height"/> tall: <see cref="WeaponCalmBottom"/>, lowered so the box never
+        /// passes the cluster's top (r4-tests: Mac UI 1.2 × text 1.25 drew it 6.4 px over the 140 px cluster).
+        /// </summary>
+        public static float WeaponCalmBottomFor(float height)
+        {
+            return Mathf.Min(WeaponCalmBottom, WeaponClusterHeight - height);
+        }
+
+        private Vector2 _captionRow;
+        private float _weaponCalmHeight;
+
+        /// <summary>V-52: the alert words' font size at <paramref name="textScale"/> (clamped 1–1.25 like the kit's Label).</summary>
+        public static float AlertWordSize(float textScale)
+        {
+            return Mathf.Round(AlertWordPx * TextShare(textScale));
+        }
+
+        /// <summary>
+        /// V-53: a secondary line's font size at <paramref name="textScale"/>; <paramref name="calmDrawn"/>: it lives in a posture
+        /// cluster, drawn at CalmScale in calm - the size is raised so the DRAWN size holds <see cref="SecondaryTextPx"/>.
+        /// </summary>
+        public static float SecondaryTextSize(float textScale, bool calmDrawn)
+        {
+            // r4-tests (HudCoverageTests XXXVIII 1.519 % > 1.5 % with 18): rounded, not raised - 17 × 0.94 draws 15.98 px, the floor
+            // within half a pixel, and the halo'd lines stay under the user's coverage cap.
+            return Mathf.Round(SecondaryTextPx * TextShare(textScale) / (calmDrawn ? CalmScale : 1f));
+        }
+
+        /// <summary>V-52: the reload key chip for an alert word of <paramref name="alertSize"/> (never under the old 22).</summary>
+        public static float AlertPromptSize(float alertSize)
+        {
+            return Mathf.Max(ReloadPromptSize, Mathf.Round(alertSize * AlertPromptShare));
+        }
+
+        /// <summary>One line's box for a label of <paramref name="size"/> in <paramref name="face"/>'s face (its line, on the 4 px grid).</summary>
+        public static float HudLineHeight(float size, UiType face = UiType.Label)
+        {
+            return Mathf.Ceil(size * UiFactory.FaceLineRatio(face) / 4f) * 4f;
+        }
+
+        private static float TextShare(float textScale)
+        {
+            return Mathf.Clamp(textScale, 1f, 1.25f);
+        }
+
+        /// <summary>V-52 / V-53: a HUD word at <paramref name="size"/> in the halo (build time only; the size first, the ink after).</summary>
+        private static TMP_Text Legible(TMP_Text text, float size)
+        {
+            if (text == null)
+            {
+                return null;
+            }
+
+            text.fontSize = size;
+            UiHudInk.ApplyHalo(text);
+            return text;
+        }
+
         /// <summary>The HUD's corner clusters (the safe-zone and coverage tests; nothing else reads it).</summary>
         public IReadOnlyList<RectTransform> Clusters => _clusters;
 
@@ -321,14 +410,16 @@ namespace DD.Prototype.UI
             valueRect.offsetMin = new Vector2(44f, 0f);
             _goldValue = _goldCounter.ValueText;
             InkAll(_goldCounter.gameObject);
+            // WP-105 V-53 (the audit's 2.19:1 over the light stone): the gold keeps its StateGold and its 22, in the halo.
+            UiHudInk.ApplyHalo(_goldValue);
 
             // 08.10 (AD SHOULD-2: "+25" read small and faint): the counter's own numeric face at GoldDeltaCapShare of its size
-            // (18 of 22 - the cap ≥ 0.75 × the counter's), bold, in the HUD ink outline - its contrast is UiKitContrast's
-            // "HUD currency counter" pair (StateGold on the ink over a white world).
+            // (18 of 22 - the cap ≥ 0.75 × the counter's), bold, in the HUD ink - its contrast is UiKitContrast's "HUD currency
+            // counter" pair (StateGold on the ink over a white world). WP-105: the counter's halo, as the numeral it adds to.
             _goldDelta = InkText("Delta", root, string.Empty, UiType.NumericS, UiColor.StateGold, TextAnchor.MiddleLeft);
             _goldDelta.fontSize = Mathf.Round(UiTokens.FontSize(GoldCounterType) * GoldDeltaCapShare);
             _goldDelta.fontStyle = FontStyles.Bold;
-            UiHudInk.Apply(_goldDelta);
+            UiHudInk.ApplyHalo(_goldDelta);
             _goldDeltaHome = new Vector2(112f, 0f);
             Place(_goldDelta.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _goldDeltaHome, new Vector2(72f, UiFactory.LineHeight(GoldCounterType)));
             _goldDelta.canvasRenderer.SetAlpha(0f);
@@ -708,16 +799,24 @@ namespace DD.Prototype.UI
             Place(_healthValue.rectTransform, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(38f, row), new Vector2(valueWidth, band));
             float after = 38f + valueWidth + 6f;
 
+            // WP-105 V-53: "/ max" at the secondary size as drawn in calm (it is calm-only), in the halo; V-52: LOW at the
+            // alert size, in the halo, its box the word's own width and line.
+            float secondary = SecondaryTextSize(UiTokens.TextScale, true);
+            float alert = AlertWordSize(UiTokens.TextScale);
             RectTransform maxCalm = UiFactory.NewRect("MaxCalm", root);
-            Place(maxCalm, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(after, row - 4f), new Vector2(72f, band * 0.6f));
+            Place(maxCalm, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(after, row - 4f),
+                new Vector2(72f, Mathf.Max(band * 0.6f, HudLineHeight(secondary, UiType.NumericS))));
             _healthMaxText = InkText("Max", maxCalm, string.Empty, UiType.NumericS, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            Legible(_healthMaxText, secondary);
             UiFactory.Fill(_healthMaxText.rectTransform);
             _calmOnly.Add(UiFactory.Group(maxCalm.gameObject));
 
             // LOW takes the "/ max" place (T2 hides whenever health is low - low is danger).
             _healthLowWord = InkText("Low", root, UiStrings.Get("hud.health.low", "LOW"), UiType.Label, UiColor.StateDanger, TextAnchor.MiddleLeft);
             _healthLowWord.fontStyle = FontStyles.Bold;
-            Place(_healthLowWord.rectTransform, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(after, row), new Vector2(72f, band * 0.6f));
+            Legible(_healthLowWord, alert);
+            float lowWidth = Mathf.Max(72f, Mathf.Ceil(_healthLowWord.GetPreferredValues(_healthLowWord.text).x) + 4f);
+            Place(_healthLowWord.rectTransform, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(after, row), new Vector2(lowWidth, HudLineHeight(alert)));
             _healthLowWord.gameObject.SetActive(false);
 
             // The stroke on the back plane: ink rim, cream ghost track, lost-value ghost, fill; leaning toward the centre.
@@ -743,8 +842,10 @@ namespace DD.Prototype.UI
             _healthBar.EnableSegments(10);
             BuildHealthJuice(stroke, fill, rim, strokeLength, strokeHeight);   // WP-094: H1 chunks, H4 glow / wet band, H5 rim
 
+            // WP-105 V-53: "recovery in" (and the death line) at the secondary size in the halo, centred where the 18 px row was.
             _healthState = InkText("State", root, string.Empty, UiType.Caption, UiColor.AccentMoss, TextAnchor.MiddleLeft);
-            Place(_healthState.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(320f, 18f));
+            Legible(_healthState, secondary);
+            Place(_healthState.rectTransform, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(0f, HealthStateCentre), new Vector2(320f, HudLineHeight(secondary)));
         }
 
         // ---- bottom-right weapon: the lacquer ring, the count, the ladder on its brush
@@ -777,10 +878,14 @@ namespace DD.Prototype.UI
             float edge = -(WeaponRing + RingGap);
             BuildInkAmmo(root, host, back, edge);
 
-            // T2 (calm only): the weapon and its build on one line (AD 8-R SHOULD-A1).
+            // T2 (calm only): the weapon and its build on one line (AD 8-R SHOULD-A1). WP-105 V-53 (the audit's 1.84:1): at the
+            // secondary size as drawn in calm, in the halo; its box the line of that size (LayWeaponCluster lays it).
+            float secondary = SecondaryTextSize(UiTokens.TextScale, true);
+            _weaponCalmHeight = HudLineHeight(secondary);
             RectTransform calm = UiFactory.NewRect("WeaponCalm", root);
-            Place(calm, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(edge, 118f), new Vector2(340f, UiFactory.LineHeight(UiType.Caption)));   // WP-081 B4 (U2): the caption's line, not 18 (LayWeaponCluster too)
+            Place(calm, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(edge, WeaponCalmBottomFor(_weaponCalmHeight)), new Vector2(340f, _weaponCalmHeight));
             _classicName = InkText("Name", calm, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
+            Legible(_classicName, secondary);
             UiFactory.Fill(_classicName.rectTransform);
             _calmOnly.Add(UiFactory.Group(calm.gameObject));
             _weaponCalm = calm;
@@ -807,6 +912,12 @@ namespace DD.Prototype.UI
             _ammoLowWord = UiStrings.Get("hud.ammo.low", "LOW AMMO");
             _ammoValue = _ammoCounter.ValueText;
             InkAll(_ammoCounter.gameObject);
+            // WP-105 V-53: "/ 30" (the counter's Max label) at the secondary size as drawn in calm, in the halo.
+            Transform ammoMax = _ammoCounter.transform.Find("Max");
+            if (ammoMax != null)
+            {
+                Legible(ammoMax.GetComponent<TMP_Text>(), SecondaryTextSize(UiTokens.TextScale, true));
+            }
 
             RectTransform under = UiFactory.NewRect("Underline", back);
             Place(under, anchor, new Vector2(0f, 0.5f), new Vector2(ladderLeft - 8f, 20f), new Vector2(ladderWidth + 16f, 14f));
@@ -825,11 +936,25 @@ namespace DD.Prototype.UI
             _ladderWidth = ladderWidth;
             BuildAmmoJuice(ladder, back);   // WP-094: A3 preview, A4 group, A1 spark, A2 casings, A6 ring kick
 
+            // WP-105 V-52 (the audit: RELOAD 6.90:1 / LOW AMMO 6.47:1 at ≈ 13 px): the state word at the alert size in the halo,
+            // the reload key's chip AlertPromptShare of it with its letter at the word's size; the row is the taller of the two.
+            float alert = AlertWordSize(UiTokens.TextScale);
+            float promptSize = AlertPromptSize(alert);
+            _captionRow = new Vector2(220f, Mathf.Max(promptSize + 6f, HudLineHeight(alert)));
             _reloadCaption = InkText("ReloadCaption", host, string.Empty, UiType.Label, UiColor.BarReload, TextAnchor.MiddleLeft);
             _reloadCaption.fontStyle = FontStyles.Bold;
+            Legible(_reloadCaption, alert);
             RectTransform captionRow = _reloadCaption.rectTransform;
-            Place(captionRow, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
-            _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
+            Place(captionRow, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), _captionRow);
+            _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, promptSize);
+            Transform keyLetter = _reloadPrompt.transform.Find("Text");
+            TMP_Text key = keyLetter != null ? keyLetter.GetComponent<TMP_Text>() : null;
+            if (key != null)
+            {
+                key.fontSize = alert;
+                _reloadPrompt.Refresh();   // the cap re-measures its letter at the new size (UiPrompt: never per frame)
+            }
+
             // WP-094 (feel contract §4.8): the caption reads EMPTY, or RELOAD / DOLDUR after an empty pull - the key sits past the wider.
             float captionWords = Mathf.Max(_reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.empty", "EMPTY")).x,
                 _reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.reload_hint", "RELOAD")).x);
@@ -841,7 +966,8 @@ namespace DD.Prototype.UI
 
             TMP_Text suspended = InkText("Suspended", root, UiStrings.Get("hud.special.suspended", "SUSPENDED"), UiType.Label, UiColor.StateWarning, TextAnchor.MiddleLeft);
             suspended.fontStyle = FontStyles.Bold;
-            Place(suspended.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
+            Legible(suspended, alert);
+            Place(suspended.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), _captionRow);
             _suspendedChip = suspended.gameObject;
             _suspendedRect = suspended.rectTransform;
             _suspendedChip.SetActive(false);
@@ -960,7 +1086,7 @@ namespace DD.Prototype.UI
             Fade(underline, 0.8f);
             TMP_Text words = InkText("Text", row, UiStrings.Get("hud.special.ending_banner", "SPECIAL WEAPON ENDING"), UiType.Label, UiColor.StateDanger, TextAnchor.MiddleCenter);
             words.fontStyle = FontStyles.Bold;
-            UiHudInk.Apply(words);
+            Legible(words, AlertWordSize(UiTokens.TextScale));   // WP-105 V-52: a warning read mid-fight
             UiFactory.Fill(words.rectTransform);
             return row.gameObject;
         }
@@ -969,7 +1095,10 @@ namespace DD.Prototype.UI
 
         private void BuildInkThreatChips()
         {
-            RectTransform row = InkRoot("ThreatRow", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -ThreatRowTop), new Vector2(600f, 30f));
+            // WP-105 V-52 (SURROUNDED measured 2.66:1 at ≈ 14 px): the words at the alert size in the halo (InkThreatChip); the
+            // row stays at the top centre from InkMargin and grows down to the words' line when the TextScale needs it.
+            float chipHeight = Mathf.Max(ThreatChipHeight, HudLineHeight(AlertWordSize(UiTokens.TextScale)));
+            RectTransform row = InkRoot("ThreatRow", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -ThreatRowTop), new Vector2(600f, chipHeight));
             _threatRow = row.gameObject;
 
             _threatSlots[0] = InkThreatChip(row, UiStrings.Get("hud.threat.surrounded", "SURROUNDED"), "Threat.Surrounded", UiColor.StateDanger);
@@ -986,7 +1115,7 @@ namespace DD.Prototype.UI
             for (int i = 0; i < _threatSlots.Length; i++)
             {
                 ThreatSlot slot = _threatSlots[i];
-                slot.Rect.sizeDelta = new Vector2(width, 30f);
+                slot.Rect.sizeDelta = new Vector2(width, chipHeight);
                 slot.Home = new Vector2(i * (width + (int)UiSpace.L), 0f);
                 slot.Rect.anchoredPosition = slot.Home;
                 Transform underline = slot.Rect.Find("Underline");
@@ -998,8 +1127,11 @@ namespace DD.Prototype.UI
                 slot.Rect.gameObject.SetActive(false);
             }
 
-            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.L * 2f, 30f);
+            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.L * 2f, chipHeight);
         }
+
+        /// <summary>The threat row's least height (its 8-R line); WP-105: the alert words' line when that is taller.</summary>
+        private const float ThreatChipHeight = 30f;
 
         private ThreatSlot InkThreatChip(RectTransform row, string text, string glyph, UiColor colour)
         {
@@ -1015,7 +1147,7 @@ namespace DD.Prototype.UI
             Place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(24f, 24f));
             TMP_Text label = InkText("Text", chip, text, UiType.Label, colour, TextAnchor.MiddleLeft);
             label.fontStyle = FontStyles.Bold;
-            UiHudInk.Apply(label);
+            Legible(label, AlertWordSize(UiTokens.TextScale));   // WP-105 V-52: the alert size, in the halo (the slot is measured after)
             RectTransform labelRect = UiFactory.Fill(label.rectTransform);
             labelRect.offsetMin = new Vector2(30f, 0f);
             return new ThreatSlot { Rect = chip, Group = UiFactory.Group(chip.gameObject), Label = label, Glyph = icon };
@@ -1098,6 +1230,69 @@ namespace DD.Prototype.UI
                     _backPlanes[i].anchoredPosition = _parallax * _backPlaneDepth[i];
                 }
             }
+        }
+
+        // ================================================================ WP-105 V-41: the pause hides the HUD
+
+        private bool _pauseHidden;
+        private CanvasGroup _hudGroup;
+
+        /// <summary>The HUD stands hidden under the pause (tests, captures).</summary>
+        public bool HiddenForPause => _pauseHidden;
+
+        /// <summary>The HUD canvas's group - the one the entrance fade and the death dim drive too (tests, captures).</summary>
+        public CanvasGroup HudGroup
+        {
+            get
+            {
+                if (_hudGroup == null && Canvas != null)
+                {
+                    _hudGroup = UiFactory.Group(Canvas.gameObject);
+                }
+
+                return _hudGroup;
+            }
+        }
+
+        /// <summary>
+        /// V-41: whether the HUD hides for <paramref name="paused"/> in <paramref name="phase"/> - under the pause overlay, but
+        /// never in the death beat (the death dim owns the HUD's group then; PauseScreen.CanOpen refuses that phase anyway).
+        /// </summary>
+        public static bool HiddenUnderPause(bool paused, DD.Prototype.Rounds.RunPhase phase)
+        {
+            return paused && phase != DD.Prototype.Rounds.RunPhase.Dead;
+        }
+
+        /// <summary>
+        /// WP-105 V-41 (R4 audit: the pause's MAIN MENU sat on the health readout - 15-pause, x 118–291 over "100" at x 68–120):
+        /// while the pause overlay is up (UiNavigation.IsPaused, the flag PauseScreen.SetPaused writes - read here, nothing
+        /// added to the pause) the whole HUD fades to α 0 over Fast (Exit) and returns over Fast (Settle) when it closes; Decor,
+        /// so reduced motion cuts. Under the pause's scrim the HUD carried nothing the pause's own run column does not. Called
+        /// once a frame; acts only on a change (one compare otherwise, nothing allocated).
+        /// </summary>
+        private void UpdatePauseHide()
+        {
+            DD.Prototype.Rounds.RunPhase phase = DD.Prototype.Rounds.RunEvents.Current.Phase;
+            bool hide = HiddenUnderPause(UiNavigation.IsPaused, phase);
+            if (hide == _pauseHidden)
+            {
+                return;
+            }
+
+            _pauseHidden = hide;
+            CanvasGroup group = HudGroup;
+            if (group == null)
+            {
+                return;
+            }
+
+            UiMotion.KillTarget(group, false);
+            if (!hide && phase == DD.Prototype.Rounds.RunPhase.Dead)
+            {
+                return;   // the death dim writes the group from this frame on
+            }
+
+            UiMotion.Alpha(group, hide ? 0f : 1f, UiDuration.Fast, hide ? UiEase.Exit : UiEase.Settle, UiMotionClass.Decor, 0f, UiClock.Unscaled, GetInstanceID());
         }
 
         // ================================================================ the edge marker's clear path (AD 8c MUST-2)
@@ -1279,10 +1474,12 @@ namespace DD.Prototype.UI
                 }
             }
 
-            Vector2 row = new Vector2(220f, ReloadPromptSize + 6f);
+            // WP-105: the rows keep their places; their boxes are the alert row and the secondary line BuildInkAmmo /
+            // BuildRingWeapon measured (the same in every mode).
+            Vector2 row = _captionRow;
             Place(_reloadCaption.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
             Place(_suspendedRect, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
-            Place(_weaponCalm, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f), new Vector2(mirrored ? FpCountInset : edge, 118f), new Vector2(340f, UiFactory.LineHeight(UiType.Caption)));
+            Place(_weaponCalm, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f), new Vector2(mirrored ? FpCountInset : edge, WeaponCalmBottomFor(_weaponCalmHeight)), new Vector2(340f, _weaponCalmHeight));
             _classicName.alignment = UiFactory.Align(mirrored ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight);
         }
 

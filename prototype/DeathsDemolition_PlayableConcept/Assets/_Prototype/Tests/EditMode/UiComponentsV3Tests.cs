@@ -689,7 +689,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(endRun.Destructive);
             Assert.AreEqual("Menu.EndRun", endRun.ConfirmIcon, "END RUN ikonla");
             Assert.AreEqual("pause.confirm.end", endRun.ConfirmKey);
-            Assert.AreEqual("pause.confirm.keep", endRun.CancelKey, "güvenli eylem KEEP PLAYING");
+            // WP-105 (NICE-4): one action, one name - the safe action is the panel's RESUME (it was KEEP PLAYING / OYNAMAYA DEVAM).
+            Assert.AreEqual("pause.resume", endRun.CancelKey, "güvenli eylem RESUME / DEVAM ET (tek ad)");
             Assert.IsFalse(string.IsNullOrEmpty(endRun.CancelIcon));
             Assert.AreEqual("pause.confirm.body", endRun.BodyKey, "kayıp ve korunan: gövde");
 

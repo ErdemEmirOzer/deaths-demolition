@@ -346,6 +346,29 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// R4 WP-105 (user note 6, C-00 11.10: the logo sits inside the loading ring, not above it) · the seal layer's top
+        /// for a seal that lands <paramref name="landing"/> spec px below its canonical rest (y down): the fall (before the
+        /// impact frame) is stretched so it still starts where the spec starts it (off the composition, SealY[0]) and lands
+        /// at rest + landing on the impact frame; the bounce after it keeps the spec's own amplitude, offset by landing.
+        /// landing 0 returns <paramref name="top"/> unchanged (the menu intro's canonical composition).
+        /// </summary>
+        public static float LandedTop(float top, float spec, float landing)
+        {
+            if (landing == 0f)
+            {
+                return top;
+            }
+
+            if (spec < ImpactSeconds)
+            {
+                float start = SealY[0];
+                return start + (top - start) * (SealRestTop + landing - start) / (SealRestTop - start);
+            }
+
+            return top + landing;
+        }
+
+        /// <summary>
         /// The seal layer at spec time: visible from frame 39, its bottom (the pivot, spec px from the canvas top) and its
         /// scale, linear between the spec's per-frame samples; rest after frame 54.
         /// </summary>

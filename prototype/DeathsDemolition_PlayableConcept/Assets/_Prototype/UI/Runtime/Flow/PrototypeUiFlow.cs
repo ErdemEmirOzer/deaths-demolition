@@ -306,8 +306,22 @@ namespace DD.Prototype.UI
         /// <summary>No progress for this long: a log line and the on-screen notice under the tip.</summary>
         public const float StallSeconds = 10f;
 
-        /// <summary>No progress for this long: the load error modal (QUIT only - an async load cannot be cancelled).</summary>
+        /// <summary>
+        /// No progress for this long: the load error modal. An async load cannot be cancelled, so QUIT is always there; R4
+        /// WP-105 (V-49): a load bound anywhere but the main menu also offers RETURN TO MAIN MENU (<see cref="StallOffersWayBack"/>).
+        /// </summary>
         public const float StallErrorSeconds = 60f;
+
+        /// <summary>
+        /// R4 WP-105 (V-49) · a stalled load to <paramref name="destination"/> offers RETURN TO MAIN MENU beside QUIT - every
+        /// destination but the main menu itself (there the way back is the same stuck load: QUIT only). The held load is not
+        /// cancelled (Unity cannot): it is let through as soon as it can activate and the main menu loads straight behind it,
+        /// under the closed cover (<see cref="LoadRoutine"/>). The boot's first load keeps QUIT only.
+        /// </summary>
+        public static bool StallOffersWayBack(string destination)
+        {
+            return !string.IsNullOrEmpty(destination) && destination != PrototypeScenes.MainMenu;
+        }
 
         /// <summary>AsyncOperation.progress stops at 0.9 while activation is held.</summary>
         private const float LoadedProgress = 0.9f;
@@ -450,7 +464,10 @@ namespace DD.Prototype.UI
                 // WP-098A (HAREKET-MENU M14): ScreenExiting at t0, CurtainClosed once the cover is whole (below). The close's own
                 // length - the doors' Screen 280 or the brush's Emphasis 400 - is what the load waits for.
                 UiEvents.Raise(UiEvent.ScreenExiting, sceneName);
-                closeSeconds = curtain.Close(fast);
+                // R4 WP-105 (V-49): a cover that is already whole (UiCurtain.Shut - the load before this one activated and its
+                // reveal has not begun, as on the way back from a stalled load) is cut shut, not closed again: the brush's
+                // close would start its wipe from nothing and show the scene behind it for a moment.
+                closeSeconds = curtain.Close(fast || UiCurtain.Shut);
             }
 
             float groupShownAt = -1f;
@@ -497,7 +514,8 @@ namespace DD.Prototype.UI
 
             op.allowSceneActivation = false;
 
-            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime);
+            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime, StallOffersWayBack(sceneName));
+            bool toMenu = false;   // R4 WP-105 (V-49): the player chose RETURN TO MAIN MENU on the stalled load's error
             while (true)
             {
                 float now = Time.unscaledTime;
@@ -507,7 +525,27 @@ namespace DD.Prototype.UI
                     progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
                 }
 
-                watchdog.Tick(progress, now);   // QUIT-only error at 60 s; if the load recovers, the modal goes
+                watchdog.Tick(progress, now);   // the error at 60 s (QUIT, + RETURN TO MAIN MENU off the menu); if the load recovers, the modal goes
+
+                if (!toMenu && watchdog.WayBackRequested)
+                {
+                    // V-49: the held load cannot be cancelled. The error's modal has closed (its action); the loading screen
+                    // now names the main menu, the held load activates as soon as it can (below) and the menu load follows it
+                    // under the closed cover. A fresh watchdog guards the wait: still stuck after StallErrorSeconds, the error
+                    // comes back with QUIT only (the menu is now where this goes).
+                    toMenu = true;
+                    curtain.HideError();
+                    curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.MainMenu), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.MainMenu));
+                    screen = true;
+                    groupShownAt = now;
+                    if (ringShownAt < 0f)
+                    {
+                        ringShownAt = now;   // under the ink: the key-art group is up already, never opened again over this one
+                    }
+
+                    watchdog = new LoadWatchdog(PrototypeScenes.MainMenu, curtain, now, false);
+                    Debug.Log("[UI] Stalled load of '" + sceneName + "': RETURN TO MAIN MENU chosen at +" + (now - t0).ToString("F2") + " s (progress " + progress.ToString("F2") + "); the main menu follows its activation.");
+                }
 
                 if (ink && ringShownAt < 0f && now - t0 >= InkRingSeconds && progress < LoadedProgress)
                 {
@@ -588,8 +626,13 @@ namespace DD.Prototype.UI
                 Debug.Log("[UI] Results load under the ink done at +" + (Time.unscaledTime - t0).ToString("F2") + " s (key art " + (ringShownAt >= 0f ? "shown" : "not needed") + ").");
             }
 
-            // Activation: the seal step, the world is released, the scene may activate.
-            curtain.Activate();
+            // Activation: the seal step, the world is released, the scene may activate. V-49: on the way back to the menu the
+            // label stays LOADING · MAIN MENU - this activation is not the menu's (no ENTERING, no stamp).
+            if (!toMenu)
+            {
+                curtain.Activate();
+            }
+
             ReleaseSimulation();
             op.allowSceneActivation = true;
             while (!op.isDone)
@@ -598,10 +641,11 @@ namespace DD.Prototype.UI
             }
 
             s_loading = false; // normally already cleared by OnSceneLoaded
-            if (!fast)
+            if (!fast && !toMenu)
             {
                 // Only real loads are measured: FastTransitions (batch, tests) skips the curtain's
-                // timings, and a batch run writes no load-timing.json.
+                // timings, and a batch run writes no load-timing.json. V-49: a load the player walked away from (it waited
+                // on the error modal) is not a measurement.
                 UiLoadTiming.RecordLoad(sceneName, Time.unscaledTime - loadStart, loadedAt >= 0f ? loadedAt - loadStart : -1f);
             }
 
@@ -610,6 +654,24 @@ namespace DD.Prototype.UI
             yield return null;
             if (generation != s_loadGeneration)
             {
+                yield break;
+            }
+
+            if (toMenu)
+            {
+                // V-49: the held destination went live behind the closed cover only so that the load queue could move on. The
+                // main menu load takes the doors from here (a newer generation: this routine's reveal never runs). A run that
+                // just started leaves as the pause's END RUN leaves it (no Results, its completion capability dropped).
+                Debug.Log("[UI] '" + sceneName + "' activated behind the cover; going on to the main menu (V-49).");
+                if (sceneName == PrototypeScenes.Run)
+                {
+                    AbortRunToMainMenu();
+                }
+                else
+                {
+                    GoToMainMenu();
+                }
+
                 yield break;
             }
 
@@ -664,26 +726,38 @@ namespace DD.Prototype.UI
         /// <summary>
         /// Direction §15.2 / §15.4 - one watchdog for the boot load and every later transition (M-70; c29b4108 had copied
         /// it). No progress for <see cref="StallSeconds"/>: the stall notice (and a log). No progress for
-        /// <see cref="StallErrorSeconds"/>: the QUIT-only error, which stays until the load completes. Progress coming back
-        /// before the error takes the notice away and re-arms the watchdog, so a second stall shows it again.
+        /// <see cref="StallErrorSeconds"/>: the error, which stays until the load completes - QUIT, and R4 WP-105 (V-49) with
+        /// <c>wayBack</c> also RETURN TO MAIN MENU (the safe action, first and focused), which the load routine reads as
+        /// <see cref="WayBackRequested"/>. Progress coming back before the error takes the notice away and re-arms the
+        /// watchdog, so a second stall shows it again.
         /// </summary>
         private sealed class LoadWatchdog
         {
             private readonly string _scene;
             private readonly UiCurtain _curtain;
+            private readonly bool _wayBack;
             private float _lastProgress = -1f;
             private float _lastProgressAt;
             private bool _stallShown;
 
-            public LoadWatchdog(string scene, UiCurtain curtain, float now)
+            public LoadWatchdog(string scene, UiCurtain curtain, float now, bool wayBack)
             {
                 _scene = scene;
                 _curtain = curtain;
                 _lastProgressAt = now;
+                _wayBack = wayBack;
             }
 
             /// <summary>True once the error is up; the caller takes it down when the load completes.</summary>
             public bool ErrorShown { get; private set; }
+
+            /// <summary>R4 WP-105 (V-49): the player pressed RETURN TO MAIN MENU on this watchdog's error.</summary>
+            public bool WayBackRequested { get; private set; }
+
+            private void RequestWayBack()
+            {
+                WayBackRequested = true;
+            }
 
             public void Tick(float progress, float now)
             {
@@ -709,7 +783,14 @@ namespace DD.Prototype.UI
                 else if (!ErrorShown && now - _lastProgressAt > StallErrorSeconds)
                 {
                     ErrorShown = true;
-                    _curtain.ShowError(_scene, true, null, null);
+                    if (_wayBack)
+                    {
+                        _curtain.ShowError(_scene, true, UiStrings.Get("loading.error.to_menu", "RETURN TO MAIN MENU"), RequestWayBack);
+                    }
+                    else
+                    {
+                        _curtain.ShowError(_scene, true, null, null);
+                    }
                 }
             }
         }
@@ -758,7 +839,7 @@ namespace DD.Prototype.UI
             op.allowSceneActivation = false;
             bool handedOff = false;
             float handOffAt = -1f;
-            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime);
+            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime, false);   // the first load: QUIT only (V-49 keeps it)
             while (true)
             {
                 float now = Time.unscaledTime;

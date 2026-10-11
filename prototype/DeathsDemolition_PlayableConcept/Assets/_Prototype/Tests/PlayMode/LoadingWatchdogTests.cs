@@ -127,6 +127,97 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[S09-WATCHDOG] M-70 stall notice left when progress returned at 12 s; load completed");
         }
 
+        /// <summary>
+        /// R4 WP-105 (V-49): a load to the selection screen held for 60 s opens the error with RETURN TO MAIN MENU (focused) and
+        /// QUIT. Choosing the way back closes the modal and the loading screen names the main menu at once; the held load is
+        /// not cancelled (Unity cannot) - when it lets go, it activates behind the closed cover and the main menu follows.
+        /// Nothing writes the profile and no hold outlives it.
+        /// </summary>
+        [UnityTest, Timeout(180000)]
+        public IEnumerator Takilma_AnaMenuyeDon_TakiliYukBirakilincaAnaMenuyeVarir()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiFactory.EnsureEventSystem();
+            PrototypeUiFlow.FastTransitions = false;
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f);
+            PrototypeUiFlow.ArtificialLoadSeconds = HeldLoadSeconds;
+            float requestAt = Time.realtimeSinceStartup;
+            PrototypeUiFlow.GoToSelection();
+            UiCurtain curtain = UiCurtain.Instance;
+            yield return Bekle(() => curtain.GroupVisible, 8f, "Loading group did not show.");
+            yield return null;
+            _profileHash = ProfileHash();
+            yield return Bekle(() => curtain.ErrorOpen, PrototypeUiFlow.StallErrorSeconds + 20f, "The watchdog's error did not open.");
+            Assert.GreaterOrEqual(Time.realtimeSinceStartup - requestAt, PrototypeUiFlow.StallErrorSeconds - 0.1f, "No early error.");
+
+            UiModal modal = OpenError(curtain);
+            Assert.IsNotNull(modal.Secondary, "the way back is offered off the main menu");
+            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Secondary.LabelText.text);
+            Assert.AreSame(modal.Secondary.gameObject, EventSystem.current.currentSelectedGameObject, "the way back is the safe, focused action");
+            AssertErrorOnTop(curtain);
+
+            Assert.IsTrue(ExecuteEvents.Execute(modal.Secondary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
+            yield return null;
+            yield return null;
+            Assert.IsFalse(curtain.ErrorOpen, "the way back closes the error");
+            Assert.IsTrue(curtain.GroupVisible && curtain.DeviceVisible, "the loading screen is back, ring and labels with it");
+            Assert.AreEqual(UiCurtain.DestinationFor(PrototypeScenes.MainMenu), curtain.DestinationText, "it now names the main menu");
+            Assert.IsTrue(PrototypeUiFlow.IsLoading, "the held load is still in flight (an async load cannot be cancelled)");
+            Assert.IsTrue(UiCurtain.IsCovering, "the cover stays closed");
+            Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name, "activation is still held");
+
+            // The held load lets go: Selection activates behind the cover, the main menu follows it.
+            bool sawSelection = false;
+            PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+            float deadline = Time.realtimeSinceStartup + 40f;
+            while (!(SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering)
+                   && Time.realtimeSinceStartup < deadline)
+            {
+                if (SceneManager.GetActiveScene().name == PrototypeScenes.Selection)
+                {
+                    sawSelection = true;
+                    Assert.IsTrue(UiCurtain.IsCovering, "the selection screen is never revealed on the way back");
+                }
+
+                yield return null;
+            }
+
+            Assert.IsTrue(sawSelection, "the held load activated (it was let through, not dropped)");
+            Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name, "the way back ends on the main menu");
+            Assert.IsFalse(UiCurtain.IsCovering);
+            Assert.IsFalse(curtain.ErrorOpen);
+            Assert.AreEqual(0, RunFlowClock.HoldCount);
+            Assert.AreEqual(_profileHash, ProfileHash(), "the way back writes no profile progress");
+            Debug.Log("[S09-WATCHDOG] V-49 way back: held Selection load let through, main menu reached, profile=" + _profileHash);
+        }
+
+        /// <summary>
+        /// R4 WP-105 (V-48): the load error is a canvas layer of its own (override sorting at UiCurtain.ErrorSortingOrder) on
+        /// an overlay root - above every other canvas on screen but the debug overlay, the loading logo's included.
+        /// </summary>
+        private static void AssertErrorOnTop(UiCurtain curtain)
+        {
+            Canvas layer = curtain.ErrorCanvas;
+            Assert.IsNotNull(layer, "the load error has its own canvas");
+            Assert.IsTrue(layer.overrideSorting, "its own sorting order");
+            Assert.AreEqual(UiCurtain.ErrorSortingOrder, layer.sortingOrder);
+            Assert.AreEqual(RenderMode.ScreenSpaceOverlay, layer.rootCanvas.renderMode, "drawn after every camera");
+            Assert.Greater(UiCurtain.ErrorSortingOrder, UiCurtain.LogoSortingOrder, "over the loading logo's canvas");
+            foreach (Canvas other in UnityEngine.Object.FindObjectsOfType<Canvas>())
+            {
+                if (other == layer || !other.isActiveAndEnabled || (!other.isRootCanvas && !other.overrideSorting))
+                {
+                    continue;
+                }
+
+                if (other.renderMode == RenderMode.ScreenSpaceOverlay && other.sortingOrder < UiLayer.Debug)
+                {
+                    Assert.Less(other.sortingOrder, layer.sortingOrder, other.name + " would draw over the load error");
+                }
+            }
+        }
+
         private IEnumerator ProveWatchdog(string oldScene, string destination, float requestAt)
         {
             UiCurtain curtain = UiCurtain.Instance;
@@ -156,8 +247,19 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(curtain.DeviceVisible, "The loading device steps out under the modal.");
             Assert.IsFalse(curtain.StallVisible, "The modal replaces the stall notice.");
             UiModal modal = OpenError(curtain);
-            Assert.IsNull(modal.Secondary, "A held async load offers QUIT only; it cannot be cancelled.");
+            if (PrototypeUiFlow.StallOffersWayBack(destination))
+            {
+                // R4 WP-105 (V-49): off the main menu the stalled load also offers the way back (the safe action, focused).
+                Assert.IsNotNull(modal.Secondary, "A held load bound for " + destination + " offers RETURN TO MAIN MENU beside QUIT.");
+                Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Secondary.LabelText.text);
+            }
+            else
+            {
+                Assert.IsNull(modal.Secondary, "A held load to the main menu offers QUIT only; it cannot be cancelled.");
+            }
+
             Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Primary.LabelText.text);
+            AssertErrorOnTop(curtain);
             AssertIgnoredCancel(modal);
             LogAssert.Expect(LogType.Log, new Regex("ignored: a scene is still loading"));
             PrototypeUiFlow.GoToResults();
@@ -253,6 +355,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(PrototypeUiFlow.IsLoading, "Nothing is loading: the scene never started.");
             Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
 
+            // R4 WP-105 (V-48): the error is its own canvas layer over every menu canvas (the rail dims under its ink).
+            AssertErrorOnTop(curtain);
+            // R4 WP-105 (SHOULD-13): the error owns the focus - the menu's own reclaim (PaneWatch) is turned into the error's
+            // safe action, never a control behind it; a click on the ink that emptied the selection is no way behind it either.
+            Assert.AreSame(modal, UiInput.TopModal, "the load error is the modal on top");
+            UnityEngine.UI.Selectable behind = menu.GetComponentInChildren<UnityEngine.UI.Selectable>();
+            Assert.IsNotNull(behind, "a control on the menu under the error");
+            Assert.AreSame(modal.Secondary, UiInput.ReclaimTarget(behind), "a reclaim from the menu lands on the error's safe action");
+            EventSystem.current.SetSelectedGameObject(null);   // what a click on the ink leaves behind
+            yield return null;
+            yield return null;
+            GameObject afterClick = EventSystem.current.currentSelectedGameObject;
+            Assert.IsTrue(afterClick == null || afterClick.transform.IsChildOf(modal.transform),
+                "an emptied selection never lands on the menu behind the error (" + (afterClick != null ? afterClick.name : "none") + ")");
+            UiInput.Focus(modal.Secondary);
+
             // Escape / B under the modal: the menu takes no "back" (Settings → Profile) and focus stays on the modal.
             UiInput.SimulateCancelNextFrame();
             yield return null;
@@ -265,6 +383,7 @@ namespace DD.Prototype.Tests.PlayMode
             // The safe action is the way back: a real main-menu load.
             Assert.IsTrue(ExecuteEvents.Execute(modal.Secondary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
             Assert.IsFalse(curtain.ErrorOpen, "Submit on the way back closes the modal.");
+            Assert.IsNull(UiInput.TopModal, "the closed error gives the focus back to the screens");
             _manualError = false;
             yield return Bekle(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 20f, "The way back did not reach the main menu.");
             Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);

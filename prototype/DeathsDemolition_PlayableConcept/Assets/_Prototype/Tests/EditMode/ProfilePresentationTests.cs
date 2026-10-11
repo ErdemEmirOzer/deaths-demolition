@@ -391,7 +391,7 @@ namespace DD.Prototype.Tests.EditMode
 
             vm = AchievementsViewModel.From(null, null);
             Assert.IsTrue(vm.IsEmpty, "null girdiler de güvenli");
-            StringAssert.Contains("nothing to claim", AchievementsViewModel.AutoNote);
+            StringAssert.Contains("by themselves", AchievementsViewModel.AutoNote);   // R4 WP-105 (ux-writer): no "claim" wording at all
         }
 
         // ------------------------------------------------------------ WP-022D (WP-035)

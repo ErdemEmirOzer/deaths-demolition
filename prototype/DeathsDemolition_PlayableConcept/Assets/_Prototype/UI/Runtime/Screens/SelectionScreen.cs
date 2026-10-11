@@ -1491,6 +1491,8 @@ namespace DD.Prototype.UI
                 bool selected = unlocked && id == PrototypeUiFlow.SelectedWeapon;
 
                 _weaponButtons[i].SetSelectedChoice(selected);   // the state the pad / tests read; the check glyph draws it
+                // WP-105 (SHOULD-8): SelectWeapon refuses this row with Denied - then that is the press's one voice (no Confirm).
+                _weaponButtons[i].ConfirmCue = ProfileService.IsWeaponUnlocked(id);
                 bool locked = _weaponLockWords[i] != null;
                 UiBrushKit.SetRowStatus(_weaponButtons[i], selected ? CheckGlyph : locked ? LockGlyph : null, locked ? _weaponLockWords[i] : null);
                 if (_weaponGlyphs[i] != null)

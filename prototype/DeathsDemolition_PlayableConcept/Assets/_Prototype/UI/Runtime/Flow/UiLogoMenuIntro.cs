@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -84,7 +83,7 @@ namespace DD.Prototype.UI
             _logo.Root.anchoredPosition = new Vector2(0f, -height * 0.5f);
             _logo.Impact += OnImpact;
 
-            TMP_Text title = FindTitle();
+            RectTransform title = FindTitle();
             if (title != null)
             {
                 _titleGroup = title.GetComponent<CanvasGroup>();
@@ -101,8 +100,11 @@ namespace DD.Prototype.UI
             Follow();
         }
 
-        /// <summary>The menu's title (MainMenuScreen's "Title" label), found without touching the menu's code.</summary>
-        private static TMP_Text FindTitle()
+        /// <summary>
+        /// The menu's title (MainMenuScreen's "Title": R4 WP-105 the wordmark + seal lockup, the loading logo's own art), found
+        /// without touching the menu's code.
+        /// </summary>
+        private static RectTransform FindTitle()
         {
             MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
             if (menu == null)
@@ -110,12 +112,12 @@ namespace DD.Prototype.UI
                 return null;
             }
 
-            TMP_Text[] texts = menu.GetComponentsInChildren<TMP_Text>(true);
-            for (int i = 0; i < texts.Length; i++)
+            RectTransform[] rects = menu.GetComponentsInChildren<RectTransform>(true);
+            for (int i = 0; i < rects.Length; i++)
             {
-                if (texts[i].name == "Title")
+                if (rects[i].name == "Title")
                 {
-                    return texts[i];
+                    return rects[i];
                 }
             }
 

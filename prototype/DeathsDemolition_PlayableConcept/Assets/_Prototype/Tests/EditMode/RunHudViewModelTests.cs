@@ -174,7 +174,7 @@ namespace DD.Prototype.Tests.EditMode
         public void SaglikDurumSatiri_RegenVeGeriSayim()
         {
             _vm.ApplyHealth(Saglik(50f, 100f, regen: false, untilRegen: 2.34f), 0.3f);
-            Assert.AreEqual("recovery in 2.4s", _vm.HealthStateText, "onda birlik tavana yuvarlama");
+            Assert.AreEqual("recovery in 2.4 s", _vm.HealthStateText, "onda birlik tavana yuvarlama");
             Assert.AreEqual(RunHudTone.Neutral, _vm.HealthStateTone);
 
             RunHudField f = _vm.ApplyHealth(Saglik(50f, 100f, regen: false, untilRegen: 2.31f), 0.3f);
@@ -185,6 +185,68 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(RunHudTone.Positive, _vm.HealthStateTone);
 
             _vm.ApplyHealth(Saglik(100f, 100f), 0.3f);
+            Assert.AreEqual(string.Empty, _vm.HealthStateText);
+        }
+
+        /// <summary>
+        /// WP-105 V-54 (R4 audit: "100 / 100" over "recovery in 4.3 s"): the countdown is the wait before health comes back, so it
+        /// shows only while the readout is short of its maximum. PlayerHealth keeps counting after a hit whatever heals the player
+        /// meanwhile (a pickup, a kill heal, the F1 / capture invulnerability that resets the wait with no loss).
+        /// </summary>
+        [Test]
+        public void GeriSayim_CanDoluyken_Gizli_EksikkenGorunur()
+        {
+            // Full health, the wait still running (the capture tool's invulnerable hit): no line.
+            _vm.ApplyHealth(Saglik(100f, 100f, untilRegen: 4.27f), 0.3f);
+            Assert.AreEqual(string.Empty, _vm.HealthStateText, "can dolu: geri sayım yazılmaz");
+            Assert.AreEqual(RunHudTone.Neutral, _vm.HealthStateTone);
+
+            // A real hit: the countdown appears, to the tenth (rounded up).
+            RunHudField f = _vm.ApplyHealth(Saglik(64f, 100f, untilRegen: 4.27f), 0.3f);
+            Assert.AreEqual("recovery in 4.3 s", _vm.HealthStateText, "eksik can: geri sayım görünür");
+            Assert.IsTrue((f & RunHudField.HealthState) != 0);
+
+            // Healed back to full before the wait ends (a pickup / a kill heal): the line goes on that frame, not at the wait's end.
+            f = _vm.ApplyHealth(Saglik(100f, 100f, untilRegen: 2.24f), 0.3f);
+            Assert.AreEqual(string.Empty, _vm.HealthStateText, "dolunca satır o karede kalkar");
+            Assert.IsTrue((f & RunHudField.HealthState) != 0, "durum satırı bayraklanır");
+
+            // The readout is what the player sees: 99.6 reads "100 / 100", so it is full too.
+            _vm.ApplyHealth(Saglik(99.6f, 100f, untilRegen: 1.5f), 0.3f);
+            Assert.AreEqual("100 / 100", _vm.HealthText);
+            Assert.AreEqual(string.Empty, _vm.HealthStateText, "göstergede 100 / 100: geri sayım yok");
+
+            // One point short: the countdown is honest again.
+            _vm.ApplyHealth(Saglik(99f, 100f, untilRegen: 1.5f), 0.3f);
+            Assert.AreEqual("recovery in 1.5 s", _vm.HealthStateText);
+
+            // Regenerating and dead keep their words.
+            _vm.ApplyHealth(Saglik(80f, 100f, regen: true), 0.3f);
+            Assert.AreEqual("RECOVERING", _vm.HealthStateText);
+            _vm.ApplyHealth(Saglik(0f, 100f, dead: true, untilRegen: 4f), 0.3f);
+            Assert.AreEqual("DOWN", _vm.HealthStateText);
+        }
+
+        /// <summary>WP-105 V-54: at full health the running wait formats nothing - a quiet frame stays 0 B while the seconds run.</summary>
+        [Test]
+        public void GeriSayim_CanDoluyken_SaniyelerAkarkenSifirAyirma()
+        {
+            _vm.ApplyHealth(Saglik(100f, 100f, untilRegen: 4.5f), 0.3f);
+            _vm.ApplyHealth(Saglik(100f, 100f, untilRegen: 4.4f), 0.3f);   // warm-up
+
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            RunHudField toplam = RunHudField.None;
+            Assert.That(() =>
+            {
+                for (int i = 0; i < 440; i++)
+                {
+                    toplam |= _vm.ApplyHealth(Saglik(100f, 100f, untilRegen: 4.45f - i * 0.01f), 0.3f);
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "dolu canda akan geri sayım ayırmamalı (yem " + (yem != null ? yem.Length : 0) + " B)");
+
+            Assert.AreEqual(RunHudField.None, toplam, "dolu canda geri sayım hiçbir alanı bayraklamaz");
             Assert.AreEqual(string.Empty, _vm.HealthStateText);
         }
 

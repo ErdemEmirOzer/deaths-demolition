@@ -123,6 +123,15 @@ namespace DD.Prototype.UI
 
         /// <summary>WP-022G: the remap row currently listening ("PRESS A KEY"), for the redraw after the result.</summary>
         private string _rebindingEntryId;
+        // R4 WP-105 (MUST-2): the frame the listening ended (Escape / Start cancel it in the input update, before this Update) and
+        // what the listening switched off (the screen's raycasts, the EventSystem's navigation) so a click or a key is only a binding.
+        private int _rebindEndedFrame = -1;
+        // R4 WP-105 (SHOULD-2): the NEW ids of the open visit (kept across its redraws), and whether this redraw is the visit's entry.
+        private readonly HashSet<string> _visitNewAchievements = new HashSet<string>();
+        private readonly HashSet<string> _visitNewCosmetics = new HashSet<string>();
+        private bool _paneEntering;
+        private bool _rebindBlocked;
+        private bool _rebindNavWas;
         private UiButton _playButton;
 
         // WP-068 TR: the menu's standing words, relabelled in place when the language changes.
@@ -149,7 +158,7 @@ namespace DD.Prototype.UI
         /// <summary>The hero arrival plays once a session (M6: later arrivals rise in). Tests reset it.</summary>
         private static bool s_introPlayed;
 
-        private TMP_Text _title;
+        private RectTransform _title;   // R4 WP-105: the wordmark + seal lockup ("Title")
         private RectTransform _titleClip;
         private float _titleWidth;
         private UiBrushMark _titleStroke;
@@ -268,7 +277,7 @@ namespace DD.Prototype.UI
 
             float top = BuildTitle() + (int)UiSpace.XXL;
 
-            RectTransform nav = Column("Nav", 0f, 0.26f, top);
+            RectTransform nav = Column("Nav", 0f, SpineShare, top);
             _nav = nav;
             BuildRail(nav);
             CoverColumn(nav);   // 12b · D1: the text-safe scrim reaches the spine's right edge (the title stands in it too)
@@ -348,46 +357,104 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>v4: the name alone at the top of the spine, on as many lines as the spine's width needs (two at 1080).</summary>
+        /// <summary>
+        /// R4 WP-105 (user note 6, C-00 11.10: "the main menu's Deaths Demolition is the loading screen's own, with the game's
+        /// logo beside it") · the name is AP-035's brush wordmark - the loading logo's very sprite - with the seal (the emblem
+        /// the loading ring holds) at its left: one lockup at the top of the spine, as wide as the spine (<see cref="TitleLockup"/>).
+        /// It keeps v5's arrival: the clip types it open (M2) and the dry stroke lies under it.
+        /// </summary>
         private float BuildTitle()
         {
             // WP-098A (M2): the title stands in a clip that types it open (its width 0 → full); the clip takes the title's place.
             _titleClip = UiFactory.ClipContent(UiFactory.NewRect("TitleClip", Content));
-            TMP_Text title = UiFactory.Label("Title", _titleClip, HeaderTitle, UiType.Display, UiColor.TextPrimary, TextAnchor.LowerLeft);
-            _title = title;
-            title.enableWordWrapping = true;
-            RectTransform rect = title.rectTransform;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            // Words stay whole: the title is the spine's width, or its longest word's where the spine is narrower (UI 1.2
-            // on the Mac host: "DEMOLITION" outruns a 366 px spine - TMP would break it as "DEMOLITI / ON").
-            float width = Mathf.Max(Content.rect.width * 0.26f, LongestWord(title, HeaderTitle) + 2f);
-            float line = UiFactory.LineHeight(UiType.Display);
-            float height = width > 1f ? Mathf.Max(line, Mathf.Ceil(title.GetPreferredValues(HeaderTitle, width, 0f).y)) : line * 2f;
-            rect.sizeDelta = new Vector2(width, height);
-            rect.anchoredPosition = Vector2.zero;
+            float spine = Content.rect.width > 1f ? Content.rect.width * SpineShare : TitleLockupReferenceWidth;
+            Vector2 size = TitleLockup(spine, out Vector2 seal, out Vector2 word);
+            RectTransform lockup = UiFactory.NewRect("Title", _titleClip);
+            lockup.anchorMin = new Vector2(0f, 1f);
+            lockup.anchorMax = new Vector2(0f, 1f);
+            lockup.pivot = new Vector2(0f, 1f);
+            lockup.sizeDelta = size;
+            lockup.anchoredPosition = Vector2.zero;
+            _title = lockup;
+            LockupArt(lockup, TitleSealName, UiLogoAssets.Seal, seal, 0f, size.y);
+            LockupArt(lockup, TitleWordmarkName, UiLogoAssets.Wordmark, word, seal.x + TitleGap(size.y), size.y);
 
             _titleClip.anchorMin = new Vector2(0f, 1f);
             _titleClip.anchorMax = new Vector2(0f, 1f);
             _titleClip.pivot = new Vector2(0f, 1f);
-            _titleClip.sizeDelta = new Vector2(width, height);
+            _titleClip.sizeDelta = size;
             _titleClip.anchoredPosition = Vector2.zero;
-            _titleWidth = width;
+            _titleWidth = size.x;
 
-            // M2's dry stroke under the name: the longest line + 48, from the title's x, in the gap above the rail.
-            float measured = width > 1f ? Mathf.Min(width, title.GetPreferredValues(HeaderTitle, width, 0f).x) : UiBrushTokens.TitleStrokeMin;
-            _titleStroke = UiBrushKit.TitleStroke(Content, measured + (int)UiSpace.XXXL);
+            // M2's dry stroke under the name: the lockup's width + 48, from its x, in the gap above the rail.
+            _titleStroke = UiBrushKit.TitleStroke(Content, size.x + (int)UiSpace.XXXL);
             RectTransform stroke = _titleStroke.Rect;
             stroke.anchorMin = new Vector2(0f, 1f);
             stroke.anchorMax = new Vector2(0f, 1f);
             stroke.pivot = new Vector2(0f, 1f);
-            stroke.anchoredPosition = new Vector2(0f, -(height + UiBrushTokens.TitleRuleGap));
-            return height;
+            stroke.anchoredPosition = new Vector2(0f, -(size.y + UiBrushTokens.TitleRuleGap));
+            return size.y;
+        }
+
+        /// <summary>The spine's share of the page width (the Nav column, 0..0.26).</summary>
+        public const float SpineShare = 0.26f;
+
+        /// <summary>The lockup's width before the page is laid (the 1080p spine: 0.26 × (1920 − 2 × 96)).</summary>
+        public const float TitleLockupReferenceWidth = 449f;
+
+        /// <summary>The lockup's parts (tests and captures find them by name; "Title" is the lockup root the logo intro fades).</summary>
+        public const string TitleSealName = "TitleSeal";
+        public const string TitleWordmarkName = "TitleWordmark";
+
+        /// <summary>
+        /// The lockup's proportions are AP-042's (exports/v001/loading/title-lockup-layout.json, horizontal: logo 400², wordmark
+        /// 1392 × 522, gap 48 - the AP-035 sprites unchanged): the seal's box is 400 / 522 of the wordmark's height, the gap 48 / 522.
+        /// </summary>
+        public const float SealPerWordmark = 400f / 522f;
+        public const float GapPerWordmark = 48f / 522f;
+        public const float WordmarkAspect = 2048f / 768f;
+
+        /// <summary>The wordmark's box height at most (its 1080p size): a wide page does not blow the name up.</summary>
+        public const float TitleLockupMaxHeight = 128f;
+
+        /// <summary>
+        /// The lockup for a spine <paramref name="spine"/> px wide: the seal's box (square) and the wordmark's (2048:768), side by
+        /// side with <see cref="TitleGap"/>, in AP-042's proportions, together as wide as the spine (the wordmark at most
+        /// <see cref="TitleLockupMaxHeight"/> tall); returns the lockup's size (the wordmark's height).
+        /// </summary>
+        public static Vector2 TitleLockup(float spine, out Vector2 seal, out Vector2 wordmark)
+        {
+            float height = Mathf.Floor(Mathf.Min(TitleLockupMaxHeight, Mathf.Max(1f, spine) / (SealPerWordmark + GapPerWordmark + WordmarkAspect)));
+            float side = Mathf.Round(height * SealPerWordmark);
+            seal = new Vector2(side, side);
+            wordmark = new Vector2(Mathf.Round(height * WordmarkAspect), height);
+            return new Vector2(seal.x + TitleGap(height) + wordmark.x, height);
+        }
+
+        /// <summary>The seal ↔ wordmark gap for a wordmark <paramref name="height"/> px tall (AP-042: 48 / 522 of it).</summary>
+        public static float TitleGap(float height)
+        {
+            return Mathf.Round(height * GapPerWordmark);
+        }
+
+        private static Image LockupArt(RectTransform lockup, string name, Sprite sprite, Vector2 size, float x, float height)
+        {
+            Image image = UiFactory.NewImage(name, lockup, UiColor.TextPrimary, sprite);
+            image.color = Color.white;   // the art's own colours (bone wordmark, vermilion seal), as on the loading screen
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            RectTransform rect = image.rectTransform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = new Vector2(x, -height * 0.5f);
+            return image;
         }
 
         protected override void OnDestroy()
         {
+            CancelListening();
             base.OnDestroy();
             ProfileService.Changed -= OnProfileChanged;
             UiCurtain.Revealed -= OnRevealed;
@@ -422,6 +489,13 @@ namespace DD.Prototype.UI
             }
 
             if (!UiInput.CancelPressed())
+            {
+                return;
+            }
+
+            // R4 WP-105 (MUST-2): while a key is listened for - and in the frame the listening ended - Escape, Start and a pad's B
+            // belong to the rebind (cancel or the new binding): they must not close the Controls pane under it.
+            if (_rebindingEntryId != null || _rebindEndedFrame == Time.frameCount)
             {
                 return;
             }
@@ -736,17 +810,6 @@ namespace DD.Prototype.UI
             rect.anchoredPosition = new Vector2(0f, -top);
         }
 
-        private static float LongestWord(TMP_Text text, string words)
-        {
-            float widest = 0f;
-            foreach (string word in words.Split(' '))
-            {
-                widest = Mathf.Max(widest, text.GetPreferredValues(word).x);
-            }
-
-            return Mathf.Ceil(widest);
-        }
-
         /// <summary>v4 (O1): the profile level top-right, its XP to the next level as a bar under it - a word and a value.</summary>
         private void BuildProgressReadout()
         {
@@ -769,6 +832,15 @@ namespace DD.Prototype.UI
             bar.pivot = new Vector2(0.5f, 1f);
             bar.sizeDelta = new Vector2(0f, BarHeight);
             bar.anchoredPosition = new Vector2(0f, -(line + (int)UiSpace.S));
+            // R4 WP-105 (V-10): over the world the bar's Sumi900 track vanished - at 0 XP nothing showed. The kit's line tone
+            // (KILAVUZ §1 "Çizgi") draws the empty part; the sakura fill (BarXp) is the token it was.
+            Transform track = bar.Find("Track");
+            Image trackImage = track != null ? track.GetComponent<Image>() : null;
+            if (trackImage != null)
+            {
+                trackImage.color = UiBrushTokens.LineColour();
+            }
+
             RefreshProgressReadout();
         }
 
@@ -1316,6 +1388,22 @@ namespace DD.Prototype.UI
             /// <summary>An achievement row's C18 status: earned → the unlocked glyph + EARNED (NEW on its first visit); else the progress glyph + IN PROGRESS.</summary>
             public static void AchievementStatus(bool earned, bool isNew, out string icon, out string trailing)
             {
+                AchievementStatus(earned, isNew, true, out icon, out trailing);
+            }
+
+            /// <summary>
+            /// R4 WP-105 (V-18: "IN PROGRESS" at 0 of 50 said a counter ran that never moved) · as above, with
+            /// <paramref name="started"/>: an achievement with no progress yet is NOT STARTED, no glyph (the bar says 0).
+            /// </summary>
+            public static void AchievementStatus(bool earned, bool isNew, bool started, out string icon, out string trailing)
+            {
+                if (!earned && !started)
+                {
+                    icon = null;
+                    trailing = UiStrings.Get("ach.not_started", "NOT STARTED");
+                    return;
+                }
+
                 if (earned)
                 {
                     icon = EarnedGlyph;
@@ -1334,10 +1422,18 @@ namespace DD.Prototype.UI
             /// </summary>
             public static void BindStatus(bool listening, bool conflicted, bool overridden, string control, out string icon, out string trailing)
             {
+                BindStatus(listening, false, conflicted, overridden, control, out icon, out trailing);
+            }
+
+            /// <summary>R4 WP-105 (NICE-1): as above; a pad slot listens for a BUTTON and its Menu cancels (the keyboard's Escape does not).</summary>
+            public static void BindStatus(bool listening, bool pad, bool conflicted, bool overridden, string control, out string icon, out string trailing)
+            {
                 if (listening)
                 {
                     icon = null;
-                    trailing = UiStrings.Get("controls.listening", "PRESS A KEY");
+                    trailing = pad
+                        ? UiStrings.Get("controls.listening.pad", "PRESS A BUTTON · MENU CANCELS")
+                        : UiStrings.Get("controls.listening", "PRESS A KEY");
                     return;
                 }
 
@@ -1395,6 +1491,11 @@ namespace DD.Prototype.UI
         /// </summary>
         public void ShowPane(UiContext pane)
         {
+            if (pane != UiContext.Controls)
+            {
+                CancelListening();   // R4 WP-105 (MUST-2): leaving Controls ends a rebind still listening
+            }
+
             if (pane == UiContext.MainMenu)
             {
                 ClosePane();
@@ -1436,6 +1537,7 @@ namespace DD.Prototype.UI
         /// <summary>v4: no pane - the carrier closes (WP-098B: the kit's Close), the rail's tick goes, the navigation model leaves the layer.</summary>
         private void ClosePane()
         {
+            CancelListening();
             UiContext from = _pane;
             if (_pane != UiContext.MainMenu)
             {
@@ -1475,6 +1577,7 @@ namespace DD.Prototype.UI
         private void RedrawPane(UiContext from)
         {
             bool entering = from != _pane;
+            _paneEntering = entering;
             UiButton open = TabOf(_pane);
             if (_profileTab != null)
             {
@@ -1484,6 +1587,11 @@ namespace DD.Prototype.UI
                 _settingsTab.SetSelectedChoice(_pane == UiContext.Settings);
                 _controlsTab.SetSelectedChoice(_pane == UiContext.Controls);
                 _accessibilityTab.SetSelectedChoice(_pane == UiContext.Accessibility);
+            }
+
+            for (int i = 0; i < _rail.Count; i++)
+            {
+                _rail[i].SetReceded(_pane != UiContext.MainMenu);   // R4 WP-105 SHOULD-5: the open pane's icon stays cream, the rest step back
             }
 
             // The pane's controls are about to be destroyed (or to fade out, inert): no tab may keep pointing
@@ -1566,9 +1674,11 @@ namespace DD.Prototype.UI
                         // WP-022D: the WP-035 progress source when the service has one
                         // (progress, rarity, "new"); the WP-005 definition list otherwise.
                         IAchievementProgressSource progress = ProfileService.AchievementProgressSource;
-                        BuildAchievementsPane(progress != null
+                        AchievementsViewModel achievements = progress != null
                             ? AchievementsViewModel.From(progress)
-                            : AchievementsViewModel.From(profile, ProfileService.AllAchievements));
+                            : AchievementsViewModel.From(profile, ProfileService.AllAchievements);
+                        achievements.KeepNew(_visitNewAchievements, entering);   // R4 WP-105 SHOULD-2: NEW survives a page turn
+                        BuildAchievementsPane(achievements);
                         if (progress != null)
                         {
                             // After the build: this visit still shows its NEW chips; the
@@ -1604,6 +1714,7 @@ namespace DD.Prototype.UI
                     }
             }
 
+            AttachPaneBack();
             _paneRowsEnter = false;
             int owner = GetInstanceID();
 
@@ -1663,8 +1774,24 @@ namespace DD.Prototype.UI
                     again = FindDeep(_paneHost, _refocusName);   // an option inside the profile's scroller
                 }
 
+                string wanted = _refocusName;
                 _refocusName = null;
                 UiButton button = again != null ? again.GetComponent<UiButton>() : null;
+                if (button != null && !button.IsInteractable())
+                {
+                    // R4 WP-105 (SHOULD-4): the last / first page greys the pager that led there - the focus goes to the other
+                    // pager (else the pane's first control), never to nothing (a pad press spent on finding the cursor again).
+                    string other = wanted.EndsWith("Pager.Next", System.StringComparison.Ordinal) ? "Pager/Pager.Previous"
+                        : wanted.EndsWith("Pager.Previous", System.StringComparison.Ordinal) ? "Pager/Pager.Next" : null;
+                    Transform swap = other != null ? FindDeep(_paneHost, other.Substring(other.IndexOf('/') + 1)) : null;
+                    UiButton alt = swap != null ? swap.GetComponent<UiButton>() : null;
+                    button = alt != null && alt.IsInteractable() ? alt : null;
+                    if (button == null && _paneFocus != null && _paneFocus.IsInteractable())
+                    {
+                        UiInput.Focus(_paneFocus);
+                    }
+                }
+
                 if (button != null)
                 {
                     UiInput.Focus(button);
@@ -1776,7 +1903,9 @@ namespace DD.Prototype.UI
                 }
                 else
                 {
-                    UiInput.ReclaimFocus(PaneFocusFallback());
+                    // R4 WP-105 (MUST-1): a locked title / badge row the pad walked onto is focus held, not lost (it is reachable
+                    // on purpose, its reason on show) - only a focus gone from the pane comes back to the fallback.
+                    UiInput.ReclaimFocus(PaneFocusFallback(), _paneHost);
                 }
 
                 yield return null;
@@ -1794,6 +1923,61 @@ namespace DD.Prototype.UI
             }
 
             return TabOf(_pane);
+        }
+
+        /// <summary>Name of the open pane's C10 Back (R4 WP-105 SHOULD-1).</summary>
+        public const string PaneBackName = "PaneBack";
+
+        /// <summary>
+        /// R4 WP-105 (SHOULD-1: a mouse could not close a pane - Cancel only, and a second click on its icon is idempotent) · the
+        /// kit's C10 Back with the pad's Cancel glyph at the right end of the pane's heading band (it scrolls with the heading,
+        /// never over a row): click = Cancel. Mouse-only as a stop (Navigation None): the pad's way out is its B, the glyph
+        /// beside it says so. No brush trace (the census and the pane budget see none).
+        /// </summary>
+        private void AttachPaneBack()
+        {
+            if (_pane == UiContext.MainMenu || _paneHost == null)
+            {
+                return;
+            }
+
+            Transform heading = null;
+            for (int i = 0; i < _paneHost.childCount && heading == null; i++)
+            {
+                Transform child = _paneHost.GetChild(i);
+                if (child.name == PaneLook.LeavingName)
+                {
+                    continue;   // the pane fading out under a change keeps its own
+                }
+
+                heading = child.name == PaneLook.TitleName ? child : FindDeep(child, PaneLook.TitleName);
+            }
+
+            if (heading == null || heading.Find(PaneBackName) != null)
+            {
+                return;
+            }
+
+            UiIconButton back = UiBrushKit.Back((RectTransform)heading, () =>
+            {
+                UiButton icon = TabOf(_pane);
+                CancelPane();
+                UiInput.Focus(icon != null ? icon : _playButton);
+            });
+            back.PinObjectName(PaneBackName);   // kept through a relabel (a language change renames by the accessible name)
+            back.Button.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            float prompt = 0f;
+            Transform glyph = back.transform.Find("Prompt");
+            if (glyph != null)
+            {
+                prompt = ((RectTransform)glyph).sizeDelta.x + (int)UiSpace.S;
+            }
+
+            var rect = (RectTransform)back.transform;
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-prompt, 0f);
         }
 
         private static Transform FindDeep(Transform root, string name)
@@ -2302,6 +2486,15 @@ namespace DD.Prototype.UI
                 0f, 1f, UiSettings.MasterVolume, 0f, Percent,
                 v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f, list);
             AddSettingRow(ref stack, master.transform);
+            // R4 WP-105 (C-00 11.10 §C4, V-22): music and effects on their own sliders - the music quieter, the shots kept.
+            UiSlider music = UiBrushKit.Slider(content, "Setting.MUSIC VOLUME", "settings.row.music_volume", "MUSIC",
+                0f, 1f, UiSettings.MusicVolume, 0f, Percent,
+                v => UiSettings.MusicVolume = Mathf.Round(v * 20f) / 20f, list);
+            AddSettingRow(ref stack, music.transform);
+            UiSlider effects = UiBrushKit.Slider(content, "Setting.EFFECTS VOLUME", "settings.row.effects_volume", "EFFECTS",
+                0f, 1f, UiSettings.EffectsVolume, 0f, Percent,
+                v => UiSettings.EffectsVolume = Mathf.Round(v * 20f) / 20f, list);
+            AddSettingRow(ref stack, effects.transform);
             // WP-068 U8: UI sounds on their own slider (the Interface bus).
             UiSlider uiSounds = UiBrushKit.Slider(content, "Setting.UI SOUNDS", "settings.row.ui_sounds", "UI SOUNDS",
                 0f, 1f, UiSettings.UiVolume, 0f, Percent,
@@ -2323,7 +2516,7 @@ namespace DD.Prototype.UI
             AddSettingRow(ref stack, lookSpeed.transform);
             UiSlider stickSpeed = UiBrushKit.Slider(content, "Setting.STICK LOOK SPEED", "settings.row.stick_look_speed", "STICK LOOK SPEED",
                 InputPreferences.MinStickLookDegreesPerSecond, InputPreferences.MaxStickLookDegreesPerSecond, look.StickLookDegreesPerSecond, 10f,
-                v => Mathf.RoundToInt(v) + "°/s", v => UpdatePreferences(p => p.StickLookDegreesPerSecond = Mathf.Round(v / 10f) * 10f), list);
+                v => UiStrings.Format("stat.fmt.deg_per_second", "value", Mathf.RoundToInt(v).ToString(), "{value}°/s"), v => UpdatePreferences(p => p.StickLookDegreesPerSecond = Mathf.Round(v / 10f) * 10f), list);
             AddSettingRow(ref stack, stickSpeed.transform);
             UiSwitch invert = UiBrushKit.Toggle(content, "InvertLook", "settings.row.invert_look", "INVERT LOOK", look.LookInvertY,
                 on => UpdatePreferences(p => p.LookInvertY = on), list);
@@ -2532,7 +2725,10 @@ namespace DD.Prototype.UI
         /// </summary>
         public static string ControlName(string effectivePath, string displayName)
         {
-            if (UiStrings.Language != UiStrings.Turkish || string.IsNullOrEmpty(effectivePath))
+            // R4 WP-105 (V-29): both languages read the pack - English showed the Input System's raw names ("Button West",
+            // "Escape"); the pack names what the pad and the keyboard carry (X, LB, Menu, Esc). A control the pack does not
+            // name keeps the service's name (a letter key: W).
+            if (string.IsNullOrEmpty(effectivePath))
             {
                 return displayName;
             }
@@ -2818,6 +3014,7 @@ namespace DD.Prototype.UI
                 RedrawPane();
             });
             reset.ConfigureHold(UiMotionTokens.HoldConfirm);
+            reset.SetInteractable(remap != null);   // R4 WP-105 (NICE-9): with no input service a held reset did nothing - it reads disabled
             RectTransform resetRect = (RectTransform)reset.transform;
             resetRect.anchorMin = new Vector2(0f, 0.5f);
             resetRect.anchorMax = new Vector2(0f, 0.5f);
@@ -2966,7 +3163,8 @@ namespace DD.Prototype.UI
                 // column's words, never colour alone). "Slot.<id>/Bind.<id>" keeps the rebind's refocus path.
                 bool listening = _rebindingEntryId == e.Id;
                 bool conflicted = !listening && !string.IsNullOrEmpty(e.EffectivePath) && conflictedPaths.Contains(e.EffectivePath);
-                PaneLook.BindStatus(listening, conflicted, e.IsOverridden, ControlName(e.EffectivePath, e.DisplayName), out string icon, out string trailing);
+                PaneLook.BindStatus(listening, e.Scheme == DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad, conflicted, e.IsOverridden,
+                    ControlName(e.EffectivePath, e.DisplayName), out string icon, out string trailing);
                 string entryId = e.Id;
                 UiButton slot = UiBrushKit.ListRow(row, "Bind." + e.Id, RemapRowName(e), icon, () => StartRebind(remap, entryId));
                 UiFactory.Fill((RectTransform)slot.transform);
@@ -3078,6 +3276,8 @@ namespace DD.Prototype.UI
             bool started = remap.StartRebind(entryId, (result, entry) =>
             {
                 _rebindingEntryId = null;
+                _rebindEndedFrame = Time.frameCount;
+                BlockForRebind(false);
                 UiEvents.Raise(result == InputRebindResult.Completed ? UiEvent.Confirm : UiEvent.Back, "Rebind");
                 if (this != null && _paneHost != null && _pane == UiContext.Controls)
                 {
@@ -3090,7 +3290,62 @@ namespace DD.Prototype.UI
             {
                 _rebindingEntryId = null;
                 RedrawPane();
+                return;
             }
+
+            BlockForRebind(true);
+        }
+
+        /// <summary>
+        /// R4 WP-105 (MUST-2) · while a key is listened for, the menu takes no click and no navigation: a mouse button pressed to
+        /// bind Fire is a binding only (no click on the rail or PLAY under it), an arrow key bound to Move does not walk the pane.
+        /// The Input System still reads both (the rebind's own events).
+        /// </summary>
+        private void BlockForRebind(bool on)
+        {
+            if (on == _rebindBlocked)
+            {
+                return;
+            }
+
+            _rebindBlocked = on;
+            CanvasGroup group = Canvas != null ? Canvas.GetComponent<CanvasGroup>() : null;
+            if (group != null)
+            {
+                group.blocksRaycasts = !on;
+            }
+
+            UnityEngine.EventSystems.EventSystem system = UnityEngine.EventSystems.EventSystem.current;
+            if (system != null)
+            {
+                if (on)
+                {
+                    _rebindNavWas = system.sendNavigationEvents;
+                    system.sendNavigationEvents = false;
+                }
+                else
+                {
+                    system.sendNavigationEvents = _rebindNavWas;
+                }
+            }
+        }
+
+        /// <summary>R4 WP-105 (MUST-2): a rebind still listening is cancelled (the pane changes or closes, the screen goes).</summary>
+        private void CancelListening()
+        {
+            if (_rebindingEntryId == null)
+            {
+                return;
+            }
+
+            IInputRemapService remap = PrototypeInputInstaller.Instance != null ? PrototypeInputInstaller.Instance.Remap : null;
+            if (remap != null && remap.IsRebinding)
+            {
+                remap.CancelRebind();   // its callback clears the id and lifts the block
+            }
+
+            _rebindingEntryId = null;
+            BlockForRebind(false);
         }
 
         private string FindSlotPath(string entryId)
@@ -3435,8 +3690,8 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.S);
 
             TMP_Text xpCaption = UiFactory.Label(
-                "XpCaption", body, model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
-            stack.Add((RectTransform)xpCaption.transform, UiFactory.LineHeight(UiType.Caption));
+                "XpCaption", body, model.ProgressCaption, UiType.MenuSmall, UiColor.TextSecondary);   // R4 WP-105 (V-02): the XP left reads (was Caption 14)
+            stack.Add((RectTransform)xpCaption.transform, UiFactory.LineHeight(UiType.MenuSmall));
 
             stack.Gap(UiSpace.L);
             PaneLook.Divider(ref stack, body, "D1", _paneMarks);
@@ -3457,6 +3712,7 @@ namespace DD.Prototype.UI
             // picker on the right.
             ICosmeticsSource cosmeticsSource = ProfileService.CosmeticsSource;
             CosmeticsViewModel cosmetics = cosmeticsSource != null ? CosmeticsViewModel.From(cosmeticsSource) : null;
+            cosmetics?.KeepNew(_visitNewCosmetics, _paneEntering);   // R4 WP-105 SHOULD-2: a title choice keeps the visit's NEW
             bool twoColumns = cosmetics != null && !cosmetics.IsEmpty;
 
             RectTransform columns = UiFactory.NewRect("Columns", body);
@@ -3483,14 +3739,14 @@ namespace DD.Prototype.UI
             leftStack.Gap(UiSpace.M);
 
             TMP_Text achievements = UiFactory.Label(
-                "AchievementSummary", left, model.AchievementSummary, UiType.Caption, UiColor.TextSecondary);
-            leftStack.Add((RectTransform)achievements.transform, UiFactory.LineHeight(UiType.Caption));
+                "AchievementSummary", left, model.AchievementSummary, UiType.MenuSmall, UiColor.TextSecondary);   // R4 WP-105 (V-02)
+            leftStack.Add((RectTransform)achievements.transform, UiFactory.LineHeight(UiType.MenuSmall));
 
             leftStack.Gap(UiSpace.S);
 
             TMP_Text rule = UiFactory.Label(
-                "Rule", left, ProfileViewModel.RuleNote, UiType.Caption, UiColor.TextSecondary);
-            leftStack.Add((RectTransform)rule.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+                "Rule", left, ProfileViewModel.RuleNote, UiType.MenuSmall, UiColor.TextSecondary);   // R4 WP-105 (V-02): the rule is read, not fine print
+            leftStack.Add((RectTransform)rule.transform, UiFactory.LineHeight(UiType.MenuSmall) * 2f);
 
             float needed = leftStack.Cursor;
             List<Selectable> options = null;
@@ -3707,7 +3963,7 @@ namespace DD.Prototype.UI
                 nextIcon.SetInteractable(_achievementPage < pages - 1);
 
                 TMP_Text page = UiFactory.Label(
-                    "Page", pager, UiStrings.Format("ach.page", "value", (_achievementPage + 1).ToString(), "total", pages.ToString(), "Page {value} of {total}"), UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
+                    "Page", pager, UiStrings.Format("ach.page", "value", (_achievementPage + 1).ToString(), "total", pages.ToString(), "Page {value} of {total}"), UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleCenter);   // R4 WP-105 (V-02, was Caption 14)
                 RectTransform pageRect = UiFactory.Fill((RectTransform)page.transform);
                 float pageInset = PagerHeight + (int)UiSpace.S;
                 pageRect.offsetMin = new Vector2(pageInset, 0f);
@@ -3862,7 +4118,7 @@ namespace DD.Prototype.UI
         /// </summary>
         private UiButton BuildAchievementRow(UiAchievementLine line)
         {
-            PaneLook.AchievementStatus(line.Earned, line.IsNew, out string icon, out string trailing);
+            PaneLook.AchievementStatus(line.Earned, line.IsNew, line.Current > 0, out string icon, out string trailing);
             UiButton button = UiBrushKit.ListRow(_paneHost, "Achievement." + line.Id, line.Title, icon, null, false);
             UiBrushKit.SetRowStatus(button, icon, trailing);
             var row = (RectTransform)button.transform;
@@ -4015,26 +4271,31 @@ namespace DD.Prototype.UI
                 "Label", row, line.Title, UiType.MenuBody,
                 line.Unlocked ? UiColor.TextPrimary : UiColor.TextSecondary, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
-            labelRect.offsetMax = new Vector2(-(ValueColumnWidth + glyph + (int)UiSpace.S * 2), 0f);
 
-            Image icon = UiArt.IconImage("Glyph", row, line.Unlocked ? PaneLook.EarnedGlyph : PaneLook.LockGlyph,
+            // R4 WP-105 (V-11): an unlocked row carried the open-lock glyph beside UNLOCKED - at 24 px it read as a lock. The kit's
+            // check (G1: the choice is the check) says open; the lock stays the locked rows' shape.
+            Image icon = UiArt.IconImage("Glyph", row, line.Unlocked ? PaneLook.CheckGlyph : PaneLook.LockGlyph,
                 line.Unlocked ? UiColor.TextPrimary : UiColor.TextSecondary, glyph);
             var iconRect = (RectTransform)icon.transform;
             iconRect.anchorMin = new Vector2(1f, 0.5f);
             iconRect.anchorMax = new Vector2(1f, 0.5f);
             iconRect.pivot = new Vector2(1f, 0.5f);
-            iconRect.anchoredPosition = new Vector2(-(ValueColumnWidth + (int)UiSpace.S), 0f);
 
+            // R4 WP-105 (V-12): one lock pattern on both lists - "LOCKED · LEVEL 3" / "KİLİTLİ · SEVİYE 3", as the titles say it (the
+            // bare "LEVEL 3" read as the weapon's level). The state word is measured (TR 1.25 outgrew the fixed 200 px column).
             TMP_Text state = UiFactory.Label(
                 "State", row,
-                line.Unlocked ? UiStrings.Get("profile.unlocked", "UNLOCKED") : UiStrings.Format("profile.level", "value", line.RequiredLevel.ToString(), "LEVEL {value}"),
+                line.Unlocked ? UiStrings.Get("profile.unlocked", "UNLOCKED") : UiStrings.Format("profile.locked.level", "value", line.RequiredLevel.ToString(), "LOCKED · LEVEL {value}"),
                 UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleRight);
+            float stateWidth = Mathf.Max(ValueColumnWidth, Mathf.Ceil(state.GetPreferredValues(state.text).x) + 2f);
             RectTransform stateRect = state.rectTransform;
             stateRect.anchorMin = new Vector2(1f, 0f);
             stateRect.anchorMax = new Vector2(1f, 1f);
             stateRect.pivot = new Vector2(1f, 0.5f);
-            stateRect.sizeDelta = new Vector2(ValueColumnWidth, 0f);
+            stateRect.sizeDelta = new Vector2(stateWidth, 0f);
             stateRect.anchoredPosition = Vector2.zero;
+            iconRect.anchoredPosition = new Vector2(-(stateWidth + (int)UiSpace.S), 0f);
+            labelRect.offsetMax = new Vector2(-(stateWidth + glyph + (int)UiSpace.S * 2), 0f);
 
             stack.Add(row, UiBrushTokens.RowHeight(UiType.MenuBody, UiBrushTokens.RowHitCompact));
             EnterRow(row);

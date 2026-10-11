@@ -154,6 +154,7 @@ namespace DD.Prototype.UI
         private RectTransform _tipStrip;
         private TMP_Text _tip;
         private RectTransform _stall;
+        private string _stallWords;
         private UiModal _error;
         private int _percent = -1;
         private string _eyebrowState = "LOADING"; // TMP's .text is not updated by SetText (the RM percent line)
@@ -792,10 +793,14 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>A boot skip (Submit / Cancel / click, silent - no prompt, §15.5) or a test's request.</summary>
+        /// <summary>
+        /// A boot skip (Submit / Cancel / click, silent - no prompt, §15.5) or a test's request. R4 WP-105 (NICE-8): the
+        /// boot seal covers the screen, so it reads the curtain's own Cancel (<see cref="UiInput.CurtainCancelPressed"/>) -
+        /// <see cref="UiInput.CancelPressed"/> is false for everything under the cover.
+        /// </summary>
         public bool BootSkipRequested
         {
-            get { return s_bootSkip || UiInput.CancelPressed() || UiInput.SubmitHeld() || Input.GetMouseButtonDown(0); }
+            get { return s_bootSkip || UiInput.CurtainCancelPressed() || UiInput.SubmitHeld() || Input.GetMouseButtonDown(0); }
         }
 
         public void RequestBootSkip()
@@ -1110,7 +1115,10 @@ namespace DD.Prototype.UI
         /// <summary>
         /// SCREEN depth with its key art and tip (the plates - far always, mid too on the way into the
         /// run - only when the art cannot load); <paramref name="tip"/> null = no strip
-        /// (Boot, Results, the Pause abort). Reduced Motion shows the static RM line instead.
+        /// (Boot, Results, the Pause abort). R4 WP-105 (KOD SHOULD-6): Reduced Motion shows the tip too - it is still text,
+        /// not motion, and the flow has already marked a HINT as seen when it picked it. The old RM line that replaced it
+        /// (loading.reduced_motion) is gone: under RM the eyebrow already carries the progress as a number, and a screen
+        /// without a tip (Boot, Results, the Pause abort) shows no strip at all.
         /// </summary>
         public void ShowGroup(string destination, string subline, string tip, bool midPlate, string keyArt = LoadingKeyArt)
         {
@@ -1134,7 +1142,7 @@ namespace DD.Prototype.UI
             }
 
             ShowKeyArt(keyArt);
-            SetTip(UiMotion.ReducedMotion ? UiStrings.Get("loading.reduced_motion", UiLoadingTips.ReducedMotionLine) : tip);
+            SetTip(tip);
             if (_stall != null)
             {
                 _stall.gameObject.SetActive(false);
@@ -1298,7 +1306,11 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>No progress for 10 s: an Info notice under the tip (direction §15.2).</summary>
+        /// <summary>
+        /// No progress for 10 s: an Info notice under the tip (direction §15.2). R4 WP-105 (V-49): its words say what comes
+        /// next (loading.stalled.wait); it is built again when those words changed since the last stall (a language switch
+        /// in between) - a stall is rare, never per frame.
+        /// </summary>
         public void ShowStalled()
         {
             if (!GroupVisible)
@@ -1306,12 +1318,21 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            string words = UiStrings.Get("loading.stalled.wait", UiLoadingTips.StalledLine);
+            if (_stall != null && _stallWords != words)
+            {
+                _stall.gameObject.SetActive(false);
+                Destroy(_stall.gameObject);
+                _stall = null;
+            }
+
             if (_stall == null)
             {
                 float width = Mathf.Min(TipMaxWidth, _root.rect.width - TipMargin * 2f);
-                _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, UiStrings.Get("loading.stalled", UiLoadingTips.StalledLine), width);
+                _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, words, width);
                 _stall.anchorMin = new Vector2(0f, 0f);
                 _stall.anchorMax = new Vector2(0f, 0f);
+                _stallWords = words;
             }
 
             // Under the tip when there is one; in the tip's own slot (bottom edge 96 in) when there is none
@@ -1324,7 +1345,8 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// The load error (UXW §2.2): LOADING FAILED, why, and what now. <paramref name="onPrimary"/> null =
-        /// QUIT only (a stalled load cannot be cancelled). Cancel does nothing: there is no safe "back". Nothing writes the
+        /// QUIT only (a stalled load cannot be cancelled: the boot's, or one bound for the main menu; R4 WP-105 V-49 - a stalled
+        /// load bound elsewhere gets RETURN TO MAIN MENU from PrototypeUiFlow's watchdog). Cancel does nothing: there is no safe "back". Nothing writes the
         /// profile. WP-098B (brush kit KILAVUZ §3, C31): the kit's Confirm on the curtain (Confirm scrim, no card) - see
         /// <see cref="LoadErrorSpec"/>; the root keeps the name "LoadError".
         /// </summary>
@@ -1353,11 +1375,64 @@ namespace DD.Prototype.UI
             // stands (LoadErrorOpen), so neither the modal nor the screen under it takes a "back".
             _error = UiBrushKit.Confirm(LoadErrorName, _root, LoadErrorSpec(body, onPrimary != null ? primaryLabel : null), quit, onPrimary);
             _error.Open();
+            RaiseErrorLayer(_error);
+            StartCoroutine(HoldErrorFocus(_error));
             UiCursor.SetContextVisible(true);
         }
 
         /// <summary>The load error's root name since R1-E (the watchdog suite and captures find it by it).</summary>
         public const string LoadErrorName = "LoadError";
+
+        /// <summary>
+        /// R4 WP-105 (V-48) · the load error's own canvas order: above every screen and its dialogs (UiLayer.Modal), the
+        /// curtain itself and the loading logo's canvas (<see cref="LogoSortingOrder"/>), under the debug overlay.
+        /// </summary>
+        public const int ErrorSortingOrder = UiLayer.Curtain + 2;
+
+        /// <summary>
+        /// R4 WP-105 (V-48): the error is its own canvas layer at <see cref="ErrorSortingOrder"/>, so its Confirm ink (0.985)
+        /// covers the main menu's rail and title as the QUIT confirmation does - the r4-audit-before frames (22-load-error,
+        /// loading-error) showed the menu drawn over it: rail bright, the modal's left half dimmed by the menu's veil. Called
+        /// on the open modal: Unity keeps overrideSorting only on an active canvas (see PauseScreen.RaiseToDialogLayer).
+        /// The curtain's own order is written again as well - the menu's canvas becomes an overlay at run time
+        /// (UiFactory.MoveScreensToOverlay), and a fresh sort-order write is what makes Unity re-sort the overlay canvases.
+        /// </summary>
+        private void RaiseErrorLayer(UiModal error)
+        {
+            GameObject root = error.gameObject;
+            Canvas layer = root.GetComponent<Canvas>();
+            if (layer == null)
+            {
+                layer = root.AddComponent<Canvas>();
+                root.AddComponent<GraphicRaycaster>();
+            }
+
+            layer.overrideSorting = true;
+            layer.sortingOrder = ErrorSortingOrder;
+            _canvas.sortingOrder = UiLayer.Curtain - 1;
+            _canvas.sortingOrder = UiLayer.Curtain;
+        }
+
+        /// <summary>The load error's canvas (tests: its own layer, on top).</summary>
+        public Canvas ErrorCanvas
+        {
+            get { return _error != null ? _error.GetComponent<Canvas>() : null; }
+        }
+
+        /// <summary>
+        /// R4 WP-105 (KOD SHOULD-13): the load error takes the focus back for itself - a click on its ink empties the selection,
+        /// and the pad's next press lands on its safe action. Screens under it cannot pull the focus behind it
+        /// (UiInput.ReclaimTarget hands their reclaim to this modal). A coroutine on the curtain for as long as this error
+        /// stands - no per-frame method on the curtain, nothing allocated per frame.
+        /// </summary>
+        private IEnumerator HoldErrorFocus(UiModal error)
+        {
+            while (error != null && _error == error && error.IsOpen)
+            {
+                UiInput.ReclaimFocus(error.DefaultFocus);
+                yield return null;
+            }
+        }
 
         /// <summary>
         /// WP-098B · the load error as the kit's Confirm. QUIT is the confirming action (it ends the session: said in a word
@@ -1416,6 +1491,7 @@ namespace DD.Prototype.UI
         {
             if (_error != null)
             {
+                UiInput.ModalClosed(_error);   // R4 WP-105: the screens own the focus again this frame (Destroy lands at its end)
                 Destroy(_error.gameObject);
                 _error = null;
                 RestoreDevice();
@@ -1458,11 +1534,25 @@ namespace DD.Prototype.UI
         /// gate (TextSecondary 2.45:1 at lift 0, < 4.5) - below -65 onto the tip strip too; a logo wider than 0.34 x 960 leaves
         /// the Mac canvas's top margin. A larger logo needs a label backing or a darker L02 (AD decision). The ring's own small
         /// seal hides while the logo shows (one emblem per screen).
+        /// R4 WP-105 (user note 6: "the logo sits inside the round progress ring, not above it"): the wordmark keeps this
+        /// place over the ring; the seal lands in the ring's centre (<see cref="LogoSealLanding"/>) - the emblem the ring holds
+        /// at every depth (its own small seal when no logo plays). At 0.34 the seal's ink (Ø ≈ 152) clears the ring's inner
+        /// edge (Ø ≈ 206, measured on the r4-audit-before frame) by ≈ 27 px a side.
         /// </summary>
         public const float LogoRingLift = RingLift;
         public const float LogoWidth = 960f * 0.34f;
         public const float LogoGap = 24f;
         public const float LogoBottom = LogoRingLift + RingSize * 0.5f + LogoGap;
+
+        /// <summary>The logo's scale on the loading screen (canvas px per spec px).</summary>
+        public const float LogoScale = LogoWidth / UiLogoAnimator.CompositionWidth;
+
+        /// <summary>
+        /// R4 WP-105 · how far below its canonical rest the loading logo's seal lands (spec px, y down): from the foot at
+        /// <see cref="LogoBottom"/> the canonical seal centre stands <see cref="UiLogoAnimator.SealCentreAboveFoot"/> × scale
+        /// higher; it comes down to the ring's centre at <see cref="LogoRingLift"/>.
+        /// </summary>
+        public const float LogoSealLanding = (LogoBottom - LogoRingLift) / LogoScale + UiLogoAnimator.SealCentreAboveFoot;
 
         /// <summary>The logo's canvas: just above the curtain's (the error modal hides it - HideDevice).</summary>
         public const int LogoSortingOrder = UiLayer.Curtain + 1;
@@ -1486,6 +1576,7 @@ namespace DD.Prototype.UI
             Canvas canvas = UiFactory.CreateCanvas("UiCurtain.Logo", LogoSortingOrder, transform);
             _logo = UiLogoAnimator.Create((RectTransform)canvas.transform, LogoWidth);
             _logo.Root.anchoredPosition = new Vector2(0f, LogoBottom);
+            _logo.SetSealLanding(LogoSealLanding);   // R4 WP-105: the seal inside the ring, the wordmark over it
             _sealHide = _seal.gameObject.AddComponent<CanvasGroup>();
             _sealHide.blocksRaycasts = false;
             UiEvents.Raised += OnLogoCue;

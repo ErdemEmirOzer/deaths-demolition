@@ -409,7 +409,11 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>Open: remember focus, EnterModal (scrim Fast, card 0.96 → 1 Base), focus the default action.</summary>
+        /// <summary>
+        /// Open: remember focus, EnterModal (scrim Fast, card 0.96 → 1 Base), focus the default action. R4 WP-105 (KOD
+        /// SHOULD-13): the modal registers with <see cref="UiInput.ModalOpened"/> - while it stands, a screen's
+        /// <see cref="UiInput.ReclaimFocus(Selectable)"/> brings the focus here, never behind it.
+        /// </summary>
         public void Open()
         {
             _returnFocus = UnityEngine.EventSystems.EventSystem.current != null
@@ -417,6 +421,7 @@ namespace DD.Prototype.UI
                 : null;
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
+            UiInput.ModalOpened(this);
             UiPresets.EnterModal(_scrim, _card, _cardRect);
             if (_brushTitle.Stroke != null)
             {
@@ -436,11 +441,18 @@ namespace DD.Prototype.UI
             }
 
             gameObject.SetActive(false);
+            UiInput.ModalClosed(this);   // R4 WP-105: the screens own the focus again (before it is handed back below)
             UiEvents.Raise(UiEvent.DialogClosed, name);
             if (_returnFocus != null && _returnFocus.activeInHierarchy)
             {
                 UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(_returnFocus);
             }
+        }
+
+        /// <summary>R4 WP-105: a modal destroyed with its screen (or the load error's HideError) leaves the focus registry.</summary>
+        private void OnDestroy()
+        {
+            UiInput.ModalClosed(this);
         }
 
         /// <summary>Cancel (B / Esc) = the secondary action. Returns true when the modal took it.</summary>

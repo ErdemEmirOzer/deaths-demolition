@@ -377,17 +377,12 @@ namespace DD.Prototype.Tests.EditMode
             // WP-081 menu v4: the name on as many lines as the spine needs at the top of it, the rail under it (Column "Nav"
             // 0..0.26 from title + XXL to the page's foot): the focused item's word and PLAY's sub-line beside the icons,
             // the build line at the foot - every word inside the spine's scrim (no header block any more).
-            float navWidth = width * 0.26f;
-            float longest = 0f;
-            foreach (string part in MainMenuScreen.HeaderTitle.Split(' '))
-            {
-                longest = Mathf.Max(longest, Mathf.Ceil(Width(rootRect, part, UiType.Display)));
-            }
-
-            float titleBox = Mathf.Max(navWidth, longest + 2f);   // MainMenuScreen.BuildTitle: words stay whole
-            float titleW = Mathf.Min(titleBox, Mathf.Ceil(Width(rootRect, MainMenuScreen.HeaderTitle, UiType.Display)));
-            float titleH = Mathf.Max(UiFactory.LineHeight(UiType.Display),
-                Mathf.Ceil(WrappedHeight(rootRect, MainMenuScreen.HeaderTitle, UiType.Display, titleBox)));
+            float navWidth = width * MainMenuScreen.SpineShare;
+            // R4 WP-105: the title is the AP-035 wordmark + seal lockup, as wide as the spine (MainMenuScreen.TitleLockup); its
+            // bone wordmark is measured as the cream it carries (LOGO-KILAVUZU bone #E9DECD ≈ TextPrimary).
+            Vector2 lockup = MainMenuScreen.TitleLockup(navWidth, out _, out _);
+            float titleW = lockup.x;
+            float titleH = lockup.y;
             var words = new List<Word>();
             words.Add(new Word { Name = "title", Rect = new Rect(left, top, titleW, titleH), Colour = UiColor.TextPrimary });
             float navTop = top + titleH + (int)UiSpace.XXL;

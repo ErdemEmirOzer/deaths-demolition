@@ -118,6 +118,7 @@ namespace DD.Prototype.UI
         private UiIconLabel _labelMode;
         private UiIconSize _size;
         private bool _tab;
+        private bool _receded;
         private string _objectName;
         private UiControlStyle _style;
 
@@ -440,6 +441,28 @@ namespace DD.Prototype.UI
             RefreshState();
         }
 
+        /// <summary>
+        /// R4 WP-105 (SHOULD-5; KIT-KILAVUZU §8 S4 R3 ek, gt S1 10.10) · an item of a rail whose open pane is another: its glyph
+        /// steps back to TextSecondary (the G1 tone, no brush, no word), the chosen one stays cream - the open pane reads on the
+        /// rail with no motion (Reduced Motion, the Performance tier) and adds no letters (R2 U1).
+        /// </summary>
+        public void SetReceded(bool receded)
+        {
+            if (_receded == receded)
+            {
+                return;
+            }
+
+            _receded = receded;
+            if (_button != null)
+            {
+                RefreshState();
+            }
+        }
+
+        /// <summary>The glyph is stepped back (tests).</summary>
+        public bool Receded => _receded;
+
         private void RefreshState()
         {
             bool chosen = _button.IsSelectedChoice;
@@ -451,7 +474,7 @@ namespace DD.Prototype.UI
 
             if (_glyph != null)
             {
-                UiColor tint = !usable || (_tab && !chosen) ? UiColor.TextSecondary : UiColor.TextPrimary;
+                UiColor tint = !usable || ((_tab || _receded) && !chosen) ? UiColor.TextSecondary : UiColor.TextPrimary;
                 _glyph.color = UiTokens.Get(tint);
             }
 
