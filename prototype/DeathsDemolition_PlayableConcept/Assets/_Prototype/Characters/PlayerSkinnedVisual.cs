@@ -639,7 +639,18 @@ namespace DD.Prototype.Characters
 
         [PrototypeOnly(PendingDecisions.None, "WP-071 r2: a shot within this many fire intervals of the previous one continues a sustained string (the LMG fire loop takes over from the per-shot kick; it ends that long after the last shot). Invented.", true)]
         public const float FireLoopChainIntervals = 1.6f;
+        [PrototypeOnly(PendingDecisions.None, "WP-111 R4 (WP-104 extremes, e.g. a full-auto launcher): a v3 fire clip this long or longer is a heavy kick — it restarts no sooner than LongFireRetriggerShare of its length; shorter clips keep a kick per shot down to MinFireRetriggerSeconds. rl_1 0.433 / sr_1 0.367 vs ar_1 0.233 / smg 0.167 / lmg 0.2 (AP-022).", true)]
+        public const float LongFireClipSeconds = 0.35f, LongFireRetriggerShare = 0.35f, MinFireRetriggerSeconds = 0.045f;
+        [PrototypeOnly(PendingDecisions.None, "WP-111 R4: a reload shorter than this (an upgrade's near-instant reload) skips the clip instead of playing it at 5–10× (the magazine just refills).", true)]
+        public const float MinReloadClipSeconds = 0.35f;
         private float _lastShotTime = -1f;
+        private float _lastFireCall = -1f, _measuredFireInterval, _lastFireTrigger = -1f, _fireClipSeconds;
+        private string _fireClipSet;
+        /// <summary>WP-111 R4 readouts (tests): fire beats not restarted because the heavy kick was still playing; reloads too short for the clip.</summary>
+        public int FireRetriggersSkipped { get; private set; }
+        public int InstantReloads { get; private set; }
+        /// <summary>WP-111 R4: the measured interval between the last shots (0 = no string), the rate an upgrade really fires at.</summary>
+        public float MeasuredFireInterval => _measuredFireInterval;
         private bool _fireHeld;
         private DD.Prototype.Weapons.WeaponController _weaponController;
 
@@ -649,7 +660,28 @@ namespace DD.Prototype.Characters
             return k >= 0 && _animation.WeaponSets[_setIndex[k]].hasFireLoop;
         }
 
-        private float FireIntervalSeconds => _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.rpm > 0f ? 60f / _weaponDef.fire.rpm : 0.1f;
+        private float FireIntervalSeconds
+        {
+            get
+            {
+                float def = _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.rpm > 0f ? 60f / _weaponDef.fire.rpm : 0.1f;
+                // WP-111 R4: an upgrade (WP-104) fires faster than the definition — the measured string wins when it is faster
+                return _measuredFireInterval > 0f ? Mathf.Min(def, _measuredFireInterval) : def;
+            }
+        }
+
+        /// <summary>WP-111 R4: the current v3 set's TP fire clip length (cached per set; 0 when none).</summary>
+        private float FireClipSeconds()
+        {
+            if (!ReferenceEquals(_fireClipSet, WeaponAnimSet))
+            {
+                _fireClipSet = WeaponAnimSet;
+                CharacterAnimationSet.Entry e = WeaponAnimSet != null && _animation != null ? _animation.Find(CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, "fire")) : null;
+                _fireClipSeconds = e != null ? e.seconds : 0f;
+            }
+
+            return _fireClipSeconds;
+        }
 
         /// <summary>WP-071 r2: the TP v3 ADS weight (the gameplay's linear ClassicWeaponRuntime.Ads01) and the end of a sustained string.</summary>
         private void TickV3Weapon()
@@ -690,6 +722,7 @@ namespace DD.Prototype.Characters
             }
             _specialV3 = false;   // a classic equip ends a v3 Special hold
             _lastShotTime = -1f;   // WP-071 r2: a sustained string never carries over to the next weapon
+            _lastFireCall = -1f; _measuredFireInterval = 0f; _lastFireTrigger = -1f;   // WP-111 R4: nor the measured rate / kick floor
             if (_animator != null) SetFireHeld(false);
             _burstStart = -1f;
             int k = def != null && TpV3On(def.AnimSet) && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
@@ -887,6 +920,8 @@ namespace DD.Prototype.Characters
         public void PlayReload(float seconds, bool empty)
         {
             if (!_authored || _dying) return;
+            // WP-111 R4 (WP-104 extremes): a near-instant reload refills without the clip — at 5–10× it only flickered the arms
+            if (seconds > 0f && seconds < MinReloadClipSeconds) { InstantReloads++; return; }
             ReloadPartCalibration.ConfigureSocket(_magSocket, WeaponAnimSet);
             if (!_specialV3 && _fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
             if (_weapon == 3) return;
@@ -982,6 +1017,15 @@ namespace DD.Prototype.Characters
         public void PlayFire()
         {
             if (!_authored || _dying) return;
+            // WP-111 R4: the real shot interval (S-02: PlayFire once per real shot, once per trigger for multi-bullet)
+            float shotNow = Time.time;
+            if (_lastFireCall >= 0f)
+            {
+                float d = shotNow - _lastFireCall;
+                _measuredFireInterval = d > 0f && d < 1f ? (_measuredFireInterval > 0f ? Mathf.Lerp(_measuredFireInterval, d, 0.5f) : d) : 0f;
+            }
+
+            _lastFireCall = shotNow;
             // WP-071 B4b: a burst weapon's v3 fire clip (TP and FP) is the whole burst (P-06 ar_2: 3 kicks) — only the burst's first shot
             // starts it. The shots arrive on frame boundaries (a 60 Hz frame can push the last one past count × interval): the window
             // reaches half-way into the gap before the next burst (burstDelaySeconds), which frame jitter never crosses.
@@ -1002,6 +1046,15 @@ namespace DD.Prototype.Characters
                 bool chained = _lastShotTime >= 0f && now - _lastShotTime <= FireLoopChainIntervals * FireIntervalSeconds;
                 _lastShotTime = now;
                 if (chained) { SetFireHeld(true); FireTriggers++; return; }
+            }
+
+            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3)
+            {
+                // WP-111 R4: a heavy kick (rl / sr) is not restarted every shot of an upgraded full-auto string — it plays on
+                float clip = FireClipSeconds();
+                float floor = clip >= LongFireClipSeconds ? clip * LongFireRetriggerShare : MinFireRetriggerSeconds;
+                if (_lastFireTrigger >= 0f && shotNow - _lastFireTrigger < floor) { FireRetriggersSkipped++; return; }
+                _lastFireTrigger = shotNow;
             }
 
             FireTriggers++;

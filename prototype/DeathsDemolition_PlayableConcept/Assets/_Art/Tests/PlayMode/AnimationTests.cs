@@ -602,6 +602,57 @@ namespace DD.Art.Tests.PlayMode
             finally { PlayerSkinnedVisual.V3WeaponSets = false; }
         }
 
+        [Category("WP111")]
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator SilahV3_Ekstrem_rl1TamOtomatik_AgirTepmeTabani_AnlikReloadKlipsiz()
+        {
+            // WP-111 R4 (C-00 11.10 · WP-104 extremes; S-02: PlayFire once per real shot): a full-auto launcher at 10 shots/s restarts
+            // its heavy 0.433 s kick no sooner than 35 % of it (a beat every second shot), the measured interval is the real 0.1 s (the
+            // fire-loop chain reads it), and a 0.2 s reload refills without the clip; a normal reload still plays. ar_1 keeps a kick per
+            // shot at 0.05 s (SilahV3_AOC_… above).
+            yield return RunAP005();
+            PlayerSkinnedVisual.V3WeaponSets = true;
+            try
+            {
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            if (pv.AnimationSet == null || pv.AnimationSet.WeaponSets.Count == 0) Assert.Ignore("AP-022 v3 setleri içe alınmadı");
+            var rl1 = DD.Prototype.Core.Weapons.Arsenal.Get("rl_1");
+            Assert.IsNotNull(rl1, "kaynak yok: rl_1");
+            int over = -1; for (int i = 0; i < pv.Animator.layerCount; i++) if (pv.Animator.GetLayerName(i) == C.OverrideUpperLayer) over = i;
+            pv.EquipWeapon(rl1, rl1.id);
+            Assert.AreEqual("rl_1", pv.WeaponAnimSet);
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.AimV3State), 2f, "Aim_V3");
+            Time.captureDeltaTime = 1f / 60f;
+            int f0 = pv.FireTriggers, s0 = pv.FireRetriggersSkipped;
+            for (int i = 0; i < 20; i++) { pv.PlayFire(); yield return new WaitForSeconds(0.1f); }
+            int beats = pv.FireTriggers - f0, skipped = pv.FireRetriggersSkipped - s0;
+            float measured = pv.MeasuredFireInterval;
+            int r0 = pv.InstantReloads;
+            pv.PlayReload(0.2f);
+            bool reloadState = false;
+            for (int i = 0; i < 6; i++)
+            {
+                yield return null;
+                AnimatorStateInfo s = pv.Animator.GetCurrentAnimatorStateInfo(over);
+                reloadState |= s.IsName(C.ReloadTacState) || s.IsName(C.ReloadEmptyState);
+            }
+
+            int instant = pv.InstantReloads - r0;
+            Debug.Log("[DD-TEST] wp111.fire rl_1 shots=20 beats=" + beats + " skipped=" + skipped + " measured=" + measured.ToString("F3", CultureInfo.InvariantCulture)
+                      + "s instantReload=" + instant + " reloadState=" + reloadState);
+            Assert.AreEqual(20, beats + skipped, "her atış ya bir vuruş ya da atlanan yeniden başlatma");
+            Assert.That(beats, Is.InRange(8, 12), "10 atış/s'de 0,152 s taban: kabaca iki atışta bir ağır tepme");
+            Assert.AreEqual(0.1f, measured, 0.02f, "ölçülen aralık gerçek atış aralığı");
+            Assert.AreEqual(1, instant, "0,2 s reload anlık sayılır");
+            Assert.IsFalse(reloadState, "0,2 s reload klibi oynatmaz");
+            pv.PlayReload(rl1.ammo.reloadTacSeconds);
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.ReloadTacState) || pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.ReloadEmptyState), 1f, "normal reload klibi");
+            pv.CancelReload();
+            }
+            finally { PlayerSkinnedVisual.V3WeaponSets = false; Time.captureDeltaTime = 0f; }
+        }
+
         [Category("WP018")]
         [UnityTest]
         [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
