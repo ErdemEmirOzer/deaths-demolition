@@ -246,7 +246,7 @@ namespace DD.Prototype.Damage
 
             ArmorSlot slot = DamageRegions.SlotFor(region);
 
-            if (Armor.Protects(slot))
+            if (Armor.Protects(slot) && !(DamageHitContext.IgnoreArmor && DamageHitContext.GroundFire))   // WP-104 B3: a status tick passes armour (S5)
             {
                 Armor.Absorb(slot, share, out float absorbed, out bool broke);
                 result.ArmorDamage += absorbed;

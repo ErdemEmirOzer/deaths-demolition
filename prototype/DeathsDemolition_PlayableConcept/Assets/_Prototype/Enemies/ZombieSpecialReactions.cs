@@ -89,6 +89,8 @@ namespace DD.Prototype.Enemies
         private void TickSpecialVisual()
         {
             ZombieSpecialVisual want = IsElectrocuted ? ZombieSpecialVisual.Electrocuted
+                : IsFrozen ? ZombieSpecialVisual.Netted    // WP-104 B3: frozen — S-06 holds the Animator mid-pose (speed 0)
+                : IsStunned ? ZombieSpecialVisual.Dazed    // WP-104 B3: the nuke / bell / bulwark stun reads as the daze
                 : Gel != GelState.None ? ZombieSpecialVisual.Slipping
                 : ZombieSpecialVisual.None;
             if (want != _specialVisual) SetSpecialVisual(want);

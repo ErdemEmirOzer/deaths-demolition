@@ -106,7 +106,7 @@ namespace DD.Prototype.Enemies
 
             Vector3 p = transform.position;
             float distance = target != null ? FlatDistance(p, target.position) : -1f;
-            bool exempt = target == null || IsRising || _waiting || IsNetted || _animator.IsStaggering || _attack.IsAttacking
+            bool exempt = target == null || IsRising || _waiting || IsNetted || TreeHolds || IsPulled || _animator.IsStaggering || _attack.IsAttacking
                           || _attack.IsGrabbing || BodyState > ZombieBodyState.Staggered   // WP-076 §2.4-4: held grab, slide / downed / shock
                           || (_pathFollower != null && _pathFollower.IsQueued)
                           || distance <= _attack.Range * 1.6f

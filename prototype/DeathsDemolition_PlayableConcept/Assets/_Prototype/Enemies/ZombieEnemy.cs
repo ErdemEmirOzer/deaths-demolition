@@ -633,6 +633,7 @@ namespace DD.Prototype.Enemies
             ResetHitResponse();        // WP-076 B3
             ResetShock();              // WP-076 B4
             ResetGel();                // WP-076 B5
+            ResetTreeStatus();         // WP-104 B3: no ice / freeze / stun / pull / tint crosses a life
             ResetRear();               // WP-076 B7
             ResetClipStep();           // WP-076 clip events
             ResetOutOfWorld();         // WP-061K
@@ -676,6 +677,7 @@ namespace DD.Prototype.Enemies
             _bodyStateOverride = ZombieBodyState.Standing;
             ResetShock();   // WP-076 B4: a held shock death never resumes on a pooled body
             ResetGel();     // WP-076 B5
+            EndTreeStatus();   // WP-104 B3: S-04's status slot is released once per life (Die already did it for a kill)
             UnregisterCrowdMembership();
             DamageTargetRegistry.Unregister(transform);
             s_live.Remove(this);
@@ -1020,6 +1022,10 @@ namespace DD.Prototype.Enemies
             Vector3 gelVelocity = TickGel(dt, out bool gelHolds);
             if (gelHolds && _attack.IsAttacking) _attack.Cancel(GrabEndReason.Staggered);
             staggering |= gelHolds;
+            // WP-104 B3: frozen / stunned by the tree holds the body the same way (its swing was cancelled on entry).
+            bool treeHolds = TreeHolds;
+            staggering |= treeHolds;
+            PauseTreePursuitClock(treeHolds, dt);   // WP-102 × WP-104: a held / pulled body is not 'making no progress'
 
             bool rearLeadOk = TickRear(target, distance);   // WP-076 B7 §6: rear_threat beat + the fairness lead before a swing from behind
             if (!staggering && target != null && rearLeadOk)
@@ -1056,6 +1062,7 @@ namespace DD.Prototype.Enemies
                 float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
                 speed *= WallFrictionFactor();                // WP-054: sliding along world geometry keeps 80 % (hysteresis)
                 speed *= SpecialSlowFactor;                   // WP-055: Ofuda net (root / slow by tier) and the Ultra's Tide drag
+                speed *= TreeSlowFactor;                      // WP-104 B3: ice stacks / the Ultra's freeze slow (1 without the tree)
                 speed *= SuppressionFactor;                   // WP-076 B3: LMG suppression ×0.70
                 if (_attack.IsGrabbing) speed = 0f;           // WP-076 §1.4: the holding body stands; the crowd flows around it
 
@@ -1070,7 +1077,7 @@ namespace DD.Prototype.Enemies
                 walkSpeed = speed;
             }
 
-            Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds, walkHeading, walkSpeed, distance, dt);
+            Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds || treeHolds, walkHeading, walkSpeed, distance, dt);
             Vector3 commanded = walkHeading * walkSpeed;
             float transitionYawStep = 0f;
             Vector3 transitionVelocity = Vector3.zero;
@@ -1083,7 +1090,7 @@ namespace DD.Prototype.Enemies
             bool stumbleRecover = _skinned != null && _skinned.StumbleRecoverActive;
             bool engagingTarget = distance <= _attack.Range * WaitEngageRangeFactor;
             bool transitionMotor = _skinned != null && _skinned.StepTransition(walkHeading, walkSpeed, _groundForward,
-                (canWalk || stumbleRecover) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds && (!engagingTarget || stumbleRecover),
+                (canWalk || stumbleRecover) && !_attack.IsAttacking && !IsRooted && !IsElectrocuted && !gelHolds && !treeHolds && (!engagingTarget || stumbleRecover),
                 dt, out transitionVelocity, out transitionYawStep);
             if (transitionMotor) { ownVelocity = transitionVelocity; _steerSpeed = transitionVelocity.magnitude; }
 
@@ -1091,7 +1098,7 @@ namespace DD.Prototype.Enemies
             float impulse = _attack.ForwardImpulse;
             if (impulse > 0f)
             {
-                Vector3 lunge = transform.forward * (impulse * SpecialSlowFactor);   // WP-055: a netted Runner's lunge is held by the same net
+                Vector3 lunge = transform.forward * (impulse * SpecialSlowFactor * TreeSlowFactor);   // WP-055: a netted Runner's lunge is held by the same net
                 ownVelocity += lunge;
                 commanded += lunge;
             }
@@ -1104,6 +1111,7 @@ namespace DD.Prototype.Enemies
 
             // ICrowdMember contract: final = own locomotion + correction.
             Vector3 correction = ConsumeCrowdCorrection();
+            if (IsPulled) correction *= TreeStatusMath.PulledCrowdShare;   // WP-104 B3: separation no longer fights the well at full strength
             Vector3 velocity = ownVelocity + correction;
 
             // ----------------------------------------------------------------- physics
@@ -1112,6 +1120,7 @@ namespace DD.Prototype.Enemies
             velocity += TickHitResponse(dt);   // WP-076 B3: class knockback (ease-out) + LMG sustained push
             velocity += gelVelocity;           // WP-076 B5: the gel slide keeps its momentum (no steering)
             velocity += TickClipStep(dt);      // WP-076: the clip's attack_step root step (clips play in place)
+            velocity += TickTreePull(dt);      // WP-104 B3: the black hole's pull (zero when not pulled)
 
             _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
 
@@ -1148,7 +1157,7 @@ namespace DD.Prototype.Enemies
 #endif
 
             // A strong push can walk the body off the mesh; put it back.
-            ClampToWalkable(correction);
+            ClampToWalkable(correction + _treePullVelocity);   // WP-104 B3: a pulled body stays on the walkable surface
 #if UNITY_EDITOR
             if (observeMove)
             {
@@ -1261,7 +1270,7 @@ namespace DD.Prototype.Enemies
             // makes the requested speed in a jam noisier still. min(requested, real): every body that was stalled before still is.
             float movingSpeed = Mathf.Min(_currentSpeed, RealGroundSpeed);
             bool stalled = wants && !engaging && movingSpeed < WaitStalledSpeed;
-            bool busy = _attack.IsAttacking || _animator.IsStaggering || IsRising || engaging;
+            bool busy = _attack.IsAttacking || _animator.IsStaggering || IsRising || engaging || TreeHolds || IsPulled;   // WP-104 B3
 
             if (stalled && !busy) { _stallSeconds += dt; _moveSeconds = 0f; }
             else if (movingSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
@@ -1350,7 +1359,9 @@ namespace DD.Prototype.Enemies
             Func<ZombieEnemy, float> incoming = IncomingDamageScale;
             if (incoming != null) scaled.Amount *= incoming(this);
             scaled.Amount *= DD.Prototype.Rounds.RunTreeHooks.StaggeredScale(this);   // WP-077 ks.impact.stagger
+            scaled.Amount *= TreeVulnerabilityScale;   // WP-104 B3: Deep Freeze — a frozen body takes FreezeVulnerability
 
+            MarkCorrosionIgnoreArmor();   // WP-104 B3: Corrosion (inside the weapon's own DamageHitContext only)
             DamageResult result = _body.ApplyDirectHit(in scaled, config != null ? config.Enemies.Armor : null);
 
             BuildMeta(DamageKind.Direct, DamageRegions.SlotFor(scaled.Region),
@@ -1432,6 +1443,7 @@ namespace DD.Prototype.Enemies
             Func<ZombieEnemy, float> incoming = IncomingDamageScale;
             if (incoming != null) totalDamage *= incoming(this);   // WP-069 × WP-077 link.gel.slickfloor
             totalDamage *= DD.Prototype.Rounds.RunTreeHooks.StaggeredScale(this);   // WP-077 ks.impact.stagger
+            totalDamage *= TreeVulnerabilityScale;   // WP-104 B3: Deep Freeze
 
             DamageResult result = _body.ApplyExplosion(
                 totalDamage,
@@ -1571,6 +1583,7 @@ namespace DD.Prototype.Enemies
 
             _alive = false;
             _dying = true;
+            LatchTreeStatusAtDeath();   // WP-104 B3: FrozenAtDeath for Shatter / Frozen Gravity, read by every death listener
             // WP-054: corpse linger by tier with jitter; near the body ceiling (DEC-023: corpses count) it shortens.
             {
                 CrowdFeelSettings feel = CrowdFeelSettings.Active;
@@ -1646,6 +1659,7 @@ namespace DD.Prototype.Enemies
                 DamageRegions.IsCritical(in result, hit.Source), heavyTier, _spawnRound,
                 gold, xp, _body.LastOverkill, hitStop, _lifeId, in _lastMeta, in _reward));
             RaiseBeat(EnemyCombatEventKind.Death, transform.position, direction, ArmorSlot.None, _skinned != null, 0f);   // WP-040
+            EndTreeStatus();   // WP-104 B3: tint cleared, TreeStatusEnded (IsDying → S-04 counts the death) once per life
         }
 
         /// <summary>
