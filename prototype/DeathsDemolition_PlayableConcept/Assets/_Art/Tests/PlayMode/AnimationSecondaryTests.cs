@@ -266,6 +266,10 @@ namespace DD.Art.Tests.PlayMode
             _temp.Add(eye);
             eye.transform.position = o + new Vector3(-6.3f, 14f, -2.1f);
             SecondaryChainDriver.LodEyeOverride = eye.transform;
+            // WP-111 R4: a fixed 60 fps clock, so the carried step is the same on every machine (the batch editor's frames are 1–3 ms).
+            // The r4hero / r4hero2 reds (hair_mass 7.4° / 10.1° past its cone on a sparse body, also at a fixed 16.7 ms) were the stale
+            // particles between sparse steps — fixed in the driver's gap carry, not here.
+            Time.captureDeltaTime = 1f / 60f;
             var drivers = new SecondaryChainDriver[visuals.Count];
             for (int i = 0; i < visuals.Count; i++) drivers[i] = visuals[i].Chains;
             Assert.GreaterOrEqual(SecondaryChainDriver.CrowdCount, 40, "kalabalık gövdeleri LOD sırasına kayıtlı değil");
@@ -299,7 +303,7 @@ namespace DD.Art.Tests.PlayMode
             var steps = new int[drivers.Length];
             int perMin = int.MaxValue, perMax = 0, perSum = 0;
             bool finite = true;
-            float worstOver = float.MinValue;
+            float worstOver = float.MinValue, maxDt = 0f;
             string worstChain = "";
             for (int f = 0; f < Warm + Frames; f++)
             {
@@ -307,6 +311,7 @@ namespace DD.Art.Tests.PlayMode
                 yield return null;
                 if (f < Warm) continue;
                 int n = 0;
+                maxDt = Mathf.Max(maxDt, Time.deltaTime);
                 for (int i = 0; i < drivers.Length; i++)
                 {
                     if (!drivers[i].ServedLastFrame) continue;
@@ -340,6 +345,7 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp082.chainlod tiers full/half/quarter=" + tierCount[1] + "/" + tierCount[2] + "/" + tierCount[4]
                       + " stepsPerFrame mean=" + perMean.ToString("F1", CultureInfo.InvariantCulture) + " min=" + perMin + " max=" + perMax
                       + " micros/frame off=" + (microsOff / Frames).ToString("F0", CultureInfo.InvariantCulture) + " on=" + (microsOn / Frames).ToString("F0", CultureInfo.InvariantCulture)
+                      + " maxDt=" + (maxDt * 1000f).ToString("F1", CultureInfo.InvariantCulture) + "ms"
                       + " wrong=" + wrong.Count + " worstAngleOver=" + worstOver.ToString("F1", CultureInfo.InvariantCulture) + " (" + worstChain + ")");
             Assert.AreEqual(SecondaryChainDriver.LodFullBodies, tierCount[1], "tam hız gövde sayısı");
             Assert.AreEqual(SecondaryChainDriver.LodHalfBodies, tierCount[2], "yarım hız gövde sayısı");

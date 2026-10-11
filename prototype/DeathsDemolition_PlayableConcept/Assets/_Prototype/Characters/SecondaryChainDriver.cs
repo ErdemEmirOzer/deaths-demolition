@@ -53,6 +53,9 @@ namespace DD.Prototype.Characters
             [NonSerialized] public Vector3[] pos;
             [NonSerialized] public Vector3[] prev;
             [NonSerialized] public bool initialised;
+            /// <summary>WP-111 R4: the parent's world frame at this chain's last step (the gap carry below).</summary>
+            [NonSerialized] public Vector3 lastParentPos;
+            [NonSerialized] public Quaternion lastParentRot;
         }
 
         [PrototypeOnly(PendingDecisions.None, "Bodies served per frame across the crowd (LOD0/1 gate is the owner's). Budget.", true)]
@@ -66,9 +69,10 @@ namespace DD.Prototype.Characters
         public const int LodFullBodies = 12;
         [PrototypeOnly(PendingDecisions.None, "Crowd LOD (Yüksek + TD): the next bodies, every 2nd frame; the rest every 4th.", true)]
         public const int LodHalfBodies = 16;
-        /// <summary>Step cap for a body on the 2nd / 4th-frame cadence (s): two 30 fps frames. Verlet stays stable at the contract's
-        /// stiffness (k·dt² = 400 × 1/225 ≤ 1.8 &lt; 4); the cap only bites below 30 fps (half) / 60 fps (quarter).</summary>
-        public const float LodMaxStep = 2f * MaxStep;
+        /// <summary>Step cap for a body on the 2nd / 4th-frame cadence (s) — WP-111 R4: the contract's own <see cref="MaxStep"/>
+        /// (the first LOD allowed 2 × MaxStep, past the contract's anti-fling cap). At 60 fps the half-rate bodies still get their
+        /// full time (2 frames = 1/30 s); the quarter-rate (far) bodies swing at half speed.</summary>
+        public const float LodMaxStep = MaxStep;
 
         [SerializeField] private Chain[] _chains = new Chain[0];
         private Func<bool> _near;
@@ -99,6 +103,7 @@ namespace DD.Prototype.Characters
         /// <summary>Tests: −1 = normal, 0 = every body off, 1 = every body on (ignores the gate).</summary>
         public static int Force = -1;
         private bool _servedThisFrame;
+        private int _lastStepFrame = -1;
         public bool ServedLastFrame => _servedThisFrame;
         private static long s_ticks;
         /// <summary>Microseconds spent by every served body this frame (Stopwatch ticks; tests / probes).</summary>
@@ -262,7 +267,10 @@ namespace DD.Prototype.Characters
             float dt = Mathf.Min(step, cap);
             if (dt <= 0f) return;
             long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            for (int c = 0; c < _chains.Length; c++) Step(_chains[c], dt);
+            // WP-111 R4: a step after a gap (LOD cadence, budget skip, back from the far gate) carries the particles with the parent first
+            bool carry = _lastStepFrame >= 0 && Time.frameCount - _lastStepFrame > 1;
+            _lastStepFrame = Time.frameCount;
+            for (int c = 0; c < _chains.Length; c++) Step(_chains[c], dt, carry);
             s_ticks += System.Diagnostics.Stopwatch.GetTimestamp() - t0;
         }
 
@@ -273,13 +281,13 @@ namespace DD.Prototype.Characters
             if (_chains.Length == 0 || dt <= 0f) return;
             bool allowed = Force == 1 || (Force != 0 && (_near == null || _near()));
             if (!allowed) return;
-            for (int c = 0; c < _chains.Length; c++) Step(_chains[c], Mathf.Min(dt, MaxStep));
+            for (int c = 0; c < _chains.Length; c++) Step(_chains[c], Mathf.Min(dt, MaxStep), false);
         }
 
         private static readonly Vector3[] s_rest = new Vector3[MaxSegments];   // this chain's rest directions in world space (one parent.rotation read a step)
         public const int MaxSegments = 8;
 
-        private static void Step(Chain ch, float dt)
+        private static void Step(Chain ch, float dt, bool carry)
         {
             int n = ch.bones != null ? ch.bones.Length : 0;
             if (n == 0 || n > MaxSegments || ch.parent == null) return;
@@ -296,6 +304,23 @@ namespace DD.Prototype.Characters
             Vector3 capA = parent.position;
             for (int i = 0; i < n; i++) s_rest[i] = (parentRot * ch.restLocal[i]).normalized;
             Vector3 root = ch.bones[0].position;
+            if (carry && ch.initialised)
+            {
+                // WP-111 R4 · between this body's steps its bones followed the parent rigidly (they keep their local rotation), but the
+                // particles stayed where the last step left them in the world; the parent capsule then landed on them and the push-out
+                // threw a segment past the angle cone (r4hero: up to 10° on a quarter-rate hair_mass). Carry particles and previous
+                // positions with the parent's motion since that step — the picture the viewer saw — so the relative velocity (the swing)
+                // survives and only the skipped frames' bulk motion is not re-integrated.
+                Quaternion d = parentRot * Quaternion.Inverse(ch.lastParentRot);
+                for (int i = 0; i <= n; i++)
+                {
+                    ch.pos[i] = capA + d * (ch.pos[i] - ch.lastParentPos);
+                    ch.prev[i] = capA + d * (ch.prev[i] - ch.lastParentPos);
+                }
+            }
+
+            ch.lastParentPos = capA;
+            ch.lastParentRot = parentRot;
             if (!ch.initialised)
             {
                 // start from the rest pose in the parent's current frame
