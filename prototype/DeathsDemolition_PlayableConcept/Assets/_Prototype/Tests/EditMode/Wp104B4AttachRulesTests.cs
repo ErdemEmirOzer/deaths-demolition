@@ -95,10 +95,14 @@ namespace DD.Prototype.Tests.EditMode
             TreeStats s = Stats();
             s.Elements = TreeElement.Ice | TreeElement.Venom;
             s.SetBranchTier(TreeBranch.Element, 3);
+            Assert.AreEqual(TreeElement.Ice, WeaponAttachRules.DominantElement(in s), "baskın düğüm yokken Fire → Ice → Shock → Venom sırasındaki ilk bayrak");
+            s.DominantElement = TreeElement.Fire;
+            Assert.AreEqual(TreeElement.Ice, WeaponAttachRules.DominantElement(in s), "sahip olunmayan baskın element kapsül vermez");
+            s.DominantElement = TreeElement.Venom;
             TreeElement dominant = WeaponAttachRules.DominantElement(in s);
-            Assert.AreEqual(TreeElement.Ice, dominant, "yerine geçen kural: Fire → Ice → Shock → Venom sırasındaki ilk bayrak (S-04 DominantElement gelene dek)");
+            Assert.AreEqual(TreeElement.Venom, dominant, "S-04 TreeStats.DominantElement (B1b) sıradan önce gelir");
             WeaponAttachSet a = WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, dominant);
-            Assert.AreEqual(TreeElement.Ice, a.Side);
+            Assert.AreEqual(TreeElement.Venom, a.Side);
             Assert.AreEqual(3, a.SideTier, "ışıma kademesi Element dalının kademesi");
             Assert.AreEqual(0, WeaponAttachRules.ElementIndex(TreeElement.Fire));
             Assert.AreEqual(1, WeaponAttachRules.ElementIndex(TreeElement.Ice));
@@ -126,7 +130,8 @@ namespace DD.Prototype.Tests.EditMode
             s.MagazineScale = 3f;
             s.TwinBarrel = true;
             s.SetBranchTier(TreeBranch.Chaos, 5);
-            s.Elements = TreeElement.Shock;
+            s.Elements = TreeElement.Shock | TreeElement.Venom;
+            s.DominantElement = TreeElement.Venom;
             Assert.That((TestDelegate)(() => { s_sink = new byte[64]; }), UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: ölçüm ayırmayı görüyor");
             Assert.That((TestDelegate)(() =>
             {

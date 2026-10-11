@@ -63,12 +63,14 @@ namespace DD.Prototype.Weapons.Attachments
             : (byte)2;
 
         /// <summary>
-        /// The element the single E4 capsule shows. S-04's TreeStats.DominantElement ("the highest-tier element, ties to the latest
-        /// bought") is on its B1b branch, not on main yet; until it lands the first set flag in Fire → Ice → Shock → Venom order stands in.
+        /// The element the single E4 capsule shows: S-04's TreeStats.DominantElement (B1b, "the highest-tier element, ties to the
+        /// latest bought") while it is one of the owned flags; with no dominant node the first set flag in Fire → Ice → Shock → Venom order.
         /// </summary>
         public static TreeElement DominantElement(in TreeStats s)
         {
             TreeElement e = s.Elements;
+            TreeElement d = s.DominantElement;
+            if (d != TreeElement.None && (e & d) == d) return d;
             if ((e & TreeElement.Fire) != 0) return TreeElement.Fire;
             if ((e & TreeElement.Ice) != 0) return TreeElement.Ice;
             if ((e & TreeElement.Shock) != 0) return TreeElement.Shock;
