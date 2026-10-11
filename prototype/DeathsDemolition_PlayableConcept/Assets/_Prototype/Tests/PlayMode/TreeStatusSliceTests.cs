@@ -156,7 +156,13 @@ namespace DD.Prototype.Tests.PlayMode
             yield return new WaitForSeconds(0.8f);
             Debug.Log("[DD-TEST] wp104.b3.freeze gait0=" + oran0.ToString("F2") + " gait1=" + (surulen ? z.Skinned.GaitRate : 0f).ToString("F2")
                       + " honest=" + (surulen && z.Skinned.GaitRateHonest) + " driven=" + surulen);
-            if (surulen) Assert.AreEqual(oran0, z.Skinned.GaitRate, 0.15f, "çözülünce kadans eski yerine dönmedi");
+            // the pre-freeze sample is taken 0.5 s into the walk, still accelerating (honest below the band, gait0 ≈ 0.44); after the
+            // thaw the body cruises (≈ 0.98): the check is that the cadence is honest again and walking, not that it equals gait0
+            if (surulen)
+            {
+                Assert.IsTrue(z.Skinned.GaitRateHonest, "çözülünce kadans dürüst değil (ayak kayar)");
+                Assert.Greater(z.Skinned.GaitRate, 0.5f, "çözülünce yürüyüş kadansı dönmedi");
+            }
 
             // §4.4: inside the body's FreezeCooldown the cap only slows — Frozen Gravity's ignoreCooldown freezes anyway
             Assert.AreEqual(IceResult.Slowed, z.ApplyIce(4), "bekleme dolmadan bayraksız donmaz");

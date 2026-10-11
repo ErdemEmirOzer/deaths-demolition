@@ -838,7 +838,10 @@ namespace DD.Prototype.Tests.PlayMode
                 _girdi.Yon = new Vector2(0f, 1f);
                 bool ileriKesme = false, yaklasti = false;
                 var ilkMesafe = new Dictionary<ZombieEnemy, float>();
-                for (int k = 0; k < 90; k++)
+                // 2.5 s: five pursuit decisions (0.5 s timer) while the player closes on the arc - the first one or two fall on a
+                // player still accelerating (or standing: the escape is then the ring's open side, behind), so 1.5 s was a coin toss
+                // on frame timing (S-04 b23 window: aheadCut False at 6.1 m moved; main 21d0fc46 True at 7.2 m)
+                for (int k = 0; k < 150; k++)
                 {
                     yield return null;
                     Vector3 p = Yatay(_rig.transform.position);
