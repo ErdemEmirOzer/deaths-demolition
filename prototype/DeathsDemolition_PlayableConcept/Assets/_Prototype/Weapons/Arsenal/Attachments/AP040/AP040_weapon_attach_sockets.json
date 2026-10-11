@@ -1,0 +1,6535 @@
+{
+  "schema": "AP040.weapon-attach-sockets.v001",
+  "date": "2026-10-11",
+  "measured": true,
+  "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+  "units": "metres",
+  "weapons": [
+    {
+      "weapon_id": "ar_1",
+      "display_name": "Hinawa",
+      "class": "AssaultRifle",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_ar_1/AP021_ar_1.fbx",
+      "source_sha256": "9a5d551a94269440de482d5229851fcb1e9150fbb7afe2f9406d81cccd52fd08",
+      "canonical_frame_residual_m": 3.987e-05,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.06756012886762619,
+          0.7998999953269958
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.014110015705227852,
+          0.09539999812841415
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Alt şarjör; kaynak marker_mag seat, orijinal part_mag gizlenir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.026099409580230715,
+          0.0676,
+          0.359955
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.031939871132373815,
+              0.9498999953269959
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8421901349963272
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.031939871132373815,
+              0.9498999953269959
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8606073879663263
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.036939871132373805,
+              1.0198999953269958
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8421901349963272
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.036939871132373805,
+              1.0198999953269958
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8606073879663263
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04443987113237381,
+              1.109899995326996
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8421901349963272
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.227817,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.227817,
+            1.227817
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04443987113237381,
+              1.109899995326996
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06756012886762619,
+              0.8606073879663263
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.227817
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "smg_1",
+      "display_name": "Shippu",
+      "class": "SMG",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_smg_1/AP021_smg_1.fbx",
+      "source_sha256": "8e9bb2fdbdf14375a8d0b989e91e79fd98c7b8582007b73a28a21e28f8fe459c",
+      "canonical_frame_residual_m": 5.002e-05,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.06480007618665695,
+          0.4758000075817108
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.006480015814304352,
+          0.09600000083446503
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Alt şarjör; kaynak marker_mag seat, orijinal part_mag gizlenir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.0222823281288147,
+          0.0648,
+          0.21411
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.03469992381334305,
+              0.6258000075817108
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5145783642287995
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.03469992381334305,
+              0.6258000075817108
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5313494689071223
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.039699923813343044,
+              0.6958000075817108
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5145783642287995
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.039699923813343044,
+              0.6958000075817108
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5313494689071223
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04719992381334305,
+              0.7858000075817109
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5145783642287995
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.118074,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.118074,
+            1.118074
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04719992381334305,
+              0.7858000075817109
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480007618665695,
+              0.5313494689071223
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.118074
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "sg_1",
+      "display_name": "Rappa",
+      "class": "Shotgun",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_sg_1/AP021_sg_1.fbx",
+      "source_sha256": "7af2ad6d853bc87d17bdd45096414acd6813f378471d4e6d71ade63102a2a579",
+      "canonical_frame_residual_m": 5.386e-05,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.07068008184432983,
+          0.4959999918937683
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.020843837738037108,
+          0.1
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Yeni alt feed-adapter socket; shell port/ön roket seat doğrudan kullanılmaz.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.020496751785278322,
+          0.0707,
+          0.2232
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.035133
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.035133,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.06395286180103124,
+              0.6459999918937683
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.5749901862753541
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.04313294364536106,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.059117
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.059117,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.08793726596853699,
+              0.6459999918937683
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.6106105898917225
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.06711734781286681,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.035133
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.035133,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.06895286180103122,
+              0.7159999918937683
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.5749901862753541
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.04313294364536106,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.059117
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.059117,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.09293726596853696,
+              0.7159999918937683
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.6106105898917225
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.06711734781286681,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.035133
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.035133,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.07645286180103122,
+              0.8059999918937684
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.5749901862753541
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.04313294364536106,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.374694,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.059117
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.059117,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.374694,
+            2.374694
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.10043726596853697,
+              0.8059999918937684
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07068008184432983,
+              0.6106105898917225
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.374694
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.06711734781286681,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "ar_2",
+      "display_name": "Sanren",
+      "class": "AssaultRifle",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_ar_2/AP021_ar_2.fbx",
+      "source_sha256": "defecddf6ccee8889b9f86fb8f32e6bbfdb7534f653699b66753eb56e4f1872f",
+      "canonical_frame_residual_m": 1.1e-07,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.08300010859966278,
+          0.6848999857902527
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.026000022888183594,
+          0.13699999451637268
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Alt şarjör; kaynak marker_mag seat, orijinal part_mag gizlenir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.023399080753326418,
+          0.083,
+          0.308205
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.016499891400337224,
+              0.8348999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7262454927667538
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.016499891400337224,
+              0.8348999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7442199491619886
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.021499891400337215,
+              0.9048999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7262454927667538
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.021499891400337215,
+              0.9048999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7442199491619886
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.02899989140033722,
+              0.9948999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7262454927667538
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.198297,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.198297,
+            1.198297
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.02899989140033722,
+              0.9948999857902527
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08300010859966278,
+              0.7442199491619886
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.198297
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "AssaultRifle",
+            "weapon_id": "ar_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "smg_2",
+      "display_name": "Tetsui",
+      "class": "SMG",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_smg_2/AP021_smg_2.fbx",
+      "source_sha256": "3889fcd8bcaad3ecb98ba101b1a8f3418589bb79adc10ac36180a9640fda9f52",
+      "canonical_frame_residual_m": 5.657e-05,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.05785005912184715,
+          0.36579999327659607
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          -0.030500000342726707,
+          0.05390000343322754,
+          0.017999989911913872
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          -90
+        ],
+        "adapter_note": "Sol yan şarjör; Unity Z −90°, genel ek −Y yönü sola çevrilir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          1.0,
+          0.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          -0.7071067811865475,
+          0.7071067811865476
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.02923604440689087,
+          0.0578,
+          0.16461
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04164994087815285,
+              0.5157999932765961
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.4047734705319368
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04164994087815285,
+              0.5157999932765961
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.42163603799537774
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04664994087815284,
+              0.585799993276596
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.4047734705319368
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04664994087815284,
+              0.585799993276596
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.42163603799537774
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.05414994087815285,
+              0.6757999932765961
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.4047734705319368
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.124171,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.124171,
+            1.124171
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.05414994087815285,
+              0.6757999932765961
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.05785005912184715,
+              0.42163603799537774
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.124171
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "SMG",
+            "weapon_id": "smg_2",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "sg_2",
+      "display_name": "Nito",
+      "class": "Shotgun",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_sg_2/AP021_sg_2.fbx",
+      "source_sha256": "6e67a0ede2546f98b306a71faf927de54b80b1f9407149b3efc8ba5a10260bb4",
+      "canonical_frame_residual_m": 9e-08,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.044100090861320496,
+          0.5587000250816345
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.02008292484283447,
+          0.1
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Yeni alt feed-adapter socket; shell port/ön roket seat doğrudan kullanılmaz.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.02771922540664673,
+          0.0441,
+          0.251415
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.071637
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.071637,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.12703712938035056,
+              0.7087000250816345
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.6645872223750523
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07963722024167103,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.104111
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.104111,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.1595108997612461,
+              0.7087000250816345
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.7128155961063418
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.11211099062256658,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.071637
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.071637,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.13203712938035053,
+              0.7787000250816345
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.6645872223750523
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07963722024167103,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.104111
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.104111,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.16451089976124608,
+              0.7787000250816345
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.7128155961063418
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.11211099062256658,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.071637
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.071637,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.13953712938035054,
+              0.8687000250816346
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.6645872223750523
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07963722024167103,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 3.215225,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.104111
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.104111,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            3.215225,
+            3.215225
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.1720108997612461,
+              0.8687000250816346
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.044100090861320496,
+              0.7128155961063418
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 3.215225
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Shotgun",
+            "weapon_id": "sg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.11211099062256658,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "sr_1",
+      "display_name": "Tomi",
+      "class": "Sniper",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_sr_1/AP021_sr_1.fbx",
+      "source_sha256": "8230799738a4258d4137aeaf00b4c8e3c8effba0a80b516a83bb21c37f720b29",
+      "canonical_frame_residual_m": 5.001e-05,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.06480017304420471,
+          1.0508999824523926
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.011750015430152416,
+          0.0989999994635582
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Alt şarjör; kaynak marker_mag seat, orijinal part_mag gizlenir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.019355263233184816,
+          0.0648,
+          0.47290499999999996
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.03469982695579529,
+              1.2008999824523925
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.0858999824523925
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.03469982695579529,
+              1.2008999824523925
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.1008999824523924
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.039699826955795284,
+              1.2708999824523926
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.0858999824523925
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.039699826955795284,
+              1.2708999824523926
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.1008999824523924
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04719982695579529,
+              1.3608999824523926
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.0858999824523925
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.0,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.0
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.0,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.0,
+            1.0
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04719982695579529,
+              1.3608999824523926
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.06480017304420471,
+              1.1008999824523924
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Sniper",
+            "weapon_id": "sr_1",
+            "required": false,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.008,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "lmg_1",
+      "display_name": "Mukade",
+      "class": "LMG",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_lmg_1/AP021_lmg_1.fbx",
+      "source_sha256": "b94f637f21c5e36e5400571d915a4640e2387783bd34075881bf25d9edb957f9",
+      "canonical_frame_residual_m": 1.5e-07,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.08200015127658844,
+          0.9196000099182129
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          -0.004999966360628605,
+          0.20499999821186066
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Alt şarjör; kaynak marker_mag seat, orijinal part_mag gizlenir.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.05709811639785767,
+          0.082,
+          0.41382
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.006214
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.006214,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.02371362697366576,
+              1.0696000099182128
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              0.9772820467805626
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.014213778250254201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.023473
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.023473,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.04097264418611357,
+              1.0696000099182128
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              1.002914251559789
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.03147279546270201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.006214
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.006214,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.02871362697366575,
+              1.1396000099182129
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              0.9772820467805626
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.014213778250254201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.023473
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.023473,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.045972644186113576,
+              1.1396000099182129
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              1.002914251559789
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.03147279546270201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.006214
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.006214,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.03621362697366576,
+              1.229600009918213
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              0.9772820467805626
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.014213778250254201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 1.708814,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.023473
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.023473,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            1.708814,
+            1.708814
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.05347264418611358,
+              1.229600009918213
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.08200015127658844,
+              1.002914251559789
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.708814
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.03147279546270201,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "lmg_2",
+      "display_name": "Kurogane",
+      "class": "LMG",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/AP021_lmg_2.fbx",
+      "source_sha256": "c14ec628c377b8154fd270b0279c15d02fae020376e31baa750cccda205a65fd",
+      "canonical_frame_residual_m": 1.3e-07,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.09200012683868408,
+          0.7692999839782715
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.14800003170967102,
+          0.17899997532367706
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          180
+        ],
+        "adapter_note": "Üst pan; Unity Z 180°, tambur yukarıda.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          -1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          1.0,
+          6.123233995736766e-17
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.05436393213272095,
+          0.092,
+          0.346185
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.046472
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.046472,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.05397196824806061,
+              0.9192999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.8566450676433619
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.05447209508674468,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.073094
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.073094,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.08059338424296203,
+              0.9192999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.896181825611373
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.08109351108164609,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.046472
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.046472,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.058971968248060586,
+              0.9892999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.8566450676433619
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.05447209508674468,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.073094
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.073094,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.085593384242962,
+              0.9892999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.896181825611373
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.08109351108164609,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.046472
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.046472,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.06647196824806059,
+              1.0792999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.8566450676433619
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.05447209508674468,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.635784,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.073094
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.073094,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.635784,
+            2.635784
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.09309338424296201,
+              1.0792999839782715
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.09200012683868408,
+              0.896181825611373
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.635784
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "LMG",
+            "weapon_id": "lmg_2",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.08109351108164609,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "weapon_id": "rl_1",
+      "display_name": "Bohiya",
+      "class": "Launcher",
+      "source_git_revision": "d0ed5f03bd5bf1b6728a113979ffb3c259e05238",
+      "source_git_path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Weapons/Arsenal/Models/AP021_rl_1/AP021_rl_1.fbx",
+      "source_sha256": "010c00302136bb9de7b90cdcf965e4e8c95493f02ace0ccd1d8793a646aa337e",
+      "canonical_frame_residual_m": 7e-08,
+      "source_frame_handedness": "Main FBX import X ters; canonical dönüşüm diag(-1,1,1), winding reverse",
+      "frame": "Unity +Z namlu/+Y yukarı/+X sağ",
+      "SOCKET_Muzzle": {
+        "position_unity_m": [
+          0.0,
+          0.07830007374286652,
+          0.445499986410141
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ]
+      },
+      "SOCKET_Mag": {
+        "position_unity_m": [
+          0.0,
+          0.027185056686401365,
+          0.14
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "adapter_note": "Yeni alt feed-adapter socket; shell port/ön roket seat doğrudan kullanılmaz.",
+        "uniformScale": 1.0,
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          -0.0,
+          1.0,
+          0
+        ],
+        "rotation_unity_quaternion_xyzw": [
+          0,
+          0,
+          0.0,
+          1.0
+        ],
+        "E2_min_uniformScale_for_12px_at_47px_per_m": 1.0,
+        "E2_E6_weapon_collision_status": "ÖLÇÜLMEDİ; Mag adapter seat/direction tablosu gerçek yüzey raycast’idir."
+      },
+      "SOCKET_Side": {
+        "position_unity_m": [
+          0.060397412300109865,
+          0.0783,
+          0.20047500000000001
+        ],
+        "rotation_unity_deg": [
+          0,
+          0,
+          0
+        ],
+        "forward_unity": [
+          0,
+          0,
+          1
+        ],
+        "up_unity": [
+          0,
+          1,
+          0
+        ],
+        "adapter_note": "Gerçek sağ-yan ray hit +2mm; tek baskın E4 kapsül."
+      },
+      "secondary_muzzle_policy": "Kombinasyonun SOCKET_SecondaryMuzzle alanı ölçülen adapter offsetini içerir; nominal local socket doğrudan kullanılmaz.",
+      "attachment_precedence": {
+        "SOCKET_Mag": [
+          "E6_rl1_fullauto",
+          "E2",
+          "E1"
+        ],
+        "SOCKET_Side": "dominant_element_only",
+        "SOCKET_Muzzle": "E3+E5"
+      },
+      "combinations": [
+        {
+          "E3_variant": 1,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.043266
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.043266,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.06446576122586925,
+              0.595499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5304826403609306
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.051265834968735755,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 1,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.069142
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.069142,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.0903415353712369,
+              0.595499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5689120094003633
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07714160911410342,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.043266
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.043266,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.06946576122586923,
+              0.665499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5304826403609306
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.051265834968735755,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 2,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.069142
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.069142,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.09534153537123691,
+              0.665499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5689120094003633
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07714160911410342,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 1,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.043266
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.043266,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.07696576122586923,
+              0.755499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5304826403609306
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.051265834968735755,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        },
+        {
+          "E3_variant": 3,
+          "E5_variant": 2,
+          "E3_uniformScale": 1.0,
+          "E5_uniformScale": 2.561958,
+          "E3_offset_blender_m": [
+            0,
+            0,
+            -0.069142
+          ],
+          "E3_offset_unity_m": [
+            0,
+            -0.069142,
+            0
+          ],
+          "E5_offset_blender_m": [
+            0,
+            -0.003,
+            0
+          ],
+          "E5_offset_unity_m": [
+            0,
+            0,
+            0.003
+          ],
+          "E5_measured_uniformScale_range": [
+            2.561958,
+            2.561958
+          ],
+          "scale_range_note": "Yalnız bu ölçülen ölçek/adapter çifti doğrulanır; geniş aralık ölçülmedi.",
+          "SOCKET_SecondaryMuzzle": {
+            "position_unity_m": [
+              0.0,
+              -0.10284153537123691,
+              0.755499986410141
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 1.0
+          },
+          "SOCKET_PowerMuzzle": {
+            "position_unity_m": [
+              0.0,
+              0.07830007374286652,
+              0.5689120094003633
+            ],
+            "rotation_unity_deg": [
+              0,
+              0,
+              0
+            ],
+            "forward_unity": [
+              0,
+              0,
+              1
+            ],
+            "up_unity": [
+              0,
+              1,
+              0
+            ],
+            "uniformScale": 2.561958
+          },
+          "adapter": {
+            "type": "rear_drop_bridge",
+            "weapon_class": "Launcher",
+            "weapon_id": "rl_1",
+            "required": true,
+            "width_m": 0.009,
+            "rear_y_m": 0.04,
+            "from_z_m": -0.008,
+            "to_z_m": -0.07714160911410342,
+            "rails_x_m": [
+              -0.018,
+              0.018
+            ]
+          },
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "E3/E5 rigid mesh uniformScale ve konum adaptörü; kaynak silah değişmez.",
+    "E2/E6 TD minimum12px için uniformScale≥1.0; sınıfa özel Mag yönü tablodan uygulanır.",
+    "AP021 main FBX import → canonical X handedness dönüşümü açıkça uygulanır; threshold 0,1 mm, mesh triangle winding düzeltilir.",
+    "FullpatternV/ChaosInlay mask varyantları aynı E5 mesh üzerinde; mask tint/intensity runtime tarafından."
+  ]
+}
