@@ -23,7 +23,7 @@ namespace DD.Prototype.Rounds
         public int[] ParentIndices;
         /// <summary>True when ANY listed parent suffices (Elemental Fusion: any two element II; Critical Mass: nuke OR hole).</summary>
         public bool ParentsAny;
-        /// <summary>Fork id (0 = none; 1 = F1 elements, 2 = F2 chaos core).</summary>
+        /// <summary>Fork id: 0 none · 1 F1 element cap · 2 F2 chaos core · 10–16 a branch capstone and its awakening alternative.</summary>
         public int ForkGroup;
         public TreeNodeState State;
         /// <summary>Round the node's tier opens in the current mode (fog line).</summary>
@@ -48,6 +48,10 @@ namespace DD.Prototype.Rounds
         /// <summary>Detail panel placeholders in display units, parallel arrays (shared, read-only).</summary>
         public string[] ArgNames;
         public float[] ArgValues;
+        /// <summary>WP-104 B5a (S-09): AP-042 v002 file of the icon (atis_III_triple_shot.png); <see cref="IconKey"/> stays "Tree.&lt;NodeId&gt;".</summary>
+        public string IconFile;
+        /// <summary>Excluded: index of the owned node that closed it ("CLOSED BY …"), −1 otherwise.</summary>
+        public int ClosedByIndex;
     }
 
     /// <summary>One synergy on the synergy column / detail panel.</summary>
@@ -68,6 +72,11 @@ namespace DD.Prototype.Rounds
         public bool Active;
         /// <summary>Hidden until one of its nodes is owned (unless the Synergy Codex awakening is owned).</summary>
         public bool Revealed;
+        /// <summary>WP-104 B5a (S-09): placeholders in display units ({every} {parts} …), shared, read-only.</summary>
+        public string[] ArgNames;
+        public float[] ArgValues;
+        /// <summary>AP-042 v002 badge file (sinerji_barrage.png); <see cref="BadgeKey"/> stays "Tree.Synergy.&lt;name&gt;".</summary>
+        public string BadgeFile;
     }
 
     /// <summary>
@@ -103,6 +112,9 @@ namespace DD.Prototype.Rounds
         public int ElementCap = 2;
         /// <summary>The weapon in hand, for previews ("on your rl_1 this becomes …").</summary>
         public TreeWeaponProfile Weapon;
+        /// <summary>WP-104 B5a (S-09): Hearth caps ("HEARTH n/20", "THIS ROUND n/3").</summary>
+        public int HearthPerRound;
+        public int HearthMax;
     }
 
     /// <summary>Commands the tree screen sends (B1's round-end shop implements it). Every call refreshes the snapshot.</summary>
@@ -114,7 +126,8 @@ namespace DD.Prototype.Rounds
         void SetTarget(int nodeIndex);
         bool TryReroll();
         bool TryStokeHearth();
-        /// <summary>Closes the tree and starts the next round (decision 1: one key).</summary>
+        /// <summary>Closes the tree's own round-end state (decision 1: one key). It does NOT end the round-end phase: the screen
+        /// still calls RunDirector.CloseUpgradeScreen() as today (WP-104 B5a answer to S-09).</summary>
         void Continue();
     }
 }

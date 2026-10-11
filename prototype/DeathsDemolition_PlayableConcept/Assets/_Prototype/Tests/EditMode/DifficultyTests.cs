@@ -224,8 +224,8 @@ namespace DD.Prototype.Tests.EditMode
             DifficultyService.BeginRun();
             Assert.AreEqual(150, DifficultyService.StartingGold, "Demolition açılış altını");
             sum = 0;
-            for (int i = 0; i < 4; i++) sum += DifficultyService.ScaleGold(5);
-            Assert.AreEqual(50, sum, "Demolition ×2,5: 4 × 5 → 50");
+            for (int i = 0; i < 5; i++) sum += DifficultyService.ScaleGold(5);
+            Assert.AreEqual(45, sum, "Demolition ×1,8 (WP-104 B5a): 5 × 5 → 45");
             DifficultyService.EndRun();
         }
 

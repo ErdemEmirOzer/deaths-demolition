@@ -9,6 +9,25 @@ namespace DD.Prototype.Rounds
     {
         public string name;
         public float value;
+        /// <summary>Display unit (K/wp-104/strings/NOTES.md §1): bonus (v−1)×100 · cut (1−v)×100 · pct v×100 · mult · count · sec · m · deg.</summary>
+        public string unit;
+
+        /// <summary>The number the pack text shows for this arg (sign and % live in the text).</summary>
+        public float DisplayValue
+        {
+            get
+            {
+                switch (unit)
+                {
+                    case "bonus": return Round1((value - 1f) * 100f);
+                    case "cut": return Round1((1f - value) * 100f);
+                    case "pct": return Round1(value * 100f);
+                    default: return value;
+                }
+            }
+        }
+
+        private static float Round1(float v) => Mathf.Abs(v - Mathf.Round(v)) < 0.05f ? Mathf.Round(v) : Mathf.Round(v * 10f) / 10f;
     }
 
     [Serializable]
@@ -38,6 +57,9 @@ namespace DD.Prototype.Rounds
         [NonSerialized] public TreeBranch Branch;
         [NonSerialized] public TreeElement Element;
         [NonSerialized] public int[] ParentIndices;
+        /// <summary>Placeholder names and display values for the detail panel (built once on load; shared, read-only).</summary>
+        [NonSerialized] public string[] DisplayNames;
+        [NonSerialized] public float[] DisplayValues;
 
         public float Arg(string name, float fallback)
         {
@@ -68,6 +90,8 @@ namespace DD.Prototype.Rounds
         [NonSerialized] public TreeSynergy Synergy;
         [NonSerialized] public int NodeA = -1;
         [NonSerialized] public int NodeB = -1;
+        [NonSerialized] public string[] DisplayNames;
+        [NonSerialized] public float[] DisplayValues;
 
         public float Arg(string name, float fallback)
         {
@@ -95,7 +119,11 @@ namespace DD.Prototype.Rounds
     {
         public int count = 3;
         public float discount = 0.10f;
+        /// <summary>B5a: the strip discount never exceeds this many gold (a reroll must not pay for itself on tier IV–V).</summary>
+        public int discountCap = 25;
         public int rerollCost = 10;
+        /// <summary>B5a: each further reroll in the same round costs this much more (10, 20, 30 …).</summary>
+        public int rerollStep = 10;
     }
 
     [Serializable]
@@ -242,6 +270,7 @@ namespace DD.Prototype.Rounds
                 Enum.TryParse(n.branch, out n.Branch);
                 n.Element = TreeElement.None;
                 if (!string.IsNullOrEmpty(n.element)) Enum.TryParse(n.element, out n.Element);
+                BuildDisplay(n.args, out n.DisplayNames, out n.DisplayValues);
             }
 
             for (int i = 0; i < doc.nodes.Length; i++)
@@ -260,10 +289,23 @@ namespace DD.Prototype.Rounds
                 Enum.TryParse(s.id, out s.Synergy);
                 s.NodeA = !string.IsNullOrEmpty(s.a) && index.TryGetValue(s.a, out int a) ? a : -1;
                 s.NodeB = !string.IsNullOrEmpty(s.b) && index.TryGetValue(s.b, out int b) ? b : -1;
+                BuildDisplay(s.args, out s.DisplayNames, out s.DisplayValues);
             }
 
             s_document = doc;
             s_index = index;
+        }
+
+        private static void BuildDisplay(TreeArgV2[] args, out string[] names, out float[] values)
+        {
+            int count = args != null ? args.Length : 0;
+            names = new string[count];
+            values = new float[count];
+            for (int i = 0; i < count; i++)
+            {
+                names[i] = args[i] != null ? args[i].name : string.Empty;
+                values[i] = args[i] != null ? args[i].DisplayValue : 0f;
+            }
         }
 
         /// <summary>Human-readable problems; empty when sound (tests, F1).</summary>

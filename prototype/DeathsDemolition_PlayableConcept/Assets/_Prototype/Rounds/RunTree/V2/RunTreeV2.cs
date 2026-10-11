@@ -179,7 +179,9 @@ namespace DD.Prototype.Rounds
             get
             {
                 TreeStripDefV2 strip = TreeCatalogV2.Document.strip;
-                return Mathf.Max(1, strip != null ? strip.rerollCost : 10);
+                int baseCost = strip != null ? strip.rerollCost : 10;
+                int step = strip != null ? Mathf.Max(0, strip.rerollStep) : 0;
+                return Mathf.Max(1, baseCost + step * RerollsThisRound);
             }
         }
 
@@ -247,7 +249,9 @@ namespace DD.Prototype.Rounds
             if (!_strip.Contains(i)) return cost;
             TreeStripDefV2 strip = TreeCatalogV2.Document.strip;
             float discount = strip != null ? Mathf.Clamp01(strip.discount) : 0f;
-            return Mathf.Max(1, Mathf.RoundToInt(cost * (1f - discount)));
+            int off = Mathf.RoundToInt(cost * discount);
+            if (strip != null && strip.discountCap > 0) off = Mathf.Min(off, strip.discountCap);
+            return Mathf.Max(1, cost - off);
         }
 
         private bool IsExcluded(int i, TreeNodeDefV2 n)
@@ -275,6 +279,21 @@ namespace DD.Prototype.Rounds
             }
 
             return false;
+        }
+
+        /// <summary>The owned node that closes <paramref name="i"/>: its fork partner, or for F1 the last element line bought.</summary>
+        private int ClosedBy(int i, TreeNodeDefV2 n)
+        {
+            TreeNodeDefV2[] nodes = TreeCatalogV2.Document.nodes;
+            int best = -1, bestOrder = -1;
+            for (int k = 0; k < nodes.Length; k++)
+            {
+                if (k == i || !_owned[k] || nodes[k].fork != n.fork) continue;
+                if (n.fork == 1 && nodes[k].tier != 1) continue;
+                if (_order[k] > bestOrder) { bestOrder = _order[k]; best = k; }
+            }
+
+            return best;
         }
 
         private bool ParentsMet(TreeNodeDefV2 n)
@@ -448,7 +467,9 @@ namespace DD.Prototype.Rounds
                 ref TreeNodeView v = ref _snapshot.Nodes[i];
                 v.NodeId = n.id;
                 v.StringKey = n.stringKey;
-                v.IconKey = string.IsNullOrEmpty(n.icon) ? "Tree." + n.id : n.icon;
+                v.IconKey = "Tree." + n.id;
+                v.IconFile = n.icon;
+                v.ClosedByIndex = state == TreeNodeState.Excluded ? ClosedBy(i, n) : -1;
                 v.Branch = n.Branch;
                 v.Tier = n.tier;
                 v.Slot = n.slot;
@@ -467,8 +488,8 @@ namespace DD.Prototype.Rounds
                 v.NewlyAvailable = buyable && !_availableLast[i];
                 v.IsAwakeningVariant = n.IsAwakening;
                 v.Synergies = syn;
-                v.ArgNames = null;
-                v.ArgValues = null;
+                v.ArgNames = n.DisplayNames;
+                v.ArgValues = n.DisplayValues;
                 _availableLast[i] = buyable;
             }
 
@@ -478,7 +499,10 @@ namespace DD.Prototype.Rounds
                 ref TreeSynergyView v = ref _snapshot.Synergies[s];
                 v.Synergy = d.Synergy;
                 v.StringKey = "tree.v2.synergy." + d.id;
-                v.BadgeKey = string.IsNullOrEmpty(d.icon) ? "Tree.Synergy." + d.id : d.icon;
+                v.BadgeKey = "Tree.Synergy." + d.id;
+                v.BadgeFile = d.icon;
+                v.ArgNames = d.DisplayNames;
+                v.ArgValues = d.DisplayValues;
                 v.NodeA = d.NodeA;
                 v.NodeB = d.NodeB;
                 v.BranchA = d.NodeA >= 0 ? doc.nodes[d.NodeA].Branch : TreeBranch.Speed;
@@ -507,6 +531,9 @@ namespace DD.Prototype.Rounds
             _snapshot.ElementsPicked = Stats.Elements;
             _snapshot.ElementCap = ElementCap;
             _snapshot.Weapon = Weapon;
+            TreeHearthDefV2 hearthDef = doc.hearth ?? new TreeHearthDefV2();
+            _snapshot.HearthPerRound = hearthDef.perRound;
+            _snapshot.HearthMax = hearthDef.max;
             Changed?.Invoke();
         }
 

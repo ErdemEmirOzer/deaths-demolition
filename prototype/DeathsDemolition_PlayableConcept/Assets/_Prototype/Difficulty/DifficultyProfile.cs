@@ -171,7 +171,7 @@ namespace DD.Prototype.Difficulty
                     s.FlankShareStandard = 0.35f; s.InterceptShare = 0.6f; s.CutShare = 0.4f; s.InterceptLeadMaxSeconds = 1.4f;
                     s.CutDistance = 5f; s.CutArrivalMarginSeconds = 0.3f;
                     s.RunningCrowd = true; s.RunningElite = true; s.UltraFastHeavyWalk = true;
-                    s.GoldScale = 2.5f; s.StartingGold = 150;   // target: 700–1 000 cumulative gold by the end of R3 (B5 sets the scale)
+                    s.GoldScale = 1.8f; s.StartingGold = 150;   // target: 700–1 000 cumulative gold by the end of R3 — WP-104 B5a (S-04, 12.10): ×2,5 gave ~1 116 in the B5 model, ×1,8 ~845
                     break;
             }
 

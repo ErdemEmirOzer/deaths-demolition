@@ -77,7 +77,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(63, baseNodes.Length, "design §2: 63 nodes");
             Assert.AreEqual(7, doc.nodes.Count(n => n.IsAwakening), "one awakening alternative per branch");
             Assert.AreEqual(10, doc.synergies.Length);
-            Assert.AreEqual(33240, baseNodes.Sum(n => n.cost), "node prices of GD-TREE §2");
+            Assert.AreEqual(33242, baseNodes.Sum(n => n.cost), "GD-TREE §2 prices with the B5a ladder (III ×1,25, IV ×1,15, V ×0,75)");
             var perBranch = new Dictionary<TreeBranch, int> { [TreeBranch.Shot] = 11, [TreeBranch.Magazine] = 9, [TreeBranch.Speed] = 8, [TreeBranch.Element] = 14,
                 [TreeBranch.Chaos] = 7, [TreeBranch.Survival] = 8, [TreeBranch.Economy] = 6 };
             foreach (var kv in perBranch) Assert.AreEqual(kv.Value, baseNodes.Count(n => n.Branch == kv.Key), kv.Key.ToString());
@@ -229,7 +229,7 @@ namespace DD.Prototype.Tests.EditMode
 
             _tree.OnEquip(Ar);
             Assert.IsFalse(TreeRuntime.Current.Has(TreeSynergy.Barrage), "Barrage needs rl_1 in hand");
-            Assert.AreEqual(1.3f, TreeRuntime.Current.FullAutoRpmScale, 1e-4f, "automatic weapons: rpm ×1,3");
+            Assert.AreEqual(1.15f, TreeRuntime.Current.FullAutoRpmScale, 1e-4f, "automatic weapons: rpm ×1,15 (B5a)");
             Assert.AreEqual(0, TreeRuntime.Current.FullAutoMagazine);
         }
 
@@ -241,7 +241,7 @@ namespace DD.Prototype.Tests.EditMode
             ref readonly TreeStats s = ref TreeRuntime.Current;
             float rpm = 900f * s.FireRateScale * s.FullAutoRpmScale;
             Assert.LessOrEqual(rpm, TreeGuardrails.TriggerRpmMax + 0.01f);
-            float raw = 900f * 1.40f * 1.35f;
+            float raw = 900f * 1.30f * 1.15f;   // B5a: Trigger III ×1,3, Twin ×1,15
             Assert.AreEqual(raw / 60f * 8f, rpm / 60f * 8f * s.DamageScale, 0.01f, "K6: DPS kept");
         }
 
@@ -252,7 +252,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (string id in new[] { "sh_heavy", "sh_double", "sh_triple", "sh_fan", "el_ice", "sh_bore", "sh_explosive" }) _tree.GrantFree(id);
             ref readonly TreeStats s = ref TreeRuntime.Current;
             Assert.AreEqual(4, s.ExtraShots, "Dragon Fan: 5 shots");
-            Assert.AreEqual(0.45f, s.ExtraShotDamage, 1e-4f);
+            Assert.AreEqual(0.35f, s.ExtraShotDamage, 1e-4f, "Dragon Fan B5a");
             Assert.AreEqual(3, s.IceStacksPerHit, "slow weapon: 3 stacks per hit");
             Assert.AreEqual(0f, s.ExplosiveRadius, "rl_1 already explodes");
             Assert.AreEqual(1.3f, s.OwnBlastRadiusScale, 1e-4f);
@@ -270,12 +270,18 @@ namespace DD.Prototype.Tests.EditMode
             _tree.Open(3);
             Assert.AreEqual(3, _tree.Strip.Count);
             int i = _tree.Strip[0];
-            Assert.AreEqual(UnityEngine.Mathf.RoundToInt(TreeCatalogV2.Document.nodes[i].cost * 0.9f), _tree.PriceOf(i));
+            int cost = TreeCatalogV2.Document.nodes[i].cost;
+            Assert.AreEqual(cost - UnityEngine.Mathf.Min(UnityEngine.Mathf.RoundToInt(cost * 0.1f), 25), _tree.PriceOf(i), "−10 %, capped at 25 gold (B5a)");
             Assert.IsTrue(_tree.Snapshot.Nodes[i].Recommended);
             int before = _wallet.Balance;
             Assert.IsTrue(_tree.TryReroll());
             Assert.AreEqual(before - 10, _wallet.Balance);
             Assert.AreEqual(3, _tree.Strip.Count);
+            Assert.AreEqual(20, _tree.RerollCost, "B5a: +10 per reroll in the round");
+            Assert.IsTrue(_tree.TryReroll());
+            Assert.AreEqual(before - 30, _wallet.Balance);
+            _tree.Open(4);
+            Assert.AreEqual(10, _tree.RerollCost, "a new round resets the reroll price");
         }
 
         [Test]
@@ -391,6 +397,37 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(TreeElement.Fire, TreeRuntime.Current.DominantElement, "fire reaches tier II");
             _tree.GrantFree("el_ice2");
             Assert.AreEqual(TreeElement.Ice, TreeRuntime.Current.DominantElement);
+        }
+
+        [Test]
+        public void Snapshot_DisplayArgs_IconsAndClosedBy()
+        {
+            Begin();
+            Give(5000);
+            _tree.Open(3);
+            TreeNodeView heavy = _tree.Snapshot.Nodes[Idx("sh_heavy")];
+            Assert.AreEqual("Tree.sh_heavy", heavy.IconKey);
+            Assert.AreEqual("atis_I_heavy_rounds.png", heavy.IconFile);
+            int dmg = System.Array.IndexOf(heavy.ArgNames, "dmg");
+            Assert.AreEqual(15f, heavy.ArgValues[dmg], 1e-3f, "bonus: (1,15 − 1) × 100");
+            TreeNodeView reload = _tree.Snapshot.Nodes[Idx("mg_reload1")];
+            Assert.AreEqual(20f, reload.ArgValues[System.Array.IndexOf(reload.ArgNames, "reload")], 1e-3f, "cut: (1 − 0,80) × 100");
+            TreeNodeView dbl = _tree.Snapshot.Nodes[Idx("sh_double")];
+            Assert.AreEqual(50f, dbl.ArgValues[System.Array.IndexOf(dbl.ArgNames, "extraDmg")], 1e-3f, "pct (B5a 0,5)");
+            TreeSynergyView barrage = _tree.Snapshot.Synergies.First(v => v.Synergy == TreeSynergy.Barrage);
+            Assert.AreEqual("Tree.Synergy.Barrage", barrage.BadgeKey);
+            Assert.AreEqual("sinerji_barrage.png", barrage.BadgeFile);
+            Assert.AreEqual(4f, barrage.ArgValues[System.Array.IndexOf(barrage.ArgNames, "every")], 1e-3f);
+            Assert.AreEqual(3, _tree.Snapshot.HearthPerRound);
+            Assert.AreEqual(20, _tree.Snapshot.HearthMax);
+
+            _tree.TryBuy(Idx("el_fire"));
+            _tree.TryBuy(Idx("el_ice"));
+            _tree.Refresh();
+            TreeNodeView shock = _tree.Snapshot.Nodes[Idx("el_shock")];
+            Assert.AreEqual(TreeNodeState.Excluded, shock.State);
+            Assert.AreEqual(Idx("el_ice"), shock.ClosedByIndex, "closed by the last element line bought");
+            Assert.AreEqual(-1, heavy.ClosedByIndex);
         }
 
         [Test]

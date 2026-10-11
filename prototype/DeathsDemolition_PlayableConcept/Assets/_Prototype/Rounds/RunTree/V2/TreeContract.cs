@@ -10,7 +10,7 @@ namespace DD.Prototype.Rounds
     // decisions K/c-00/R4/KARAR-WP104-11.10.md). S-02 (fire path), S-03 (zombie status receivers), S-07 (VFX), S-08 (audio) and
     // S-09 (tree screen) build on these types in parallel; B1 fills them. Values append only: enums are serialised as ints.
 
-    /// <summary>The seven branches (rows of the tree screen, top to bottom).</summary>
+    /// <summary>The seven branches. Values are identities, not the screen order (S-09 lays the rows out in the AD order).</summary>
     public enum TreeBranch
     {
         Shot = 0,

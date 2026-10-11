@@ -170,7 +170,7 @@ MonoBehaviour:
     ActiveCap: 40
     SpawnRefillInterval: 0.25
     MaxSpawnsPerRefillTick: 3
-    GoldScale: 2.5
+    GoldScale: 1.8
     StartingGold: 150
     ArmorGrowthScale: 1.83
     ArmorMaxAdd: 0.2
