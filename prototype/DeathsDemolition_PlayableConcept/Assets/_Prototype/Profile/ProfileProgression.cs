@@ -64,6 +64,14 @@ namespace DD.Prototype.Profile
         /// <summary>DEC-111 (user 30.09): kills of the run's starting classic weapon — the only kills weapon mastery counts.</summary>
         public readonly int MasteryKills;
 
+        /// <summary>WP-104 / WP-102: the run's mode (<see cref="TreeMode"/>); an unknown value reads Normal.</summary>
+        public readonly int Mode;
+
+        /// <summary>WP-104 B1: feature-tree counters at the end of the run (0 until the new tree fills them).</summary>
+        public readonly int TreeNodesOwned;
+        public readonly int TreeTier3Owned;
+        public readonly int SynergiesOwned;
+
         /// <summary>Standard + Special + Elite + Ultra + unattributed, saturating.</summary>
         public int TotalKills => ProfileProgression.SaturatingAdd(
             ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills), UnattributedKills);
@@ -102,6 +110,10 @@ namespace DD.Prototype.Profile
             TreeWeaponCapstone = Math.Min(1, Math.Max(0, summary.TreeWeaponCapstone));
             TreeFullLanes = Math.Max(0, summary.TreeFullLanes);
             MasteryKills = Math.Min(Math.Max(0, summary.ClassicWeaponKills), Math.Max(0, summary.TotalKills));
+            Mode = summary.Mode >= 0 && summary.Mode < TreeMode.Count ? summary.Mode : TreeMode.Normal;
+            TreeNodesOwned = Math.Max(0, summary.TreeNodesOwned);
+            TreeTier3Owned = Math.Min(Math.Max(0, summary.TreeTier3Owned), TreeNodesOwned);
+            SynergiesOwned = Math.Max(0, summary.SynergiesOwned);
         }
 
         public int KillsFor(EnemyTier tier)
@@ -234,7 +246,7 @@ namespace DD.Prototype.Profile
             }
 
             int perAsh = prog != null ? Math.Max(1, prog.XpPerAsh) : 40;
-            long ash = input.TotalXp / perAsh;
+            long ash = RunXpAsh(input.TotalXp, perAsh, prog != null ? prog.AshModeMultiplier(input.Mode) : 1f);
 
             if (input.ReachedRound >= 10 && !string.IsNullOrEmpty(input.WeaponKey) && candidate.Grant(candidate.AshMilestones, "r10:" + input.WeaponKey))
             {
@@ -263,6 +275,20 @@ namespace DD.Prototype.Profile
             candidate.AshEarnedTotal = SaturatingAdd(candidate.AshEarnedTotal, gained);
             candidate.AshBalance = candidate.AshEarnedTotal - candidate.AshSpentTotal;
             return gained;
+        }
+
+        /// <summary>
+        /// WP-104: the run-XP part of the Ash — floor(XP × mode multiplier / XpPerAsh). A ×1 mode (Normal) is the integer
+        /// division it always was (byte-equal Normal profiles); the multiplier is read at 4 decimals so a float like 1.6f
+        /// cannot tip a floor.
+        /// </summary>
+        public static long RunXpAsh(int runXp, int xpPerAsh, float modeMultiplier)
+        {
+            int perAsh = Math.Max(1, xpPerAsh);
+            long xp = Math.Max(0, runXp);
+            long scale = (long)Math.Round(Math.Max(0.0, modeMultiplier) * 10000.0);
+            if (scale == 10000L) return xp / perAsh;
+            return xp * scale / (10000L * perAsh);
         }
 
         // ------------------------------------------------------------- statistics
@@ -301,6 +327,14 @@ namespace DD.Prototype.Profile
             if (input.TreeWeaponCapstone > 0) candidate.AddWeaponCapstone(input.WeaponKey);
             candidate.RoundsCompleted = SaturatingAdd(candidate.RoundsCompleted, input.CompletedRounds);
             candidate.HighestRound = Math.Max(candidate.HighestRound, input.ReachedRound);
+
+            // WP-104 / WP-102: the mode's own record. The legacy HighestRound above stays the best of every mode.
+            ModeStatsEntry mode = candidate.ModeStatsFor(input.Mode);
+            mode.Runs = SaturatingAdd(mode.Runs, 1);
+            mode.HighestRound = Math.Max(mode.HighestRound, input.ReachedRound);
+            mode.TotalKills = SaturatingAdd(mode.TotalKills, input.TotalKills);
+            mode.BestKills = Math.Max(mode.BestKills, input.TotalKills);
+            mode.BestNodes = Math.Max(mode.BestNodes, input.TreeNodesOwned);
 
             candidate.StandardKills = SaturatingAdd(candidate.StandardKills, input.StandardKills);
             candidate.SpecialKills = SaturatingAdd(candidate.SpecialKills, input.SpecialKills);
@@ -491,7 +525,7 @@ namespace DD.Prototype.Profile
                     return candidate.ArmorPiecesBroken >= threshold;
 
                 case AchievementTrigger.ReachRound:
-                    return candidate.HighestRound >= threshold;
+                    return candidate.HighestRoundAnyMode >= threshold;   // WP-104: any mode counts
 
                 case AchievementTrigger.KillTier:
                     return candidate.KillsForTierName(definition.TargetTier.ToString()) >= threshold

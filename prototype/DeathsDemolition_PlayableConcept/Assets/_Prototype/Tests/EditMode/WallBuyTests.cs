@@ -245,7 +245,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(1, n.LevelGate, n.Id);
             }
 
-            Assert.AreEqual(9, weapons);
+            Assert.AreEqual(0, weapons, "WP-104 B1a: the weapons page is retired (Awakening replaces it); WP-107 opens every weapon but rl_1 without the meta path");
         }
 
         // ------------------------------------------------------------------ wallet

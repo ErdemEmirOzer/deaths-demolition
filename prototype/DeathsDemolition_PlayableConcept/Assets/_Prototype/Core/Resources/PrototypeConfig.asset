@@ -343,6 +343,10 @@ MonoBehaviour:
     AshAchievementUncommon: 10
     AshAchievementRare: 20
     AshAchievementEpic: 40
+    AshModeMultipliers:
+    - 1
+    - 1.25
+    - 1.6
     GoldGrantsXp: 0
     PlaytimeGrantsXp: 0
     IncompleteRoundGrantsRoundXp: 0

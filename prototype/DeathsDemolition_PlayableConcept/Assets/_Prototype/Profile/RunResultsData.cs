@@ -124,6 +124,12 @@ namespace DD.Prototype.Profile
         public int LifetimeHighestRound { get; private set; }
         public int LifetimeTotalKills { get; private set; }
         public bool IsNewHighestRound { get; private set; }
+
+        /// <summary>WP-104 / WP-102: the run's mode (<see cref="DD.Prototype.Rounds.TreeMode"/>; the Results mode badge).</summary>
+        public int Mode { get; private set; }
+
+        /// <summary>WP-104 / WP-102: the run beat its own mode's highest round (mode-based "new best", S-09).</summary>
+        public bool IsNewModeBest { get; private set; }
         public bool IsBestRunXp { get; private set; }
 
         // -------------------------------------------------------------- profile
@@ -208,6 +214,8 @@ namespace DD.Prototype.Profile
             }
 
             data.IsNewHighestRound = report.Applied && input.ReachedRound > report.HighestRoundBefore;
+            data.Mode = input.Mode;
+            data.IsNewModeBest = report.Applied && input.ReachedRound > report.ModeHighestRoundBefore;
             data.IsBestRunXp = report.Applied && input.TotalXp > 0 && input.TotalXp > report.BestRunXpBefore;
 
             if (report.Applied)

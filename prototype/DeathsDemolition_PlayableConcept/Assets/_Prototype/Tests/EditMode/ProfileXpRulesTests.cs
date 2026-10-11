@@ -344,9 +344,11 @@ namespace DD.Prototype.Tests.EditMode
                 "AshBalance", "AshEarnedTotal", "AshSpentTotal", "MetaNodes", "MetaRespecCount", "MetaPinnedNode",
                 "MetaSeen", "AshMilestones", "WeaponMastery",
                 // WP-077 A10 (v5, eksikse sıfır): silah / Special feat sayaçları — başarım istatistiği, oynanış değeri değil (DEC-007).
-                "FeatLifetime"
+                "FeatLifetime",
+                // WP-104 (şema v6): mod başına istatistik (WP-102; kayıt, modifier değil) + tek seferlik Uyanış iade bildirimi.
+                "ModeStats", "PendingAshRefundNotice"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
-            Assert.AreEqual(5, ProfileData.CurrentVersion);
+            Assert.AreEqual(6, ProfileData.CurrentVersion);
             StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");
         }
 

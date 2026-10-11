@@ -75,13 +75,18 @@ namespace DD.Prototype.Profile
     ///   prototype-profile.json.bak.writing    transient candidate used to refresh the backup atomically
     ///   prototype-profile.json.corrupt.N.json unreadable primaries, kept for inspection, never deleted
     ///   prototype-profile.json.lock           write ownership of this profile (pid + process name)
+    ///   prototype-profile.json.v5.bak         WP-104: the last pre-v6 document, byte for byte, kept before the first
+    ///                                         write that replaces it (Awakening respec, §4.14); written once, never
+    ///                                         overwritten, never deleted by this class (Delete / Reset keep it)
     ///
     /// SAVE CHAIN (WP-009) - each numbered step is a <see cref="ProfileSaveStage"/> the
     /// fault-injection tests can fail:
     ///   1 serialize, re-parse and validate the text in memory;
     ///   2 write the candidate to .writing (a FileStream, flushed with fsync);
     ///   3 read .writing back and require it to equal the text written;
-    ///   4 copy the current primary to .bak (only if the primary itself validates);
+    ///   4 WP-104: a pre-v6 primary (or a pre-v6 .bak about to be refreshed) is first kept as .v5.bak; if that copy
+    ///     cannot be written the save is refused and the old file stays exactly as it is;
+    ///     then copy the current primary to .bak (only if the primary itself validates);
     ///   5 rename .writing over the primary - one rename(2) via File.Replace, so the
     ///     primary is never absent and never half-written;
     ///   6 read the primary back and require it to equal the text; on a mismatch the
@@ -112,6 +117,9 @@ namespace DD.Prototype.Profile
         public const string CorruptSuffix = ".corrupt";
         public const string LockSuffix = ".lock";
 
+        /// <summary>WP-104: the byte-for-byte copy of the last pre-v6 document (taken before the Awakening respec reaches disk).</summary>
+        public const string LegacyV5BackupSuffix = ".v5.bak";
+
         private static string s_pathOverride;
         private static FileStream s_lease;
         private static string s_leasePath;
@@ -137,6 +145,7 @@ namespace DD.Prototype.Profile
         public static string BackupPath => Path + BackupSuffix;
         public static string BackupCandidatePath => BackupPath + CandidateSuffix;
         public static string LockPath => Path + LockSuffix;
+        public static string LegacyV5BackupPath => Path + LegacyV5BackupSuffix;
 
         // ------------------------------------------------------------ diagnostics
 
@@ -231,6 +240,20 @@ namespace DD.Prototype.Profile
             switch (status)
             {
                 case ProfileLoadStatus.Ok:
+                    // WP-104 (§4.14): a pre-v6 primary is kept byte for byte BEFORE anything can replace it. If that copy
+                    // cannot be made, the migrated profile stays in memory only: the session is read-only and the old
+                    // file is left exactly as it is (the save chain refuses too - this is the earlier, louder signal).
+                    // Only where a backup may be written at all (LegacyBackupAllowed): an editor / batch load of the real
+                    // profile - a test that reads it, a domain reload - writes nothing here; its saves are refused instead.
+                    if (LegacyBackupAllowed && !EnsureLegacyBackup(path))
+                    {
+                        SaveLocked = true;
+                        SaveLockReason = LegacyBackupReason;
+                        LastLoadMessage = SaveLockReason;
+                        Debug.LogWarning("[Profile] " + SaveLockReason);
+                        return data;
+                    }
+
                     DiscardOrphanCandidate("the primary profile is valid");
                     return data;
 
@@ -557,6 +580,15 @@ namespace DD.Prototype.Profile
                 //        a bad primary must not overwrite a good backup)
                 stage = ProfileSaveStage.BackupCopy;
                 Hook(stage);
+
+                // WP-104 (§4.14): neither the replace (primary) nor the backup refresh (.bak) may destroy the last
+                // pre-v6 document before it is kept as .v5.bak. The primary is the newer one, so it goes first.
+                if (!EnsureLegacyBackup(path) || !EnsureLegacyBackup(backupPath))
+                {
+                    TryDelete(candidatePath);
+                    return new ProfileSaveResult(false, stage, "The previous-version profile could not be backed up, so it was not replaced.");
+                }
+
                 bool primaryExists = File.Exists(path);
                 if (primaryExists)
                 {
@@ -1104,6 +1136,114 @@ namespace DD.Prototype.Profile
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// WP-104 (C-00 §4.14, 11.10): where the .v5.bak may be WRITTEN. A sandbox (path override that is not the real
+        /// profile: tests, -ddProfilePath bots) always; the real profile only on the player path - a Player, or the
+        /// editor in Play mode - and never in batch mode (test runners, CI), at an editor domain load or in EditMode.
+        /// Elsewhere a pre-v6 real profile is read but never replaced (EnsureLegacyBackup returns false → save refused).
+        /// </summary>
+        public static bool LegacyBackupAllowed => IsSandbox || IsPlayerPath;
+
+        /// <summary>The file is redirected away from the real profile (tests, -ddProfilePath).</summary>
+        public static bool IsSandbox =>
+            !string.IsNullOrEmpty(s_pathOverride) && !SamePath(s_pathOverride, System.IO.Path.Combine(Application.persistentDataPath, FileName));
+
+        private static bool IsPlayerPath => !Application.isBatchMode && (!Application.isEditor || Application.isPlaying);
+
+        private static bool SamePath(string a, string b)
+        {
+            try
+            {
+                return string.Equals(System.IO.Path.GetFullPath(a), System.IO.Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception)
+            {
+                return true;   // undecidable → treat as the real profile (fail closed)
+            }
+        }
+
+        private const string LegacyBackupReason =
+            "The profile could not be backed up before its upgrade to the new version, so it is left untouched. Progress made now will not be saved.";
+
+        /// <summary>
+        /// WP-104 (C-00 11.10 decision 2, §4.14): when <paramref name="source"/> is a pre-v6 profile document and no
+        /// .v5.bak exists yet, copies it there byte for byte (staged, fsync'd, verified, then published with one rename
+        /// that never overwrites). True when nothing needs keeping (no file, already v6+, not a profile, a backup
+        /// already exists) or the copy is published; false - with a warning - only when a pre-v6 document could NOT be
+        /// kept, in which case the caller must not replace it. Never throws.
+        /// </summary>
+        private static bool EnsureLegacyBackup(string source)
+        {
+            string legacy = LegacyV5BackupPath;
+            string staging = legacy + CandidateSuffix;
+            try
+            {
+                if (File.Exists(legacy) || !File.Exists(source))
+                {
+                    return true;   // written once: an existing copy is never overwritten
+                }
+
+                byte[] bytes = File.ReadAllBytes(source);
+                int version = ProfileMigration.ReadDocumentVersion(Encoding.UTF8.GetString(bytes));
+                if (version <= 0 || version >= ProfileData.AwakeningVersion)
+                {
+                    return true;
+                }
+
+                if (!LegacyBackupAllowed)
+                {
+                    // §4.14: no backup outside a sandbox / the player path, so the pre-v6 real file is not replaced either.
+                    Debug.LogWarning("[Profile] A previous-version profile is not upgraded on disk outside the game (editor / batch); it is left untouched.");
+                    return false;
+                }
+
+                if (Directory.Exists(legacy))
+                {
+                    throw new IOException("The backup path is taken by a directory.");
+                }
+
+                TryDelete(staging);
+                using (var stream = new FileStream(staging, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    stream.Write(bytes, 0, bytes.Length);
+                    stream.Flush(true);
+                }
+
+                if (!BytesEqual(File.ReadAllBytes(staging), bytes))
+                {
+                    throw new IOException("The backup copy did not read back as written.");
+                }
+
+                File.Move(staging, legacy);   // refuses an existing destination: never an overwrite
+                if (!BytesEqual(File.ReadAllBytes(legacy), bytes))
+                {
+                    throw new IOException("The published backup did not verify.");
+                }
+
+                Debug.Log("[Profile] The version-" + version + " profile was kept byte for byte as '" +
+                          System.IO.Path.GetFileName(legacy) + "' before its upgrade to version " + ProfileData.CurrentVersion + ".");
+                return true;
+            }
+            catch (Exception e)
+            {
+                TryDelete(staging);
+                Debug.LogWarning("[Profile] The previous-version profile could not be backed up (" + e.GetType().Name +
+                                 "); it is not migrated on disk.");
+                return false;
+            }
+        }
+
+        private static bool BytesEqual(byte[] a, byte[] b)
+        {
+            if (a == null || b == null || a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (a[i] != b[i]) return false;
+            }
+
+            return true;
         }
 
         private static void TryDelete(string path)

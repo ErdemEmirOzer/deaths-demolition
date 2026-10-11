@@ -6,19 +6,24 @@ using UnityEngine;
 
 namespace DD.Prototype.Profile
 {
-    /// <summary>WP-077 (DEC-095 layer 2): the three meta PATH pages (LB/RB on the S-09 pane).</summary>
+    /// <summary>WP-077 (DEC-095 layer 2): the meta PATH pages (LB/RB on the S-09 pane).</summary>
     public enum MetaPage
     {
+        /// <summary>RETIRED (WP-104, C-00 11.10): weapons are no longer opened on the PATH; no node may use it. Value kept.</summary>
         Weapons = 0,
         Special = 1,
-        Passives = 2
+        Passives = 2,
+        /// <summary>WP-104: Awakening ("Uyanış") — Ash opens variety on the run tree, never power (GD-TREE §3).</summary>
+        Awakening = 3
     }
 
     public enum MetaNodeKind
     {
         Weapon = 0,
         SpecialLean = 1,
-        Passive = 2
+        Passive = 2,
+        /// <summary>WP-104: an Awakening unlock (alternative capstone, fork widening, codex, head start, second thoughts).</summary>
+        Awakening = 3
     }
 
     /// <summary>Why a meta node is LOCKED (the detail panel turns it into a sentence).</summary>
@@ -92,8 +97,9 @@ namespace DD.Prototype.Profile
 
     /// <summary>
     /// WP-077 B2b: the meta PATH catalog — <c>Resources/ProgressionTree/meta-tree.json</c> (dd-meta-tree-v1):
-    /// WEAPONS (10, WP-069 order), SPECIAL (10 leanings), PASSIVES (18: economy / body ≤ 8 % / quality of life).
-    /// Council proposal numbers (PrototypeOnly) until C-00 records DEC-098 after the B3 simulation.
+    /// SPECIAL (10 leanings), PASSIVES (16: economy / body ≤ 8 % / quality of life) and, since WP-104 (C-00 11.10
+    /// decision 2), AWAKENING (12, GD-TREE §3) in place of the retired WEAPONS page (the v5 → v6 profile step refunds
+    /// every Ash spent). PrototypeOnly numbers.
     /// </summary>
     public static class MetaPathCatalog
     {
@@ -150,6 +156,14 @@ namespace DD.Prototype.Profile
                 if (string.IsNullOrEmpty(n.shortName) || n.shortName.Length > RunTreeCatalog.ShortNameMax) errors.Add(n.id + ": shortName empty or > 12");
                 if (n.ashCost < 0 || n.levelGate < 1) errors.Add(n.id + ": cost ≥ 0, gate ≥ 1");
                 if (kind == MetaNodeKind.Weapon && !WeaponIdMigration.TryGetRuntimeId(n.weaponKey, out _)) errors.Add(n.id + ": weapon key '" + n.weaponKey + "'");
+                // WP-104: the weapons page is retired (weapons open without the PATH); Awakening nodes live on their page only.
+                if (Enum.TryParse(n.page, true, out MetaPage page))
+                {
+                    if (page == MetaPage.Weapons || kind == MetaNodeKind.Weapon) errors.Add(n.id + ": the weapons page is retired (WP-104)");
+                    if ((page == MetaPage.Awakening) != (kind == MetaNodeKind.Awakening)) errors.Add(n.id + ": Awakening kind and page go together");
+                    if (kind == MetaNodeKind.Awakening && (n.effectId == null || !n.effectId.StartsWith(MetaPathEffects.AwakeningPrefix, StringComparison.Ordinal)))
+                        errors.Add(n.id + ": an Awakening effect id starts with '" + MetaPathEffects.AwakeningPrefix + "'");
+                }
             }
 
             foreach (MetaPathCatalogNode n in doc.nodes)
@@ -230,6 +244,12 @@ namespace DD.Prototype.Profile
         public const string PurseAtStart = "meta.eco.pursestart";
         public const string CapstoneDiscount = "meta.eco.capdiscount";
 
+        /// <summary>
+        /// WP-104: every Awakening effect id starts with this. They are live: <see cref="DD.Prototype.Rounds.TreeAwakening"/>
+        /// reads them for the run tree (B1 ships the reader and the tree together).
+        /// </summary>
+        public const string AwakeningPrefix = "awakening.";
+
         /// <summary>DEC-113 pa_qol_6 Round Report — data in RunStatsTracker.LastRound; S-09 adds it here with the UI.</summary>
         public const string RoundReport = "meta.qol.roundreport";
 
@@ -247,7 +267,8 @@ namespace DD.Prototype.Profile
         {
             if (TreatAllAsLive) return true;
             if (string.IsNullOrEmpty(effectId)) return false;
-            return effectId.StartsWith("weapon.", StringComparison.Ordinal) || s_live.Contains(effectId);
+            return effectId.StartsWith("weapon.", StringComparison.Ordinal) || effectId.StartsWith(AwakeningPrefix, StringComparison.Ordinal) ||
+                   s_live.Contains(effectId);
         }
     }
 }

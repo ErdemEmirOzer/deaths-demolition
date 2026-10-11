@@ -596,7 +596,8 @@ namespace DD.Prototype.Profile
                 LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel),
                 Feats = WithRunEconomy(feats, summary),
                 HighestRoundBefore = s_data.HighestRound,
-                BestRunXpBefore = s_data.BestRunXp
+                BestRunXpBefore = s_data.BestRunXp,
+                ModeHighestRoundBefore = s_data.HighestRoundIn(input.Mode)
             };
 
             // ---- 1/2 identity: format → schema → lineage → ordinal → mark → sequence → capability

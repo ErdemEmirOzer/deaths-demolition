@@ -66,6 +66,66 @@
       "Rarity": "Epic"
     },
     {
+      "Id": "hard_round_10",
+      "DisplayName": "Hard Line",
+      "Description": "Reach round 10 on Hard.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Hard",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "hard_round_20",
+      "DisplayName": "Iron Will",
+      "Description": "Reach round 20 on Hard.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Hard",
+      "Threshold": 20,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
+      "Id": "demolition_round_3",
+      "DisplayName": "First Rubble",
+      "Description": "Reach round 3 in Demolition.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Demolition",
+      "Threshold": 3,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "demolition_round_5",
+      "DisplayName": "Wrecking Crew",
+      "Description": "Reach round 5 in Demolition.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Demolition",
+      "Threshold": 5,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "demolition_round_8",
+      "DisplayName": "Fault Line",
+      "Description": "Reach round 8 in Demolition.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Demolition",
+      "Threshold": 8,
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "demolition_round_10",
+      "DisplayName": "Last One Standing",
+      "Description": "Reach round 10 in Demolition.",
+      "Condition": "ReachRoundInMode",
+      "Mode": "Demolition",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
       "Id": "rounds_completed_50",
       "DisplayName": "Fifty Rounds",
       "Description": "Complete 50 rounds in total.",

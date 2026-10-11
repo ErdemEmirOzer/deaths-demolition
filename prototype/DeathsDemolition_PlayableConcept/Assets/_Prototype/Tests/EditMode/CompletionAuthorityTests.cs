@@ -238,7 +238,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(p.IsValid());
             string json = JsonUtility.ToJson(p);
             StringAssert.DoesNotContain("AppliedCompletionIds", json);
-            Assert.Less(json.Length, 900, "anti-replay durumu iki sabit alan; 10.000 koşu sonrası belge büyümez: " + json.Length + " bayt");
+            // WP-104 (v6): + ModeStats[3] and PendingAshRefundNotice — fixed size (~130 B), independent of the run count.
+            Assert.Less(json.Length, 1200, "anti-replay durumu iki sabit alan; 10.000 koşu sonrası belge büyümez: " + json.Length + " bayt");
         }
 
         [Test]

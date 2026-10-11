@@ -988,6 +988,7 @@ namespace DD.Prototype.Rounds
                 TreeLinkII = ThisRunTree && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
                 TreeWeaponCapstone = ThisRunTree && _shop.Tree.IsOwned(_shop.Tree.Graph.WeaponCapstoneIndex) ? 1 : 0,
                 TreeFullLanes = ThisRunTree ? _shop.Tree.FullLaneCount(_shop.BuildForTree) : 0,
+                Mode = TreeRuntime.Mode,   // WP-104: the run's mode (WP-102 sets it at run start; Normal otherwise)
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,

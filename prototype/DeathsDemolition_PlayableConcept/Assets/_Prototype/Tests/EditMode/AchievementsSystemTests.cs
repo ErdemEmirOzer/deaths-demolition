@@ -176,7 +176,8 @@ namespace DD.Prototype.Tests.EditMode
             // Tanım yalnız sayaç + eşik taşır; hiçbir alan oynanış değeri değildir (DEC-007). RequiresEffect (WP-077 B4)
             // yalnız görünürlük kapısıdır: ağaç etkisi canlı değilken başarım listelenmez.
             FieldInfo[] alanlar = typeof(AchievementDefinition).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            CollectionAssert.AreEquivalent(new[] { "Id", "DisplayName", "Description", "Condition", "Threshold", "TargetTier", "Scope", "Rarity", "RequiresEffect", "Feat" },
+            // WP-104: Mode yalnız ReachRoundInMode kuralının hangi modu okuduğunu söyler (sayaç seçimi, oynanış değeri değil).
+            CollectionAssert.AreEquivalent(new[] { "Id", "DisplayName", "Description", "Condition", "Threshold", "TargetTier", "Scope", "Rarity", "RequiresEffect", "Feat", "Mode" },
                 Array.ConvertAll(alanlar, f => f.Name));
         }
 

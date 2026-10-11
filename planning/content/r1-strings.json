@@ -1623,6 +1623,102 @@
     "en": "After each round, one line: kills by type, damage taken, gold earned and how fast you killed Elites.",
     "tr": "Her round sonunda tek satır: türe göre öldürmeler, aldığın hasar, kazandığın altın ve Elitleri ne kadar sürede öldürdüğün."
   },
+  "tree.meta.awakening.alt_shot.name": {
+    "en": "Ring of Ruin",
+    "tr": "Yıkım Halkası"
+  },
+  "tree.meta.awakening.alt_shot.desc": {
+    "en": "Shot V alternative: every 4th pull fires an 8-shot 360° ring at 50% damage.",
+    "tr": "Atış V alternatifi: her 4. tetikte %50 hasarlı 8 atışlık 360° halka çıkar."
+  },
+  "tree.meta.awakening.alt_magazine.name": {
+    "en": "Ammo Fountain",
+    "tr": "Cephane Pınarı"
+  },
+  "tree.meta.awakening.alt_magazine.desc": {
+    "en": "Magazine V alternative: each kill has a 3% chance to refill the magazine and give +15% damage for 3 s.",
+    "tr": "Şarjör V alternatifi: her öldürme %3 şansla şarjörü doldurur ve 3 sn +%15 hasar verir."
+  },
+  "tree.meta.awakening.alt_speed.name": {
+    "en": "Blink Fire",
+    "tr": "Şimşek Ateşi"
+  },
+  "tree.meta.awakening.alt_speed.desc": {
+    "en": "Speed V alternative: after a dodge or a kill, 1 s of double rate of fire.",
+    "tr": "Hız V alternatifi: kaçınma ya da öldürmeden sonra 1 sn çift atış hızı."
+  },
+  "tree.meta.awakening.alt_element.name": {
+    "en": "Elemental Avatar",
+    "tr": "Element Avatarı"
+  },
+  "tree.meta.awakening.alt_element.desc": {
+    "en": "Element V alternative: a 10 s elemental form in which every hit is a nova.",
+    "tr": "Element V alternatifi: 10 sn element formu; her isabet bir nova olur."
+  },
+  "tree.meta.awakening.alt_chaos.name": {
+    "en": "Event Horizon",
+    "tr": "Olay Ufku"
+  },
+  "tree.meta.awakening.alt_chaos.desc": {
+    "en": "Chaos V alternative: one small black hole orbits you for good.",
+    "tr": "Kaos V alternatifi: küçük bir kara delik kalıcı olarak etrafında döner."
+  },
+  "tree.meta.awakening.alt_survival.name": {
+    "en": "Phoenix",
+    "tr": "Anka"
+  },
+  "tree.meta.awakening.alt_survival.desc": {
+    "en": "Survival V alternative: once per run, death becomes a 6 m fire blast and you rise with 30% health.",
+    "tr": "Hayatta kalma V alternatifi: koşuda bir kez ölüm 6 m ateş patlamasına döner, %30 canla kalkarsın."
+  },
+  "tree.meta.awakening.alt_economy.name": {
+    "en": "Golden Rain",
+    "tr": "Altın Yağmuru"
+  },
+  "tree.meta.awakening.alt_economy.desc": {
+    "en": "Economy IV alternative: every 1,000 gold spent gives +30% damage for 10 s.",
+    "tr": "Ekonomi IV alternatifi: harcanan her 1.000 altın 10 sn +%30 hasar verir."
+  },
+  "tree.meta.awakening.third_affinity.name": {
+    "en": "Third Affinity",
+    "tr": "Üçüncü Uyum"
+  },
+  "tree.meta.awakening.third_affinity.desc": {
+    "en": "Element fork: three elements can be taken in one run instead of two.",
+    "tr": "Element çatalı: bir koşuda iki yerine üç element alınabilir."
+  },
+  "tree.meta.awakening.twin_cores.name": {
+    "en": "Twin Cores",
+    "tr": "İkiz Çekirdek"
+  },
+  "tree.meta.awakening.twin_cores.desc": {
+    "en": "Chaos fork: Mini Nuke and Black Hole together (the second at 70% power).",
+    "tr": "Kaos çatalı: Mini Nükleer ve Kara Delik birlikte (ikincisi %70 güçte)."
+  },
+  "tree.meta.awakening.synergy_codex.name": {
+    "en": "Synergy Codex",
+    "tr": "Sinerji Kodeksi"
+  },
+  "tree.meta.awakening.synergy_codex.desc": {
+    "en": "Locked synergies are previewed on the tree screen.",
+    "tr": "Kilitli sinerjiler ağaç ekranında önizlenir."
+  },
+  "tree.meta.awakening.head_start.name": {
+    "en": "Head Start",
+    "tr": "Erken Başlangıç"
+  },
+  "tree.meta.awakening.head_start.desc": {
+    "en": "+40 gold in round 1 (Normal and Hard only).",
+    "tr": "1. roundda +40 altın (yalnız Normal ve Zor)."
+  },
+  "tree.meta.awakening.second_thoughts.name": {
+    "en": "Second Thoughts",
+    "tr": "İkinci Düşünce"
+  },
+  "tree.meta.awakening.second_thoughts.desc": {
+    "en": "Once per run, take back one tree node for a full refund.",
+    "tr": "Koşuda bir kez, bir ağaç düğümünü tam iadeyle geri al."
+  },
   "tips.001": {
     "en": "Change the camera from the Pause menu: top-down, third-person or first-person.",
     "tr": "Kamerayı Duraklat menüsünden değiştir: tepeden, üçüncü şahıs ya da birinci şahıs."
@@ -3679,6 +3775,30 @@
     "en": "Survive until round {count}.",
     "tr": "{count}. rounda kadar hayatta kal."
   },
+  "achievement.hard_round_10.desc": {
+    "en": "Reach round {count} on Hard.",
+    "tr": "Zor modda {count}. rounda ulaş."
+  },
+  "achievement.hard_round_20.desc": {
+    "en": "Reach round {count} on Hard.",
+    "tr": "Zor modda {count}. rounda ulaş."
+  },
+  "achievement.demolition_round_3.desc": {
+    "en": "Reach round {count} in Demolition.",
+    "tr": "Demolition modunda {count}. rounda ulaş."
+  },
+  "achievement.demolition_round_5.desc": {
+    "en": "Reach round {count} in Demolition.",
+    "tr": "Demolition modunda {count}. rounda ulaş."
+  },
+  "achievement.demolition_round_8.desc": {
+    "en": "Reach round {count} in Demolition.",
+    "tr": "Demolition modunda {count}. rounda ulaş."
+  },
+  "achievement.demolition_round_10.desc": {
+    "en": "Reach round {count} in Demolition.",
+    "tr": "Demolition modunda {count}. rounda ulaş."
+  },
   "achievement.rounds_completed_50.desc": {
     "en": "Complete {count} rounds in total.",
     "tr": "Toplam {count} round tamamla."
@@ -3882,6 +4002,30 @@
   "achievement.reach_round_20.name": {
     "en": "Reach Round 20",
     "tr": "20. Rounda Ulaş"
+  },
+  "achievement.hard_round_10.name": {
+    "en": "Hard Line",
+    "tr": "Zor Hat"
+  },
+  "achievement.hard_round_20.name": {
+    "en": "Iron Will",
+    "tr": "Demir İrade"
+  },
+  "achievement.demolition_round_3.name": {
+    "en": "First Rubble",
+    "tr": "İlk Enkaz"
+  },
+  "achievement.demolition_round_5.name": {
+    "en": "Wrecking Crew",
+    "tr": "Yıkım Ekibi"
+  },
+  "achievement.demolition_round_8.name": {
+    "en": "Fault Line",
+    "tr": "Fay Hattı"
+  },
+  "achievement.demolition_round_10.name": {
+    "en": "Last One Standing",
+    "tr": "Ayakta Kalan Son"
   },
   "achievement.rounds_completed_50.name": {
     "en": "Fifty Rounds",

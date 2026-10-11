@@ -14,7 +14,8 @@ using UnityEngine.TestTools;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-077 B2b · meta YOL (DEC-095 katman 2): katalog (WEAPONS 9 - WP-107: Kül'süz merdiven, w_rl_1 yok / SPECIAL 10 / PASSIVES 18, 6×3 sayfa),
+    /// WP-077 B2b · meta YOL (DEC-095 katman 2) + WP-104 Uyanış: katalog (SPECIAL 10 / PASSIVES 16 / AWAKENING 12, 6×3 sayfa;
+    /// silah sayfası emekli),
     /// yedi durum (seviye kapısı, merdiven silahı, bağlanmamış etki, ön koşul, dışlama, Kül), atomik satın alma
     /// (aday klon → doğrula → kaydet; başarısız kayıtta RAM = disk; ikinci alım AlreadyOwned), silah düğümü
     /// silahı açar, respec (silahlar kalır, ilk %100 sonra %75), koşu değiştiricileri (reroll 7, Ocak eğimi 27,
@@ -93,56 +94,85 @@ namespace DD.Prototype.Tests.EditMode
             MetaPathRules.Status(ProfileService.Current, MetaPathCatalog.IndexOf(id), out neden, out _, out _);
 
         [Test]
-        public void Katalog_Gecerli_Sayfalar_ve_Silahlar()
+        public void Katalog_Gecerli_Sayfalar_ve_Uyanis()
         {
             TextAsset t = Resources.Load<TextAsset>(MetaPathCatalog.ResourcePath);
             Assert.IsNotNull(t);
             var doc = JsonUtility.FromJson<MetaPathCatalogDocument>(t.text);
             var hatalar = MetaPathCatalog.Validate(doc);
             Assert.IsEmpty(hatalar, string.Join("; ", hatalar));
-            int w = 0, s = 0, p = 0;
+            int w = 0, s = 0, p = 0, a = 0, kul = 0;
             foreach (MetaPathNode n in MetaPathCatalog.Nodes)
             {
-                if (n.Page == MetaPage.Weapons) w++; else if (n.Page == MetaPage.Special) s++; else p++;
+                if (n.Page == MetaPage.Weapons) w++;
+                else if (n.Page == MetaPage.Special) s++;
+                else if (n.Page == MetaPage.Passives) p++;
+                else if (n.Page == MetaPage.Awakening) { a++; kul += n.AshCost; Assert.AreEqual(MetaNodeKind.Awakening, n.Kind, n.Id); }
+                Assert.AreNotEqual(MetaNodeKind.Weapon, n.Kind, n.Id + ": WP-104 silah sayfası emekli");
             }
 
-            // WP-107 (R4, kullanıcı 11.10 not 8): silahlar seviyeyle / Kül'le açılmaz - silah sayfası yalnız merdiven düğümleri
-            // (seviye 1, Kül yok); roketatar düğümü kalktı (duvardan satın alınır).
-            Assert.AreEqual(9, w); Assert.AreEqual(10, s); Assert.AreEqual(18, p);
-            Assert.AreEqual(0, MetaPathCatalog.Find("w_ar_2").AshCost);
-            Assert.AreEqual(1, MetaPathCatalog.Find("w_ar_2").LevelGate);
-            Assert.IsNull(MetaPathCatalog.Find("w_rl_1"));
+            // WP-104 (C-00 11.10 karar 2): silah sayfası emekli → Uyanış (GD-TREE §3, 12 düğüm ≈ 3 250 Kül); Special korunur;
+            // Pasif'ten capstone indirimi (pa_eco_4) ve Kese başlangıçta (pa_eco_3, Kese emekli) çıktı.
+            Assert.AreEqual(0, w); Assert.AreEqual(10, s); Assert.AreEqual(16, p); Assert.AreEqual(12, a);
+            Assert.AreEqual(3250, kul, "Uyanış toplamı");
+            Assert.IsNull(MetaPathCatalog.Find("w_ar_2"));
+            Assert.IsNull(MetaPathCatalog.Find("pa_eco_3"));
+            Assert.IsNull(MetaPathCatalog.Find("pa_eco_4"));
+            Assert.AreEqual(400, MetaPathCatalog.Find("aw_twincore").AshCost);
+            Assert.AreEqual(350, MetaPathCatalog.Find("aw_third").AshCost);
+            MetaPathNode bes = MetaPathCatalog.Find("pa_eco_5");
+            Assert.AreEqual(1, bes.Parents.Length);
+            Assert.AreEqual("pa_eco_2", MetaPathCatalog.Nodes[bes.Parents[0]].Id, "zincir pa_eco_2'ye bağlanır");
+        }
+
+        [Test]
+        public void Dogrulayici_SilahSayfasiniVeUyumsuzUyanisiReddeder()
+        {
+            var doc = new MetaPathCatalogDocument
+            {
+                schema = MetaPathCatalog.Schema,
+                nodes = new[]
+                {
+                    new MetaPathCatalogNode { id = "w_ar_1", page = "weapons", kind = "Weapon", shortName = "Hinawa", weaponKey = "ar_1", effectId = "weapon.ar_1" },
+                    new MetaPathCatalogNode { id = "aw_x", page = "passives", row = 1, kind = "Awakening", shortName = "X", effectId = "awakening.x" },
+                    new MetaPathCatalogNode { id = "aw_y", page = "awakening", row = 2, kind = "Awakening", shortName = "Y", effectId = "meta.eco.reroll" },
+                    new MetaPathCatalogNode { id = "aw_ok", page = "awakening", kind = "Awakening", shortName = "OK", effectId = "awakening.ok" }
+                }
+            };
+            var hatalar = MetaPathCatalog.Validate(doc);
+            Assert.IsTrue(hatalar.Exists(h => h.StartsWith("w_ar_1") && h.Contains("retired")), string.Join("; ", hatalar));
+            Assert.IsTrue(hatalar.Exists(h => h.StartsWith("aw_x")), "Uyanış türü yalnız Uyanış sayfasında");
+            Assert.IsTrue(hatalar.Exists(h => h.StartsWith("aw_y")), "Uyanış etki kimliği awakening. ile başlar");
+            Assert.IsFalse(hatalar.Exists(h => h.StartsWith("aw_ok")));
+            Assert.IsTrue(MetaPathEffects.IsLive("awakening.third_affinity"), "Uyanış etkileri canlı (TreeAwakening okur)");
         }
 
         [Test]
         public void TazeProfil_Durumlar()
         {
-            Assert.AreEqual(RunTreeNodeStatus.Purchased, Durum("w_ar_1", out _), "varsayılan silah açık");
-            Assert.AreEqual(RunTreeNodeStatus.Purchased, Durum("w_smg_1", out _), "WP-107: baştan açık");
-            Assert.AreEqual(RunTreeNodeStatus.Purchased, Durum("w_ar_2", out _), "WP-107: baştan açık (Kül yok)");
             Assert.AreEqual(RunTreeNodeStatus.Locked, Durum("pa_body_1", out MetaLockReason c));
             Assert.AreEqual(MetaLockReason.LevelGate, c, "L1 < L2");
+            Assert.AreEqual(RunTreeNodeStatus.Unaffordable, Durum("aw_codex", out MetaLockReason d), "Uyanış: kapı L1, etki canlı, Kül yok");
+            Assert.AreEqual(MetaLockReason.None, d);
         }
 
         [Test]
-        public void SatinAlma_Atomik_Idempotan_SilahDugumuSatilmaz()
+        public void UyanisSatinAlma_Atomik_Idempotan()
         {
-            Kazan(20000);   // ≈ L14, Kül = 500 + başarımlar
+            Kazan(20000);   // ≈ L14, Kül = 666 + başarımlar
             ProfileData p = ProfileService.Current;
-            Assert.GreaterOrEqual(p.ProfileLevel, 8);
-            Assert.AreEqual(RunTreeNodeStatus.Purchased, Durum("w_smg_1", out _), "WP-107: silahlar baştan açık");
             int once = p.AshBalance;
-            Assert.AreEqual(MetaCommandResult.AlreadyOwned, ProfileService.TryBuyMetaNode("w_ar_2"), "WP-107: silah düğümü Kül'le satılmaz");
-            Assert.AreEqual(once, ProfileService.Current.AshBalance);
+            int cost = MetaPathCatalog.Find("aw_codex").AshCost;
 
-            int cost = MetaPathCatalog.Find("pa_eco_1").AshCost;
-            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("aw_codex"));
             p = ProfileService.Current;
             Assert.AreEqual(once - cost, p.AshBalance);
-            Assert.IsTrue(p.MetaNodes.Contains("pa_eco_1"));
+            Assert.IsTrue(p.MetaNodes.Contains("aw_codex"));
+            Assert.IsTrue(TreeAwakening.FromProfile(p).SynergyCodex, "koşu ağacı Uyanış'ı profilden okur");
             Assert.AreEqual(JsonUtility.ToJson(p), JsonUtility.ToJson(Oku()), "canlı = disk");
-            Assert.AreEqual(MetaCommandResult.AlreadyOwned, ProfileService.TryBuyMetaNode("pa_eco_1"), "ikinci alım yok");
+            Assert.AreEqual(MetaCommandResult.AlreadyOwned, ProfileService.TryBuyMetaNode("aw_codex"), "ikinci alım yok");
             Assert.AreEqual(once - cost, ProfileService.Current.AshBalance);
+            Assert.AreEqual(MetaCommandResult.UnknownNode, ProfileService.TryBuyMetaNode("w_ar_2"), "WP-104: silah düğümü yok");
         }
 
         [Test]
@@ -151,9 +181,9 @@ namespace DD.Prototype.Tests.EditMode
             Kazan(1500);   // L5 civarı, Kül ≈ 50 + başarımlar (DEC-098 XP/30)
             string disk = Disk();
             Assert.AreEqual(MetaCommandResult.NotAvailable, ProfileService.TryBuyMetaNode("sp_early_bell"), "seviye kapısı (L7)");
-            Assert.AreEqual(MetaCommandResult.AlreadyOwned, ProfileService.TryBuyMetaNode("w_ar_2"), "WP-107: silah baştan açık");
             Assert.AreEqual(MetaCommandResult.NotAvailable, ProfileService.TryBuyMetaNode("pa_body_1"), "bağlanmamış etki satılmaz");
             Assert.AreEqual(MetaCommandResult.NotAvailable, ProfileService.TryBuyMetaNode("pa_eco_2"), "ön koşul: pa_eco_1");
+            Assert.AreEqual(MetaCommandResult.InsufficientAsh, ProfileService.TryBuyMetaNode("aw_twincore"), "400 Kül yok");
             Assert.AreEqual(MetaCommandResult.UnknownNode, ProfileService.TryBuyMetaNode("nope"));
             MetaPathEffects.TreatAllAsLive = true;
             ProfileData p = ProfileService.Current;
@@ -181,19 +211,15 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void SilahKilidi_Secim_SatiriSorgusu()
         {
+            // WP-104: no weapon opens on the PATH any more — every weapon reads its ladder / entitlement, never Ash.
             MetaPathRules.WeaponLockInfo ar1 = ProfileService.WeaponLock(ClassicWeaponId.AssaultRifle);
             Assert.IsTrue(ar1.Entitled && ar1.Ladder);
-            MetaPathRules.WeaponLockInfo smg1 = ProfileService.WeaponLock(ClassicWeaponId.AutoSmg);
-            Assert.IsTrue(smg1.Ladder, "smg_1 merdivende, Kül yok");
-            Assert.AreEqual(0, smg1.AshCost);
-            // WP-107 (R4): Sanren de merdivende ve baştan sahip; roketatar yalnız duvardan (seçim satırı "WALL BUY").
-            MetaPathRules.WeaponLockInfo ar2 = ProfileService.WeaponLock(ClassicWeaponId.Ar2);
-            Assert.IsTrue(ar2.Ladder && ar2.Entitled && !ar2.OnPath);
-            Assert.AreEqual(0, ar2.AshCost);
-            MetaPathRules.WeaponLockInfo rl1 = ProfileService.WeaponLock(ClassicWeaponId.Rl1);
-            Assert.IsFalse(rl1.Entitled);
-            Assert.AreEqual(MetaLockReason.WallBuyOnly, rl1.LockReason);
-            Assert.AreEqual(RunTreeNodeStatus.Locked, rl1.Status);
+            foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))
+            {
+                MetaPathRules.WeaponLockInfo info = ProfileService.WeaponLock(id);
+                Assert.IsFalse(info.OnPath, id + ": meta YOL silah açmaz");
+                Assert.AreEqual(0, info.AshCost, id + ": Kül yok");
+            }
         }
 
         [Test]
@@ -202,14 +228,16 @@ namespace DD.Prototype.Tests.EditMode
             Kazan(20000);
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));   // 40 (DEC-098)
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_2"));   // 70
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("aw_codex"));   // 100 (Uyanış da iade edilir)
             int once = ProfileService.Current.AshBalance;
 
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryMetaRespec(out int iade));
-            Assert.AreEqual(110, iade, "ilk respec %100");
+            Assert.AreEqual(210, iade, "ilk respec %100");
             ProfileData p = ProfileService.Current;
-            Assert.AreEqual(once + 110, p.AshBalance);
-            Assert.IsTrue(p.UnlockedWeapons.Contains("ar_2"), "silahlar kalır (WP-107: baştan açık)");
+            Assert.AreEqual(once + 210, p.AshBalance);
+            Assert.IsTrue(p.UnlockedWeapons.Contains("ar_1"), "silahlar kalır");
             Assert.IsFalse(p.MetaNodes.Contains("pa_eco_1"));
+            Assert.IsFalse(p.MetaNodes.Contains("aw_codex"));
 
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryMetaRespec(out int iade2));
@@ -221,14 +249,14 @@ namespace DD.Prototype.Tests.EditMode
         public void KosuDegistiricileri_DukkanVeAgac()
         {
             Kazan(40000);   // ≈ L19
-            foreach (string id in new[] { "pa_eco_1", "pa_eco_2", "pa_eco_3", "pa_eco_4" })
+            foreach (string id in new[] { "pa_eco_1", "pa_eco_2" })
                 Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode(id), id);
 
             MetaRunModifiers m = MetaPathRules.RunModifiers(ProfileService.Current, "ar_1");
             Assert.AreEqual(7, m.RerollCostOverride);
             Assert.AreEqual(27, m.HearthCostStepOverride);
-            Assert.IsTrue(m.PurseAtStart);
-            Assert.AreEqual(0.10f, m.CapstoneDiscount, 1e-5f);
+            Assert.IsFalse(m.PurseAtStart, "WP-104: pa_eco_3 emekli");
+            Assert.AreEqual(0f, m.CapstoneDiscount, "WP-104: pa_eco_4 emekli");
             Assert.IsFalse(m.CapstoneMasteryMet, "K6: ar_1 ustalığı < 150 öldürme (M1)");
 
             var config = ScriptableObject.CreateInstance<PrototypeConfig>();
@@ -239,14 +267,9 @@ namespace DD.Prototype.Tests.EditMode
                 var dukkan = new RoundUpgradeShop { UnlockedPredicate = _ => true, Random = new SeededUpgradeOfferRandom(3), WeaponProvider = () => ClassicWeaponId.AssaultRifle, Meta = m };
                 dukkan.Open(1, config, cuzdan, new WeaponModifierState(), 44);
                 Assert.AreEqual(7, dukkan.RerollCost, "reroll 10 → 7");
-                Assert.IsTrue(dukkan.Tree.IsOwned(dukkan.Tree.Graph.PurseIndex), "Kese başlangıçta");
-                Assert.AreEqual(342, dukkan.Tree.Cost(dukkan.Tree.Graph.WeaponCapstoneIndex, null), "doruk 380 × 0,90");
-                RunTreeEffects.TreatAllAsLive = true;
-                Assert.IsFalse(dukkan.Tree.IsOfferable(dukkan.Tree.Graph.WeaponCapstoneIndex, null), "M1 öncesi doruk (pin yoksa) teklife girmez");
             }
             finally
             {
-                RunTreeEffects.TreatAllAsLive = false;
                 UnityEngine.Object.DestroyImmediate(config);
             }
         }
@@ -255,17 +278,17 @@ namespace DD.Prototype.Tests.EditMode
         public void AnlikGoruntu_S09()
         {
             Kazan(20000);
-            Assert.AreEqual(MetaCommandResult.Done, ProfileService.SetMetaPin("pa_eco_1"));
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.SetMetaPin("aw_codex"));
             var s = new MetaPathSnapshot();
             s.Refresh();
-            Assert.AreEqual(37, s.Count, "WP-107: w_rl_1 kalktı");
-            Assert.AreEqual(s.IndexOf("pa_eco_1"), s.NextIndex);
+            Assert.AreEqual(38, s.Count, "Special 10 + Pasif 16 + Uyanış 12");
+            Assert.AreEqual(s.IndexOf("aw_codex"), s.NextIndex);
             Assert.IsFalse(s.NextIsAuto);
             Assert.IsTrue(s.Nodes[s.NextIndex].IsPinned);
             Assert.Greater(s.LastRunAsh, 0);
             Assert.AreEqual(ProfileService.Current.AshBalance, s.AshBalance);
             Assert.IsTrue(s.RespecFree);
-            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("aw_codex"));
             s.Refresh();
             Assert.IsTrue(s.NextIsAuto, "pin satın alındı → otomatik NEXT");
             Assert.IsTrue(s.HasNew);

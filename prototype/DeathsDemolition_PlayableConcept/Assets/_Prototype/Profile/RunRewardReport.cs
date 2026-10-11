@@ -135,6 +135,9 @@ namespace DD.Prototype.Profile
             public int HighestRoundBefore;
             public int BestRunXpBefore;
 
+            /// <summary>WP-104 / WP-102: the run's mode's highest round BEFORE this transaction (mode "new best", S-09).</summary>
+            public int ModeHighestRoundBefore;
+
             public RunRewardReport Seal()
             {
                 return new RunRewardReport(this);
@@ -169,6 +172,7 @@ namespace DD.Prototype.Profile
             Feats = draft.Feats;
             HighestRoundBefore = draft.HighestRoundBefore;
             BestRunXpBefore = draft.BestRunXpBefore;
+            ModeHighestRoundBefore = draft.ModeHighestRoundBefore;
         }
 
         /// <summary>False when the screen was opened without a run behind it.</summary>
@@ -242,6 +246,9 @@ namespace DD.Prototype.Profile
 
         /// <summary>WP-023: the profile's best run XP before this transaction.</summary>
         public int BestRunXpBefore { get; }
+
+        /// <summary>WP-104 / WP-102: the highest round of the run's mode (Summary.Mode) before this transaction.</summary>
+        public int ModeHighestRoundBefore { get; }
 
         /// <summary>True when the profile could not be written. The screen says so rather than lying.</summary>
         public bool SaveFailed => Outcome == ProfileCommitOutcome.SaveFailed;

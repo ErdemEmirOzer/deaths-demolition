@@ -89,7 +89,8 @@ namespace DD.Prototype.Achievements
             {
                 case AchievementCondition.TotalKills: return profile.TotalKills;
                 case AchievementCondition.TierKills: return profile.KillsForTierName(definition.TargetTier.ToString());
-                case AchievementCondition.ReachRound: return profile.HighestRound;
+                case AchievementCondition.ReachRound: return profile.HighestRoundAnyMode;   // WP-104: every mode counts
+                case AchievementCondition.ReachRoundInMode: return profile.HighestRoundIn(definition.Mode);
                 case AchievementCondition.RoundsCompleted: return profile.RoundsCompleted;
                 case AchievementCondition.ArmorPiecesBroken: return profile.ArmorPiecesBroken;
                 case AchievementCondition.SpecialWeaponPickups: return profile.SpecialWeaponPickups;
@@ -133,6 +134,7 @@ namespace DD.Prototype.Achievements
                 case AchievementCondition.TotalKills: return input.TotalKills;
                 case AchievementCondition.TierKills: return input.KillsFor(definition.TargetTier);
                 case AchievementCondition.ReachRound: return input.ReachedRound;
+                case AchievementCondition.ReachRoundInMode: return input.Mode == definition.Mode ? input.ReachedRound : 0;
                 case AchievementCondition.RoundsCompleted: return input.CompletedRounds;
                 case AchievementCondition.ArmorPiecesBroken: return input.ArmorPiecesBroken;
                 case AchievementCondition.SpecialWeaponPickups: return Math.Max(0, feats.SpecialWeaponPickups);

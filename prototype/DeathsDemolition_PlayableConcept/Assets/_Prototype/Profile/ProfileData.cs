@@ -45,12 +45,20 @@ namespace DD.Prototype.Profile
     ///      WP-035 adds SelectedTitle / SelectedBadge / AchievementsSeen / ContentSeen to
     ///      the SAME version: absent keys read as defaults, an older v4 build ignores them,
     ///      and none of them changes what the profile has earned.
+    ///   5  WP-077: the meta PATH (Ash, meta nodes, respec, pin, milestones, weapon mastery, feats) + WP-069 weapon keys.
+    ///   6  WP-104 (C-00 11.10 decision 2): Ash becomes the Awakening page. The v5 → v6 step is a full free respec (every
+    ///      Ash spent comes back, MetaNodes empty, PendingAshRefundNotice = the refund) taken only after the v5 file was
+    ///      kept byte for byte as <c>*.v5.bak</c> (ProfileStore). + ModeStats[TreeMode.Count] (WP-102 Normal / Hard /
+    ///      Demolition bests); the pre-v6 HighestRound / RunsPlayed / TotalKills seed the Normal entry.
     /// </summary>
     [Serializable]
     public sealed class ProfileData
     {
         /// <summary>Bumped when the shape changes. 0 or negative means "not a real save".</summary>
-        public const int CurrentVersion = 5;   // WP-077: v5 = meta PATH (Ash, meta nodes, mastery) + WP-069 weapon keys
+        public const int CurrentVersion = 6;   // WP-104: v6 = Awakening respec + per-mode statistics (WP-102)
+
+        /// <summary>WP-104: the first version written after the Awakening respec; an older document is backed up before it is replaced.</summary>
+        public const int AwakeningVersion = 6;
 
         /// <summary>The first version that ever existed on disk (WP-005).</summary>
         public const int OldestReadableVersion = 1;
@@ -78,6 +86,11 @@ namespace DD.Prototype.Profile
 
         // ------------------------------------------------------------- statistics
 
+        /// <summary>
+        /// Highest round reached in ANY mode (WP-104 v6: the max over <see cref="ModeStats"/>, so every existing reader —
+        /// the statistics pane, ReachRound achievements, round-gated content, "new best round" — counts every mode, as
+        /// C-00 decided for ReachRound). The per-mode bests are in <see cref="ModeStats"/>.
+        /// </summary>
         public int HighestRound;
         public int RunsPlayed;
         public int RoundsCompleted;
@@ -173,6 +186,52 @@ namespace DD.Prototype.Profile
         /// </summary>
         public int[] FeatLifetime = new int[DD.Prototype.Achievements.FeatKinds.Count];
 
+        // ------------------------------------------------- Awakening + modes (v6, WP-104)
+
+        /// <summary>
+        /// WP-104 (WP-102 modes): one entry per <see cref="DD.Prototype.Rounds.TreeMode"/> (Normal, Hard, Demolition), always
+        /// exactly <see cref="DD.Prototype.Rounds.TreeMode.Count"/> long. Statistics, never modifiers (DEC-007).
+        /// </summary>
+        public ModeStatsEntry[] ModeStats = NewModeStats();
+
+        /// <summary>
+        /// WP-104: Ash the v5 → v6 respec gave back, shown once ("AWAKENING +N Ash" / "UYANIŞ +N Kül"). The UI reads it and clears
+        /// it with <see cref="ProfileService.AcknowledgeAshRefundNotice"/>; 0 = nothing to show.
+        /// </summary>
+        public int PendingAshRefundNotice;
+
+        /// <summary>WP-104: the statistics of a mode (<see cref="DD.Prototype.Rounds.TreeMode"/>); an out-of-range mode reads Normal.</summary>
+        public ModeStatsEntry ModeStatsFor(int mode)
+        {
+            if (ModeStats == null || ModeStats.Length != DD.Prototype.Rounds.TreeMode.Count) ModeStats = CleanModeStats(ModeStats);
+            if (mode < 0 || mode >= ModeStats.Length) mode = DD.Prototype.Rounds.TreeMode.Normal;
+            return ModeStats[mode];
+        }
+
+        /// <summary>WP-104: the highest round of one mode (0 when none).</summary>
+        public int HighestRoundIn(int mode)
+        {
+            return ModeStats != null && mode >= 0 && mode < ModeStats.Length && ModeStats[mode] != null ? ModeStats[mode].HighestRound : 0;
+        }
+
+        /// <summary>WP-104: the highest round over every mode and the legacy total (what ReachRound reads).</summary>
+        public int HighestRoundAnyMode
+        {
+            get
+            {
+                int best = HighestRound;
+                if (ModeStats != null) for (int i = 0; i < ModeStats.Length; i++) if (ModeStats[i] != null && ModeStats[i].HighestRound > best) best = ModeStats[i].HighestRound;
+                return best;
+            }
+        }
+
+        public static ModeStatsEntry[] NewModeStats()
+        {
+            var result = new ModeStatsEntry[DD.Prototype.Rounds.TreeMode.Count];
+            for (int i = 0; i < result.Length; i++) result[i] = new ModeStatsEntry();
+            return result;
+        }
+
         public int FeatTotal(DD.Prototype.Achievements.FeatKind kind)
         {
             int i = (int)kind;
@@ -253,6 +312,9 @@ namespace DD.Prototype.Profile
             SpecialWeaponPickups = Math.Max(0, SpecialWeaponPickups);
             FlawlessRounds = Math.Max(0, FlawlessRounds);
             FeatLifetime = CleanFeats(FeatLifetime);
+            ModeStats = CleanModeStats(ModeStats);
+            HighestRound = Math.Max(HighestRound, HighestRoundAnyMode);   // v6: the legacy best is the best of every mode
+            PendingAshRefundNotice = Math.Max(0, PendingAshRefundNotice);
 
             Achievements = Clean(Achievements);
             UnlockedWeapons = Clean(UnlockedWeapons);
@@ -328,6 +390,11 @@ namespace DD.Prototype.Profile
             for (int i = 0; i < FeatLifetime.Length; i++)
             {
                 if (FeatLifetime[i] < 0) return false;
+            }
+
+            if (PendingAshRefundNotice < 0 || !IsCleanModeStats(ModeStats) || HighestRound < HighestRoundAnyMode)
+            {
+                return false;
             }
 
             int attributed = ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills);
@@ -410,6 +477,8 @@ namespace DD.Prototype.Profile
                 SpecialWeaponPickups = SpecialWeaponPickups,
                 FlawlessRounds = FlawlessRounds,
                 FeatLifetime = CleanFeats(FeatLifetime),
+                ModeStats = CopyModeStats(ModeStats),
+                PendingAshRefundNotice = PendingAshRefundNotice,
                 Achievements = new List<string>(Achievements ?? new List<string>()),
                 UnlockedWeapons = new List<string>(UnlockedWeapons ?? new List<string>()),
                 UnlockedBranches = new List<string>(UnlockedBranches ?? new List<string>()),
@@ -552,6 +621,38 @@ namespace DD.Prototype.Profile
             return true;
         }
 
+        /// <summary>WP-104: exactly TreeMode.Count non-null entries with non-negative counters (a short / missing array grows with zeros).</summary>
+        private static ModeStatsEntry[] CleanModeStats(ModeStatsEntry[] source)
+        {
+            ModeStatsEntry[] result = NewModeStats();
+            for (int i = 0; source != null && i < source.Length && i < result.Length; i++)
+            {
+                ModeStatsEntry e = source[i];
+                if (e == null) continue;
+                result[i].HighestRound = Math.Max(0, e.HighestRound);
+                result[i].BestKills = Math.Max(0, e.BestKills);
+                result[i].Runs = Math.Max(0, e.Runs);
+                result[i].TotalKills = Math.Max(0, e.TotalKills);
+                result[i].BestNodes = Math.Max(0, e.BestNodes);
+            }
+
+            return result;
+        }
+
+        private static ModeStatsEntry[] CopyModeStats(ModeStatsEntry[] source) => CleanModeStats(source);
+
+        private static bool IsCleanModeStats(ModeStatsEntry[] list)
+        {
+            if (list == null || list.Length != DD.Prototype.Rounds.TreeMode.Count) return false;
+            for (int i = 0; i < list.Length; i++)
+            {
+                ModeStatsEntry e = list[i];
+                if (e == null || e.HighestRound < 0 || e.BestKills < 0 || e.Runs < 0 || e.TotalKills < 0 || e.BestNodes < 0) return false;
+            }
+
+            return true;
+        }
+
         /// <summary>WP-077 A10: exactly FeatKinds.Count non-negative entries (a short / missing array grows with zeros).</summary>
         private static int[] CleanFeats(int[] source)
         {
@@ -636,6 +737,22 @@ namespace DD.Prototype.Profile
                 default: return 0;
             }
         }
+    }
+
+    /// <summary>WP-104 v6 (WP-102): one difficulty mode's lifetime statistics. Records, never modifiers (DEC-007).</summary>
+    [Serializable]
+    public sealed class ModeStatsEntry
+    {
+        /// <summary>Highest round reached in this mode.</summary>
+        public int HighestRound;
+        /// <summary>Most kills in one run of this mode.</summary>
+        public int BestKills;
+        /// <summary>Runs finished in this mode.</summary>
+        public int Runs;
+        /// <summary>Kills over every run of this mode.</summary>
+        public int TotalKills;
+        /// <summary>Most run-tree nodes owned at the end of one run of this mode.</summary>
+        public int BestNodes;
     }
 
     /// <summary>WP-077 v5: kills recorded with one weapon (mastery gates on the meta PATH).</summary>

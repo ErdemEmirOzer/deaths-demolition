@@ -774,10 +774,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ProfileLoadStatus.InvalidLineage, ProfileStore.ReadFile(Primary, out d));
             File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLineageId\": \"" + Soy + "\", \"LastAppliedCompletionOrdinal\": -4}");
             Assert.AreEqual(ProfileLoadStatus.Malformed, ProfileStore.ReadFile(Primary, out d), "negatif ordinal onarılmaz; geçersiz belge");
-            File.WriteAllText(Primary, "{\"SaveVersion\": 6, \"ProfileLineageId\": \"" + Soy + "\"}");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 7, \"ProfileLineageId\": \"" + Soy + "\"}");
             Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d));
-            File.WriteAllText(Primary, "{\"SaveVersion\": 6}");
-            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v6 lineage'sız da future: dokunulmaz (WP-077: v5 artık güncel)");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 7}");
+            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v7 lineage'sız da future: dokunulmaz (WP-104: v6 artık güncel)");
             File.Delete(Primary);
             Assert.AreEqual(ProfileLoadStatus.Missing, ProfileStore.ReadFile(Primary, out d));
             Assert.IsNull(d);

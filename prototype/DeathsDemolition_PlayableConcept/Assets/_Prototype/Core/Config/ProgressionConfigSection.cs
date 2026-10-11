@@ -97,6 +97,19 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash for an Epic achievement.")]
         public int AshAchievementEpic = 40;
 
+        [PrototypeOnly(PendingDecisions.ProfileXp,
+            "WP-104 / WP-102 (C-00 11.10): Ash from run XP per mode (Normal, Hard, Demolition) - floor(XP × this / XpPerAsh). " +
+            "Milestone and achievement Ash are not scaled. Fine-tuned in B5.")]
+        public float[] AshModeMultipliers = { 1f, 1.25f, 1.6f };
+
+        /// <summary>WP-104: the run-XP Ash multiplier of a mode (0 Normal, 1 Hard, 2 Demolition); 1 for a missing / bad entry.</summary>
+        public float AshModeMultiplier(int mode)
+        {
+            if (AshModeMultipliers == null || mode < 0 || mode >= AshModeMultipliers.Length) return 1f;
+            float m = AshModeMultipliers[mode];
+            return float.IsNaN(m) || float.IsInfinity(m) || m <= 0f ? 1f : m;
+        }
+
         /// <summary>WP-077: Ash for an achievement of the given rarity (0 Common … 3 Epic).</summary>
         public int AshForRarity(int rarity)
         {

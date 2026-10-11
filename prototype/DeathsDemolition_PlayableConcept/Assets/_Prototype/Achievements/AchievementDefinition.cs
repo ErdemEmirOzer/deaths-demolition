@@ -12,7 +12,7 @@ namespace DD.Prototype.Achievements
         /// <summary>Kills of <see cref="AchievementDefinition.TargetTier"/>.</summary>
         TierKills = 1,
 
-        /// <summary>Highest round fought in (lifetime) / round reached (single run).</summary>
+        /// <summary>Highest round fought in (lifetime, any mode — WP-104) / round reached (single run, any mode).</summary>
         ReachRound = 2,
 
         /// <summary>Rounds actually completed.</summary>
@@ -61,7 +61,10 @@ namespace DD.Prototype.Achievements
         WeaponMastery = 17,
 
         /// <summary>WP-077 A10: a weapon / Special feat (<see cref="AchievementDefinition.Feat"/>): this run's value, or the lifetime one.</summary>
-        Feat = 18
+        Feat = 18,
+
+        /// <summary>WP-104 / WP-102: highest round reached in <see cref="AchievementDefinition.Mode"/> (lifetime: ModeStats; single run: this run, if it was that mode).</summary>
+        ReachRoundInMode = 19
     }
 
     /// <summary>Whether the threshold is measured over the whole profile or inside one run.</summary>
@@ -117,6 +120,9 @@ namespace DD.Prototype.Achievements
         /// <summary>WP-077 A10: which feat a <see cref="AchievementCondition.Feat"/> rule reads (a counter, never a gameplay value).</summary>
         public FeatKind Feat;
 
+        /// <summary>WP-104: which mode a <see cref="AchievementCondition.ReachRoundInMode"/> rule reads (<see cref="DD.Prototype.Rounds.TreeMode"/>).</summary>
+        public int Mode;
+
         public bool IsUsable => !string.IsNullOrEmpty(Id) && Enum.IsDefined(typeof(AchievementCondition), Condition);
 
         /// <summary>
@@ -149,6 +155,7 @@ namespace DD.Prototype.Achievements
             {
                 case AchievementCondition.ArmorPiecesBroken: return AchievementTrigger.ArmorPieceBroken;
                 case AchievementCondition.ReachRound: return AchievementTrigger.ReachRound;
+                case AchievementCondition.ReachRoundInMode: return AchievementTrigger.ReachRound;   // presentation shape only
                 case AchievementCondition.TierKills: return AchievementTrigger.KillTier;
                 default: return AchievementTrigger.FirstKill;
             }

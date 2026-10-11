@@ -240,6 +240,18 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-077 B4: lanes that end the run with their capstone and a tier at its maximum (0–2; full_lane).</summary>
         public int TreeFullLanes;
 
+        /// <summary>WP-104 / WP-102: the run's difficulty mode (<see cref="TreeMode"/>; 0 = Normal, the default).</summary>
+        public int Mode;
+
+        /// <summary>WP-104 B1: feature-tree nodes owned at the end of the run (ModeStats.BestNodes).</summary>
+        public int TreeNodesOwned;
+
+        /// <summary>WP-104 B1: feature-tree nodes of tier III or higher owned at the end of the run.</summary>
+        public int TreeTier3Owned;
+
+        /// <summary>WP-104 B1: synergies unlocked at the end of the run.</summary>
+        public int SynergiesOwned;
+
         /// <summary>Seconds of run time, paused and frozen time excluded.</summary>
         public float RunDuration;
 

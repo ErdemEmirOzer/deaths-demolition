@@ -34,6 +34,8 @@ namespace DD.Prototype.Achievements
             public string Rarity;
             public string RequiresEffect;
             public string Feat;
+            /// <summary>WP-104: "Normal" | "Hard" | "Demolition" (ReachRoundInMode only).</summary>
+            public string Mode;
         }
 
         [Serializable]
@@ -228,6 +230,14 @@ namespace DD.Prototype.Achievements
                 }
             }
 
+            // WP-104: a mode rule names its mode.
+            int mode = DD.Prototype.Rounds.TreeMode.Normal;
+            if (condition == AchievementCondition.ReachRoundInMode && !TryParseMode(d.Mode, out mode))
+            {
+                why = "unknown mode '" + d.Mode + "' for '" + d.Id + "'";
+                return null;
+            }
+
             AchievementRarity rarity = AchievementRarity.Common;
             if (!string.IsNullOrEmpty(d.Rarity) && (!Enum.TryParse(d.Rarity, false, out rarity) || !Enum.IsDefined(typeof(AchievementRarity), rarity)))
             {
@@ -246,8 +256,21 @@ namespace DD.Prototype.Achievements
                 Scope = scope,
                 Rarity = rarity,
                 RequiresEffect = d.RequiresEffect ?? string.Empty,
-                Feat = feat
+                Feat = feat,
+                Mode = mode
             };
+        }
+
+        /// <summary>WP-104: the catalog's mode names, in <see cref="DD.Prototype.Rounds.TreeMode"/> order.</summary>
+        public static bool TryParseMode(string name, out int mode)
+        {
+            switch (name)
+            {
+                case "Normal": mode = DD.Prototype.Rounds.TreeMode.Normal; return true;
+                case "Hard": mode = DD.Prototype.Rounds.TreeMode.Hard; return true;
+                case "Demolition": mode = DD.Prototype.Rounds.TreeMode.Demolition; return true;
+                default: mode = DD.Prototype.Rounds.TreeMode.Normal; return false;
+            }
         }
 
         private static void EnsureLoaded()
