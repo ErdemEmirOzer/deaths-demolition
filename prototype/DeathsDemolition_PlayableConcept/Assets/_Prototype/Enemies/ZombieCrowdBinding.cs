@@ -3,6 +3,7 @@ using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Difficulty;
 using DD.Prototype.Navigation;
+using Unity.Profiling;
 
 namespace DD.Prototype.Enemies
 {
@@ -208,7 +209,10 @@ namespace DD.Prototype.Enemies
 
         private void DropPursuitRole(string why, float distance)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            // dev / editor only: a release log line carries a stack trace into the FINAL perf window (gt 12.10)
             Debug.Log("[DD-DIFF] pursuit.fallback " + _aiRole + " → Chase (" + why + ") tier=" + _tier + " dist=" + distance.ToString("F1") + " pos=" + transform.position.ToString("F1"));
+#endif
             _aiRole = ZombieAiRole.Chase;
             _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f;
             PursuitFallbacks++;
@@ -248,16 +252,21 @@ namespace DD.Prototype.Enemies
                 DropPursuitRole(_waiting ? "waiting" : "no progress", distance);
                 return target;
             }
-            if (Time.time >= _nextPursuitCheck) RefreshPursuitDecision(target, distance, mode);
+            if (Time.time >= _nextPursuitCheck)
+                using (s_pursuitDecideMarker.Auto()) RefreshPursuitDecision(target, distance, mode);
             if (_cutActive) return target + _cutOffset;
             return target + PursuitPlanner.InterceptOffset(distance, PursuitPlanner.PlayerVelocity, _moveSpeed, mode.InterceptLeadMaxSeconds) * _leadScale;
         }
+
+        /// <summary>WP-102: the pursuit decision's cost (R4 test policy: new per-frame cost carries a marker).</summary>
+        private static readonly ProfilerMarker s_pursuitDecideMarker = new ProfilerMarker("WP102.Pursuit.Decide");
 
         /// <summary>
         /// WP-102: the pursuit decision, once per FlankOpenCheckSeconds. A cutter tries the points 1 / 1.6 / 2.4 × CutDistance ahead
         /// of the player along its escape direction (PursuitPlanner: where it runs, or the ring's open side), each pulled back to
         /// where the NavMesh line from the player stops; the nearest it can reach before the player wins. Otherwise the intercept
-        /// lead is scaled to where the NavMesh line from the player towards it stops. At most 4 NavMesh queries, no allocation.
+        /// lead is scaled to where the NavMesh line from the player towards it stops. At most 5 NavMesh queries (the clamp, up to
+        /// three cut lines, the lead line), no allocation.
         /// </summary>
         private void RefreshPursuitDecision(Vector3 target, float distance, DifficultyModeSettings mode)
         {

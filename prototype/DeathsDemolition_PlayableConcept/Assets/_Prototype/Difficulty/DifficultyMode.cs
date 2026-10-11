@@ -1,7 +1,8 @@
 namespace DD.Prototype.Difficulty
 {
     /// <summary>
-    /// WP-102 (R4, user note 2): the three difficulty modes. Normal is the game as of r3-final-b46a3ca4, untouched; Hard is faster,
+    /// WP-102 (R4, user note 2): the three difficulty modes. Normal is the game as of r3-final-b46a3ca4 up to round 20 (from R21 the late-game
+    /// health curve and Elite / Ultra share apply to every mode, C-00 KARAR-WP104 §11.3); Hard is faster,
     /// smarter and hits harder; Demolition is built so nobody gets far — very fast, path-cutting crowds, big tiers early and running.
     /// The numeric value is persisted (profile / score keys, S-04) — never reorder.
     /// </summary>

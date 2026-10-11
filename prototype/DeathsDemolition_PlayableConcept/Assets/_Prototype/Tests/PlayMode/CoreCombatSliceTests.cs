@@ -806,6 +806,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 Assert.IsNotNull(DifficultyService.Current, "Demolition ayarı etkin değil");
                 var zler = new List<ZombieEnemy>();
+                EnemyFactory.ResetSeedForTests(1u);   // the role rolls are deterministic (gt 12.10)
                 for (int i = 0; i < 16; i++) zler.Add(HalkaDogur(merkez, i, 16));
                 yield return null;
                 int kesici = 0, onleyici = 0;
@@ -986,6 +987,106 @@ namespace DD.Prototype.Tests.PlayMode
                 if (rt != null) UnityEngine.Object.Destroy(rt);
                 if (tex != null) UnityEngine.Object.Destroy(tex);
                 if (mod != DifficultyMode.Normal) DifficultyService.EndRun();
+                DifficultyService.Selected = DifficultyMode.Normal;
+                if (_can != null) _can.DiagnosisInvulnerable = false;
+            }
+        }
+
+        /// <summary>
+        /// WP-102 evidence (Explicit, DD_WP102_CAPTURE_DIR/heavy): Demolition's big tiers — three Elite (running) and three Ultra (fast
+        /// heavy walk) spawn 14 m ahead and come at the standing player; TD frames + frames.tsv (tdmux) and per body its gait clip,
+        /// ground speed, gait rate, honest flag and body scale (heavy.tsv) for the art review. Asserts it recorded and that ≥ 90 % of
+        /// the walking samples play an honest cadence (gt MUST-1 12.10: no foot slide on the big bodies).
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-102 kanıt çekimi")]
+        [Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator Zorluk_AgirKademeler_DurustKadans_Demolition_TdKareleri()
+        {
+            string kok = Environment.GetEnvironmentVariable("DD_WP102_CAPTURE_DIR");
+            if (string.IsNullOrEmpty(kok)) kok = System.IO.Path.Combine(Application.temporaryCachePath, "wp102-capture");
+            string dir = System.IO.Path.Combine(kok, "heavy");
+            string kareler = System.IO.Path.Combine(dir, "frames");
+            System.IO.Directory.CreateDirectory(kareler);
+            yield return RunSahnesiniHazirla();
+            _can.DiagnosisInvulnerable = true;
+            DifficultyService.Selected = DifficultyMode.Demolition;
+            DifficultyService.BeginRun();
+            RenderTexture rt = null;
+            Texture2D tex = null;
+            try
+            {
+                EnemyFactory.ResetSeedForTests(1021u);
+                Vector3 merkez = _rig.transform.position;
+                var zler = new List<ZombieEnemy>();
+                for (int i = 0; i < 6; i++)
+                {
+                    float a = (-30f + i * 12f) * Mathf.Deg2Rad;
+                    Vector3 p = NavPathFollowerClamp(merkez + new Vector3(Mathf.Sin(a) * 14f, 0f, Mathf.Cos(a) * 14f));
+                    Vector3 d = merkez - p; d.y = 0f;
+                    ZombieEnemy z = EnemyFactory.Spawn(i % 2 == 0 ? EnemyTier.Elite : EnemyTier.Ultra, 3, p, Quaternion.LookRotation(d.normalized, Vector3.up));
+                    if (z != null) zler.Add(z);
+                }
+
+                Camera cam = PrototypeCameraRig.Active.Camera;
+                rt = new RenderTexture(1280, 720, 24);
+                tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+                var tsv = new StringBuilder();
+                var agir = new StringBuilder("frame\tbody\ttier\tgait\tclip\tspeed\trate\thonest\tbody_scale\n");
+                int yuruyus = 0, durust = 0;
+                var onceki = new Dictionary<ZombieEnemy, Vector3>();
+                int yazilan = 0;
+                for (int k = 0; k < 240; k++)
+                {
+                    yield return null;
+                    if ((k & 1) != 0) continue;
+                    foreach (ZombieEnemy z in zler)
+                    {
+                        if (z == null || !z.IsAlive || z.Skinned == null) continue;
+                        Vector3 q = Yatay(z.transform.position);
+                        float v = onceki.TryGetValue(z, out Vector3 q0) ? Vector3.Distance(q, q0) / (2f * Adim) : 0f;
+                        onceki[z] = q;
+                        int g = z.Skinned.Gait;
+                        agir.Append(yazilan).Append('\t').Append(z.name).Append('\t').Append(z.Tier).Append('\t').Append(g).Append('\t')
+                            .Append(g >= 0 && g < DD.Prototype.Characters.CharacterAnimatorContract.ZombieGaitClips.Length ? DD.Prototype.Characters.CharacterAnimatorContract.ZombieGaitClips[g] : "?").Append('\t')
+                            .Append(v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
+                            .Append(z.Skinned.GaitRate.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
+                            .Append(z.Skinned.GaitRateHonest ? 1 : 0).Append('\t')
+                            .Append(z.Skinned.GaitBodyScale.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                        if (z.Skinned.GaitOn && v > 1.5f)
+                        {
+                            yuruyus++;
+                            if (z.Skinned.GaitRateHonest) durust++;
+                        }
+                    }
+
+                    RenderTexture eski = cam.targetTexture;
+                    cam.targetTexture = rt;
+                    cam.Render();
+                    cam.targetTexture = eski;
+                    RenderTexture.active = rt;
+                    tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+                    tex.Apply(false);
+                    RenderTexture.active = null;
+                    System.IO.File.WriteAllBytes(System.IO.Path.Combine(kareler, "f-" + yazilan.ToString("000000") + ".jpg"), tex.EncodeToJPG(90));
+                    tsv.Append(yazilan).Append('\t').Append((yazilan / 30f).ToString("F4", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                    yazilan++;
+                }
+
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "frames.tsv"), tsv.ToString());
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "heavy.tsv"), agir.ToString());
+                Debug.Log("[DD-TEST] wp102.heavy frames=" + yazilan + " bodies=" + zler.Count + " honest=" + durust + "/" + yuruyus + " -> " + dir);
+                Assert.AreEqual(120, yazilan, "kareler kayıtta değil");
+                Assert.AreEqual(6, zler.Count, "ağır gövdeler doğmadı");
+                Assert.Greater(yuruyus, 100, "yürüyen ağır gövde örneği yok");
+                Assert.GreaterOrEqual(durust, 0.9f * yuruyus, "ağır kademelerde kadans dürüst değil (ayak kayar): " + durust + "/" + yuruyus);
+            }
+            finally
+            {
+                if (rt != null) UnityEngine.Object.Destroy(rt);
+                if (tex != null) UnityEngine.Object.Destroy(tex);
+                DifficultyService.EndRun();
                 DifficultyService.Selected = DifficultyMode.Normal;
                 if (_can != null) _can.DiagnosisInvulnerable = false;
             }

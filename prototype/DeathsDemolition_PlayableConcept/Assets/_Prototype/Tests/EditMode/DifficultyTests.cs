@@ -1,7 +1,9 @@
 using System;
+using System.Globalization;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Difficulty;
+using DD.Prototype.Enemies;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -11,8 +13,8 @@ namespace DD.Prototype.Tests.EditMode
     /// <summary>
     /// WP-102 (R4, C-00 11.10 approved design S-03-11.10-1): the three difficulty modes. Normal is r3-final byte for byte (no copy,
     /// the shipped config instance and its serialization unchanged); Hard / Demolition run on a mode-applied copy and leave the
-    /// shipped asset untouched; the asset carries the code defaults; every speed a mode sets sits inside its gait pool's cadence
-    /// band (a faster speed on a walk clip slides the feet); the pursuit / cut / open-side math.
+    /// shipped asset untouched; the asset carries the code defaults; every speed a mode sets is honest on its gait pool for the
+    /// tier's body size at the jitter corners (a speed outside the band slides the feet); the pursuit / cut / open-side math.
     /// </summary>
     public sealed class DifficultyTests
     {
@@ -130,6 +132,10 @@ namespace DD.Prototype.Tests.EditMode
                     float v = s.MoveSpeed[t];
                     if (v <= 0f) continue;
                     int[] pool = DifficultyService.GaitPoolFor(t) ?? CharacterAnimatorContract.ZombieGaitPools[t];
+                    // the game's honest rate is speed / (clip speed × body scale) (ZombieSkinnedVisual.SetLocomotion): the corners are the
+                    // slowest spawn on the largest body and the fastest spawn on the smallest (gt MUST-1 12.10; the WP-096 stomp test's rule)
+                    ZombieAppearance.BodyScaleRange((EnemyTier)t, out float bodyMin, out float bodyMax);
+                    float slow = v * (1f - ZombieLocomotionMath.SpeedSpread), fast = v * (1f + ZombieLocomotionMath.SpeedSpread);
                     int carried = 0;
                     foreach (int g in pool)
                     {
@@ -137,9 +143,14 @@ namespace DD.Prototype.Tests.EditMode
                         if (set.Find(clip) == null) continue;
                         carried++;
                         float c = set.SpeedOf(clip);
-                        string tag = m + " kademe " + t + " " + v.ToString("F2") + " m/s, " + clip + " " + c.ToString("F2");
-                        Assert.GreaterOrEqual(v, c * set.MinRateOf(clip) - 1e-3f, tag + ": ayak gövdeyi geçer (kadans tabanı)");
-                        Assert.LessOrEqual(v, c * set.MaxRateOf(clip) + 1e-3f, tag + ": ayak kayar (kadans tavanı)");
+                        float low = slow / (c * bodyMax), high = fast / (c * bodyMin);
+                        string tag = m + " kademe " + t + " " + v.ToString("F2", CultureInfo.InvariantCulture) + " m/s, " + clip + " "
+                                     + c.ToString("F2", CultureInfo.InvariantCulture) + " m/s, gövde " + bodyMin.ToString("F2", CultureInfo.InvariantCulture)
+                                     + "-" + bodyMax.ToString("F2", CultureInfo.InvariantCulture) + ": dürüst oran " + low.ToString("F3", CultureInfo.InvariantCulture)
+                                     + "-" + high.ToString("F3", CultureInfo.InvariantCulture);
+                        Debug.Log("[DD-TEST] wp102.cadence " + tag);
+                        Assert.GreaterOrEqual(low, set.MinRateOf(clip) - 1e-3f, tag + ": ayak gövdeyi geçer (kadans tabanı)");
+                        Assert.LessOrEqual(high, set.MaxRateOf(clip) + 1e-3f, tag + ": ayak kayar (kadans tavanı)");
                     }
 
                     Assert.Greater(carried, 0, m + " kademe " + t + ": havuzun hiçbir klibi sette yok");
@@ -199,6 +210,13 @@ namespace DD.Prototype.Tests.EditMode
             int sum = 0;
             for (int i = 0; i < 8; i++) sum += DifficultyService.ScaleGold(2);
             Assert.AreEqual(20, sum, "Zor ×1,25: 8 × 2 → 20 (kesir taşınır)");
+            // a refused ledger claim does not eat the fraction: scaling without the commit leaves the carry where it was
+            int a = DifficultyService.ScaleGold(2, out float carryA);
+            int b = DifficultyService.ScaleGold(2, out float carryB);
+            Assert.AreEqual(a, b, "kesir taahhüt edilmeden ilerledi (reddedilen talep kesri yer)");
+            Assert.AreEqual(carryA, carryB, 1e-6f);
+            DifficultyService.CommitGoldCarry(carryA);
+            Assert.AreEqual(3, DifficultyService.ScaleGold(2), "taahhüt edilen kesir sonraki öldürmeye taşınır");
             Assert.AreEqual(0, DifficultyService.StartingGold);
             DifficultyService.EndRun();
 
@@ -227,6 +245,29 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0, (int)DifficultyMode.Normal);
             Assert.AreEqual(1, (int)DifficultyMode.Hard);
             Assert.AreEqual(2, (int)DifficultyMode.Demolition);
+
+            // the launch override wins over the menu: a bot / FINAL probe started with -ddDifficulty plays that mode; the menu's
+            // pick raises SelectedChanged once per change (S-08 mode-select sound, S-09 badge), never under the override
+            int changes = 0;
+            Action<DifficultyMode> onChanged = _ => changes++;
+            DifficultyService.SelectedChanged += onChanged;
+            try
+            {
+                DifficultyService.SetLaunchOverrideForTests(DifficultyMode.Demolition);
+                DifficultyService.Selected = DifficultyMode.Normal;
+                Assert.AreEqual(DifficultyMode.Demolition, DifficultyService.Selected, "menü komut satırını ezdi");
+                Assert.IsTrue(DifficultyService.LaunchOverride);
+                Assert.AreEqual(0, changes, "override altında seçim olayı yayınlandı");
+                DifficultyService.ResetForTests();
+                DifficultyService.Selected = DifficultyMode.Hard;
+                Assert.AreEqual(DifficultyMode.Hard, DifficultyService.Selected, "override yokken menü seçemedi");
+                DifficultyService.Selected = DifficultyMode.Hard;
+                Assert.AreEqual(1, changes, "SelectedChanged yalnız değişimde, bir kez");
+            }
+            finally
+            {
+                DifficultyService.SelectedChanged -= onChanged;
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ namespace DD.Prototype.Difficulty
         public DifficultyMode Mode;
 
         [Header("Tiers (Standard, Runner, Elite, Ultra) — negative / 0 round = keep the shipped value")]
-        [Tooltip("Move speed m/s per tier. Kept inside the tier's gait cadence band (×0.75–×1.20 of its clip speed) — DifficultyTests checks it.")]
+        [Tooltip("Move speed m/s per tier. Honest on every clip of the tier's pool: speed / (clip speed × body scale) stays inside the clip's cadence band at the corners (±4 % speed jitter, the tier's body scale ±6 %) — DifficultyTests checks it.")]
         public float[] MoveSpeed = { -1f, -1f, -1f, -1f };
         public int[] IntroductionRound = { 0, 0, 0, 0 };
         public float[] SpawnWeight = { -1f, -1f, -1f, -1f };
@@ -77,11 +77,14 @@ namespace DD.Prototype.Difficulty
         public float CutArrivalMarginSeconds = 0.3f;
 
         [Header("Gaits (the speeds above need them — no foot slide)")]
-        [Tooltip("Standard walks the run pool (run_feral A/B, run_stumble A).")]
+        [Tooltip("Standard walks the run pool (run_feral A/B, run_stumble A): honest from 4.14 to 5.32 m/s.")]
         public bool RunningCrowd;
-        [Tooltip("Elite / Ultra run (run_stumble A, run_feral B).")]
-        public bool RunningHeavyTiers;
-        [Tooltip("Elite walks the AP-022 walk_heavy (2.1 m/s clip: band up to 2.52 m/s).")]
+        [Tooltip("Elite runs (run_stumble A, run_feral B): its 1.16 body is honest from 4.78 to 6.17 m/s.")]
+        public bool RunningElite;
+        [Tooltip("Ultra power-walks (walk_heavy B + AP-022 walk_heavy): its 1.48 body is honest from 2.57 to 3.15 m/s. No run clip carries "
+                 + "a 1.48 body below 6.1 m/s — an Ultra run needs a heavy_run clip (design §2.4 fallback, S-06 / P-06).")]
+        public bool UltraFastHeavyWalk;
+        [Tooltip("Elite walks the AP-022 walk_heavy: its 1.16 body is honest from 2.02 to 2.64 m/s.")]
         public bool EliteFastHeavyWalk;
 
         public bool IsNeutral => Mode == DifficultyMode.Normal;
@@ -125,14 +128,18 @@ namespace DD.Prototype.Difficulty
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => s_active = null;
 
-        /// <summary>The design numbers (S-03-11.10-1, speeds fitted to the gait cadence bands — see the WP-102 delivery).</summary>
+        /// <summary>
+        /// The design numbers (S-03-11.10-1). The speeds are fitted to the gait cadence bands for the tier's body size at the jitter
+        /// corners (gt MUST-1 12.10 — see the WP-102 delivery): Hard Standard 2.78 / Runner 4.9, Demolition Runner 5.05 / Elite 4.9 /
+        /// Ultra 3.1 (a fast heavy walk: no run clip carries the 1.48 Executioner).
+        /// </summary>
         public static DifficultyModeSettings Defaults(DifficultyMode mode)
         {
             var s = new DifficultyModeSettings { Mode = mode };
             switch (mode)
             {
                 case DifficultyMode.Hard:
-                    s.MoveSpeed = new[] { 3.05f, 5.3f, 2.5f, -1f };
+                    s.MoveSpeed = new[] { 2.78f, 4.9f, 2.5f, -1f };
                     s.IntroductionRound = new[] { 0, 2, 4, 6 };
                     s.SpawnWeight = new[] { -1f, 22f, 11f, 4f };
                     s.SpawnWeightGrowthPerRound = new[] { -1f, 4f, 2f, 1f };
@@ -149,7 +156,7 @@ namespace DD.Prototype.Difficulty
                     s.GoldScale = 1.25f;
                     break;
                 case DifficultyMode.Demolition:
-                    s.MoveSpeed = new[] { 4.3f, 5.85f, 4.4f, 4.0f };
+                    s.MoveSpeed = new[] { 4.3f, 5.05f, 4.9f, 3.1f };
                     s.IntroductionRound = new[] { 0, 1, 2, 3 };
                     s.SpawnWeight = new[] { -1f, 30f, 14f, 6f };
                     s.SpawnWeightGrowthPerRound = new[] { -1f, 5f, 3f, 1.5f };
@@ -163,7 +170,7 @@ namespace DD.Prototype.Difficulty
                     s.QueueSecondsScale = 0.48f; s.AttackSlotBonus = 2;
                     s.FlankShareStandard = 0.35f; s.InterceptShare = 0.6f; s.CutShare = 0.4f; s.InterceptLeadMaxSeconds = 1.4f;
                     s.CutDistance = 5f; s.CutArrivalMarginSeconds = 0.3f;
-                    s.RunningCrowd = true; s.RunningHeavyTiers = true;
+                    s.RunningCrowd = true; s.RunningElite = true; s.UltraFastHeavyWalk = true;
                     s.GoldScale = 2.5f; s.StartingGold = 150;   // target: 700–1 000 cumulative gold by the end of R3 (B5 sets the scale)
                     break;
             }

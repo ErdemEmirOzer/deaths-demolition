@@ -24,15 +24,46 @@ namespace DD.Prototype.Difficulty
         public const string CommandLineFlag = "-ddDifficulty";
 
         private static DifficultyMode s_selected;
-        private static bool s_launchRead;
+        private static bool s_launchRead, s_launchOverride, s_overrideNoted;
         private static PrototypeConfig s_shipped, s_clone;
 
-        /// <summary>The mode the next run starts with (menu / Prepare Run, S-09; a launch override in development builds).</summary>
+        /// <summary>
+        /// The mode the next run starts with (menu / Prepare Run, S-09). A launch override (<see cref="CommandLineFlag"/>, or
+        /// <see cref="EnvironmentVariable"/> in development builds) wins: the menu's write is then ignored (logged once), so a bot or a
+        /// FINAL probe started with a mode plays that mode whatever the menu remembers (gt 12.10).
+        /// </summary>
         public static DifficultyMode Selected
         {
             get { ReadLaunchOverride(); return s_selected; }
-            set { s_launchRead = true; s_selected = value; }
+            set
+            {
+                ReadLaunchOverride();
+                if (s_launchOverride)
+                {
+                    if (value != s_selected && !s_overrideNoted)
+                    {
+                        s_overrideNoted = true;
+                        Debug.Log("[DD] difficulty: menu selection " + Id(value) + " ignored - launch override " + Id(s_selected));
+                    }
+
+                    return;
+                }
+
+                if (s_selected == value) return;
+                s_selected = value;
+                SelectedChanged?.Invoke(value);
+            }
         }
+
+        /// <summary>
+        /// WP-097 R4 (S-08): the menu / Prepare Run pick changed - the mode-select sound (Hard / Demolition), S-09's badge. Raised by
+        /// the <see cref="Selected"/> setter on a change only; the launch override (and a menu write it ignores) and
+        /// <see cref="ResetForTests"/> stay silent.
+        /// </summary>
+        public static event Action<DifficultyMode> SelectedChanged;
+
+        /// <summary>A launch override set the mode: the menu cannot change it this session.</summary>
+        public static bool LaunchOverride { get { ReadLaunchOverride(); return s_launchOverride; } }
 
         /// <summary>The mode of the run in progress (or the last one): results, score and profile keys (S-04).</summary>
         public static DifficultyMode RunMode { get; private set; }
@@ -55,13 +86,28 @@ namespace DD.Prototype.Difficulty
         /// </summary>
         public static int ScaleGold(int amount)
         {
+            int whole = ScaleGold(amount, out float carry);
+            CommitGoldCarry(carry);
+            return whole;
+        }
+
+        /// <summary>
+        /// <see cref="ScaleGold(int)"/> without moving the carried fraction: GoldService commits <paramref name="carry"/> only once the
+        /// ledger grants the kill, so a refused claim does not eat the fraction (gt 12.10).
+        /// </summary>
+        public static int ScaleGold(int amount, out float carry)
+        {
+            carry = s_goldRemainder;
             DifficultyModeSettings s = Current;
             if (s == null || amount <= 0 || s.GoldScale <= 0f || Mathf.Approximately(s.GoldScale, 1f)) return amount;
             float exact = amount * s.GoldScale + s_goldRemainder;
             int whole = Mathf.FloorToInt(exact);
-            s_goldRemainder = exact - whole;
+            carry = exact - whole;
             return whole;
         }
+
+        /// <summary>The fraction <see cref="ScaleGold(int, out float)"/> returned, carried to the next kill.</summary>
+        public static void CommitGoldCarry(float carry) => s_goldRemainder = carry;
         public static float QueueSecondsScale => Current != null && Current.QueueSecondsScale > 0f ? Current.QueueSecondsScale : 1f;
 
         /// <summary>PrototypeUiFlow's scene load: entering the Run scene begins the run's mode, any other scene ends it.</summary>
@@ -159,19 +205,22 @@ namespace DD.Prototype.Difficulty
         // ---------------------------------------------------------------------------------------------------------- gaits
 
         private static readonly int[] s_runCrowd = { CharacterAnimatorContract.GaitRunFeralAV4, CharacterAnimatorContract.GaitRunStumbleAV4, CharacterAnimatorContract.GaitRunFeralBV4 };
-        private static readonly int[] s_runHeavy = { CharacterAnimatorContract.GaitRunStumbleAV4, CharacterAnimatorContract.GaitRunFeralBV4 };
+        private static readonly int[] s_runElite = { CharacterAnimatorContract.GaitRunStumbleAV4, CharacterAnimatorContract.GaitRunFeralBV4 };
+        private static readonly int[] s_ultraFastHeavyWalk = { CharacterAnimatorContract.GaitWalkHeavyBV4, CharacterAnimatorContract.GaitWalkHeavyV3 };
         private static readonly int[] s_fastHeavyWalk = { CharacterAnimatorContract.GaitWalkHeavyV3 };
 
         /// <summary>
         /// The run's gait pool for a tier when the mode needs another one (its speed is outside the shipped pool's cadence band —
-        /// a faster speed on a walk clip slides the feet); null = the shipped pool (ZombieGaitPools).
+        /// a faster speed on a walk clip slides the feet; the band is per body size: rate = speed / (clip speed × body scale));
+        /// null = the shipped pool (ZombieGaitPools).
         /// </summary>
         public static int[] GaitPoolFor(int tier)
         {
             DifficultyModeSettings s = Current;
             if (s == null) return null;
             if (tier == 0 && s.RunningCrowd) return s_runCrowd;
-            if ((tier == 2 || tier == 3) && s.RunningHeavyTiers) return s_runHeavy;
+            if (tier == 2 && s.RunningElite) return s_runElite;
+            if (tier == 3 && s.UltraFastHeavyWalk) return s_ultraFastHeavyWalk;
             if (tier == 2 && s.EliteFastHeavyWalk) return s_fastHeavyWalk;
             return null;
         }
@@ -198,6 +247,7 @@ namespace DD.Prototype.Difficulty
             if (TryParse(value, out DifficultyMode m))
             {
                 s_selected = m;
+                s_launchOverride = true;
                 Debug.Log("[DD] difficulty=" + Id(m) + " source=" + source);
             }
             else Debug.LogWarning("[DD] difficulty: unknown value '" + value + "' (" + source + ") — Normal");
@@ -229,7 +279,18 @@ namespace DD.Prototype.Difficulty
             EndRun();
             s_selected = DifficultyMode.Normal;
             s_launchRead = true;
+            s_launchOverride = false;
+            s_overrideNoted = false;
             RunMode = DifficultyMode.Normal;
+        }
+
+        /// <summary>Tests: a launch override as if the build had been started with <c>-ddDifficulty</c>.</summary>
+        internal static void SetLaunchOverrideForTests(DifficultyMode mode)
+        {
+            s_launchRead = true;
+            s_launchOverride = true;
+            s_overrideNoted = false;
+            s_selected = mode;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -237,11 +298,14 @@ namespace DD.Prototype.Difficulty
         {
             s_selected = DifficultyMode.Normal;
             s_launchRead = false;
+            s_launchOverride = false;
+            s_overrideNoted = false;
             s_shipped = null;
             s_clone = null;
             Current = null;
             RunMode = DifficultyMode.Normal;
             RunStarted = null;
+            SelectedChanged = null;
         }
 
         private static float At(float[] a, int i) => a != null && i >= 0 && i < a.Length ? a[i] : -1f;

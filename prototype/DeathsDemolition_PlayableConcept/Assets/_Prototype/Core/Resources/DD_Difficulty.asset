@@ -69,12 +69,13 @@ MonoBehaviour:
     CutDistance: 5
     CutArrivalMarginSeconds: 0.3
     RunningCrowd: 0
-    RunningHeavyTiers: 0
+    RunningElite: 0
+    UltraFastHeavyWalk: 0
     EliteFastHeavyWalk: 0
   - Mode: 1
     MoveSpeed:
-    - 3.05
-    - 5.3
+    - 2.78
+    - 4.9
     - 2.5
     - -1
     IntroductionRound:
@@ -127,14 +128,15 @@ MonoBehaviour:
     CutDistance: 5
     CutArrivalMarginSeconds: 0.3
     RunningCrowd: 0
-    RunningHeavyTiers: 0
+    RunningElite: 0
+    UltraFastHeavyWalk: 0
     EliteFastHeavyWalk: 1
   - Mode: 2
     MoveSpeed:
     - 4.3
-    - 5.85
-    - 4.4
-    - 4
+    - 5.05
+    - 4.9
+    - 3.1
     IntroductionRound:
     - 0
     - 1
@@ -185,5 +187,6 @@ MonoBehaviour:
     CutDistance: 5
     CutArrivalMarginSeconds: 0.3
     RunningCrowd: 1
-    RunningHeavyTiers: 1
+    RunningElite: 1
+    UltraFastHeavyWalk: 1
     EliteFastHeavyWalk: 0

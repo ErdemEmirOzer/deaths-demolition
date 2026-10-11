@@ -263,6 +263,17 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>Per-tier body shape. Scale is on the Visual node, so hitboxes scale with it.</summary>
+        /// <summary>
+        /// WP-102 (gt 12.10): a tier's body scale range — its silhouette scale times the per-instance jitter. The gait cadence is
+        /// honest per body size (rate = speed / (clip speed × body scale)), so a speed check reads it here, not a copied number.
+        /// </summary>
+        public static void BodyScaleRange(EnemyTier tier, out float min, out float max)
+        {
+            float scale = tier == EnemyTier.Special ? RunnerScale : tier == EnemyTier.Elite ? GuardScale : tier == EnemyTier.Ultra ? ExecutionerScale : StandardScale;
+            min = scale * ScaleJitterMin;
+            max = scale * ScaleJitterMax;
+        }
+
         private void ApplySilhouette(EnemyTier tier, ref EnemyRandom random)
         {
             float scale;

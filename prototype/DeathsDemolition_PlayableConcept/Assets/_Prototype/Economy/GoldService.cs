@@ -617,13 +617,15 @@ namespace DD.Prototype.Economy
             int total = value.Total;
             Func<EnemyDeathInfo, int> bonus = KillBonus;
             if (bonus != null) total += Mathf.Max(0, bonus(info));
-            total = DD.Prototype.Difficulty.DifficultyService.ScaleGold(total);   // WP-102: Hard ×1.25, Demolition ×2.5 (Normal unchanged)
+            total = DD.Prototype.Difficulty.DifficultyService.ScaleGold(total, out float goldCarry);   // WP-102: Hard ×1.25, Demolition ×2.5 (Normal unchanged)
 
             GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, total);
             if (verdict != GoldRewardVerdict.Granted)
             {
                 return;
             }
+
+            DD.Prototype.Difficulty.DifficultyService.CommitGoldCarry(goldCarry);   // WP-102: the fraction carries only for a granted kill
 
             if (!TrySpawnPacket(total, info.Position))
             {

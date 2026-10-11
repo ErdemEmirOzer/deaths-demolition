@@ -1,5 +1,6 @@
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace DD.Prototype.Difficulty
@@ -21,6 +22,8 @@ namespace DD.Prototype.Difficulty
         private static Vector3 s_velocity, s_escape = Vector3.forward;
         private static float s_speed;
         private static readonly int[] s_counts = new int[Slices];
+        /// <summary>The per-frame player read (R4 test policy: new per-frame cost carries a marker).</summary>
+        private static readonly ProfilerMarker s_planMarker = new ProfilerMarker("WP102.Pursuit.Plan");
 
         public static Vector3 PlayerVelocity { get { Refresh(); return s_velocity; } }
         public static float PlayerSpeed { get { Refresh(); return s_speed; } }
@@ -31,6 +34,11 @@ namespace DD.Prototype.Difficulty
             int frame = Time.frameCount;
             if (frame == s_frame) return;
             s_frame = frame;
+            using (s_planMarker.Auto()) RefreshNow();
+        }
+
+        private static void RefreshNow()
+        {
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig == null || rig.Motor == null)
             {
