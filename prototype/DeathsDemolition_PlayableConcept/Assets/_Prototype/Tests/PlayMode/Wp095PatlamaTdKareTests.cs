@@ -46,9 +46,10 @@ namespace DD.Prototype.Tests.PlayMode
             Directory.CreateDirectory(dir);
             LogAssert.ignoreFailingMessages = true;
 
+            int previousScene = SceneManager.GetActiveScene().handle;   // an earlier test's Run scene must not satisfy the wait
             SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
             float limit = Time.realtimeSinceStartup + 120f;
-            while (!(SceneManager.GetActiveScene().name == PrototypeScenes.Run && RunDirector.Instance != null && PlayerRegistry.Primary != null
+            while (!(SceneManager.GetActiveScene().handle != previousScene && SceneManager.GetActiveScene().name == PrototypeScenes.Run && RunDirector.Instance != null && PlayerRegistry.Primary != null
                      && HitFeedbackDirector.Instance != null && PrototypeCameraRig.Active != null && RunDirector.Instance.Phase == RunPhase.Fighting))
             {
                 Assert.Less(Time.realtimeSinceStartup, limit, "Run sahnesi / Fighting fazı gelmedi");

@@ -588,8 +588,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(_system.LiveExplosions, Is.LessThanOrEqualTo(8));
         }
 
+        // User 10.10 (C-00): "the bullets stop half way ... more visible, orange-ish, realistic" - the 3 cm × 40 ms line became a warm
+        // core (the weapon's width × TdCoreScale, ≥ TdCoreMin) riding to the impact, its tail running in over TdTailOutSeconds.
         [Test]
-        public void TdTracer_NormalWeaponClasses_UseThreeCentimetresAndFortyMilliseconds()
+        public void TdTracer_NormalWeaponClasses_WarmCoreToTheImpact_TailRunsInSixtyMs()
         {
             TracerRibbonRenderer tracer = AttachTdTracer();
             ClassicWeaponId[] weapons = { ClassicWeaponId.AssaultRifle, ClassicWeaponId.AutoSmg,
@@ -605,11 +607,13 @@ namespace DD.Prototype.Tests.PlayMode
             Vector4[] extra = TracerBuffer(tracer, "_extra");
             for (int i = 0; i < 4; i++)
             {
-                Assert.That(head[i].w, Is.EqualTo(.03f).Within(.00001f), weapons[i].ToString());
+                float core = Mathf.Max(VfxWeaponProfiles.For(weapons[i]).CoreWidth * TracerRibbonRenderer.TdCoreScale, TracerRibbonRenderer.TdCoreMin);
+                Assert.That(head[i].w, Is.EqualTo(core).Within(.00001f), weapons[i].ToString());
                 Assert.That(extra[i], Is.EqualTo(Vector4.zero), "TD must not inherit the old pixel width/head-dot floor");
                 Assert.That(new Vector3(head[i].x, head[i].y, head[i].z), Is.EqualTo(O + Vector3.forward * i + Vector3.right * 3f));
             }
-            tracer.TickTd(.039f);
+            Assert.That(DrawTd(tracer, 2), Is.EqualTo(3), "the warm glow on the rifle, smg and lmg rounds - not on the shotgun pellet");
+            tracer.TickTd(TracerRibbonRenderer.TdTailOutSeconds - .001f);
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(4));
             Assert.That(tracer.LiveTdSmoke, Is.Zero);
             tracer.TickTd(.002f);
@@ -617,19 +621,47 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(DrawTd(tracer, 0), Is.Zero);
         }
 
+        // User 10.10: a round reaching an enemy 30 m out is drawn all the way (the old tracer ended ≈ 5 m out); ReduceFlashes dims the glow.
         [Test]
-        public void TdTracer_SniperKeepsStoppedHead_CoreEndsAtPointTwelve_SmokeAtPointFour()
+        public void TdTracer_RidesItsRoundToAFarImpact_WarmGlow_ReduceFlashesDims()
+        {
+            TracerRibbonRenderer tracer = AttachTdTracer();
+            VfxWeaponProfile ar = VfxWeaponProfiles.For(ClassicWeaponId.AssaultRifle);
+            Assert.That(tracer.Emit(O, O + Vector3.forward * 30f, ar, false, false, false), Is.True);
+            tracer.TickTd(.08f);   // twice the old 40 ms life
+            Assert.That(tracer.LiveTdTracers, Is.EqualTo(1), "still flying");
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
+            Vector4 h = TracerBuffer(tracer, "_head")[0];
+            Assert.That(Vector3.Distance(new Vector3(h.x, h.y, h.z), O), Is.EqualTo(Mathf.Min(30f, ar.Speed * .08f)).Within(.01f), "the head is the round");
+            float flash = GameFeelSettings.FlashScale;
+            try
+            {
+                GameFeelSettings.FlashScale = 1f;
+                Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
+                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdGlowAlpha).Within(1e-5f));
+                GameFeelSettings.FlashScale = .4f;
+                Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
+                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdGlowAlpha * .4f).Within(1e-5f), "ReduceFlashes dims the glow");
+            }
+            finally { GameFeelSettings.FlashScale = flash; }
+            tracer.TickTd(1f);   // it arrived at 30 m (≈ 0.12 s) and its tail ran in
+            Assert.That(tracer.LiveTdTracers, Is.Zero);
+        }
+
+        [Test]
+        public void TdTracer_SniperKeepsStoppedHead_CoreTailsOutInSixtyMs_SmokeAtPointFour()
         {
             TracerRibbonRenderer tracer = AttachTdTracer();
             ProjectileSpawnInfo spawn = TdSpawn(int.MaxValue - 100, ClassicWeaponId.Sr1, O);
             Assert.That(tracer.RecordTdProjectile(in spawn), Is.True);
             Vector3 stopped = O + new Vector3(23f, 0f, 2f);
             tracer.StopTdProjectile(spawn.ProjectileId, stopped);
-            tracer.TickTd(.119f);
+            tracer.TickTd(TracerRibbonRenderer.TdTailOutSeconds - .001f);   // user 10.10: the core tails out into the impact
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(1));
             Assert.That(tracer.LiveTdSmoke, Is.EqualTo(1));
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(.07f).Within(.00001f));
+            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(Mathf.Max(VfxWeaponProfiles.For(ClassicWeaponId.Sr1).CoreWidth
+                * TracerRibbonRenderer.TdCoreScale, TracerRibbonRenderer.TdSniperCoreMin)).Within(.00001f));
             Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(Vector4.zero));
             Assert.That(DrawTd(tracer, 1), Is.EqualTo(1));
             float firstSmokeAlpha = TracerBuffer(tracer, "_headColor")[0].w;
@@ -641,7 +673,7 @@ namespace DD.Prototype.Tests.PlayMode
             Vector4 head = TracerBuffer(tracer, "_head")[0];
             Assert.That(new Vector3(head.x, head.y, head.z), Is.EqualTo(stopped), "impact stops the head instead of extrapolating the projectile");
             Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.LessThan(firstSmokeAlpha));
-            tracer.TickTd(.278f); // .399 seconds from birth, not from impact
+            tracer.TickTd(.399f - TracerRibbonRenderer.TdTailOutSeconds - .001f); // .399 seconds from birth, not from impact
             Assert.That(tracer.LiveTdSmoke, Is.EqualTo(1));
             tracer.TickTd(.002f);
             Assert.That(tracer.LiveTdSmoke, Is.Zero);
@@ -667,8 +699,11 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(47));
             Assert.That(tracer.RecordTdProjectile(in excess), Is.True, "cleared projectile releases its record immediately");
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(48));
+            // User 10.10 (C-00): a tracer rides its projectile to the impact - the old 40 ms life no longer ends it
             tracer.TickTd(.041f);
-            Assert.That(tracer.LiveTdTracers, Is.Zero);
+            Assert.That(tracer.LiveTdTracers, Is.EqualTo(48), "in flight past 41 ms");
+            tracer.TickTd(TracerRibbonRenderer.TdMaxFlightSeconds);
+            Assert.That(tracer.LiveTdTracers, Is.Zero, "a record that never hears its impact ends at the flight ceiling");
             ProjectileSpawnInfo sniper = TdSpawn(int.MaxValue - 101, ClassicWeaponId.Sr1, O);
             Assert.That(tracer.RecordTdProjectile(in sniper), Is.True);
             tracer.Clear();

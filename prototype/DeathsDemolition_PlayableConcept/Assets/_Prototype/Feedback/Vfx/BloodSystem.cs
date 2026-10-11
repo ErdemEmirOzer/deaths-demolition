@@ -229,6 +229,24 @@ namespace DD.Prototype.Feedback.Vfx
             return any;
         }
 
+        /// <summary>User 10.10 (C-00): "it hits the enemy further on but the hit is not seen". Top-down the AP-037 brush layers own a
+        /// flesh hit's droplets and stain (FeelBrushVfxSystem.OnHit) and their 2–8 cm drops read as nothing from the TD camera; the
+        /// splash card(s) of <see cref="PlayHit"/> alone (no droplets / marks / drip, which the brush already draws), ×<see
+        /// cref="TdHitCardScale"/>, make a hit readable - a far one too, up to the card LOD (<see cref="EventLodNoCardMetres"/>).</summary>
+        public const float TdHitCardScale = 1.5f;
+        public int TdHitCards { get; private set; }
+        public bool PlayHitCard(Vector3 point, Vector3 normal, Vector3 shotDirection, HitClass hitClass)
+        {
+            if (!_ready) return false;
+            float distance = CameraDistance(point);
+            if (distance >= EventLodNoCardMetres) return false;
+            float scale = (hitClass == HitClass.Critical ? 1.3f : hitClass == HitClass.ArmorBreak ? 1.1f : 1f) * TdHitCardScale
+                          * (distance >= EventLodNoDetailMetres ? 1.2f : 1f);
+            bool played = PlaySplashCard(point, SplashDirection(normal, shotDirection), scale, hitClass != HitClass.Normal);
+            if (played) TdHitCards++;
+            return played;
+        }
+
         // ------------------------------------------------------------------ WP-073 B2 · gore v3 (direction §1.4 Flesh row)
 
         /// <summary>Head-kill red mist alive at once by tier (Performance 1, High / Cinematic 2 — readability cap).</summary>

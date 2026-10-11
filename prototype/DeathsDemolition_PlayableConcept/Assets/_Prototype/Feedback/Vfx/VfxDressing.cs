@@ -732,8 +732,14 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayFleshHit(Vector3 point, Vector3 normal, Vector3 shotDirection, bool critical, bool killed)
         {
-            // AP037 owns the TD flesh layer only after its complete asset set is warmed.
-            if (FeelBrushVfxSystem.OwnsTdLayers) return true;
+            // AP037 owns the TD flesh layer (droplets, stain) only after its complete asset set is warmed. User 10.10: the brush drops
+            // alone left a hit unreadable from the TD camera - the blood splash card draws with them (a kill: the death path).
+            if (FeelBrushVfxSystem.OwnsTdLayers)
+            {
+                if (!killed && _ready && !AuditMute && _blood.IsReady)
+                    _blood.PlayHitCard(point, normal, shotDirection, critical ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal);
+                return true;
+            }
             if (!_ready || AuditMute)
             {
                 return false;

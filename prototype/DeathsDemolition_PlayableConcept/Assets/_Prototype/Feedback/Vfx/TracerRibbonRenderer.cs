@@ -25,13 +25,34 @@ namespace DD.Prototype.Feedback.Vfx
 
         public const int Capacity = 256;
         public const int TdCapacity = 48;
+        /// <summary>
+        /// User 10.10 (C-00): "the bullets stop half way, hit the enemy further on, the hit is not seen; make them more visible,
+        /// orange-ish, realistic". The top-down tracer lived 0.04 s from birth (≈ 5 m at rifle speed) and was a 3 cm line. It now
+        /// rides its projectile all the way to the impact (or the range end), then its tail runs into the stopped head over
+        /// <see cref="TdTailOutSeconds"/>; the tail trails the head by clamp(v × <see cref="TdTailSeconds"/>, 1.5, 6 m) (sniper ≤ 10 m).
+        /// A warm white-hot core (the weapon's head → tail colours, ×<see cref="TdCoreScale"/> wide, ≥ <see cref="TdCoreMin"/>) and an
+        /// orange glow (the tail colour, ×<see cref="TdGlowScale"/> wide, α <see cref="TdGlowAlpha"/>; none on Performance).
+        /// ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR and the glow. A shotgun pellet keeps its short warm bar
+        /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
+        /// </summary>
+        public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .025f, TdTailMin = 1.5f, TdTailMax = 6f,
+            TdSniperTailMax = 10f, TdCoreScale = 1.5f, TdCoreMin = .05f, TdSniperCoreMin = .07f, TdGlowScale = 2f, TdGlowAlpha = .45f;
         private struct TdRound
         {
-            public bool Alive, Sniper, Stopped;
+            public bool Alive, Sniper, Stopped, Pellet;
             public int Id;
-            public float Age, Speed, Target;
+            public float Age, Speed, Target, StopAge, Core, Glow;
             public Vector3 Origin, Head, Direction;
-            public Color Color;
+            public Color Color, Tail;
+        }
+        // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
+        private static bool TdCoreLive(in TdRound r) => !(r.Pellet && (r.Head - r.Origin).sqrMagnitude >= PelletFadeDistance * PelletFadeDistance)
+            && (r.Stopped ? r.Age - r.StopAge < TdTailOutSeconds : r.Age < TdMaxFlightSeconds);
+        private void TdLook(ref TdRound r, VfxWeaponProfile profile)
+        {
+            r.Sniper = profile.Class == VfxWeaponClass.Sniper; r.Color = profile.HeadColor; r.Tail = profile.TailColor;
+            r.Core = Mathf.Max(profile.CoreWidth * TdCoreScale, r.Sniper ? TdSniperCoreMin : TdCoreMin);
+            r.Glow = Mathf.Max(profile.GlowWidth * TdGlowScale, r.Core * 2f);
         }
         private readonly TdRound[] _tdRounds = new TdRound[TdCapacity];
         private int _tdSyntheticId;
@@ -47,9 +68,10 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 if (_tdRounds[i].Alive) continue;
                 VfxWeaponProfile profile = VfxWeaponProfiles.For(info.WeaponId);
-                _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId, Sniper = profile.Class == VfxWeaponClass.Sniper,
+                _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId,
                     Origin = info.Position, Head = info.Position, Direction = info.Direction.normalized,
-                    Speed = info.Speed, Target = float.PositiveInfinity, Color = profile.HeadColor };
+                    Speed = info.Speed, Target = float.PositiveInfinity, Pellet = info.Kind == ProjectileKind.Pellet };
+                TdLook(ref _tdRounds[i], profile);
                 LiveTdTracers++;
                 if (_tdRounds[i].Sniper) LiveTdSmoke++;
                 return true;
@@ -62,7 +84,7 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 ref TdRound r = ref _tdRounds[i];
                 if (!r.Alive || r.Id != id) continue;
-                r.Head = position; r.Stopped = true;
+                if (!r.Stopped) { r.Head = position; r.Stopped = true; r.StopAge = r.Age; }
                 if (cleared) r.Alive = false;
                 return;
             }
@@ -93,11 +115,12 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     float distance = Mathf.Min(r.Target, r.Age * r.Speed);
                     r.Head = r.Origin + r.Direction * distance;
-                    if (distance >= r.Target) r.Stopped = true;
+                    if (distance >= r.Target) { r.Stopped = true; r.StopAge = r.Speed > 0f ? Mathf.Min(r.Age, r.Target / r.Speed) : r.Age; }   // the true arrival, not the frame that saw it
                 }
-                if (r.Age >= (r.Sniper ? .4f : .04f)) { r.Alive = false; continue; }
-                if (r.Age < (r.Sniper ? .12f : .04f)) LiveTdTracers++;
-                if (r.Sniper) LiveTdSmoke++;
+                bool core = TdCoreLive(r), smoke = r.Sniper && r.Age < .4f;
+                if (!core && !smoke) { r.Alive = false; continue; }
+                if (core) LiveTdTracers++;
+                if (smoke) LiveTdSmoke++;
             }
         }
         private void ClearTd()
@@ -111,15 +134,24 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < TdCapacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i];
-                if (!r.Alive || (layer == 0 && r.Age >= (r.Sniper ? .12f : .04f)) || (layer == 1 && !r.Sniper)) continue;
-                Vector3 tail = layer == 1 ? r.Origin : r.Head - r.Direction * Mathf.Min((r.Head-r.Origin).magnitude, r.Sniper ? 10f : 8f);
+                if (!r.Alive || (layer != 1 && !TdCoreLive(r)) || (layer == 1 && (!r.Sniper || r.Age >= .4f)) || (layer == 2 && (_performance || r.Pellet))) continue;
+                Vector3 tail;
+                if (layer == 1) tail = r.Origin;
+                else
+                {
+                    float trail = Mathf.Min((r.Head-r.Origin).magnitude, r.Pellet ? PelletBarLength : Mathf.Clamp(r.Speed * TdTailSeconds, TdTailMin, r.Sniper ? TdSniperTailMax : TdTailMax));
+                    if (r.Stopped) trail *= 1f - Mathf.Clamp01((r.Age - r.StopAge) / TdTailOutSeconds);   // the tail runs into the impact
+                    tail = r.Head - r.Direction * trail;
+                }
                 float length = (r.Head-tail).magnitude; if (length < .01f) continue;
-                Color color = layer == 1 ? new Color(.48f,.50f,.52f) : r.Color;
-                Write(n, 0, r.Head, tail, layer == 1 ? .12f : r.Sniper ? .07f : .03f,
-                    0f, length, 0f, 0f, 0f, color, color, false, false);
+                float flash = Mathf.Clamp01(GameFeelSettings.FlashScale);
+                Color head = layer == 1 ? new Color(.48f,.50f,.52f) : layer == 2 ? r.Tail : r.Color * Mathf.Lerp(.6f, 1f, flash);
+                Color back = layer == 1 ? head : r.Tail;
+                Write(n, 0, r.Head, tail, layer == 1 ? .12f : layer == 2 ? r.Glow : r.Core,
+                    0f, length, 0f, 0f, 0f, head, back, false, false);
                 // Exact metre widths; TD does not inherit the older pixel floor/head dot.
                 _extra[n] = Vector4.zero;
-                float alpha = layer == 1 ? .16f * (1f-r.Age/.4f) : 1f;
+                float alpha = layer == 1 ? .16f * (1f-r.Age/.4f) : layer == 2 ? TdGlowAlpha * flash : 1f;
                 _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : 0f;
                 n++;
             }
@@ -330,8 +362,8 @@ namespace DD.Prototype.Feedback.Vfx
                 for (int i = 0; i < TdCapacity; i++)
                     if (_tdRounds[i].Alive && _tdRounds[i].Id == info.ProjectileId)
                     {
-                        _tdRounds[i].Sniper = profile.Class == VfxWeaponClass.Sniper;
-                        _tdRounds[i].Color = profile.HeadColor;
+                        TdLook(ref _tdRounds[i], profile);
+                        _tdRounds[i].Pellet = pellet;
                         _tdRounds[i].Target = (end-origin).magnitude;
                         break;
                     }
@@ -472,7 +504,7 @@ namespace DD.Prototype.Feedback.Vfx
                 TickTd(dt);
                 _live = LiveTdTracers; _firstPerson = false; _performance = VfxTier.Current == VfxTierLevel.Performance;
                 DrawnCore = _material != null ? DrawTd(0) : 0;
-                DrawnGlow = _material != null ? DrawTd(1) : 0;
+                DrawnGlow = _material != null ? DrawTd(1) + DrawTd(2) : 0;   // sniper smoke + the warm glow (none on Performance)
                 DrawnGlint = 0;
                 return;
             }
