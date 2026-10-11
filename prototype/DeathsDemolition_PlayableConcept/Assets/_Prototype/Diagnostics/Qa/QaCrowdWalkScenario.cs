@@ -40,7 +40,7 @@ namespace DD.Prototype.Qa
         private static readonly Vector3 Start = new Vector3(20f, 0f, 1f);      // td-capture pose garden_path_east
         private static readonly Vector3 GateWest = new Vector3(29f, 0f, 1f);   // inside the R7 west gate (GreyboxV6Builder R7_W, gate at z 1)
         private static readonly Vector3 Sakura = new Vector3(36f, 0f, 1f);    // GreyboxV6Builder.GreatSakura
-        private static readonly Vector3 GateNorth = new Vector3(36f, 0f, 8.8f); // short of the R7 north gate (z 10)
+        private static readonly Vector3 GateNorth = new Vector3(36f, 0f, 10f);  // the R7 north gate (GreyboxV6Builder R7_N, gate at x 36)
 
         private enum Phase { Settle, Gather, Walk, Done }
         private Phase _phase = Phase.Settle;
@@ -59,6 +59,7 @@ namespace DD.Prototype.Qa
         private double _tStart = -1, _tEnd = -1, _tCanopyIn = -1, _tCanopyOut = -1;
         private int _crowdWithinMin = int.MaxValue;
         private bool _arrived;
+        private int _deniedServe0, _deniedLock0, _servedFrames, _walkFrames;
 
         public static QaCrowdWalkScenario Create(string name) => string.Equals(name, Name, StringComparison.OrdinalIgnoreCase) ? new QaCrowdWalkScenario() : null;
 
@@ -89,6 +90,8 @@ namespace DD.Prototype.Qa
                     _stick = rig.Motor != null && rig.Motor.MaxSpeed > 0.1f ? Mathf.Clamp(WalkSpeed / rig.Motor.MaxSpeed, 0.1f, 1f) : 0.3f;
                     log("crowdwalk walk start pos=" + V(_lastPos) + " corners=" + _route.Count + " stick=" + QaArgs.F(_stick, 2));
                     _tStart = Time.realtimeSinceStartupAsDouble;
+                    if (_pv == null) _pv = rig.GetComponentInChildren<PlayerSkinnedVisual>();
+                    if (_pv != null && _pv.FootIk != null) { _deniedServe0 = _pv.FootIk.BudgetDeniedServe; _deniedLock0 = _pv.FootIk.BudgetDeniedLock; }
                     WriteJson(false, log);
                     break;
                 case Phase.Walk:
@@ -106,7 +109,9 @@ namespace DD.Prototype.Qa
             _crownHalfZ = CrownBounds(out _crown);
             float north = Mathf.Max(3.2f, 0.6f * _crownHalfZ);   // north of the island's trunks (r 2.2 + 0.4), inside the crown
             Vector3 under = OnMesh(Sakura + new Vector3(0f, 0f, north), 2f);
-            Vector3[] goals = { start, OnMesh(GateWest, 2f), under, OnMesh(GateNorth, 2f) };
+            // the end lies past the crown (crowdwalk-r4: an end short of the north gate was still under a 7.6 m crown — no canopyExit)
+            Vector3 end = OnMesh(new Vector3(Sakura.x, 0f, Mathf.Max(_crown.max.z + 1.5f, GateNorth.z + 2.5f)), 2.5f);
+            Vector3[] goals = { start, OnMesh(GateWest, 2f), under, OnMesh(GateNorth, 2f), end };
             _route.Clear();
             _route.Add(start);
             var path = new NavMeshPath();
@@ -144,7 +149,8 @@ namespace DD.Prototype.Qa
                 WriteJson(_arrived && _walkSeconds >= 5f && _tCanopyIn >= 0 && _tCanopyOut >= 0, log);
                 log("crowdwalk done " + (_corner >= _route.Count ? "arrived" : "timeout") + " walk=" + QaArgs.F(_walkSeconds, 1) + "s " + QaArgs.F(_walkMeters, 1) + "m meanSpeed="
                     + QaArgs.F(_walkSeconds > 0f ? _walkMeters / _walkSeconds : 0f, 2) + " meanLocoRate=" + QaArgs.F(_rateFrames > 0 ? _rateSum / _rateFrames : 0f, 2)
-                    + " lockGateOpen=" + QaArgs.F(_gateSeconds, 1) + "s footLocked=" + QaArgs.F(_lockedSeconds, 1) + "s crowd=" + _placed + " crownHalfZ=" + QaArgs.F(_crownHalfZ, 1));
+                    + " lockGateOpen=" + QaArgs.F(_gateSeconds, 1) + "s footLocked=" + QaArgs.F(_lockedSeconds, 1) + "s ikServed=" + _servedFrames + "/" + _walkFrames
+                    + " ikDenied serve/lock=" + DeniedServe() + "/" + DeniedLock() + " crowd=" + _placed + " crownHalfZ=" + QaArgs.F(_crownHalfZ, 1));
                 return;
             }
 
@@ -167,6 +173,8 @@ namespace DD.Prototype.Qa
                     _rateFrames++;
                     if (pv.FootIk != null && pv.FootIk.LockGateOpen) _gateSeconds += dt;
                     if (pv.FootIk != null && pv.FootIk.LockedFeet > 0) _lockedSeconds += dt;
+                    if (pv.FootIk != null && pv.FootIk.Served) _servedFrames++;
+                    _walkFrames++;
                 }
             }
 
@@ -174,7 +182,9 @@ namespace DD.Prototype.Qa
             {
                 _traceAt = now + 1f;
                 log("crowdwalk t=" + QaArgs.F(now - _phaseStart, 1) + " pos=" + V(pos) + " speed=" + QaArgs.F(speed, 2) + " stick=" + QaArgs.F(_stick, 2)
-                    + " locoRate=" + (pv != null ? QaArgs.F(pv.LocoRate, 2) : "-") + " lockedFeet=" + (pv != null && pv.FootIk != null ? pv.FootIk.LockedFeet.ToString() : "-") + " corner=" + _corner + "/" + _route.Count);
+                    + " locoRate=" + (pv != null ? QaArgs.F(pv.LocoRate, 2) : "-") + " honest=" + (pv != null ? QaArgs.F(pv.HonestSpeed, 2) : "-")
+                    + " lockedFeet=" + (pv != null && pv.FootIk != null ? pv.FootIk.LockedFeet.ToString() : "-") + " ikServed=" + (pv != null && pv.FootIk != null && pv.FootIk.Served ? 1 : 0)
+                    + " ikDenied=" + (pv != null && pv.FootIk != null ? (pv.FootIk.BudgetDeniedServe - _deniedServe0) + "/" + (pv.FootIk.BudgetDeniedLock - _deniedLock0) : "-") + " corner=" + _corner + "/" + _route.Count);
             }
         }
 
@@ -237,6 +247,9 @@ namespace DD.Prototype.Qa
             return dx * dx + dz * dz <= 1f;
         }
 
+        private int DeniedServe() => _pv != null && _pv.FootIk != null ? _pv.FootIk.BudgetDeniedServe - _deniedServe0 : 0;
+        private int DeniedLock() => _pv != null && _pv.FootIk != null ? _pv.FootIk.BudgetDeniedLock - _deniedLock0 : 0;
+
         private void WriteJson(bool completed, Action<string> log)
         {
             if (string.IsNullOrEmpty(OutDir)) return;
@@ -246,7 +259,9 @@ namespace DD.Prototype.Qa
                           + ",\"canopyEnter\":" + S(_tCanopyIn) + ",\"canopyExit\":" + S(_tCanopyOut) + "}"
                           + ",\"walkSeconds\":" + _walkSeconds.ToString("F2", CultureInfo.InvariantCulture)
                           + ",\"crowdWithin15m\":" + (_crowdWithinMin == int.MaxValue ? 0 : _crowdWithinMin)
-                          + ",\"crowdPlaced\":" + _placed + ",\"arrived\":" + (_arrived ? "true" : "false") + "}";
+                          + ",\"crowdPlaced\":" + _placed + ",\"arrived\":" + (_arrived ? "true" : "false")
+                          + ",\"lockGateSeconds\":" + _gateSeconds.ToString("F2", CultureInfo.InvariantCulture) + ",\"footLockedSeconds\":" + _lockedSeconds.ToString("F2", CultureInfo.InvariantCulture)
+                          + ",\"ikServedFrames\":" + _servedFrames + ",\"walkFrames\":" + _walkFrames + ",\"ikDeniedServe\":" + DeniedServe() + ",\"ikDeniedLock\":" + DeniedLock() + "}";
             try
             {
                 Directory.CreateDirectory(OutDir);
