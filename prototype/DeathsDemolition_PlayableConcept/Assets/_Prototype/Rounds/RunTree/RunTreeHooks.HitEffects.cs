@@ -72,6 +72,9 @@ namespace DD.Prototype.Rounds
         /// </summary>
         public const int TreeRoundThirdEye = 8;
 
+        /// <summary>WP-104 (S-07 K3): the round carries the chaos core's next hit (TreeVolleyPlan.Marked) — drawn as the marked round.</summary>
+        public const int TreeRoundMarkedChaos = 16;
+
         // ------------------------------------------------------------------ AfterTreeHit result bits
 
         /// <summary>Chain from this hit (cap.ar_2 / cap.smg_2) — the engine runs one chain after the segment.</summary>

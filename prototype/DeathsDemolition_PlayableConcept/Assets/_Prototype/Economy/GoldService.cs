@@ -243,7 +243,7 @@ namespace DD.Prototype.Economy
         /// <summary>Run this service is paying out for. 0 between runs.</summary>
         public int RunId => _runId;
 
-        public float MagnetRadius => _magnetRadius;
+        public float MagnetRadius => _magnetRadius * DD.Prototype.Rounds.TreeHooks.MagnetRadiusScale;   // WP-104 Coin Sense III (×1 without the tree)
 
         public float MagnetSpeed => _magnetSpeed;
 
