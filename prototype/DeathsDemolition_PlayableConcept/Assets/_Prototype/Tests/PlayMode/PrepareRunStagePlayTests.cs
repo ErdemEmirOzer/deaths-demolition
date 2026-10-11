@@ -18,7 +18,9 @@ namespace DD.Prototype.Tests.PlayMode
     /// R4 WP-106 P1 · Prepare Run's weapon stage in a live URP frame (an overlay canvas, a 640 × 360 host):
     ///   1. Create → a target the host's size on the view; two weapons → a render each; the models are cached per id; idle frames draw nothing.
     ///   2. The weapon stands on SOCKET_Weapon (foot on the socket, centred on the rotor axis) at its class display length, LOD0, on the stage layer.
-    ///   3. Orbit / Zoom keep to the json's limits; several changes in one frame are one render; ResetView.
+    ///   3. Orbit / Zoom keep to the json's limits; several changes in one frame are one render however many frames follow;
+    ///      the camera is never enabled (fix, PM run w106-tests 12.10: an enabled camera was drawn on every editor tick until the
+    ///      next LateUpdate - one change ~20 renders); ResetView.
     ///   4. Reduced Motion: the auto turn neither turns nor draws; without it the weapon turns.
     ///   5. A hidden view (inactive, CanvasGroup α 0) never draws; shown again it draws what changed.
     ///   6. The pad through UiInput's seam turns, tilts and zooms; the pointer's drag / wheel / double click.
@@ -67,6 +69,8 @@ namespace DD.Prototype.Tests.PlayMode
             PrepareRunStage stage = NewStage(out _);
             stage.AutoTurn = false;
             yield return LifecycleTestKit.Bekle(() => stage.Renders >= 1, Wait, "ilk çizim olmadı");
+            Assert.AreEqual(1, stage.Renders, "açılış tek çizim (kamera talep üzerine çizer, açık kalmaz)");
+            Assert.IsFalse(stage.StageCamera.enabled, "sahne kamerası hiç açılmaz");
             Assert.AreEqual(640, stage.Target.width, "hedef host'un piksel boyunda");
             Assert.AreEqual(360, stage.Target.height);
             Assert.AreSame(stage.Target, stage.View.texture, "RawImage hedefi gösterir");
@@ -168,6 +172,7 @@ namespace DD.Prototype.Tests.PlayMode
             PrepareRunStage stage = NewStage(out _);
             stage.AutoTurn = false;
             yield return LifecycleTestKit.Bekle(() => stage.Renders >= 1, Wait, "çizim olmadı");
+            Assert.AreEqual(1, stage.Renders, "açılış tek çizim");
             Assert.AreEqual(PrepareRunStage.InitialPitch, stage.Pitch, 1e-3f);
             Assert.AreEqual(PrepareRunStage.InitialDistance, stage.Distance, 1e-3f);
 
@@ -183,9 +188,13 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(PrepareRunStage.DistanceMax, stage.Distance, 1e-4f, "en uzak 6.1 m");
 
             int before = stage.Renders;
-            yield return null;
-            yield return null;
-            Assert.AreEqual(before + 1, stage.Renders, "bir karedeki birkaç değişiklik tek çizim");
+            for (int i = 0; i < 6; i++)
+            {
+                yield return null;
+                Assert.IsFalse(stage.StageCamera.enabled, "kamera hiç açılmaz (kare " + i + ")");
+            }
+
+            Assert.AreEqual(before + 1, stage.Renders, "bir karedeki birkaç değişiklik, ardından kaç kare geçerse geçsin, tek çizim");
 
             Camera cam = stage.StageCamera;
             Vector3 target = cam.transform.parent.TransformPoint(PrepareRunStage.OrbitTarget);
@@ -196,6 +205,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(PrepareRunStage.InitialPitch, stage.Pitch, 1e-4f);
             Assert.AreEqual(PrepareRunStage.InitialDistance, stage.Distance, 1e-4f);
             yield return LifecycleTestKit.Bekle(() => stage.Renders > before + 1, Wait, "ResetView çizmedi");
+            yield return null;
+            yield return null;
+            Assert.AreEqual(before + 2, stage.Renders, "ResetView tek çizim");
         }
 
         // ------------------------------------------------------------------ 4 · Reduced Motion
@@ -235,6 +247,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(turned, Is.InRange(8f, 12.5f), "~1 s × 12°/s yavaş dönüş: " + turned);
             Assert.Greater(stage.Renders, r0, "dönüş çizer");
             Assert.LessOrEqual(stage.Renders - r0, 20, "en çok kare başına bir çizim (≤ 30/s)");
+            Assert.GreaterOrEqual(stage.Renders - r0, 19, "0.05 s'lik her dönüş karesi bir çizim (≥ 1/30 s)");
         }
 
         // ------------------------------------------------------------------ 5 · hidden

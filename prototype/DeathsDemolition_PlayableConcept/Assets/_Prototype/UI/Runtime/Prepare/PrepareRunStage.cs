@@ -38,9 +38,9 @@ namespace DD.Prototype.UI
     /// renderer (<see cref="FeatureFreeRendererIndex"/>), never tagged MainCamera, always into its own target (UiFactory's screen
     /// camera lookup skips it). Its lights reach that layer only; renderers sample no probes (nothing is baked down there).
     ///
-    /// DRAWING. The camera is disabled except on the frames something changed - an orbit, a zoom, a weapon, the auto turn (at
-    /// most <see cref="AutoTurnFps"/> renders a second) or a lost / resized target - and only while the view shows (active,
-    /// on an enabled canvas, alpha above zero, the curtain not shut). The target follows the view's size in pixels, the short
+    /// DRAWING. The camera is never enabled: LateUpdate renders it on demand (Camera.Render), once, on the frames something
+    /// changed - an orbit, a zoom, a weapon, the auto turn (at most <see cref="AutoTurnFps"/> renders a second) or a lost /
+    /// resized target - and only while the view shows (active, on an enabled canvas, alpha above zero, the curtain not shut). The target follows the view's size in pixels, the short
     /// side at most <see cref="MaxShortSide"/>. Per frame nothing is allocated (the PlayMode test measures it).
     ///
     /// INPUT. Mouse: drag (left button) turns the weapon (x) and tilts the camera (y), the wheel zooms, a double click resets
@@ -205,6 +205,7 @@ namespace DD.Prototype.UI
         private float _viewHeightPixels = 1f;
         private bool _dirty;
         private bool _autoDirty;
+        private bool _renderDue;
         private bool _dragging;
         private bool _padActive;
         private float _lastTick = -1f;
@@ -940,11 +941,17 @@ namespace DD.Prototype.UI
         private void LateUpdate()
         {
             Tick(UiMotion.Now(UiClock.Unscaled));
+            if (_renderDue)
+            {
+                _renderDue = false;
+                Draw();
+            }
         }
 
         /// <summary>
-        /// One frame at <paramref name="now"/> (UiMotion's unscaled clock): the pad's view controls, the auto turn, then the camera's
-        /// draw decision. Allocation-free (PrepareRunStagePlayTests measures it). Internal for the tests' explicit clock.
+        /// One frame at <paramref name="now"/> (UiMotion's unscaled clock): the pad's view controls, the auto turn, then the draw
+        /// decision (<see cref="Present"/>); the draw itself is LateUpdate's, once a frame however often this runs. Allocation-free
+        /// (PrepareRunStagePlayTests measures it). Internal for the tests' explicit clock.
         /// </summary>
         internal void Tick(float now)
         {
@@ -997,41 +1004,57 @@ namespace DD.Prototype.UI
             return modal == null || transform.IsChildOf(modal.transform);
         }
 
-        /// <summary>Draws this frame only when the view shows and something changed; the camera stays disabled otherwise.</summary>
+        /// <summary>
+        /// The draw decision: due only when the view shows and something changed (the auto turn at most <see cref="AutoTurnFps"/> a
+        /// second). Changes made while hidden wait for the view to show.
+        /// </summary>
         private void Present(float now, bool visible)
         {
-            bool draw = false;
-            if (visible)
+            if (!visible)
             {
-                Vector2 pixels = ViewPixels();
-                _viewHeightPixels = Mathf.Max(1f, pixels.y);
-                Vector2Int size = TargetSize(pixels, MaxShortSide);
-                if (_target == null || Mathf.Abs(_target.width - size.x) > 1 || Mathf.Abs(_target.height - size.y) > 1)
-                {
-                    EnsureTarget(size);
-                }
-                else if (!_target.IsCreated())
-                {
-                    _target.Create();   // lost with the device: drawn again before it shows
-                    ClearTarget();
-                    _dirty = true;
-                }
-
-                bool autoDue = _autoDirty && now - _lastRenderAt >= 1f / AutoTurnFps;
-                draw = _dirty || autoDue;
-                if (draw)
-                {
-                    ApplyPose();
-                    _dirty = false;
-                    _autoDirty = false;
-                    _lastRenderAt = now;
-                }
+                return;
             }
 
-            if (_camera.enabled != draw)
+            Vector2 pixels = ViewPixels();
+            _viewHeightPixels = Mathf.Max(1f, pixels.y);
+            Vector2Int size = TargetSize(pixels, MaxShortSide);
+            if (_target == null || Mathf.Abs(_target.width - size.x) > 1 || Mathf.Abs(_target.height - size.y) > 1)
             {
-                _camera.enabled = draw;
+                EnsureTarget(size);
             }
+            else if (!_target.IsCreated())
+            {
+                _target.Create();   // lost with the device: drawn again before it shows
+                ClearTarget();
+                _dirty = true;
+            }
+
+            bool autoDue = _autoDirty && now - _lastRenderAt >= 1f / AutoTurnFps;
+            if (_dirty || autoDue)
+            {
+                _dirty = false;
+                _autoDirty = false;
+                _lastRenderAt = now;
+                _renderDue = true;
+            }
+        }
+
+        /// <summary>
+        /// WP-106 fix (PM run w106-tests, 12.10): the one render of a frame, drawn on demand by the disabled camera - the pose, then
+        /// <see cref="Camera.Render"/> into the target. The camera is never enabled: an enabled camera stays enabled until the next
+        /// LateUpdate, and the Editor (batch, the shipped 60 FPS cap) draws an enabled camera on every editor tick in between -
+        /// one change was ~20 renders (21, 24, 442 for 20) and the idle frames none. On demand, one change is exactly one render
+        /// in every runner and the Player, and the texture is current before this frame's canvases draw.
+        /// </summary>
+        private void Draw()
+        {
+            if (_camera == null || _target == null)
+            {
+                return;
+            }
+
+            ApplyPose();
+            _camera.Render();
         }
 
         /// <summary>The turntable at <see cref="Yaw"/>, the camera on its orbit looking at the target, the lens for the target's aspect.</summary>
@@ -1062,7 +1085,7 @@ namespace DD.Prototype.UI
             _padActive = false;
             if (_camera != null)
             {
-                _camera.enabled = false;   // a hidden view never leaves its camera drawing
+                _camera.enabled = false;   // never enabled (Draw renders on demand); kept against an outside switch
             }
         }
 
