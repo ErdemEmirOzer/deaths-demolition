@@ -618,6 +618,7 @@ namespace DD.Prototype.Economy
             Func<EnemyDeathInfo, int> bonus = KillBonus;
             if (bonus != null) total += Mathf.Max(0, bonus(info));
             total = DD.Prototype.Difficulty.DifficultyService.ScaleGold(total, out float goldCarry);   // WP-102: Hard ×1.25, Demolition ×2.5 (Normal unchanged)
+            total = DD.Prototype.Rounds.TreeEconomyV2.ScaleKillGold(total, out float treeCarry);   // WP-104: then the tree's Coin Sense (×1 without the tree)
 
             GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, total);
             if (verdict != GoldRewardVerdict.Granted)
@@ -626,6 +627,7 @@ namespace DD.Prototype.Economy
             }
 
             DD.Prototype.Difficulty.DifficultyService.CommitGoldCarry(goldCarry);   // WP-102: the fraction carries only for a granted kill
+            DD.Prototype.Rounds.TreeEconomyV2.CommitCarry(treeCarry);   // WP-104: likewise for Coin Sense
 
             if (!TrySpawnPacket(total, info.Position))
             {

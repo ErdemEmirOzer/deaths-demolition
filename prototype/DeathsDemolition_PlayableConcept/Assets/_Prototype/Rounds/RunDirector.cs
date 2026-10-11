@@ -988,7 +988,10 @@ namespace DD.Prototype.Rounds
                 TreeLinkII = ThisRunTree && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
                 TreeWeaponCapstone = ThisRunTree && _shop.Tree.IsOwned(_shop.Tree.Graph.WeaponCapstoneIndex) ? 1 : 0,
                 TreeFullLanes = ThisRunTree ? _shop.Tree.FullLaneCount(_shop.BuildForTree) : 0,
-                Mode = TreeRuntime.Mode,   // WP-104: the run's mode (WP-102 sets it at run start; Normal otherwise)
+                Mode = (int)DD.Prototype.Difficulty.DifficultyService.RunMode,   // WP-104: the run's mode (WP-102 DifficultyService; TreeMode order)
+                TreeNodesOwned = _shop.TreeV2.IsBuilt ? _shop.TreeV2.NodesOwned : 0,
+                TreeTier3Owned = _shop.TreeV2.IsBuilt ? _shop.TreeV2.CountOwnedTierAtLeast(3) : 0,
+                SynergiesOwned = _shop.TreeV2.IsBuilt ? _shop.TreeV2.SynergyCount : 0,
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,

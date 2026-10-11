@@ -209,6 +209,39 @@ namespace DD.Prototype.Rounds
         public void BeginRunTree(int runId, PrototypeConfig config)
         {
             Tree.Begin(Mathf.Max(0, runId), ShopWeapon, config, Meta);
+            BeginTreeV2(runId, config);
+        }
+
+        /// <summary>WP-104 B1: the feature-based run tree (built only while <see cref="TreeV2Active"/>; the WP-077 tree above stays the shipped one until B2).</summary>
+        public RunTreeV2 TreeV2 { get; } = new RunTreeV2();
+
+        /// <summary>WP-104: the awakening unlocks (Ash) for the run; null = read from the profile when the V2 tree begins.</summary>
+        public TreeAwakening? AwakeningOverride { get; set; }
+
+        /// <summary>Tests: force the V2 tree on/off (null = config / dev flag).</summary>
+        public static bool? TreeV2TestOverride { get; set; }
+
+        /// <summary>WP-104: the V2 tree runs this run — config RunTreeV2, the dev flag -ddTreeV2, or a -ddTreePreset (dev builds only).</summary>
+        public static bool TreeV2Active(PrototypeConfig config)
+        {
+            if (TreeV2TestOverride.HasValue) return TreeV2TestOverride.Value;
+            if (config != null && config.Economy != null && config.Economy.RunTreeV2) return true;
+            if (!TreePresetsV2.DevAllowed) return false;
+            return Array.IndexOf(Environment.GetCommandLineArgs(), "-ddTreeV2") >= 0 || TreePresetsV2.TryFromCommandLine(out _);
+        }
+
+        private void BeginTreeV2(int runId, PrototypeConfig config)
+        {
+            // WP-102: the run's mode is fixed by DifficultyService.BeginRun when the run scene loads (before StartRun); TreeMode = DifficultyMode.
+            int mode = (int)DD.Prototype.Difficulty.DifficultyService.RunMode;
+            TreeRuntime.Reset();
+            TreeRuntime.SetMode(mode);
+            TreeEconomyV2.ResetCarry();
+            if (!TreeV2Active(config)) return;
+            GoldWallet wallet = GoldService.Instance != null ? GoldService.Instance.Wallet : null;
+            TreeAwakening awakening = AwakeningOverride ?? TreeAwakening.FromProfile(ProfileService.Current);
+            TreeV2.Begin(Mathf.Max(0, runId), mode, wallet, RunTreeV2.ProfileOf(ShopWeapon), awakening);
+            if (TreePresetsV2.TryFromCommandLine(out TreePresetsV2.Preset preset)) TreePresetsV2.Apply(TreeV2, preset);
         }
 
         /// <summary>WP-077: the equipped weapon the tree is built for. Null = WeaponRegistry.SelectedWeapon.</summary>
@@ -343,6 +376,7 @@ namespace DD.Prototype.Rounds
 
                 Tree.TierEligibility = TierEligibility;
                 PurseBonusThisRound = Tree.OnRoundEnd(wallet);
+                if (TreeV2.IsBuilt && TreeV2.RunId == wantedRun) TreeV2.Open(wantedRound);   // WP-104 B1: interest, strip, Hearth count
                 DropClosedPin();
 
                 BuildOffer();

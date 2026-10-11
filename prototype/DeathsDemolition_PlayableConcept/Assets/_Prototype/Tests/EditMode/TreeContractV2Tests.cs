@@ -63,6 +63,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(11, Enum.GetValues(typeof(TreeSynergy)).Length, "None + 10 synergies (design §3)");
             Assert.AreEqual(8, (int)TreeElement.Venom);
             Assert.AreEqual(24, (int)TreeProcKind.ClusterSplit);
+            Assert.AreEqual(28, (int)TreeProcKind.BarrageRocket);
             Assert.AreEqual(6, (int)TreeNodeState.AwakeningLocked);
             Assert.AreEqual(3, TreeMode.Count);
         }
@@ -145,6 +146,9 @@ namespace DD.Prototype.Tests.EditMode
             TreeEvents.RaiseProc(new TreeProcInfo { Kind = TreeProcKind.MiniNuke, Point = Vector3.one, Radius = 5f });
             TreeEvents.RaiseSynergyUnlocked(TreeSynergy.Barrage);
             Assert.AreEqual(TreeProcKind.MiniNuke, seen);
+            Assert.AreEqual(1, TreeEvents.ProcCount, "S-10 window counter");
+            TreeEvents.CountShapedShot();
+            Assert.AreEqual(1, TreeEvents.ShapedShots);
             Assert.AreEqual(TreeSynergy.Barrage, syn);
 
             TreeEvents.ResetForTests();

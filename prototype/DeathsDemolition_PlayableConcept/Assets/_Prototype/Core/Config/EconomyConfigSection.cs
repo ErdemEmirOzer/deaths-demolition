@@ -99,6 +99,9 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-077 K10: the round-end offer sells tree NODE cards (frontier draw, fork pair as one card, undo, Reforge). Off until S-09's tree screen (WP-068 R1-C) draws node cards; off = the classic branch cards.")]
         public bool RunTreeNodeCards = false;
 
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-104 B1 (KARAR-WP104-11.10): the feature-based run tree (run-tree-v2, RoundUpgradeShop.TreeV2). Off until the B2 fire-path hooks and S-09's tree screen land; dev: -ddTreeV2 or a -ddTreePreset turns it on for a run.")]
+        public bool RunTreeV2 = false;
+
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Lower bound of the request's 15-45 starting cost band; used as a sanity clamp.")]
         public int StartingCostMin = 15;
 

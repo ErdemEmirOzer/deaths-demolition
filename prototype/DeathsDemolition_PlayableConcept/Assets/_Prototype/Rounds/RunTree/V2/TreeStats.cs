@@ -190,6 +190,22 @@ namespace DD.Prototype.Rounds
         public int AuraLevel;
         /// <summary>Highest owned tier per <see cref="TreeBranch"/> index 0–6, packed 3 bits each (visual tier ladder).</summary>
         public int BranchTiers;
+        /// <summary>WP-104 B1: the awakening alternative capstones owned, bit per <see cref="TreeBranch"/> index.</summary>
+        public byte AltCapstones;
+        /// <summary>WP-104 B1 (S-06 E4 capsule, AD-VISUAL K1): the element of the highest-tier owned element node; a tie goes to the
+        /// later purchase. None without an element.</summary>
+        public TreeElement DominantElement;
+        /// <summary>WP-104 B1 (S-03 B3 receivers): Black Hole pull speed m/s and the share Special / Elite·Ultra feel (Standard 1).</summary>
+        public float HolePullSpeed;
+        public float HolePullSpecialShare;
+        public float HolePullHeavyShare;
+        /// <summary>Deep Freeze: Elite freeze length share; Ultra never freezes and slows by this share instead.</summary>
+        public float FreezeEliteShare;
+        public float FreezeUltraSlow;
+        /// <summary>Nuke / Bell / Stone Guardian stuns: Elite·Ultra feel this share of the length.</summary>
+        public float StunHeavyShare;
+        /// <summary>Stone Guardian push wave stun (s).</summary>
+        public float BulwarkStunSeconds;
 
         public int BranchTier(TreeBranch branch) => (BranchTiers >> ((int)branch * 3)) & 7;
 
@@ -231,7 +247,9 @@ namespace DD.Prototype.Rounds
             MagnetScale = 1f,
             WallBuyScale = 1f,
             AmmoBuyScale = 1f,
-            HearthDamageScale = 1f
+            HearthDamageScale = 1f,
+            // S-03 B3: a stun from a node without its own arg still reaches Elite·Ultra at half length (0 would mean immune).
+            StunHeavyShare = 0.5f
         };
     }
 }

@@ -81,7 +81,9 @@ namespace DD.Prototype.Rounds
         /// <summary>Closed by a fork (F1 third element, F2 other core).</summary>
         Excluded = 5,
         /// <summary>An awakening variant the profile has not unlocked with Ash.</summary>
-        AwakeningLocked = 6
+        AwakeningLocked = 6,
+        /// <summary>WP-104 B1: no system reads this node's effect yet (TreeLiveV2), so it is never sold (the WP-077 rule).</summary>
+        EffectPending = 7
     }
 
     /// <summary>Gameplay moments the tree raises for VFX (S-07), audio (S-08), HUD (S-09) and telemetry. Values append only.</summary>
@@ -111,7 +113,15 @@ namespace DD.Prototype.Rounds
         EndlessWindowClose = 21,
         OverclockPeak = 22,
         SynergyFirstTrigger = 23,
-        ClusterSplit = 24
+        ClusterSplit = 24,
+        /// <summary>WP-104 B1 (S-08 / S-07 request): the shield came up or refilled to full (Point = player).</summary>
+        ShieldUp = 25,
+        /// <summary>Damage absorbed by the shield without breaking it (Point = player).</summary>
+        ShieldHit = 26,
+        /// <summary>One bounce (Point = bounce point, Depth = bounce index; S-02's fire path raises it).</summary>
+        Ricochet = 27,
+        /// <summary>A Barrage (rl_1 + Full-Auto) rocket launched (S-02 fire path).</summary>
+        BarrageRocket = 28
     }
 
     /// <summary>Difficulty modes as the tree reads them (index into per-mode tables). Same order as S-03's WP-102 DifficultyMode.</summary>
@@ -161,8 +171,11 @@ namespace DD.Prototype.Rounds
         public ClassicWeaponId Weapon;
         /// <summary>The body hit or killed, if any. Valid only during the callback.</summary>
         public Component Target;
-        /// <summary>Chain generation (0 = direct), see <see cref="TreeGuardrails.ChainDepth"/>.</summary>
+        /// <summary>Chain generation (0 = direct), see <see cref="TreeGuardrails.ChainDepth"/>; for Ricochet the bounce index.</summary>
         public int Depth;
+        /// <summary>WP-104 B1 (S-07 / S-08): how long the moment lasts in seconds — fire ground, venom cloud, black hole, freeze,
+        /// Endless window; 0 for an instant (blast, crit, chain).</summary>
+        public float Seconds;
     }
 
     /// <summary>
@@ -180,7 +193,26 @@ namespace DD.Prototype.Rounds
         /// <summary>The resolved stats changed (purchase, equip, run start/end).</summary>
         public static event Action StatsChanged;
 
-        public static void RaiseProc(in TreeProcInfo info) => Proc?.Invoke(info);
+        /// <summary>WP-104 B1 (S-10 FINAL tree perf cell): tree moments raised since the last <see cref="ResetCounters"/> — proof that a
+        /// measured window really ran tree effects (the probe writes it as treeEvents; a cell with 0 is not a tree measurement).</summary>
+        public static int ProcCount { get; private set; }
+
+        /// <summary>Trigger pulls the tree changed (extra shots, Full-Auto, size…): the B2 fire-path hooks call <see cref="CountShapedShot"/>.</summary>
+        public static int ShapedShots { get; private set; }
+
+        public static void CountShapedShot() => ShapedShots++;
+
+        public static void ResetCounters()
+        {
+            ProcCount = 0;
+            ShapedShots = 0;
+        }
+
+        public static void RaiseProc(in TreeProcInfo info)
+        {
+            ProcCount++;
+            Proc?.Invoke(info);
+        }
         public static void RaiseNodePurchased(string nodeId, TreeBranch branch, int tier) => NodePurchased?.Invoke(nodeId, branch, tier);
         public static void RaiseSynergyUnlocked(TreeSynergy synergy) => SynergyUnlocked?.Invoke(synergy);
         public static void RaiseAuraChanged(int level) => AuraChanged?.Invoke(level);
@@ -194,6 +226,7 @@ namespace DD.Prototype.Rounds
             SynergyUnlocked = null;
             AuraChanged = null;
             StatsChanged = null;
+            ResetCounters();
         }
     }
 
@@ -258,6 +291,8 @@ namespace DD.Prototype.Rounds
         public static readonly ProfilerMarker Gravity = new ProfilerMarker("WP104.Tree.Gravity");
         public static readonly ProfilerMarker Nuke = new ProfilerMarker("WP104.Tree.Nuke");
         public static readonly ProfilerMarker ProjectileQueries = new ProfilerMarker("WP104.Proj.Queries");
+        /// <summary>WP-104 B1 (S-03 request): the zombie-side receivers of tree statuses (ApplyIce / ApplyStun / ApplyPull / ApplyStatusDamage).</summary>
+        public static readonly ProfilerMarker ZombieStatus = new ProfilerMarker("WP104.Tree.ZombieStatus");
     }
 
     /// <summary>
