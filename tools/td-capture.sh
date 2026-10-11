@@ -5,7 +5,7 @@
 # usage: td-capture.sh --app <dev DeathsDemolition.app> --wp <wp-0NN> --label <label>
 #                      [--poses <file>] [--seed 26] [--video-seconds 45] [--size 1920x1080] [--tier sinematik]
 #                      [--stills-only | --video-only] [--with-enemies] [--crowd-wait 45] [--hud on|off]
-#                      [--video-from fighting|boot]
+#                      [--video-from fighting|boot] [--scenario <name>]
 #   --app       a DEVELOPMENT build (tools/build.sh dev); release builds carry no capture agent (exit 3)
 #   --wp/--label  output folder K/<wp>/capture/<label>/ — must not exist yet (an earlier delivery is never overwritten)
 #   --poses     "key x z" lines, TopDown map coordinates (default tools/td-capture-poses.txt: the 8 standard poses —
@@ -16,6 +16,8 @@
 #   --hud       off: the in-run HUD is hidden in stills and video (HUD-less TopDown backgrounds; dev watermark stays)
 #   --video-from  fighting (default): the MP4 starts in the run · boot (--video-seconds ≥ 30): from Player start — loading
 #               screen, menu logo (held 4 s), first run seconds; capture.json video.phases holds loadingStart/loadingEnd/menu/fighting (s from t0)
+#   --scenario  R4 (S-06/S-01 11.10): a QaRunBot scenario the video plays instead of the free fight — passed on as
+#               -ddQaBotScenario <name> ([a-z0-9-]+, e.g. crowdwalk); fighting video only; recorded in capture.json
 # Output: stills/<nn>-<key>.png + stills/contact.png + stills/poses.json · video/td-<label>.mp4 (+ frames/, audio.wav,
 #         sync.json, summary.json) · logs/ · ug/ (the guard window) · capture.json + SHA256SUMS.
 # Order (D8): guard snapshot --scope player FIRST (it holds the player slot), then each Player through tools/player-run.sh
@@ -27,15 +29,15 @@ setopt nullglob
 SELF="${0:A}"; HERE="${SELF:h}"
 source "$HERE/dd-env.sh"
 
-APP=""; WP=""; LABEL=""; POSES="$HERE/td-capture-poses.txt"; SEED=26; SECS=45; SIZE="1920x1080"; TIER="sinematik"; CROWD_WAIT=45; HUD=on; VFROM=fighting
+APP=""; WP=""; LABEL=""; POSES="$HERE/td-capture-poses.txt"; SEED=26; SECS=45; SIZE="1920x1080"; TIER="sinematik"; CROWD_WAIT=45; HUD=on; VFROM=fighting; SCEN=""
 DO_STILLS=1; DO_VIDEO=1; HOLD=1
-usage() { sed -n '5,19p' "$SELF" >&2; exit 64; }
+usage() { sed -n '5,21p' "$SELF" >&2; exit 64; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --app) APP="${2:-}"; shift ;; --wp) WP="${2:-}"; shift ;; --label) LABEL="${2:-}"; shift ;;
     --poses) POSES="${2:-}"; shift ;; --seed) SEED="${2:-}"; shift ;; --video-seconds) SECS="${2:-}"; shift ;;
     --size) SIZE="${2:-}"; shift ;; --tier) TIER="${2:-}"; shift ;; --crowd-wait) CROWD_WAIT="${2:-}"; shift ;;
-    --hud) HUD="${2:-}"; shift ;; --video-from) VFROM="${2:-}"; shift ;;
+    --hud) HUD="${2:-}"; shift ;; --video-from) VFROM="${2:-}"; shift ;; --scenario) SCEN="${2:-}"; shift ;;
     --stills-only) DO_VIDEO=0 ;; --video-only) DO_STILLS=0 ;; --with-enemies) HOLD=0 ;;
     -h|--help) usage ;;
     *) echo "td-capture: unknown option $1" >&2; usage ;;
@@ -48,6 +50,8 @@ done
 [[ "$SEED" == <-> ]] && [[ "$SECS" == <-> ]] && (( SECS >= 10 && SECS <= 120 )) || { echo "td-capture: --seed integer, --video-seconds 10..120" >&2; exit 64; }
 [[ "$CROWD_WAIT" == <-> ]] && (( CROWD_WAIT >= 1 && CROWD_WAIT <= 120 )) || { echo "td-capture: --crowd-wait 1..120" >&2; exit 64; }
 [[ "$HUD" == (on|off) ]] && [[ "$VFROM" == (fighting|boot) ]] || { echo "td-capture: --hud on|off, --video-from fighting|boot" >&2; exit 64; }
+[ -z "$SCEN" ] || { [[ "$SCEN" =~ '^[a-z0-9-]+$' ]] && [ "$VFROM" = fighting ] && [ "$DO_VIDEO" -eq 1 ]; } \
+  || { echo "td-capture: --scenario <a-z0-9->, with a fighting video (not --stills-only / --video-from boot)" >&2; exit 64; }
 [ "$VFROM" = boot ] && [ "$DO_VIDEO" -eq 1 ] && (( SECS < 30 )) && { echo "td-capture: --video-from boot needs --video-seconds ≥ 30 (the run starts ~12–18 s in)" >&2; exit 64; }
 [[ "$SIZE" =~ '^[0-9]+x[0-9]+$' ]] || { echo "td-capture: --size WxH" >&2; exit 64; }
 W=${SIZE%x*}; H=${SIZE#*x}
@@ -132,7 +136,8 @@ if [ "$DO_VIDEO" -eq 1 ] && [ $SIG -eq 0 ] && [ $RC -eq 0 ]; then
     # QaRunBot would leave the menu one frame after it loads, so no -ddQaBot / -ddDirectToRun here
     launch video $((SECS + 240)) -ddTdCaptureMode boot -ddTdVideoSeconds "$SECS" -ddAudioCapture "$OUT/video/audio.wav"
   else
-    launch video $((SECS + 240)) -ddQaBot "$OUT/bot" -ddQaBotSeed "$SEED" -ddQaBotInvulnerable 1 \
+    SCENARGS=(); [ -n "$SCEN" ] && SCENARGS=(-ddQaBotScenario "$SCEN")
+    launch video $((SECS + 240)) -ddQaBot "$OUT/bot" -ddQaBotSeed "$SEED" -ddQaBotInvulnerable 1 "${SCENARGS[@]}" \
       -ddTdCaptureMode video -ddTdVideoSeconds "$SECS" -ddAudioCapture "$OUT/video/audio.wav"
   fi
   if [ -f "$OUT/video/frames.tsv" ] && [ -f "$OUT/video/sync.json" ]; then
@@ -173,7 +178,7 @@ fi
 
 # --- record (always: what was asked, what came out) -------------------------------------------------------------------
 python3 "$HERE/td-capture/manifest.py" "$OUT" --app "$APP" --seed "$SEED" --poses "$POSES" --size "$SIZE" --tier "$TIER" \
-  --hold "$HOLD" --guard "$GR" --rc "$RC" --signal "$SIG" > "$OUT/logs/manifest.out" 2>&1 || true
+  --hold "$HOLD" --scenario "$SCEN" --guard "$GR" --rc "$RC" --signal "$SIG" > "$OUT/logs/manifest.out" 2>&1 || true
 python3 -c 'import json, sys; sys.path.insert(0, sys.argv[2]); import manifest
 [print(l) for l in manifest.warning_lines(json.load(open(sys.argv[1])).get("videoQuality") or {})]' "$OUT/capture.json" "$HERE/td-capture" 2>&1 | tee -a "$DD_TIMELINE" >&2
 [ $SIG -ne 0 ] && exit $SIG

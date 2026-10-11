@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """WP-099 (S-01, C-00 07.10) · td-capture's record: <out>/capture.json (what was asked, the build, what came out, the
 guard result) and <out>/SHA256SUMS (every stills/ and video/ file except the raw frames, which are listed by count).
-usage: manifest.py <out> --app A --seed S --poses P --size WxH --tier T --hold 0|1 --guard N --rc N --signal N"""
+usage: manifest.py <out> --app A --seed S --poses P --size WxH --tier T --hold 0|1 [--scenario NAME] --guard N --rc N --signal N"""
 import argparse
 import hashlib
 import json
@@ -203,6 +203,7 @@ def main(argv):
     ap.add_argument("out")
     for k in ("app", "seed", "poses", "size", "tier", "hold", "guard", "rc", "signal"):
         ap.add_argument("--" + k, required=True)
+    ap.add_argument("--scenario", default="")   # R4 (S-06/S-01 11.10): the QaRunBot scenario of the video, "" = free fight
     a = ap.parse_args(argv)
     out = Path(a.out)
     files = sorted(p for sub in ("stills", "video") for p in (out / sub).rglob("*")
@@ -211,7 +212,7 @@ def main(argv):
     record = {
         "tool": "tools/td-capture.sh (WP-099)", "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "app": a.app, "build": build_identity(a.app), "seed": int(a.seed), "size": a.size, "tier": a.tier,
-        "holdSpawnsForStills": a.hold == "1",
+        "holdSpawnsForStills": a.hold == "1", "scenario": a.scenario or None,
         "poses": {"file": a.poses, "sha256": sha(a.poses) if Path(a.poses).is_file() else None},
         "stills": read_json(out / "stills" / "poses.json"),
         "video": {"summary": read_json(out / "video" / "summary.json"), "probe": read_json(out / "video" / "probe.json"),

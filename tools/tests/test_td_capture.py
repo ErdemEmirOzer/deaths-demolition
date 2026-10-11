@@ -292,6 +292,26 @@ class TdCaptureTests(unittest.TestCase):
         r = self.run_cap("--stills-only", label="t2")
         self.assertEqual("on", self.calls()[-1][self.calls()[-1].index("-ddTdHud") + 1])
 
+    def test_Senaryo_YalnizVideoyaIletilir_CaptureJsonda(self):
+        """R4 (S-06/S-01 11.10, kit D2 crowdwalk): --scenario reaches the video's QaRunBot only, and capture.json names it."""
+        r = self.run_cap("--scenario", "crowdwalk")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        stills, video = self.calls()
+        self.assertNotIn("-ddQaBotScenario", stills)
+        self.assertEqual("crowdwalk", video[video.index("-ddQaBotScenario") + 1])
+        self.assertEqual("crowdwalk", json.loads((self.out() / "capture.json").read_text())["scenario"])
+        r = self.run_cap("--video-only", label="t2")   # without it: the free fight, no flag, scenario null
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertNotIn("-ddQaBotScenario", self.calls()[-1])
+        self.assertIsNone(json.loads((self.out("t2") / "capture.json").read_text())["scenario"])
+
+    def test_Senaryo_KotuAdYaDaVideosuz_Cikis64HicbirSeyKosmaz(self):
+        for extra in (["--scenario", "Crowd Walk"], ["--scenario", "a;b"], ["--scenario", "crowdwalk", "--stills-only"],
+                      ["--scenario", "crowdwalk", "--video-only", "--video-from", "boot", "--video-seconds", "30"]):
+            with self.subTest(extra=extra):
+                self.assertEqual(64, self.run_cap(*extra).returncode)
+        self.assertEqual([], self.calls()); self.assertEqual([], self.guard_calls())
+
     def test_VideoBoot_ModBoot_AsamalarCaptureJsonda(self):
         """C-00 08.10 (S-10 08.10-2): the loading screen / menu logo clip — mode boot, phases into capture.json."""
         self.assertEqual(64, self.run_cap("--video-only", "--video-from", "boot", "--video-seconds", "20").returncode)
