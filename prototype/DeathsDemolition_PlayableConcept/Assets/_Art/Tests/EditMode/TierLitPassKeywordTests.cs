@@ -18,7 +18,8 @@ namespace DD.Art.Tests.EditMode
     public sealed class TierLitPassKeywordTests
     {
         private const string ShaderName = "DD/Character/Tier Lit";
-        private static readonly string[] SurfaceKeywords = { "_TIER_TINT", "_ZOMBIE_MASKS" };
+        // WP-111 R4: _HERO_READ (the hero's dark lift + rim) is a ForwardLit-only surface keyword — never in DepthNormals either
+        private static readonly string[] SurfaceKeywords = { "_TIER_TINT", "_ZOMBIE_MASKS", "_HERO_READ" };
 
         [Test]
         public void TierLit_DepthNormals_YuzeyAnahtariYok_ForwardLitteVar()

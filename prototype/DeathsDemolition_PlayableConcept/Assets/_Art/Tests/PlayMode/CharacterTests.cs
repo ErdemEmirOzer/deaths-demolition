@@ -630,14 +630,15 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-082 R3 (C-00 10.10, DEC-077 skin 1 0.099 → 0.058 with hero v2) · calibration only: the DEC-077 scene, masks and body
-        /// band above, with the player's _BaseColor gain swept through a property block (the same gamma → linear path as the
-        /// material value). Logs body luma per gain and skin against the crowd luma; picks nothing, asserts nothing.
+        /// WP-111 R4 (S-06, C-00 11.10 · AD-R3READ SHOULD-1 / N1) · calibration only: the DEC-077 scene, masks and body band above, with
+        /// the hero's Tier Lit _HERO_READ parameters swept through a property block — the darks-only lift (_HeroLift.x) and the rim
+        /// (_HeroRim rgb) — per skin: body / figure luma against the crowd, and the silhouette edge (mask pixels with an outside
+        /// neighbour) against the surround ring (the rim's job). Picks nothing, asserts nothing.
         /// </summary>
         [UnityTest]
-        [Explicit("WP-082 R3 kalibrasyon — M_player _BaseColor kazancı taraması")]
+        [Explicit("WP-111 R4 kalibrasyon — kahraman koyu kaldırma + kenar ışığı taraması")]
         [Timeout(600000)]
-        public IEnumerator Okunabilirlik_DEC077_KahramanKazanciTaramasi()
+        public IEnumerator Okunabilirlik_DEC077_KahramanOkumaTaramasi()
         {
             yield return RunAP005();
             PlayerRig rig = PlayerRegistry.Primary;
@@ -669,8 +670,10 @@ namespace DD.Art.Tests.PlayMode
             Time.captureDeltaTime = 0f;
             Time.timeScale = 0f;
             var block = new MaterialPropertyBlock();
-            int baseColorId = Shader.PropertyToID("_BaseColor");
-            Color materialColor = pv.Renderers[0].sharedMaterial.GetColor(baseColorId);
+            int liftId = Shader.PropertyToID("_HeroLift"), rimId = Shader.PropertyToID("_HeroRim");
+            Material shared = pv.Renderers[0].sharedMaterial;
+            Vector4 materialLift = shared.GetVector(liftId), materialRim = shared.GetVector(rimId);
+            Assert.IsTrue(shared.IsKeywordEnabled("_HERO_READ"), "M_player _HERO_READ değil (" + shared.shader.name + ")");
             try
             {
                 Color32[] full = Capture(pose, null);
@@ -683,10 +686,23 @@ namespace DD.Art.Tests.PlayMode
                 bool[] playerMask = DiffFigure(full, noPlayer);
                 bool[] zombieMask = DiffFigure(full, noZombies);
                 bool[] bodyMask = Band(playerMask, 0.20f, 0.60f, 0.20f, 0.80f);
+                bool[] ring = Ring(playerMask, zombieMask, 4, 10);
+                var edge = new bool[playerMask.Length];
+                for (int y = 1; y < H - 1; y++)
+                for (int x = 1; x < W - 1; x++)
+                {
+                    int i = y * W + x;
+                    edge[i] = playerMask[i] && (!playerMask[i - 1] || !playerMask[i + 1] || !playerMask[i - W] || !playerMask[i + W]);
+                }
+
                 float zombieLuma = MeanLuma(full, zombieMask);
-                Debug.Log("[DD-TEST] wp082.read.sweep warm=" + warm + " playerPx=" + Count(playerMask) + " bodyPx=" + Count(bodyMask) + " zombiePx=" + Count(zombieMask) +
-                          " zombieLuma=" + zombieLuma.ToString("F3", CultureInfo.InvariantCulture) + " materialBaseColor=" + materialColor.r.ToString("F3", CultureInfo.InvariantCulture));
-                foreach (float gain in new[] { 1.00f, 1.10f, 1.20f, 1.30f, 1.40f })
+                Debug.Log("[DD-TEST] wp111.read.sweep warm=" + warm + " playerPx=" + Count(playerMask) + " bodyPx=" + Count(bodyMask) + " edgePx=" + Count(edge) + " zombiePx=" + Count(zombieMask) +
+                          " zombieLuma=" + zombieLuma.ToString("F3", CultureInfo.InvariantCulture) + " material lift=" + materialLift + " rim=" + materialRim);
+                // (dark gain, rim linear blue channel, rim exponent): 1/0 = the plain atlas, 1.78/0 = the lift alone (R3's darks), then
+                // stronger lifts and rims (the first sweep: a rim ≤ 0.12 at exponent 3 moved the edge luma ≤ 0.005 — invisible from TD)
+                var combos = new[] { new Vector3(1f, 0f, 3f), new Vector3(1.78f, 0f, 3f), new Vector3(2.4f, 0.25f, 2f), new Vector3(2.4f, 0.4f, 2f),
+                                     new Vector3(3f, 0.25f, 2f), new Vector3(3f, 0.4f, 2f), new Vector3(2.4f, 0.4f, 3f) };
+                foreach (Vector3 c in combos)
                 {
                     var row = new List<string>();
                     for (int s = 0; s < 3; s++)
@@ -696,17 +712,20 @@ namespace DD.Art.Tests.PlayMode
                         {
                             if (r == null) continue;
                             r.GetPropertyBlock(block);
-                            block.SetColor(baseColorId, new Color(gain, gain, gain, 1f));
+                            block.SetVector(liftId, new Vector4(c.x, materialLift.y, materialLift.z, 0f));
+                            block.SetVector(rimId, new Vector4(c.y * materialRim.x / Mathf.Max(materialRim.z, 1e-4f), c.y * materialRim.y / Mathf.Max(materialRim.z, 1e-4f), c.y, c.z));
                             r.SetPropertyBlock(block);
                         }
 
-                        Color32[] frame = Capture(pose, s == 0 ? Path.Combine(dir, "sweep-skin1-gain" + gain.ToString("F2", CultureInfo.InvariantCulture) + ".png") : null);
-                        float body = MeanLuma(frame, bodyMask);
+                        string tag = "g" + c.x.ToString("F2", CultureInfo.InvariantCulture) + "-r" + c.y.ToString("F2", CultureInfo.InvariantCulture) + "-e" + c.z.ToString("F0", CultureInfo.InvariantCulture);
+                        Color32[] frame = Capture(pose, s != 1 ? Path.Combine(dir, "sweep-skin" + (s + 1) + "-" + tag + ".png") : null);
+                        float body = MeanLuma(frame, bodyMask), fig = MeanLuma(frame, playerMask), e = MeanLuma(frame, edge), sur = MeanLuma(frame, ring);
                         row.Add("skin" + (s + 1) + " body=" + body.ToString("F3", CultureInfo.InvariantCulture) + " sep=" + (body - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) +
-                                " figure=" + MeanLuma(frame, playerMask).ToString("F3", CultureInfo.InvariantCulture));
+                                " figure=" + fig.ToString("F3", CultureInfo.InvariantCulture) + " edge=" + e.ToString("F3", CultureInfo.InvariantCulture) +
+                                " edgeR2=" + (Mathf.Abs(e - sur) / Mathf.Max(e + sur, 1e-3f)).ToString("F3", CultureInfo.InvariantCulture) + " surround=" + sur.ToString("F3", CultureInfo.InvariantCulture));
                     }
 
-                    Debug.Log("[DD-TEST] wp082.read.sweep gain=" + gain.ToString("F2", CultureInfo.InvariantCulture) + " " + string.Join(" | ", row));
+                    Debug.Log("[DD-TEST] wp111.read.sweep gain=" + c.x.ToString("F2", CultureInfo.InvariantCulture) + " rim=" + c.y.ToString("F2", CultureInfo.InvariantCulture) + " exp=" + c.z.ToString("F0", CultureInfo.InvariantCulture) + " " + string.Join(" | ", row));
                 }
             }
             finally
@@ -715,7 +734,8 @@ namespace DD.Art.Tests.PlayMode
                 {
                     if (r == null) continue;
                     r.GetPropertyBlock(block);
-                    block.SetColor(baseColorId, materialColor);
+                    block.SetVector(liftId, materialLift);
+                    block.SetVector(rimId, materialRim);
                     r.SetPropertyBlock(block);
                 }
 

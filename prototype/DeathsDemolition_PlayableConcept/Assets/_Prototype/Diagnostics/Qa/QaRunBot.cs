@@ -121,6 +121,7 @@ namespace DD.Prototype.Qa
             if (QaArgs.Arg(StabilityFlag) != null) d.ConfigureStability();   // WP-064 / DEC-091
             if (QaArgs.Arg(WeaponCycleFlag) != null) d.ConfigureWeaponCycle();   // WP-078 A3
             if (!string.IsNullOrEmpty(QaArgs.Arg(RouteTourFlag))) d.ConfigureRouteTour(QaArgs.Arg(RouteTourFlag));   // WP-078 D3c
+            if (!string.IsNullOrEmpty(QaArgs.Arg(QaCrowdWalkScenario.Flag))) d.ConfigureScenario(QaArgs.Arg(QaCrowdWalkScenario.Flag));   // WP-111 R4 (S-06)
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -480,6 +481,13 @@ namespace DD.Prototype.Qa
             public void ConfigureStability() { _stability = true; _invulnerable = true; }
             public void ConfigureWeaponCycle() { _weaponCycle = true; }
             public void ConfigureRouteTour(string framesDir) { _routeDir = framesDir; }
+            /// <summary>WP-111 R4 (S-06): an evidence scenario owns every frame after run-ready (<see cref="QaCrowdWalkScenario"/>); an unknown name is logged and ignored.</summary>
+            public void ConfigureScenario(string name)
+            {
+                _scenario = QaCrowdWalkScenario.Create(name);
+                Debug.Log("[QaRunBot] scenario '" + name + "' " + (_scenario != null ? "armed (evidence only, never a QA pass)" : "unknown — ignored"));
+            }
+            private QaCrowdWalkScenario _scenario;
             private string _routeDir;
             private int _routeStep = -1;
             private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f, _routeTimeout, _routeTraceAt;
@@ -1003,6 +1011,12 @@ namespace DD.Prototype.Qa
                 if (_routeDir != null)
                 {
                     TickRouteTour(rig);         // WP-078 D3c: the route run owns every frame; no fighting, no rounds
+                    return;
+                }
+
+                if (_scenario != null)
+                {
+                    _scenario.Tick(rig, _pad, _runStart, Log);   // WP-111 R4: the evidence scenario owns every frame; no fighting, no rounds
                     return;
                 }
 

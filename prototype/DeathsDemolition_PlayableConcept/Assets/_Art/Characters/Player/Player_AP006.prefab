@@ -213,6 +213,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animator: {fileID: 6900253727677849600}
   _rotationWeight: 0.6
+  PreserveSwingLift: 0
+  ZombieLock: 0
+  ZombieExplicitLiftEvents: 0
+  TraceZombieLock: 0
+  TraceFootIkGoals: 0
 --- !u!114 &4861808871027546340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -234,8 +239,8 @@ MonoBehaviour:
     - {fileID: 6050582287516245604}
     - {fileID: 5453699124050397018}
     segmentLength: 0.129
-    stiffness: 0.45
-    damping: 0.15
+    stiffness: 0.85
+    damping: 0.35
     gravity: 9.81
     maxAngleDegrees: 50
     collisionRadius: 0.02

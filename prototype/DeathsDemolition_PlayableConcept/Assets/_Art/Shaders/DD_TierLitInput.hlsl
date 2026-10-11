@@ -53,6 +53,11 @@ half _ZombieMaskMaxLod;
 half _ZombieSkinEnable;
 half _ZombieDirtRoughness;
 half _ZombieBloodRoughness;
+// WP-111 R4 (S-06, C-00 11.10 · AD-R3READ SHOULD-1 / N1): the hero's TD read, used by the _HERO_READ variant only — always declared.
+// _HeroLift: x = gain on the dark albedo (linear), y / z = luma where the gain starts / ends fading to 1 (linear); w unused.
+// _HeroRim: rgb = rim colour added after lighting (linear), a = the view-angle exponent.
+half4 _HeroLift;
+half4 _HeroRim;
 CBUFFER_END
 
 // NOTE: Do not ifdef the properties for dots instancing, but ifdef the actual usage.
@@ -373,6 +378,14 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     tinted = lerp(tinted, _TierLacquerTint.rgb, saturate(tierMask.r * _TierLacquerK));
     tinted = lerp(tinted, _TierClothTint.rgb, saturate(tierMask.g * _TierClothK));
     outSurfaceData.albedo = tinted;
+    #endif
+
+    #if defined(_HERO_READ)
+    // WP-111 R4: the darks-only lift — the dark costume gains up to _HeroLift.x, the ivory / cream panels keep their albedo, nothing
+    // passes 1 (R3's flat 1.3 _BaseColor put 13–16 % of the atlas above linear 1.0). By luma, so a hue keeps its hue.
+    half heroLuma = dot(outSurfaceData.albedo, half3(0.2126, 0.7152, 0.0722));
+    half heroGain = lerp(_HeroLift.x, half(1.0), smoothstep(_HeroLift.y, _HeroLift.z, heroLuma));
+    outSurfaceData.albedo = saturate(outSurfaceData.albedo * heroGain);
     #endif
 
     #if defined(_ZOMBIE_MASKS)

@@ -60,6 +60,12 @@ Shader "DD/Character/Tier Lit"
         _ZombieORM("ORM (R AO, G roughness, B metallic)", 2D) = "white" {}
         _ZombieUseOrm("Use ORM", Float) = 0.0
         _ZombieMaskDomain("Mask Domain (xy scale, zw offset)", Vector) = (0.5, 1, 0, 0)
+
+        // WP-111 R4 (S-06, C-00 11.10): the hero's TD read — a darks-only albedo lift (DD_TierLitInput.hlsl) and a thin view-angle
+        // rim after lighting (DD_TierLitForwardPass.hlsl); forward pass only, off = the zombie variants unchanged.
+        [Toggle(_HERO_READ)] _HeroReadOn("Hero Read", Float) = 0.0
+        _HeroLift("Hero Dark Lift (x gain, y/z luma fade, linear)", Vector) = (1, 0.1, 0.4, 0)
+        _HeroRim("Hero Rim (rgb linear, a exponent)", Vector) = (0, 0, 0, 3)
         _ZombieMaskMaxLod("Mask Max LOD", Float) = 9
         _ZombieSkinEnable("Skin Tint Enable", Float) = 1.0
         _ZombieSkinRef("Skin Reference (Tref)", Color) = (0.5490196, 0.572549, 0.572549, 1)
@@ -154,6 +160,7 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
             #pragma shader_feature_local_fragment _TIER_TINT
             #pragma shader_feature_local_fragment _ZOMBIE_MASKS
+            #pragma shader_feature_local_fragment _HERO_READ
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
@@ -201,7 +208,7 @@ Shader "DD/Character/Tier Lit"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "DD_TierLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
+            #include "DD_TierLitForwardPass.hlsl"
             ENDHLSL
         }
 

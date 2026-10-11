@@ -96,6 +96,7 @@ namespace DD.Art.Tests.PlayMode
             Time.captureDeltaTime = 1f / 60f;
             velocity = Vector3.forward * 6.2f;
             float maxSash = 0f, maxBand = 0f, minClr = float.MaxValue, tipTravel = 0f;
+            int sashAtClamp = 0, runFrames = 0;
             Vector3 tipRoot = Vector3.zero;
             for (int f = 0; f < 240; f++)
             {
@@ -103,7 +104,10 @@ namespace DD.Art.Tests.PlayMode
                 yield return null;
                 if (f < 60) continue;
                 Assert.IsTrue(chains.ServedLastFrame, "oyuncu zincirleri servis edilmedi");
-                maxSash = Mathf.Max(maxSash, chains.MaxAngleFromRest(sash));
+                float sashAngle = chains.MaxAngleFromRest(sash);
+                maxSash = Mathf.Max(maxSash, sashAngle);
+                if (sashAngle >= sashLimit - 1f) sashAtClamp++;   // WP-111 R4: riding the clamp = a hard stop between the thighs
+                runFrames++;
                 if (band >= 0) maxBand = Mathf.Max(maxBand, chains.MaxAngleFromRest(band));
                 for (int c = 0; c < chains.Chains.Length; c++) minClr = Mathf.Min(minClr, chains.MinClearance(c));
                 Vector3[] p = chains.Particles(sash);
@@ -135,6 +139,9 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp032f.player sashMax=" + maxSash.ToString("F1", CultureInfo.InvariantCulture) + " bandMax=" + maxBand.ToString("F1", CultureInfo.InvariantCulture) + " minClr=" + (minClr * 100f).ToString("F1", CultureInfo.InvariantCulture)
                       + "cm sashTip=" + (tipTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm bandHit=" + maxHitBand.ToString("F1", CultureInfo.InvariantCulture) + " (before " + bandBefore.ToString("F1", CultureInfo.InvariantCulture) + ") whip=" + hitWhip.ToString("F1", CultureInfo.InvariantCulture) + "°/frame (idle " + idleWhip.ToString("F1", CultureInfo.InvariantCulture) + ")");
             Assert.LessOrEqual(maxSash, sashLimit + 0.5f, "sash açı klampı (" + sashLimit + "°)");
+            Debug.Log("[DD-TEST] wp111.sash atClamp=" + sashAtClamp + "/" + runFrames + " max=" + maxSash.ToString("F1", CultureInfo.InvariantCulture) + "/" + sashLimit);
+            // WP-111 R4: at 0.45 / 0.15 the run pinned the tails on the clamp 27 % of the frames; the tuned sash stays off it
+            Assert.LessOrEqual(sashAtClamp, runFrames / 20, "sash koşuda klampa dayanıyor (" + sashAtClamp + "/" + runFrames + " kare)");
             Assert.GreaterOrEqual(minClr, 0.005f, "zincir gövde kapsülüne girdi (kontrat klerans ≥ +0,01 m)");
             Assert.Greater(tipTravel, 0.01f, "sash koşuda salınmadı");
             if (band >= 0)
@@ -175,6 +182,76 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp032f.zombie " + string.Join(" ", rows) + " minClr=" + (minClr * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm");
             Assert.GreaterOrEqual(minClr, 0.005f, "zincir gövde kapsülüne girdi");
+        }
+
+        /// <summary>
+        /// WP-111 R4 (S-06, C-00 11.10 · R3 note: the hero sash rides its 50° clamp on a run) · calibration only: the player test's
+        /// 6.2 m/s run with the sash's stiffness / damping swept at runtime — peak angle, the share of frames within 1° of the clamp,
+        /// the tip's swing and the clearance per pair. Picks nothing, asserts nothing.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-111 R4 kalibrasyon — sash sertlik / sönüm taraması")]
+        [Timeout(300000)]
+        public IEnumerator Oyuncu_Sash_SertlikSonum_Taramasi()
+        {
+            yield return MainMenu();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var stage = new GameObject("WP111_SashStage");
+            _temp.Add(stage);
+            Transform visual = new GameObject("Visual").transform;
+            visual.SetParent(stage.transform, false);
+            GameObject go = UnityEngine.Object.Instantiate(set.PlayerPrefab, visual, false);
+            var pv = go.GetComponent<PlayerSkinnedVisual>();
+            Vector3 velocity = Vector3.zero;
+            pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+            pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            SecondaryChainDriver chains = pv.Chains;
+            int sash = -1;
+            for (int i = 0; i < chains.Chains.Length; i++) if (chains.Chains[i].name == "sash") sash = i;
+            Assert.IsTrue(sash >= 0, "sash zinciri yok");
+            SecondaryChainDriver.Chain ch = chains.Chains[sash];
+            float s0 = ch.stiffness, d0 = ch.damping, limit = ch.maxAngleDegrees;
+            Time.captureDeltaTime = 1f / 60f;
+            var pairs = new[] { new Vector2(s0, d0), new Vector2(0.55f, 0.2f), new Vector2(0.65f, 0.25f), new Vector2(0.75f, 0.3f), new Vector2(0.65f, 0.35f), new Vector2(0.85f, 0.35f) };
+            try
+            {
+                foreach (Vector2 sd in pairs)
+                {
+                    ch.stiffness = sd.x;
+                    ch.damping = sd.y;
+                    chains.Reset();
+                    velocity = Vector3.zero;
+                    for (int i = 0; i < 30; i++) yield return null;
+                    velocity = Vector3.forward * 6.2f;
+                    float maxA = 0f, minClr = float.MaxValue, tipTravel = 0f;
+                    int atClamp = 0, n = 0;
+                    Vector3 tipRoot = Vector3.zero;
+                    for (int f = 0; f < 240; f++)
+                    {
+                        stage.transform.position += Vector3.forward * 6.2f * Time.deltaTime;
+                        yield return null;
+                        if (f < 60) continue;
+                        float a = chains.MaxAngleFromRest(sash);
+                        maxA = Mathf.Max(maxA, a);
+                        if (a >= limit - 1f) atClamp++;
+                        n++;
+                        minClr = Mathf.Min(minClr, chains.MinClearance(sash));
+                        Vector3[] p = chains.Particles(sash);
+                        Vector3 tipLocal = pv.transform.InverseTransformPoint(p[p.Length - 1]);
+                        if (f == 60) tipRoot = tipLocal; else tipTravel = Mathf.Max(tipTravel, Vector3.Distance(tipLocal, tipRoot));
+                    }
+
+                    Debug.Log("[DD-TEST] wp111.sash.sweep stiffness=" + sd.x.ToString("F2", CultureInfo.InvariantCulture) + " damping=" + sd.y.ToString("F2", CultureInfo.InvariantCulture)
+                              + " max=" + maxA.ToString("F1", CultureInfo.InvariantCulture) + "/" + limit.ToString("F0", CultureInfo.InvariantCulture)
+                              + " atClamp=" + (100f * atClamp / Mathf.Max(1, n)).ToString("F0", CultureInfo.InvariantCulture) + "%"
+                              + " tip=" + (tipTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm minClr=" + (minClr * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm");
+                }
+            }
+            finally
+            {
+                ch.stiffness = s0;
+                ch.damping = d0;
+            }
         }
 
         [UnityTest]

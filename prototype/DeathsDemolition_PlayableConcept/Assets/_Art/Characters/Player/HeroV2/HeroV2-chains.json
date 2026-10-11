@@ -8,13 +8,13 @@
    "parent": "Hips",
    "length": 0.387,
    "segments": 3,
-   "stiffness": 0.45,
-   "damping": 0.15,
+   "stiffness": 0.85,
+   "damping": 0.35,
    "gravity": 9.81,
    "collision_radius": 0.02,
    "body_radius": 0.15,
    "max_angle_deg": 50,
-   "note": "teal sash tails hanging at the front centre (head y -0.115 / z 0.995 → tail z 0.61, Blender); body radius 0.15 keeps the rest particles outside the Hips capsule (0.20 m at sash_2); max angle 50 (front tails between the thighs) — AP006C sash was 70 behind the hip"
+   "note": "teal sash tails hanging at the front centre (head y -0.115 / z 0.995 → tail z 0.61, Blender); body radius 0.15 keeps the rest particles outside the Hips capsule (0.20 m at sash_2); max angle 50 (front tails between the thighs) — AP006C sash was 70 behind the hip. WP-111 R4 (S-06, 11.10): stiffness 0.45 → 0.85, damping 0.15 → 0.35 — at 0.45 / 0.15 the 6.2 m/s run pinned the tails on the 50° clamp 27 % of the frames (a hard stop between the thighs); the sweep (AnimationSecondaryTests.Oyuncu_Sash_SertlikSonum_Taramasi) gave 0.85 / 0.35: peak 46.9°, 0 % at the clamp, the tip still swings 27 cm"
   }
  ]
 }

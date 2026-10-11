@@ -71,13 +71,19 @@ namespace DD.Art.Pipeline.EditorTools
         public const string HeroV2Chains = HeroV2Folder + "/HeroV2-chains.json";
         public const string HeroV2Provenance = HeroV2Folder + "/HeroV2-provenance.json";
         /// <summary>
-        /// WP-082 R3 (C-00 10.10 · DEC-077): M_player's _BaseColor gain over the hero atlas — the hero v2 costume read darker from the
-        /// TD camera than the pre-hero body (skin 1 body/crowd separation 0.099 → 0.058, line 0.08). An albedo gain keeps the light's
-        /// shaping (the TD key lifts the top faces most, the shadow side stays dark) and touches no texture, the ground or the zombies.
-        /// Every skin rides it (ApplySkin swaps _BaseMap only). 1.3 from the Okunabilirlik_DEC077_KahramanKazanciTaramasi sweep (one frozen
-        /// frame, 10.10): skin-1 body luma +0.048 over 1.0 (1.1 +0.018, 1.2 +0.036, 1.4 +0.060), the run-to-run spread of the reading ±0.04.
+        /// WP-111 R4 (S-06, C-00 11.10 · AD-R3READ SHOULD-1 / N1) · the hero's TD read on DD/Character/Tier Lit's _HERO_READ variant,
+        /// replacing R3's flat _BaseColor 1.3 (WP-082, which pushed 13–16 % of the atlas — the ivory / cream panels — above linear 1.0):
+        /// the dark albedo gains <see cref="HeroDarkGain"/> (= 1.3^2.2, R3's lift on the costume), fading to 1 between linear luma
+        /// <see cref="HeroDarkFadeStart"/> and <see cref="HeroDarkFadeEnd"/>, so the panels keep their albedo and nothing passes 1; a
+        /// thin view-angle rim <see cref="HeroRim"/> (linear rgb, exponent in w) keeps the costume's edge on dark ground (AD N1).
+        /// Every skin rides it (ApplySkin swaps _BaseMap only). Values from CharacterTests.Okunabilirlik_DEC077_KahramanOkumaTaramasi
+        /// (two sweeps, 11.10): R3's 1.78 lift with a rim ≤ 0.12 at exponent 3 moved the silhouette edge ≤ 0.005 luma (invisible from TD);
+        /// 2.4 + rim 0.25 at exponent 2 lifts the costume to slate with a cool edge on the arms / legs / shoulders and keeps it dark
+        /// (3.0 starts to wash it grey) — skin 1 body +0.052, edge +0.034 over the plain atlas in the same frame.
         /// </summary>
-        public const float HeroV2BaseColorGain = 1.3f;
+        public const float HeroDarkGain = 2.4f;
+        public const float HeroDarkFadeStart = 0.12f, HeroDarkFadeEnd = 0.40f;
+        public static readonly Vector4 HeroRim = new Vector4(0.19f, 0.22f, 0.25f, 2f);
 
         /// <summary>WP-082 R3 · the hero's shipped maps: three AP-024 v003 sources, the derived MetallicSmoothness, the two D5 skin albedos.</summary>
         public static string[] HeroV2TextureFiles() => new[] { HeroV2BaseColor, HeroV2Normal, HeroV2Orm, HeroV2MetallicSmoothness, HeroV2Skin2BaseColor, HeroV2Skin3BaseColor };
@@ -170,6 +176,16 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.Refresh();
         }
 
+        /// <summary>WP-111 R4 batch entry · the player materials and Player_AP006 (the hero chain table is baked into the prefab); textures and the asset set stay on disk.</summary>
+        public static void BuildPlayerMaterialsAndPrefabCli()
+        {
+            BuildPlayerMaterials();
+            AssetDatabase.SaveAssets();
+            BuildPlayerPrefab();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         public static int EnsureAvatars()
         {
             int reimported = 0;
@@ -250,10 +266,13 @@ namespace DD.Art.Pipeline.EditorTools
         public static void BuildPlayerMaterials()
         {
             Shader lit = ArtMaterialBuilder.ResolveLitShader();
-            Material player = LoadOrCreateMaterial(PlayerMaterial, lit, "M_player");
+            // WP-111 R4: the hero rides the project's Tier Lit (a URP 14 Lit copy, same lighting) for its _HERO_READ variant
+            Shader hero = Shader.Find(ArtTierBuilder.ShaderName);
+            if (hero == null) throw new InvalidOperationException(LogPrefix + "shader missing: " + ArtTierBuilder.ShaderName);
+            Material player = LoadOrCreateMaterial(PlayerMaterial, hero, "M_player");
             ArtMaterialBuilder.ApplyCommonPublic(player);
             ApplyCharacterMaps(player, Load<Texture2D>(HeroV2BaseColor), Load<Texture2D>(HeroV2Normal), Load<Texture2D>(HeroV2MetallicSmoothness));
-            player.SetColor("_BaseColor", new Color(HeroV2BaseColorGain, HeroV2BaseColorGain, HeroV2BaseColorGain, 1f));
+            ApplyHeroRead(player);
             EditorUtility.SetDirty(player);
             // AP-022 FP arms v2 (WP-071): the FP-only arms (own UVs) — skin 1 albedo; FirstPersonArms swaps the albedo per skin
             Material fpArms = LoadOrCreateMaterial(PlayerFpArmsMaterial, lit, "M_player_fparms");
@@ -354,6 +373,19 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         public static void ApplyCharacterMapsPublic(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask) => ApplyCharacterMaps(m, baseMap, normal, mask);
+
+        /// <summary>WP-111 R4 · the hero's TD read on Tier Lit: _HERO_READ on, the dark lift and the rim; no tier tint / zombie masks.</summary>
+        public static void ApplyHeroRead(Material m)
+        {
+            m.DisableKeyword("_TIER_TINT");
+            m.DisableKeyword("_ZOMBIE_MASKS");
+            m.SetFloat("_ZombieMasksOn", 0f);
+            m.SetColor("_BaseColor", Color.white);
+            m.EnableKeyword("_HERO_READ");
+            m.SetFloat("_HeroReadOn", 1f);
+            m.SetVector("_HeroLift", new Vector4(HeroDarkGain, HeroDarkFadeStart, HeroDarkFadeEnd, 0f));
+            m.SetVector("_HeroRim", HeroRim);
+        }
 
         /// <summary>
         /// WP-076 (C-00 25.09 → S-07 WP-073 B6): every zombie material carries the _EMISSION variant with BLACK emission, so

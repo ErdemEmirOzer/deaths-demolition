@@ -262,16 +262,21 @@ namespace DD.Art.Tests.EditMode
         {
             var m = AssetDatabase.LoadAssetAtPath<Material>(ArtCharacterPrefabBuilder.PlayerMaterial);
             Assert.IsNotNull(m);
-            Assert.AreEqual(ArtMaterialBuilder.ResolveLitShader(), m.shader, "proje karakter Lit shader'ı (DEC-077)");
+            // WP-111 R4: the hero rides Tier Lit (a URP 14 Lit copy, DEC-077's lighting) for its _HERO_READ variant
+            Assert.AreEqual(ArtTierBuilder.ShaderName, m.shader.name, "proje karakter Tier Lit shader'ı (DEC-077 ışığı, _HERO_READ)");
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2BaseColor, AssetDatabase.GetAssetPath(m.GetTexture("_BaseMap")));
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2Normal, AssetDatabase.GetAssetPath(m.GetTexture("_BumpMap")));
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2MetallicSmoothness, AssetDatabase.GetAssetPath(m.GetTexture("_MetallicGlossMap")));
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2MetallicSmoothness, AssetDatabase.GetAssetPath(m.GetTexture("_OcclusionMap")), "AO = türetilmiş haritanın G'si (ORM R)");
             Assert.IsTrue(m.IsKeywordEnabled("_NORMALMAP") && m.IsKeywordEnabled("_METALLICSPECGLOSSMAP") && m.IsKeywordEnabled("_OCCLUSIONMAP"));
-            // WP-082 R3 (C-00 10.10 · DEC-077): the TD readability albedo gain, grey and opaque (every skin rides it)
-            Color gain = m.GetColor("_BaseColor");
-            Assert.AreEqual(ArtCharacterPrefabBuilder.HeroV2BaseColorGain, gain.r, 1e-4f, "_BaseColor kazancı");
-            Assert.IsTrue(Mathf.Approximately(gain.r, gain.g) && Mathf.Approximately(gain.r, gain.b) && Mathf.Approximately(gain.a, 1f), "gri kazanç, alfa 1: " + gain);
+            // WP-111 R4 (AD-R3READ SHOULD-1 / N1): the darks-only lift + rim replace R3's flat 1.3 gain — _BaseColor back to white
+            Assert.AreEqual(Color.white, m.GetColor("_BaseColor"), "_BaseColor beyaz (düz kazanç kalktı)");
+            Assert.IsTrue(m.IsKeywordEnabled("_HERO_READ"), "_HERO_READ açık");
+            Assert.IsFalse(m.IsKeywordEnabled("_TIER_TINT") || m.IsKeywordEnabled("_ZOMBIE_MASKS"), "zombi katmanları kapalı");
+            Vector4 lift = m.GetVector("_HeroLift"), rim = m.GetVector("_HeroRim");
+            Assert.AreEqual(new Vector4(ArtCharacterPrefabBuilder.HeroDarkGain, ArtCharacterPrefabBuilder.HeroDarkFadeStart, ArtCharacterPrefabBuilder.HeroDarkFadeEnd, 0f), lift, "koyu kaldırma");
+            Assert.AreEqual(ArtCharacterPrefabBuilder.HeroRim, rim, "kenar ışığı");
+            Assert.Less(lift.y, lift.z, "solma aralığı");
             foreach (SkinnedMeshRenderer r in Visual().Renderers) Assert.AreSame(m, r.sharedMaterial, r.name);
 
             var baseColor = (TextureImporter)AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.HeroV2BaseColor);
