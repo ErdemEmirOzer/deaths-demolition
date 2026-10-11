@@ -115,6 +115,8 @@ namespace DD.Prototype.UI
         private readonly int[] _specialSides = { -1, -1 };
         private float _specialModeSize;
         private bool _specialsBeside = true;
+        private bool _specialsStacked;                      // laid side by side, a mode still did not fit: stacked for this size
+        private Vector2 _specialsStackedSize;
         private float _weaponsTop;
         private float _rowHeight;
         private float _tileHeight;
@@ -505,7 +507,8 @@ namespace DD.Prototype.UI
 
             // The map: its caption, the L01 art cover-fit in a framed well, its name.
             _mapBlock = UiFactory.NewRect("Map", column);
-            _mapTitle = UiFactory.Label("Title", _mapBlock, UiStrings.Get("map.title", "MAP"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            // R4 WP-106 (R2 U1): no MAP word over the map - the picture and its name say it; the label stays, empty, for the layout.
+            _mapTitle = UiFactory.Label("Title", _mapBlock, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             _mapTitle.enableWordWrapping = false;
             _mapFrame = UiFactory.FramedCard("Frame", _mapBlock, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
             var thumb = new GameObject("Thumb", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
@@ -584,9 +587,9 @@ namespace DD.Prototype.UI
             }
 
             float difficultyH = headH + (int)UiSpace.S + rowsH + (int)UiSpace.S + lineH;
-            float mapTitleH = LineOf(_mapTitle);
+            float mapTitleH = string.IsNullOrEmpty(_mapTitle.text) ? 0f : LineOf(_mapTitle) + (int)UiSpace.XS;   // the MAP word is off (R2 U1)
             float mapNameH = LineOf(_mapName);
-            float mapText = mapTitleH + (int)UiSpace.XS + (int)UiSpace.S + mapNameH;
+            float mapText = mapTitleH + (int)UiSpace.S + mapNameH;
             bool tip = _tipBlock.gameObject.activeSelf || !string.IsNullOrEmpty(_tipText.text);
             float tipH = tip ? Mathf.Max(TipGlyph, Measure(_tipText, _tipText.text, w - TipGlyph - (int)UiSpace.S)) : 0f;
             float thumbIdeal = Mathf.Floor(w * 9f / 16f);
@@ -606,20 +609,20 @@ namespace DD.Prototype.UI
             Dock(_modeLine.rectTransform, y, lineH);
             y += lineH + bands.Gap;
 
-            float mapH = mapTitleH + (int)UiSpace.XS + bands.Thumb + (int)UiSpace.S + mapNameH;
+            float mapH = mapTitleH + bands.Thumb + (int)UiSpace.S + mapNameH;
             Dock(_mapBlock, y, mapH);
             SetTop(_mapTitle, 0f, 0f, mapTitleH);
             _mapFrame.gameObject.SetActive(bands.Thumb > 0f);
             if (bands.Thumb > 0f)
             {
-                Dock(_mapFrame, mapTitleH + (int)UiSpace.XS, bands.Thumb);
+                Dock(_mapFrame, mapTitleH, bands.Thumb);
                 Texture art = _mapThumb.texture;
                 _mapThumb.uvRect = art != null
                     ? PrepareRunLayout.CoverUv(art.width, art.height, w, bands.Thumb, ThumbFocusY)
                     : new Rect(0f, 0f, 1f, 1f);
             }
 
-            SetTop(_mapName, 0f, mapTitleH + (int)UiSpace.XS + bands.Thumb + (int)UiSpace.S, mapNameH);
+            SetTop(_mapName, 0f, mapTitleH + bands.Thumb + (int)UiSpace.S, mapNameH);
             y += mapH;
 
             _tipBlock.gameObject.SetActive(bands.Tip && tip);
@@ -686,7 +689,11 @@ namespace DD.Prototype.UI
             ShowModeLine(focused >= 0 ? focused : chosen, focused >= 0);
         }
 
-        /// <summary>The mode line: the focused mode's detail while a row has focus, else the chosen mode's short line.</summary>
+        /// <summary>
+        /// The mode line: the focused mode's detail while a row has focus, else nothing - R4 WP-106 (R2 U1: u1_same_content
+        /// measured 0.397 &lt; 0.40 with the chosen mode's short line at rest; the rows and their marks say the mode). Its band
+        /// stays reserved (measured for every mode's line), so nothing moves when a row takes the focus.
+        /// </summary>
         private void ShowModeLine(int index, bool focused)
         {
             if (_modeLine == null || _modeDesc == null || index < 0 || index >= _modeDesc.Length)
@@ -702,7 +709,7 @@ namespace DD.Prototype.UI
             _modeLineIndex = index;
             _modeLineDetail = focused;
             string detail = _modeDetail[index];
-            _modeLine.text = focused && !string.IsNullOrEmpty(detail) ? detail : _modeDesc[index];
+            _modeLine.text = !focused ? string.Empty : !string.IsNullOrEmpty(detail) ? detail : _modeDesc[index];
         }
 
         private int DifficultyIndexOf(GameObject focus)
@@ -1202,7 +1209,12 @@ namespace DD.Prototype.UI
 
             _weaponsLayoutPending = false;
             float tileW = Mathf.Max(1f, _weaponsSize.x * 0.5f - (int)UiSpace.XS);
-            _specialsBeside = SpecialsFitBeside(tileW);
+            if (_specialsStacked && _specialsStackedSize != _weaponsSize)
+            {
+                _specialsStacked = false;   // a new size (window, UI or text scale): measure beside again
+            }
+
+            _specialsBeside = !_specialsStacked && SpecialsFitBeside(tileW);
             float minTile = Mathf.Max(SpecialTileHeight, _specialsTitleBand + (int)UiSpace.M);
             _tileHeight = PrepareRunLayout.SpecialTileHeight(_specialsBeside, minTile, LineOf(_specialNames[0]), ModeLineHeight(), (int)UiSpace.S);
 
@@ -1235,7 +1247,15 @@ namespace DD.Prototype.UI
             y += headH + (int)UiSpace.XS;
             Dock(_specialsRow, y, _tileHeight);
             LayoutSideViews(rowH, tileW);
-            LayoutSpecialTiles();
+            if (!LayoutSpecialTiles() && _specialsBeside)
+            {
+                // R4 WP-106 (U2 "LOB" at Mac 1.2 x text 1.25): the side views' floor scale (LayoutSideViews) can leave a
+                // mode less room than SpecialsFitBeside reckoned - laid beside, it would cut. Stack the tiles for this size
+                // and lay the column once more (the next size measures beside again).
+                _specialsStacked = true;
+                _specialsStackedSize = _weaponsSize;
+                LayoutWeapons();
+            }
         }
 
         /// <summary>The Specials' name and mode fit one line beside the smallest side view (the mode at 80 %), in both tiles.</summary>
@@ -1339,8 +1359,10 @@ namespace DD.Prototype.UI
         /// right-aligned at least S after it, stepping down to 80 % of its size when the room is short (it fits there:
         /// SpecialsFitBeside checked). Stacked, the name is the tile's first line and the mode its second, both at full size.
         /// </summary>
-        private void LayoutSpecialTiles()
+        /// <returns>false when a tile laid beside could not keep its mode whole (even at 80 %): the caller stacks the tiles.</returns>
+        private bool LayoutSpecialTiles()
         {
+            bool fits = true;
             for (int i = 0; i < _specialNames.Length; i++)
             {
                 TMP_Text name = _specialNames[i];
@@ -1386,8 +1408,11 @@ namespace DD.Prototype.UI
                 if (modeW > room && modeW > 0f)
                 {
                     mode.fontSize = Mathf.Max(_specialModeSize * 0.8f, _specialModeSize * room / modeW);
+                    fits &= modeW * 0.8f + 1f <= room;   // 1 px for TMP's sub-pixel advance at the smaller size
                 }
             }
+
+            return fits;
         }
 
         private static float LineOf(TMP_Text text)

@@ -325,8 +325,8 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(i + 1, full, modes[i].name + ": zorluk göstergesi " + (i + 1) + " dolu işaret");
             }
 
-            // At rest the line under the rows is the chosen mode's short line.
-            Assert.AreEqual(UiStrings.Get("difficulty.normal.desc", string.Empty), screen.ModeLine.text);
+            // At rest the line under the rows is empty (R2 U1): the rows and their marks say the mode.
+            Assert.AreEqual(string.Empty, screen.ModeLine.text);
 
             // The pad: from the chosen weapon Left → a mode row, Down walks the modes, Right → the chosen weapon.
             int chosen = ChosenRow(screen);
@@ -375,7 +375,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreEqual(weapon, Focused, "sağ → seçili silah");
             yield return null;
-            Assert.AreEqual(UiStrings.Get("difficulty.demolition.desc", string.Empty), screen.ModeLine.text, "odak gidince seçili modun kısa satırı");
+            Assert.AreEqual(string.Empty, screen.ModeLine.text, "odak gidince satır boşalır (R2 U1)");
 
             // Session memory: back to the menu and in again - Demolition is still the choice.
             PrototypeUiFlow.GoToMainMenu();
