@@ -274,7 +274,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(m.IsKeywordEnabled("_HERO_READ"), "_HERO_READ açık");
             Assert.IsFalse(m.IsKeywordEnabled("_TIER_TINT") || m.IsKeywordEnabled("_ZOMBIE_MASKS"), "zombi katmanları kapalı");
             Vector4 lift = m.GetVector("_HeroLift"), rim = m.GetVector("_HeroRim");
-            Assert.AreEqual(new Vector4(ArtCharacterPrefabBuilder.HeroDarkGain, ArtCharacterPrefabBuilder.HeroDarkFadeStart, ArtCharacterPrefabBuilder.HeroDarkFadeEnd, 0f), lift, "koyu kaldırma");
+            Assert.AreEqual(new Vector4(ArtCharacterPrefabBuilder.HeroDarkGain, ArtCharacterPrefabBuilder.HeroDarkFadeStart, ArtCharacterPrefabBuilder.HeroDarkFadeEnd, ArtCharacterPrefabBuilder.HeroBrightGain), lift, "koyu / açık uç kazancı");
+            Assert.AreEqual(ArtCharacterPrefabBuilder.HeroAlbedoClip, m.GetFloat("_HeroClip"), 1e-4f, "albedo tavanı (AD-R4HERO MUST-3: 0,90 doğrusal)");
+            Assert.LessOrEqual(ArtCharacterPrefabBuilder.HeroAlbedoClip, 0.9001f, "hiçbir texel 0,90'ı aşmaz");
             Assert.AreEqual(ArtCharacterPrefabBuilder.HeroRim, rim, "kenar ışığı");
             Assert.Less(lift.y, lift.z, "solma aralığı");
             foreach (SkinnedMeshRenderer r in Visual().Renderers) Assert.AreSame(m, r.sharedMaterial, r.name);

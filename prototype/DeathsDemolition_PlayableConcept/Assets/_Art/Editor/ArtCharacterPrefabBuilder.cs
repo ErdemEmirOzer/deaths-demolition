@@ -76,14 +76,14 @@ namespace DD.Art.Pipeline.EditorTools
         /// the dark albedo gains <see cref="HeroDarkGain"/> (= 1.3^2.2, R3's lift on the costume), fading to 1 between linear luma
         /// <see cref="HeroDarkFadeStart"/> and <see cref="HeroDarkFadeEnd"/>, so the panels keep their albedo and nothing passes 1; a
         /// thin view-angle rim <see cref="HeroRim"/> (linear rgb, exponent in w) keeps the costume's edge on dark ground (AD N1).
-        /// Every skin rides it (ApplySkin swaps _BaseMap only). Values from CharacterTests.Okunabilirlik_DEC077_KahramanOkumaTaramasi
-        /// (two sweeps, 11.10): R3's 1.78 lift with a rim ≤ 0.12 at exponent 3 moved the silhouette edge ≤ 0.005 luma (invisible from TD);
-        /// 2.4 + rim 0.25 at exponent 2 lifts the costume to slate with a cool edge on the arms / legs / shoulders and keeps it dark
-        /// (3.0 starts to wash it grey) — skin 1 body +0.052, edge +0.034 over the plain atlas in the same frame.
+        /// Every skin rides it (ApplySkin swaps _BaseMap only). AD-R4HERO-11.10 (REJECT on the values only; mechanism and sash accepted):
+        /// 2.4 / bright 1.0 / cool rim (0.19, 0.22, 0.25) at exponent 2 lifted the costume into the ground's value band, greyed the head
+        /// and spread a cool film that put the hero in the zombies' grey family — MUST-1 dark 1.8, MUST-2 a warm rim (0.25, 0.235, 0.205)
+        /// at exponent 4, MUST-3 the bright end ×1.3 (head / panels back near R3) under a 0.90 linear ceiling (no texel above 0.90).
         /// </summary>
-        public const float HeroDarkGain = 2.4f;
+        public const float HeroDarkGain = 1.8f, HeroBrightGain = 1.3f, HeroAlbedoClip = 0.90f;
         public const float HeroDarkFadeStart = 0.12f, HeroDarkFadeEnd = 0.40f;
-        public static readonly Vector4 HeroRim = new Vector4(0.19f, 0.22f, 0.25f, 2f);
+        public static readonly Vector4 HeroRim = new Vector4(0.25f, 0.235f, 0.205f, 4f);
 
         /// <summary>WP-082 R3 · the hero's shipped maps: three AP-024 v003 sources, the derived MetallicSmoothness, the two D5 skin albedos.</summary>
         public static string[] HeroV2TextureFiles() => new[] { HeroV2BaseColor, HeroV2Normal, HeroV2Orm, HeroV2MetallicSmoothness, HeroV2Skin2BaseColor, HeroV2Skin3BaseColor };
@@ -383,7 +383,8 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetColor("_BaseColor", Color.white);
             m.EnableKeyword("_HERO_READ");
             m.SetFloat("_HeroReadOn", 1f);
-            m.SetVector("_HeroLift", new Vector4(HeroDarkGain, HeroDarkFadeStart, HeroDarkFadeEnd, 0f));
+            m.SetVector("_HeroLift", new Vector4(HeroDarkGain, HeroDarkFadeStart, HeroDarkFadeEnd, HeroBrightGain));
+            m.SetFloat("_HeroClip", HeroAlbedoClip);
             m.SetVector("_HeroRim", HeroRim);
         }
 

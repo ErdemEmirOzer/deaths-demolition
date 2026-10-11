@@ -54,10 +54,11 @@ half _ZombieSkinEnable;
 half _ZombieDirtRoughness;
 half _ZombieBloodRoughness;
 // WP-111 R4 (S-06, C-00 11.10 · AD-R3READ SHOULD-1 / N1): the hero's TD read, used by the _HERO_READ variant only — always declared.
-// _HeroLift: x = gain on the dark albedo (linear), y / z = luma where the gain starts / ends fading to 1 (linear); w unused.
-// _HeroRim: rgb = rim colour added after lighting (linear), a = the view-angle exponent.
+// _HeroLift: x = gain on the dark albedo, w = gain on the bright end, y / z = luma where the dark gain fades into the bright one (linear).
+// _HeroClip: the lifted albedo's ceiling (linear). _HeroRim: rgb = rim colour added after lighting (linear), a = the view-angle exponent.
 half4 _HeroLift;
 half4 _HeroRim;
+half _HeroClip;
 CBUFFER_END
 
 // NOTE: Do not ifdef the properties for dots instancing, but ifdef the actual usage.
@@ -381,11 +382,11 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     #endif
 
     #if defined(_HERO_READ)
-    // WP-111 R4: the darks-only lift — the dark costume gains up to _HeroLift.x, the ivory / cream panels keep their albedo, nothing
-    // passes 1 (R3's flat 1.3 _BaseColor put 13–16 % of the atlas above linear 1.0). By luma, so a hue keeps its hue.
+    // WP-111 R4: the two-ended lift — the dark costume gains _HeroLift.x, the ivory / cream panels and the head _HeroLift.w, by luma
+    // (a hue keeps its hue), and no channel passes _HeroClip (R3's flat 1.3 _BaseColor put 13–16 % of the atlas above linear 1.0).
     half heroLuma = dot(outSurfaceData.albedo, half3(0.2126, 0.7152, 0.0722));
-    half heroGain = lerp(_HeroLift.x, half(1.0), smoothstep(_HeroLift.y, _HeroLift.z, heroLuma));
-    outSurfaceData.albedo = saturate(outSurfaceData.albedo * heroGain);
+    half heroGain = lerp(_HeroLift.x, _HeroLift.w, smoothstep(_HeroLift.y, _HeroLift.z, heroLuma));
+    outSurfaceData.albedo = min(outSurfaceData.albedo * heroGain, _HeroClip);
     #endif
 
     #if defined(_ZOMBIE_MASKS)

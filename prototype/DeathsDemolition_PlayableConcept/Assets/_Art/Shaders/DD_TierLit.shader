@@ -64,8 +64,9 @@ Shader "DD/Character/Tier Lit"
         // WP-111 R4 (S-06, C-00 11.10): the hero's TD read — a darks-only albedo lift (DD_TierLitInput.hlsl) and a thin view-angle
         // rim after lighting (DD_TierLitForwardPass.hlsl); forward pass only, off = the zombie variants unchanged.
         [Toggle(_HERO_READ)] _HeroReadOn("Hero Read", Float) = 0.0
-        _HeroLift("Hero Dark Lift (x gain, y/z luma fade, linear)", Vector) = (1, 0.1, 0.4, 0)
-        _HeroRim("Hero Rim (rgb linear, a exponent)", Vector) = (0, 0, 0, 3)
+        _HeroLift("Hero Lift (x dark gain, w bright gain, y/z luma fade, linear)", Vector) = (1, 0.1, 0.4, 1)
+        _HeroClip("Hero Albedo Clip (linear)", Float) = 1.0
+        _HeroRim("Hero Rim (rgb linear, a exponent)", Vector) = (0, 0, 0, 4)
         _ZombieMaskMaxLod("Mask Max LOD", Float) = 9
         _ZombieSkinEnable("Skin Tint Enable", Float) = 1.0
         _ZombieSkinRef("Skin Reference (Tref)", Color) = (0.5490196, 0.572549, 0.572549, 1)

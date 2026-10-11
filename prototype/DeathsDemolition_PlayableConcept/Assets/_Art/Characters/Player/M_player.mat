@@ -128,6 +128,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HeroClip: 0.9
     - _HeroReadOn: 1
     - _Metallic: 1
     - _OcclusionStrength: 1
@@ -156,8 +157,8 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1.3, g: 1.3, b: 1.3, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HeroLift: {r: 2.4, g: 0.12, b: 0.4, a: 0}
-    - _HeroRim: {r: 0.19, g: 0.22, b: 0.25, a: 2}
+    - _HeroLift: {r: 1.8, g: 0.12, b: 0.4, a: 1.3}
+    - _HeroRim: {r: 0.25, g: 0.235, b: 0.205, a: 4}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TierClothTint: {r: 1, g: 1, b: 1, a: 1}
     - _TierLacquerTint: {r: 1, g: 1, b: 1, a: 1}
