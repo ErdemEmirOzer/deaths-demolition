@@ -27,7 +27,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// Standard zombie 9 m east (r1: 14 m sat on the frame's edge), the trigger held on its chest for 0.8 s; every 2nd frame (60 Hz) is a
     /// video frame AND is measured; the weapon's fullest frame (most streak pixels) is saved as its still. Per frame, inside the
     /// 1.2 m-wide band from the muzzle to the zombie (the tracer layers only - see the dark frame):
-    /// streak pixels (luminance ≥ 0.55 and ≥ 0.12 over the same pixel with the tracer layers held back — the round's own light),
+    /// streak pixels (any channel ≥ 0.10 off the same pixel with the tracer layers held back — the tracer's own pixels),
     /// their orange share (hue 8–34°, S ≥ 0.45), and the core's cross width (px, median over the band's sample columns).
     /// Output DD_TD_MERMI101_DIR (else the temp cache): one still per weapon, video frames + frames.tsv (tdmux), mermi101.json (per
     /// weapon: frames with a streak, mean / max streak px, mean orange share, median core width px).
@@ -198,8 +198,9 @@ namespace DD.Prototype.Tests.PlayMode
                     if (x < 0 || y < 0 || x >= W || y >= H) continue;
                     int i = y * W + x;
                     Color c = lit[i], d = dark[i];
-                    float l = .2126f * c.r + .7152f * c.g + .0722f * c.b, ld = .2126f * d.r + .7152f * d.g + .0722f * d.b;
-                    if (l < .55f || l - ld < .12f) continue;
+                    // the tracer layers' own pixels: any channel moved ≥ 0.10 (v2 asked for ≥ 0.12 more luminance - on the light stone
+                    // the premultiplied glow darkens the ground, so the R3 tracer measured ≈ 3 px while the frame showed a 280 px streak)
+                    if (Mathf.Max(Mathf.Abs(c.r - d.r), Mathf.Max(Mathf.Abs(c.g - d.g), Mathf.Abs(c.b - d.b))) < .10f) continue;
                     streak++; across++;
                     Color.RGBToHSV(c, out float h, out float sat, out _);
                     if (sat >= .45f && h * 360f >= 8f && h * 360f <= 34f) orangeN++;
