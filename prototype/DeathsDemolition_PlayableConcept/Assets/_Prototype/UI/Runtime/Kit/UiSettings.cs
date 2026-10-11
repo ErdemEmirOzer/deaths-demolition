@@ -192,7 +192,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>R4 WP-105 (§C4): the MUSIC slider, persisted with the device preferences; S-08 reads it at start and on change.</summary>
+        /// <summary>R4 WP-105 (§C4): the MUSIC slider, persisted with the device preferences; written to S-08's PrototypeAudio.MusicVolume (db529f70) here and on load.</summary>
         public static float MusicVolume
         {
             get
@@ -210,6 +210,7 @@ namespace DD.Prototype.UI
                 }
 
                 s_data.MusicVolume = clamped;
+                PrototypeAudio.MusicVolume = clamped;
                 MusicVolumeChanged?.Invoke(clamped);
                 Persist();
             }
@@ -233,6 +234,7 @@ namespace DD.Prototype.UI
                 }
 
                 s_data.EffectsVolume = clamped;
+                PrototypeAudio.EffectsVolume = clamped;
                 EffectsVolumeChanged?.Invoke(clamped);
                 Persist();
             }
@@ -751,6 +753,8 @@ namespace DD.Prototype.UI
             // Single owner of AudioListener.volume is the audio module (S-08).
             PrototypeAudio.MasterVolume = s_data.MasterVolume;
             PrototypeAudio.UiVolume = s_data.UiVolume;
+            PrototypeAudio.MusicVolume = s_data.MusicVolume;   // R4 WP-105 (§C4, S-08 db529f70): the MUSIC / EFFECTS sliders
+            PrototypeAudio.EffectsVolume = s_data.EffectsVolume;
         }
 
         private static void ApplyQuality()
