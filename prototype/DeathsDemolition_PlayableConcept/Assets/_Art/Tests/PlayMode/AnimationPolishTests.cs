@@ -496,6 +496,61 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ crowd: IK cost + GC
 
+        /// <summary>
+        /// WP-111 R4 (R4 matrix D2; crowdwalk-r4b: in a 40-body crowd the hero's foot IK was served on 0 of 781 walking frames — the WP-096
+        /// near-first cuts reserved the player's slot only if it had been served the frame before) · with 40 zombies wanting the IK
+        /// the player is served every frame and never budget-denied; the zombies stay inside the cap with the player's slot counted.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Kalabalik40_OyuncuAyakIk_HerKareServis_ZombilerButcede()
+        {
+            yield return MainMenu();
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(60f, 0.2f, 60f);
+            ground.transform.position = new Vector3(0f, -0.1f, 0f);
+            ground.layer = PrototypeLayers.Environment;
+            var target = new GameObject("WP111_Threat");
+            _temp.Add(target);
+            target.transform.position = new Vector3(6f, 0f, 20f);
+            EnemyTargeting.SetPlayer(target.transform);
+            var visuals = new List<ZombieSkinnedVisual>();
+            for (int i = 0; i < 40; i++) visuals.Add(ZombieOnStage(new Vector3(i % 8 * 1.5f, 0f, i / 8 * 1.5f), Quaternion.identity, (uint)(i + 1)));
+            CharacterAnimatorLod.ForceFar = 0;
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var stage = new GameObject("WP111_PlayerStage");
+            _temp.Add(stage);
+            stage.transform.position = new Vector3(5f, 0f, 3f);   // inside the crowd
+            Transform visual = new GameObject("Visual").transform;
+            visual.SetParent(stage.transform, false);
+            GameObject go = UnityEngine.Object.Instantiate(set.PlayerPrefab, visual, false);
+            var pv = go.GetComponent<PlayerSkinnedVisual>();
+            Vector3 velocity = Vector3.forward * 1.6f;
+            pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+            pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            Assert.IsNotNull(pv.FootIk, "kaynak yok: oyuncuda FootIkAdapter");
+            for (int f = 0; f < 30; f++) { foreach (var v in visuals) v.SetSpeed(2.7f * ((f / 30 + visuals.IndexOf(v)) % 2), Time.deltaTime); yield return null; }
+
+            const int Frames = 60;
+            int denied0 = pv.FootIk.BudgetDeniedServe, served = 0, maxTotal = 0, minTotal = int.MaxValue;
+            for (int f = 0; f < Frames; f++)
+            {
+                foreach (var v in visuals) v.SetSpeed(2.7f * ((f / 30 + visuals.IndexOf(v)) % 2), Time.deltaTime);
+                yield return null;
+                if (pv.FootIk.Served) served++;
+                maxTotal = Mathf.Max(maxTotal, FootIkAdapter.ServedThisFrame);
+                minTotal = Mathf.Min(minTotal, FootIkAdapter.ServedThisFrame);
+            }
+
+            int denied = pv.FootIk.BudgetDeniedServe - denied0;
+            Debug.Log("[DD-TEST] wp111.footik.crowd playerServed=" + served + "/" + Frames + " playerDenied=" + denied + " bodiesServed min/max=" + minTotal + "/" + maxTotal + " (cap " + FootIkAdapter.MaxBodiesPerFrame + ")");
+            Assert.AreEqual(Frames, served, "oyuncunun ayak IK'sı kalabalıkta her kare servis edilmeli");
+            Assert.AreEqual(0, denied, "oyuncu bütçeden reddedilmemeli");
+            Assert.LessOrEqual(maxTotal, FootIkAdapter.MaxBodiesPerFrame + 1, "zombiler oyuncunun yeri sayılarak bütçede");
+            Assert.GreaterOrEqual(minTotal, FootIkAdapter.MaxBodiesPerFrame - 1, "zombiler hâlâ bütçeyi kullanır");
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Kalabalik40_IkAcik_GcSifir_Butce12Govde_Sure()

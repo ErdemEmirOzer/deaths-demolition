@@ -475,7 +475,11 @@ namespace DD.Prototype.Characters
             }
 
             bool allowed = Force == 1 || (Force != 0 && (_enabled == null || _enabled()) && (_near == null || _near()));
-            bool budget = allowed && s_served < MaxBodiesPerFrame;
+            // WP-111 R4 (D2 crowdwalk, S-06): the non-zombie body — the player — is outside the per-frame caps. The WP-096 near-first cuts
+            // kept its slots only while it had been served the frame before, so one miss in a crowd starved it for good: crowdwalk-r4b
+            // served the hero's foot IK on 0 of 781 walking frames (826 budget denials; no ground IK, no foot lock). Zombies stay inside
+            // MaxBodiesPerFrame / MaxLockBodiesPerFrame, and their cuts keep counting the player's slot (s_otherServed / s_otherLocked).
+            bool budget = allowed && (!ZombieLock || s_served < MaxBodiesPerFrame);
             float rankDistance = 0f;
             if (ZombieLock && allowed && s_rankOriginValid)
             {
@@ -521,7 +525,7 @@ namespace DD.Prototype.Characters
             s_served++;
             if (ProbeAllocPerServe) s_probeSink = new byte[16];   // tests: the positive control for the crowd allocation gate
             bool wantsLock = _lockGate != null && _lockGate();
-            _lockThisFrame = wantsLock && s_locked < MaxLockBodiesPerFrame;
+            _lockThisFrame = wantsLock && (!ZombieLock || s_locked < MaxLockBodiesPerFrame);   // WP-111 R4: the player's lock slot is its own
             if (wantsLock && ZombieLock && s_rankOriginValid)
             {
                 // WP-096: the lock slots go to the nearest zombies too (a body holding a lock keeps it inside the hysteresis band)
