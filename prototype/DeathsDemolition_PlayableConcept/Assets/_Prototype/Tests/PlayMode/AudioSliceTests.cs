@@ -3079,6 +3079,47 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-105 (S-09 contract, C-00 11.10): MUSIC scales the Music bus, EFFECTS the Weapon / Impact / Target / Ambience buses;
+        /// Interface and the master stay. The value lands on the bus over the master's 60 ms ramp (not in the same frame), and a
+        /// voice's gain follows the bus.
+        /// </summary>
+        [Category("WP021")]
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Ayarlar_MuzikEfekt_KaydiricilariBuslaraRampayla()
+        {
+            try
+            {
+                yield return null;
+                float master = PrototypeAudio.MasterVolume;
+                PrototypeAudio.MusicVolume = 0.5f;
+                PrototypeAudio.EffectsVolume = 0.25f;
+                Assert.AreEqual(1f, _d.Mixer.GetPlayerVolume(AudioBus.Weapon), 1e-4f, "Kaydırıcı bus'a aynı karede atlamamalı (60 ms rampa).");
+                yield return new WaitForSecondsRealtime(0.25f);
+                foreach (AudioBus b in new[] { AudioBus.Weapon, AudioBus.Impact, AudioBus.Target, AudioBus.Ambience })
+                {
+                    Assert.AreEqual(0.25f, _d.Mixer.GetPlayerVolume(b), 1e-4f, "EFFECTS " + b + " bus'ına uygulanmalı.");
+                }
+
+                Assert.AreEqual(0.5f, _d.Mixer.GetPlayerVolume(AudioBus.Music), 1e-4f, "MUSIC Music bus'ına uygulanmalı.");
+                Assert.AreEqual(1f, _d.Mixer.GetPlayerVolume(AudioBus.Interface), 1e-4f, "Interface (UI SOUNDS) etkilenmemeli.");
+                Assert.AreEqual(master, PrototypeAudio.MasterVolume, 1e-6f, "Master etkilenmemeli.");
+                float weapon = _d.Mixer.Gain(AudioBus.Weapon);
+                PrototypeAudio.EffectsVolume = 1f;
+                yield return new WaitForSecondsRealtime(0.25f);
+                Assert.AreEqual(4f * weapon, _d.Mixer.Gain(AudioBus.Weapon), 1e-3f, "Weapon kazancı EFFECTS ile ölçeklenmeli.");
+                Debug.Log("[DD-TEST] wp105.volumes music=" + _d.Mixer.GetPlayerVolume(AudioBus.Music) + " weaponGain=" + _d.Mixer.Gain(AudioBus.Weapon));
+            }
+            finally
+            {
+                PrototypeAudio.MusicVolume = 1f;
+                PrototypeAudio.EffectsVolume = 1f;
+            }
+
+            yield return new WaitForSecondsRealtime(0.15f);
+        }
+
         [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]

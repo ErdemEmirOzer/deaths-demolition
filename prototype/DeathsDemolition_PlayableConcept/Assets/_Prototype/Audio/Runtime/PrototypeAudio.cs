@@ -127,5 +127,30 @@ namespace DD.Prototype.Audio
         }
 
         private static float s_uiVolume = 1f;
+
+        /// <summary>
+        /// WP-105 (S-09 contract, C-00 11.10): the MUSIC slider, 0-1. <c>UiSettings.MusicVolume</c> writes here; the director ramps
+        /// it over the master's 60 ms onto the player multiplier of the software Music bus - not the mixer's exposed "MusicVolume",
+        /// which would override the snapshots (as for <see cref="UiVolume"/>). Every music layer and stinger follows on its next tick.
+        /// </summary>
+        public static float MusicVolume
+        {
+            get => s_musicVolume;
+            set => s_musicVolume = Mathf.Clamp01(value);
+        }
+
+        /// <summary>
+        /// WP-105: the EFFECTS slider, 0-1: the Weapon, Impact, Target and Ambience buses - every game sound but the music and the
+        /// interface (the ambience beds count as effects). <c>UiSettings.EffectsVolume</c> writes here; ramped like
+        /// <see cref="MusicVolume"/>.
+        /// </summary>
+        public static float EffectsVolume
+        {
+            get => s_effectsVolume;
+            set => s_effectsVolume = Mathf.Clamp01(value);
+        }
+
+        private static float s_musicVolume = 1f;
+        private static float s_effectsVolume = 1f;
     }
 }

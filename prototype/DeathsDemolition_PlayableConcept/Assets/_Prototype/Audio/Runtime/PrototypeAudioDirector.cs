@@ -128,6 +128,13 @@ namespace DD.Prototype.Audio
         private const float MasterRampSeconds = 0.06f;
         private float _masterTarget = 1f;
         private float _masterApplied = -1f;
+
+        /// <summary>WP-105: the MUSIC / EFFECTS multipliers as last applied to the buses (-1 = not yet: the first tick sets them at once).</summary>
+        private float _musicApplied = -1f;
+        private float _effectsApplied = -1f;
+
+        /// <summary>WP-105: the buses the EFFECTS slider scales - everything but Music and Interface.</summary>
+        private static readonly AudioBus[] EffectsBuses = { AudioBus.Weapon, AudioBus.Impact, AudioBus.Target, AudioBus.Ambience };
         private int _configuredBudget = 16;
         private int _budgetOverride;
         private int _suppressedSeen;
@@ -274,6 +281,7 @@ namespace DD.Prototype.Audio
             BuildUiVoices();
             _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
             _mixer.SetPlayerVolume(AudioBus.Interface, PrototypeAudio.UiVolume);   // WP-068 U8 (settings may load before the director)
+            TickPlayerVolumes(0f);   // WP-105: MUSIC / EFFECTS at once, before the first voice
 
             // v003 (ADR-021-2): distance darkening and the idle range are measured from the
             // player-anchored listener, not the camera.
@@ -450,6 +458,7 @@ namespace DD.Prototype.Audio
 
             UpdatePause();
             TickMasterVolume(dt);
+            TickPlayerVolumes(dt);
 
             _mixer.Tick(dt);
             _world.Tick(dt, _paused);
@@ -498,6 +507,31 @@ namespace DD.Prototype.Audio
             for (int i = 0; i < n; i++)
             {
                 PlayCombatCue(_heldImpacts[i]);
+            }
+        }
+
+        /// <summary>
+        /// WP-105: <see cref="PrototypeAudio.MusicVolume"/> / <see cref="PrototypeAudio.EffectsVolume"/> onto the software buses'
+        /// player multipliers, ramped over <see cref="MasterRampSeconds"/> in the linear domain like the master, so a dragged
+        /// slider never zippers. The first call (and a director built after the settings loaded) applies the value at once.
+        /// </summary>
+        private void TickPlayerVolumes(float dt)
+        {
+            float music = PrototypeAudio.MusicVolume;
+            if (!Mathf.Approximately(_musicApplied, music))
+            {
+                _musicApplied = _musicApplied < 0f ? music : Mathf.MoveTowards(_musicApplied, music, dt / MasterRampSeconds);
+                _mixer.SetPlayerVolume(AudioBus.Music, _musicApplied);
+            }
+
+            float effects = PrototypeAudio.EffectsVolume;
+            if (!Mathf.Approximately(_effectsApplied, effects))
+            {
+                _effectsApplied = _effectsApplied < 0f ? effects : Mathf.MoveTowards(_effectsApplied, effects, dt / MasterRampSeconds);
+                for (int i = 0; i < EffectsBuses.Length; i++)
+                {
+                    _mixer.SetPlayerVolume(EffectsBuses[i], _effectsApplied);
+                }
             }
         }
 
@@ -1385,6 +1419,10 @@ namespace DD.Prototype.Audio
 
             _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Master volume",
                 () => PrototypeAudio.MasterVolume, v => PrototypeAudio.MasterVolume = v, 0f, 1f, false, 0));
+            _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Music volume",
+                () => PrototypeAudio.MusicVolume, v => PrototypeAudio.MusicVolume = v, 0f, 1f, false, 0));   // WP-105
+            _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Effects volume",
+                () => PrototypeAudio.EffectsVolume, v => PrototypeAudio.EffectsVolume = v, 0f, 1f, false, 0));   // WP-105
 
             AddBusSlider(AudioBus.Weapon, "Weapon bus", 1);
             AddBusSlider(AudioBus.Impact, "Impact bus", 2);
