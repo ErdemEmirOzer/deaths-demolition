@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Reflection;
 using DD.Prototype.Characters;
 using DD.Prototype.Core;
@@ -21,6 +23,9 @@ namespace DD.Prototype.Qa
     /// north gate. The crowd: 40 Standard bodies ~2.2 m either side of the route, AI off (the live zombie wall, REQ-046, would stop the
     /// hero) and on the queue idle, facing the route. The stick is held at walk pace (~1.6 m/s, the hero's walk ring) by a feedback on
     /// the measured ground speed. Readouts per second: position, speed, LocoRate, locked feet; a summary line at the end.
+    /// S-01 / S-10 (kit B3): <c>&lt;-ddQaBot dir&gt;/scenario.json</c> — completed, walkSeconds, crowdWithin15m (the fewest bodies within
+    /// 15 m during the walk) and the realtime stamps (Time.realtimeSinceStartupAsDouble) crowdwalkStart / End, canopyEnter / Exit,
+    /// which td-capture turns into video seconds (capture.json scenarioStamps). Written with completed false at the walk's start.
     /// </summary>
     public sealed class QaCrowdWalkScenario
     {
@@ -47,6 +52,13 @@ namespace DD.Prototype.Qa
         private int _rateFrames, _placed;
         private float _crownHalfZ;
         private PlayerSkinnedVisual _pv;
+        /// <summary>The bot's out dir (QaRunBot.Driver sets it); scenario.json lands there.</summary>
+        public string OutDir;
+        private Bounds _crown;
+        private readonly List<ZombieEnemy> _crowd = new List<ZombieEnemy>(CrowdSize);
+        private double _tStart = -1, _tEnd = -1, _tCanopyIn = -1, _tCanopyOut = -1;
+        private int _crowdWithinMin = int.MaxValue;
+        private bool _arrived;
 
         public static QaCrowdWalkScenario Create(string name) => string.Equals(name, Name, StringComparison.OrdinalIgnoreCase) ? new QaCrowdWalkScenario() : null;
 
@@ -76,6 +88,8 @@ namespace DD.Prototype.Qa
                     _lastPos = rig.transform.position;
                     _stick = rig.Motor != null && rig.Motor.MaxSpeed > 0.1f ? Mathf.Clamp(WalkSpeed / rig.Motor.MaxSpeed, 0.1f, 1f) : 0.3f;
                     log("crowdwalk walk start pos=" + V(_lastPos) + " corners=" + _route.Count + " stick=" + QaArgs.F(_stick, 2));
+                    _tStart = Time.realtimeSinceStartupAsDouble;
+                    WriteJson(false, log);
                     break;
                 case Phase.Walk:
                     Walk(rig, pad, now, log);
@@ -89,7 +103,7 @@ namespace DD.Prototype.Qa
         {
             Vector3 start = OnMesh(Start, 3f);
             rig.Teleport(start, Quaternion.LookRotation(Vector3.right));
-            _crownHalfZ = CrownHalfZ();
+            _crownHalfZ = CrownBounds(out _crown);
             float north = Mathf.Max(3.2f, 0.6f * _crownHalfZ);   // north of the island's trunks (r 2.2 + 0.4), inside the crown
             Vector3 under = OnMesh(Sakura + new Vector3(0f, 0f, north), 2f);
             Vector3[] goals = { start, OnMesh(GateWest, 2f), under, OnMesh(GateNorth, 2f) };
@@ -115,9 +129,19 @@ namespace DD.Prototype.Qa
             _lastPos = pos;
             float speed = step.magnitude / dt;
             while (_corner < _route.Count && Planar(_route[_corner] - pos).magnitude <= Arrive) _corner++;
+            double rt = Time.realtimeSinceStartupAsDouble;
+            bool inCanopy = InCanopy(pos);
+            if (inCanopy && _tCanopyIn < 0) _tCanopyIn = rt;
+            if (!inCanopy && _tCanopyIn >= 0 && _tCanopyOut < 0) _tCanopyOut = rt;
+            int near = 0;
+            for (int i = 0; i < _crowd.Count; i++) if (_crowd[i] != null && Planar(_crowd[i].transform.position - pos).magnitude <= 15f) near++;
+            _crowdWithinMin = Mathf.Min(_crowdWithinMin, near);
             if (_corner >= _route.Count || now - _phaseStart > WalkTimeout)
             {
                 _phase = Phase.Done;
+                _arrived = _corner >= _route.Count;
+                _tEnd = rt;
+                WriteJson(_arrived && _walkSeconds >= 5f && _tCanopyIn >= 0 && _tCanopyOut >= 0, log);
                 log("crowdwalk done " + (_corner >= _route.Count ? "arrived" : "timeout") + " walk=" + QaArgs.F(_walkSeconds, 1) + "s " + QaArgs.F(_walkMeters, 1) + "m meanSpeed="
                     + QaArgs.F(_walkSeconds > 0f ? _walkMeters / _walkSeconds : 0f, 2) + " meanLocoRate=" + QaArgs.F(_rateFrames > 0 ? _rateSum / _rateFrames : 0f, 2)
                     + " lockGateOpen=" + QaArgs.F(_gateSeconds, 1) + "s footLocked=" + QaArgs.F(_lockedSeconds, 1) + "s crowd=" + _placed + " crownHalfZ=" + QaArgs.F(_crownHalfZ, 1));
@@ -180,6 +204,7 @@ namespace DD.Prototype.Qa
                         if (z == null) continue;
                         z.enabled = false;   // no AI: no chase, no zombie wall; the visual keeps animating
                         if (z.Skinned != null) z.Skinned.SetWaiting(true);
+                        _crowd.Add(z);
                         placed++;
                     }
                 }
@@ -188,10 +213,10 @@ namespace DD.Prototype.Qa
             return placed;
         }
 
-        /// <summary>Half the Z extent of the great sakura's canopy (renderers above 3 m within 5 m of the trunk); 4.5 m when none is found.</summary>
-        private static float CrownHalfZ()
+        /// <summary>The great sakura's canopy (renderers above 3 m within 5 m of the trunk; a 9 m crown when none is found) and its half Z extent north of the trunk.</summary>
+        private static float CrownBounds(out Bounds crown)
         {
-            Bounds crown = default;
+            crown = new Bounds(Sakura + Vector3.up * 5f, new Vector3(9f, 6f, 9f));
             bool any = false;
             foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
             {
@@ -202,6 +227,32 @@ namespace DD.Prototype.Qa
             }
 
             return any ? Mathf.Clamp(crown.max.z - Sakura.z, 2f, 9f) : 4.5f;
+        }
+
+        /// <summary>Under the crown: inside the ellipse of the canopy's XZ extents.</summary>
+        private bool InCanopy(Vector3 p)
+        {
+            float ex = Mathf.Max(_crown.extents.x, 0.5f), ez = Mathf.Max(_crown.extents.z, 0.5f);
+            float dx = (p.x - _crown.center.x) / ex, dz = (p.z - _crown.center.z) / ez;
+            return dx * dx + dz * dz <= 1f;
+        }
+
+        private void WriteJson(bool completed, Action<string> log)
+        {
+            if (string.IsNullOrEmpty(OutDir)) return;
+            string S(double v) => v >= 0 ? v.ToString("F3", CultureInfo.InvariantCulture) : "null";
+            string json = "{\"scenario\":\"" + Name + "\",\"completed\":" + (completed ? "true" : "false")
+                          + ",\"realtime\":{\"crowdwalkStart\":" + S(_tStart) + ",\"crowdwalkEnd\":" + S(_tEnd)
+                          + ",\"canopyEnter\":" + S(_tCanopyIn) + ",\"canopyExit\":" + S(_tCanopyOut) + "}"
+                          + ",\"walkSeconds\":" + _walkSeconds.ToString("F2", CultureInfo.InvariantCulture)
+                          + ",\"crowdWithin15m\":" + (_crowdWithinMin == int.MaxValue ? 0 : _crowdWithinMin)
+                          + ",\"crowdPlaced\":" + _placed + ",\"arrived\":" + (_arrived ? "true" : "false") + "}";
+            try
+            {
+                Directory.CreateDirectory(OutDir);
+                File.WriteAllText(Path.Combine(OutDir, "scenario.json"), json + "\n");
+            }
+            catch (Exception e) { log("crowdwalk scenario.json not written: " + e.Message); }
         }
 
         private static void HoldSpawns()

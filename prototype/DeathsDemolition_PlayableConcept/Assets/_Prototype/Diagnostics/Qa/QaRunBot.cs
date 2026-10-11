@@ -485,6 +485,7 @@ namespace DD.Prototype.Qa
             public void ConfigureScenario(string name)
             {
                 _scenario = QaCrowdWalkScenario.Create(name);
+                if (_scenario != null) _scenario.OutDir = _outDir;
                 Debug.Log("[QaRunBot] scenario '" + name + "' " + (_scenario != null ? "armed (evidence only, never a QA pass)" : "unknown — ignored"));
             }
             private QaCrowdWalkScenario _scenario;
