@@ -171,7 +171,7 @@ namespace DD.Prototype.Navigation
             NavRegionVolume v = profile.Find(nextCorner);
             if (v == null || !v.IsChokepoint || v.Contains(position)) return false;
             volume = v;
-            if (queuedSeconds >= profile.MaxQueueSeconds) return false;
+            if (queuedSeconds >= profile.MaxQueueSeconds * DD.Prototype.Difficulty.DifficultyService.QueueSecondsScale) return false;   // WP-102: shorter in Hard / Demolition
             bool full = Occupancy(v) >= v.capacity;
             if (full && queuedSeconds <= 0f) QueueEvents++;
             return full;

@@ -44,6 +44,12 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.CombatScaling, "Request value: 1 + 0.08 * (R-1)")]
         public float DamageMultiplierPerRound = 0.08f;
 
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104 (C-00 11.10 §11.3): the late-game health curve starts at this round — the WP-104 tree keeps the power fantasy going past R25 on the linear curve alone")]
+        public int LateHealthFromRound = 21;
+
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104: late-game health × this^(R − LateHealthFromRound + 1) (1.15 = ×1.15^(R−20); the B5 bot run sets the value: Normal death median R24–28)")]
+        public float LateHealthGrowth = 1.15f;
+
         [Header("Flow")]
         [PrototypeOnly(PendingDecisions.None, "Request value: ~0.45 s refill interval while below target")]
         public float SpawnRefillInterval = 0.45f;
@@ -74,7 +80,10 @@ namespace DD.Prototype.Core.Config
 
         public float EnemyHealthMultiplier(int round)
         {
-            return 1f + HealthMultiplierPerRound * Mathf.Max(0, round - 1);
+            float m = 1f + HealthMultiplierPerRound * Mathf.Max(0, round - 1);
+            int late = round - LateHealthFromRound + 1;   // WP-102 / WP-104: R21+ × 1.15^(R−20)
+            if (late > 0 && LateHealthGrowth > 1f) m *= Mathf.Pow(LateHealthGrowth, Mathf.Min(late, 200));   // finite for any round
+            return m;
         }
 
         public float EnemyDamageMultiplier(int round)

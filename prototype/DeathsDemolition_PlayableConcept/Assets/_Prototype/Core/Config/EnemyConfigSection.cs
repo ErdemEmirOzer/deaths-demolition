@@ -108,6 +108,12 @@ namespace DD.Prototype.Core.Config
 
         public ArmorChanceSettings ArmorChances = new ArmorChanceSettings();
 
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104 (C-00 11.10 §11.3): the late-game share — weight added per round from LateWeightFromRound on, past SpawnWeightMax (Elite / Ultra; the B5 bot run sets the values)", true)]
+        public float LateSpawnWeightPerRound = 0f;
+
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104: the round the late-game share starts at.", true)]
+        public int LateWeightFromRound = 21;
+
         public float ResolveSpawnWeight(int round)
         {
             if (round < IntroductionRound)
@@ -116,7 +122,10 @@ namespace DD.Prototype.Core.Config
             }
 
             int steps = Mathf.Max(0, round - IntroductionRound);
-            return Mathf.Min(SpawnWeight + SpawnWeightGrowthPerRound * steps, SpawnWeightMax);
+            float weight = Mathf.Min(SpawnWeight + SpawnWeightGrowthPerRound * steps, SpawnWeightMax);
+            int late = round - LateWeightFromRound + 1;
+            if (late > 0 && LateSpawnWeightPerRound > 0f) weight += LateSpawnWeightPerRound * late;
+            return weight;
         }
     }
 

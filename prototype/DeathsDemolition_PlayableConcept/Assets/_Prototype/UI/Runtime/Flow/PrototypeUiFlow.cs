@@ -401,6 +401,9 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // WP-102: entering the Run scene fixes the run's difficulty (Hard / Demolition: a mode-applied config copy goes active);
+            // any other scene puts the shipped config back
+            DD.Prototype.Difficulty.DifficultyService.OnSceneLoad(sceneName == PrototypeScenes.Run);
             s_loading = true;
             s_loadingScene = sceneName;
             string from = SceneManager.GetActiveScene().name;

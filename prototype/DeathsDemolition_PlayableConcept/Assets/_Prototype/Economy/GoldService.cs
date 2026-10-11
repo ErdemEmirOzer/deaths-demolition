@@ -384,6 +384,8 @@ namespace DD.Prototype.Economy
             _lastSweepRound = 0;
 
             _wallet.InitializeForRun(_runId);
+            int openingGold = DD.Prototype.Difficulty.DifficultyService.StartingGold;   // WP-102: Demolition opens with 150 (0 in Normal)
+            if (openingGold > 0) _wallet.Credit(openingGold, GoldSource.RunInitialization, _wallet.NextTransactionId());
             _ledger.BeginRun(_runId, EnemyLifeIds.Last);
 
             ResetCounters();
@@ -615,6 +617,7 @@ namespace DD.Prototype.Economy
             int total = value.Total;
             Func<EnemyDeathInfo, int> bonus = KillBonus;
             if (bonus != null) total += Mathf.Max(0, bonus(info));
+            total = DD.Prototype.Difficulty.DifficultyService.ScaleGold(total);   // WP-102: Hard ×1.25, Demolition ×2.5 (Normal unchanged)
 
             GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, total);
             if (verdict != GoldRewardVerdict.Granted)

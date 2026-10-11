@@ -8,6 +8,7 @@ using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Damage;
+using DD.Prototype.Difficulty;
 using DD.Prototype.Enemies;
 using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
@@ -778,6 +779,107 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         // ================================================================ REQ-046
+
+        /// <summary>
+        /// WP-102 (R4, C-00 11.10): the difficulty roles on a live Run scene. Normal: sixteen bodies, every one a plain chaser or a
+        /// WP-054 flanker (no role roll). Demolition (the run's config copy active): the non-flanking bodies split into interceptors
+        /// and cutters; with the player running north for 2 s, a cutter takes a point ahead on the player's escape path (its
+        /// offset from the player points along the run) and closes on it — the "yolunu kesen" behaviour the user asked for.
+        /// </summary>
+        [UnityTest]
+        [Category("Regression")]
+        [Timeout(180000)]
+        public IEnumerator Zorluk_NormalRolYok_DemolitionKesiciKacisYolununOnunuTutar()
+        {
+            yield return RunSahnesiniHazirla();
+            Vector3 merkez = _rig.transform.position;
+            var normal = new List<ZombieEnemy>();
+            for (int i = 0; i < 16; i++) normal.Add(HalkaDogur(merkez, i, 16));
+            yield return null;
+            foreach (ZombieEnemy z in normal) Assert.AreEqual(ZombieAiRole.Chase, z.AiRole, "Normal'de rol atandı: " + z.name);
+            EnemyFactory.ClearAll();
+            yield return null;
+
+            DifficultyService.Selected = DifficultyMode.Demolition;
+            DifficultyService.BeginRun();
+            try
+            {
+                Assert.IsNotNull(DifficultyService.Current, "Demolition ayarı etkin değil");
+                var zler = new List<ZombieEnemy>();
+                for (int i = 0; i < 16; i++) zler.Add(HalkaDogur(merkez, i, 16));
+                yield return null;
+                int kesici = 0, onleyici = 0;
+                foreach (ZombieEnemy z in zler)
+                {
+                    if (z.AiRole == ZombieAiRole.Cut) kesici++;
+                    else if (z.AiRole == ZombieAiRole.Intercept) onleyici++;
+                }
+
+                Assert.Greater(kesici, 0, "Demolition'da kesici yok");
+                Assert.Greater(onleyici, 0, "Demolition'da önleyici yok");
+
+                // the cut itself: six bodies in an arc ahead of the player (±40°, 8–11 m), all cutters; the player runs up the screen.
+                // A cutter's accepted point lies ahead on the run (its offset from the player along the player's own velocity) and
+                // the cutter closes on it.
+                EnemyFactory.ClearAll();
+                yield return null;
+                var onde = new List<ZombieEnemy>();
+                for (int i = 0; i < 6; i++)
+                {
+                    float a = (-40f + i * 16f) * Mathf.Deg2Rad;
+                    float r = 8f + (i % 2) * 3f;
+                    ZombieEnemy z = Dogur(NavPathFollowerClamp(merkez + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r)), merkez);
+                    Assert.IsNotNull(z, "öndeki zombi doğmadı (" + i + ")");
+                    z.SetAiRoleForTests(ZombieAiRole.Cut);
+                    onde.Add(z);
+                }
+
+                _girdi.Yon = new Vector2(0f, 1f);
+                bool ileriKesme = false, yaklasti = false;
+                var ilkMesafe = new Dictionary<ZombieEnemy, float>();
+                for (int k = 0; k < 90; k++)
+                {
+                    yield return null;
+                    Vector3 p = Yatay(_rig.transform.position);
+                    Vector3 v = Yatay(_rig.Motor.PlanarVelocity);
+                    if (v.sqrMagnitude < 1f) continue;
+                    Vector3 yon = v.normalized;
+                    foreach (ZombieEnemy z in onde)
+                    {
+                        if (z == null || !z.IsAlive || !z.CutActive) continue;
+                        Vector3 o = Yatay(z.CutOffset);
+                        if (o.sqrMagnitude > 1f && Vector3.Dot(o.normalized, yon) > 0.8f) ileriKesme = true;
+                        float d = Vector3.Distance(Yatay(z.transform.position), p + o);
+                        if (!ilkMesafe.TryGetValue(z, out float d0)) ilkMesafe[z] = d;
+                        else if (d < d0 - 1f) yaklasti = true;
+                    }
+                }
+
+                _girdi.Yon = Vector2.zero;
+                Debug.Log("[DD-TEST] wp102.roles cut=" + kesici + " intercept=" + onleyici + " aheadCut=" + ileriKesme + " closing=" + yaklasti
+                          + " cutters=" + ilkMesafe.Count + " playerMoved=" + Vector3.Distance(Yatay(_rig.transform.position), Yatay(merkez)).ToString("F1"));
+                Assert.IsTrue(ileriKesme, "hiçbir kesici koşunun önüne nokta almadı");
+                Assert.IsTrue(yaklasti, "kesici kesme noktasına yaklaşmadı");
+            }
+            finally
+            {
+                _girdi.Yon = Vector2.zero;
+                DifficultyService.EndRun();
+                DifficultyService.Selected = DifficultyMode.Normal;
+            }
+        }
+
+        private static ZombieEnemy HalkaDogur(Vector3 merkez, int i, int n)
+        {
+            float a = i * Mathf.PI * 2f / n;
+            float r = 9f + (i % 3) * 1.5f;
+            Vector3 p = merkez + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r);
+            ZombieEnemy z = Dogur(NavPathFollowerClamp(p), merkez);
+            Assert.IsNotNull(z, "zombi doğmadı (" + i + ")");
+            return z;
+        }
+
+        private static Vector3 NavPathFollowerClamp(Vector3 p) => DD.Prototype.Navigation.NavPathFollower.ClampToNavMesh(p, 3f);
 
         /// <summary>
         /// Beş canlı zombi duvarı önde: 1.5 sn tam güç ileri → yer değiştirme küçük (engel).

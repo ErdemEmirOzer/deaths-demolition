@@ -204,9 +204,11 @@ namespace DD.Prototype.Enemies
         public static bool CanAcquire(ZombieAttackStyle s, float now)
         {
             int i = (int)s;
-            if (s_active[i] >= Slots[i]) return false;
+            // WP-102: Hard / Demolition add swipe slots and wind-ups (DifficultyService.AttackSlotBonus; 0 in Normal)
+            int bonus = DD.Prototype.Difficulty.DifficultyService.AttackSlotBonus;
+            if (s_active[i] >= Slots[i] + (s == ZombieAttackStyle.Swipe ? bonus : 0)) return false;
             if (now - s_lastCommit[i] < CommitCooldown[i]) return false;
-            if (s_windups >= (GrabState.Active ? WindupCapWhileGrabbed : WindupCap)) return false;
+            if (s_windups >= (GrabState.Active ? WindupCapWhileGrabbed : WindupCap + bonus)) return false;
             if (GrabState.Active && s == ZombieAttackStyle.Lunge) return false;          // no dive on a slowed, grabbed player
             if (s == ZombieAttackStyle.Swipe && now - s_lastSwipeWindup < SwipeSpreadSeconds) return false;
             return true;

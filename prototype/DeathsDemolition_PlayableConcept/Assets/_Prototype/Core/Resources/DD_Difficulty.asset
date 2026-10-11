@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1ff1c0102a4400e9b5e3d7f4c0a1102, type: 3}
+  m_Name: DD_Difficulty
+  m_EditorClassIdentifier: 
+  _modes:
+  - Mode: 0
+    MoveSpeed:
+    - -1
+    - -1
+    - -1
+    - -1
+    IntroductionRound:
+    - 0
+    - 0
+    - 0
+    - 0
+    SpawnWeight:
+    - -1
+    - -1
+    - -1
+    - -1
+    SpawnWeightGrowthPerRound:
+    - -1
+    - -1
+    - -1
+    - -1
+    SpawnWeightMax:
+    - -1
+    - -1
+    - -1
+    - -1
+    DamageScale: 1
+    TelegraphScale: 1
+    RecoveryScale: 1
+    CooldownScale: 1
+    MinTelegraphSeconds: 0.25
+    HealthScale: 1
+    HealthMultiplierPerRound: -1
+    PoolScale: 1
+    ActiveBase: -1
+    ActivePerRound: -1
+    ActiveCap: -1
+    SpawnRefillInterval: -1
+    MaxSpawnsPerRefillTick: -1
+    GoldScale: 1
+    StartingGold: 0
+    ArmorGrowthScale: 1
+    ArmorMaxAdd: 0
+    MinSpawnDistance: -1
+    PreferredDistanceMin: -1
+    PreferredDistanceMax: -1
+    AheadOfPlayerBonus: -1
+    QueueSecondsScale: 1
+    AttackSlotBonus: 0
+    FlankShareStandard: -1
+    InterceptShare: 0
+    CutShare: 0
+    InterceptLeadMaxSeconds: 0
+    CutDistance: 5
+    CutArrivalMarginSeconds: 0.3
+    RunningCrowd: 0
+    RunningHeavyTiers: 0
+    EliteFastHeavyWalk: 0
+  - Mode: 1
+    MoveSpeed:
+    - 3.05
+    - 5.3
+    - 2.5
+    - -1
+    IntroductionRound:
+    - 0
+    - 2
+    - 4
+    - 6
+    SpawnWeight:
+    - -1
+    - 22
+    - 11
+    - 4
+    SpawnWeightGrowthPerRound:
+    - -1
+    - 4
+    - 2
+    - 1
+    SpawnWeightMax:
+    - -1
+    - 50
+    - 30
+    - 14
+    DamageScale: 1.4
+    TelegraphScale: 0.85
+    RecoveryScale: 0.85
+    CooldownScale: 0.8
+    MinTelegraphSeconds: 0.25
+    HealthScale: 1.15
+    HealthMultiplierPerRound: 0.14
+    PoolScale: 1.25
+    ActiveBase: 9
+    ActivePerRound: 2.5
+    ActiveCap: 36
+    SpawnRefillInterval: 0.35
+    MaxSpawnsPerRefillTick: 2
+    GoldScale: 1.25
+    StartingGold: 0
+    ArmorGrowthScale: 1.33
+    ArmorMaxAdd: 0.1
+    MinSpawnDistance: 11
+    PreferredDistanceMin: 16
+    PreferredDistanceMax: 32
+    AheadOfPlayerBonus: 1.6
+    QueueSecondsScale: 0.8
+    AttackSlotBonus: 1
+    FlankShareStandard: 0.45
+    InterceptShare: 0.55
+    CutShare: 0
+    InterceptLeadMaxSeconds: 0.8
+    CutDistance: 5
+    CutArrivalMarginSeconds: 0.3
+    RunningCrowd: 0
+    RunningHeavyTiers: 0
+    EliteFastHeavyWalk: 1
+  - Mode: 2
+    MoveSpeed:
+    - 4.3
+    - 5.85
+    - 4.4
+    - 4
+    IntroductionRound:
+    - 0
+    - 1
+    - 2
+    - 3
+    SpawnWeight:
+    - -1
+    - 30
+    - 14
+    - 6
+    SpawnWeightGrowthPerRound:
+    - -1
+    - 5
+    - 3
+    - 1.5
+    SpawnWeightMax:
+    - -1
+    - 60
+    - 36
+    - 18
+    DamageScale: 1.8
+    TelegraphScale: 0.7
+    RecoveryScale: 0.7
+    CooldownScale: 0.6
+    MinTelegraphSeconds: 0.25
+    HealthScale: 1.25
+    HealthMultiplierPerRound: 0.16
+    PoolScale: 1.4
+    ActiveBase: 12
+    ActivePerRound: 3
+    ActiveCap: 40
+    SpawnRefillInterval: 0.25
+    MaxSpawnsPerRefillTick: 3
+    GoldScale: 2.5
+    StartingGold: 150
+    ArmorGrowthScale: 1.83
+    ArmorMaxAdd: 0.2
+    MinSpawnDistance: 10
+    PreferredDistanceMin: 13
+    PreferredDistanceMax: 26
+    AheadOfPlayerBonus: 2.2
+    QueueSecondsScale: 0.48
+    AttackSlotBonus: 2
+    FlankShareStandard: 0.35
+    InterceptShare: 0.6
+    CutShare: 0.4
+    InterceptLeadMaxSeconds: 1.4
+    CutDistance: 5
+    CutArrivalMarginSeconds: 0.3
+    RunningCrowd: 1
+    RunningHeavyTiers: 1
+    EliteFastHeavyWalk: 0

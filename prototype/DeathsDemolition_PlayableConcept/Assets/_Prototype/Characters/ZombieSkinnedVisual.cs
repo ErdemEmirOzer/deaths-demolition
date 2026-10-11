@@ -1169,6 +1169,9 @@ namespace DD.Prototype.Characters
             int t = (int)tier;
             if (set != null && t >= 0 && t < CharacterAnimatorContract.ZombieGaitPools.Length)
             {
+                // WP-102: a Hard / Demolition run walks a tier whose speed leaves the shipped pool's cadence band on a pool that fits it
+                int[] modePool = DD.Prototype.Difficulty.DifficultyService.GaitPoolFor(t);
+                if (modePool != null && PickCarried(modePool, set, pick, out int mg)) return mg;
                 if (PickCarried(CharacterAnimatorContract.ZombieGaitPools[t], set, pick, out int g)) return g;
                 if (t < CharacterAnimatorContract.ZombieGaitFallbacks.Length && PickCarried(CharacterAnimatorContract.ZombieGaitFallbacks[t], set, pick, out g)) return g;
             }

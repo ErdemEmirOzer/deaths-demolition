@@ -1,5 +1,7 @@
 using UnityEngine;
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Difficulty;
 using DD.Prototype.Navigation;
 
 namespace DD.Prototype.Enemies
@@ -88,8 +90,18 @@ namespace DD.Prototype.Enemies
         private void RollCrowdFeel(ref EnemyRandom random)
         {
             CrowdFeelSettings feel = CrowdFeelSettings.Active;
-            _flankSign = random.Chance(feel.FlankShareOf(_tier)) ? (random.Chance(0.5f) ? 1 : -1) : 0;
+            DifficultyModeSettings mode = DifficultyService.Current;   // WP-102: null in Normal
+            float flankShare = mode != null && _tier == EnemyTier.Standard && mode.FlankShareStandard >= 0f ? mode.FlankShareStandard : feel.FlankShareOf(_tier);
+            _flankSign = random.Chance(flankShare) ? (random.Chance(0.5f) ? 1 : -1) : 0;
             _flankAngle = random.Range(feel.FlankAngleMin, feel.FlankAngleMax);
+            // WP-102: a non-flanking body of a Hard / Demolition run takes a role. Normal draws nothing more — its rolls are unchanged.
+            _aiRole = ZombieAiRole.Chase;
+            _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f; _nextPursuitCheck = 0f;
+            if (mode != null && _flankSign == 0)
+            {
+                float u = random.Next01();
+                _aiRole = u < mode.CutShare ? ZombieAiRole.Cut : u < mode.CutShare + mode.InterceptShare ? ZombieAiRole.Intercept : ZombieAiRole.Chase;
+            }
             _gateMassScale = 1f;
             _wallContactSince = -1f; _wallLastContact = -1f; _wallSliding = false;
         }
@@ -101,6 +113,7 @@ namespace DD.Prototype.Enemies
         /// </summary>
         private Vector3 CrowdFeelGoal(Vector3 target)
         {
+            if (_aiRole != ZombieAiRole.Chase) return PursuitGoal(target);   // WP-102 (Hard / Demolition)
             if (_flankSign == 0) return target;
             if (Time.time >= _nextFlankOpenCheck) RefreshFlankDecision(target);
             if (!_flankOpen) return target;
@@ -165,6 +178,99 @@ namespace DD.Prototype.Enemies
                 return;
             }
             _flankOpen = false;
+        }
+
+        // ------------------------------------------------------------------------------------------------ WP-102 pursuit roles
+
+        private ZombieAiRole _aiRole;
+        private float _nextPursuitCheck;
+        private Vector3 _cutOffset;
+        private bool _cutActive;
+        private float _leadScale = 1f;
+        private static readonly float[] CutScales = { 1f, 1.6f, 2.4f };
+
+        /// <summary>WP-102 readout: this life's AI role (Chase in Normal and for flankers).</summary>
+        public ZombieAiRole AiRole => _aiRole;
+        /// <summary>WP-102 readout: the last decision sent this cutter to a point on the player's escape path.</summary>
+        public bool CutActive => _cutActive;
+        /// <summary>WP-102 readout: the accepted cut point relative to the player (zero when not cutting).</summary>
+        public Vector3 CutOffset => _cutOffset;
+
+        /// <summary>WP-102 tests (InternalsVisibleTo): give this life a role, the next pursuit decision on the next goal read.</summary>
+        internal void SetAiRoleForTests(ZombieAiRole role)
+        {
+            _aiRole = role;
+            _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f; _nextPursuitCheck = 0f;
+            if (role != ZombieAiRole.Chase) _flankSign = 0;
+        }
+
+        /// <summary>
+        /// WP-102: the navigation goal of an intercepting / cutting body. Inside the straight radius the target itself (as the flank).
+        /// Otherwise a cutter that could get there first walks to its accepted point on the player's escape path (held as an offset
+        /// from the player between decisions), and an interceptor — or a cutter that cannot get ahead — to where the player will be:
+        /// player + velocity × min(distance / own speed, lead cap), the lead clamped to the NavMesh at the last decision. The
+        /// decision runs on the flank's timer (FlankOpenCheckSeconds); per frame this is arithmetic only.
+        /// </summary>
+        private Vector3 PursuitGoal(Vector3 target)
+        {
+            DifficultyModeSettings mode = DifficultyService.Current;
+            if (mode == null) return target;
+            Vector3 to = target - transform.position; to.y = 0f;
+            float straight = CrowdFeelSettings.Active.FlankStraightRadius;
+            float dist2 = to.sqrMagnitude;
+            if (dist2 <= straight * straight) return target;
+            float distance = Mathf.Sqrt(dist2);
+            if (Time.time >= _nextPursuitCheck) RefreshPursuitDecision(target, distance, mode);
+            if (_cutActive) return target + _cutOffset;
+            return target + PursuitPlanner.InterceptOffset(distance, PursuitPlanner.PlayerVelocity, _moveSpeed, mode.InterceptLeadMaxSeconds) * _leadScale;
+        }
+
+        /// <summary>
+        /// WP-102: the pursuit decision, once per FlankOpenCheckSeconds. A cutter tries the points 1 / 1.6 / 2.4 × CutDistance ahead
+        /// of the player along its escape direction (PursuitPlanner: where it runs, or the ring's open side), each pulled back to
+        /// where the NavMesh line from the player stops; the nearest it can reach before the player wins. Otherwise the intercept
+        /// lead is scaled to where the NavMesh line from the player towards it stops. At most 4 NavMesh queries, no allocation.
+        /// </summary>
+        private void RefreshPursuitDecision(Vector3 target, float distance, DifficultyModeSettings mode)
+        {
+            _nextPursuitCheck = Time.time + FlankOpenCheckSeconds;
+            _cutActive = false; _cutOffset = Vector3.zero; _leadScale = 1f;
+            Vector3 from = NavPathFollower.ClampToNavMesh(target, 2f);
+            int area = CrowdService.Paths.AreaMask;
+            if (_aiRole == ZombieAiRole.Cut)
+            {
+                Vector3 escape = PursuitPlanner.EscapeDirection;
+                float playerSpeed = PursuitPlanner.PlayerSpeed;
+                Vector3 self = transform.position;
+                for (int i = 0; i < CutScales.Length; i++)
+                {
+                    float d = mode.CutDistance * CutScales[i];
+                    Vector3 cut = from + escape * d;
+                    if (UnityEngine.AI.NavMesh.Raycast(from, cut, out UnityEngine.AI.NavMeshHit hit, area))
+                    {
+                        cut = hit.position;
+                        float hx = cut.x - from.x, hz = cut.z - from.z;
+                        d = Mathf.Sqrt(hx * hx + hz * hz);
+                    }
+
+                    if (d < 1.5f) break;   // the player stands against the edge that way: nothing to cut
+                    float cx = cut.x - self.x, cz = cut.z - self.z;
+                    if (PursuitPlanner.CutReachable(Mathf.Sqrt(cx * cx + cz * cz), _moveSpeed, d, playerSpeed, mode.CutArrivalMarginSeconds))
+                    {
+                        _cutActive = true;
+                        _cutOffset = cut - target;
+                        return;
+                    }
+                }
+            }
+
+            Vector3 lead = PursuitPlanner.InterceptOffset(distance, PursuitPlanner.PlayerVelocity, _moveSpeed, mode.InterceptLeadMaxSeconds);
+            float leadLength = lead.magnitude;
+            if (leadLength > 0.5f && UnityEngine.AI.NavMesh.Raycast(from, from + lead, out UnityEngine.AI.NavMeshHit h, area))
+            {
+                float lx = h.position.x - from.x, lz = h.position.z - from.z;
+                _leadScale = Mathf.Clamp01(Mathf.Sqrt(lx * lx + lz * lz) / leadLength);
+            }
         }
 
         /// <summary>

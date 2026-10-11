@@ -744,6 +744,7 @@ namespace DD.Prototype.Diagnostics
                     // flow's StartRun (which only knows the Run scene) is bypassed; the
                     // simulation clock is still released the way every flow transition does it.
                     PrototypeUiFlow.ReleaseSimulation();
+                    DD.Prototype.Difficulty.DifficultyService.BeginRun();   // WP-102: the flow's Run load would begin the run's mode
                     SceneManager.LoadScene(_scene, LoadSceneMode.Single);
                 }
 
