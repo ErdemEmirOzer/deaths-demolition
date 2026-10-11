@@ -178,19 +178,22 @@ class OosRuleTests(unittest.TestCase):
         ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
 
     # --- R4 (C-00 11.10, S-07 wp101-once-v2): windows that will never restore are no writers; a restored one wins ---------
-    def other(self, name, start, end=None, verified="verified=1", marker=False, resolved=False, owner=None):
-        """another player-scope window under the walk root: window.json utc start (+ receipt.owner), a restore summary at
-        end (None = none), the NOT-RESTORED marker (+ .resolved)."""
+    def other(self, name, start, end=None, verified="verified=1", marker=False, resolved=False, owner=None, wid=None,
+              marker_utc=None):
+        """another player-scope window under the walk root: window.json utc start (+ receipt.owner, + id), a restore summary
+        at end (None = none), the NOT-RESTORED marker (+ its utc line, + .resolved)."""
         import json as _json
         w = self.root / "wp-092" / "perf-td" / name / "ug"; w.mkdir(parents=True)
         doc = {"scope": "player", "windowAreas": ["player"], "utc": "2026-10-05T%sZ" % start}
         if owner:
             doc["receipt"] = {"owner": {"pid": owner[0], "lstart": owner[1]}}
+        if wid:
+            doc["id"] = wid
         (w / "window.json").write_text(_json.dumps(doc))
         if end is not None:
             (w / "restore.txt").write_text("2026-10-05T%sZ userdata-guard restore scope=player touched=1 %s extraKeys=0\nexit=0\n" % (end, verified))
         if marker:
-            (w / "userdata-NOT-RESTORED.txt").write_text("NOT restored\n")
+            (w / "userdata-NOT-RESTORED.txt").write_text("NOT restored\n" + ("utc 2026-10-05T%sZ\n" % marker_utc if marker_utc else ""))
         if resolved:
             (w / "userdata-NOT-RESTORED.resolved").write_text("C-00\n")
         return w
@@ -221,7 +224,7 @@ class OosRuleTests(unittest.TestCase):
 
     def test_2b_DefterdeKapaliRestoresizPencere_AdayDegil(self):
         self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
-        closed = self.other("closed-no-summary", "12:01:00")
+        closed = self.other("closed-no-summary", "12:01:00", wid="c1")
         ledger = self.root / "ledger"; (ledger / "closed").mkdir(parents=True)
         (ledger / "closed" / "c1.json").write_text('{"id": "c1", "dir": "%s"}' % closed)
         ok, why = oos_rule.decide(self.ug, [self.root], wait=0, sleep=lambda s: None, ledgers=[ledger])
@@ -233,6 +236,82 @@ class OosRuleTests(unittest.TestCase):
         self.span_case(mtime="12:05:00")   # self.owner restored verified 12:03 → 12:05:01
         self.other("open-unknown-owner", "12:02:00")   # no restore, owner unknown: open
         ok, why = self.decide(); self.assertTrue(ok, why); self.assertIn(str(self.owner), why)
+
+    # --- gt 12.10 (fcc1172f PASS_WITH_NOTES): every window holding t is a writer; closed by id; marker by its utc ----------
+    @staticmethod
+    def lstart(pid):
+        import os as _os, subprocess as _sp
+        return _sp.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True,
+                       env=dict({k: v for k, v in _os.environ.items() if k != "TZ"}, LC_ALL="C")).stdout.strip()
+
+    def test_2b_IcIcePencere_DisAcikCanliSahip_Beklenir(self):
+        """gt SHOULD-1 S1: inner B restored verified=1, outer A still open with a live owner — A is waited for, B does not
+        mask it (fcc1172f passed on B)."""
+        import os as _os
+        self.span_case(mtime="12:05:00")   # B = self.owner 12:03 → 12:05:01 verified=1
+        outer = self.other("outer-A", "12:01:00", owner=(_os.getpid(), self.lstart(_os.getpid())))
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("not restored yet", why); self.assertIn(str(outer), why)
+        (outer / "restore.txt").write_text("2026-10-05T12:06:00Z userdata-guard restore scope=player touched=1 verified=1 extraKeys=0\nexit=0\n")
+        ok, why = self.decide(); self.assertTrue(ok, why); self.assertIn(str(outer), why); self.assertIn(str(self.owner), why)
+
+    def test_2b_IcIcePencere_DisVerified0_Kalir(self):
+        """gt SHOULD-1 S2: outer A restored verified=0 around inner B verified=1 — fails on A."""
+        self.span_case(mtime="12:05:00")
+        outer = self.other("outer-A", "12:01:00", end="12:06:00", verified="verified=0")
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("not verified=1", why); self.assertIn(str(outer), why)
+
+    def test_2b_IsaretliAmaRestoreEdilmis_YineYazar(self):
+        """a NOT-RESTORED marker only rules out a window WITHOUT a restore summary (never_restores); one restored later is
+        a writer like any other (gt NOTE-3 G7)."""
+        self.span_case(mtime="12:05:00")
+        marked = self.other("marked-restored", "12:01:00", end="12:06:00", verified="verified=0", marker=True, resolved=True)
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("not verified=1", why); self.assertIn(str(marked), why)
+
+    def test_2b_AyniDirEskiKapaliKayit_YeniPencereyiGizlemez(self):
+        """gt SHOULD-2 S3: a closed ledger record of an EARLIER window in the same DIR does not close the window there now."""
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
+        reused = self.other("reused", "12:01:00", wid="new-id")
+        ledger = self.root / "ledger"; (ledger / "closed").mkdir(parents=True)
+        (ledger / "closed" / "old-id.json").write_text('{"id": "old-id", "dir": "%s"}' % reused)
+        ok, why = oos_rule.decide(self.ug, [self.root], wait=0, sleep=lambda s: None, ledgers=[ledger])
+        self.assertFalse(ok, why); self.assertIn("not restored yet", why); self.assertIn(str(reused), why)
+        (ledger / "closed" / "new-id.json").write_text('{"id": "new-id", "dir": "%s"}' % reused)
+        ok, why = oos_rule.decide(self.ug, [self.root], wait=0, sleep=lambda s: None, ledgers=[ledger])
+        self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
+
+    def test_2b_EskiIsaret_YeniPencereyiGizlemez(self):
+        """gt SHOULD-2: a marker written before the window opened (utc) belongs to an earlier window in the DIR."""
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
+        for marker_utc, want in (("11:00:00", "not restored yet"), ("12:02:00", "lies in no other guarded player window"), (None, "lies in no other guarded player window")):
+            with self.subTest(marker_utc=marker_utc):
+                w = self.other("reused-%s" % (marker_utc or "none").replace(":", ""), "12:01:00", marker=True, marker_utc=marker_utc)
+                ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn(want, why)
+                import shutil as _sh; _sh.rmtree(w.parent)
+
+    def test_SahipZombi_Olmus_Sayilir(self):
+        """gt NOTE-2: a zombie owner is gone (the guard's gone() reads Z so); a hung or failing ps is unknown (NOTE-1)."""
+        import subprocess as _sp, time as _t
+        z = _sp.Popen(["true"])   # not waited for: a zombie until reaped
+        try:
+            for _ in range(200):
+                st = _sp.run(["ps", "-o", "stat=", "-p", str(z.pid)], capture_output=True, text=True).stdout.strip()
+                if st.startswith("Z"):
+                    break
+                _t.sleep(0.02)
+            self.assertTrue(st.startswith("Z"), st)
+            w = self.other("zombie-owner", "12:01:00", owner=(z.pid, self.lstart(z.pid)))
+            self.assertIs(False, oos_rule.owner_alive(w))
+        finally:
+            z.wait()
+        real_run = oos_rule.subprocess.run
+        for exc in (_sp.TimeoutExpired(["ps"], 10), OSError("ps")):
+            def boom(*a, **k):
+                raise exc
+            oos_rule.subprocess.run = boom
+            try:
+                self.assertIsNone(oos_rule.owner_alive(w), exc)
+            finally:
+                oos_rule.subprocess.run = real_run
 
     def test_SatirYok_Kalir(self):
         self.window(rows=())

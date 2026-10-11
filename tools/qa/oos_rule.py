@@ -14,10 +14,12 @@ when all three hold:
      its mtime lies inside the span of ANOTHER player-scope guard window (window.json utc → its restore summary,
      ± SPAN_SLACK s) — that window's Player run or restore is the writer — and condition 3 holds for that window. The
      mtime must also lie inside this window's own span. A change outside every such window still fails.
-     R4 (C-00 11.10, S-07 wp101-once-v2): a window that will never restore is no candidate — one with a NOT-RESTORED
-     marker (resolved or not), one without a restore summary that the ledger lists as closed, or one whose owner process
-     (window.json receipt.owner pid + start) is gone. Of the windows holding the mtime, a restored one wins over an open
-     one, verified=1 first, then the tightest span (an abandoned 10.10 window used to shadow the real, verified writer).
+     R4 (C-00 11.10, S-07 wp101-once-v2): a window without a restore summary that will never get one is no candidate —
+     its own NOT-RESTORED marker (resolved or not), a closed ledger record of its id, or an owner process (window.json
+     receipt.owner pid + start) that is gone (an abandoned 10.10 window used to shadow the real, verified writer).
+     gt 12.10: EVERY other window holding the mtime is a writer and must pass condition 3 — an inner verified=1 window
+     never masks an outer one that is open (owner alive: waited for) or restored verified=0. Only an open window whose
+     owner is unknown (no receipt, before D8) gives way to a restored one.
 Anything else → FAIL (the caller stops, tell C-00). Player stages never come here: there 32 is a failure.
 Owning windows are looked up in the guard's window ledger first (G4 D8: L/windows + L/closed records name their DIR;
 L = $DD_GUARD_ROOT/ledger, else ~/.dd-userdata-guard of the passwd home), then — windows taken before D8 have no record —
@@ -164,18 +166,49 @@ def full_mtime(hms, own):
     return None
 
 
-def closed_dirs(ledgers):
-    """dirs the guard ledger lists as closed (L/closed records)."""
+def closed_ids(ledgers):
+    """ids of the windows the guard ledger lists as closed (L/closed/<id>.json, its "id"). gt SHOULD-2 (12.10): by id,
+    never by DIR — a DIR reused by a later window must not inherit an earlier window's closed record."""
     out = set()
     for ledger in ledgers:
         for rec in Path(ledger, "closed").glob("*.json"):
+            out.add(rec.stem)
             try:
-                d = json.loads(rec.read_text(encoding="utf-8")).get("dir")
-            except (ValueError, OSError):
+                i = json.loads(rec.read_text(encoding="utf-8")).get("id")
+            except (ValueError, OSError, AttributeError):
                 continue
-            if d:
-                out.add(Path(d).resolve())
+            if isinstance(i, str) and i:
+                out.add(i)
     return out
+
+
+def window_id(window):
+    try:
+        i = json.loads((window / "window.json").read_text(encoding="utf-8")).get("id")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return i if isinstance(i, str) and i else None
+
+
+MARKER_UTC = re.compile(r"^utc (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\s*$", re.M)
+
+
+def marked(window, start):
+    """this window's own NOT-RESTORED marker (resolved or not). gt SHOULD-2 (12.10): a marker whose utc is before the window
+    opened was left by an earlier window in the same DIR and is not this one's; a marker without a readable utc counts."""
+    try:
+        text = (window / MARKER).read_text(encoding="utf-8", errors="replace")
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return True
+    m = MARKER_UTC.search(text)
+    if not m or start is None:
+        return True
+    try:
+        return utc_epoch(m.group(1)) >= start
+    except ValueError:
+        return True
 
 
 def owner_alive(window):
@@ -189,40 +222,49 @@ def owner_alive(window):
         return None
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
     env["LC_ALL"] = "C"
-    r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, env=env)
-    return r.returncode == 0 and " ".join(r.stdout.split()) == " ".join(lstart.split())
+    try:   # gt NOTE-1 (12.10): bounded like the guard's own lstart(); a hung or failing ps → unknown
+        r = subprocess.run(["ps", "-o", "stat=,lstart=", "-p", str(pid)], capture_output=True, text=True, env=env, timeout=10)
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if r.returncode != 0:
+        return False
+    stat, _, started = r.stdout.strip().partition(" ")
+    if stat.startswith("Z"):
+        return False   # gt NOTE-2 (12.10): a zombie is gone, as the guard's gone() reads it
+    return " ".join(started.split()) == " ".join(lstart.split())
 
 
-def never_restores(window, closed):
-    """R4 (C-00 11.10): a window without a restore summary that will never get one — a NOT-RESTORED marker (resolved or
-    not), a closed ledger record, or an owner process that is gone."""
-    if (window / MARKER).exists():
-        return True
-    if window.resolve() in closed:
-        return True
-    return owner_alive(window) is False
+def player_windows(roots, own, ledgers, cache):
+    """[(window, span)] of the other player-scope windows, and the ledger's closed ids — once per decide (gt NOTE-4)."""
+    if "wins" not in cache:
+        cache["wins"] = [(w, sp) for w in windows(roots, own, ledgers) if is_player_window(w) for sp in [span(w)] if sp]
+        cache["closed"] = closed_ids(ledgers)
+    return cache["wins"], cache["closed"]
 
 
-def window_at(t, roots, own, ledgers=()):
-    """another player-scope window whose span holds t. A window not restored yet counts while it is open — never one that
-    will not restore (never_restores). Several: a restored one first (verified=1 first, then the tightest span), then an
-    open one (R4, C-00 11.10: an abandoned 10.10 window shadowed the real writer, S-07 wp101-once-v2)."""
-    closed = closed_dirs(ledgers)
-    restored, still_open = [], []
-    for w in windows(roots, own, ledgers):
-        if not is_player_window(w) or (w / MARKER).exists():
+def windows_at(t, roots, own, ledgers=(), cache=None):
+    """every other player-scope window whose span holds t — each one is a writer that must pass condition 3 (gt SHOULD-1
+    12.10: an inner verified=1 window never masks an outer one). A window without a restore summary counts while it can
+    still restore; never one that will not (R4, C-00 11.10, S-07 wp101-once-v2): its own NOT-RESTORED marker, a closed
+    ledger record of its id, an owner that is gone. An open window whose owner is alive is waited for; one whose owner is
+    unknown (no receipt, before D8) counts only when no restored window holds t."""
+    wins, closed = player_windows(roots, own, ledgers, {} if cache is None else cache)
+    restored, alive, unknown = [], [], []
+    for w, (start, end) in wins:
+        if t < start - SPAN_SLACK:
             continue
-        sp = span(w)
-        if not sp or t < sp[0] - SPAN_SLACK:
+        if end is not None:
+            if t <= end + SPAN_SLACK:
+                restored.append(w)
             continue
-        if sp[1] is not None:
-            if t <= sp[1] + SPAN_SLACK:
-                restored.append((verified(w) is not True, sp[1] - sp[0], str(w), w))
-        elif not never_restores(w, closed):
-            still_open.append((sp[0], str(w), w))
-    if restored:
-        return sorted(restored)[0][3]
-    return sorted(still_open)[-1][2] if still_open else None
+        if marked(w, start) or window_id(w) in closed:
+            continue
+        a = owner_alive(w)
+        if a is True:
+            alive.append(w)
+        elif a is None:
+            unknown.append(w)
+    return sorted(restored) + sorted(alive) + ([] if restored else sorted(unknown))
 
 
 def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledgers=()):
@@ -246,17 +288,18 @@ def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledger
     except FileNotFoundError:
         return False, "condition 2: no attribution.txt"
     starts = {p: s for p, s, _ in lineage(ug / "players-lineage.tsv")}
-    owners, by_time = {}, {}
+    owners, by_time, cache = {}, {}, {}
     own_span = span(ug)
     for path in sorted(changed):
         pids = attribution.get(path, [])
         if not pids:
             t = full_mtime(mtimes[path], own_span) if path in mtimes else None
-            w = window_at(t, roots, ug, ledgers) if t is not None else None
-            if w is None:
+            ws = windows_at(t, roots, ug, ledgers, cache) if t is not None else []
+            if not ws:
                 return False, "condition 2: %s is not attributed to a Player (and its mtime lies in no other guarded player window)" % path
-            owners[w] = owners.get(w, "mtime %s" % mtimes[path])
-            by_time[w] = "%s mtime %sZ" % (path, mtimes[path])
+            for w in ws:
+                owners[w] = owners.get(w, "mtime %s" % mtimes[path])
+                by_time[w] = "%s mtime %sZ" % (path, mtimes[path])
             continue
         for pid in pids:
             if pid not in starts:
