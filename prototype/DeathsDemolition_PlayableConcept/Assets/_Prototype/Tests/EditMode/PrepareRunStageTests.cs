@@ -78,7 +78,10 @@ namespace DD.Prototype.Tests.EditMode
         {
             float d = PrepareRunStage.InitialDistance;
             Assert.AreEqual(d / PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(d, 1f), Eps, "+1 adım yakınlaşır");
-            Assert.AreEqual(d * PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(d, -1f), Eps, "−1 adım uzaklaşır");
+            // The initial 5.71 m is within one step of the 6.1 m end (5.71 × 1.12 = 6.40 clamps): step out from the middle.
+            float mid = (PrepareRunStage.DistanceMin + PrepareRunStage.DistanceMax) * 0.5f;
+            Assert.AreEqual(mid * PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(mid, -1f), Eps, "−1 adım uzaklaşır");
+            Assert.AreEqual(PrepareRunStage.DistanceMax, PrepareRunStage.ZoomedDistance(d, -1f), Eps, "sınırın bir adım içinden: uzak uçta durur");
             Assert.AreEqual(PrepareRunStage.DistanceMin, PrepareRunStage.ZoomedDistance(d, 100f), Eps);
             Assert.AreEqual(PrepareRunStage.DistanceMax, PrepareRunStage.ZoomedDistance(d, -100f), Eps);
 

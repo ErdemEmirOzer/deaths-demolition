@@ -51,8 +51,9 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void StatKartlari_BesSigarsaTekSira_SigmazsaUcArtiIki_SonraIkili_SonraTekli()
         {
-            var fits = new List<float> { 120f, 118f, 110f, 90f, 100f };
-            Assert.AreEqual(5, PrepareRunLayout.StatColumns(616f, 12f, fits), "1080p stage (616): five cards of 113 hold 113-wide words");
+            var fits = new List<float> { 113f, 112f, 110f, 90f, 100f };   // five cells of (616 - 4 × 12) / 5 = 113.6
+            Assert.AreEqual(5, PrepareRunLayout.StatColumns(616f, 12f, fits), "1080p stage (616): five cards of 113.6 hold 113-wide words");
+            Assert.AreEqual(3, PrepareRunLayout.StatColumns(616f, 12f, new List<float> { 120f, 118f, 110f, 90f, 100f }), "a 120-wide word: three over two");
             var wide = new List<float> { 120f, 160f, 110f, 90f, 100f };
             Assert.AreEqual(3, PrepareRunLayout.StatColumns(616f, 12f, wide), "one wider card: three over two");
             Assert.AreEqual(2, PrepareRunLayout.Rows(5, 3));
