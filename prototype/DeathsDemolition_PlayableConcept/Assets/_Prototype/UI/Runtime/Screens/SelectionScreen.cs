@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Core.Weapons;
-using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
 using TMPro;
 using UnityEngine;
@@ -13,69 +13,91 @@ using UnityEngine.UI;
 namespace DD.Prototype.UI
 {
     /// <summary>
-    /// Skin and Weapon Selection. Shown before every run.
+    /// Prepare Run. Shown before every run.
     ///
-    /// WP-068 slice 7 · E9 v3, reworked for the M4-R1 ten-weapon roster. Three columns on the page grid:
-    ///   * CHARACTER SKIN: three 120 px cards (the AP-006 portrait, the palette strip, the name, "Cosmetic only").
-    ///     A skin is a taste choice with no consequence, so its cards carry no numbers.
-    ///   * The stage, an Elev1 card: the weapon under focus (or the chosen one when focus is elsewhere). It shows the
-    ///     identity-tinted glyph (N19), the pack's name / class / fire mode / role / description / flavour, and the
-    ///     weapon's own four-stat StatStrip, each stat with its number and a bar compared with the classic roster.
-    ///     Below that come the CORE branches and the state line (carried for the run, or what unlocks it). The v2 screen
-    ///     printed all of this on every card; ten cards cannot hold it (GD P14: show the numbers the rule uses, invent none).
-    ///   * CLASSIC WEAPON: one 48 px row per roster weapon (glyph, name, state chip), then the two Specials as
-    ///     information tiles. They are found on the field and never chosen here.
-    /// A locked row can be focused so the stage can say what unlocks it. Pressing it nudges its chip, plays Denied and
-    /// changes nothing.
+    /// WP-106 (R4, user note 7: "the old character's skin choices are still there - remove them; the page fuller, with 3D
+    /// interactive weapon previews"): the skin column is gone (hero v2 is the one hero; PrototypeUiFlow.SelectedSkin keeps its
+    /// default and the game applies it as before). Three columns on the page grid (PrepareRunLayout: 456 / 24 / 664 / 24 / 560
+    /// at 1728):
+    ///   * RUN SETUP: DIFFICULTY - one kit list row per WP-102 mode (its name, a 1-3 mark indicator, the check glyph on the
+    ///     choice) and one line under the rows: the chosen mode's short line, or the focused mode's detail while a row has
+    ///     focus. Then the MAP (the AP-028 L01 courtyard art, cover-fit, and its name) and one short TIP from the loading set.
+    ///   * The stage, an Elev1 card: the weapon under focus (or the chosen one when focus is elsewhere) - its name and class,
+    ///     its role, the 3D preview (PrepareRunStage, which owns its input: drag turns and tilts, the wheel zooms, a double
+    ///     click resets; the pad's right stick and triggers from anywhere on the page; the AP-036 side view stands in until the
+    ///     first render), five stat cards (damage, fire rate, magazine, range - spread on a pellet weapon -, fire mode; each a
+    ///     short label, its number and a roster bar) and the state line (what keeps a weapon out of a starting loadout).
+    ///   * CLASSIC WEAPON: one row per roster weapon (side view, name, check / lock glyph and its chip), then the two Specials
+    ///     as information tiles. They are found on the field and never chosen here.
+    /// A locked row can be focused so the stage can say why. Pressing it nudges the row, plays Denied and changes nothing.
     ///
-    /// WP-098B (AP-028 §3.4; brush kit KILAVUZ §3 "Seçim"): the window is the kit's - the world plate under the Window
-    /// scrim (<see cref="UiBrushPane"/>, linear 0.95; the v2 backdrop's veils, petals and lozenge are gone), the kit's C5
-    /// title without a glyph, the skins and the weapons as C18 list rows (unframed; the choice is the check glyph, a lock is
-    /// the lock glyph and its level, never a chip), Back (C10, Menu.Back + the pad's Cancel) and START RUN (C11, Menu.Play).
-    /// The column headings are words without the vermilion tick. Trace budget: title brush 1; vermilion 0. The stage card,
-    /// the Specials' tiles and the AP-036 side views are unchanged.
+    /// WP-098B (AP-028 §3.4; brush kit KILAVUZ §3 "Seçim"): the window is the kit's - the world plate under the Window scrim
+    /// (<see cref="UiBrushPane"/>), the kit's C5 title without a glyph, every choice a C18 list row (unframed; the choice is the
+    /// check glyph, a lock the lock glyph and its chip), Back (C10, Menu.Back + the pad's Cancel) and START RUN (C11, Menu.Play).
+    /// Trace budget: title brush 1; vermilion 0.
     ///
-    /// SESSION MEMORY (acceptance criteria 23 and 24). The current choice comes from
-    /// <c>PrototypeUiFlow.SelectedSkin</c> and <c>PrototypeUiFlow.SelectedWeapon</c>, statics reset by
-    /// RuntimeInitializeOnLoadMethod. A second run in the same session opens on the previous choice; a restarted
-    /// application opens on the defaults. Neither is written to the profile save.
+    /// R2 U1 (fewer letters, binding): what the page adds is drawn, not written - the mode marks, the stat icons and bars, the
+    /// map art, the preview glyph. A mode's detail shows only on its focus, the preview's words only on the pointer's hover,
+    /// the tip is one short line (PrepareRunLayout.TipPool).
+    ///
+    /// SESSION MEMORY (acceptance criteria 23 and 24): the weapon is <c>PrototypeUiFlow.SelectedWeapon</c>, the difficulty
+    /// WP-102's <c>DifficultyService.Selected</c> (through <see cref="PrepareDifficulty"/>); both statics reset when the
+    /// application restarts. A second run in the same session opens on the previous choices. Neither is written to the profile.
     /// </summary>
     public sealed class SelectionScreen : UiScreen
     {
-        private const float SkinCardHeight = 120f;          // E9: portrait 88 + 2 × 16
-        private const float SwatchWidth = 100f;
-        private const float BadgeWidth = 160f;              // a row's trailing reserve: the status glyph, its word and the gap
         private const float FooterHeight = 88f;             // the kit's 64 high C10 / C11 + XL
+        private const float BadgeWidth = 160f;              // a row's trailing reserve: the status glyph, its word and the gap
 
         private const float WeaponRowHeight = 48f;
         private const float WeaponRowGap = 4f;
         private const float RowGlyph = 40f;
         private const float SpecialTileHeight = 48f;
-        private const float StageGlyph = 128f;
-        private const float StageBandMin = 48f;             // R3 m12: the side view's last yield before the description is clipped
         private const float RowSideMax = 128f;              // R3 m12: the rows' side-view slot (the longest weapon's width), at most
-        private const float StatBarHeight = 8f;
-        private const float CoreGlyphSize = 26f;            // AD v003 MUST-4: ≥ 24 px at 1080p
 
-        // The three columns of the 12-column grid (560 / 24 / 560 / 24 / 560 at 1728).
-        private const float ColumnShare = 560f / 1728f;
-        private const float GutterShare = 24f / 1728f;
+        private const float StatBarHeight = 8f;
+        private const float StatIcon = 20f;
+        private const float PreviewMin = 120f;              // under this the gaps close first
+        private const float PreviewHide = 56f;              // under this the preview gives its room up (never a text)
+        private const float PreviewMaxAspect = 0.8f;        // the preview's height at most 0.8 × its width (the 4:3 page)
+        private const float HintGlyph = 32f;
+
+        private const float DifficultyRowGap = 4f;
+        private const float MarkSize = 14f;
+        private const float MarkGap = 4f;
+        private const float ThumbMin = 72f;
+        private const float ThumbFocusY = 0.62f;            // L01: the palace and its roofs stand in the upper half of the art
+        private const float TipGlyph = 24f;
 
         private static readonly Vector3 GlyphEdge = new Vector3(0.25f, 0f, 0f);   // the HudInk edge the HUD glyphs wear
 
         /// <summary>The window's kit pane (its root under the page grid; its C1 on the screen root).</summary>
         public const string PaneName = "SelectionPane";
 
-        /// <summary>C18 status glyphs (G1 atlas): the choice is the check, a weapon not yet earned the lock.</summary>
+        /// <summary>C18 status glyphs (G1 atlas): the choice is the check, a weapon or mode not open the lock.</summary>
         public const string CheckGlyph = "Selection.Selected";
 
         public const string LockGlyph = "State.Locked";
 
+        /// <summary>
+        /// The difficulty indicator's marks (G1). The R4 copy asks for skulls 1 / 2 / 3; the atlas has none yet, so the pips
+        /// stand in - an AP-042 skull cell swaps in here, nothing else changes.
+        /// </summary>
+        public const string MarkFull = "Pip.Full";
+
+        public const string MarkEmpty = "Pip.Empty";
+
+        /// <summary>The map's art (AP-028 L01, the palace courtyard - the loading rotation's first painting).</summary>
+        public const string MapArt = UiCurtain.LoadingKeyArt;
+
+        // Page
         private UiBrushPane _pane;
         private RectTransform _page;                        // the pane's clipped content: the columns and the footer
-        private UiButton[] _skinButtons;
-        private Image[] _skinPreviews;
+        private UiButton _backButton;
+        private UiButton _startButton;
+        private GameObject _lastFocus;
 
+        // Weapons column
         private UiButton[] _weaponButtons;
         private string[] _weaponLockWords;                  // a locked row's trailing word (null: unlocked), built once
         private Image[] _weaponGlyphs;
@@ -83,38 +105,6 @@ namespace DD.Prototype.UI
         private ClassicWeaponId[] _weaponIds;
         private WeaponDefinition[] _weaponDefs;
         private bool[] _weaponEnabled;
-
-        private UiButton _backButton;
-        private UiButton _startButton;
-        private TMP_Text _startCaption;
-
-        // The stage
-        private CanvasGroup _stageText;
-        private Image _stageGlyph;
-        private TMP_Text _stageName;
-        private TMP_Text _stageClass;
-        private TMP_Text _stageRole;
-        private TMP_Text _stageDescription;
-        private TMP_Text _stageFlavour;
-        private readonly TMP_Text[] _statLabels = new TMP_Text[4];
-        private readonly TMP_Text[] _statValues = new TMP_Text[4];
-        private readonly UiBar[] _statBars = new UiBar[4];
-        private readonly WeaponStat[] _stats = new WeaponStat[4];
-        private readonly Image[] _coreGlyphs = new Image[3];
-        private readonly TMP_Text[] _coreNames = new TMP_Text[3];
-        private TMP_Text _stateLine;
-        private int _stageIndex = -1;
-        private GameObject _lastFocus;
-        private RectTransform _stageContent;
-        private RectTransform _stageCard;
-        private static readonly Vector3[] s_stageCorners = new Vector3[4];
-        private RectTransform _stageTop;
-        private RectTransform _coreRow;
-        private RectTransform _stateRow;
-        private TMP_Text _compareCaption;
-        private readonly RectTransform[] _statCells = new RectTransform[4];
-        private bool _stageLayoutPending;
-        private Vector2 _stageSize;
         private RectTransform _weaponsColumn;
         private RectTransform _specialsHead;
         private RectTransform _specialsRow;
@@ -124,6 +114,7 @@ namespace DD.Prototype.UI
         private readonly Image[] _specialIcons = new Image[2];
         private readonly int[] _specialSides = { -1, -1 };
         private float _specialModeSize;
+        private bool _specialsBeside = true;
         private float _weaponsTop;
         private float _rowHeight;
         private float _tileHeight;
@@ -131,22 +122,148 @@ namespace DD.Prototype.UI
         private bool _weaponsLayoutPending;
         private Vector2 _weaponsSize;
 
-        /// <summary>The preview images the skin cards show, index = PlayerSkin (tests read the sprite).</summary>
-        public Image[] SkinPreviews
+        // The stage
+        private RectTransform _stageCard;
+        private RectTransform _stageContent;
+        private CanvasGroup _stageText;
+        private RectTransform _stageTop;
+        private TMP_Text _stageName;
+        private TMP_Text _stageClass;
+        private TMP_Text _stageRole;
+        private RectTransform _previewWell;
+        private Image _stageGlyph;                          // the side-view stand-in under the 3D render
+        private PrepareRunStage _stage;
+        private PrepareRunPreviewHover _previewHover;
+        private Image _previewHint;
+        private TMP_Text _previewHintText;
+        private bool _awaitFirstRender;
+        private RectTransform _statsRow;
+        private readonly RectTransform[] _statCells = new RectTransform[PrepareRunLayout.StatCount];
+        private readonly Image[] _statIcons = new Image[PrepareRunLayout.StatCount];
+        private readonly TMP_Text[] _statLabels = new TMP_Text[PrepareRunLayout.StatCount];
+        private readonly TMP_Text[] _statValues = new TMP_Text[PrepareRunLayout.StatCount];
+        private readonly UiBar[] _statBars = new UiBar[PrepareRunLayout.StatCount];
+        private readonly WeaponStat[] _stats = new WeaponStat[PrepareRunLayout.StatCount];
+        private readonly float[] _statNeed = new float[PrepareRunLayout.StatCount];
+        private int _statColumns = PrepareRunLayout.StatCount;
+        private RectTransform _stateRow;
+        private TMP_Text _stateLine;
+        private int _stageIndex = -1;
+        private bool _stageLayoutPending;
+        private Vector2 _stageSize;
+
+        // Run setup column
+        private RectTransform _setupColumn;
+        private TMP_Text _difficultyHeading;
+        private UiButton[] _difficultyRows;
+        private Image[][] _difficultyMarks;
+        private string[] _modeDesc;
+        private string[] _modeDetail;
+        private TMP_Text _modeLine;
+        private int _modeLineIndex = -1;
+        private bool _modeLineDetail;
+        private RectTransform _mapBlock;
+        private TMP_Text _mapTitle;
+        private RectTransform _mapFrame;
+        private RawImage _mapThumb;
+        private TMP_Text _mapName;
+        private RectTransform _tipBlock;
+        private TMP_Text _tipText;
+        private bool _setupLayoutPending;
+        private Vector2 _setupSize;
+
+        /// <summary>The page's openings this session: the tip rotates through its pool, one step per opening.</summary>
+        private static int s_visits;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
         {
-            get { return _skinPreviews; }
+            s_visits = 0;
         }
 
-        /// <summary>The roster row the stage shows (tests, captures).</summary>
+        // ================================================================= public surface (tests, captures)
+
+        /// <summary>The roster row the stage shows.</summary>
         public int StageIndex
         {
             get { return _stageIndex; }
         }
 
-        /// <summary>The stage's texts, top to bottom (tests: name, class line, role, description, state line).</summary>
+        /// <summary>The stage's texts, top to bottom: name, class line, role, state line.</summary>
         public TMP_Text[] StageTexts
         {
-            get { return new[] { _stageName, _stageClass, _stageRole, _stageDescription, _stateLine }; }
+            get { return new[] { _stageName, _stageClass, _stageRole, _stateLine }; }
+        }
+
+        /// <summary>The state line: what keeps the weapon on the stage out of a starting loadout (empty when nothing does).</summary>
+        public TMP_Text StateLine
+        {
+            get { return _stateLine; }
+        }
+
+        /// <summary>The 3D preview (P1); null when it could not be built - the side view then stands in.</summary>
+        public PrepareRunStage Stage
+        {
+            get { return _stage; }
+        }
+
+        /// <summary>The preview's well on the stage card (the stage's host).</summary>
+        public RectTransform PreviewWell
+        {
+            get { return _previewWell; }
+        }
+
+        /// <summary>The hint's hover relay on the preview's view (null without a stage).</summary>
+        public PrepareRunPreviewHover PreviewHover
+        {
+            get { return _previewHover; }
+        }
+
+        /// <summary>The preview's hint words (shown only while the pointer is over the view).</summary>
+        public TMP_Text PreviewHintText
+        {
+            get { return _previewHintText; }
+        }
+
+        /// <summary>The weapon rows, in roster order.</summary>
+        public UiButton[] WeaponRows
+        {
+            get { return _weaponButtons; }
+        }
+
+        /// <summary>The difficulty rows, in the source's order.</summary>
+        public UiButton[] DifficultyRows
+        {
+            get { return _difficultyRows; }
+        }
+
+        /// <summary>The line under the difficulty rows (the chosen mode's line, or the focused mode's detail).</summary>
+        public TMP_Text ModeLine
+        {
+            get { return _modeLine; }
+        }
+
+        public TMP_Text MapName
+        {
+            get { return _mapName; }
+        }
+
+        /// <summary>The tip's words (inactive when the column has no room for it or no tip qualifies).</summary>
+        public TMP_Text TipText
+        {
+            get { return _tipText; }
+        }
+
+        /// <summary>Stat cards per row as last laid out (5, else 3 over 2, …).</summary>
+        public int StatColumns
+        {
+            get { return _statColumns; }
+        }
+
+        /// <summary>The Specials tiles carry name and mode on one line (false: stacked - the Mac canvas at text 1.25).</summary>
+        public bool SpecialsBeside
+        {
+            get { return _specialsBeside; }
         }
 
         /// <summary>The kit's carrier: C1 Window scrim, the clipped content (tests read its level and its text ground).</summary>
@@ -175,47 +292,46 @@ namespace DD.Prototype.UI
                 PrototypeUiFlow.SelectedWeapon = ProfileService.FirstUnlockedWeapon();
             }
 
-            // WP-098B (KILAVUZ §3 "Seçim"): the world plate, then the kit's Window pane over the page grid - its C1 is the
-            // scrim (no hand-set alpha), its clipped content holds every column.
             ResultsScreen.BuildWorldPlate(ScreenRect);
             _pane = UiBrushKit.Pane(ScreenRect, Content, PaneName, UiBrushScrim.Window, UiBrushWash.None);
             _page = _pane.Content;
 
-            // WP-081 U1b (R2 U1, fewer letters): the title alone - no eyebrow, no subtitle. What the subtitle said lives on
-            // the screen itself: the skins' swatches only recolour, the weapon row is the run's one choice (its lock line).
-            // WP-098B: the kit's C5 title without a glyph (AP-028 §3.4) - its rule and its title brush, inked in on Open.
             UiBrushTitle title = UiBrushKit.Title(_page, "selection.title", "PREPARE YOUR RUN");
-
-            // The kit's title band is taller than the v2 H1 + rule (Display 56 + the rule gap + the stroke): M under it keeps the
-            // columns within ~15 px of their v2 room (the Mac weapon column fits its ten rows and the Specials).
             float top = title.Height + (int)UiSpace.M;
-            float stageFrom = ColumnShare + GutterShare;
-            float weaponsFrom = stageFrom + ColumnShare + GutterShare;
-
-            RectTransform skins = PageColumn("Skins", 0f, ColumnShare, top, FooterHeight);
-            RectTransform stage = PageColumn("Stage", stageFrom, stageFrom + ColumnShare, top, FooterHeight);
-            RectTransform weapons = PageColumn("Weapons", weaponsFrom, 1f, top, FooterHeight);
-            BuildSkinColumn(skins);
+            RectTransform setup = PageColumn("Setup", 0f, PrepareRunLayout.SetupShare, top, FooterHeight);
+            RectTransform stage = PageColumn("Stage", PrepareRunLayout.StageFrom, PrepareRunLayout.StageTo, top, FooterHeight);
+            RectTransform weapons = PageColumn("Weapons", PrepareRunLayout.WeaponsFrom, 1f, top, FooterHeight);
             BuildWeaponColumn(weapons);
             BuildStage(stage);
+            BuildSetupColumn(setup);
             BuildFooter();
 
-            RefreshSkins();
             RefreshWeapons();
+            RefreshDifficulty();
             ShowOnStage(SelectedIndex());
             LinkNavigation();
+            UiInputScheme.Changed += OnSchemeChanged;
+
+            // Focus opens on the chosen weapon - on a second run of the session the remembered one.
+            int chosen = SelectedIndex();
+            SetInitialFocus(chosen >= 0 ? _weaponButtons[chosen] : _startButton);
 
             // E9 choreography: the three columns land left to right, 60 ms apart, once the curtain has revealed the
             // screen (Decor: Reduced Motion shows them at rest).
             gameObject.AddComponent<UiStaggerIn>().Configure(new[]
             {
-                UiFactory.Group(skins.gameObject),
+                UiFactory.Group(setup.gameObject),
                 UiFactory.Group(stage.gameObject),
                 UiFactory.Group(weapons.gameObject)
             });
 
-            // The window opens with the screen (input live at once); the chosen skin takes the focus in Start.
             _pane.Open(null);
+        }
+
+        protected override void OnDestroy()
+        {
+            UiInputScheme.Changed -= OnSchemeChanged;
+            base.OnDestroy();
         }
 
         /// <summary>A column of the pane's page, on fractional anchors (UiScreen.Column's rule, inside the kit's content).</summary>
@@ -231,11 +347,11 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>A column's heading: its words in TextPrimary - no vermilion heading tick in a brush window (KILAVUZ §1).</summary>
-        private static RectTransform ColumnHeading(string words, RectTransform column)
+        private static TMP_Text ColumnHeading(string words, RectTransform column)
         {
             TMP_Text heading = UiFactory.Label("Heading", column, words, UiType.H2, UiColor.TextPrimary, TextAnchor.MiddleLeft);
             heading.enableWordWrapping = false;
-            return heading.rectTransform;
+            return heading;
         }
 
         private void Update()
@@ -246,12 +362,9 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            UiInput.ReclaimFocus(_skinButtons != null && _skinButtons.Length > 0
-                ? _skinButtons[(int)PrototypeUiFlow.SelectedSkin]
-                : _startButton);
+            UiInput.ReclaimFocus(FocusFallback());
 
-            // The stage follows focus (a pointer hover moves focus too). A change of the selected object is the only
-            // trigger: the stage is rebuilt on a change, never per frame.
+            // Layout runs when a column's size changes or its first pass found no canvas yet - never per frame otherwise.
             if (_stageContent != null && (_stageLayoutPending || _stageContent.rect.size != _stageSize))
             {
                 LayoutStage();
@@ -262,212 +375,366 @@ namespace DD.Prototype.UI
                 LayoutWeapons();
             }
 
+            if (_setupColumn != null && (_setupLayoutPending || _setupColumn.rect.size != _setupSize))
+            {
+                LayoutSetup();
+            }
+
+            // The stage and the mode line follow focus (a pointer hover moves focus too). A change of the selected object
+            // is the only trigger.
             GameObject focus = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             if (focus != _lastFocus)
             {
                 _lastFocus = focus;
-                int index = IndexOf(focus);
-                ShowOnStage(index >= 0 ? index : SelectedIndex());
+                OnFocusChanged(focus);
+            }
+
+            // The stage turns itself (its pointer events, the pad's view controls in its own tick); the screen only hands
+            // over from the side view once the first render stands.
+            if (_awaitFirstRender && _stage != null && _stage.Renders > 0)
+            {
+                _awaitFirstRender = false;
+                _stageGlyph.gameObject.SetActive(false);
             }
         }
 
+        private Selectable FocusFallback()
+        {
+            int chosen = SelectedIndex();
+            return chosen >= 0 && _weaponButtons != null ? _weaponButtons[chosen] : _startButton;
+        }
+
+        private void OnFocusChanged(GameObject focus)
+        {
+            int weapon = IndexOf(focus);
+            if (weapon >= 0)
+            {
+                ShowOnStage(weapon);
+            }
+            else if (focus != null)
+            {
+                ShowOnStage(SelectedIndex());   // focus on the setup, Back or START RUN: the run's weapon
+            }
+
+            // focus == null (a pointer on the preview, a click on empty page): the stage keeps what it shows.
+            int mode = DifficultyIndexOf(focus);
+            ShowModeLine(mode >= 0 ? mode : PrepareDifficulty.Source.Selected, mode >= 0);
+        }
+
         /// <summary>
-        /// Gamepad / keyboard map (E9): skins ↕ and weapons ↕ are two vertical chains; Left / Right hops between the
-        /// columns; Down from the last card lands on the footer. Locked weapon rows are in the chain (the stage explains
-        /// them); pressing one is refused.
+        /// Gamepad / keyboard map: the difficulty rows ↕ and the weapons ↕ are two vertical chains (Back closes the first,
+        /// START RUN the second); Left / Right hops between them - Right from a mode lands on the chosen weapon, Left from a
+        /// weapon on the mode row beside it; Back ↔ START RUN. Locked rows are in the chains (the stage explains them); pressing
+        /// one is refused. The stage is not a stop: the pad's right stick and triggers turn and zoom it from anywhere on the page.
         /// </summary>
         private void LinkNavigation()
         {
-            var skins = new List<Selectable>(_skinButtons);
+            var setup = new List<Selectable>(_difficultyRows);
             var weapons = new List<Selectable>(_weaponButtons);
-            skins.Add(_backButton);
+            setup.Add(_backButton);
             weapons.Add(_startButton);
-            UiInput.ChainVertical(skins.ToArray());
+            UiInput.ChainVertical(setup.ToArray());
             UiInput.ChainVertical(weapons.ToArray());
 
-            int skinCards = skins.Count - 1;
-            int weaponCards = weapons.Count - 1;
-            int selected = Mathf.Max(0, SelectedIndex());
-            for (int i = 0; i < skinCards; i++)
+            int modes = _difficultyRows.Length;
+            int weaponRows = _weaponButtons.Length;
+            int chosen = Mathf.Max(0, SelectedIndex());
+            for (int i = 0; i < modes; i++)
             {
-                // → from any skin lands on the chosen weapon: the decision the player came back to adjust.
-                Selectable right = weaponCards > 0 ? weapons[Mathf.Min(selected, weaponCards - 1)] : _startButton;
-                UiInput.LinkHorizontal(skins[i], right, right);
+                Selectable right = weaponRows > 0 ? (Selectable)_weaponButtons[Mathf.Min(chosen, weaponRows - 1)] : _startButton;
+                UiInput.LinkHorizontal(_difficultyRows[i], right, right);
             }
 
-            for (int i = 0; i < weaponCards; i++)
+            for (int i = 0; i < weaponRows; i++)
             {
-                // ← from a weapon row lands on the skin card beside it (ten rows over three cards).
-                Selectable left = skinCards > 0 ? skins[Mathf.Min(i * skinCards / Mathf.Max(1, weaponCards), skinCards - 1)] : _backButton;
-                UiInput.LinkHorizontal(weapons[i], left, left);
+                int row = PrepareRunLayout.SetupRowFor(i, weaponRows, modes);
+                Selectable left = row >= 0 ? (Selectable)_difficultyRows[row] : _backButton;
+                UiInput.LinkHorizontal(_weaponButtons[i], left, left);
             }
 
             UiInput.LinkHorizontal(_backButton, _startButton, _startButton);
             UiInput.LinkHorizontal(_startButton, _backButton, _backButton);
         }
 
-        // =================================================================== skins
+        // =================================================================== run setup
 
-        private void BuildSkinColumn(RectTransform column)
+        private void BuildSetupColumn(RectTransform column)
         {
-            var stack = new UiStack(column);
+            _setupColumn = column;
+            IPrepareDifficulty source = PrepareDifficulty.Source;
+            _difficultyHeading = ColumnHeading(UiStrings.Get("difficulty.title", "DIFFICULTY"), column);
 
-            // WP-081 U1b: the heading, then the cards - the caption ("all three from the start, none changes a value") and each
-            // card's "Cosmetic only" left with R2 U1; the swatch and the preview show what a skin is.
-            stack.Add(ColumnHeading(UiStrings.Get("selection.skin.title", "CHARACTER SKIN"), column), UiFactory.LineHeight(UiType.H2));
-            stack.Gap(UiSpace.L);
-
-            int count = PlayerSkins.Count;
-            _skinButtons = new UiButton[count];
-            _skinPreviews = new Image[count];
-
+            int count = source.Count;
+            _difficultyRows = new UiButton[count];
+            _difficultyMarks = new Image[count][];
+            _modeDesc = new string[count];
+            _modeDetail = new string[count];
             for (int i = 0; i < count; i++)
             {
-                var skin = (PlayerSkin)i;
-                PlayerSkins.Palette palette = PlayerSkins.Get(skin);
+                int index = i;
+                string id = source.IdAt(i) ?? i.ToString(CultureInfo.InvariantCulture);
+                // The pack writes the mode names in capitals (DEMOLITION is a proper name in TR too): never upper-cased here,
+                // a Turkish upper-casing would dot its I.
+                string name = UiStrings.Get("difficulty." + id + ".name", id.ToUpperInvariant());
+                UiButton row = UiBrushKit.ListRow(column, "Difficulty." + id, name, null, () => SelectDifficulty(index));
+                _difficultyRows[i] = row;
+                _modeDesc[i] = UiStrings.Get("difficulty." + id + ".desc", string.Empty);
+                _modeDetail[i] = UiStrings.Get("difficulty." + id + ".detail", string.Empty);
 
-                // WP-098B (KILAVUZ §4.1 C18, AP-028 §3.4): an unframed kit list row - the portrait, the palette strip, the name
-                // (MenuBody) and the check glyph (32) on the choice; no card, no SELECTED badge.
-                UiButton button = UiBrushKit.ListRow(column, "Skin." + skin, palette.DisplayName, null, () => SelectSkin(skin), false);
-
-                stack.Add((RectTransform)button.transform, SkinCardHeight);
-                stack.Gap(UiSpace.L);
-
-                _skinPreviews[i] = BuildPreview(button, i);
-                BuildSwatch(button, palette);
-
-                // AD G1 MUST-3: the name top-aligned and growing downward, from the strip to the row's status glyph (the kit's
-                // SetRowStatus keeps that right edge measured; only the left and the top are set here).
-                float textLeft = PreviewSlotWidth + SwatchWidthNow + (int)UiSpace.XL + (int)UiSpace.L;
-                RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.M);
-                labelRect.offsetMax = new Vector2(labelRect.offsetMax.x, -(int)UiSpace.L);
-                button.LabelText.enableWordWrapping = true;
-                button.LabelText.alignment = TextAlignmentOptions.TopLeft;
-
-                _skinButtons[i] = button;
-
-                // Focus opens on the skin that is already selected - on a second run of
-                // the session that is the remembered one, not the first card.
-                if (skin == PrototypeUiFlow.SelectedSkin)
+                // The 1-3 indicator: three marks on the row's right, left of the check glyph's slot (fixed - the marks never
+                // move when the choice does).
+                var marks = new Image[3];
+                for (int m = 0; m < marks.Length; m++)
                 {
-                    SetInitialFocus(button);
+                    Image mark = UiFactory.NewImage("Mark" + m, row.transform, UiColor.TextPrimary, UiArt.Icon(MarkEmpty));
+                    mark.preserveAspect = true;
+                    var rect = (RectTransform)mark.transform;
+                    rect.anchorMin = new Vector2(1f, 0.5f);
+                    rect.anchorMax = new Vector2(1f, 0.5f);
+                    rect.pivot = new Vector2(1f, 0.5f);
+                    rect.sizeDelta = new Vector2(MarkSize, MarkSize);
+                    rect.anchoredPosition = new Vector2(-(MarksRight + (2 - m) * (MarkSize + MarkGap)), 0f);
+                    marks[m] = mark;
+                }
+
+                _difficultyMarks[i] = marks;
+            }
+
+            _modeLine = UiFactory.Label("ModeLine", column, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
+            _modeLine.enableWordWrapping = true;
+
+            // The map: its caption, the L01 art cover-fit in a framed well, its name.
+            _mapBlock = UiFactory.NewRect("Map", column);
+            _mapTitle = UiFactory.Label("Title", _mapBlock, UiStrings.Get("map.title", "MAP"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            _mapTitle.enableWordWrapping = false;
+            _mapFrame = UiFactory.FramedCard("Frame", _mapBlock, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
+            var thumb = new GameObject("Thumb", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            var thumbRect = (RectTransform)thumb.transform;
+            thumbRect.SetParent(_mapFrame, false);
+            UiFactory.Fill(thumbRect, UiTokens.StrokeHairline);
+            thumbRect.SetSiblingIndex(1);   // over the well's fill, under the ink frame
+            _mapThumb = thumb.GetComponent<RawImage>();
+            _mapThumb.raycastTarget = false;
+            _mapThumb.texture = Resources.Load<Texture2D>(MapArt);
+            _mapName = UiFactory.Label("Name", _mapBlock, UiStrings.Get("map.palace.name", "Palace Courtyard"), UiType.H3, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            _mapName.enableWordWrapping = false;
+
+            // The tip: the Tip.Hint glyph and one short line (no TIP word: the glyph says it).
+            _tipBlock = UiFactory.NewRect("Tip", column);
+            Image glyph = UiArt.IconImage("Glyph", _tipBlock, "Tip.Hint", UiColor.TextSecondary, TipGlyph);
+            var glyphRect = (RectTransform)glyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 1f);
+            glyphRect.anchorMax = new Vector2(0f, 1f);
+            glyphRect.pivot = new Vector2(0f, 1f);
+            glyphRect.anchoredPosition = Vector2.zero;
+            _tipText = UiFactory.Label("Text", _tipBlock, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
+            _tipText.enableWordWrapping = true;
+            RectTransform tipRect = UiFactory.Fill(_tipText.rectTransform);
+            tipRect.offsetMin = new Vector2(TipGlyph + (int)UiSpace.S, 0f);
+
+            bool hintsOn = UiSettings.Hints && (ProfileService.Current == null || ProfileService.Current.RunsPlayed < UiLoadingTips.HintRuns);
+            int tip = PrepareRunLayout.TipFor(PrepareRunLayout.TipPool(hintsOn), s_visits);
+            s_visits++;
+            _tipText.text = tip >= 0 ? UiStrings.Get(UiLoadingTips.All[tip].Key, UiLoadingTips.All[tip].Text) : string.Empty;
+            _tipBlock.gameObject.SetActive(tip >= 0);
+
+            LayoutSetup();
+        }
+
+        /// <summary>The marks' right edge from the row's: the check glyph's 24 px slot and its gap stay reserved.</summary>
+        private static float MarksRight
+        {
+            get { return (int)UiIconSize.S + (int)UiSpace.M; }
+        }
+
+        private static float MarksWidth
+        {
+            get { return 3f * MarkSize + 2f * MarkGap; }
+        }
+
+        /// <summary>
+        /// Places the setup column from what it holds at its real size (PrepareRunLayout.Setup): the heading, the rows, the mode
+        /// line (its room is the longest line or detail of any mode at this width, so nothing moves when focus walks), the map
+        /// and the tip. Short of room the gaps close, then the map art shrinks, then the tip goes, then the art.
+        /// </summary>
+        private void LayoutSetup()
+        {
+            if (_setupColumn == null || _difficultyRows == null)
+            {
+                return;
+            }
+
+            Rect area = _setupColumn.rect;
+            _setupSize = area.size;
+            if (area.width < 1f || area.height < 1f)
+            {
+                _setupLayoutPending = true;
+                return;
+            }
+
+            _setupLayoutPending = false;
+            float w = area.width;
+            float headH = LineOf(_difficultyHeading);
+            float rowH = _difficultyRows.Length > 0 ? ((RectTransform)_difficultyRows[0].transform).sizeDelta.y : 0f;
+            float rowsH = _difficultyRows.Length * rowH + Mathf.Max(0, _difficultyRows.Length - 1) * DifficultyRowGap;
+            float lineH = LineOf(_modeLine);
+            for (int i = 0; i < _difficultyRows.Length; i++)
+            {
+                lineH = Mathf.Max(lineH, Measure(_modeLine, _modeDesc[i], w), Measure(_modeLine, _modeDetail[i], w));
+            }
+
+            float difficultyH = headH + (int)UiSpace.S + rowsH + (int)UiSpace.S + lineH;
+            float mapTitleH = LineOf(_mapTitle);
+            float mapNameH = LineOf(_mapName);
+            float mapText = mapTitleH + (int)UiSpace.XS + (int)UiSpace.S + mapNameH;
+            bool tip = _tipBlock.gameObject.activeSelf || !string.IsNullOrEmpty(_tipText.text);
+            float tipH = tip ? Mathf.Max(TipGlyph, Measure(_tipText, _tipText.text, w - TipGlyph - (int)UiSpace.S)) : 0f;
+            float thumbIdeal = Mathf.Floor(w * 9f / 16f);
+            PrepareRunLayout.SetupBands bands = PrepareRunLayout.Setup(area.height, difficultyH, mapText, tipH, thumbIdeal, ThumbMin,
+                (int)UiSpace.XL, (int)UiSpace.M);
+
+            float y = 0f;
+            Dock(_difficultyHeading.rectTransform, y, headH);
+            y += headH + (int)UiSpace.S;
+            for (int i = 0; i < _difficultyRows.Length; i++)
+            {
+                Dock((RectTransform)_difficultyRows[i].transform, y, rowH);
+                y += rowH + (i < _difficultyRows.Length - 1 ? DifficultyRowGap : 0f);
+            }
+
+            y += (int)UiSpace.S;
+            Dock(_modeLine.rectTransform, y, lineH);
+            y += lineH + bands.Gap;
+
+            float mapH = mapTitleH + (int)UiSpace.XS + bands.Thumb + (int)UiSpace.S + mapNameH;
+            Dock(_mapBlock, y, mapH);
+            SetTop(_mapTitle, 0f, 0f, mapTitleH);
+            _mapFrame.gameObject.SetActive(bands.Thumb > 0f);
+            if (bands.Thumb > 0f)
+            {
+                Dock(_mapFrame, mapTitleH + (int)UiSpace.XS, bands.Thumb);
+                Texture art = _mapThumb.texture;
+                _mapThumb.uvRect = art != null
+                    ? PrepareRunLayout.CoverUv(art.width, art.height, w, bands.Thumb, ThumbFocusY)
+                    : new Rect(0f, 0f, 1f, 1f);
+            }
+
+            SetTop(_mapName, 0f, mapTitleH + (int)UiSpace.XS + bands.Thumb + (int)UiSpace.S, mapNameH);
+            y += mapH;
+
+            _tipBlock.gameObject.SetActive(bands.Tip && tip);
+            if (bands.Tip && tip)
+            {
+                y += bands.Gap;
+                Dock(_tipBlock, y, tipH);
+            }
+        }
+
+        private void SelectDifficulty(int index)
+        {
+            IPrepareDifficulty source = PrepareDifficulty.Source;
+            if (!source.Select(index))
+            {
+                // A locked mode refuses as a locked weapon does: the row nudges, Denied plays, nothing changes.
+                UiPresets.DeniedNudge((RectTransform)_difficultyRows[index].transform);
+                UiSound.Play(UiSoundKind.Denied);
+                return;
+            }
+
+            RefreshDifficulty();
+            UiEvents.Raise(UiEvent.ChoiceSelected, "Difficulty");
+        }
+
+        private void RefreshDifficulty()
+        {
+            if (_difficultyRows == null)
+            {
+                return;
+            }
+
+            IPrepareDifficulty source = PrepareDifficulty.Source;
+            int chosen = source.Selected;
+            Sprite full = UiArt.Icon(MarkFull);
+            Sprite empty = UiArt.Icon(MarkEmpty);
+            for (int i = 0; i < _difficultyRows.Length; i++)
+            {
+                UiButton row = _difficultyRows[i];
+                bool locked = source.IsLockedAt(i);
+                bool selected = i == chosen && !locked;
+                row.SetSelectedChoice(selected);   // the state the pad / tests read; the check glyph draws it
+                row.ConfirmCue = !locked;          // WP-105 SHOULD-8: a refused press has one voice (Denied)
+                UiBrushKit.SetRowStatus(row, selected ? CheckGlyph : locked ? LockGlyph : null, null);
+
+                // The label stops before the marks (the kit measured it against the status glyph only).
+                RectTransform label = row.LabelText.rectTransform;
+                label.offsetMax = new Vector2(-(MarksRight + MarksWidth + (int)UiSpace.L), label.offsetMax.y);
+
+                int level = source.LevelAt(i);
+                Image[] marks = _difficultyMarks[i];
+                for (int m = 0; m < marks.Length; m++)
+                {
+                    bool on = m < level;
+                    UiArt.SetGlyph(marks[m], on ? full : empty);
+                    marks[m].enabled = marks[m].sprite != null;
+                    marks[m].color = UiTokens.Get(on ? UiColor.TextPrimary : UiColor.TextSecondary);
                 }
             }
+
+            GameObject focus = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            int focused = DifficultyIndexOf(focus);
+            _modeLineIndex = -1;
+            ShowModeLine(focused >= 0 ? focused : chosen, focused >= 0);
         }
 
-        /// <summary>Width the character preview takes at the card's leading edge (0 without art).</summary>
-        private static float PreviewSlotWidth
+        /// <summary>The mode line: the focused mode's detail while a row has focus, else the chosen mode's short line.</summary>
+        private void ShowModeLine(int index, bool focused)
         {
-            get { return UiArt.SkinPreview(0) != null ? SkinCardHeight - (int)UiSpace.L * 2 + (int)UiSpace.L : 0f; }
-        }
-
-        private static float SwatchWidthNow
-        {
-            get { return PreviewSlotWidth > 0f ? 24f : SwatchWidth; }
-        }
-
-        /// <summary>
-        /// The AP-006 front-view render of the skin (WP-022): the real character, not a
-        /// colour strip, is what a skin choice is about. Sits inside a recessed well so a
-        /// pale skin still has an edge on the card. Absent art leaves the slot at zero width.
-        /// </summary>
-        private static Image BuildPreview(UiButton button, int skinIndex)
-        {
-            Sprite sprite = UiArt.SkinPreview(skinIndex);
-            if (sprite == null)
+            if (_modeLine == null || _modeDesc == null || index < 0 || index >= _modeDesc.Length)
             {
-                return null;
+                return;
             }
 
-            float size = SkinCardHeight - (int)UiSpace.L * 2;
-            Image well = UiFactory.NewImage("PreviewWell", button.transform, UiColor.SurfaceInset, UiSprites.Chip);
-            var wellRect = (RectTransform)well.transform;
-            wellRect.anchorMin = new Vector2(0f, 0.5f);
-            wellRect.anchorMax = new Vector2(0f, 0.5f);
-            wellRect.pivot = new Vector2(0f, 0.5f);
-            wellRect.sizeDelta = new Vector2(size, size);
-            wellRect.anchoredPosition = new Vector2((int)UiSpace.L, 0f);
-
-            Image preview = UiFactory.NewImage("Preview", wellRect, UiColor.TextPrimary, sprite);
-            UiFactory.Fill((RectTransform)preview.transform, (int)UiSpace.XS);
-            preview.preserveAspect = true;
-            return preview;
-        }
-
-        /// <summary>Three stacked bands of the skin's own palette. No text needed.</summary>
-        private static void BuildSwatch(UiButton button, PlayerSkins.Palette palette)
-        {
-            RectTransform swatch = UiFactory.NewRect("Swatch", button.transform);
-            swatch.anchorMin = new Vector2(0f, 0f);
-            swatch.anchorMax = new Vector2(0f, 1f);
-            swatch.pivot = new Vector2(0f, 0.5f);
-            swatch.sizeDelta = new Vector2(SwatchWidthNow, -((int)UiSpace.L * 2));
-            swatch.anchoredPosition = new Vector2((int)UiSpace.L + PreviewSlotWidth, 0f);
-
-            Image frame = UiFactory.NewImage("Frame", swatch, UiColor.BorderStrong, UiSprites.Chip);
-            UiFactory.Fill((RectTransform)frame.transform);
-
-            AddBand(swatch, palette.Primary, 0f, 0.5f);
-            AddBand(swatch, palette.Secondary, 0.5f, 0.82f);
-            AddBand(swatch, palette.Accent, 0.82f, 1f);
-        }
-
-        /// <summary>
-        /// The swatch is the ONE place in this module that draws a colour that is not a
-        /// UI token: it is showing the player character's palette, which is owned by
-        /// <c>PlayerSkins</c>. Painting it from a UI token would show the wrong colour.
-        /// It carries no text, so no contrast pair depends on it.
-        /// </summary>
-        private static void AddBand(RectTransform parent, Color color, float from, float to)
-        {
-            var go = new GameObject("Band", typeof(RectTransform), typeof(Image));
-            var rect = (RectTransform)go.transform;
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0f, from);
-            rect.anchorMax = new Vector2(1f, to);
-            rect.offsetMin = new Vector2(UiTokens.StrokeControl, UiTokens.StrokeControl);
-            rect.offsetMax = new Vector2(-UiTokens.StrokeControl, -UiTokens.StrokeControl);
-
-            var image = go.GetComponent<Image>();
-            image.sprite = UiSprites.Solid;
-            image.color = color;
-            image.raycastTarget = false;
-        }
-
-        private void SelectSkin(PlayerSkin skin)
-        {
-            PrototypeUiFlow.SelectedSkin = skin;
-            RefreshSkins();
-            RefreshStartCaption();
-            UiEvents.Raise(UiEvent.ChoiceSelected, "Skin");
-        }
-
-        private void RefreshSkins()
-        {
-            for (int i = 0; i < _skinButtons.Length; i++)
+            if (index == _modeLineIndex && focused == _modeLineDetail)
             {
-                bool selected = (PlayerSkin)i == PrototypeUiFlow.SelectedSkin;
-                _skinButtons[i].SetSelectedChoice(selected);   // the state the pad / tests read; the check glyph draws it
-                UiBrushKit.SetRowStatus(_skinButtons[i], selected ? CheckGlyph : null, null);
+                return;
             }
+
+            _modeLineIndex = index;
+            _modeLineDetail = focused;
+            string detail = _modeDetail[index];
+            _modeLine.text = focused && !string.IsNullOrEmpty(detail) ? detail : _modeDesc[index];
+        }
+
+        private int DifficultyIndexOf(GameObject focus)
+        {
+            if (focus == null || _difficultyRows == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _difficultyRows.Length; i++)
+            {
+                if (_difficultyRows[i] != null && _difficultyRows[i].gameObject == focus)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         // ================================================================= weapons
 
         /// <summary>
-        /// One 48 px row per Arsenal classic weapon (WP-069 §1098: Selection reads the Arsenal, enabled only, sortOrder): the glyph in its
-        /// lineage tint (N19; α 0.55 while locked, never a grey swap), the pack name, and a chip - SELECTED on the choice,
-        /// LOCKED · L{n} on a weapon the profile has not earned. Then the two Specials as information tiles.
-        /// R3 m12: the glyph is the weapon's AP-036 side view (untinted, α 0.55 while locked), every row at one scale.
-        /// WP-098B (KILAVUZ §4.1 C18): each row is the kit's unframed compact list row - the name at the dense list's 20 px,
-        /// the check glyph on the choice, the lock glyph and its level ("L3", "PATH · L11") on a weapon not yet earned; no
-        /// SELECTED / LOCKED chip.
+        /// One row per Arsenal classic weapon (WP-069 §1098: enabled only, sortOrder): the AP-036 side view (untinted, α 0.55
+        /// while locked), the pack name at the dense list's 20 px, the check glyph on the choice, the lock glyph and its chip
+        /// on a weapon that cannot start a run (WP-107: "WALL BUY" on the rocket launcher; "LEVEL n" / "PATH · Ln" where a
+        /// profile has not earned one). Then the two Specials as information tiles.
         /// </summary>
         private void BuildWeaponColumn(RectTransform column)
         {
             var stack = new UiStack(column);
-            stack.Add(ColumnHeading(UiStrings.Get("selection.weapon.title", "CLASSIC WEAPON"), column), UiFactory.LineHeight(UiType.H2));
+            stack.Add(ColumnHeading(UiStrings.Get("selection.weapon.title", "CLASSIC WEAPON"), column).rectTransform, UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
             _weaponsColumn = column;
             _weaponsTop = stack.Cursor;
@@ -503,8 +770,7 @@ namespace DD.Prototype.UI
                 }
 
                 // R3 m12 (WP-098B): the AP-036 side view, placed at the column's one scale by LayoutWeapons. Without it the
-                // G1 cell by runtime id (N19 Weapon.<ClassicWeaponId>; a v3 id without one borrows its class sibling's),
-                // then the definition's own HUD icon key.
+                // G1 cell by runtime id, then the definition's own HUD icon key.
                 int side = WeaponSideView.IndexOf(def.weaponId);
                 Sprite glyphSprite = side >= 0 ? WeaponSideView.Load(side) : null;
                 if (glyphSprite == null)
@@ -564,8 +830,9 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The two Specials (DEC-094): found on the field, never chosen here - information tiles, not controls. The glyph
-        /// wears its Special's identity tint (Arc / Gel); the name and fire mode come from the pack.
+        /// The two Specials (DEC-094): found on the field, never chosen here - information tiles, not controls. The side view
+        /// at the rows' scale; the name and fire mode from the pack, side by side - or stacked when they do not fit beside it
+        /// (U2: the Mac canvas at UI 1.2 × text 1.25 cut "LOB"; PrepareRunLayout.SpecialBeside).
         /// </summary>
         private void BuildSpecialTiles(RectTransform column, ref UiStack stack)
         {
@@ -575,8 +842,6 @@ namespace DD.Prototype.UI
             _specialsHead = head;
             _specialsTitleBand = band;
             stack.Add(head, band);
-            // WP-081 U1b: the title alone - the note ("found on the field, never chosen here") left with R2 U1; the tiles
-            // carry no button, so nothing on them reads as a choice.
             TMP_Text title = UiFactory.Label("Title", head, UiStrings.Get("selection.specials.title", "SPECIAL WEAPONS"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             SetTop(title, 0f, 0f, band);
             stack.Gap(UiSpace.XS);
@@ -595,7 +860,6 @@ namespace DD.Prototype.UI
                 tile.offsetMin = new Vector2(i == 0 ? 0f : (int)UiSpace.XS, 0f);
                 tile.offsetMax = new Vector2(i == 0 ? -(int)UiSpace.XS : 0f, 0f);
 
-                // R3 m12: the AP-036 side view at the rows' scale (LayoutWeapons places it); the tinted G1 glyph without it.
                 int side = WeaponSideView.IndexOf(ids[i]);
                 Sprite sprite = side >= 0 ? WeaponSideView.Load(side) : null;
                 if (sprite == null)
@@ -622,16 +886,12 @@ namespace DD.Prototype.UI
                 }
 
                 TMP_Text name = UiFactory.Label("Name", tile, UiStrings.Upper(UiStrings.Get("weapon." + ids[i] + ".name", ids[i])), UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
-                RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
-                nameRect.offsetMin = new Vector2(left, 0f);
-                nameRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+                UiFactory.Fill((RectTransform)name.transform);
                 name.enableWordWrapping = false;
                 TMP_Text mode = UiFactory.Label("Mode", tile, UiStrings.Get("weapon." + ids[i] + ".firemode", string.Empty), UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
-                RectTransform modeRect = UiFactory.Fill((RectTransform)mode.transform);
-                modeRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+                UiFactory.Fill((RectTransform)mode.transform);
                 mode.enableWordWrapping = false;
                 mode.overflowMode = TextOverflowModes.Ellipsis;
-                // U1b MUST-2 (AD + ui-ux, 06.10): LayoutSpecialTiles keeps the name whole and the mode >= S beside it.
                 _specialNames[i] = name;
                 _specialModes[i] = mode;
                 _specialTextLeft[i] = left;
@@ -645,125 +905,141 @@ namespace DD.Prototype.UI
         {
             UiCard card = UiCard.Create("StageCard", column, Vector2.zero, UiElevation.Elev1, UiColor.SurfacePanel, UiSpace.XL);
             UiFactory.Fill((RectTransform)card.transform);
-            _stageCard = (RectTransform)card.transform;   // LayoutStage fits it to its content (U1b MUST-1)
+            _stageCard = (RectTransform)card.transform;
             RectTransform content = card.Content;
             _stageContent = content;
             _stageText = UiFactory.Group(content.gameObject);
 
-            // Every block is built here and placed by LayoutStage from the texts it holds (the stage is measured, not
-            // stacked on fixed bands: TextScale 1.25 on the Mac canvas at UI scale 1.2 leaves ~560 px for it).
+            // Every block is built here and placed by LayoutStage from the texts it holds (measured, not stacked on fixed
+            // bands: the Mac canvas at UI scale 1.2 × TextScale 1.25 is the short case; the preview takes the slack).
             _stageTop = UiFactory.NewRect("Identity", content);
-            _stageGlyph = UiFactory.NewImage("StageGlyph", _stageTop, UiColor.TextPrimary, UiArt.WeaponIcon(ClassicWeaponId.AssaultRifle));
+            _stageName = TopLabel("Name", _stageTop, UiType.H1, UiColor.TextPrimary);
+            _stageClass = TopLabel("Class", _stageTop, UiType.Label, UiColor.TextSecondary);
+            _stageRole = TopLabel("Role", content, UiType.Body, UiColor.TextPrimary);
+            _stageName.enableWordWrapping = false;
+            _stageClass.enableWordWrapping = false;
+            _stageName.overflowMode = TextOverflowModes.Ellipsis;
+            _stageClass.overflowMode = TextOverflowModes.Ellipsis;
+            _stageRole.enableWordWrapping = true;
+
+            // The 3D preview: a recessed well, the side view standing in until the first render, the stage's view over it, and
+            // the device's hint glyph in its corner (its words on the pointer's hover only - R2 U1). Nothing over the view takes
+            // the pointer: the stage's drag, wheel and double click land on its own image.
+            Image well = UiFactory.NewImage("Preview", content, UiColor.SurfaceInset, UiSprites.Card);
+            _previewWell = (RectTransform)well.transform;
+            _stageGlyph = UiFactory.NewImage("StageGlyph", _previewWell, UiColor.TextPrimary, UiArt.WeaponIcon(ClassicWeaponId.AssaultRifle));
             _stageGlyph.preserveAspect = true;
             if (UiArt.IsGlyph(_stageGlyph.sprite))
             {
                 UiArt.ApplyGlyph(_stageGlyph, GlyphEdge);
             }
 
-            _stageName = TopLabel("Name", _stageTop, UiType.H1, UiColor.TextPrimary, 0f, 0f, 1f);
-            _stageClass = TopLabel("Class", _stageTop, UiType.Label, UiColor.TextSecondary, 0f, 0f, 1f);
-            _stageRole = TopLabel("Role", content, UiType.Body, UiColor.TextPrimary, 0f, 0f, 1f);
-            _stageName.enableWordWrapping = false;
-            _stageClass.enableWordWrapping = false;
-            _stageName.overflowMode = TextOverflowModes.Ellipsis;
-            _stageClass.overflowMode = TextOverflowModes.Ellipsis;   // "LIGHT MACHINE GUN · AUTO" on the 1408 canvas
-            _stageRole.overflowMode = TextOverflowModes.Ellipsis;
-
-            _stageDescription = UiFactory.Label("Description", content, string.Empty, UiType.Body, UiColor.TextSecondary);
-            _stageDescription.overflowMode = TextOverflowModes.Ellipsis;
-            _stageFlavour = UiFactory.Label("Flavour", content, string.Empty, UiType.Caption, UiColor.TextMuted);
-            _stageFlavour.fontStyle = FontStyles.Italic;
-            _stageFlavour.overflowMode = TextOverflowModes.Ellipsis;
-
-            // The StatStrip: two rows of two, each a label, a number and a roster bar.
-            for (int s = 0; s < 4; s++)
+            _stage = CreateStage(_previewWell);
+            _awaitFirstRender = _stage != null;
+            if (_stage != null && _stage.View != null)
             {
-                RectTransform cell = UiFactory.NewRect("Stat" + s, content);
+                _previewHover = _stage.View.gameObject.AddComponent<PrepareRunPreviewHover>();
+                _previewHover.Bind(OnPreviewHover);
+            }
+
+            _previewHint = UiFactory.NewImage("Hint", _previewWell, UiColor.TextSecondary, UiArt.Icon(HintGlyphKey(UiInputScheme.Current)));
+            _previewHint.preserveAspect = true;
+            _previewHint.enabled = _previewHint.sprite != null && _stage != null;
+            Place((RectTransform)_previewHint.transform, new Vector2(1f, 0f), new Vector2(-(int)UiSpace.M, (int)UiSpace.M), new Vector2(HintGlyph, HintGlyph));
+            ((RectTransform)_previewHint.transform).pivot = new Vector2(1f, 0f);
+            _previewHintText = UiFactory.Label("HintText", _previewWell, UiStrings.Get("selection.preview.hint", "Drag: rotate · Scroll: zoom"),
+                UiType.Caption, UiColor.TextSecondary, TextAnchor.LowerRight);
+            _previewHintText.enableWordWrapping = false;
+            RectTransform hintText = _previewHintText.rectTransform;
+            hintText.anchorMin = new Vector2(0f, 0f);
+            hintText.anchorMax = new Vector2(1f, 0f);
+            hintText.pivot = new Vector2(1f, 0f);
+            hintText.offsetMin = new Vector2((int)UiSpace.M, (int)UiSpace.M);
+            hintText.offsetMax = new Vector2(-((int)UiSpace.M + HintGlyph + (int)UiSpace.S), (int)UiSpace.M + HintGlyph);
+            _previewHintText.gameObject.SetActive(false);
+
+            // Five stat cards: icon + short label, the number, the roster bar (a card without a bar keeps its row).
+            _statsRow = UiFactory.NewRect("Stats", content);
+            for (int s = 0; s < PrepareRunLayout.StatCount; s++)
+            {
+                RectTransform cell = UiFactory.FramedCard("Stat" + s, _statsRow, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
                 _statCells[s] = cell;
-                _statLabels[s] = TopLabel("Label", cell, UiType.Caption, UiColor.TextSecondary, 0f, 0f, 1f);
-                _statValues[s] = TopLabel("Value", cell, UiType.Label, UiColor.TextPrimary, 0f, 0f, 1f);
+                Image icon = UiFactory.NewImage("Icon", cell, UiColor.TextSecondary, null);
+                icon.preserveAspect = true;
+                icon.enabled = false;
+                Place((RectTransform)icon.transform, new Vector2(0f, 1f), new Vector2((int)UiSpace.S, -(int)UiSpace.S), new Vector2(StatIcon, StatIcon));
+                _statIcons[s] = icon;
+                _statLabels[s] = TopLabel("Label", cell, UiType.Caption, UiColor.TextSecondary);
+                _statValues[s] = TopLabel("Value", cell, UiType.Label, UiColor.TextPrimary);
                 _statLabels[s].enableWordWrapping = false;
                 _statValues[s].enableWordWrapping = false;
-                _statLabels[s].overflowMode = TextOverflowModes.Ellipsis;
 
                 UiBar bar = UiFactory.Bar("Bar", cell, UiColor.TextPrimary, StatBarHeight);
                 RectTransform barRect = (RectTransform)bar.transform;
                 barRect.anchorMin = new Vector2(0f, 0f);
                 barRect.anchorMax = new Vector2(1f, 0f);
                 barRect.pivot = new Vector2(0.5f, 0f);
-                barRect.sizeDelta = new Vector2(0f, StatBarHeight);
-                barRect.anchoredPosition = Vector2.zero;
+                barRect.offsetMin = new Vector2((int)UiSpace.S, (int)UiSpace.S);
+                barRect.offsetMax = new Vector2(-(int)UiSpace.S, (int)UiSpace.S + StatBarHeight);
                 _statBars[s] = bar;
             }
 
-            // WP-081 U1b: no caption under the bars ("compare with the other classic weapons, longer is better") - the
-            // roster bars read on their own; the label stays for LayoutStage, empty, so its band closes.
-            _compareCaption = UiFactory.Label("CompareCaption", content, string.Empty, UiType.Caption, UiColor.TextMuted);
-
-            // CORE: the weapon's three round-end branches (WP-034 shop gate).
-            _coreRow = UiFactory.NewRect("CoreBranches", content);
-            TMP_Text coreLabel = UiFactory.Label("Label", _coreRow, UiStrings.Get("selection.core", "CORE"), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            RectTransform coreLabelRect = (RectTransform)coreLabel.transform;
-            coreLabelRect.anchorMin = new Vector2(0f, 0f);
-            coreLabelRect.anchorMax = new Vector2(0f, 1f);
-            coreLabelRect.pivot = new Vector2(0f, 0.5f);
-            coreLabelRect.sizeDelta = new Vector2(CoreLabelMinWidth, 0f);
-            coreLabelRect.anchoredPosition = Vector2.zero;
-            for (int i = 0; i < 3; i++)
-            {
-                RectTransform slot = UiFactory.NewRect("Core" + i, _coreRow);
-                slot.anchorMin = new Vector2(0f, 0f);
-                slot.anchorMax = new Vector2(0f, 1f);
-                slot.pivot = new Vector2(0f, 0.5f);
-                Image glyph = UiFactory.NewImage("Glyph", slot, UiColor.TextSecondary, UiSprites.Disc);
-                glyph.preserveAspect = true;
-                Place((RectTransform)glyph.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(CoreGlyphSize, CoreGlyphSize));
-                _coreGlyphs[i] = glyph;
-                TMP_Text name = UiFactory.Label("Name", slot, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
-                RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
-                nameRect.offsetMin = new Vector2(CoreGlyphSize + (int)UiSpace.XS, 0f);
-                name.enableWordWrapping = false;
-                name.overflowMode = TextOverflowModes.Ellipsis;
-                _coreNames[i] = name;
-            }
-
-            // The state line: what carrying it means, or what unlocks it (+ the XP mini-bar).
+            // The state line: what keeps the weapon out of a starting loadout (WP-107: the wall-buy weapon), else empty.
             _stateRow = UiFactory.NewRect("State", content);
-            _stateLine = UiFactory.Label("Line", _stateRow, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            _stateLine = UiFactory.Label("Line", _stateRow, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
             _stateLine.richText = true;   // the PATH line marks each met part in cream (built on a focus change)
-            _stateLine.overflowMode = TextOverflowModes.Ellipsis;
-            UiFactory.Fill((RectTransform)_stateLine.transform);   // the full width: AD R1-B SHOULD-3 retired the unlabeled XP track
+            _stateLine.enableWordWrapping = true;
+            UiFactory.Fill((RectTransform)_stateLine.transform);
         }
 
-        // "CORE" and its gap; the word itself is measured (AD d109 MUST-2: the Turkish word was cut at a fixed 52).
-        private const float CoreLabelMinWidth = 52f;
-        private const float StageGlyphCompact = 96f;
-
-        /// <summary>U1b MUST-1: the stage card's height - its content, at least down to the skins' last card, at most the column.</summary>
-        private void FitStageCard(RectTransform stageColumn, float contentHeight)
+        /// <summary>P1's 3D stage on the well; a stage that cannot be built leaves the side view standing in (never a dead page).</summary>
+        private static PrepareRunStage CreateStage(RectTransform host)
         {
-            float floor = 0f;
-            if (_skinButtons != null && _skinButtons.Length > 0 && _skinButtons[_skinButtons.Length - 1] != null)
+            try
             {
-                ((RectTransform)_skinButtons[_skinButtons.Length - 1].transform).GetWorldCorners(s_stageCorners);
-                floor = stageColumn.rect.yMax - stageColumn.InverseTransformPoint(s_stageCorners[0]).y;
+                return PrepareRunStage.Create(host);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[PrepareRun] the 3D preview could not be built - the side view stands in: " + e.Message);
+                return null;
+            }
+        }
+
+        private static string HintGlyphKey(InputSchemeKind scheme)
+        {
+            return scheme == InputSchemeKind.Gamepad ? "Pad.RSMove" : "Mouse.Move";
+        }
+
+        private void OnSchemeChanged(InputSchemeKind scheme)
+        {
+            if (_previewHint == null)
+            {
+                return;
             }
 
-            float height = Mathf.Min(stageColumn.rect.height, Mathf.Max(contentHeight, floor));
-            _stageCard.anchorMin = new Vector2(0f, 1f);
-            _stageCard.anchorMax = new Vector2(1f, 1f);
-            _stageCard.pivot = new Vector2(0.5f, 1f);
-            _stageCard.sizeDelta = new Vector2(0f, height);
-            _stageCard.anchoredPosition = Vector2.zero;
-            _stageSize = _stageContent.rect.size;   // the card's own resize is not a new layout trigger
+            UiArt.SetGlyph(_previewHint, UiArt.Icon(HintGlyphKey(scheme)));
+            _previewHint.enabled = _previewHint.sprite != null && _stage != null;
+            if (scheme == InputSchemeKind.Gamepad)
+            {
+                _previewHintText.gameObject.SetActive(false);
+            }
+        }
+
+        private void OnPreviewHover(bool over)
+        {
+            if (_previewHintText != null)
+            {
+                _previewHintText.gameObject.SetActive(over && _stage != null && UiInputScheme.Current != InputSchemeKind.Gamepad);
+            }
         }
 
         /// <summary>
-        /// Places the stage's blocks from what they hold at the card's real size. Heights come from the texts (the
-        /// description's measured lines, up to five). A stat whose label and value do not fit on one line puts the value
-        /// under its label. When the card is short (Mac canvas at UI scale 1.2 × TextScale 1.25), the gaps close first,
-        /// then the flavour line and the bar caption drop, then the glyph steps down to 96 and the description is clipped
-        /// last. Run on a focus change and when the card's size changes, never per frame otherwise.
+        /// Places the stage's blocks from what they hold at the card's real size (PrepareRunLayout.Stage): the name with its
+        /// class beside it when both hold one line (else the class under it), the role (measured, it wraps, never cut), the
+        /// preview (the slack), the stat cards (five a row while each card's widest line fits, else three over two …) and the
+        /// state line (its place kept when empty). Short of room the gaps close, then the preview shrinks; the texts never
+        /// yield. Run on a focus change and when the card's size changes, never per frame otherwise.
         /// </summary>
         private void LayoutStage()
         {
@@ -774,8 +1050,7 @@ namespace DD.Prototype.UI
 
             Rect area = _stageContent.rect;
             _stageSize = area.size;
-            RectTransform stageColumn = (RectTransform)_stageCard.parent;
-            if (area.height < 1f || area.width < 1f || stageColumn.rect.height < 1f)
+            if (area.height < 1f || area.width < 1f)
             {
                 _stageLayoutPending = true;   // the canvas has not laid out yet: next Update
                 return;
@@ -783,240 +1058,132 @@ namespace DD.Prototype.UI
 
             _stageLayoutPending = false;
             float w = area.width;
-            // U1b MUST-1 (AD + ui-ux, 06.10): the card ends under its content, so the room is the column's, less the card's
-            // own top and bottom padding (the card - content difference holds at any card height).
-            float inset = _stageCard.rect.height - area.height;
-            float h = stageColumn.rect.height - inset;
-            // Line heights measured from the texts themselves (their font size already carries the TextScale; the
-            // ScaledBand metric would count it twice and plan a Mac stage ~25 % taller than it renders - AD R1-B re-check).
-            float bodyLine = LineOf(_stageDescription);
-            float captionLine = LineOf(_compareCaption);
-            float labelLine = LineOf(_stageClass);
-            float nameBand = LineOf(_stageName);
-            float statLine = Mathf.Max(LineOf(_statLabels[0]), LineOf(_statValues[0]));
+            float h = area.height;
 
-            // The StatStrip: two by two while every label and value share a line; one column when any cannot (AD R1-B
-            // MUST-2a: a value never wraps under its label).
-            float cellW = Mathf.Floor((w - (int)UiSpace.XL) * 0.5f);
-            bool oneColumn = false;
-            for (int s = 0; s < 4; s++)
+            // Identity
+            float nameLine = LineOf(_stageName);
+            bool hasClass = !string.IsNullOrEmpty(_stageClass.text);
+            float classLine = hasClass ? LineOf(_stageClass) : 0f;
+            float nameW = Mathf.Ceil(_stageName.GetPreferredValues(_stageName.text).x);
+            float classW = hasClass ? Mathf.Ceil(_stageClass.GetPreferredValues(_stageClass.text).x) : 0f;
+            bool classBeside = hasClass && nameW + (int)UiSpace.L + classW <= w;
+            float roleH = Measure(_stageRole, _stageRole.text, w);
+            float topH = nameLine + (hasClass && !classBeside ? (int)UiSpace.XS + classLine : 0f);
+            float identityH = topH + (roleH > 0f ? (int)UiSpace.S + roleH : 0f);
+
+            // Stat cards
+            float labelLine = LineOf(_statLabels[0]);
+            float valueLine = LineOf(_statValues[0]);
+            for (int s = 0; s < PrepareRunLayout.StatCount; s++)
             {
-                float lw = _statLabels[s].GetPreferredValues(_statLabels[s].text).x;
-                float vw = _statValues[s].GetPreferredValues(_statValues[s].text).x;
-                oneColumn |= lw + vw + (int)UiSpace.S > cellW;
+                float lw = Mathf.Ceil(_statLabels[s].GetPreferredValues(_statLabels[s].text).x);
+                float vw = Mathf.Ceil(_statValues[s].GetPreferredValues(_statValues[s].text).x);
+                float iconW = _statIcons[s].enabled ? StatIcon + (int)UiSpace.XS : 0f;
+                _statNeed[s] = (int)UiSpace.S * 2f + Mathf.Max(iconW + lw, vw);
             }
 
-            float cellH = statLine + (int)UiSpace.XS + StatBarHeight;
-            float rowGap = oneColumn ? (int)UiSpace.S : (int)UiSpace.M;
-            float statsH = oneColumn ? cellH * 4f + rowGap * 3f : cellH * 2f + rowGap;
-            float coreH = Mathf.Max(CoreGlyphSize + 4f, captionLine);
-            float stateH = captionLine;
-            float compareH = string.IsNullOrEmpty(_compareCaption.text) ? 0f : Mathf.Ceil(_compareCaption.GetPreferredValues(_compareCaption.text, w, 0f).y);
-            float flavourH = string.IsNullOrEmpty(_stageFlavour.text) ? 0f : captionLine;
-            float descH = string.IsNullOrEmpty(_stageDescription.text) ? 0f
-                : Mathf.Min(bodyLine * 5f, Mathf.Ceil(_stageDescription.GetPreferredValues(_stageDescription.text, w, 0f).y));
+            _statColumns = PrepareRunLayout.StatColumns(w, (int)UiSpace.M, _statNeed);
+            int rows = PrepareRunLayout.Rows(PrepareRunLayout.StatCount, _statColumns);
+            float cellW = PrepareRunLayout.CellWidth(w, (int)UiSpace.M, _statColumns);
+            float headLine = Mathf.Max(StatIcon, labelLine);
+            float cellH = (int)UiSpace.S + headLine + (int)UiSpace.XS + valueLine + (int)UiSpace.XS + StatBarHeight + (int)UiSpace.S;
+            float statsH = rows * cellH + (rows - 1) * (int)UiSpace.M;
 
-            // The class line ("LIGHT MACHINE GUN · AUTO") must hold one line beside the glyph: a narrow card takes the
-            // 96 glyph from the start (T3: nothing on the stage is cut).
-            // R3 m12 (WP-098B): with its AP-036 side view the weapon is a band over the card's width instead - one scale for
-            // every weapon (the longest fills the width, the tallest the band), the name, class and role under it.
-            int stageSide = _weaponSides != null && _stageIndex >= 0 && _stageIndex < _weaponSides.Length ? _weaponSides[_stageIndex] : -1;
-            bool band = stageSide >= 0;
-            float bandH = 0f;
-            float stageScale = 0f;
-            float classW = _stageClass.GetPreferredValues(_stageClass.text).x;
-            float glyph = band || classW <= w - StageGlyph - (int)UiSpace.L ? StageGlyph : StageGlyphCompact;
-            float gap = (int)UiSpace.L;
-            bool showFlavour = flavourH > 0f;
-            bool showCompare = compareH > 0f;
-            bool roleBeside = true;
-            bool classBeside = true;
-            float roleBelowH = 0f;
-            float topH = glyph;
-            float BelowH()
-            {
-                return (classBeside ? 0f : (int)UiSpace.S + labelLine) + (roleBelowH > 0f ? (int)UiSpace.S + roleBelowH : 0f);
-            }
+            // State line: its measured lines, at least one (its place is kept when empty: the stats do not jump on focus).
+            float stateH = Mathf.Max(LineOf(_stateLine), Measure(_stateLine, _stateLine.text, w));
 
-            void Identity()
-            {
-                // The class and the role sit beside the glyph when each holds one line there; otherwise they take the
-                // card's width under the identity block (AD R1-B MUST-2a: no wrap, no cut beside the glyph). Under a side-view
-                // band the "beside" column is the card's full width.
-                if (band)
-                {
-                    stageScale = WeaponSideView.PixelsPerMetre(w, glyph);
-                    bandH = Mathf.Ceil(WeaponSideView.MaxHeightM * stageScale);
-                }
+            PrepareRunLayout.StageBands bands = PrepareRunLayout.Stage(h, identityH + statsH + stateH, (int)UiSpace.L, (int)UiSpace.S, PreviewMin, PreviewHide,
+                Mathf.Floor(w * PreviewMaxAspect));
 
-                float textW = band ? w : w - glyph - (int)UiSpace.L;
-                classBeside = classW <= textW;
-                float roleW = string.IsNullOrEmpty(_stageRole.text) ? 0f : _stageRole.GetPreferredValues(_stageRole.text).x;
-                roleBeside = roleW <= textW;
-                roleBelowH = roleBeside || roleW <= 0f ? 0f : Mathf.Min(bodyLine * 2f, Mathf.Ceil(_stageRole.GetPreferredValues(_stageRole.text, w, 0f).y));
-                float textH = nameBand + (classBeside ? labelLine : 0f) + (roleBeside && roleW > 0f ? (int)UiSpace.S + bodyLine : 0f);
-                topH = band ? bandH + (int)UiSpace.S + textH : Mathf.Max(glyph, textH);
-            }
-
-            float Total()
-            {
-                return topH + BelowH() + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f)
-                       + gap + statsH + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + gap + stateH;   // U1b MUST-1: the state line keeps its place when empty
-            }
-
-            // Yield order when short (AD R1-B re-check): the flavour line, the bar caption, the gaps, the glyph (96; a side-view
-            // band then down to 48), and only then the description - never under three lines, so CORE's top stays >= the last bar + 12.
-            Identity();
-            if (Total() > h) { showFlavour = false; }
-            if (Total() > h) { showCompare = false; }
-            if (Total() > h) { gap = Mathf.Max((int)UiSpace.M, gap - (Total() - h) / 5f); }
-            if (Total() > h) { glyph = StageGlyphCompact; Identity(); }
-            if (Total() > h && band) { glyph = Mathf.Max(StageBandMin, glyph - (Total() - h)); Identity(); }
-            if (Total() > h) { descH = Mathf.Max(Mathf.Min(descH, bodyLine * 3f), descH - (Total() - h)); }
-
-            // Top group, from the top.
             float y = 0f;
             Dock(_stageTop, y, topH);
-            RectTransform glyphRect = (RectTransform)_stageGlyph.transform;
-            float textLeft = glyph + (int)UiSpace.L;
-            float textTop = 0f;
-            if (band)
-            {
-                // The stock on the card's right edge, the weapon's foot on the band's floor (WeaponSideView.Place).
-                WeaponSideView.Place(glyphRect, stageSide, stageScale, new Vector2(0f, 1f), new Vector2(w, -bandH));
-                textLeft = 0f;
-                textTop = bandH + (int)UiSpace.S;
-            }
-            else
-            {
-                glyphRect.anchorMin = new Vector2(0f, 1f);
-                glyphRect.anchorMax = new Vector2(0f, 1f);
-                glyphRect.pivot = new Vector2(0f, 1f);
-                glyphRect.sizeDelta = new Vector2(glyph, glyph);
-                glyphRect.anchoredPosition = Vector2.zero;
-            }
-
-            SetTop(_stageName, textLeft, textTop, nameBand);
-            y += topH;
+            SetTop(_stageName, 0f, 0f, nameLine);
+            _stageName.alignment = TextAlignmentOptions.TopLeft;
             if (classBeside)
             {
-                SetTop(_stageClass, textLeft, textTop + nameBand, labelLine);
+                // Beside the name, on the name band's foot (its own baseline, right-aligned).
+                SetTop(_stageClass, nameW + (int)UiSpace.L, 0f, nameLine);
+                _stageClass.alignment = TextAlignmentOptions.BottomRight;
             }
-            else
+            else if (hasClass)
+            {
+                SetTop(_stageClass, 0f, nameLine + (int)UiSpace.XS, classLine);
+                _stageClass.alignment = TextAlignmentOptions.TopLeft;
+            }
+
+            y += topH;
+            if (roleH > 0f)
             {
                 y += (int)UiSpace.S;
-                SetTop(_stageClass, 0f, y, labelLine);
-                y += labelLine;
+                Dock(_stageRole.rectTransform, y, roleH);
+                y += roleH;
             }
 
-            if (roleBeside)
+            y += bands.Gap;
+            _previewWell.gameObject.SetActive(bands.Preview > 0f);
+            if (bands.Preview > 0f)
             {
-                SetTop(_stageRole, textLeft, textTop + nameBand + (classBeside ? labelLine : 0f) + (int)UiSpace.S, bodyLine);
-                _stageRole.enableWordWrapping = false;
-            }
-            else
-            {
-                y += (int)UiSpace.S;
-                SetTop(_stageRole, 0f, y, roleBelowH);
-                _stageRole.enableWordWrapping = true;
-                y += roleBelowH;
+                // A capped preview stands in the middle of its band; the cards and the state line keep the card's foot.
+                y += Mathf.Floor(bands.Slack * 0.5f);
+                Dock(_previewWell, y, bands.Preview);
+                PlaceStandIn(w, bands.Preview);
+                y += bands.Preview + bands.Gap + (bands.Slack - Mathf.Floor(bands.Slack * 0.5f));
             }
 
-            y += gap;
-            Dock((RectTransform)_stageDescription.transform, y, descH);
-            y += descH;
-            _stageFlavour.gameObject.SetActive(showFlavour);
-            if (showFlavour)
+            Dock(_statsRow, y, statsH);
+            for (int s = 0; s < PrepareRunLayout.StatCount; s++)
             {
-                y += (int)UiSpace.XS;
-                Dock((RectTransform)_stageFlavour.transform, y, flavourH);
-                y += flavourH;
-            }
-
-            y += gap;
-            for (int s = 0; s < 4; s++)
-            {
+                int col = s % _statColumns;
+                int row = s / _statColumns;
                 RectTransform cell = _statCells[s];
                 cell.anchorMin = new Vector2(0f, 1f);
                 cell.anchorMax = new Vector2(0f, 1f);
                 cell.pivot = new Vector2(0f, 1f);
-                if (oneColumn)
-                {
-                    cell.sizeDelta = new Vector2(w, cellH);
-                    cell.anchoredPosition = new Vector2(0f, -(y + s * (cellH + rowGap)));
-                }
-                else
-                {
-                    cell.sizeDelta = new Vector2(cellW, cellH);
-                    cell.anchoredPosition = new Vector2((s % 2) * (cellW + (int)UiSpace.XL), -(y + (s / 2) * (cellH + rowGap)));
-                }
+                cell.sizeDelta = new Vector2(cellW, cellH);
+                cell.anchoredPosition = new Vector2(col * (cellW + (int)UiSpace.M), -(row * (cellH + (int)UiSpace.M)));
 
-                SetTop(_statLabels[s], 0f, 0f, statLine);
-                SetTop(_statValues[s], 0f, 0f, statLine);
+                float labelLeft = (int)UiSpace.S + (_statIcons[s].enabled ? StatIcon + (int)UiSpace.XS : 0f);
+                SetTop(_statLabels[s], labelLeft, (int)UiSpace.S, headLine);
+                RectTransform labelRect = _statLabels[s].rectTransform;
+                labelRect.offsetMax = new Vector2(-(int)UiSpace.S, labelRect.offsetMax.y);
                 _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
-                _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
+                SetTop(_statValues[s], (int)UiSpace.S, (int)UiSpace.S + headLine + (int)UiSpace.XS, valueLine);
+                RectTransform valueRect = _statValues[s].rectTransform;
+                valueRect.offsetMax = new Vector2(-(int)UiSpace.S, valueRect.offsetMax.y);
+                _statValues[s].alignment = TextAlignmentOptions.MidlineLeft;
+                RectTransform iconRect = (RectTransform)_statIcons[s].transform;
+                iconRect.anchoredPosition = new Vector2((int)UiSpace.S, -((int)UiSpace.S + (headLine - StatIcon) * 0.5f));
             }
 
-            y += statsH;
-            _compareCaption.gameObject.SetActive(showCompare);
-            if (showCompare)
-            {
-                y += (int)UiSpace.S;
-                Dock((RectTransform)_compareCaption.transform, y, compareH);
-                y += compareH;
-            }
-
-            // U1b MUST-1 (AD + ui-ux, 06.10): CORE and the state line follow the bars with the section gap - no longer anchored
-            // to the card's foot, where the slack had become an empty band once the paragraph left. The card then ends under
-            // them, never above the skins' last card (AD: the middle column closes on the left column's line).
-            y += gap;
-            Dock(_coreRow, y, coreH);
-            y += coreH + gap;
+            y += statsH + bands.Gap;
             Dock(_stateRow, y, stateH);
-            y += stateH;
-            FitStageCard(stageColumn, y + inset);
+        }
 
-            // The CORE word gives its width up before any branch name would be cut (T3: nothing truncates).
-            float namesW = 0f;
-            for (int i = 0; i < 3; i++)
+        /// <summary>The side view stand-in, centred in the well at the one scale the well allows (the longest weapon fills it).</summary>
+        private void PlaceStandIn(float w, float h)
+        {
+            int side = _weaponSides != null && _stageIndex >= 0 && _stageIndex < _weaponSides.Length ? _weaponSides[_stageIndex] : -1;
+            RectTransform rect = (RectTransform)_stageGlyph.transform;
+            float inset = (int)UiSpace.XL;
+            if (side >= 0)
             {
-                if (_coreGlyphs[i].transform.parent.gameObject.activeSelf)
-                {
-                    namesW += CoreGlyphSize + (int)UiSpace.XS + Mathf.Ceil(_coreNames[i].GetPreferredValues(_coreNames[i].text).x);
-                }
+                float scale = WeaponSideView.PixelsPerMetre(Mathf.Max(1f, w - inset * 2f), Mathf.Max(1f, h - inset * 2f));
+                WeaponSideView.Entry e = WeaponSideView.Table[side];
+                float length = e.LengthM * scale;
+                float height = e.HeightM * scale;
+                WeaponSideView.Place(rect, side, scale, new Vector2(0f, 1f), new Vector2((w + length) * 0.5f, -(h + height) * 0.5f));
             }
-
-            // The CORE word takes its own measured width (a one-word label never takes an ellipsis), else it gives way.
-            Transform labelTransform = _coreRow.Find("Label");
-            TMP_Text coreLabel = labelTransform != null ? labelTransform.GetComponent<TMP_Text>() : null;
-            float labelW = coreLabel != null
-                ? Mathf.Max(CoreLabelMinWidth, Mathf.Ceil(coreLabel.GetPreferredValues(coreLabel.text).x) + (int)UiSpace.S)
-                : CoreLabelMinWidth;
-            bool coreWord = namesW + (int)UiSpace.S * 2f + labelW <= w;
-            if (labelTransform != null)
+            else
             {
-                labelTransform.gameObject.SetActive(coreWord);
-                ((RectTransform)labelTransform).sizeDelta = new Vector2(labelW, 0f);
-            }
-
-            float left = coreWord ? labelW : 0f;
-            float slotW = Mathf.Floor((w - left - (int)UiSpace.S * 2f) / 3f);
-            float x = left;
-            for (int i = 0; i < 3; i++)
-            {
-                RectTransform slot = (RectTransform)_coreGlyphs[i].transform.parent;
-                float want = CoreGlyphSize + (int)UiSpace.XS + Mathf.Ceil(_coreNames[i].GetPreferredValues(_coreNames[i].text).x);
-                bool natural = namesW + (int)UiSpace.S * 2f + left <= w;
-                float width = natural ? want : slotW;   // each takes what it needs while all three fit, else equal thirds
-                slot.sizeDelta = new Vector2(width, 0f);
-                slot.anchoredPosition = new Vector2(x, 0f);
-                x += width + (int)UiSpace.S;
+                float size = Mathf.Max(1f, Mathf.Min(h - inset * 2f, 128f));
+                Place(rect, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
             }
         }
 
         /// <summary>
-        /// Fits the weapon rows and the Specials strip to the column's real height. On the short Mac canvas (UI scale 1.2 ×
-        /// TextScale 1.25), first the Specials note line goes, then the rows give up height down to their text line + 8 px.
+        /// Fits the weapon rows and the Specials strip to the column's real height. Short of room (the Mac canvas at UI 1.2 ×
+        /// TextScale 1.25) the rows give up height down to their text line + 8 px. The Specials tiles stack their name and
+        /// mode when the two do not fit side by side (U2).
         /// </summary>
         private void LayoutWeapons()
         {
@@ -1027,13 +1194,18 @@ namespace DD.Prototype.UI
 
             _weaponsSize = _weaponsColumn.rect.size;
             float avail = _weaponsSize.y;
-            if (avail < 1f)
+            if (avail < 1f || _weaponsSize.x < 1f)
             {
                 _weaponsLayoutPending = true;
                 return;
             }
 
             _weaponsLayoutPending = false;
+            float tileW = Mathf.Max(1f, _weaponsSize.x * 0.5f - (int)UiSpace.XS);
+            _specialsBeside = SpecialsFitBeside(tileW);
+            float minTile = Mathf.Max(SpecialTileHeight, _specialsTitleBand + (int)UiSpace.M);
+            _tileHeight = PrepareRunLayout.SpecialTileHeight(_specialsBeside, minTile, LineOf(_specialNames[0]), ModeLineHeight(), (int)UiSpace.S);
+
             int n = _weaponButtons.Length;
             float rowH = _rowHeight;
             float Need()
@@ -1062,18 +1234,46 @@ namespace DD.Prototype.UI
             Dock(_specialsHead, y, headH);
             y += headH + (int)UiSpace.XS;
             Dock(_specialsRow, y, _tileHeight);
-            LayoutSideViews(rowH);
+            LayoutSideViews(rowH, tileW);
             LayoutSpecialTiles();
         }
 
+        /// <summary>The Specials' name and mode fit one line beside the smallest side view (the mode at 80 %), in both tiles.</summary>
+        private bool SpecialsFitBeside(float tileW)
+        {
+            bool beside = true;
+            for (int i = 0; i < _specialNames.Length; i++)
+            {
+                if (_specialNames[i] == null || _specialModes[i] == null)
+                {
+                    continue;
+                }
+
+                _specialModes[i].fontSize = _specialModeSize;
+                float iconW = _specialSides[i] >= 0
+                    ? Mathf.Ceil(WeaponSideView.Table[_specialSides[i]].LengthM * RowGlyph / WeaponSideView.MaxLengthM)
+                    : (_specialIcons[i] != null ? RowGlyph : 0f);
+                float nameW = Mathf.Ceil(_specialNames[i].GetPreferredValues(_specialNames[i].text).x);
+                float modeW = Mathf.Ceil(_specialModes[i].GetPreferredValues(_specialModes[i].text).x * 0.8f);
+                beside &= PrepareRunLayout.SpecialBeside(tileW, iconW, nameW, modeW, (int)UiSpace.M, (int)UiSpace.S);
+            }
+
+            return beside;
+        }
+
+        private float ModeLineHeight()
+        {
+            return _specialModes[0] != null ? LineOf(_specialModes[0]) : 0f;
+        }
+
         /// <summary>
-        /// R3 m12 (WP-098B): the weapons column's side views at one scale - ten rows and the two Specials. The scale is the
+        /// R3 m12 (WP-098B): the weapons column's side views at one scale - the rows and the two Specials. The scale is the
         /// largest that lets the longest weapon fill the row slot (at most 128, never past the longest row name's room), the
-        /// tallest stand in the row less 8, and each Special keep its name and its mode (at 80 %) beside it in the tile; it
-        /// never drops below the old 40 px glyph slot. Each weapon's stock stands on the slot's right edge (rows) or after the
-        /// tile's inset (Specials), its foot on one baseline - the tallest weapon centred in the row.
+        /// tallest stand in the row less 8, and each Special keep its words beside it (or, stacked, its longer word); it never
+        /// drops below the old 40 px glyph slot. Each weapon's stock stands on the slot's right edge (rows) or after the tile's
+        /// inset (Specials), its foot on one baseline - the tallest weapon centred in the row.
         /// </summary>
-        private void LayoutSideViews(float rowH)
+        private void LayoutSideViews(float rowH, float tileW)
         {
             int n = _weaponButtons.Length;
             float colW = _weaponsColumn.rect.width;
@@ -1096,10 +1296,11 @@ namespace DD.Prototype.UI
 
                 TMP_Text mode = _specialModes[i];
                 mode.fontSize = _specialModeSize;
-                float tileW = ((RectTransform)_specialNames[i].transform.parent).rect.width;
-                float room = tileW - (int)UiSpace.M * 2f - (int)UiSpace.S * 2f
-                             - Mathf.Ceil(_specialNames[i].GetPreferredValues(_specialNames[i].text).x)
-                             - Mathf.Ceil(mode.GetPreferredValues(mode.text).x * 0.8f);
+                float nameW = Mathf.Ceil(_specialNames[i].GetPreferredValues(_specialNames[i].text).x);
+                float modeW = Mathf.Ceil(mode.GetPreferredValues(mode.text).x);
+                float room = _specialsBeside
+                    ? tileW - (int)UiSpace.M * 2f - (int)UiSpace.S * 2f - nameW - Mathf.Ceil(modeW * 0.8f)
+                    : tileW - (int)UiSpace.M * 2f - (int)UiSpace.S - Mathf.Max(nameW, modeW);
                 scale = Mathf.Min(scale, room / WeaponSideView.Table[_specialSides[i]].LengthM);
             }
 
@@ -1115,7 +1316,6 @@ namespace DD.Prototype.UI
                         new Vector2(0f, 0.5f), new Vector2((int)UiSpace.M + slotW, baseline));
                 }
 
-                // The name follows the slot (the old glyph's 40 + its M while no row has a side view).
                 RectTransform labelRect = (RectTransform)_weaponButtons[i].LabelText.transform;
                 labelRect.offsetMin = new Vector2(_weaponSides[i] >= 0 ? textLeft : (int)UiSpace.M + RowGlyph + (int)UiSpace.M, labelRect.offsetMin.y);
             }
@@ -1131,15 +1331,13 @@ namespace DD.Prototype.UI
                 WeaponSideView.Place((RectTransform)_specialIcons[i].transform, _specialSides[i], scale,
                     new Vector2(0f, 0.5f), new Vector2((int)UiSpace.M + width, baseline));
                 _specialTextLeft[i] = (int)UiSpace.M + width + (int)UiSpace.S;
-                RectTransform nameRect = (RectTransform)_specialNames[i].transform;
-                nameRect.offsetMin = new Vector2(_specialTextLeft[i], nameRect.offsetMin.y);
             }
         }
 
         /// <summary>
-        /// U1b MUST-2 (AD + ui-ux, 06.10): on the Mac canvas in TR the special tile read "NAMEKUJİYAY ATIŞ" - the name and the
-        /// fire mode met. The name takes its own width and never shrinks; the mode stands right-aligned at least S after it,
-        /// stepping down to 80 % of its size when the room is short, then an ellipsis.
+        /// U1b MUST-2 (AD + ui-ux, 06.10) + WP-106 (U2): beside, the name takes its own width and never shrinks, the mode stands
+        /// right-aligned at least S after it, stepping down to 80 % of its size when the room is short (it fits there:
+        /// SpecialsFitBeside checked). Stacked, the name is the tile's first line and the mode its second, both at full size.
         /// </summary>
         private void LayoutSpecialTiles()
         {
@@ -1154,14 +1352,36 @@ namespace DD.Prototype.UI
 
                 float tileW = ((RectTransform)name.transform.parent).rect.width;
                 float left = _specialTextLeft[i];
+                RectTransform nameRect = (RectTransform)name.transform;
+                RectTransform modeRect = (RectTransform)mode.transform;
+                mode.fontSize = _specialModeSize;
+                if (!_specialsBeside)
+                {
+                    float nameLine = LineOf(name);
+                    float modeLine = LineOf(mode);
+                    float top = Mathf.Max(0f, (_tileHeight - nameLine - modeLine) * 0.5f);
+                    SetTop(name, left, top, nameLine);
+                    nameRect.offsetMax = new Vector2(-(int)UiSpace.M, nameRect.offsetMax.y);
+                    name.alignment = TextAlignmentOptions.MidlineLeft;
+                    SetTop(mode, left, top + nameLine, modeLine);
+                    modeRect.offsetMax = new Vector2(-(int)UiSpace.M, modeRect.offsetMax.y);
+                    mode.alignment = TextAlignmentOptions.MidlineLeft;
+                    continue;
+                }
+
+                UiFactory.Fill(nameRect);
+                UiFactory.Fill(modeRect);
+                name.alignment = TextAlignmentOptions.MidlineLeft;
+                mode.alignment = TextAlignmentOptions.MidlineRight;
                 float nameW = Mathf.Ceil(name.GetPreferredValues(name.text).x);
                 float nameRight = Mathf.Min(tileW - (int)UiSpace.M, left + nameW);
-                ((RectTransform)name.transform).offsetMax = new Vector2(nameRight - tileW, 0f);
+                nameRect.offsetMin = new Vector2(left, 0f);
+                nameRect.offsetMax = new Vector2(nameRight - tileW, 0f);
 
                 float modeLeft = nameRight + (int)UiSpace.S;
                 float room = Mathf.Max(0f, tileW - (int)UiSpace.M - modeLeft);
-                ((RectTransform)mode.transform).offsetMin = new Vector2(modeLeft, 0f);
-                mode.fontSize = _specialModeSize;
+                modeRect.offsetMin = new Vector2(modeLeft, 0f);
+                modeRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
                 float modeW = Mathf.Ceil(mode.GetPreferredValues(mode.text).x);
                 if (modeW > room && modeW > 0f)
                 {
@@ -1173,6 +1393,12 @@ namespace DD.Prototype.UI
         private static float LineOf(TMP_Text text)
         {
             return Mathf.Ceil(text.GetPreferredValues("Ag").y);
+        }
+
+        /// <summary>The height <paramref name="words"/> take wrapped at <paramref name="width"/> (0 for none).</summary>
+        private static float Measure(TMP_Text text, string words, float width)
+        {
+            return string.IsNullOrEmpty(words) ? 0f : Mathf.Ceil(text.GetPreferredValues(words, Mathf.Max(1f, width), 0f).y);
         }
 
         private static void Dock(RectTransform rect, float top, float height)
@@ -1194,15 +1420,10 @@ namespace DD.Prototype.UI
             rect.offsetMax = new Vector2(0f, -top);
         }
 
-        private static TMP_Text TopLabel(string name, RectTransform parent, UiType type, UiColor colour, float left, float top, float height)
+        private static TMP_Text TopLabel(string name, RectTransform parent, UiType type, UiColor colour)
         {
             TMP_Text label = UiFactory.Label(name, parent, string.Empty, type, colour, TextAnchor.UpperLeft);
-            RectTransform rect = (RectTransform)label.transform;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.offsetMin = new Vector2(left, -(top + height));
-            rect.offsetMax = new Vector2(0f, -top);
+            SetTop(label, 0f, 0f, 1f);
             return label;
         }
 
@@ -1215,7 +1436,7 @@ namespace DD.Prototype.UI
             rect.anchoredPosition = at;
         }
 
-        /// <summary>Put roster row <paramref name="index"/> on the stage. Rebuilt on a change only.</summary>
+        /// <summary>Put roster row <paramref name="index"/> on the stage (and in the 3D preview). Rebuilt on a change only.</summary>
         private void ShowOnStage(int index)
         {
             if (index < 0 || _weaponIds == null || index >= _weaponIds.Length || index == _stageIndex || _stageName == null)
@@ -1231,24 +1452,32 @@ namespace DD.Prototype.UI
             bool enabled = _weaponEnabled[index];
             bool unlocked = enabled && ProfileService.IsWeaponUnlocked(id);
 
+            _stageName.text = UiStrings.Upper(WeaponName(id));
+            _stageClass.text = UiStrings.Get("weapon." + key + ".class", string.Empty);
+            _stageRole.text = UiStrings.Get("weapon." + key + ".role", string.Empty);
+
+            // The 3D preview shows the weapon; the side view stands in until the stage's first render.
+            if (_stage != null && key != null)
+            {
+                _stage.ShowWeapon(key);
+            }
+
             Sprite sprite = _weaponGlyphs[index] != null ? _weaponGlyphs[index].sprite : null;
             UiArt.SetGlyph(_stageGlyph, sprite);
             _stageGlyph.enabled = sprite != null;
             _stageGlyph.color = RowTint(index, unlocked);
+            _stageGlyph.gameObject.SetActive(_stage == null || _stage.Renders == 0);
 
-            _stageName.text = UiStrings.Upper(WeaponName(id));
-            _stageClass.text = ClassLine(key, def);
-            _stageRole.text = UiStrings.Get("weapon." + key + ".role", string.Empty);
-            // WP-081 U1b (R2 U1, fewer letters): the class line, the role and the bars say what the weapon is; the paragraph
-            // and the flavour line leave the card (their strings stay in the table, LayoutStage closes their bands when empty).
-            _stageDescription.text = string.Empty;
-            _stageFlavour.text = string.Empty;
-
-            WeaponStatReadout.Fill(def, _stats);
-            for (int s = 0; s < 4; s++)
+            string[] keys = PrepareRunLayout.CardKeys(def);
+            for (int s = 0; s < PrepareRunLayout.StatCount; s++)
             {
+                _stats[s] = CardStat(def, key, keys[s]);
                 _statLabels[s].text = _stats[s].Label;
                 _statValues[s].text = _stats[s].Value;
+                string iconKey = CardIcon(def, keys[s]);
+                Sprite icon = iconKey != null ? UiArt.Icon(iconKey) : null;
+                UiArt.SetGlyph(_statIcons[s], icon);
+                _statIcons[s].enabled = icon != null;
                 bool hasBar = _stats[s].Bar01 >= 0f;
                 _statBars[s].gameObject.SetActive(hasBar);
                 if (hasBar)
@@ -1258,24 +1487,8 @@ namespace DD.Prototype.UI
                 }
             }
 
-            UpgradeBranch[] branches = def != null && def.upgrade != null && def.upgrade.coreBranches != null ? def.upgrade.coreBranches : new UpgradeBranch[0];
-            for (int i = 0; i < 3; i++)
-            {
-                bool has = i < branches.Length;
-                _coreGlyphs[i].transform.parent.gameObject.SetActive(has);
-                if (!has)
-                {
-                    continue;
-                }
-
-                Sprite branchSprite = UiArt.UpgradeIcon(branches[i]);
-                UiArt.SetGlyph(_coreGlyphs[i], branchSprite != null ? branchSprite : UiSprites.Disc);
-                _coreGlyphs[i].color = UiTokens.Get(unlocked ? UiColor.TextPrimary : UiColor.TextSecondary);
-                _coreNames[i].text = BranchName(branches[i], key);
-            }
-
-            // The state line names only what stands between the player and the weapon (AD R1-B MUST-2a: "carried for the
-            // whole run" is the header's sentence, so a weapon the player owns shows no line).
+            // The state line names only what stands between the player and the weapon (AD R1-B MUST-2a: a weapon the player
+            // can start with shows no line).
             if (!enabled)
             {
                 _stateLine.text = UiStrings.Get("selection.not_in_build", "Not in this build.");
@@ -1286,28 +1499,88 @@ namespace DD.Prototype.UI
             }
             else
             {
-                _stateLine.text = LockLine(ProfileService.WeaponLock(id));
+                _stateLine.text = LockLineFor(ProfileService.WeaponLock(id));
             }
 
             LayoutStage();
 
             if (!first)
             {
-                // A focus change re-inks the stage: the text block dips and returns (Fast, Decor - at rest under RM).
+                // A focus change re-inks the stage: the block dips and returns (Fast, Decor - at rest under RM).
                 _stageText.alpha = 0.55f;
                 UiMotion.Alpha(_stageText, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
             }
         }
 
+        /// <summary>One stat card: the readout's pack label, number and roster bar; the spread and the fire mode carry no bar.</summary>
+        private static WeaponStat CardStat(WeaponDefinition def, string weaponKey, string cardKey)
+        {
+            if (cardKey == PrepareRunLayout.SpreadKey)
+            {
+                WeaponStat spread = WeaponStatReadout.Read(def, WeaponStatReadout.Accuracy);
+                spread.Key = cardKey;
+                spread.Label = UiStrings.Get("stat.spread", "SPREAD");
+                spread.Bar01 = -1f;   // copy-r4 §2: a "less is better" bar misreads - the number alone
+                return spread;
+            }
+
+            if (cardKey == PrepareRunLayout.FireModeKey)
+            {
+                return new WeaponStat
+                {
+                    Key = cardKey,
+                    Label = UiStrings.Get("stat.fire_mode", "FIRE MODE"),
+                    Value = FireModeWord(weaponKey, def),
+                    Bar01 = -1f
+                };
+            }
+
+            return WeaponStatReadout.Read(def, cardKey);
+        }
+
+        /// <summary>The card's G1 icon: the stat's own (O1 family), the spread arc, the fire mode's glyph (none for a burst).</summary>
+        private static string CardIcon(WeaponDefinition def, string cardKey)
+        {
+            switch (cardKey)
+            {
+                case WeaponStatReadout.Damage: return "Stat.Damage";
+                case WeaponStatReadout.FireRate: return "Stat.FireRate";
+                case WeaponStatReadout.Magazine: return "Stat.Magazine";
+                case WeaponStatReadout.Range: return "Stat.Range";
+                case PrepareRunLayout.SpreadKey: return "Reticle.SpreadArc";
+                case PrepareRunLayout.FireModeKey:
+                    if (def == null || def.fire == null) return null;
+                    return def.fire.fireMode == WeaponFireMode.Auto ? "FireMode.Auto" : def.fire.fireMode == WeaponFireMode.Single ? "FireMode.Semi" : null;
+                default: return null;
+            }
+        }
+
+        /// <summary>The pack's fire mode word ("AUTO", "BURST ×3", "PUMP" …), its {count} filled from the definition.</summary>
+        private static string FireModeWord(string weaponKey, WeaponDefinition def)
+        {
+            string mode = UiStrings.Get("weapon." + weaponKey + ".firemode", string.Empty);
+            if (def != null && mode.Contains("{count}"))
+            {
+                mode = mode.Replace("{count}", Mathf.Max(1, def.fire.burstCount).ToString(CultureInfo.InvariantCulture));
+            }
+
+            return string.IsNullOrEmpty(mode) ? "—" : mode;
+        }
+
         /// <summary>
-        /// WP-077 (S-04 ProfileService.WeaponLock): a ladder weapon reads "L3" beside the kit's lock glyph (WP-098B: the glyph
-        /// says LOCKED - U1, fewer letters); a PATH weapon reads "PATH · L11", or "PATH › ready" once the meta PATH can sell
-        /// it. Built once per row.
+        /// A locked row's chip, from the profile's lock (built once per row): WP-107 "WALL BUY" on a weapon bought at its wall
+        /// in the run; on the level ladder "LEVEL 3" (selection.lock.chip - the kit's lock glyph says LOCKED); on the PATH
+        /// "PATH · L11" (the pack's path.lock.line form) or "PATH › ready".
         /// </summary>
         private static string LockChip(ClassicWeaponId id)
         {
-            MetaPathRules.WeaponLockInfo info = ProfileService.WeaponLock(id);
-            if (info.LockReason == MetaLockReason.WallBuyOnly)
+            return LockChipFor(ProfileService.WeaponLock(id));
+        }
+
+        /// <summary>The chip words for a lock (public for the EditMode tests: the words, no profile needed).</summary>
+        public static string LockChipFor(MetaPathRules.WeaponLockInfo info)
+        {
+            if (PrepareRunLayout.IsWallBuyOnly(info))
             {
                 return UiStrings.Get("selection.lock.wallbuy_chip", "WALL BUY");   // WP-107 (R4): rl_1 is bought in the run
             }
@@ -1318,17 +1591,16 @@ namespace DD.Prototype.UI
                 return info.Ready ? UiStrings.Upper(UiStrings.Get("path.lock.ready", "PATH › ready")) : UiStrings.Get("path.title", "PATH") + " · L" + level;
             }
 
-            return "L" + level;
+            return UiStrings.Format("selection.lock.chip", "level", level, "LEVEL {level}");
         }
 
         /// <summary>
-        /// The stage's lock line: "Reach profile level 3 · you are level 1" on the ladder. On the PATH it is the pack's
-        /// path.lock.line (cost and level gate, each number in cream once it is met and secondary while it is not), or
-        /// "PATH › ready".
+        /// The stage's lock line: WP-107's wall-buy sentence; "Reach profile level 3 · you are level 1" on the ladder; on the
+        /// PATH the pack's path.lock.line (cost and level gate, each number in cream once met), or "PATH › ready".
         /// </summary>
-        private static string LockLine(MetaPathRules.WeaponLockInfo info)
+        public static string LockLineFor(MetaPathRules.WeaponLockInfo info)
         {
-            if (info.LockReason == MetaLockReason.WallBuyOnly)
+            if (PrepareRunLayout.IsWallBuyOnly(info))
             {
                 return UiStrings.Get("selection.lock.wallbuy", "Bought at its wall during a run. It is never a starting weapon.");
             }
@@ -1336,9 +1608,10 @@ namespace DD.Prototype.UI
             string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
             if (!info.OnPath)
             {
+                int current = ProfileService.Current != null ? ProfileService.Current.ProfileLevel : 1;
                 return UiStrings.Get("selection.lock.level", "Reach profile level {level} · you are level {current}")
                     .Replace("{level}", level)
-                    .Replace("{current}", ProfileService.Current.ProfileLevel.ToString(CultureInfo.InvariantCulture));
+                    .Replace("{current}", current.ToString(CultureInfo.InvariantCulture));
             }
 
             if (info.Ready)
@@ -1356,41 +1629,6 @@ namespace DD.Prototype.UI
         private static string Met(string part, bool met)
         {
             return "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(met ? UiColor.TextPrimary : UiColor.TextSecondary)) + ">" + part + "</color>";
-        }
-
-        private static string ClassLine(string key, WeaponDefinition def)
-        {
-            string cls = UiStrings.Get("weapon." + key + ".class", string.Empty);
-            string mode = UiStrings.Get("weapon." + key + ".firemode", string.Empty);
-            if (def != null && mode.Contains("{count}"))
-            {
-                mode = mode.Replace("{count}", Mathf.Max(1, def.fire.burstCount).ToString(CultureInfo.InvariantCulture));
-            }
-
-            return string.IsNullOrEmpty(mode) ? cls : cls + "  ·  " + mode;
-        }
-
-        /// <summary>The branch's pack name (tree.run.branch.&lt;snake&gt;.name); rl_1's Explosion reads "Blast" (pack A6).</summary>
-        private static string BranchName(UpgradeBranch branch, string weaponKey)
-        {
-            string snake = branch == UpgradeBranch.Explosion && weaponKey == "rl_1" ? "blast" : Snake(branch.ToString());
-            return UiStrings.Get("tree.run.branch." + snake + ".name", branch.ToString());
-        }
-
-        private static string Snake(string value)
-        {
-            var sb = new System.Text.StringBuilder(value.Length + 4);
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (i > 0 && char.IsUpper(value[i]))
-                {
-                    sb.Append('_');
-                }
-
-                sb.Append(char.ToLowerInvariant(value[i]));
-            }
-
-            return sb.ToString();
         }
 
         /// <summary>The pack's weapon name (Hinawa …), else the config display name.</summary>
@@ -1438,9 +1676,8 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The Arsenal's classic weapons in sortOrder (WP-069; the ten of DEC-097). A definition that is not shipped
-        /// (enabled = false: rl_1 until B3) is not shown at all - no locked card, no placeholder (user decision, C-00
-        /// 2026-09-17). Specials have their own tiles.
+        /// The Arsenal's classic weapons in sortOrder (WP-069). A definition that is not shipped (enabled = false) is not shown
+        /// at all - no locked card, no placeholder (user decision, C-00 2026-09-17). Specials have their own tiles.
         /// </summary>
         private static List<WeaponDefinition> RosterForDisplay()
         {
@@ -1478,7 +1715,6 @@ namespace DD.Prototype.UI
 
             PrototypeUiFlow.SelectedWeapon = id;
             RefreshWeapons();
-            RefreshStartCaption();
             UiEvents.Raise(UiEvent.ChoiceSelected, "Weapon");
         }
 
@@ -1498,6 +1734,16 @@ namespace DD.Prototype.UI
                 if (_weaponGlyphs[i] != null)
                 {
                     _weaponGlyphs[i].color = RowTint(i, unlocked);
+                }
+            }
+
+            // Right from a mode lands on the chosen weapon: keep that link on the new choice.
+            if (_difficultyRows != null && _weaponButtons.Length > 0)
+            {
+                Selectable right = _weaponButtons[Mathf.Clamp(SelectedIndex(), 0, _weaponButtons.Length - 1)];
+                for (int i = 0; i < _difficultyRows.Length; i++)
+                {
+                    UiInput.LinkHorizontal(_difficultyRows[i], right, right);
                 }
             }
         }
@@ -1522,8 +1768,9 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-098B (AP-028 §3.4 footer; KILAVUZ §4.1 C10 / C11): Back is the kit's footer C10 (Menu.Back, the pad's Cancel
-        /// glyph beside it; Cancel does the same), START RUN its C11 (Menu.Play + the word, unfilled, as wide as its word; the Submit glyph beside it);
-        /// focus on either is the kit's cream brackets. The loadout echo sits between them.
+        /// glyph beside it; Cancel does the same), START RUN its C11 (Menu.Play + the word, unfilled, as wide as its word; the
+        /// Submit glyph beside it); focus on either is the kit's cream brackets. WP-106: no loadout echo between them - the
+        /// choices are on the page (the check glyphs), and the words would spend R2 U1's letters twice.
         /// </summary>
         private void BuildFooter()
         {
@@ -1545,7 +1792,6 @@ namespace DD.Prototype.UI
             UiButton start = UiBrushKit.Button(footer, "Start", "selection.start", "START RUN", "Menu.Play", PrototypeUiFlow.StartRun);
             _startButton = start;
             RectTransform startRect = (RectTransform)start.transform;
-            float startWidth = startRect.sizeDelta.x;   // the kit's measured width
             startRect.anchorMin = new Vector2(1f, 0.5f);
             startRect.anchorMax = new Vector2(1f, 0.5f);
             startRect.pivot = new Vector2(1f, 0.5f);
@@ -1555,7 +1801,6 @@ namespace DD.Prototype.UI
             // carries its Cancel glyph outside its right edge; START RUN's Submit glyph mirrors it outside its left edge, so
             // the C11 keeps its measured width and stays unfilled (no key chip inside the brush control).
             UiPrompt startPrompt = UiInputGlyphs.Build("Prompt", start.transform, UiPromptAction.Submit, UiColor.TextPrimary, UiColor.SurfaceInset);
-            float startGlyph = 0f;
             if (startPrompt != null)
             {
                 var promptRect = (RectTransform)startPrompt.transform;
@@ -1563,29 +1808,7 @@ namespace DD.Prototype.UI
                 promptRect.anchorMax = new Vector2(0f, 0.5f);
                 promptRect.pivot = new Vector2(1f, 0.5f);
                 promptRect.anchoredPosition = new Vector2(-(int)UiSpace.S, 0f);
-                startGlyph = UiInputGlyphs.ReservedWidth(UiPromptAction.Submit) + (int)UiSpace.S;
             }
-
-            // E9 / GD P14: the caption beside START RUN echoes the loadout ("Ivory / Crimson · Hinawa"). It starts after Back
-            // and its pad glyph (the C10's width + a glyph's room) and ends before START RUN's glyph.
-            _startCaption = UiFactory.Label("Loadout", footer, string.Empty, UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleRight);
-            RectTransform captionRect = UiFactory.Fill((RectTransform)_startCaption.transform);
-            captionRect.offsetMin = new Vector2(backRect.sizeDelta.x + UiBrushTokens.ControlHeight + (int)UiSpace.XL, 0f);
-            captionRect.offsetMax = new Vector2(-(startWidth + startGlyph + (int)UiSpace.XL), 0f);
-            _startCaption.enableWordWrapping = false;
-            RefreshStartCaption();
-        }
-
-        private void RefreshStartCaption()
-        {
-            if (_startCaption == null || _weaponIds == null)
-            {
-                return;
-            }
-
-            int index = SelectedIndex();
-            string weapon = index >= 0 ? WeaponName(_weaponIds[index]) : string.Empty;
-            _startCaption.text = PlayerSkins.Get(PrototypeUiFlow.SelectedSkin).DisplayName + "  ·  " + weapon;
         }
 
         private static void GoBack()
@@ -1598,9 +1821,9 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// R3 m12 (WP-098B, user 07.10: "use the images in the folder for the Prepare Run weapons"): the AP-036 v001 side
-        /// views, every weapon picture on this page (ten rows, the stage, the two Specials). The renders were framed one by
-        /// one (331-1292 px per metre), so the intake (UI/AP036/AP036-intake-manifest.json) trimmed each to its alpha box,
-        /// resampled it to at most 600 px/m and padded it to a multiple of 4. This table is that manifest's numbers - the
+        /// views, every weapon picture on this page (ten rows, the stage's stand-in, the two Specials). The renders were framed
+        /// one by one (331-1292 px per metre), so the intake (UI/AP036/AP036-intake-manifest.json) trimmed each to its alpha
+        /// box, resampled it to at most 600 px/m and padded it to a multiple of 4. This table is that manifest's numbers - the
         /// weapon's real length (AP-021 length_m) and its alpha box in the sprite - and the one place a placement reads:
         /// one px-per-metre gives every sprite its size, so the 1.45 m Tomi draws twice the 0.72 m Tetsui, and each weapon's
         /// foot (the box's bottom) stands on one baseline with its stock (the box's right edge, muzzles face left) on one line.

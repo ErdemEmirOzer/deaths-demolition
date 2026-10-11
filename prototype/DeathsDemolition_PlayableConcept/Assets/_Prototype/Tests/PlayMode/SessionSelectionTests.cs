@@ -117,6 +117,7 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     secili++;
                     // WP-098B: the remembered choice is drawn by the kit's C18 check glyph (no SELECTED chip any more).
+                    // WP-106: the two choices on the page are the weapon and the difficulty (the skin rows are gone).
                     Transform glif = butonlar[i].transform.Find("Status");
                     Assert.IsNotNull(glif, butonlar[i].name + ": seçim satırı kitin liste satırı (durum glifi)");
                     Assert.IsTrue(glif.GetComponent<UnityEngine.UI.Image>().enabled, butonlar[i].name + ": hatırlanan seçim check glifiyle görünür");
@@ -125,7 +126,14 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] selection.remembered skin=" + PrototypeUiFlow.SelectedSkin + " weapon=" +
                       PrototypeUiFlow.SelectedWeapon + " selectedButtons=" + secili);
-            Assert.AreEqual(2, secili, "Selection ekranında tam 2 seçili rozet (1 skin + 1 silah) beklenir.");
+            Assert.AreEqual(2, secili, "Prepare Run'da tam 2 seçili satır (1 silah + 1 zorluk) beklenir.");
+            int skinSatiri = 0;
+            for (int i = 0; i < butonlar.Length; i++)
+            {
+                skinSatiri += butonlar[i].name.StartsWith("Skin.") ? 1 : 0;
+            }
+
+            Assert.AreEqual(0, skinSatiri, "WP-106: kostüm satırı yok (skin yalnız oyun yolunda, oturum statiğiyle)");
             Debug.Log("[DD-TEST] sessionSelection=OK");
         }
     }

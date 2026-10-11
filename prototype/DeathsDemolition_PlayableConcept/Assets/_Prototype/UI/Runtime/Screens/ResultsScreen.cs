@@ -233,11 +233,12 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The reason line: the killing blow · the loadout · the name plate (each only when it has words).</summary>
+        /// <summary>The reason line: the killing blow · the loadout · the mode (WP-102, not in Normal) · the name plate (each only when it has words).</summary>
         private string ReasonLine()
         {
             string line = ResultsViewModel.KillerName(_model.KilledBy);
             line = Join(line, _model.Loadout);
+            line = Join(line, _model.ModeLine);
             return Join(line, UiStrings.Upper(CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource)));
         }
 

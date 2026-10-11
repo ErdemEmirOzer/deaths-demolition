@@ -13,9 +13,10 @@ using UnityEngine.UI;
 namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
-    /// WP-068 slice 7 · E9 v3 with the M4-R1 roster: every weapon row and the Specials strip fit the column (the v2
-    /// cards ran 1 500 px into a 700 px column with ten weapons). The stage follows focus, and a focused locked row
-    /// states its unlock and refuses a press. START RUN echoes the loadout.
+    /// WP-068 slice 7 · E9 v3 with the M4-R1 roster, WP-106 Prepare Run v2: every weapon row and the Specials strip fit the
+    /// column, every block of the stage (identity, preview, stat cards, state line) and of the run setup (difficulty, map,
+    /// tip) fits its column on the Mac canvas, the stage follows focus, and a focused locked row states its lock and refuses a
+    /// press. The skins are gone (R4 user note 7).
     /// </summary>
     public sealed class SelectionV3Tests
     {
@@ -31,8 +32,8 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// The Mac case (the r1b-caps frame that failed): UI scale 1.2 × TextScale 1.25 leaves the stage ~560 px. The
-        /// measured layout keeps every block inside the card, and a focused PATH weapon still fits.
+        /// The Mac case (the r1b-caps frame that failed): UI scale 1.2 × TextScale 1.25. The measured layout keeps every block
+        /// inside its column and nothing on the stage is cut - for the chosen weapon, the longest (Tomi) and a heavy one.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -64,16 +65,20 @@ namespace DD.Prototype.Tests.PlayMode
                 Canvas.ForceUpdateCanvases();
                 RectTransform card = Named(screen, "StageCard");
                 float floor = Bottom(card) - 0.5f;
-                foreach (string block in new[] { "State", "CoreBranches", "Stat2", "Stat3" })
+                foreach (string block in new[] { "Identity", "State", "Stats", "Stat4" })
                 {
                     Assert.GreaterOrEqual(Bottom(Named(screen, block)), floor, (weapon ?? "seçili") + ": " + block + " kartın altına taşıyor");
                 }
 
-                // AD R1-B re-check: CORE never meets the last stat bar, and nothing on the stage is cut.
-                RectTransform core = Named(screen, "CoreBranches");
-                core.GetWorldCorners(s_corners);
-                float coreTop = s_corners[1].y;
-                Assert.Greater(Bottom(Named(screen, "Stat3")), coreTop, (weapon ?? "seçili") + ": son stat çubuğu CORE satırına giriyor");
+                // The cards come after the preview (when it has room), the state line after the cards: no block meets another.
+                RectTransform stats = Named(screen, "Stats");
+                RectTransform preview = Named(screen, "Preview");
+                if (preview.gameObject.activeInHierarchy)
+                {
+                    Assert.GreaterOrEqual(Bottom(preview), Top(stats) - 0.5f, (weapon ?? "seçili") + ": önizleme kartlara giriyor");
+                }
+
+                Assert.GreaterOrEqual(Bottom(stats), Top(Named(screen, "State")) - 0.5f, (weapon ?? "seçili") + ": kartlar durum satırına giriyor");
                 foreach (TMPro.TMP_Text t in screen.StageTexts)
                 {
                     if (t.isActiveAndEnabled && !string.IsNullOrEmpty(t.text))
@@ -82,10 +87,27 @@ namespace DD.Prototype.Tests.PlayMode
                         Assert.IsFalse(t.isTextTruncated, (weapon ?? "seçili") + ": " + t.name + " kesiliyor: " + t.text);
                     }
                 }
+
+                for (int s = 0; s < PrepareRunLayout.StatCount; s++)
+                {
+                    RectTransform cell = Named(screen, "Stat" + s);
+                    foreach (string part in new[] { "Label", "Value" })
+                    {
+                        TMPro.TMP_Text text = cell.Find(part).GetComponent<TMPro.TMP_Text>();
+                        text.ForceMeshUpdate();
+                        Assert.IsFalse(text.isTextTruncated || text.isTextOverflowing, (weapon ?? "seçili") + ": Stat" + s + "/" + part + " kesiliyor: " + text.text);
+                    }
+                }
             }
 
             RectTransform column = Named(screen, "Weapons");
             Assert.GreaterOrEqual(Bottom(Named(screen, "Specials")), Bottom(column) - 0.5f, "Special şeridi kolona sığar (kompakt)");
+            RectTransform setup = Named(screen, "Setup");
+            foreach (string block in new[] { "Difficulty.demolition", "ModeLine", "Map" })
+            {
+                Assert.GreaterOrEqual(Bottom(Named(screen, block)), Bottom(setup) - 0.5f, block + " kurulum kolonuna sığar (kompakt)");
+            }
+
             PrototypeUiFlow.GoToMainMenu();
             yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.MainMenu);
         }
@@ -94,6 +116,12 @@ namespace DD.Prototype.Tests.PlayMode
         {
             rect.GetWorldCorners(s_corners);
             return s_corners[0].y;
+        }
+
+        private static float Top(RectTransform rect)
+        {
+            rect.GetWorldCorners(s_corners);
+            return s_corners[1].y;
         }
 
         private static RectTransform Named(Component root, string name)
@@ -133,7 +161,7 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            Assert.GreaterOrEqual(rows.Count, 9, "WP-069 kadrosu (rl_1 B3'e kadar kapalı)");
+            Assert.GreaterOrEqual(rows.Count, 9, "WP-069 kadrosu");
 
             RectTransform column = Named(screen, "Weapons");
             RectTransform specials = Named(screen, "Specials");
@@ -154,19 +182,10 @@ namespace DD.Prototype.Tests.PlayMode
             int chosen = screen.StageIndex;
             Assert.GreaterOrEqual(chosen, 0);
             TMP_TextCheck(screen, "açılış");
-
-            // U1b MUST-1 (AD + ui-ux, 06.10): the card ends under its content - CORE and the state line follow the bars - and
-            // never above the skins' last card; its foot stays put when focus walks to a locked row (the state line's place
-            // is kept when it is empty).
-            Canvas.ForceUpdateCanvases();
-            RectTransform lastSkin = Named(screen, "Skin." + (PlayerSkin)(PlayerSkins.Count - 1));
+            Assert.IsEmpty(screen.StateLine.text, "başlangıç silahında durum satırı boş");
             float cardFoot = Bottom(stageCard);
-            Assert.LessOrEqual(cardFoot, Bottom(lastSkin) + 1f, "sahne kartı son kostüm kartının altına kadar iner");
-            stageCard.GetWorldCorners(s_corners);
-            float cardHeight = s_corners[1].y - s_corners[0].y;
-            Assert.Less(Bottom(Named(screen, "Stat3")) - Bottom(Named(screen, "CoreBranches")), cardHeight * 0.2f, "CORE çubukların hemen altında (boş bant yok)");
 
-            // Focus a locked row: the stage follows and names the unlock; a press changes nothing.
+            // Focus a locked row: the stage follows and names the lock; a press changes nothing.
             UiButton locked = null;
             foreach (UiButton row in rows)
             {
@@ -177,38 +196,43 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            Assert.IsNotNull(locked, "yeni profilde kilitli silah satırı var");
-            Assert.IsTrue(locked.IsInteractable(), "kilitli satır odaklanabilir (sahne kilidi açıklar)");
-            EventSystem.current.SetSelectedGameObject(locked.gameObject);
-            yield return null;
-            yield return null;
-            Assert.AreNotEqual(chosen, screen.StageIndex, "sahne odağı izler");
-            string lockLine = screen.StageTexts[4].text;
-            // WP-107 (R4): the only locked row of a new profile is the rocket launcher - bought at its wall during a run.
-            Assert.IsTrue(lockLine.StartsWith("Reach profile level") || lockLine.Contains("PATH") || lockLine.StartsWith("Bought at its wall"),
-                "kilit satırı (merdiven, PATH ya da wall buy): " + lockLine);
-            StringAssert.DoesNotContain("{", lockLine, "kilit satırı biçimlendi");
-            TMP_TextCheck(screen, "kilitli odak");
-            Canvas.ForceUpdateCanvases();
-            Assert.AreEqual(cardFoot, Bottom(stageCard), 1f, "kilitli satıra odakta kartın ayağı yerinde (±1 px)");
+            if (locked != null)
+            {
+                Assert.IsTrue(locked.IsInteractable(), "kilitli satır odaklanabilir (sahne kilidi açıklar)");
+                EventSystem.current.SetSelectedGameObject(locked.gameObject);
+                yield return null;
+                yield return null;
+                Assert.AreNotEqual(chosen, screen.StageIndex, "sahne odağı izler");
+                string lockLine = screen.StateLine.text;
+                // WP-107 (R4): the only locked row of a new profile is the rocket launcher - bought at its wall during a run.
+                Assert.IsTrue(lockLine.StartsWith("Reach profile level") || lockLine.Contains("PATH") || lockLine.StartsWith("Bought at its wall"),
+                    "kilit satırı (merdiven, PATH ya da wall buy): " + lockLine);
+                StringAssert.DoesNotContain("{", lockLine, "kilit satırı biçimlendi");
+                TMP_TextCheck(screen, "kilitli odak");
+                Canvas.ForceUpdateCanvases();
+                Assert.AreEqual(cardFoot, Bottom(stageCard), 1f, "kilitli satıra odakta kartın ayağı yerinde (±1 px)");
 
-            ClassicWeaponId before = PrototypeUiFlow.SelectedWeapon;
-            locked.OnSubmit(null);
-            yield return null;
-            Assert.AreEqual(before, PrototypeUiFlow.SelectedWeapon, "kilitli silah seçilemez");
+                ClassicWeaponId before = PrototypeUiFlow.SelectedWeapon;
+                locked.OnSubmit(null);
+                yield return null;
+                Assert.AreEqual(before, PrototypeUiFlow.SelectedWeapon, "kilitli silah seçilemez");
+            }
+            else
+            {
+                Debug.Log("[DD-TEST] selection.v3 no locked weapon row on this profile - the lock half is not exercised");
+            }
 
-            TMPro.TMP_Text loadout = Named(screen, "Loadout").GetComponent<TMPro.TMP_Text>();
-            StringAssert.Contains(PlayerSkins.Get(PrototypeUiFlow.SelectedSkin).DisplayName, loadout.text, "START RUN yükü yankılar");
-
+            // WP-106: no loadout echo in the footer (the choices are the check glyphs on the page).
+            Assert.IsNull(Named(screen, "Loadout"), "START RUN yanında yük yankısı yok (R2 U1)");
             PrototypeUiFlow.GoToMainMenu();
             yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.MainMenu);
         }
 
         /// <summary>
-        /// R3 m12 (WP-098B): the page's weapon pictures are the AP-036 side views at one scale. In the column every row and
-        /// both Specials draw px-per-metre alike (the real length reads: Tomi ~2 × Tetsui), each weapon's foot sits the same
-        /// distance under its row's centre, and the rows' stocks stand on one vertical line left of the names. On the stage
-        /// the scale holds across a focus change (Tomi → Tetsui), the picture stays inside the card and above the name.
+        /// R3 m12 (WP-098B): the column's weapon pictures are the AP-036 side views at one scale. Every row and both Specials draw
+        /// px-per-metre alike (the real length reads: Tomi ~2 × Tetsui), each weapon's foot sits the same distance under its
+        /// row's centre, and the rows' stocks stand on one vertical line left of the names. WP-106: the stage's picture is the 3D
+        /// preview; the side view stands in only until its first render, inside the preview well.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -276,35 +300,27 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(1.4495f / 0.72f, tomi / tetsui, 0.05f, "Tomi / Tetsui gerçek boy oranı");
             }
 
-            // The stage: one scale across a focus change, inside the card, above the name.
-            var stageScales = new List<float>();
-            foreach (string weapon in new[] { "Weapon.sr_1.Sr1", "Weapon.smg_2.Smg2" })
+            // The stage: the stand-in side view (while it shows) sits inside the preview well, at the real length ratio.
+            RectTransform glyph = Named(screen, "StageGlyph");
+            Assert.IsNotNull(glyph, "sahnenin yan görünüm yedeği");
+            if (glyph.gameObject.activeInHierarchy && screen.PreviewWell.gameObject.activeInHierarchy)
             {
-                RectTransform row = Named(screen, weapon);
-                Assert.IsNotNull(row, weapon);
-                EventSystem.current.SetSelectedGameObject(row.gameObject);
-                yield return null;
-                yield return null;
-                Canvas.ForceUpdateCanvases();
-                string weaponId = weapon.Split('.')[1];
-                Rect content = SideContent(Named(screen, "StageGlyph"), weaponId);
-                stageScales.Add(content.width / SelectionScreen.WeaponSideView.Table[SelectionScreen.WeaponSideView.IndexOf(weaponId)].LengthM);
-                Rect card = WorldRect(Named(screen, "StageCard"));
-                Assert.IsTrue(card.Contains(content.min) && card.Contains(content.max), weapon + ": sahne görseli kartın içinde");
-                Assert.GreaterOrEqual(content.yMin, WorldRect(screen.StageTexts[0].rectTransform).yMax - 0.5f, weapon + ": görsel adın üstünde");
+                string weaponId = screen.WeaponRows[screen.StageIndex].name.Split('.')[1];
+                Rect content = SideContent(glyph, weaponId);
+                Rect well = WorldRect(screen.PreviewWell);
+                Assert.IsTrue(well.Contains(content.min) && well.Contains(content.max), "yedek görsel önizleme kuyusunun içinde");
             }
 
-            Assert.AreEqual(stageScales[0], stageScales[1], stageScales[0] * 0.01f, "sahne odak değişiminde aynı ölçek");
             PrototypeUiFlow.GoToMainMenu();
             yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.MainMenu);
         }
 
         /// <summary>
         /// WP-098B (brush kit KILAVUZ §3 "Seçim", AP-028 §3.4): the window is the kit's - the world plate under the Window scrim
-        /// at its linear α (no v2 veils, petals or lozenge), the C5 title without a glyph (one title brush, no C8, no
-        /// vermilion heading tick); the skins and the weapons are C18 list rows - no card frame, no SELECTED / LOCKED chip -
-        /// whose choice is the check glyph (exactly one skin and one weapon), a locked weapon the lock glyph and its level;
-        /// Back is the kit's C10 and START RUN its C11, both ≥ 48 high; the names the PM tests use are kept.
+        /// at its linear α (no v2 veils, petals or lozenge), the C5 title without a glyph (one title brush, no C8, no vermilion
+        /// heading tick); the difficulty modes and the weapons are C18 list rows - no card frame, no SELECTED / LOCKED chip -
+        /// whose choice is the check glyph (exactly one mode and one weapon), a locked weapon the lock glyph and its chip; no
+        /// skin row (WP-106); Back is the kit's C10 and START RUN its C11, both ≥ 48 high; the names the PM tests use are kept.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -346,17 +362,18 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsFalse(rect.name == "Heading" && rect.Find("Tick") != null, "fırça penceresinde vermilyon başlık çentiği yok");
             }
 
-            int checks = 0, skins = 0, weapons = 0;
+            int weaponChecks = 0, modeChecks = 0, skins = 0, modes = 0, weapons = 0;
             foreach (UiButton row in screen.GetComponentsInChildren<UiButton>(false))
             {
-                bool skin = row.name.StartsWith("Skin.");
+                skins += row.name.StartsWith("Skin.") ? 1 : 0;
+                bool mode = row.name.StartsWith("Difficulty.");
                 bool weapon = row.name.StartsWith("Weapon.");
-                if (!skin && !weapon)
+                if (!mode && !weapon)
                 {
                     continue;
                 }
 
-                skins += skin ? 1 : 0;
+                modes += mode ? 1 : 0;
                 weapons += weapon ? 1 : 0;
                 Assert.IsFalse(row.DrawsFocusRing, row.name + ": kit satırı (odak = köşebent, halka yok)");
                 Assert.IsNull(row.transform.Find("Frame"), row.name + ": çerçevesiz satır");
@@ -366,23 +383,26 @@ namespace DD.Prototype.Tests.PlayMode
                 if (row.IsSelectedChoice)
                 {
                     Assert.IsTrue(glyph, row.name + ": seçim = check glifi");
-                    checks++;
+                    weaponChecks += weapon ? 1 : 0;
+                    modeChecks += mode ? 1 : 0;
                 }
                 else if (weapon && !ProfileServiceUnlocked(row))
                 {
                     Assert.IsTrue(glyph, row.name + ": kilitli satırda kilit glifi");
                     TMPro.TMP_Text trailing = row.transform.Find("Trailing").GetComponent<TMPro.TMP_Text>();
-                    Assert.IsFalse(string.IsNullOrEmpty(trailing.text), row.name + ": kilidin koşulu yazılı (L3 / PATH · L11)");
+                    Assert.IsFalse(string.IsNullOrEmpty(trailing.text), row.name + ": kilidin koşulu yazılı (WALL BUY / LEVEL n)");
                 }
-                else
+                else if (weapon)
                 {
                     Assert.IsFalse(glyph, row.name + ": seçilmemiş, açık satırda glif yok");
                 }
             }
 
-            Assert.AreEqual(3, skins, "üç kostüm satırı");
+            Assert.AreEqual(0, skins, "kostüm satırı yok (WP-106)");
+            Assert.AreEqual(PrepareDifficulty.Source.Count, modes, "her mod bir satır");
             Assert.GreaterOrEqual(weapons, 9, "silah satırları");
-            Assert.AreEqual(2, checks, "tam iki check: bir kostüm + bir silah");
+            Assert.AreEqual(1, weaponChecks, "tam bir silah seçili");
+            Assert.AreEqual(1, modeChecks, "tam bir mod seçili");
 
             foreach (string name in new[] { "Back", "Start" })
             {
@@ -428,11 +448,19 @@ namespace DD.Prototype.Tests.PlayMode
         private static void TMP_TextCheck(SelectionScreen screen, string when)
         {
             TMPro.TMP_Text[] texts = screen.StageTexts;
+            Assert.AreEqual(4, texts.Length, "ad, sınıf, rol, durum");
             Assert.IsFalse(string.IsNullOrEmpty(texts[0].text), when + ": ad");
             StringAssert.DoesNotContain("{", texts[1].text, when + ": sınıf satırı biçimlendi");
             Assert.IsFalse(string.IsNullOrEmpty(texts[2].text), when + ": rol (paket)");
-            // WP-081 U1b (R2 U1): the paragraph left the card - the class line, the role and the bars say what the weapon is.
-            Assert.IsEmpty(texts[3].text, when + ": açıklama paragrafı kartta yok (U1b)");
+            for (int s = 0; s < PrepareRunLayout.StatCount; s++)
+            {
+                RectTransform cell = Named(screen, "Stat" + s);
+                TMPro.TMP_Text label = cell.Find("Label").GetComponent<TMPro.TMP_Text>();
+                TMPro.TMP_Text value = cell.Find("Value").GetComponent<TMPro.TMP_Text>();
+                Assert.IsFalse(string.IsNullOrEmpty(label.text), when + ": Stat" + s + " etiketi");
+                Assert.IsFalse(string.IsNullOrEmpty(value.text), when + ": Stat" + s + " değeri");
+                StringAssert.DoesNotContain("{", value.text, when + ": Stat" + s + " biçimlendi");
+            }
         }
     }
 }

@@ -1,0 +1,404 @@
+{
+  "schema": "AP040.prepare-run-scene.v001",
+  "date": "2026-10-11",
+  "source_blend": "05-blender/AP040_prepare_run_v001.blend",
+  "source_blend_sha256": "a027f850c8bdcc5ed73821330d8813d2251fb29be6274e903e4ca3342269fdef",
+  "preview": "exports/v001/preview/AP040_PrepareRun_v001.png",
+  "preview_sha256": "aadbdda921d256e9240a63381a99eb658b5e1b3b050df834239eaae6e4c021cb",
+  "placements": [
+    {
+      "source": "05-blender/AP040_display_pedestal_V01.blend",
+      "source_sha256": "0a3ba3f92ec1f3305b81c2b9440a1233f27bdab3094f5db51120dc534850c11d",
+      "family": "display_pedestal",
+      "variant": 1,
+      "anchor": "PR_Pedestal",
+      "position_blender_m": [
+        0,
+        0,
+        0
+      ],
+      "position_unity_m": [
+        0,
+        0,
+        0
+      ],
+      "rotation_deg": [
+        0,
+        0,
+        0
+      ],
+      "uniform_scale": 1.0,
+      "LOD0": "PR_Pedestal_SM_display_pedestal_V01_LOD0",
+      "tris": 2720,
+      "sockets": {
+        "SOCKET_Weapon": {
+          "object": "PR_Pedestal_SOCKET_Weapon",
+          "world_blender_m": [
+            0.0,
+            0.0,
+            0.94
+          ],
+          "local_blender_m": [
+            0.0,
+            0.0,
+            0.94
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "SOCKET_Turntable": {
+          "object": "PR_Pedestal_SOCKET_Turntable",
+          "world_blender_m": [
+            0.0,
+            0.0,
+            0.7
+          ],
+          "local_blender_m": [
+            0.0,
+            0.0,
+            0.7
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "source": "05-blender/AP040_backdrop_panel_V01.blend",
+      "source_sha256": "357a9f261779392b862c8f01c2f6006107730a337835cea56c1327363ac19572",
+      "family": "backdrop_panel",
+      "variant": 1,
+      "anchor": "PR_Backdrop",
+      "position_blender_m": [
+        0,
+        1.3,
+        0
+      ],
+      "position_unity_m": [
+        0,
+        0,
+        -1.3
+      ],
+      "rotation_deg": [
+        0,
+        0,
+        0
+      ],
+      "uniform_scale": 1.0,
+      "LOD0": "PR_Backdrop_SM_backdrop_panel_V01_LOD0",
+      "tris": 2188,
+      "sockets": {
+        "SOCKET_Backlight": {
+          "object": "PR_Backdrop_SOCKET_Backlight",
+          "world_blender_m": [
+            0.0,
+            1.52,
+            1.1
+          ],
+          "local_blender_m": [
+            0.0,
+            0.22,
+            1.1
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "source": "05-blender/AP040_stage_lantern_V01.blend",
+      "source_sha256": "39708052181f2aecddc79e0505c2433396c3ac3a6bc552df864621adbce68ccc",
+      "family": "stage_lantern",
+      "variant": 1,
+      "anchor": "PR_KeyLantern",
+      "position_blender_m": [
+        -1.05,
+        0.4,
+        0
+      ],
+      "position_unity_m": [
+        -1.05,
+        0,
+        -0.4
+      ],
+      "rotation_deg": [
+        0,
+        0,
+        0
+      ],
+      "uniform_scale": 1.0,
+      "LOD0": "PR_KeyLantern_SM_stage_lantern_V01_LOD0",
+      "tris": 1192,
+      "sockets": {
+        "SOCKET_Light": {
+          "object": "PR_KeyLantern_SOCKET_Light",
+          "world_blender_m": [
+            -1.05,
+            0.285,
+            1.47
+          ],
+          "local_blender_m": [
+            0.0,
+            -0.115,
+            1.47
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "SOCKET_Flame": {
+          "object": "PR_KeyLantern_SOCKET_Flame",
+          "world_blender_m": [
+            -1.05,
+            0.285,
+            1.32
+          ],
+          "local_blender_m": [
+            0.0,
+            -0.115,
+            1.32
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "source": "05-blender/AP040_stage_lantern_V02.blend",
+      "source_sha256": "a40c89777ea03ec538c3ccb083201e67574259c32b3c625b6c13b5589591e280",
+      "family": "stage_lantern",
+      "variant": 2,
+      "anchor": "PR_FillLantern",
+      "position_blender_m": [
+        1.05,
+        0.4,
+        0
+      ],
+      "position_unity_m": [
+        1.05,
+        0,
+        -0.4
+      ],
+      "rotation_deg": [
+        0,
+        0,
+        0
+      ],
+      "uniform_scale": 1.0,
+      "LOD0": "PR_FillLantern_SM_stage_lantern_V02_LOD0",
+      "tris": 1192,
+      "sockets": {
+        "SOCKET_Light": {
+          "object": "PR_FillLantern_SOCKET_Light",
+          "world_blender_m": [
+            1.05,
+            0.285,
+            1.77
+          ],
+          "local_blender_m": [
+            0.0,
+            -0.115,
+            1.77
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "SOCKET_Flame": {
+          "object": "PR_FillLantern_SOCKET_Flame",
+          "world_blender_m": [
+            1.05,
+            0.285,
+            1.62
+          ],
+          "local_blender_m": [
+            0.0,
+            -0.115,
+            1.62
+          ],
+          "rotation_blender_rad": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ],
+  "lights": [
+    {
+      "object": "PR_KeyWarm2800",
+      "type": "AREA",
+      "position_blender_m": [
+        -1.05,
+        0.205,
+        1.47
+      ],
+      "aim_blender_m": [
+        0.0,
+        0.0,
+        0.94
+      ],
+      "energy_w": 105,
+      "size_m": 0.72,
+      "temperature_K": 2800,
+      "rgb_fallback_linear": [
+        1.0,
+        0.57,
+        0.29
+      ],
+      "temperature_method": "Blackbody node; EEVEE fallback data.color"
+    },
+    {
+      "object": "PR_FillCoolSoft",
+      "type": "AREA",
+      "position_blender_m": [
+        1.05,
+        0.205,
+        1.77
+      ],
+      "aim_blender_m": [
+        0.0,
+        0.0,
+        1.05
+      ],
+      "energy_w": 62,
+      "size_m": 1.1,
+      "temperature_K": 6500,
+      "rgb_fallback_linear": [
+        0.68,
+        0.79,
+        1.0
+      ],
+      "temperature_method": "Blackbody node; EEVEE fallback data.color"
+    },
+    {
+      "object": "PR_RimWarmSoft",
+      "type": "AREA",
+      "position_blender_m": [
+        0.0,
+        0.85,
+        2.65
+      ],
+      "aim_blender_m": [
+        0.0,
+        0.0,
+        0.85
+      ],
+      "energy_w": 80,
+      "size_m": 1.5,
+      "temperature_K": 3400,
+      "rgb_fallback_linear": [
+        1.0,
+        0.77,
+        0.56
+      ],
+      "temperature_method": "Blackbody node; EEVEE fallback data.color"
+    }
+  ],
+  "camera_orbit": {
+    "camera": "PR_PreviewCamera",
+    "target": "PR_CameraOrbitTarget",
+    "target_blender_m": [
+      0,
+      0.15,
+      1.0
+    ],
+    "target_unity_m": [
+      0,
+      1.0,
+      -0.15
+    ],
+    "initial_camera_blender_m": [
+      2.65,
+      -4.7,
+      2.45
+    ],
+    "initial_camera_unity_m": [
+      2.6500000953674316,
+      2.450000047683716,
+      4.699999809265137
+    ],
+    "distance_m": 5.713799,
+    "lens_mm": 45.0,
+    "yaw_limits_deg": [
+      -30,
+      30
+    ],
+    "pitch_limits_deg": [
+      8,
+      35
+    ],
+    "radius_limits_m": [
+      3.8,
+      6.1
+    ],
+    "interaction": "sunum metadatası; orbit runtime davranışı Unity tarafında"
+  },
+  "weapon_display": {
+    "socket_object": "PR_Pedestal_SOCKET_Weapon",
+    "socket_world_blender_m": [
+      0.0,
+      0.0,
+      0.94
+    ],
+    "uniformScale": 1.0,
+    "rotation_blender_deg": [
+      0,
+      0,
+      0
+    ],
+    "weapon_model_embedded": false,
+    "scale_policy": "Tek uniformScale; silah sınıfına özgü fit adapter burada uygulanmadı"
+  },
+  "checks": {
+    "source_assets_4": true,
+    "LOD0_meshes_4": true,
+    "source_colliders_appended": false,
+    "source_LOD1_2_appended": false,
+    "preview_text": false,
+    "rendered": true
+  },
+  "notes": [
+    "Bu dosya kaynak preview kompozisyonudur; Unity sahnesi/prefabı değildir.",
+    "Silah modeli eklenmedi: Preview için SOCKET_Weapon/uniformScale metadata hazır.",
+    "Kamera ve ışık değerlendirmesi render ve lider görsel denetimine bağlıdır."
+  ],
+  "current_atlas_preview": {
+    "method": "Blender EEVEE existing canonical scene",
+    "shared_texture_sha256": {
+      "T_AP040_Shared_BaseColor": "43c3ac122f3c1bf26021f6c03a878ecd320a6c37cdbc987f0d1ba9ec5954da9f",
+      "T_AP040_Shared_Normal": "30d5a6a65576518b0749b9853c3d89e10ccde016004e07582e247ab21452f706",
+      "T_AP040_Shared_MaskMap": "a789494990b9c6d1eb18d512c7ddb396627c541aabe7c85217cd6185b0f723f1",
+      "T_AP040_Shared_ORM": "0e710b9a179b04c971f2def171fe4208125017383d5580fa41f018f8f6d6fc4d",
+      "T_AP040_Shared_Emission": "02a277472f079b8005def52398bae7d8d67a46644d59c30cc89faa7aee97d02a",
+      "T_AP040_Shared_VegetationORM": "b1161b979101acbc72713d82fa6aa043abf83e948caf3e6b6ea5432cfce84faa"
+    },
+    "resource_gate": {
+      "swap_mb_during_running_process": 11630.44,
+      "disk_kib_during_running_process": 34099400,
+      "launch_gate": "AP040_run.sh enforced disk/swap before Blender process start"
+    },
+    "fit_measurements_changed": false,
+    "geometry_changed": false,
+    "geometry_camera_sha256_before": "55b9a7898057af02532e44f3f9b6048de3bf8a18f1603c9f33b3ece4cb88e458",
+    "geometry_camera_sha256_after": "55b9a7898057af02532e44f3f9b6048de3bf8a18f1603c9f33b3ece4cb88e458"
+  },
+  "original_measurement_scope": "Existing geometry/pose/fit/camera measurements retained; identical geometry/camera hash; only packed textures and previews refreshed."
+}

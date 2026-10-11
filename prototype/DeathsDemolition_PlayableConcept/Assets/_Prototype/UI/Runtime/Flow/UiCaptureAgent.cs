@@ -24,6 +24,7 @@ namespace DD.Prototype.UI
     ///   DeathsDemolition.app/Contents/MacOS/... -ddUiCapture selection -ddUiCaptureOut /tmp/sel.png -ddSize 1920x1080
     ///
     /// 12b: <c>menumatrix</c> (E3), <c>-ddUiKilledBy</c> (A8), <c>-ddUiCaptureWeapon</c> (B11), hudstates' reticle-floor and 4× crops (B7 / B11).
+    /// R4 WP-106: <c>prepare</c> - Prepare Run v2 (default, weapon changed, preview turned, difficulty; UiCaptureAgent.Prepare.cs).
     ///
     /// Screens: <c>mainmenu</c>, <c>settings</c> / <c>profile</c> / <c>achievements</c> / <c>statistics</c> (main menu with that pane),
     /// <c>selection</c>, <c>pause</c> (a run, paused), <c>results</c> (a run ended by
@@ -863,6 +864,13 @@ namespace DD.Prototype.UI
                 if (_screen == "menuintro")
                 {
                     yield return MenuIntroFrames();
+                    yield break;
+                }
+
+                if (_screen == PrepareMode)
+                {
+                    // R4 WP-106 (S-10 WP-111): its first line names the screen version (screen=prepareRunV2), then its own waits.
+                    yield return PrepareFrames();
                     yield break;
                 }
 

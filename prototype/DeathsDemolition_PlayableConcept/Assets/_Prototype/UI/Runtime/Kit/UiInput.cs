@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Core.InputAbstraction;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -495,6 +496,105 @@ namespace DD.Prototype.UI
             prompt.AttachLabel(label, label.offsetMax.x); // WP-022J: re-inset on every rebind, not only at build
             return prompt;
         }
+
+        // ============================================== R4 WP-106 · the pad's view controls (Prepare Run's weapon stage)
+
+        /// <summary>
+        /// R4 WP-106 · the right stick as a 3D view's orbit (Prepare Run's weapon stage, <see cref="PrepareRunStage"/>): Core/Input's
+        /// look stick - dead zone applied, magnitude at most 1 (the aim stick for a source without look). The pad's left stick and
+        /// d-pad stay the menus' navigation, so this stick moves no focus. Zero while the curtain covers, with no real input source
+        /// or a suspended one (a rebind listening). Read through Core/Input only, no Input System type here (ADR-024-2 / WP-059).
+        /// </summary>
+        public static Vector2 ViewStick()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (s_viewSimulated)
+            {
+                return s_simulatedStick;
+            }
+#endif
+
+            IInputSource source = ViewSource();
+            return source != null ? Vector2.ClampMagnitude(source.ReadLookStick(), 1f) : Vector2.zero;
+        }
+
+        /// <summary>
+        /// R4 WP-106 · the triggers as a 3D view's zoom: +1 in (RT, the Fire action), −1 out (LT, the Focus action), 0 for both or
+        /// neither. Only while the pad is the active scheme: on the mouse the same two actions are its buttons, which drag the view.
+        /// A player's Fire / Focus remap carries over (the actions are read, never the buttons). Zero under the same conditions as
+        /// <see cref="ViewStick"/>.
+        /// </summary>
+        public static float ViewZoomAxis()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (s_viewSimulated)
+            {
+                return s_simulatedZoom;
+            }
+#endif
+
+            IInputSource source = ViewSource();
+            if (source == null || source.ActiveScheme() != InputSchemeKind.Gamepad)
+            {
+                return 0f;
+            }
+
+            float axis = 0f;
+            if (source.FireHeld)
+            {
+                axis += 1f;
+            }
+
+            if (source.FocusHeld())
+            {
+                axis -= 1f;
+            }
+
+            return axis;
+        }
+
+        /// <summary>The live device source the view controls read, or null (curtain covering, no real source, input suspended).</summary>
+        private static IInputSource ViewSource()
+        {
+            if (UiCurtain.IsCovering || !InputSourceRegistry.HasRealSource)
+            {
+                return null;
+            }
+
+            IInputSource source = InputSourceRegistry.Current;
+            return source.IsEnabled ? source : null;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static bool s_viewSimulated;
+        private static Vector2 s_simulatedStick;
+        private static float s_simulatedZoom;
+
+        /// <summary>
+        /// Dev / test seam (R4 WP-106): <see cref="ViewStick"/> and <see cref="ViewZoomAxis"/> answer these values until
+        /// <see cref="ClearSimulatedViewInput"/> - a test has no pad (the <see cref="SimulateCancelNextFrame"/> pattern).
+        /// </summary>
+        public static void SimulateViewInput(Vector2 stick, float zoom)
+        {
+            s_viewSimulated = true;
+            s_simulatedStick = Vector2.ClampMagnitude(stick, 1f);
+            s_simulatedZoom = Mathf.Clamp(zoom, -1f, 1f);
+        }
+
+        /// <summary>Dev / test seam (R4 WP-106): the view controls read the device again.</summary>
+        public static void ClearSimulatedViewInput()
+        {
+            s_viewSimulated = false;
+            s_simulatedStick = Vector2.zero;
+            s_simulatedZoom = 0f;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetViewInput()
+        {
+            ClearSimulatedViewInput();
+        }
+#endif
     }
 
     /// <summary>

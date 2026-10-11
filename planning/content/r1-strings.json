@@ -2724,12 +2724,12 @@
     "tr": "OYNA"
   },
   "menu.play_hint": {
-    "en": "Choose a skin and a classic weapon, then fight for the highest round you can reach.",
-    "tr": "Bir kostüm ve bir klasik silah seç, sonra ulaşabildiğin en yüksek round için savaş."
+    "en": "Choose a weapon and a difficulty, then fight for the highest round you can reach.",
+    "tr": "Bir silah ve bir zorluk seç, sonra ulaşabildiğin en yüksek round için savaş."
   },
   "menu.play_sub": {
-    "en": "CHOOSE SKIN & WEAPON",
-    "tr": "KOSTÜM VE SİLAH SEÇ"
+    "en": "WEAPON & DIFFICULTY",
+    "tr": "SİLAH VE ZORLUK"
   },
   "menu.progress": {
     "en": "PROGRESS",
@@ -4458,5 +4458,77 @@
   "wallbuy.special_active": {
     "en": "Not while a Special is in hand",
     "tr": "Özel silah eldeyken olmaz"
+  },
+  "selection.preview.hint": {
+    "en": "Drag: rotate · Scroll: zoom",
+    "tr": "Sürükle: döndür · Tekerlek: yakınlaştır"
+  },
+  "selection.preview.hint_pad": {
+    "en": "Right Stick: rotate and zoom",
+    "tr": "Sağ Çubuk: döndür ve yakınlaştır"
+  },
+  "stat.spread": {
+    "en": "SPREAD",
+    "tr": "YAYILMA"
+  },
+  "stat.fire_mode": {
+    "en": "FIRE MODE",
+    "tr": "ATIŞ MODU"
+  },
+  "difficulty.title": {
+    "en": "DIFFICULTY",
+    "tr": "ZORLUK"
+  },
+  "difficulty.normal.name": {
+    "en": "NORMAL",
+    "tr": "NORMAL"
+  },
+  "difficulty.normal.desc": {
+    "en": "The standard run",
+    "tr": "Standart koşu"
+  },
+  "difficulty.normal.detail": {
+    "en": "Base speed, damage and gold.",
+    "tr": "Temel hız, hasar ve altın."
+  },
+  "difficulty.hard.name": {
+    "en": "HARD",
+    "tr": "ZOR"
+  },
+  "difficulty.hard.desc": {
+    "en": "Faster, smarter zombies",
+    "tr": "Daha hızlı, daha akıllı zombiler"
+  },
+  "difficulty.hard.detail": {
+    "en": "Zombies hit harder and predict your path. More gold.",
+    "tr": "Zombiler daha sert vurur, yolunu tahmin eder. Daha çok altın."
+  },
+  "difficulty.demolition.name": {
+    "en": "DEMOLITION",
+    "tr": "DEMOLITION"
+  },
+  "difficulty.demolition.desc": {
+    "en": "Running crowds cut you off",
+    "tr": "Koşan kalabalık önünü keser"
+  },
+  "difficulty.demolition.detail": {
+    "en": "Elites and Ultras come early and run. Far more gold.",
+    "tr": "Elitler ve Ultralar erken gelir ve koşar. Çok daha fazla altın."
+  },
+  "map.title": {
+    "en": "MAP",
+    "tr": "HARİTA"
+  },
+  "map.palace.name": {
+    "en": "Palace Courtyard",
+    "tr": "Saray Avlusu"
+  },
+  "map.palace.desc": {
+    "en": "An old palace and its gardens",
+    "tr": "Eski bir saray ve bahçeleri"
+  },
+  "selection.tip.title": {
+    "en": "TIP",
+    "tr": "İPUCU"
   }
 }

@@ -1,0 +1,1619 @@
+{
+  "schema": "AP040.rotatable-pedestal.v001",
+  "date": "2026-10-11",
+  "functional_alternative": true,
+  "method": "directFBXparse",
+  "blender_roundtrip_verified": false,
+  "independently_editable_kit_blend_created": false,
+  "structural_parse_verified": true,
+  "primary_static_asset_changed": false,
+  "source": "05-blender/AP040_display_pedestal_V01.blend",
+  "source_sha256": "0a3ba3f92ec1f3305b81c2b9440a1233f27bdab3094f5db51120dc534850c11d",
+  "source_blend": "05-blender/AP040_display_pedestal_V01.blend",
+  "source_blend_sha256": "0a3ba3f92ec1f3305b81c2b9440a1233f27bdab3094f5db51120dc534850c11d",
+  "source_fbx": "exports/v001/fbx/AP040_display_pedestal_V01.fbx",
+  "source_fbx_sha256": "9468e4d6797ab65d163718d9b923721a3f8450d707d5652c9f17f73fe189e708",
+  "fbx": "exports/v001/fbx/AP040_display_pedestal_rotatable_V01.fbx",
+  "fbx_sha256": "a758213c8cf854947b1164984295c66d9815b0f1b29cf671ec60d162a43b2e10",
+  "fbx_binary": true,
+  "fbx_version": 7400,
+  "unit": "metres",
+  "fbx_up": "Y",
+  "fbx_forward": "-Z",
+  "uniformScale": 1.0,
+  "root_rotation_deg": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pivot_blender_m": [
+    0.0,
+    -0.0,
+    0.699999988079071
+  ],
+  "pivot_fbx_m": [
+    0.0,
+    0.699999988079071,
+    0.0
+  ],
+  "rotor_island_minimum_threshold_z_m": 0.649999988079071,
+  "bearing_policy": "Minimum z≈0,621 m bearing base’te; z≥socket_turntable.z−0,05 m bağlantılı adalar rotor.",
+  "hierarchy": {
+    "root": "AP040_display_pedestal_rotatable_V01",
+    "base_parent": "AP040_display_pedestal_rotatable_V01",
+    "rotor_parent": "SOCKET_Turntable",
+    "weapon_parent": "SOCKET_Turntable",
+    "proxy_parent": "AP040_display_pedestal_rotatable_V01"
+  },
+  "codec": {
+    "parser": "/Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_fbx/parse_fbx.py",
+    "writer": "/Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_fbx/encode_bin.py",
+    "bpy_loaded": false,
+    "proof": "encode_bin yazımı sonrası parse_fbx bağımsız gerçek binary okuması; tüm yüz/UV/normal/tangent/binormal/materyal, parent/world pose sayısal karşılaştırması."
+  },
+  "normal_tolerance_basis": {
+    "method": "FBX direct normal array/index retention; Blender normal fan yeniden paketlenmez",
+    "angular_limit_deg": 0.0,
+    "measured_angular_error_deg": 0.0
+  },
+  "regeneration_script": "04-tools/AP040_rotatable_pedestal.py",
+  "regeneration_command": "python3 04-tools/AP040_rotatable_pedestal.py --pure (çıktılar henüz bulunmayan çalışma paketinde)",
+  "source_blend_note": "Yeni kit .blend oluşturulmadı. Orijinal F1 .blend ve bu betik kaynak olarak sunulur; altı ayrı görsel mesh gerçek FBX içinde düzenlenebilir.",
+  "lods": [
+    {
+      "LOD": 0,
+      "source_tris": 2720,
+      "base_tris": 1440,
+      "rotor_tris": 1280,
+      "combined_tris": 2720,
+      "islands": [
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2719999849796295,
+          "maximum_z_m": 0.30799999833106995,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2719999849796295,
+          "maximum_z_m": 0.30799999833106995,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2719999849796295,
+          "maximum_z_m": 0.30799999833106995,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2719999849796295,
+          "maximum_z_m": 0.30799999833106995,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2849999964237213,
+          "maximum_z_m": 0.5149999856948853,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3619999885559082,
+          "maximum_z_m": 0.4580000042915344,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3619999885559082,
+          "maximum_z_m": 0.4580000042915344,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3619999885559082,
+          "maximum_z_m": 0.4580000042915344,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3969999849796295,
+          "maximum_z_m": 0.4230000078678131,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3969999849796295,
+          "maximum_z_m": 0.4230000078678131,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3619999885559082,
+          "maximum_z_m": 0.4580000042915344,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3969999849796295,
+          "maximum_z_m": 0.4230000078678131,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3969999849796295,
+          "maximum_z_m": 0.4230000078678131,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5065000057220459,
+          "maximum_z_m": 0.6015000343322754,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5950000286102295,
+          "maximum_z_m": 0.6150000095367432,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6119999885559082,
+          "maximum_z_m": 0.6260000467300415,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6119999885559082,
+          "maximum_z_m": 0.6260000467300415,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6119999885559082,
+          "maximum_z_m": 0.6260000467300415,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6119999885559082,
+          "maximum_z_m": 0.6260000467300415,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6209999918937683,
+          "maximum_z_m": 0.6509999632835388,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6499999761581421,
+          "maximum_z_m": 0.6959999799728394,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6840000152587891,
+          "maximum_z_m": 0.6980000138282776,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6945000290870667,
+          "maximum_z_m": 0.703499972820282,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8499999642372131,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8375000357627869,
+          "maximum_z_m": 0.8824999928474426,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8759999871253967,
+          "maximum_z_m": 0.8939999938011169,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8499999642372131,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8375000357627869,
+          "maximum_z_m": 0.8824999928474426,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8759999871253967,
+          "maximum_z_m": 0.8939999938011169,
+          "rotor": true
+        }
+      ],
+      "pass": true
+    },
+    {
+      "LOD": 1,
+      "source_tris": 1360,
+      "base_tris": 782,
+      "rotor_tris": 578,
+      "combined_tris": 1360,
+      "islands": [
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0,
+          "maximum_z_m": 0.12999999523162842,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0599999874830246,
+          "maximum_z_m": 0.42000001668930054,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2849999964237213,
+          "maximum_z_m": 0.5149999856948853,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5065000057220459,
+          "maximum_z_m": 0.6015000343322754,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5960000157356262,
+          "maximum_z_m": 0.6140000224113464,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6126999855041504,
+          "maximum_z_m": 0.6253000497817993,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6126999855041504,
+          "maximum_z_m": 0.6253000497817993,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6126999855041504,
+          "maximum_z_m": 0.6253000497817993,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6126999855041504,
+          "maximum_z_m": 0.6253000497817993,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6209999918937683,
+          "maximum_z_m": 0.6509999632835388,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6499999761581421,
+          "maximum_z_m": 0.6959999799728394,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6840000152587891,
+          "maximum_z_m": 0.6980000734329224,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6945000290870667,
+          "maximum_z_m": 0.703499972820282,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8500000238418579,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8375000357627869,
+          "maximum_z_m": 0.8824999928474426,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8769000172615051,
+          "maximum_z_m": 0.8931000232696533,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8500000238418579,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8375000357627869,
+          "maximum_z_m": 0.8824999928474426,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8769000172615051,
+          "maximum_z_m": 0.8931000232696533,
+          "rotor": true
+        }
+      ],
+      "pass": true
+    },
+    {
+      "LOD": 2,
+      "source_tris": 680,
+      "base_tris": 360,
+      "rotor_tris": 320,
+      "combined_tris": 680,
+      "islands": [
+        {
+          "minimum_z_m": 0.0065000043250620365,
+          "maximum_z_m": 0.12349998950958252,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.06499997526407242,
+          "maximum_z_m": 0.4150000512599945,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.006500004790723324,
+          "maximum_z_m": 0.12349998950958252,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.06499997526407242,
+          "maximum_z_m": 0.4150000512599945,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.006500004790723324,
+          "maximum_z_m": 0.12349998950958252,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.06499997526407242,
+          "maximum_z_m": 0.4150000512599945,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.0065000043250620365,
+          "maximum_z_m": 0.12349998950958252,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.06499997526407242,
+          "maximum_z_m": 0.4150000512599945,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.27379998564720154,
+          "maximum_z_m": 0.3062000274658203,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.2849999964237213,
+          "maximum_z_m": 0.5149999856948853,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.36309999227523804,
+          "maximum_z_m": 0.456900030374527,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.3963426649570465,
+          "maximum_z_m": 0.4236573278903961,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5112500190734863,
+          "maximum_z_m": 0.596750020980835,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.5960000157356262,
+          "maximum_z_m": 0.6140000224113464,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6183636784553528,
+          "maximum_z_m": 0.6196364164352417,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6183636784553528,
+          "maximum_z_m": 0.6196364164352417,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6183636784553528,
+          "maximum_z_m": 0.6196364164352417,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6183636784553528,
+          "maximum_z_m": 0.6196364164352417,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6209999918937683,
+          "maximum_z_m": 0.6509999632835388,
+          "rotor": false
+        },
+        {
+          "minimum_z_m": 0.6499999761581421,
+          "maximum_z_m": 0.6959999799728394,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6840000152587891,
+          "maximum_z_m": 0.6980000734329224,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.6945000886917114,
+          "maximum_z_m": 0.703499972820282,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8500000238418579,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8397500514984131,
+          "maximum_z_m": 0.8802500367164612,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8769000172615051,
+          "maximum_z_m": 0.8931000232696533,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.699999988079071,
+          "maximum_z_m": 0.8500000238418579,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8397500514984131,
+          "maximum_z_m": 0.8802500367164612,
+          "rotor": true
+        },
+        {
+          "minimum_z_m": 0.8769000172615051,
+          "maximum_z_m": 0.8931000232696533,
+          "rotor": true
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "meshes": [
+    {
+      "name": "SM_display_pedestal_base_V01_LOD0",
+      "triangles": 1440,
+      "LOD": 0,
+      "parent": "AP040_display_pedestal_rotatable_V01",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 0.0,
+      "world_source_max_error_m": 0.0,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    },
+    {
+      "name": "SM_display_pedestal_turntable_V01_LOD0",
+      "triangles": 1280,
+      "LOD": 0,
+      "parent": "SOCKET_Turntable",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 6.617444900424222e-24,
+      "world_source_max_error_m": 2.220446049250313e-16,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    },
+    {
+      "name": "SM_display_pedestal_base_V01_LOD1",
+      "triangles": 782,
+      "LOD": 1,
+      "parent": "AP040_display_pedestal_rotatable_V01",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 0.0,
+      "world_source_max_error_m": 0.0,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    },
+    {
+      "name": "SM_display_pedestal_turntable_V01_LOD1",
+      "triangles": 578,
+      "LOD": 1,
+      "parent": "SOCKET_Turntable",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 0.0,
+      "world_source_max_error_m": 2.220446049250313e-16,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    },
+    {
+      "name": "SM_display_pedestal_base_V01_LOD2",
+      "triangles": 360,
+      "LOD": 2,
+      "parent": "AP040_display_pedestal_rotatable_V01",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 0.0,
+      "world_source_max_error_m": 0.0,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    },
+    {
+      "name": "SM_display_pedestal_turntable_V01_LOD2",
+      "triangles": 320,
+      "LOD": 2,
+      "parent": "SOCKET_Turntable",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_fbx_deg": [
+        -90.00000933466734,
+        0.0,
+        0.0
+      ],
+      "translation_local_fbx_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "position_local_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materials": 1,
+      "material_uids": [
+        431590913
+      ],
+      "vertex_source_max_error_m": 0.0,
+      "world_source_max_error_m": 2.220446049250313e-16,
+      "faces_exact": true,
+      "edge_array_exact": true,
+      "uv_source_max_error": 0.0,
+      "normal_source_max_error": 0.0,
+      "normal_source_max_angular_error_deg": 0.0,
+      "layers": {
+        "LayerElementNormal": {
+          "exact_source_data": true
+        },
+        "LayerElementBinormal": {
+          "exact_source_data": true
+        },
+        "LayerElementTangent": {
+          "exact_source_data": true
+        },
+        "LayerElementUV": {
+          "exact_source_data": true
+        },
+        "LayerElementMaterial": {
+          "exact_source_data": true
+        }
+      },
+      "pass": true,
+      "rotation_note": "Mesh eski FBX exporter X=-90 derece koordinat dönüşünü korur; hareket parenti SOCKET_Turntable rotasyonu sıfırdır."
+    }
+  ],
+  "roundtrip": [],
+  "source_rotation_tests": [
+    {
+      "rotation_unity_y_deg": 0,
+      "rotation_blender_z_deg": 0,
+      "rotor_bounds": [
+        {
+          "LOD": 0,
+          "bounds_world_fbx_m": [
+            [
+              -0.37400001287460327,
+              0.6499999158774813,
+              -0.37400012659323484
+            ],
+            [
+              0.37400001287460327,
+              0.8940000037946596,
+              0.37399990143685097
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37400001287460327,
+              0.6499999158774812,
+              -0.37400012659323484
+            ],
+            [
+              0.37400001287460327,
+              0.8940000037946596,
+              0.37399990143685097
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 1,
+          "bounds_world_fbx_m": [
+            [
+              -0.374104380607605,
+              0.6499999159121101,
+              -0.3741044920453473
+            ],
+            [
+              0.374104380607605,
+              0.8931000334684775,
+              0.3741042691698527
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.374104380607605,
+              0.64999991591211,
+              -0.3741044920453473
+            ],
+            [
+              0.374104380607605,
+              0.8931000334684774,
+              0.3741042691698527
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 2,
+          "bounds_world_fbx_m": [
+            [
+              -0.37376800179481506,
+              0.6499999155611753,
+              -0.37376811551345634
+            ],
+            [
+              0.37376800179481506,
+              0.8931000334684775,
+              0.3737678880761638
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37376800179481506,
+              0.6499999155611752,
+              -0.37376811551345634
+            ],
+            [
+              0.37376800179481506,
+              0.8931000334684774,
+              0.3737678880761638
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        }
+      ],
+      "base_bounds_max_error_m": 0.0,
+      "weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "expected_weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "weapon_socket_position_error_m": 0.0,
+      "weapon_socket_forward_fbx": [
+        0.0,
+        1.6292067955264295e-07,
+        0.9999999999999867
+      ],
+      "weapon_socket_forward_error": 0.0,
+      "off_axis_test_probe_local_m": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "off_axis_test_probe_world_fbx_m": [
+        0.25,
+        0.9399999976158142,
+        0.0
+      ],
+      "off_axis_test_probe_error_m": 0.0,
+      "weapon_position_note": "Eksen üzerindeki silah soketinin konumu sabit; yönü döner. Off-axis probe yalnız dönüş kanıtıdır.",
+      "pass": true
+    },
+    {
+      "rotation_unity_y_deg": 90,
+      "rotation_blender_z_deg": 90,
+      "rotor_bounds": [
+        {
+          "LOD": 0,
+          "bounds_world_fbx_m": [
+            [
+              -0.37400012659323484,
+              0.6499999158774813,
+              -0.37400001287460327
+            ],
+            [
+              0.37399990143685097,
+              0.8940000037946596,
+              0.37400001287460327
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37400012659323484,
+              0.6499999158774812,
+              -0.37400001287460327
+            ],
+            [
+              0.37399990143685097,
+              0.8940000037946596,
+              0.37400001287460327
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 1,
+          "bounds_world_fbx_m": [
+            [
+              -0.3741044920453473,
+              0.6499999159121101,
+              -0.374104380607605
+            ],
+            [
+              0.3741042691698527,
+              0.8931000334684775,
+              0.374104380607605
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.3741044920453473,
+              0.64999991591211,
+              -0.374104380607605
+            ],
+            [
+              0.3741042691698527,
+              0.8931000334684774,
+              0.374104380607605
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 2,
+          "bounds_world_fbx_m": [
+            [
+              -0.37376811551345634,
+              0.6499999155611753,
+              -0.37376800179481506
+            ],
+            [
+              0.3737678880761638,
+              0.8931000334684775,
+              0.37376800179481506
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37376811551345634,
+              0.6499999155611752,
+              -0.37376800179481506
+            ],
+            [
+              0.3737678880761638,
+              0.8931000334684774,
+              0.37376800179481506
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        }
+      ],
+      "base_bounds_max_error_m": 0.0,
+      "weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "expected_weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "weapon_socket_position_error_m": 0.0,
+      "weapon_socket_forward_fbx": [
+        0.9999999999999867,
+        1.6292067955264295e-07,
+        6.123233995736685e-17
+      ],
+      "weapon_socket_forward_error": 0.0,
+      "off_axis_test_probe_local_m": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "off_axis_test_probe_world_fbx_m": [
+        1.5308084989341915e-17,
+        0.9399999976158142,
+        -0.25
+      ],
+      "off_axis_test_probe_error_m": 0.0,
+      "weapon_position_note": "Eksen üzerindeki silah soketinin konumu sabit; yönü döner. Off-axis probe yalnız dönüş kanıtıdır.",
+      "pass": true
+    }
+  ],
+  "direct_parse_rotation_tests": [
+    {
+      "rotation_unity_y_deg": 0,
+      "rotation_blender_z_deg": 0,
+      "rotor_bounds": [
+        {
+          "LOD": 0,
+          "bounds_world_fbx_m": [
+            [
+              -0.37400001287460327,
+              0.6499999158774813,
+              -0.37400012659323484
+            ],
+            [
+              0.37400001287460327,
+              0.8940000037946596,
+              0.37399990143685097
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37400001287460327,
+              0.6499999158774812,
+              -0.37400012659323484
+            ],
+            [
+              0.37400001287460327,
+              0.8940000037946596,
+              0.37399990143685097
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 1,
+          "bounds_world_fbx_m": [
+            [
+              -0.374104380607605,
+              0.6499999159121101,
+              -0.3741044920453473
+            ],
+            [
+              0.374104380607605,
+              0.8931000334684775,
+              0.3741042691698527
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.374104380607605,
+              0.64999991591211,
+              -0.3741044920453473
+            ],
+            [
+              0.374104380607605,
+              0.8931000334684774,
+              0.3741042691698527
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 2,
+          "bounds_world_fbx_m": [
+            [
+              -0.37376800179481506,
+              0.6499999155611753,
+              -0.37376811551345634
+            ],
+            [
+              0.37376800179481506,
+              0.8931000334684775,
+              0.3737678880761638
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37376800179481506,
+              0.6499999155611752,
+              -0.37376811551345634
+            ],
+            [
+              0.37376800179481506,
+              0.8931000334684774,
+              0.3737678880761638
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        }
+      ],
+      "base_bounds_max_error_m": 0.0,
+      "weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "expected_weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "weapon_socket_position_error_m": 0.0,
+      "weapon_socket_forward_fbx": [
+        0.0,
+        1.6292067955264295e-07,
+        0.9999999999999867
+      ],
+      "weapon_socket_forward_error": 0.0,
+      "off_axis_test_probe_local_m": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "off_axis_test_probe_world_fbx_m": [
+        0.25,
+        0.9399999976158142,
+        0.0
+      ],
+      "off_axis_test_probe_error_m": 0.0,
+      "weapon_position_note": "Eksen üzerindeki silah soketinin konumu sabit; yönü döner. Off-axis probe yalnız dönüş kanıtıdır.",
+      "pass": true
+    },
+    {
+      "rotation_unity_y_deg": 90,
+      "rotation_blender_z_deg": 90,
+      "rotor_bounds": [
+        {
+          "LOD": 0,
+          "bounds_world_fbx_m": [
+            [
+              -0.37400012659323484,
+              0.6499999158774813,
+              -0.37400001287460327
+            ],
+            [
+              0.37399990143685097,
+              0.8940000037946596,
+              0.37400001287460327
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37400012659323484,
+              0.6499999158774812,
+              -0.37400001287460327
+            ],
+            [
+              0.37399990143685097,
+              0.8940000037946596,
+              0.37400001287460327
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 1,
+          "bounds_world_fbx_m": [
+            [
+              -0.3741044920453473,
+              0.6499999159121101,
+              -0.374104380607605
+            ],
+            [
+              0.3741042691698527,
+              0.8931000334684775,
+              0.374104380607605
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.3741044920453473,
+              0.64999991591211,
+              -0.374104380607605
+            ],
+            [
+              0.3741042691698527,
+              0.8931000334684774,
+              0.374104380607605
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        },
+        {
+          "LOD": 2,
+          "bounds_world_fbx_m": [
+            [
+              -0.37376811551345634,
+              0.6499999155611753,
+              -0.37376800179481506
+            ],
+            [
+              0.3737678880761638,
+              0.8931000334684775,
+              0.37376800179481506
+            ]
+          ],
+          "expected_bounds_world_fbx_m": [
+            [
+              -0.37376811551345634,
+              0.6499999155611752,
+              -0.37376800179481506
+            ],
+            [
+              0.3737678880761638,
+              0.8931000334684774,
+              0.37376800179481506
+            ]
+          ],
+          "maximum_error_m": 1.1102230246251565e-16,
+          "vertex_max_error_m": 2.220446049250313e-16
+        }
+      ],
+      "base_bounds_max_error_m": 0.0,
+      "weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "expected_weapon_socket_world_fbx_m": [
+        0.0,
+        0.9399999976158142,
+        0.0
+      ],
+      "weapon_socket_position_error_m": 0.0,
+      "weapon_socket_forward_fbx": [
+        0.9999999999999867,
+        1.6292067955264295e-07,
+        6.123233995736685e-17
+      ],
+      "weapon_socket_forward_error": 0.0,
+      "off_axis_test_probe_local_m": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "off_axis_test_probe_world_fbx_m": [
+        1.5308084989341915e-17,
+        0.9399999976158142,
+        -0.25
+      ],
+      "off_axis_test_probe_error_m": 0.0,
+      "weapon_position_note": "Eksen üzerindeki silah soketinin konumu sabit; yönü döner. Off-axis probe yalnız dönüş kanıtıdır.",
+      "pass": true
+    }
+  ],
+  "checks": [
+    {
+      "check": "binary_7400",
+      "pass": true,
+      "version": 7400
+    },
+    {
+      "check": "metres_Yup",
+      "pass": true,
+      "UnitScaleFactor": [
+        100.0
+      ],
+      "UpAxis": [
+        1
+      ]
+    },
+    {
+      "check": "global_settings_preserved",
+      "pass": true
+    },
+    {
+      "check": "six_visual_mesh_names",
+      "pass": true,
+      "names": [
+        "SM_display_pedestal_base_V01_LOD0",
+        "SM_display_pedestal_turntable_V01_LOD0",
+        "SM_display_pedestal_base_V01_LOD1",
+        "SM_display_pedestal_turntable_V01_LOD1",
+        "SM_display_pedestal_base_V01_LOD2",
+        "SM_display_pedestal_turntable_V01_LOD2"
+      ]
+    },
+    {
+      "check": "material_texture_video_arrays_preserved",
+      "pass": true,
+      "objects": 8
+    },
+    {
+      "check": "texture_material_links_preserved",
+      "pass": true,
+      "count": 8
+    },
+    {
+      "check": "SM_display_pedestal_base_V01_LOD0_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "SM_display_pedestal_turntable_V01_LOD0_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "SM_display_pedestal_base_V01_LOD1_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "SM_display_pedestal_turntable_V01_LOD1_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "SM_display_pedestal_base_V01_LOD2_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "SM_display_pedestal_turntable_V01_LOD2_arrays_material_parent",
+      "pass": true
+    },
+    {
+      "check": "proxy_geometry_unchanged",
+      "pass": true
+    },
+    {
+      "check": "all_model_uniform_scale",
+      "pass": true
+    },
+    {
+      "check": "turntable_root_weapon_parent",
+      "pass": true
+    },
+    {
+      "check": "pivot_matches_source",
+      "pass": true,
+      "pivot_world_fbx_m": [
+        0.0,
+        0.699999988079071,
+        0.0
+      ]
+    },
+    {
+      "check": "rotation_0_90",
+      "pass": true
+    },
+    {
+      "check": "protected_sources_fit_unchanged",
+      "pass": true
+    },
+    {
+      "check": "connection_references_valid",
+      "pass": true
+    },
+    {
+      "check": "definition_counts_exact",
+      "pass": true
+    }
+  ],
+  "socket_parent_pass": true,
+  "protected_file_sha256": {
+    "exports/v001/fbx/AP040_display_pedestal_V01.fbx": "9468e4d6797ab65d163718d9b923721a3f8450d707d5652c9f17f73fe189e708",
+    "05-blender/AP040_display_pedestal_V01.blend": "0a3ba3f92ec1f3305b81c2b9440a1233f27bdab3094f5db51120dc534850c11d",
+    "05-blender/AP040_X3_fit_ek1.blend": "836829ffb6e506bbd787d86dd4147946516aaeb1dab55a356639aaba3e958dbc",
+    "exports/v001/preview/AP040_X3_Fit60_ek1_TD1080.png": "cc0a4e7b55f2ac5f02ab693d592c6f8f9a94a2d4bfee8533e8634decf099a356",
+    "exports/v001/weapon_attach/sockets.json": "72fc8e604d6629319385947293b277ad49b88b6b04337caa0914d7edf6083f00",
+    "exports/v001/weapon_attach/collision_report.json": "2b5a09127f85d976b731672d1ed631f0e4929488e049d0ac73fe19b0a66b33bf"
+  },
+  "protected_files_unchanged": true,
+  "pass": true,
+  "limitations": [
+    "Blender kit roundtrip yapılmadı; method directFBXparse, yalnız gerçek binary yapısal/veri ve dönüş doğrulaması PASS.",
+    "Swap >12 GB nedeniyle yeni kit .blend yok; source_blend orijinal F1 kaynağıdır.",
+    "Unity runtime dönüşü çalıştırılmadı. Yalnız kit üretimi sırasında ana 131 FBX ve o andaki roundtrip kanıtları değişmedi. Sonraki 22 kanal yaması ve güncel önizleme yenilemesi bu tarihsel snapshot sonrasıdır."
+  ],
+  "rotor_pivot_direct_parse_error_m": 0.0,
+  "rotor_pivot_roundtrip_error_m": null,
+  "regeneration_script_sha256": "eae225acf5597762fac8392b77e9b1665e17a148f0a4a2b7b90dadd498e5c40b",
+  "evidence_time_scope": {
+    "phase": "F1 kit generation before final flora channel patch and palette/fit preview refresh",
+    "protected_hashes": "Historical before/after operation snapshot only; not current delivery hashes. Original values and measured booleans are retained.",
+    "current_delivery_claim": false,
+    "current_authority": "exports/v001/AP040-manifest-v001.json + SHA256SUMS; validation/AP040-preview-refresh-v001.json",
+    "annotation_author": "root/package leader",
+    "pre_annotation_receipt_sha256": "ed601993691e30cef1e3289d303847b18706ef8f4e670194eb041c1b4ea2dc1c"
+  }
+}

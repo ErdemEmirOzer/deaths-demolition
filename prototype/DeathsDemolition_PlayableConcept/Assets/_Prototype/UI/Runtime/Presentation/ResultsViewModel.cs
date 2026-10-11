@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Achievements;
+using DD.Prototype.Difficulty;
 using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
 using UnityEngine;
@@ -57,6 +58,9 @@ namespace DD.Prototype.UI
         // ---- header
         public string Eyebrow = UiStrings.Get("results.no_run", "NO RUN RECORDED");
         public string Loadout = string.Empty;
+
+        /// <summary>WP-102: the run's mode word for the reason line (HARD / DEMOLITION); empty in Normal, the classic run.</summary>
+        public string ModeLine = string.Empty;
 
         // ---- run result (hero)
         public string ReachedRoundLabel = UiStrings.Get("results.reached_round", "REACHED ROUND");
@@ -449,6 +453,7 @@ namespace DD.Prototype.UI
             // ---- header ------------------------------------------------------
             model.Eyebrow = DescribeEnding(summary);
             model.Loadout = DescribeLoadout(summary, weaponName);
+            model.ModeLine = DescribeMode(DifficultyService.RunMode);   // WP-102: the run that just ended
 
             // ---- run result --------------------------------------------------
             model.ReachedRound = summary.ReachedRound > 0 ? summary.ReachedRound.ToString() : "—";
@@ -614,6 +619,18 @@ namespace DD.Prototype.UI
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
 
             return weapon + "   ·   " + build;
+        }
+
+        /// <summary>WP-102: the mode's word (difficulty.&lt;id&gt;.name) - empty for Normal, which the screens never label.</summary>
+        public static string DescribeMode(DifficultyMode mode)
+        {
+            if (mode == DifficultyMode.Normal)
+            {
+                return string.Empty;
+            }
+
+            string id = DifficultyService.Id(mode);
+            return UiStrings.Get("difficulty." + id + ".name", id.ToUpperInvariant());
         }
 
         public static string FormatDuration(float seconds)

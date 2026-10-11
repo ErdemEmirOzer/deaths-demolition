@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Difficulty;
 using DD.Prototype.Weapons;
 using TMPro;
 using UnityEngine;
@@ -174,6 +175,7 @@ namespace DD.Prototype.UI
         {
             BuildInkGold();
             BuildInkRound();
+            BuildInkMode();
             BuildBrushHealth();
             BuildRingWeapon();
             BuildInkSpecial();
@@ -195,6 +197,9 @@ namespace DD.Prototype.UI
 
         /// <summary>The round cluster's least height (the old seal line's); the numeral's line sets it when taller.</summary>
         public const float RoundClusterHeight = 56f;
+
+        /// <summary>WP-102: the mode word's box under the round (right-aligned, Overflow: the width never cuts the word).</summary>
+        public const float ModeWordWidth = 320f;
 
         /// <summary>
         /// The round's seal accent at the corner. The user asked for "ince altın ya da kırmızı mühür aksanı"; S-09 decision (a)
@@ -535,6 +540,46 @@ namespace DD.Prototype.UI
 
             LayRound(0);
         }
+
+        // ---- WP-102 (S-03 R4): the run's difficulty under the round - Hard / Demolition only, Normal draws nothing
+
+        /// <summary>
+        /// WP-102 (S-03 R4; S-09 UI): the run's mode as one small ink word under the round's impression, right-aligned with
+        /// its right edge - HARD / ZOR, DEMOLITION (difficulty.&lt;id&gt;.name; DifficultyService.RunMode, set as the Run scene
+        /// loads). Normal draws nothing: the classic HUD, its coverage (HudCoverageTests) and its four clusters stay as they
+        /// were - the word's root is not one of <see cref="Clusters"/>. The secondary size in the halo (V-53).
+        /// </summary>
+        private void BuildInkMode()
+        {
+            float size = SecondaryTextSize(UiTokens.TextScale, false);
+            float top = InkMargin + Mathf.Max(RoundClusterHeight, UiFactory.LineHeight(RoundNumeralType)) + (int)UiSpace.XS;
+            RectTransform root = InkRootOn(HudFrame, "Mode", Vector2.one, Vector2.one, new Vector2(-InkMargin, -top), new Vector2(ModeWordWidth, HudLineHeight(size)));
+            _modeWord = Legible(InkText("ModeWord", root, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleRight), size);
+            UiFactory.Fill(_modeWord.rectTransform);
+            ApplyMode();
+        }
+
+        /// <summary>WP-102: the mode word for <see cref="DifficultyService.RunMode"/> (Normal: hidden). At build and run start, never per frame.</summary>
+        private void ApplyMode()
+        {
+            if (_modeWord == null)
+            {
+                return;
+            }
+
+            DifficultyMode mode = DifficultyService.RunMode;
+            bool show = mode != DifficultyMode.Normal;
+            if (show)
+            {
+                string id = DifficultyService.Id(mode);
+                _modeWord.text = UiStrings.Get("difficulty." + id + ".name", id.ToUpperInvariant());
+            }
+
+            _modeWord.transform.parent.gameObject.SetActive(show);
+        }
+
+        /// <summary>WP-102: the mode word on show (null in Normal; tests).</summary>
+        public TMP_Text ModeWord => _modeWord != null && _modeWord.gameObject.activeInHierarchy ? _modeWord : null;
 
         /// <summary>
         /// The AP-032 letters with their alternates (HudArt, the §1 atlas for a cap of <paramref name="capPhysicalPx"/>), else the

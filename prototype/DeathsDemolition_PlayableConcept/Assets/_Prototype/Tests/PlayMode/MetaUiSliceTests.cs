@@ -538,39 +538,28 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== 2 · skinler
 
+        /// <summary>
+        /// WP-106 (R4 user note 7): Prepare Run offers no skin - hero v2 is the one hero. The session skin keeps its default
+        /// (nothing on the page writes it) and the game still applies whatever PrototypeUiFlow.SelectedSkin holds; a skin never
+        /// changes a gameplay value (the WP-005 rule, kept for the code path that remains).
+        /// </summary>
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator UcSkin_GorunurSecilebilir_StatDegismez()
+        public IEnumerator Skin_HazirliktaSecimYok_VarsayilanKalir_StatDegismez()
         {
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
+            PrototypeUiFlow.SelectedSkin = PlayerSkins.Default;
             PrototypeUiFlow.GoToSelection();
             yield return SahneyiBekle(PrototypeScenes.Selection);
             yield return null;
 
-            var skinler = new List<UiButton>();
             foreach (UiButton b in UnityEngine.Object.FindObjectOfType<SelectionScreen>().GetComponentsInChildren<UiButton>(true))
             {
-                if (b.gameObject.name.StartsWith("Skin."))
-                {
-                    skinler.Add(b);
-                }
+                Assert.IsFalse(b.gameObject.name.StartsWith("Skin."), b.gameObject.name + ": Prepare Run'da kostüm seçimi yok");
             }
 
-            Assert.AreEqual(3, skinler.Count, "üç skin kartı");
-            for (int i = 0; i < skinler.Count; i++)
-            {
-                Assert.IsTrue(skinler[i].IsInteractable(), skinler[i].gameObject.name + " seçilebilir olmalı (baştan açık)");
-                skinler[i].OnSubmit(null);
-                Assert.AreEqual((PlayerSkin)i, PrototypeUiFlow.SelectedSkin, "kart " + i + " seçimi");
-                int secili = 0;
-                for (int j = 0; j < skinler.Count; j++)
-                {
-                    if (skinler[j].IsSelectedChoice) secili++;
-                }
-
-                Assert.AreEqual(1, secili, "tam bir skin seçili");
-            }
+            Assert.AreEqual(PlayerSkins.Default, PrototypeUiFlow.SelectedSkin, "sayfa kostüme dokunmaz: varsayılan kalır");
 
             PrototypeUiFlow.SelectedSkin = PlayerSkin.IndigoBlack;
             PrototypeUiFlow.StartRun();

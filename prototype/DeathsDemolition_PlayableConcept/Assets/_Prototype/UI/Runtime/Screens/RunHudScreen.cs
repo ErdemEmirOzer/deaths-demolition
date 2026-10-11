@@ -140,6 +140,7 @@ namespace DD.Prototype.UI
 
         // ---- round (WP-094: top right, Roman; the enemies count is the presenter's alone - debug, never drawn)
         private TMP_Text _roundValue;
+        private TMP_Text _modeWord;   // WP-102: the run's mode under the round (Ink: BuildInkMode)
 
         // ---- gold
         private TMP_Text _goldValue;
@@ -1617,6 +1618,7 @@ namespace DD.Prototype.UI
             _roundShown = int.MinValue;
             _healthBound = false;
             ApplyRunFields(_model.ApplyRun(RunEvents.Current));
+            ApplyMode();   // WP-102: the Run scene's load set DifficultyService.RunMode
             ApplyWeaponFields(_model.ApplyWeapon(WeaponEvents.Classic));
             ApplyWeaponFields(_model.ApplyBuild(CurrentBuildDescription()));
             BindHealthSnapshot();

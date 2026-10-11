@@ -544,7 +544,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Secim_SkinOnizlemeleriGercekKarakter_SilahGlifleri()
+        public IEnumerator Secim_SkinYok_SilahGlifleri()
         {
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
@@ -554,13 +554,19 @@ namespace DD.Prototype.Tests.PlayMode
 
             SelectionScreen screen = Object.FindObjectOfType<SelectionScreen>();
             Assert.IsNotNull(screen);
-            Assert.IsNotNull(screen.SkinPreviews);
-            Assert.AreEqual(PlayerSkins.Count, screen.SkinPreviews.Length);
-            for (int i = 0; i < screen.SkinPreviews.Length; i++)
+
+            // WP-106 (R4 user note 7): the old character's skin cards and their AP-006 portraits are gone from Prepare Run.
+            foreach (Image img in screen.GetComponentsInChildren<Image>(true))
             {
-                Assert.IsNotNull(screen.SkinPreviews[i], "skin " + (i + 1) + " önizlemesi kurulmadı");
-                Assert.AreSame(UiArt.SkinPreview(i), screen.SkinPreviews[i].sprite, "skin " + (i + 1) + " kendi AP-006 renderını göstermeli");
-                Assert.AreNotSame(screen.SkinPreviews[i].sprite, screen.SkinPreviews[(i + 1) % 3].sprite, "her skin farklı görsel");
+                for (int i = 0; i < PlayerSkins.Count; i++)
+                {
+                    Assert.IsTrue(UiArt.SkinPreview(i) == null || img.sprite != UiArt.SkinPreview(i), img.name + ": kostüm portresi kaldı");
+                }
+            }
+
+            foreach (UiButton b in screen.GetComponentsInChildren<UiButton>(true))
+            {
+                Assert.IsFalse(b.name.StartsWith("Skin."), b.name + ": kostüm satırı kaldı");
             }
 
             // WP-068 slice 7 (M4-R1): one row per roster weapon, each with its own picture. R3 m12 (WP-098B): the picture is
@@ -785,12 +791,15 @@ namespace DD.Prototype.Tests.PlayMode
                 UiInputScheme.Release();
             }
 
-            // Selection: the selected skin card has focus; Right hops to the weapon column;
-            // Down reaches the footer; Left returns to the skin column.
-            yield return SeciliBekle("Skin.");
-            Hareket(MoveDirection.Right);
+            // WP-106 Prepare Run: the chosen weapon row has focus; Left hops to the difficulty rows and Right comes back to
+            // the chosen weapon; Down walks the weapons to START RUN; Left from START RUN is Back.
             yield return SeciliBekle("Weapon.");
             GameObject weapon = Secili;
+            Hareket(MoveDirection.Left);
+            yield return SeciliBekle("Difficulty.");
+            Hareket(MoveDirection.Right);
+            yield return SeciliBekle("Weapon.");
+            Assert.AreEqual(weapon, Secili, "zorluktan sağ → seçili silah");
             Hareket(MoveDirection.Down);
             yield return null;
             Assert.IsTrue(Secili.name == "Start" || Secili.name.StartsWith("Weapon."),
