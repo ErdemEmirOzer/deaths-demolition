@@ -22,7 +22,9 @@ namespace DD.Prototype.UI
         /// <summary>WP-068 slice 8 (E11): the HUD's EMPTY prompt - the Gameplay Reload action (R / pad West), rebindable.</summary>
         Reload = 5,
         /// <summary>WP-107 (R4): the wall buy prompt - the Gameplay Interact action (E / pad South), rebindable.</summary>
-        Interact = 6
+        Interact = 6,
+        /// <summary>WP-104 (R4): the tree screen's one-key CONTINUE (KARAR-WP104-11.10 decision 1) - C / pad West, a fixed UI key (UiInput.ContinuePressed).</summary>
+        Continue = 7
     }
 
     /// <summary>
@@ -199,11 +201,12 @@ namespace DD.Prototype.UI
                 case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f, "Pad.FaceNorth") : new Glyph("R", false, 1.2f);
                 case UiPromptAction.Reload: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("R", false, 1.2f);
                 case UiPromptAction.Interact: return pad ? new Glyph("A", true, 1f, "Pad.FaceSouth") : new Glyph("E", false, 1.2f);
+                case UiPromptAction.Continue: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("C", false, 1.2f);
                 default: return new Glyph("?", true, 1f);
             }
         }
 
-        /// <summary>The Gameplay action a prompt action is bound to, or null when the prompt is a fixed UI key (Submit / Cancel / Skip / Reroll).</summary>
+        /// <summary>The Gameplay action a prompt action is bound to, or null when the prompt is a fixed UI key (Submit / Cancel / Skip / Reroll / Continue).</summary>
         public static string GameplayActionOf(UiPromptAction action)
         {
             switch (action)

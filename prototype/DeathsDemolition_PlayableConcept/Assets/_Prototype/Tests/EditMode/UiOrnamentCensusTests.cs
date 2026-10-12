@@ -62,7 +62,11 @@ namespace DD.Prototype.Tests.EditMode
             new Group { Name = "Selection", Files = new[] { "Screens/SelectionScreen.cs" } },
             new Group { Name = "Results", Files = new[] { "Screens/ResultsScreen.cs" } },
             new Group { Name = "Pause", Files = new[] { "Screens/PauseScreen.cs" } },
-            new Group { Name = "Shop", Files = new[] { "Screens/UpgradeScreen.cs", "Screens/UpgradeTree.cs", "Screens/UiTreeEdges.cs" } },
+            // WP-104 B4 (S-09): the feature-based tree draws inside the round-end window (UpgradeScreen hosts it), so it spends the
+            // Shop's budget - no vermilion, no brush trace; its hanko is the window's one seal-stamp ceremony.
+            new Group { Name = "Shop", Files = new[] { "Screens/UpgradeScreen.cs", "Screens/UpgradeTree.cs", "Screens/UiTreeEdges.cs", "Screens/UpgradeTreeV2.cs" } },
+            // WP-104 (S-09): the Awakening page - a brush window of its own over Results / the menu (title 1, one column wash).
+            new Group { Name = "Awakening", Files = new[] { "Screens/AwakeningPage.cs" } },
             new Group
             {
                 Name = "HUD",

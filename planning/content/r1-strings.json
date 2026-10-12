@@ -549,7 +549,7 @@
   },
   "tree.action.stoke": {
     "en": "STOKE THE HEARTH",
-    "tr": "OCAĞI YAK"
+    "tr": "OCAĞI KÖRÜKLE"
   },
   "tree.action.undo": {
     "en": "UNDO LAST",
@@ -565,7 +565,7 @@
   },
   "tree.hearth.round": {
     "en": "{value} of {max} stokes this round",
-    "tr": "Bu round {max} yakıştan {value}"
+    "tr": "Bu round körükleme: {value}/{max}"
   },
   "tree.pin.caption": {
     "en": "A pinned node comes in the next offer once it is reachable.",
@@ -744,8 +744,8 @@
     "tr": "Ocak"
   },
   "tree.run.hearth.desc": {
-    "en": "Weapon damage +{value}% per stoke, up to {max} stokes. Bought outside the cards.",
-    "tr": "Her yakışta silah hasarı +%{value}, en çok {max} yakış. Kart dışında alınır."
+    "en": "Weapon damage +{value}% per stoke, up to {max} stokes.",
+    "tr": "Her körüklemede silah hasarı +%{value}, en çok {max} kez."
   },
   "tree.run.link.raiju.1.name": {
     "en": "Conductor",
@@ -2137,7 +2137,7 @@
   },
   "tree.action.stoke_short": {
     "en": "STOKE",
-    "tr": "YAK"
+    "tr": "KÖRÜKLE"
   },
   "tree.gate.shut": {
     "en": "ANY KEYSTONE",
@@ -4530,5 +4530,853 @@
   "selection.tip.title": {
     "en": "TIP",
     "tr": "İPUCU"
+  },
+  "tree.v2.screen.title": {
+    "en": "UPGRADE TREE",
+    "tr": "GELİŞTİRME AĞACI"
+  },
+  "tree.v2.screen.continue": {
+    "en": "CONTINUE",
+    "tr": "DEVAM ET"
+  },
+  "tree.v2.screen.reroll": {
+    "en": "REROLL · {value} GOLD",
+    "tr": "YENİDEN ÇEK · {value} ALTIN"
+  },
+  "tree.v2.screen.target": {
+    "en": "SET TARGET",
+    "tr": "HEDEF YAP"
+  },
+  "tree.v2.screen.target_clear": {
+    "en": "CLEAR TARGET",
+    "tr": "HEDEFİ KALDIR"
+  },
+  "tree.v2.screen.target_left": {
+    "en": "{value} GOLD TO TARGET",
+    "tr": "HEDEFE {value} ALTIN"
+  },
+  "tree.v2.screen.recommended": {
+    "en": "RECOMMENDED",
+    "tr": "ÖNERİLEN"
+  },
+  "tree.v2.screen.recommended_caption": {
+    "en": "{value}% off this round",
+    "tr": "Bu round %{value} indirimli"
+  },
+  "tree.v2.screen.fog": {
+    "en": "UNLOCKS AT ROUND {round}",
+    "tr": "{round}. ROUNDDA AÇILIR"
+  },
+  "tree.v2.state.Fogged": {
+    "en": "UNLOCKS AT ROUND {round}",
+    "tr": "{round}. ROUNDDA AÇILIR"
+  },
+  "tree.v2.state.PrereqMissing": {
+    "en": "NEEDS {node}",
+    "tr": "ÖNCE {node}"
+  },
+  "tree.v2.state.Available": {
+    "en": "AVAILABLE",
+    "tr": "ALINABİLİR"
+  },
+  "tree.v2.state.Unaffordable": {
+    "en": "{value} GOLD SHORT",
+    "tr": "{value} ALTIN EKSİK"
+  },
+  "tree.v2.state.Purchased": {
+    "en": "OWNED",
+    "tr": "ALINDI"
+  },
+  "tree.v2.state.Excluded": {
+    "en": "CLOSED BY {node}",
+    "tr": "{node} KAPATTI"
+  },
+  "tree.v2.state.AwakeningLocked": {
+    "en": "UNLOCKS IN AWAKENING",
+    "tr": "UYANIŞ'TA AÇILIR"
+  },
+  "tree.v2.state.EffectPending": {
+    "en": "NOT IN THIS BUILD",
+    "tr": "BU SÜRÜMDE YOK"
+  },
+  "tree.v2.branch.Shot": {
+    "en": "SHOT",
+    "tr": "ATIŞ"
+  },
+  "tree.v2.branch.Magazine": {
+    "en": "MAGAZINE",
+    "tr": "ŞARJÖR"
+  },
+  "tree.v2.branch.Speed": {
+    "en": "SPEED",
+    "tr": "HIZ"
+  },
+  "tree.v2.branch.Element": {
+    "en": "ELEMENT",
+    "tr": "ELEMENT"
+  },
+  "tree.v2.branch.Chaos": {
+    "en": "CHAOS",
+    "tr": "KAOS"
+  },
+  "tree.v2.branch.Survival": {
+    "en": "SURVIVAL",
+    "tr": "HAYATTA KALMA"
+  },
+  "tree.v2.branch.Economy": {
+    "en": "ECONOMY",
+    "tr": "EKONOMİ"
+  },
+  "tree.v2.sh_heavy.name": {
+    "en": "Heavy Rounds",
+    "tr": "Ağır Mermi"
+  },
+  "tree.v2.sh_heavy.desc": {
+    "en": "Your weapon's bullets deal +{dmg}% damage.",
+    "tr": "Silahının mermileri +%{dmg} hasar verir."
+  },
+  "tree.v2.sh_bore.name": {
+    "en": "Big Bore",
+    "tr": "Geniş Çap"
+  },
+  "tree.v2.sh_bore.desc": {
+    "en": "Bullets are +{scale}% larger, so they land more easily, and deal +{dmg}% damage.",
+    "tr": "Mermiler +%{scale} büyür, daha kolay isabet eder ve +%{dmg} hasar verir."
+  },
+  "tree.v2.sh_double.name": {
+    "en": "Double Shot",
+    "tr": "Çift Atış"
+  },
+  "tree.v2.sh_double.desc": {
+    "en": "Each pull fires {extra} extra shot, {arc}° apart, at {extraDmg}% damage. A shotgun fires its whole spread again.",
+    "tr": "Her tetikte {arc}° aralıkla {extra} ek atış çıkar; ek atış %{extraDmg} hasar verir. Saçmalı silahta bütün demet yeniden çıkar."
+  },
+  "tree.v2.sh_pierce.name": {
+    "en": "Piercing",
+    "tr": "Delme"
+  },
+  "tree.v2.sh_pierce.desc": {
+    "en": "Bullets pierce {pierce} enemies and keep {keep}% of their damage through each one.",
+    "tr": "Mermi {pierce} düşmanı deler; her delişte hasarın %{keep} kadarı kalır."
+  },
+  "tree.v2.sh_ricochet.name": {
+    "en": "Ricochet",
+    "tr": "Sekme"
+  },
+  "tree.v2.sh_ricochet.desc": {
+    "en": "Bullets ricochet {bounce}× to an enemy within {radius} m, keeping {keep}% damage.",
+    "tr": "Mermi {radius} m içindeki bir düşmana {bounce} kez seker; sekme %{keep} hasar verir."
+  },
+  "tree.v2.sh_triple.name": {
+    "en": "Triple Shot",
+    "tr": "Üçlü Atış"
+  },
+  "tree.v2.sh_triple.desc": {
+    "en": "Each pull fires {extra} extra shots in a {arc}° fan, each at {extraDmg}% damage.",
+    "tr": "Her tetikte {arc}° yelpazede {extra} ek atış çıkar; her biri %{extraDmg} hasar verir."
+  },
+  "tree.v2.sh_rail.name": {
+    "en": "Rail Line",
+    "tr": "Ray Hattı"
+  },
+  "tree.v2.sh_rail.desc": {
+    "en": "Bullets pierce up to {pierce} enemies and keep {keep}% damage through each. Pierced enemies stagger for {stagger} s.",
+    "tr": "Mermi {pierce} düşmana kadar deler, her delişte hasarın %{keep} kadarı kalır. Delinen düşman {stagger} sn sendeler."
+  },
+  "tree.v2.sh_storm.name": {
+    "en": "Bouncing Storm",
+    "tr": "Sekme Fırtınası"
+  },
+  "tree.v2.sh_storm.desc": {
+    "en": "Bullets ricochet up to {bounce}×, each at {keep}% damage, and curve up to {seek}° toward the next target.",
+    "tr": "Mermi {bounce} kez seker, her sekme %{keep} hasar verir ve sonraki hedefe {seek}° kadar kıvrılır."
+  },
+  "tree.v2.sh_explosive.name": {
+    "en": "Explosive Rounds",
+    "tr": "Patlayan Mermi"
+  },
+  "tree.v2.sh_explosive.desc": {
+    "en": "Hits explode in a {radius} m blast that deals {area}% of the bullet's damage. Rocket launchers get +{ownRadius}% blast radius instead.",
+    "tr": "İsabet {radius} m yarıçapta patlar; alandakiler mermi hasarının %{area} kadarını alır. Roketatarda bunun yerine patlama yarıçapı +%{ownRadius}."
+  },
+  "tree.v2.sh_fan.name": {
+    "en": "Dragon Fan",
+    "tr": "Ejder Yelpazesi"
+  },
+  "tree.v2.sh_fan.desc": {
+    "en": "Each pull fires {extra} extra shots in a {arc}° fan, each at {extraDmg}% damage. No weapon fires more shots per pull.",
+    "tr": "Her tetikte {arc}° yelpazede {extra} ek atış çıkar; her biri %{extraDmg} hasar verir. Bu, tetik başına atış tavanıdır."
+  },
+  "tree.v2.sh_cap.name": {
+    "en": "Seeker Swarm",
+    "tr": "Avcı Sürüsü"
+  },
+  "tree.v2.sh_cap.desc": {
+    "en": "All extra shots and ricochets home in, turning up to {seek}° toward targets. Extra shots deal {extraDmg}% damage.",
+    "tr": "Bütün ek atışlar ve sekmeler {seek}° kadar dönerek hedef arar. Ek atışlar %{extraDmg} hasar verir."
+  },
+  "tree.v2.aw_alt_sh.name": {
+    "en": "Ring of Ruin",
+    "tr": "Yıkım Halkası"
+  },
+  "tree.v2.aw_alt_sh.desc": {
+    "en": "Every {every} pulls, your weapon also fires a ring of {ring} shots in all directions at {share}% damage.",
+    "tr": "Her {every} tetikte bir, silahın her yöne {ring} atışlık bir halka da çıkarır; halka %{share} hasar verir."
+  },
+  "tree.v2.mg_ext.name": {
+    "en": "Extended Mag",
+    "tr": "Uzun Şarjör"
+  },
+  "tree.v2.mg_ext.desc": {
+    "en": "Magazine size +{mag}%, always at least one more shot.",
+    "tr": "Şarjör +%{mag} büyür; her zaman en az bir mermi artar."
+  },
+  "tree.v2.mg_reload1.name": {
+    "en": "Quick Hands I",
+    "tr": "Hızlı El I"
+  },
+  "tree.v2.mg_reload1.desc": {
+    "en": "Reload time −{reload}%.",
+    "tr": "Dolum süresi −%{reload}."
+  },
+  "tree.v2.mg_double.name": {
+    "en": "Double Magazine",
+    "tr": "Çift Şarjör"
+  },
+  "tree.v2.mg_double.desc": {
+    "en": "Magazine size ×{mag}. Multiplies with Extended Mag.",
+    "tr": "Şarjör ×{mag} büyür. Uzun Şarjör ile çarpılır."
+  },
+  "tree.v2.mg_reload2.name": {
+    "en": "Quick Hands II",
+    "tr": "Hızlı El II"
+  },
+  "tree.v2.mg_reload2.desc": {
+    "en": "Reload time −{reload}% in total.",
+    "tr": "Dolum süresi toplam −%{reload}."
+  },
+  "tree.v2.mg_reload3.name": {
+    "en": "Quick Hands III",
+    "tr": "Hızlı El III"
+  },
+  "tree.v2.mg_reload3.desc": {
+    "en": "Reload time −{reload}% in total. Reloading no longer slows you down.",
+    "tr": "Dolum süresi toplam −%{reload}. Dolum sırasında yavaşlamazsın."
+  },
+  "tree.v2.mg_autoload.name": {
+    "en": "Auto-Loader",
+    "tr": "Otomatik Dolum"
+  },
+  "tree.v2.mg_autoload.desc": {
+    "en": "Stop firing for {idle} s and your magazine refills {rate}% per second. No reload needed.",
+    "tr": "{idle} sn ateş etmezsen şarjör saniyede %{rate} dolar. Dolum tuşuna basman gerekmez."
+  },
+  "tree.v2.mg_drum.name": {
+    "en": "Bottomless Drum",
+    "tr": "Dipsiz Tambur"
+  },
+  "tree.v2.mg_drum.desc": {
+    "en": "Magazine size ×{mag} again, up to ×{magMax} in total. The last {tail}% of each magazine deals +{tailDmg}% damage.",
+    "tr": "Şarjör yine ×{mag} büyür, toplamda en çok ×{magMax}. Her şarjörün son %{tail} kısmı +%{tailDmg} hasar verir."
+  },
+  "tree.v2.mg_endless.name": {
+    "en": "Endless Window",
+    "tr": "Sonsuz Pencere"
+  },
+  "tree.v2.mg_endless.desc": {
+    "en": "Every {kills} kills, your magazine is endless for {seconds} s.",
+    "tr": "Her {kills} öldürmede şarjörün {seconds} sn boyunca bitmez."
+  },
+  "tree.v2.mg_cap.name": {
+    "en": "Infinity Engine",
+    "tr": "Sonsuzluk Motoru"
+  },
+  "tree.v2.mg_cap.desc": {
+    "en": "Endless Window opens every {kills} kills and lasts {seconds} s. During it, fire rate +{rpm}%.",
+    "tr": "Sonsuz Pencere her {kills} öldürmede açılır ve {seconds} sn sürer. Pencere boyunca atış hızı +%{rpm}."
+  },
+  "tree.v2.aw_alt_mg.name": {
+    "en": "Ammo Fountain",
+    "tr": "Cephane Pınarı"
+  },
+  "tree.v2.aw_alt_mg.desc": {
+    "en": "Each kill has a {chance}% chance to refill your magazine and give +{dmg}% damage for {seconds} s.",
+    "tr": "Her öldürme %{chance} şansla şarjörünü doldurur ve {seconds} sn boyunca hasarı +%{dmg} artırır."
+  },
+  "tree.v2.sp_rate1.name": {
+    "en": "Hair Trigger I",
+    "tr": "Hassas Tetik I"
+  },
+  "tree.v2.sp_rate1.desc": {
+    "en": "Fire rate +{rpm}%.",
+    "tr": "Atış hızı +%{rpm}."
+  },
+  "tree.v2.sp_move.name": {
+    "en": "Light Feet",
+    "tr": "Hafif Adım"
+  },
+  "tree.v2.sp_move.desc": {
+    "en": "Move speed +{move}%. Firing slows you {firePenalty}% less.",
+    "tr": "Hareket hızı +%{move}. Ateş ederken yavaşlama %{firePenalty} azalır."
+  },
+  "tree.v2.sp_rate2.name": {
+    "en": "Hair Trigger II",
+    "tr": "Hassas Tetik II"
+  },
+  "tree.v2.sp_rate2.desc": {
+    "en": "Fire rate +{rpm}% in total.",
+    "tr": "Atış hızı toplam +%{rpm}."
+  },
+  "tree.v2.sp_dash.name": {
+    "en": "Wind Step",
+    "tr": "Rüzgâr Adımı"
+  },
+  "tree.v2.sp_dash.desc": {
+    "en": "Move speed +{move}% in total. After a kill, +{killBoost}% more speed for {killSeconds} s.",
+    "tr": "Hareket hızı toplam +%{move}. Her öldürmeden sonra {killSeconds} sn boyunca +%{killBoost} hız."
+  },
+  "tree.v2.sp_rate3.name": {
+    "en": "Hair Trigger III",
+    "tr": "Hassas Tetik III"
+  },
+  "tree.v2.sp_rate3.desc": {
+    "en": "Fire rate +{rpm}% in total.",
+    "tr": "Atış hızı toplam +%{rpm}."
+  },
+  "tree.v2.sp_fullauto.name": {
+    "en": "Full-Auto",
+    "tr": "Taramalı Dönüşüm"
+  },
+  "tree.v2.sp_fullauto.desc": {
+    "en": "Hold the trigger and any weapon fires on full auto at +{dpsTarget}% DPS. Weapons that are already automatic get +{autoRpm}% fire rate.",
+    "tr": "Tetiği basılı tut: her silah otomatik ateş eder ve DPS'i +%{dpsTarget} artar. Zaten otomatik olan silahta atış hızı +%{autoRpm}."
+  },
+  "tree.v2.sp_twin.name": {
+    "en": "Twin Barrel",
+    "tr": "Çift Namlu"
+  },
+  "tree.v2.sp_twin.desc": {
+    "en": "A second barrel fires in turn: fire rate +{rpm}%. Of every {freeEvery} shots, one costs no ammo.",
+    "tr": "İkinci namlu sırayla ateşler: atış hızı +%{rpm}. Her {freeEvery} atıştan biri şarjörden düşmez."
+  },
+  "tree.v2.sp_cap.name": {
+    "en": "Overclock",
+    "tr": "Aşırı Hız"
+  },
+  "tree.v2.sp_cap.desc": {
+    "en": "Keep firing and fire rate climbs +{step}% at a time, up to +{max}%. Stop firing and it resets.",
+    "tr": "Ateş etmeyi sürdürdükçe atış hızı adım adım +%{step} artar, en çok +%{max}. Tetiği bırakınca sıfırlanır."
+  },
+  "tree.v2.aw_alt_sp.name": {
+    "en": "Blink Fire",
+    "tr": "Ani Ateş"
+  },
+  "tree.v2.aw_alt_sp.desc": {
+    "en": "After a dodge or a kill, fire rate ×{rpm} for {seconds} s.",
+    "tr": "Kaçınma ya da öldürmeden sonra {seconds} sn boyunca atış hızı ×{rpm}."
+  },
+  "tree.v2.el_fire.name": {
+    "en": "Ember Rounds",
+    "tr": "Kor Mermi"
+  },
+  "tree.v2.el_fire.desc": {
+    "en": "Hits set enemies on fire for {seconds} s. Each burning enemy takes {dot}% of your weapon's DPS per second.",
+    "tr": "İsabet düşmanı {seconds} sn yakar. Yanan her düşman saniyede silah DPS'inin %{dot} kadarı hasar alır."
+  },
+  "tree.v2.el_ice.name": {
+    "en": "Frost Rounds",
+    "tr": "Ayaz Mermi"
+  },
+  "tree.v2.el_ice.desc": {
+    "en": "Each hit adds a chill stack for {seconds} s ({slowStacks} on slow weapons). Each stack slows by {slow}%, up to {maxStacks} stacks.",
+    "tr": "Her isabet {seconds} sn süren bir soğuk yığını ekler (yavaş silahta {slowStacks}). Yığın başına %{slow} yavaşlatır, en çok {maxStacks} yığın."
+  },
+  "tree.v2.el_shock.name": {
+    "en": "Arc Rounds",
+    "tr": "Kıvılcım Mermi"
+  },
+  "tree.v2.el_shock.desc": {
+    "en": "Hits arc lightning to {jumps} nearby enemies, up to {eventMax}× per second. Each linked enemy takes {k}% of your weapon's DPS per second.",
+    "tr": "İsabet şimşeği {jumps} yakın düşmana sıçratır, saniyede en çok {eventMax} kez. Zincirdeki her düşman saniyede silah DPS'inin %{k} kadarı hasar alır."
+  },
+  "tree.v2.el_venom.name": {
+    "en": "Venom Rounds",
+    "tr": "Zehir Mermi"
+  },
+  "tree.v2.el_venom.desc": {
+    "en": "Each hit adds a venom stack for {seconds} s ({slowStacks} on slow weapons). Each stack deals {stack}% of your weapon's DPS per second, up to {maxStacks} stacks.",
+    "tr": "Her isabet {seconds} sn süren bir zehir yığını ekler (yavaş silahta {slowStacks}). Her yığın saniyede silah DPS'inin %{stack} kadarı vurur; en çok {maxStacks} yığın."
+  },
+  "tree.v2.el_fire2.name": {
+    "en": "Wildfire",
+    "tr": "Orman Yangını"
+  },
+  "tree.v2.el_fire2.desc": {
+    "en": "Burning deals {dot}% of your weapon's DPS per second. A burning enemy that dies leaves a {ground} m patch of fire for {groundSeconds} s.",
+    "tr": "Yanma saniyede silah DPS'inin %{dot} kadarı vurur. Yanarken ölen düşman {groundSeconds} sn yanan {ground} m yarıçaplı bir zemin bırakır."
+  },
+  "tree.v2.el_ice2.name": {
+    "en": "Deep Freeze",
+    "tr": "Derin Donma"
+  },
+  "tree.v2.el_ice2.desc": {
+    "en": "Fully chilled enemies freeze for {freeze} s, at most once every {cooldown} s. Elites freeze half as long; Ultras only slow. Frozen enemies take {vuln}% more damage.",
+    "tr": "Soğuğu dolan düşman en çok {cooldown} saniyede bir, {freeze} sn donar. Elit yarı süre donar, Ultra yalnız yavaşlar. Donmuş düşman %{vuln} fazla hasar alır."
+  },
+  "tree.v2.el_shock2.name": {
+    "en": "Storm Chain",
+    "tr": "Fırtına Zinciri"
+  },
+  "tree.v2.el_shock2.desc": {
+    "en": "Lightning jumps to {jumps} enemies. Each linked enemy takes {k}% of your weapon's DPS per second.",
+    "tr": "Şimşek {jumps} düşmana sıçrar. Zincirdeki her düşman saniyede silah DPS'inin %{k} kadarı hasar alır."
+  },
+  "tree.v2.el_venom2.name": {
+    "en": "Plague Cloud",
+    "tr": "Veba Bulutu"
+  },
+  "tree.v2.el_venom2.desc": {
+    "en": "A poisoned enemy that dies leaves a {cloud} m cloud for {cloudSeconds} s that poisons everyone inside. Venom stacks up to {maxStacks}.",
+    "tr": "Zehirliyken ölen düşman {cloudSeconds} sn süren {cloud} m zehir bulutu bırakır; içindekiler zehirlenir. En çok {maxStacks} yığın."
+  },
+  "tree.v2.el_fire3.name": {
+    "en": "Inferno",
+    "tr": "Cehennem"
+  },
+  "tree.v2.el_fire3.desc": {
+    "en": "Burning deals {dot}% of your weapon's DPS per second and spreads each second to an enemy within {spread} m. Burning enemies take {vuln}% more damage.",
+    "tr": "Yanma saniyede silah DPS'inin %{dot} kadarı vurur ve her saniye {spread} m içindeki bir düşmana sıçrar. Yanan düşman %{vuln} fazla hasar alır."
+  },
+  "tree.v2.el_ice3.name": {
+    "en": "Shatter",
+    "tr": "Parçalanma"
+  },
+  "tree.v2.el_ice3.desc": {
+    "en": "A frozen enemy that dies bursts into ice: {radius} m, {share}% of your weapon's DPS, and it chills enemies around it.",
+    "tr": "Donmuş düşman ölünce {radius} m buz patlaması çıkar: silah DPS'inin %{share} kadarı hasar verir ve çevredekileri üşütür."
+  },
+  "tree.v2.el_shock3.name": {
+    "en": "Thunder Lord",
+    "tr": "Gök Gürültüsü"
+  },
+  "tree.v2.el_shock3.desc": {
+    "en": "Lightning jumps to {jumps} enemies, and every enemy in the chain staggers for {stagger} s.",
+    "tr": "Şimşek {jumps} düşmana sıçrar; zincirdeki her düşman {stagger} sn sendeler."
+  },
+  "tree.v2.el_venom3.name": {
+    "en": "Corrosion",
+    "tr": "Aşındırma"
+  },
+  "tree.v2.el_venom3.desc": {
+    "en": "At {threshold} or more venom stacks, armour is ignored and the enemy takes {vuln}% more damage. Venom stacks up to {maxStacks}.",
+    "tr": "{threshold} ya da daha çok yığında zırh yok sayılır ve düşman %{vuln} fazla hasar alır. En çok {maxStacks} yığın."
+  },
+  "tree.v2.el_fusion.name": {
+    "en": "Elemental Fusion",
+    "tr": "Element Birleşimi"
+  },
+  "tree.v2.el_fusion.desc": {
+    "en": "Every hit applies both of your elements at once. All element damage +{dmg}%.",
+    "tr": "Her isabet iki elementini birlikte uygular. Bütün element hasarı +%{dmg}."
+  },
+  "tree.v2.el_cap.name": {
+    "en": "Primal Cataclysm",
+    "tr": "İlksel Felaket"
+  },
+  "tree.v2.el_cap.desc": {
+    "en": "Every {cooldown} s, an element nova bursts around you: {radius} m, full stacks of your elements and {share}% of your weapon's DPS.",
+    "tr": "{cooldown} saniyede bir çevrende {radius} m element novası patlar: elementlerinin tam yığını ve silah DPS'inin %{share} kadarı hasar."
+  },
+  "tree.v2.aw_alt_el.name": {
+    "en": "Elemental Avatar",
+    "tr": "Element Avatarı"
+  },
+  "tree.v2.aw_alt_el.desc": {
+    "en": "Take elemental form for {seconds} s: every hit sets off an element nova.",
+    "tr": "{seconds} sn element formuna girersin: her isabet bir element novası patlatır."
+  },
+  "tree.v2.kx_crit.name": {
+    "en": "Lucky Strike",
+    "tr": "Şans Vuruşu"
+  },
+  "tree.v2.kx_crit.desc": {
+    "en": "Hits have a {chance}% chance to crit for ×{mult} damage. After {pity} pulls with no crit, the next one is guaranteed.",
+    "tr": "İsabet %{chance} şansla ×{mult} kritik vurur. {pity} tetik boyunca kritik gelmezse sonraki kesin kritiktir."
+  },
+  "tree.v2.kx_crit2.name": {
+    "en": "Fortune's Edge",
+    "tr": "Talih Kılıcı"
+  },
+  "tree.v2.kx_crit2.desc": {
+    "en": "Crit chance {chance}%, crits deal ×{mult}. A crit kill sends out a {ring} m shockwave at {ringShare}% damage.",
+    "tr": "Kritik şansı %{chance}, kritik ×{mult} vurur. Kritik öldürme {ring} m şok halkası yayar; halka %{ringShare} hasar verir."
+  },
+  "tree.v2.kx_chain.name": {
+    "en": "Chain Reaction",
+    "tr": "Zincirleme Patlama"
+  },
+  "tree.v2.kx_chain.desc": {
+    "en": "Dying enemies have a {chance}% chance to explode: {radius} m, {hp}% of their maximum health. Blast kills can explode too, with a lower chance each step.",
+    "tr": "Ölen düşman %{chance} şansla patlar: {radius} m, azami canının %{hp} kadarı hasar. Patlamayla ölen de patlayabilir; şans her adımda düşer."
+  },
+  "tree.v2.kx_nuke.name": {
+    "en": "Mini Nuke",
+    "tr": "Mini Nükleer"
+  },
+  "tree.v2.kx_nuke.desc": {
+    "en": "After about {k} s of steady hits, your next hit drops a {radius} m nuke: {share}% of your weapon's DPS and a {stun} s stun.",
+    "tr": "Yaklaşık {k} saniyelik isabetten sonra sıradaki isabet {radius} m nükleer patlama olur: silah DPS'inin %{share} kadarı hasar ve {stun} sn sersemletme."
+  },
+  "tree.v2.kx_hole.name": {
+    "en": "Black Hole",
+    "tr": "Kara Delik"
+  },
+  "tree.v2.kx_hole.desc": {
+    "en": "Every {cooldown} s, a hit opens a {radius} m black hole for {seconds} s. It drags enemies in for {share}% of your weapon's DPS per second and {collapse}% when it collapses.",
+    "tr": "{cooldown} saniyede bir isabet, {seconds} sn süren {radius} m kara delik açar. Düşmanları içine çeker, saniyede silah DPS'inin %{share} kadarı, çökünce %{collapse} vurur."
+  },
+  "tree.v2.kx_mass.name": {
+    "en": "Critical Mass",
+    "tr": "Kritik Kütle"
+  },
+  "tree.v2.kx_mass.desc": {
+    "en": "Mini Nuke: needs {nukeK}% fewer hits, blast radius {nukeRadius} m. Black Hole: opens every {holeCooldown} s, collapse damage ×{collapse}.",
+    "tr": "Mini Nükleer: %{nukeK} daha az isabetle dolar, patlama yarıçapı {nukeRadius} m. Kara Delik: {holeCooldown} saniyede bir açılır, çöküş hasarı ×{collapse}."
+  },
+  "tree.v2.kx_cap.name": {
+    "en": "Doomsday Bell",
+    "tr": "Kıyamet Çanı"
+  },
+  "tree.v2.kx_cap.desc": {
+    "en": "Every {cooldown} s a bell tolls: a {radius} m shockwave deals {share}% of your weapon's DPS and stuns for {stun} s. Elites and Ultras are stunned half as long.",
+    "tr": "{cooldown} saniyede bir çan çalar: {radius} m şok halkası silah DPS'inin %{share} kadarı hasar verir ve {stun} sn sersemletir. Elit ve Ultra yarı süre sersemler."
+  },
+  "tree.v2.aw_alt_kx.name": {
+    "en": "Event Horizon",
+    "tr": "Olay Ufku"
+  },
+  "tree.v2.aw_alt_kx.desc": {
+    "en": "A small {radius} m black hole circles you all run, pulling enemies in for {share}% of your weapon's DPS per second.",
+    "tr": "Koşu boyunca çevrende {radius} m küçük bir kara delik döner; içine çektiği düşmanlar saniyede silah DPS'inin %{share} kadarı hasar alır."
+  },
+  "tree.v2.sv_hp1.name": {
+    "en": "Iron Body I",
+    "tr": "Demir Beden I"
+  },
+  "tree.v2.sv_hp1.desc": {
+    "en": "Maximum health +{hp}%.",
+    "tr": "Azami can +%{hp}."
+  },
+  "tree.v2.sv_hp2.name": {
+    "en": "Iron Body II",
+    "tr": "Demir Beden II"
+  },
+  "tree.v2.sv_hp2.desc": {
+    "en": "Maximum health +{hp}% in total.",
+    "tr": "Azami can toplam +%{hp}."
+  },
+  "tree.v2.sv_shield.name": {
+    "en": "Spirit Ward",
+    "tr": "Ruh Kalkanı"
+  },
+  "tree.v2.sv_shield.desc": {
+    "en": "Gain a shield worth {shield}% of your maximum health. After {delay} s without damage, it refills {regen}% per second.",
+    "tr": "Azami canının %{shield} kadarı kalkan kazanırsın. {delay} sn hasar almazsan kalkan saniyede %{regen} dolar."
+  },
+  "tree.v2.sv_leech.name": {
+    "en": "Life Drain",
+    "tr": "Can Emme"
+  },
+  "tree.v2.sv_leech.desc": {
+    "en": "Each kill heals {standard}% of your maximum health (Elite {elite}%, Ultra {ultra}%), up to {cap}% per second.",
+    "tr": "Her öldürme azami canının %{standard} kadarını yeniler (Elit %{elite}, Ultra %{ultra}); saniyede en çok %{cap}."
+  },
+  "tree.v2.sv_hp3.name": {
+    "en": "Iron Body III",
+    "tr": "Demir Beden III"
+  },
+  "tree.v2.sv_hp3.desc": {
+    "en": "Maximum health +{hp}% in total. Health starts to regenerate {regenDelay}% sooner.",
+    "tr": "Azami can toplam +%{hp}. Can %{regenDelay} daha erken yenilenmeye başlar."
+  },
+  "tree.v2.sv_dodge.name": {
+    "en": "Phantom Step",
+    "tr": "Hayalet Adım"
+  },
+  "tree.v2.sv_dodge.desc": {
+    "en": "{chance}% chance to dodge a hit. After a dodge, you pass through enemies for {ghost} s.",
+    "tr": "Gelen vuruştan %{chance} şansla kaçınırsın. Kaçınınca {ghost} sn düşmanların içinden geçebilirsin."
+  },
+  "tree.v2.sv_bulwark.name": {
+    "en": "Stone Guardian",
+    "tr": "Taş Muhafız"
+  },
+  "tree.v2.sv_bulwark.desc": {
+    "en": "Your shield grows to {shield}% of maximum health. When it breaks, a {radius} m wave knocks enemies back and stuns them, at most every {cooldown} s.",
+    "tr": "Kalkan azami canının %{shield} kadarına çıkar. Kalkan kırılınca {radius} m dalga düşmanları iter ve sersemletir; en çok {cooldown} saniyede bir."
+  },
+  "tree.v2.sv_cap.name": {
+    "en": "Undying Oath",
+    "tr": "Ölümsüz Ant"
+  },
+  "tree.v2.sv_cap.desc": {
+    "en": "Fatal damage makes you invulnerable for {seconds} s instead. You rise with {hp}% health and knock enemies back {radius} m. {perRound}× per round.",
+    "tr": "Ölümcül darbe aldığında ölmez, {seconds} sn ölümsüz olursun. Sonra %{hp} canla kalkar, düşmanları {radius} m geri itersin. Round başına {perRound} kez."
+  },
+  "tree.v2.aw_alt_sv.name": {
+    "en": "Phoenix",
+    "tr": "Anka Kuşu"
+  },
+  "tree.v2.aw_alt_sv.desc": {
+    "en": "Once per run, instead of dying you burst into a {radius} m blast of fire and get back up with {hp}% health.",
+    "tr": "Koşuda bir kez, ölmek yerine {radius} m ateş patlamasıyla yeniden kalkarsın; canın %{hp} olur."
+  },
+  "tree.v2.ec_gold1.name": {
+    "en": "Coin Sense I",
+    "tr": "Altın Sezgisi I"
+  },
+  "tree.v2.ec_gold1.desc": {
+    "en": "Gold earned +{gold}%.",
+    "tr": "Kazanılan altın +%{gold}."
+  },
+  "tree.v2.ec_dealer.name": {
+    "en": "Arms Dealer",
+    "tr": "Silah Tüccarı"
+  },
+  "tree.v2.ec_dealer.desc": {
+    "en": "Wall weapons cost {wall}% less, and their ammo a further {ammo}% less.",
+    "tr": "Duvar silahları %{wall} ucuz; cephaneleri ayrıca %{ammo} ucuz."
+  },
+  "tree.v2.ec_gold2.name": {
+    "en": "Coin Sense II",
+    "tr": "Altın Sezgisi II"
+  },
+  "tree.v2.ec_gold2.desc": {
+    "en": "Gold earned +{gold}% in total.",
+    "tr": "Kazanılan altın toplam +%{gold}."
+  },
+  "tree.v2.ec_interest.name": {
+    "en": "Interest",
+    "tr": "Bileşik Faiz"
+  },
+  "tree.v2.ec_interest.desc": {
+    "en": "At the end of each round, earn {rate}% interest on your unspent gold, up to a cap.",
+    "tr": "Her round sonunda harcanmamış altının %{rate} kadarı faiz olarak eklenir; faizin bir tavanı vardır."
+  },
+  "tree.v2.ec_gold3.name": {
+    "en": "Coin Sense III",
+    "tr": "Altın Sezgisi III"
+  },
+  "tree.v2.ec_gold3.desc": {
+    "en": "Gold earned +{gold}% in total. Gold pickup range +{magnet}%.",
+    "tr": "Kazanılan altın toplam +%{gold}. Altın toplama menzili +%{magnet}."
+  },
+  "tree.v2.ec_midas.name": {
+    "en": "Midas Hoard",
+    "tr": "Midas Hazinesi"
+  },
+  "tree.v2.ec_midas.desc": {
+    "en": "Damage +{step}% for every {per} gold you carry, up to +{cap}%. Spending gold lowers it.",
+    "tr": "Taşıdığın her {per} altın için hasar +%{step}, en çok +%{cap}. Altın harcadıkça azalır."
+  },
+  "tree.v2.aw_alt_ec.name": {
+    "en": "Golden Rain",
+    "tr": "Altın Yağmuru"
+  },
+  "tree.v2.aw_alt_ec.desc": {
+    "en": "Every {per} gold you spend gives +{dmg}% damage for {seconds} s.",
+    "tr": "Her {per} altın harcadığında {seconds} sn boyunca hasar +%{dmg}."
+  },
+  "tree.v2.synergy.Barrage.name": {
+    "en": "Barrage",
+    "tr": "Ateş Yağmuru"
+  },
+  "tree.v2.synergy.Barrage.desc": {
+    "en": "Rocket launcher with Full-Auto: full blast radius, one rocket in every {every} splits into {parts} bomblets ({partShare}% damage, {partRadius} m), reload {reload} s.",
+    "tr": "Taramalı roketatar: patlama yarıçapı tam kalır, her {every} roketten biri {parts} bombacığa ayrılır (%{partShare} hasar, {partRadius} m), dolum {reload} sn."
+  },
+  "tree.v2.synergy.FrozenGravity.name": {
+    "en": "Frozen Gravity",
+    "tr": "Donmuş Çekim"
+  },
+  "tree.v2.synergy.FrozenGravity.desc": {
+    "en": "Enemies in a black hole freeze after {freeze} s. The collapse hits frozen enemies ×{collapse} and bursts into ice: {radius} m, {share}% of your weapon's DPS.",
+    "tr": "Kara delikteki düşmanlar {freeze} sn sonra donar. Çöküş donmuşlara ×{collapse} vurur ve {radius} m buz patlaması çıkarır: silah DPS'inin %{share} kadarı."
+  },
+  "tree.v2.synergy.ThunderCascade.name": {
+    "en": "Thunder Cascade",
+    "tr": "Gök Şelalesi"
+  },
+  "tree.v2.synergy.ThunderCascade.desc": {
+    "en": "Every death blast throws lightning at {jumps} enemies ({share}% of your weapon's DPS). Chain blasts keep {falloff}% of their chance at each step.",
+    "tr": "Her ölüm patlaması {jumps} düşmana şimşek atar (silah DPS'inin %{share} kadarı). Zincirleme patlamada şansın %{falloff} kadarı her adımda korunur."
+  },
+  "tree.v2.synergy.PinballStorm.name": {
+    "en": "Pinball Storm",
+    "tr": "Bilardo Fırtınası"
+  },
+  "tree.v2.synergy.PinballStorm.desc": {
+    "en": "Extra shots ricochet too, and ricochets curve up to {seek}° toward the next target.",
+    "tr": "Ek atışlar da seker; sekmeler sonraki hedefe {seek}° kadar kıvrılır."
+  },
+  "tree.v2.synergy.UnbrokenLine.name": {
+    "en": "Unbroken Line",
+    "tr": "Kesintisiz Hat"
+  },
+  "tree.v2.synergy.UnbrokenLine.desc": {
+    "en": "Endless Window lasts {seconds} s longer, and fire rate is +{rpm}% during it.",
+    "tr": "Sonsuz Pencere {seconds} sn uzar; pencere boyunca atış hızı +%{rpm}."
+  },
+  "tree.v2.synergy.WildfireRounds.name": {
+    "en": "Wildfire Rounds",
+    "tr": "Yangın Mermisi"
+  },
+  "tree.v2.synergy.WildfireRounds.desc": {
+    "en": "Explosive bullets leave a {radius} m patch of fire for {seconds} s.",
+    "tr": "Patlayan mermiler {seconds} sn yanan {radius} m yarıçaplı bir zemin bırakır."
+  },
+  "tree.v2.synergy.ToxicRail.name": {
+    "en": "Toxic Rail",
+    "tr": "Zehirli Ray"
+  },
+  "tree.v2.synergy.ToxicRail.desc": {
+    "en": "A piercing bullet leaves {stacks} venom stacks on every enemy it passes through.",
+    "tr": "Delen mermi içinden geçtiği her düşmana {stacks} zehir yığını bırakır."
+  },
+  "tree.v2.synergy.CriticalMeltdown.name": {
+    "en": "Crit Meltdown",
+    "tr": "Kritik Erime"
+  },
+  "tree.v2.synergy.CriticalMeltdown.desc": {
+    "en": "A crit counts as {count} hits toward the Mini Nuke.",
+    "tr": "Kritik isabet Mini Nükleer sayacında {count} isabet sayılır."
+  },
+  "tree.v2.synergy.JudgmentLine.name": {
+    "en": "Judgment Line",
+    "tr": "Hüküm Hattı"
+  },
+  "tree.v2.synergy.JudgmentLine.desc": {
+    "en": "A piercing bullet explodes at up to {blasts} points along its line.",
+    "tr": "Delen mermi hattı boyunca en çok {blasts} noktada patlar."
+  },
+  "tree.v2.synergy.GoldenGun.name": {
+    "en": "Golden Gun",
+    "tr": "Altın Silah"
+  },
+  "tree.v2.synergy.GoldenGun.desc": {
+    "en": "Crit kills drop ×{gold} gold, adding up to +{cap}% income per round.",
+    "tr": "Kritik öldürme ×{gold} altın düşürür; round başına gelir en çok +%{cap} artar."
+  },
+  "meta.awakening.title": {
+    "en": "AWAKENING",
+    "tr": "UYANIŞ"
+  },
+  "results.awakening_line": {
+    "en": "AWAKENING +{value} Ash",
+    "tr": "UYANIŞ +{value} Kül"
+  },
+  "meta.ash_refund": {
+    "en": "+{value} Ash refunded. Every weapon now opens in every run, so the PATH's WEAPONS page is gone. Spend the Ash on the AWAKENING page.",
+    "tr": "+{value} Kül iade edildi. Artık her silah her koşuda açık, bu yüzden YOL'daki SİLAHLAR sayfası kaldırıldı. Kül'ü UYANIŞ sayfasında harcayabilirsin."
+  },
+  "tree.v2.screen.hearth": {
+    "en": "STOKE THE HEARTH · {value} GOLD",
+    "tr": "OCAĞI KÖRÜKLE · {value} ALTIN"
+  },
+  "tree.v2.screen.synergies": {
+    "en": "SYNERGIES",
+    "tr": "SİNERJİLER"
+  },
+  "tree.v2.screen.target_badge": {
+    "en": "TARGET",
+    "tr": "HEDEF"
+  },
+  "tree.v2.screen.target_path": {
+    "en": "ON TARGET PATH",
+    "tr": "HEDEF YOLUNDA"
+  },
+  "tree.v2.screen.target_ready": {
+    "en": "ENOUGH FOR TARGET",
+    "tr": "HEDEFE YETİYOR"
+  },
+  "tree.v2.screen.symbols": {
+    "en": "SYMBOLS",
+    "tr": "SİMGELER"
+  },
+  "tree.v2.screen.elements": {
+    "en": "ELEMENTS {value}/{max}",
+    "tr": "ELEMENT {value}/{max}"
+  },
+  "tree.v2.screen.fork_elements": {
+    "en": "Pick up to {max} elements. The others close for this run.",
+    "tr": "En çok {max} element seçebilirsin. Diğerleri bu koşu için kapanır."
+  },
+  "tree.v2.screen.now": {
+    "en": "NOW",
+    "tr": "ŞİMDİ"
+  },
+  "tree.v2.screen.after": {
+    "en": "AFTER",
+    "tr": "ALINCA"
+  },
+  "tree.v2.screen.synergy_requires": {
+    "en": "NEEDS {a} + {b}",
+    "tr": "GEREKLİ: {a} + {b}"
+  },
+  "tree.v2.screen.synergy_active": {
+    "en": "ACTIVE",
+    "tr": "ETKİN"
+  },
+  "tree.v2.screen.synergy_hidden": {
+    "en": "Own one of its nodes to reveal it.",
+    "tr": "Görmek için düğümlerinden birini al."
+  },
+  "awakening.ash_amount": {
+    "en": "{value} ASH",
+    "tr": "{value} KÜL"
+  },
+  "awakening.unlock": {
+    "en": "UNLOCK · {value} ASH",
+    "tr": "AÇ · {value} KÜL"
+  },
+  "awakening.state.unlocked": {
+    "en": "UNLOCKED",
+    "tr": "AÇILDI"
+  },
+  "awakening.state.short": {
+    "en": "{value} ASH SHORT",
+    "tr": "{value} KÜL EKSİK"
+  },
+  "awakening.alt_of": {
+    "en": "ALTERNATIVE TO {node}",
+    "tr": "{node} ALTERNATİFİ"
+  },
+  "awakening.alt_note": {
+    "en": "In a run, take either this or {node}.",
+    "tr": "Koşuda ya bunu ya da {node} düğümünü alabilirsin."
+  },
+  "awakening.pending": {
+    "en": "Not in this build yet. Your Ash is kept.",
+    "tr": "Bu sürümde henüz yok. Kül'ün korunuyor."
+  },
+  "awakening.empty": {
+    "en": "Ash is earned at the end of each run.",
+    "tr": "Kül her koşunun sonunda kazanılır."
+  },
+  "awakening.state.short_sentence": {
+    "en": "Not enough Ash for that yet. Nothing was spent.",
+    "tr": "Bunun için Kül henüz yetmiyor. Hiçbir şey harcanmadı."
+  },
+  "awakening.refuse": {
+    "en": "That can't be unlocked right now. Nothing was spent.",
+    "tr": "Bu şu an açılamıyor. Hiçbir şey harcanmadı."
+  },
+  "awakening.refund.title": {
+    "en": "ASH REFUNDED",
+    "tr": "KÜL İADE EDİLDİ"
+  },
+  "awakening.refund.ok": {
+    "en": "GOT IT",
+    "tr": "TAMAM"
   }
 }

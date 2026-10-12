@@ -201,7 +201,10 @@ namespace DD.Prototype.UI
 
             // WP-094: AP-032 v001's brush letters and seal ("Roman.I" … "Roman.C", "Roman.Seal") are cut from their atlas at
             // runtime (HudArt) rather than baked into this asset - the theme keys resolve all the same.
-            return HudArt.Icon(key);
+            // WP-104 B4: AP-042 v002's tree art ("Tree.<nodeId>", "Tree.Synergy.<name>", "Tree.Branch.<name>") loads the same way
+            // (TreeArt, Resources/UI/Tree) - the contract's IconKey / BadgeKey resolve through the theme.
+            Sprite hud = HudArt.Icon(key);
+            return hud != null ? hud : TreeArt.Icon(key);
         }
 
         /// <summary>True when the sprite is a G1 distance-field glyph (it must be drawn through DD/UI/Fx SdfGlyph).</summary>

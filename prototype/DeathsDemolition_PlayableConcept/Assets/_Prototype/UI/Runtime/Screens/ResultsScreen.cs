@@ -117,6 +117,7 @@ namespace DD.Prototype.UI
         private UiButton _mainMenuButton;
         private UiButton _playAgainButton;   // WP-105 (§C3): the primary action; null on the empty state
         private UiButton _focusButton;       // PLAY AGAIN, else MAIN MENU: the end state's focus and the pad's reclaim
+        private UiButton _awakeningButton;   // WP-104: the Awakening page's door, only while UiAwakeningRoute.LinkEnabled
         private readonly UiCounter[] _tiles = new UiCounter[4];
         private UiTimeline _count;
         private Image _clockRoll;      // disabled; its fill is the time roll's progress, driven by UiMotion
@@ -164,6 +165,9 @@ namespace DD.Prototype.UI
         public UiButton PlayAgainButton => _playAgainButton;
 
         public UiButton MainMenuButton => _mainMenuButton;
+
+        /// <summary>WP-104 (C-00 11.10 decision 2): the AWAKENING control - null while the link is off (until S-04 B1).</summary>
+        public UiButton AwakeningButton => _awakeningButton;
 
         protected override UiContext BaseContext => UiContext.RunResults;
 
@@ -1184,6 +1188,18 @@ namespace DD.Prototype.UI
             used += PromptBeside(mainMenu, UiPromptAction.Cancel, true);
             used = DockRight(mainMenu, used);
 
+            // WP-104 (C-00 11.10 decision 2): the door to the Awakening page, left of MAIN MENU - built only while the link is on
+            // (UiAwakeningRoute: off until S-04 B1; the -ddAwakeningPage dev flag or the integration turns it on). The Awakening
+            // LINE above stays words.
+            UiButton awakening = null;
+            if (playAgain && UiAwakeningRoute.LinkEnabled)
+            {
+                used += (int)UiSpace.XL;
+                // Its own name: the Awakening LINE above is "Awakening" (tests and captures find the line by it).
+                awakening = UiBrushKit.Button(footer, "AwakeningDoor", "awakening.title", "AWAKENING", "Menu.Path", OpenAwakening);
+                used = DockRight(awakening, used);
+            }
+
             string words = _model.FooterNote;
             TMP_Text note = UiFactory.Label(
                 "FooterNote", footer, words, UiType.MenuSmall,
@@ -1222,6 +1238,15 @@ namespace DD.Prototype.UI
                 UiInput.LinkHorizontal(mainMenu, null, again);
                 UiInput.LinkHorizontal(again, mainMenu, null);
             }
+
+            if (awakening != null)
+            {
+                // AWAKENING ⇄ MAIN MENU ⇄ PLAY AGAIN.
+                UiInput.LinkHorizontal(awakening, null, mainMenu);
+                UiInput.LinkHorizontal(mainMenu, awakening, again);
+            }
+
+            _awakeningButton = awakening;
 
             _mainMenuButton = mainMenu;
             _playAgainButton = again;
@@ -1273,11 +1298,24 @@ namespace DD.Prototype.UI
         /// were ever seen - and this screen cannot be opened again. After the beats, Cancel = the one action on this screen
         /// (MAIN MENU) with the Back cue, as on Selection; focus is reclaimed for the pad.
         /// </summary>
+        /// <summary>WP-104: opens the Awakening page over this screen; its close gives the focus back to the door.</summary>
+        private void OpenAwakening()
+        {
+            UiAwakeningRoute.Open(ScreenRect, () => UiInput.Focus(_awakeningButton));
+        }
+
         private void Update()
         {
             if (_clockRolling)
             {
                 TickClock();
+            }
+
+            if (UiAwakeningRoute.IsOpen)
+            {
+                // WP-104: the page owns Cancel and the focus while it is up (it has no per-frame loop of its own).
+                UiAwakeningRoute.HandleKeys();
+                return;
             }
 
             if (_playing)

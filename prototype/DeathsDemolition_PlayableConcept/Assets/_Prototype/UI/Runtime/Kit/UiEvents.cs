@@ -88,7 +88,15 @@ namespace DD.Prototype.UI
         /// <summary>The counter settles (stops the roll, one tok).</summary>
         CounterSettled = 53,
         /// <summary>Hold-to-confirm started (REROLL U5; also RESET ALL BINDINGS). Completion raises Confirm, early release Back.</summary>
-        RerollHoldStarted = 54
+        RerollHoldStarted = 54,
+
+        // ---- WP-104 R4 · the feature-based round-end tree (S-08's request; append-only). The hanko (a purchase) and a synergy's
+        // unlock are voiced from TreeEvents (NodePurchased / SynergyUnlocked) by S-08 - the screen raises no UiEvent for them.
+
+        /// <summary>The tree screen opened (once per round-end open; detail "UpgradeTreeV2").</summary>
+        TreeOpened = 55,
+        /// <summary>The recommendation strip was rerolled (a successful TryReroll; detail "TreeStrip"). Not UpgradeRerolled: no double cue.</summary>
+        TreeRerolled = 56
     }
 
     /// <summary>

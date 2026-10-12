@@ -20,7 +20,7 @@ namespace DD.Prototype.UI
     /// the build machine, so the stick paths are verified only through the EventSystem's
     /// own axis/submit events in PlayMode (MetaUiSliceTests.Gamepad_*).
     /// </summary>
-    public static class UiInput
+    public static partial class UiInput
     {
         private const string CancelButton = "Cancel";
 

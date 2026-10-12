@@ -404,7 +404,13 @@ namespace DD.Prototype.Tests.PlayMode
             Transform awakening = FindActive(screen, "Awakening");
             Assert.IsNotNull(awakening, "the run earned Ash: the Awakening line");
             string delta = UiStrings.Format("awakening.results.delta", "value", "15", "AWAKENING +{value} Ash");
-            StringAssert.StartsWith(delta, awakening.GetComponent<TMP_Text>().text, "AWAKENING +15 Ash (· the balance)");
+            // WP-104 (S-09 12.10): the line's words (the Awakening page's door is "AwakeningDoor", a control of its own).
+            TMP_Text awakeningText = awakening.GetComponent<TMP_Text>();
+            if (awakeningText == null)
+            {
+                awakeningText = awakening.GetComponentInChildren<TMP_Text>();   // Unity's null, not C#'s: no ??
+            }
+            StringAssert.StartsWith(delta, awakeningText.text, "AWAKENING +15 Ash (· the balance)");
             Assert.IsNull(FindActive(screen, "Path"), "no PATH line");
             Assert.IsNull(FindActive(screen, "NextUnlock"), "no Next unlock line");
             AssertInfoLinesMenuSmall(screen, "v02-1080");
@@ -469,6 +475,10 @@ namespace DD.Prototype.Tests.PlayMode
 
                 seen++;
                 TMP_Text text = line.GetComponent<TMP_Text>();
+                if (text == null)
+                {
+                    text = line.GetComponentInChildren<TMP_Text>();   // a control's label (Unity's null, not C#'s: no ??)
+                }
                 Assert.GreaterOrEqual(text.fontSize, UiTokens.FontSize(UiType.MenuSmall) - 0.01f, when + ": " + name + " ≥ MenuSmall");
                 Assert.AreNotEqual(UiTokens.Get(UiColor.TextMuted), text.color, when + ": " + name + " is not TextMuted");
             }

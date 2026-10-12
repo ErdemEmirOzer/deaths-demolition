@@ -197,6 +197,16 @@ namespace DD.Prototype.UI
 
         /// <summary>WP-068 R1-C: the in-run tree, shown instead of the card row while the shop draws node cards (WP-077 K10a).</summary>
         private UiRunTreePanel _tree;
+
+        /// <summary>
+        /// WP-104 B4 (S-09): the feature-based tree screen, built on its first open, drawn over the whole canvas instead of this
+        /// window's page while <see cref="UiTreeScreenRoute"/> names a provider (KARAR-WP104-11.10 decision 1). Until S-04 B1 no
+        /// provider exists and the shipped page / WP-077 panel above is what opens.
+        /// </summary>
+        private UiTreeScreenV2 _treeV2;
+
+        /// <summary>The provider this open's V2 tree is bound to (null = the shipped page).</summary>
+        private ITreeShopCommands _treeV2Shop;
         private UiButton _undoButton;
         private UiPrompt _continuePrompt;
 
@@ -246,6 +256,18 @@ namespace DD.Prototype.UI
 
         /// <summary>The share of the wallpaper's width shown, anchored to its bottom-right corner (UiBackdropArt).</summary>
         public const float WallpaperWidth = 0.8f;
+
+        /// <summary>WP-104 B4: the feature-based tree (null until its first open; tests, captures).</summary>
+        public UiTreeScreenV2 TreeV2
+        {
+            get { return _treeV2; }
+        }
+
+        /// <summary>WP-104 B4: this round-end open shows the feature-based tree (a provider was resolved at the open).</summary>
+        public bool TreeV2Active
+        {
+            get { return _treeV2Shop != null; }
+        }
 
         /// <summary>The kit's carrier: C1 Wallpaper scrim, two washes, the clipped content (tests).</summary>
         public UiBrushPane Pane
@@ -1045,10 +1067,17 @@ namespace DD.Prototype.UI
             SetPanelVisible(phase == RunPhase.Upgrading && contextValid);
             UpdateCountdown(phase);
 
-            if (_closing && !_pane.Root.gameObject.activeSelf)
+            if (_closing && (_treeV2Shop != null ? !_treeV2.Closing : !_pane.Root.gameObject.activeSelf))
             {
-                // The kit's close cue has run (the content, the washes and C1 faded and went off): the canvas follows.
+                // The kit's close cue has run (the content, the washes and C1 faded and went off) - or the V2 tree's fade: the
+                // canvas follows.
                 _closing = false;
+                if (_treeV2Shop != null)
+                {
+                    _treeV2.Hide();
+                    _treeV2Shop = null;
+                }
+
                 Canvas.gameObject.SetActive(false);
             }
 
@@ -1063,6 +1092,23 @@ namespace DD.Prototype.UI
             }
 
             GateForPause();
+            if (_treeV2Shop != null)
+            {
+                // WP-104 B4: the V2 tree owns the window; this screen keeps the phase, the freeze, the pause gate and the countdown.
+                if (!UiNavigation.IsPaused)
+                {
+                    _treeV2.HandleKeys();
+                }
+
+                if (_dirty)
+                {
+                    _dirty = false;
+                    _treeV2.Refresh();
+                }
+
+                return;
+            }
+
             if (TreeMode && !UiNavigation.IsPaused)
             {
                 _tree.HandleKeys();
@@ -1093,6 +1139,15 @@ namespace DD.Prototype.UI
                 StopTally();
                 UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitLayer(UiContext.RoundUpgrade);
+                if (_treeV2Shop != null)
+                {
+                    // WP-104 B4: the V2 tree fades (input off at once); Update turns the canvas off when its fade has run.
+                    _treeV2.Close();
+                    UiMotion.Alpha(_ground, 0f, UiBrushTokens.Close, UiEase.Exit, UiMotionClass.Decor, 0f, UiClock.Unscaled, GetInstanceID());
+                    _closing = true;
+                    return;
+                }
+
                 // WP-098B: the kit closes the window - input off at once, the content, washes and C1 fade (Fast, Exit, on
                 // the unscaled clock) and its cue takes the pane off; the wallpaper fades with them, and Update turns the
                 // canvas off once the pane has gone (Reduced Motion: in the same call / the next frame).
@@ -1109,6 +1164,24 @@ namespace DD.Prototype.UI
 
             UiFrozenFrame.Hold(FrozenOwner);   // WP-068 slice 4: frozen-frame blur under the shop (C8, E24)
             UiNavigation.EnterLayer(UiContext.RoundUpgrade);
+
+            // WP-104 B4 (S-09): THE tree choice of the round end - UiTreeScreenRoute's provider (S-04 B1, or a capture / test
+            // override) opens the feature-based tree over this window; none keeps the shipped page below (B1 not in: the game
+            // is unchanged).
+            _treeV2Shop = UiTreeScreenRoute.Resolve();
+            if (_treeV2Shop != null)
+            {
+                if (_treeV2 == null)
+                {
+                    _treeV2 = UiTreeScreenV2.Create(ScreenRect);
+                    _treeV2.Continued += OnTreeV2Continued;
+                }
+
+                _notice = null;
+                _treeV2.Open(_treeV2Shop);
+                _dirty = false;
+                return;
+            }
 
             _notice = null;
             // WP-098B: the kit opens the window (KILAVUZ §4.2) - the input on this frame (CONTINUE holds the focus until
@@ -2250,6 +2323,20 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-104 B4: the V2 tree's CONTINUE ran the provider's Continue. The round-end flow is the director's: when the provider
+        /// did not already end the phase (B1's RunTreeV2 raises ContinueRequested and leaves the flow to its host), this screen
+        /// closes it exactly as its own CONTINUE does.
+        /// </summary>
+        private void OnTreeV2Continued()
+        {
+            RunDirector director = RunDirector.Instance;
+            if (director != null && director.Phase == RunPhase.Upgrading)
+            {
+                CloseScreen();
+            }
+        }
+
         private void CloseScreen()
         {
             if (RunDirector.Instance == null)
@@ -2273,6 +2360,12 @@ namespace DD.Prototype.UI
         /// </summary>
         private void FocusFirstUsefulControl()
         {
+            if (_treeV2Shop != null)
+            {
+                _treeV2.FocusFirstUseful();
+                return;
+            }
+
             RoundUpgradeShop shop = Shop;
 
             if (TreeMode && _tree.FocusTarget() != null)

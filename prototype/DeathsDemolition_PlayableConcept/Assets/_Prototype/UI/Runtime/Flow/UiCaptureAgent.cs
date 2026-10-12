@@ -974,10 +974,28 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                // WP-104 B4 (S-09, S-10's request): "tree" is the feature-based round-end tree (UiCaptureAgent.TreeV2.cs); the
+                // WP-077 tree's frames kept their routine under "treev1".
                 if (_screen == "tree")
                 {
-                    yield return TreeFrames();
+                    yield return TreeV2Frames();
                     Debug.Log("[UiCapture] tree done");
+                    Application.Quit();
+                    yield break;
+                }
+
+                if (_screen == "treev1")
+                {
+                    yield return TreeFrames();
+                    Debug.Log("[UiCapture] treev1 done");
+                    Application.Quit();
+                    yield break;
+                }
+
+                if (_screen == "awakening")
+                {
+                    yield return AwakeningFrames();
+                    Debug.Log("[UiCapture] awakening done");
                     Application.Quit();
                     yield break;
                 }
@@ -2634,7 +2652,7 @@ namespace DD.Prototype.UI
             }
 
             /// <summary>
-            /// WP-068 R1-C: <c>-ddUiCapture tree</c> - the in-run tree on the round-end shop with node cards on (WP-077
+            /// WP-068 R1-C: <c>-ddUiCapture treev1</c> (was <c>tree</c> until WP-104 B4) - the in-run tree on the round-end shop with node cards on (WP-077
             /// K10a), over four staged shops: round 1 mid Opening Beat, open, a focused offer, a purchase with UNDO LAST;
             /// rounds 2-4 buy the offer (keystones and forks first) and stoke the Hearth once it opens, so OWNED, CLOSED BY,
             /// the Hearth and a pinned path all reach a frame. The player is invulnerable; the rounds are completed by the
