@@ -237,6 +237,21 @@ class UgStepTests(unittest.TestCase):
         self.assertEqual(0, r.returncode, r.stdout + r.stderr)
         self.assertIn("late=1", self.guard_notes(), "the late write landed before the restore")
 
+    def test_KalanPaylasilanDaemon_Durdurulmaz_RestoreYineKosar(self):
+        """12.10: a shared per-user daemon the step's Unity started (the licensing client) is left alone - the restore runs
+        without waiting for it or stopping it."""
+        daemon = self.root / "UnityLicensingClient.app" / "Contents" / "MacOS" / "Unity.Licensing.Client"
+        daemon.parent.mkdir(parents=True)
+        # the daemon lets go of the step's pipes (a real daemon does), else the test's own wait would outlive it
+        step = ("/bin/sh", "-c", '(exec -a "%s" sleep 20 </dev/null >/dev/null 2>&1) & sleep 1' % daemon)
+        r = self.run_step(step=step, DD_UG_STEP_POLL="1", DD_UG_STEP_DRAIN_SECONDS="3")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertEqual("done", self.result()["restore"])
+        alive = subprocess.run(["/usr/bin/pgrep", "-f", str(daemon)], capture_output=True, text=True).stdout.split()
+        self.assertTrue(alive, "the shared daemon was not stopped")
+        for p in alive:   # our own fixture only (unique tmp path), by exact pid
+            os.kill(int(p), signal.SIGTERM)
+
     def test_S3_Restore75AyniDizin_YenidenDenenir(self):
         r = self.run_step(FAKE_RESTORE_SEQ="75,0", DD_UG_STEP_RETRY_SECONDS="1")
         self.assertEqual(0, r.returncode, r.stdout + r.stderr)

@@ -67,8 +67,14 @@ QARGS=(--waiting --areas "$SCOPE" --not-under $$); [ -n "$LEDGER" ] && QARGS+=(-
 SNAP_OK=0; GX=0; RC=0; CHILD=""; FINISHED=0; RESTORE=skipped
 typeset -A SEEN   # gt S-2: every process of the step seen while it ran (pid → start), so none outlives the restore unseen
 remember() { local p; for p in ${(f)"$(dd_tree "$1")"}; do [ -n "${SEEN[$p]:-}" ] || SEEN[$p]="$(dd_pstart "$p")"; done; }
-left_behind() {   # the remembered processes still alive with the same start time (not a reused pid)
-  local p; LEFT=(); for p in ${(k)SEEN}; do dd_pid_live "$p" && [ "$(dd_pstart "$p")" = "${SEEN[$p]}" ] && LEFT+=($p); done; }
+# shared per-user daemons a Unity may start for everyone (the licensing client, the Hub): seen in a step's tree, never
+# the step's to stop (12.10: a build step left a process behind and ug-step stopped it - fine for the project's own helpers)
+SHARED_RE='UnityLicensingClient|Unity\.Licensing\.Client|Unity Hub'
+left_behind() {   # the remembered processes still alive with the same start time (not a reused pid), shared daemons excepted
+  local p; LEFT=(); for p in ${(k)SEEN}; do
+    dd_pid_live "$p" && [ "$(dd_pstart "$p")" = "${SEEN[$p]}" ] || continue
+    ps -o comm= -p "$p" 2>/dev/null | grep -qE -- "$SHARED_RE" && continue
+    LEFT+=($p); done; }
 result() { print -r -- "{\"rc\": $1, \"guard\": $GX, \"restore\": \"$RESTORE\", \"scope\": \"$SCOPE\"}" > "$UG.result.json" 2>/dev/null; }
 finish() {
   local rc=$1 t p; FINISHED=1; trap '' INT TERM HUP
