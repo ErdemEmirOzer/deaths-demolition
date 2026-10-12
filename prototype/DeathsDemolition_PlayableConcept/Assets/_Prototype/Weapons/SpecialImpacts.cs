@@ -150,7 +150,7 @@ namespace DD.Prototype.Weapons
             c.Round = Mathf.Max(1, SpecialWeaponRoundBridge.CurrentRound);
             // S-03's resolver speaks the registry's target; each hop is turned back into the weapon-side target (same id / height).
             var seed = new RegistryTarget(first.Root, first.Receiver, first.Explosive, first.Root != null ? first.Root.position : contact, 0.5f);
-            c.Count = ChainTargetResolver.Resolve(seed, contact, Mathf.Max(1, def.arcChain.maxTargets), def.arcChain.jumpRadius, c.Resolved);
+            c.Count = ChainTargetResolver.Resolve(seed, contact, ChainTargetsOf(def.arcChain), def.arcChain.jumpRadius, c.Resolved);
             for (int i = 0; i < c.Count; i++)
             {
                 if (i == 0) c.Targets[i] = first;
@@ -231,6 +231,13 @@ namespace DD.Prototype.Weapons
                 Land(c, i, false, rule != null ? rule.maxHpShare : 0f);
             }
         }
+
+        /// <summary>
+        /// WP-104 B2 Special resonance (KARAR-WP104 §6): the bodies one Raiju chain reaches - the data's maxTargets plus the run
+        /// tree's extra jumps (Storm Chain owned: +2), within the resolver's buffer. Neutral tree: exactly maxTargets.
+        /// </summary>
+        public static int ChainTargetsOf(WeaponArcChainBlock arc) =>
+            Mathf.Clamp(Mathf.Max(1, arc.maxTargets) + Mathf.Max(0, DD.Prototype.Rounds.TreeHooks.RaijuExtraJumps), 1, ChainTargetResolver.BufferSize);
 
         private static void Land(Chain c, int i, bool lethal, float share)
         {

@@ -60,6 +60,12 @@ namespace DD.Prototype.PlayerSystem
         /// <summary>MaximumHealth tier the cached ceiling was computed from. -1 before the first apply.</summary>
         private int _appliedMaxHealthTier = -1;
 
+        /// <summary>WP-104 B2: the run tree's max-health scale the cached ceiling was computed from (a change keeps the fraction, like a tier).</summary>
+        private float _appliedTreeHealthScale = 1f;
+
+        /// <summary>WP-104 B2 sv_shield / sv_dodge / sv_cap: the tree's shield, ghost and Undying Oath state (TreeHooks owns the rules).</summary>
+        private DD.Prototype.Rounds.TreeShieldState _treeShield;
+
         // ------------------------------------------------------------------- state
 
         private float _current;
@@ -130,6 +136,11 @@ namespace DD.Prototype.PlayerSystem
             get { return _upgrades.DescribeBuild(); }
         }
 
+        /// <summary>WP-104 B2 (S-09 HUD): the tree shield's points and its pool for the current maximum (0 without a shield node).</summary>
+        public float TreeShield => _treeShield.Shield;
+
+        public float TreeShieldMax => DD.Prototype.Rounds.TreeHooks.ShieldMax(_maxHealth);
+
         private float RegenCeiling
         {
             get { return _maxHealth * Mathf.Clamp01(_regenCeilingFraction); }
@@ -188,6 +199,15 @@ namespace DD.Prototype.PlayerSystem
             _upgrades.Bind();
 
             base.OnEnable();
+
+            // WP-104 B2: the tree's stats (O1), the kill heal (O4, sv_leech) and the shield for this run.
+            DD.Prototype.Rounds.TreeEvents.StatsChanged -= OnTreeStatsChanged;
+            DD.Prototype.Rounds.TreeEvents.StatsChanged += OnTreeStatsChanged;
+            DD.Prototype.Damage.DamageEvents.EnemyDied -= OnTreeKill;
+            DD.Prototype.Damage.DamageEvents.EnemyDied += OnTreeKill;
+            DD.Prototype.Rounds.RunEvents.RunStarted -= OnTreeRunStarted;
+            DD.Prototype.Rounds.RunEvents.RunStarted += OnTreeRunStarted;
+            ResetTreeShield(0);
         }
 
         protected override void OnDisable()
@@ -196,6 +216,38 @@ namespace DD.Prototype.PlayerSystem
 
             _upgrades.Unbind();
             _upgrades.Changed -= OnUpgradesChanged;
+            DD.Prototype.Rounds.TreeEvents.StatsChanged -= OnTreeStatsChanged;
+            DD.Prototype.Damage.DamageEvents.EnemyDied -= OnTreeKill;
+            DD.Prototype.Rounds.RunEvents.RunStarted -= OnTreeRunStarted;
+        }
+
+        /// <summary>WP-104 B2 O1: a tree purchase / re-resolve — recompute like a card (the fraction is kept).</summary>
+        private void OnTreeStatsChanged()
+        {
+            if (HasConfig)
+            {
+                ApplyConfig(Config);
+            }
+        }
+
+        /// <summary>WP-104 B2 O4 sv_leech: a kill heals a share of the maximum (Standard / Elite / Ultra, capped per second by TreeHooks).</summary>
+        private void OnTreeKill(DD.Prototype.Damage.EnemyDeathInfo info)
+        {
+            float share = DD.Prototype.Rounds.TreeHooks.OnKillHeal(info.Tier, Time.time, info.Position);
+            if (share > 0f) Heal(share * _maxHealth);
+        }
+
+        private void OnTreeRunStarted(int startRound)
+        {
+            DD.Prototype.Rounds.RunDirector director = DD.Prototype.Rounds.RunDirector.Instance;
+            ResetTreeShield(director != null ? director.RunId : 0);
+        }
+
+        /// <summary>WP-104 B2 O2: a fresh shield state per run (its dodge roll seeded by the run), filled to the pool.</summary>
+        private void ResetTreeShield(int runId)
+        {
+            _treeShield = DD.Prototype.Rounds.TreeShieldState.Create(DD.Prototype.Rounds.TreeHooks.SeedFor(runId, 3u));
+            DD.Prototype.Rounds.TreeHooks.ShieldFill(_maxHealth, ref _treeShield);
         }
 
         /// <summary>A health card was bought, or the build was wiped. Recompute, do not cache.</summary>
@@ -219,11 +271,13 @@ namespace DD.Prototype.PlayerSystem
             // answers for the current health, so the two are told apart by the tier itself
             // rather than by who called.
             int maxHealthTier = _upgrades.Tier(UpgradeBranch.MaximumHealth);
-            bool tierChanged = _initialised && maxHealthTier != _appliedMaxHealthTier;
+            float treeHealthScale = DD.Prototype.Rounds.TreeHooks.MaxHealthScale;   // WP-104 B2 sv_hp1-3
+            bool tierChanged = _initialised && (maxHealthTier != _appliedMaxHealthTier || !Mathf.Approximately(treeHealthScale, _appliedTreeHealthScale));
             _appliedMaxHealthTier = maxHealthTier;
+            _appliedTreeHealthScale = treeHealthScale;
 
-            _maxHealth = Mathf.Max(1f, player.MaxHealth * _upgrades.MaxHealthMultiplier);
-            _regenDelay = Mathf.Max(0f, player.HealthRegenDelay * _upgrades.RegenDelayMultiplier);
+            _maxHealth = Mathf.Max(1f, player.MaxHealth * _upgrades.MaxHealthMultiplier * treeHealthScale);
+            _regenDelay = Mathf.Max(0f, player.HealthRegenDelay * _upgrades.RegenDelayMultiplier * DD.Prototype.Rounds.TreeHooks.RegenDelayScale);
             _regenRate = Mathf.Max(0f, player.HealthRegenRate * _upgrades.RegenRateMultiplier);
             _regenCeilingFraction = Mathf.Clamp01(player.HealthRegenCeilingFraction);
 
@@ -267,6 +321,8 @@ namespace DD.Prototype.PlayerSystem
             {
                 return;
             }
+
+            DD.Prototype.Rounds.TreeHooks.ShieldTick(dt, Time.time, _maxHealth, ref _treeShield, transform.position);   // WP-104 B2 O3: the shield refills after its delay (ShieldUp at the player)
 
             if (_timeSinceDamage < float.MaxValue * 0.5f)
             {
@@ -344,8 +400,12 @@ namespace DD.Prototype.PlayerSystem
             float amount = DD.Prototype.Rounds.RunTreeHooks.PlayerDamage(request.Amount, _current >= _maxHealth, _motor != null && _motor.Speed01 > 0.1f);
 
             float before = _current;
-            float applied = Mathf.Min(before, amount);
-            _current = Mathf.Max(0f, before - amount);
+            // WP-104 B2 O2: invulnerable → ghost → dodge (≤ 30 %) → shield → Undying Oath. Neutral: the amount, unchanged.
+            DD.Prototype.Rounds.TreeHitResult hit = DD.Prototype.Rounds.TreeHooks.IncomingDamage(amount, Time.time, _current, _maxHealth, ref _treeShield, transform.position);
+            if (hit.Outcome != DD.Prototype.Rounds.TreeHitOutcome.None && hit.Damage <= 0f && hit.HealthFloor <= 0f) { _timeSinceDamage = 0f; return false; }   // the tree took it all
+            float applied = Mathf.Min(before, hit.Damage);
+            _current = Mathf.Max(0f, before - hit.Damage);
+            if (hit.HealthFloor > _current) { _current = hit.HealthFloor; applied = Mathf.Max(0f, before - _current); }   // Undying Oath (HealthFloor > 0 only then)
             if (_current <= 0f && DD.Prototype.Rounds.RunTreeHooks.TrySecondWind(out float kept))
             {
                 _current = Mathf.Min(_maxHealth, kept);   // WP-077 cap.body.secondbreath: once per run

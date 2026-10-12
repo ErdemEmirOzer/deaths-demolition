@@ -22,17 +22,17 @@ namespace DD.Prototype.Weapons
             return Mathf.Max(1, Mathf.CeilToInt(price * Mathf.Clamp01(share) - 0.0001f));
         }
 
-        /// <param name="price">The weapon's price as charged (after the run tree's scale, WP-104 B2).</param>
-        /// <param name="refillCost">The ammo refill as charged; below 0 = <see cref="RefillCost"/> of <paramref name="price"/>.</param>
-        /// <param name="basePrice">The catalog price before any discount, for the HUD's seal; below 0 = <paramref name="price"/>.</param>
+        /// <param name="price">The weapon's RAW catalog price (WallBuyCatalog.PriceOf). WP-104 B2 ec_dealer: the run tree's discount is
+        /// applied here, once — the wall price scaled, the refill half of the raw price scaled (never half of the discounted one).
+        /// <see cref="WallBuyQuote.BaseCost"/> keeps the raw value for the HUD's discount seal. Neutral tree: exactly the M4 prices.</param>
         public static WallBuyQuote Quote(ClassicWeaponId target, int price, float refillShare, bool available, bool specialActive,
-            bool hasClassic, ClassicWeaponId inHand, bool ammoFull, int balance, int refillCost = -1, int basePrice = -1)
+            bool hasClassic, ClassicWeaponId inHand, bool ammoFull, int balance)
         {
             bool refill = hasClassic && inHand == target;
             WallBuyAction action = refill ? WallBuyAction.Refill : WallBuyAction.Buy;
-            int listed = basePrice < 0 ? price : basePrice;
-            int cost = refill ? (refillCost >= 0 ? refillCost : RefillCost(price, refillShare)) : Mathf.Max(0, price);
-            int baseCost = refill ? RefillCost(listed, refillShare) : Mathf.Max(0, listed);
+            int listed = Mathf.Max(0, price);
+            int cost = refill ? DD.Prototype.Rounds.TreeHooks.AmmoPrice(listed, refillShare) : DD.Prototype.Rounds.TreeHooks.WallBuyPrice(listed);   // WP-104 B2 ec_dealer
+            int baseCost = refill ? RefillCost(listed, refillShare) : listed;
             if (!available || price <= 0) return new WallBuyQuote(action, cost, WallBuyBlock.Unavailable, baseCost);
             if (specialActive) return new WallBuyQuote(action, cost, WallBuyBlock.SpecialActive, baseCost);
             if (refill && ammoFull) return new WallBuyQuote(action, cost, WallBuyBlock.AmmoFull, baseCost);

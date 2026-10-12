@@ -332,6 +332,7 @@ namespace DD.Prototype.PlayerSystem
             float gelSteer = Mathf.Lerp(1f, GelSteerMultiplier, _gel01);
             // WP-077 ks.body.evade: the tree's speed burst after a hit rides above the weapon clamp.
             Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScaleAbove(WeaponSpeedMultiplier)
+                * DD.Prototype.Rounds.TreeHooks.MoveScale(Time.time)   // WP-104 B2 sp_move / sp_dash (above the weapon clamp)
                 * BackwardScale(desired, transform.forward));   // C-00 01.10: running backward ×0.65 (AP-022 run_back)
             CommandedPlanarVelocity = targetVelocity;
 

@@ -148,7 +148,7 @@ namespace DD.Prototype.Achievements
 
         private static void OnProjectileSpawned(ProjectileSpawnInfo info)
         {
-            if (info.WeaponId == ClassicWeaponId.Sg2 && info.PelletIndex == 0) s_sg2Shell++;   // one shell = one barrel
+            if (info.WeaponId == ClassicWeaponId.Sg2 && info.PelletIndex == 0 && info.VolleyIndex == 0) s_sg2Shell++;   // one shell = one barrel (WP-104 B2: a tree volley is not a barrel)
         }
 
         private static void OnProjectileImpact(ProjectileImpactInfo info)

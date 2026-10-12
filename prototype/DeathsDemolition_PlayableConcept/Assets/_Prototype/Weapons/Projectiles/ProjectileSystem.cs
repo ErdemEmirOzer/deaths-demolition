@@ -163,6 +163,10 @@ namespace DD.Prototype.Weapons
         /// <summary>cap.sg_2: the barrel pair (left + right) this round belongs to.</summary>
         public int TreeVolley;
 
+        /// <summary>WP-104 B3: bodies this round has hit directly (chain / ricochet bodies not counted) — the tree's Pierced fact and
+        /// Explosive Rounds' 1st / 4th / 8th body rule read it (HitscanEngine).</summary>
+        public int BodiesHit;
+
         // "Already damaged" set (ADR-034-1), rows of ProjectileSystem's side table.
         public int TouchedCount;
 
@@ -356,6 +360,7 @@ namespace DD.Prototype.Weapons
             p.ClusterBomblets = launch.ClusterBomblets;
             p.BlastTier = launch.BlastTier;
             RunTreeHooks.OnProjectileSpawned(ref p);   // WP-077 K10b: cap.ar_1 / cap.sr_1 / cap.ar_2 / cap.sg_2 round tags
+            p.TreeFlags |= shot.TreeFlags;   // WP-104 B2: the weapon's own tags (TreeRoundMarkedChaos, S-07 trail)
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;
@@ -365,7 +370,7 @@ namespace DD.Prototype.Weapons
             if (w >= 0 && w < s_lastLaunchSpeed.Length) s_lastLaunchSpeed[w] = p.Velocity.magnitude;
 
             ProjectileEvents.RaiseSpawned(new ProjectileSpawnInfo(p.Generation, index, launch.WeaponId, launch.Kind, launch.Caliber,
-                shot.Origin, direction, launch.Speed, launch.PelletIndex));
+                shot.Origin, direction, launch.Speed, launch.PelletIndex, shot.VolleyIndex, shot.EffectiveSizeScale));   // WP-104 B2 volley / size
             return index;
         }
 

@@ -44,6 +44,9 @@ namespace DD.Prototype.Damage
         /// <summary>WP-077 K10b: a burning-ground tick (RunTreeGroundFire) — the body takes it without an explosion's stagger force.</summary>
         public static bool GroundFire { get; private set; }
 
+        /// <summary>WP-104 B2 kx_crit: this classic hit is the run tree's luck crit (its multiplier is already in the damage; S-07 / S-08 read it).</summary>
+        public static bool Crit { get; private set; }
+
         /// <summary>WP-077 K10b (seal / cap.sr_1, cap.ar_1): this classic hit passes regional armour. Call after <see cref="Set"/>.</summary>
         public static void MarkIgnoreArmor() => IgnoreArmor = true;
 
@@ -52,6 +55,9 @@ namespace DD.Prototype.Damage
 
         /// <summary>WP-077 K10b: this area hit is a burning-ground tick. Call after <see cref="Set"/>.</summary>
         public static void MarkGroundFire() => GroundFire = true;
+
+        /// <summary>WP-104 B2 kx_crit: this hit is a luck crit. Call after <see cref="Set"/>.</summary>
+        public static void MarkCrit() => Crit = true;
 
         public static void Set(float headMultiplier, float armorMultiplier, bool fromClassicWeapon, ClassicWeaponId weapon, Collider hitCollider)
         {
@@ -64,6 +70,7 @@ namespace DD.Prototype.Damage
             FromSpecialWeapon = false;
             BreakPlate = false;
             GroundFire = false;
+            Crit = false;
         }
 
         /// <summary>WP-069 B4: a Special Weapon hit — neutral multipliers, optional armour bypass, the Special's id.</summary>
@@ -79,6 +86,7 @@ namespace DD.Prototype.Damage
             Special = special;
             BreakPlate = false;
             GroundFire = false;
+            Crit = false;
         }
 
         public static void Clear()
@@ -93,6 +101,7 @@ namespace DD.Prototype.Damage
             Special = default;
             BreakPlate = false;
             GroundFire = false;
+            Crit = false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

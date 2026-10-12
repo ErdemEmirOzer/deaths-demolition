@@ -41,6 +41,7 @@ namespace DD.Prototype.Weapons
         public static int DeathPuddles { get; private set; }
         public static int SlipKills { get; private set; }
         public static int SlipShares { get; private set; }
+        public static int GelFreezes { get; private set; }
 
         /// <summary>Reads the sw_gel data into the registry, the player's slide and the slip hook. Cheap when nothing changed.</summary>
         public static void EnsureConfigured()
@@ -110,6 +111,10 @@ namespace DD.Prototype.Weapons
 
             SlipShares++;
             if (rule != null && rule.immuneSeconds > 0f) body.SetGelImmunity(rule.immuneSeconds);
+            // WP-104 B2 Special resonance (KARAR-WP104 §6): Deep Freeze owned - the gel freezes the body that got up from it (a full
+            // ice cap at once; S-04's freeze rules stand: the Elite shorter, the Ultra slowed, the body's freeze cooldown).
+            if (DD.Prototype.Rounds.TreeHooks.NamekujiFreezes && body.IsAlive && body.ApplyIce(DD.Prototype.Rounds.TreeRuntime.Current.IceMaxStacks) != IceResult.None)
+                GelFreezes++;
         }
 
         /// <summary>Lets the registry expire puddles on time with no body or player querying it.</summary>
@@ -166,6 +171,7 @@ namespace DD.Prototype.Weapons
             DeathPuddles = 0;
             SlipKills = 0;
             SlipShares = 0;
+            GelFreezes = 0;
             ZombieEnemy.SlipOutcomeHandler = null;
         }
 

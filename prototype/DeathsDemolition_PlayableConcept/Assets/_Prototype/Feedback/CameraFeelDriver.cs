@@ -126,6 +126,7 @@ namespace DD.Prototype.Feedback
         private void OnSpawned(ProjectileSpawnInfo info)
         {
             if (info.Kind == ProjectileKind.Pellet && info.PelletIndex != 0) return;   // one shot, not one per pellet
+            if (info.VolleyIndex != 0) return;   // WP-104 B2: one shot per pull, not one per run-tree volley
             Shot(CameraModesFeel.For(info.WeaponId));
         }
 

@@ -57,9 +57,13 @@ namespace DD.Prototype.Weapons
         public readonly Vector3 Direction;
         public readonly float Speed;
         public readonly int PelletIndex;
+        /// <summary>WP-104 B2: the run tree's volley of the pull (0 = the main shot). Once-per-pull listeners skip volleys above 0.</summary>
+        public readonly int VolleyIndex;
+        /// <summary>WP-104 B2: the round's size (sh_bore × a merged shot; 1 = shipped) for the trail (S-07).</summary>
+        public readonly float SizeScale;
 
         public ProjectileSpawnInfo(int projectileId, int index, ClassicWeaponId weaponId, ProjectileKind kind, WeaponCaliber caliber,
-            Vector3 position, Vector3 direction, float speed, int pelletIndex)
+            Vector3 position, Vector3 direction, float speed, int pelletIndex, int volleyIndex = 0, float sizeScale = 1f)
         {
             ProjectileId = projectileId;
             Index = index;
@@ -70,6 +74,8 @@ namespace DD.Prototype.Weapons
             Direction = direction;
             Speed = speed;
             PelletIndex = pelletIndex;
+            VolleyIndex = volleyIndex;
+            SizeScale = sizeScale;
         }
     }
 

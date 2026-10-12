@@ -138,10 +138,10 @@ namespace DD.Prototype.Weapons
             return _prices.TryGetValue(id, out int price) ? price : 0;
         }
 
-        /// <summary>The ammo refill price of a weapon: <see cref="RefillShare"/> of its price, rounded up, at least 1.</summary>
+        /// <summary>The ammo refill price of a weapon: <see cref="RefillShare"/> of its price, rounded up, at least 1 (WP-104 B2: × the run tree's ammo scale).</summary>
         public int RefillPriceOf(ClassicWeaponId id)
         {
-            return WallBuyRules.RefillCost(PriceOf(id), RefillShare);
+            return DD.Prototype.Rounds.TreeHooks.AmmoPrice(PriceOf(id), RefillShare);   // WP-104 B2 ec_dealer; neutral = WallBuyRules.RefillCost
         }
 
         /// <summary>A weapon key (ar_1 …) or legacy name to a classic id; false for Specials and unknown keys.</summary>

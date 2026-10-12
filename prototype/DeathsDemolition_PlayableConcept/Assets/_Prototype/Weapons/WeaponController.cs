@@ -132,6 +132,9 @@ namespace DD.Prototype.Weapons
         private PlayerAim _playerAim;
         private float _selfSlowUntil = -1f;
 
+        // WP-104 B2 kx_crit: the luck-crit roll's xorshift state (seeded per run, never Unity's Random).
+        private uint _treeCritRng;
+
         [PrototypeOnly(PendingDecisions.None, "WP-069 B4: move-speed multiplier while Raiju's self-shock slow lasts (DIRECTION §7a: 0.4 s slow).", true)]
         private const float SelfShockSlowMultiplier = 0.5f;
 
@@ -172,6 +175,9 @@ namespace DD.Prototype.Weapons
         /// <summary>WP-042 readout: the classic rig carries the roster model (blockout / AP-013).</summary>
         public bool ClassicRigHasAuthoredModel => _classicRig != null && _classicRig.HasAuthoredModel;
 
+        /// <summary>WP-104 B4 (S-06): the classic weapon's authored model root (null without a rig or a model); the attachments mount on it.</summary>
+        public Transform ClassicModelRoot => _classicRig != null ? _classicRig.ModelRoot : null;
+
         /// <summary>
         /// WP-059C: every renderer of the weapon in hand (classic + Special rigs, models and placeholders).
         /// The readability captures (DEC-077: S-05 CharacterTests, S-10 QaReadabilityGate) exclude these so
@@ -197,7 +203,9 @@ namespace DD.Prototype.Weapons
         private void Awake()
         {
             if (GetComponent<FpViewPoseDriver>() == null) gameObject.AddComponent<FpViewPoseDriver>().Bind(this);   // WP-069 FP view pose (order 950)
+            if (GetComponent<DD.Prototype.Weapons.Attachments.WeaponAttachPresenter>() == null) gameObject.AddComponent<DD.Prototype.Weapons.Attachments.WeaponAttachPresenter>();   // WP-104 B4 (S-06) tree attachments, TopDown
             _magazine.Stepped += OnMagazineStep;   // WP-082 visual
+            _treeCritRng = DD.Prototype.Rounds.TreeHooks.SeedFor(0, 1u);   // WP-104 B2: re-seeded at every run start (OnRunStarted)
             if (_aimSourceBehaviour != null)
             {
                 _aimSource = _aimSourceBehaviour as IAimSource;
@@ -253,6 +261,21 @@ namespace DD.Prototype.Weapons
             WeaponDebugHooks.EnsureExists();
             CharacterAnimationEvents.Any += OnClipEvent;
             RunEvents.RoundStarted += OnRoundStarted;
+            RunEvents.RunStarted += OnRunStarted;   // WP-104 B2
+            DD.Prototype.Rounds.TreeEvents.StatsChanged += OnTreeStatsChanged;   // WP-104 B2
+        }
+
+        /// <summary>WP-104 B2 kx_crit: the luck-crit sequence is the run's (deterministic per run id).</summary>
+        private void OnRunStarted(int startRound)
+        {
+            RunDirector director = RunDirector.Instance;
+            _treeCritRng = DD.Prototype.Rounds.TreeHooks.SeedFor(director != null ? director.RunId : 0, 1u);
+        }
+
+        /// <summary>WP-104 B2: a purchase / re-resolve changed the tree's stats — the magazine never holds more than its (new) size.</summary>
+        private void OnTreeStatsChanged()
+        {
+            _classic.ClampAmmoToMagazine();
         }
 
         /// <summary>WP-069 B2: every round start tops the reserve up to that round's allowance.</summary>
@@ -267,6 +290,8 @@ namespace DD.Prototype.Weapons
             WeaponRegistry.Unregister(this);
             CharacterAnimationEvents.Any -= OnClipEvent;
             RunEvents.RoundStarted -= OnRoundStarted;
+            RunEvents.RunStarted -= OnRunStarted;
+            DD.Prototype.Rounds.TreeEvents.StatsChanged -= OnTreeStatsChanged;
             if (_motor != null) _motor.WeaponSpeedMultiplier = 1f;
 
             if (_special.IsActive)
@@ -381,6 +406,7 @@ namespace DD.Prototype.Weapons
             bool switching = _equipped && _equippedId != settings.Id;
             _equippedId = settings.Id;
             _equipped = true;
+            DD.Prototype.Rounds.TreeHooks.OnClassicEquipping(DD.Prototype.Rounds.RunTreeV2.ProfileOf(settings.Id));   // WP-104 B2: stats re-resolve BEFORE Equip reads magazine / reserve (wall buy too)
             _classic.Equip(settings, _modifiers);
             _timeline = WeaponMechanismTimeline.For(settings);
             _casingAt = -1f;
@@ -528,6 +554,8 @@ namespace DD.Prototype.Weapons
             // WP-069 B2: focus / ADS and movement feed the cone before the clocks advance.
             _classic.SetFocus(input.IsEnabled && !_special.IsActive && input.FocusHeld());
             _classic.SetMovement01(_motor != null ? _motor.Speed01 : 0f);
+
+            DD.Prototype.Rounds.TreeHooks.Tick(Time.time);   // WP-104 B2 mg_endless: the window closes on time, fired or not (a Special in hand too)
 
             if (_special.IsActive)
             {
@@ -701,10 +729,14 @@ namespace DD.Prototype.Weapons
 
             _host?.OnWeaponFired(RecoilStrength01(feelRow.recoilKickMeters, _classic.Power), aim);
 
-            // Step 2: muzzle flash.
+            // Step 2: muzzle flash. WP-104 B4 (S-06): flash and tracer leave the E5 power ring's muzzle when one is mounted; the hit
+            // ray's origin above never moves (Wp087 aim alignment).
+            Transform flash = DD.Prototype.Weapons.Attachments.WeaponAttachments.FlashOrigin(Muzzle);
+            if (flash == null) flash = Muzzle;
+            Vector3 tracerOrigin = flash.position;
             float powerScale = PowerScale(_classic.Power);
             HitFeedbackDirector.Instance.ReportMuzzleFlash(
-                Muzzle, _muzzleFlashSize * powerScale, _muzzleFlashLight * powerScale);
+                flash, _muzzleFlashSize * powerScale, _muzzleFlashLight * powerScale);
 
             // Step 4 and everything downstream, once per pellet — WP-069 ADR-069-1: as projectiles that
             // fly at the weapon's speed and resolve their hits (and branches) where they land.
@@ -717,19 +749,40 @@ namespace DD.Prototype.Weapons
 
             int pellets = _classic.PelletCount;
             int presentationGroupId = FeelEventRouter.NextGroupId();
-            for (int i = 0; i < pellets; i++)
-            {
-                ShotRequest request = _classic.BuildShot(origin, aim, i);
-                if (blocked)
-                {
-                    request.Origin = interior;
-                    request.Direction = blockedDirection;
-                }
 
-                request.HasTracerOrigin = true;
-                request.TracerOrigin = muzzle;
-                request.PresentationGroupId = presentationGroupId;
-                ProjectileSystem.Spawn(request, _classic.Launch(i));
+            // WP-104 B2: the run tree shapes the pull once — extra shots repeat the whole shot as volleys fanned around the aim (pellets
+            // merge first under the caps, the total damage kept), and a luck crit rides every round of the pull. Everything else in
+            // this method (PlayFire, sound, ConsumeShot, RaiseShot, casing, recoil, the presentation group) stays once per pull.
+            float pullsPerSecond = _classic.EffectiveFireRate;   // once: the spawn cap here, the B3 hit facts (nuke N, shock event rate) on every round
+            DD.Prototype.Rounds.TreeHooks.PlanVolley(_classic.TreeProfile, pellets, pullsPerSecond, out DD.Prototype.Rounds.TreeVolleyPlan plan);
+            bool treeCrit = DD.Prototype.Rounds.TreeHooks.RollCrit(ref _treeCritRng, out float critMult);
+            float hitWeight = plan.PelletsPerVolley > 1 ? 1f / plan.PelletsPerVolley : 1f;   // B3: a full shell counts one hit toward the Mini Nuke
+            for (int v = 0; v < plan.Count; v++)
+            {
+                float yaw = plan.YawDegrees(v);
+                Vector3 volleyAim = yaw != 0f ? Quaternion.AngleAxis(yaw, Vector3.up) * aim : aim;
+                float volleyDamage = plan.DamageScale(v);
+                for (int i = 0; i < plan.PelletsPerVolley; i++)
+                {
+                    int pellet = plan.PelletsPerVolley >= pellets ? i : i * pellets / plan.PelletsPerVolley;   // merged: the ring keeps its spacing, pellet 0 the centre
+                    ShotRequest request = _classic.BuildShot(origin, volleyAim, pellet, v);
+                    if (blocked)
+                    {
+                        request.Origin = interior;
+                        request.Direction = blockedDirection;
+                    }
+
+                    request.HasTracerOrigin = true;
+                    request.TracerOrigin = tracerOrigin;
+                    request.PresentationGroupId = presentationGroupId;
+                    request.Damage *= volleyDamage;
+                    request.SizeScale *= plan.MergedSizeScale;
+                    if (treeCrit) request.CritMultiplier = critMult;
+                    request.PullsPerSecond = pullsPerSecond;
+                    request.HitWeight = hitWeight;
+                    if (plan.Marked && v == 0 && i == 0) request.TreeFlags |= DD.Prototype.Rounds.RunTreeHooks.TreeRoundMarkedChaos;   // S-07 K3: the main round carries the chaos core's next hit
+                    ProjectileSystem.Spawn(request, _classic.Launch(pellet, plan.MergedSizeScale));
+                }
             }
 
             // Step 11: controlled camera response, scaled by weapon weight and clamped
@@ -740,6 +793,7 @@ namespace DD.Prototype.Weapons
             // WP-072: the cue names the weapon (WP-069 WeaponDefinition.AudioId; A/B/C → AR1/SMG1/SG1 without a definition).
             AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, _classic.Definition?.AudioId ?? WeaponAudioIdentity.ForClassic(_classic.Id), origin, powerScale, 50);
 
+            DD.Prototype.Rounds.TreeHooks.OnShotFired(Time.time);   // WP-104 B2 Overclock's own clock: a pause > 1.0 s resets the build-up (before the next interval is set)
             _classic.ConsumeShot();
 
             // WP-095 (R3): the feel layers' one shot event — one per trigger pull, after the round is spent (AmmoLeft = what the HUD shows next)
@@ -796,7 +850,7 @@ namespace DD.Prototype.Weapons
                 if (MagazineReload)
                 {
                     // WP-082: the magazine's owner (rl_1: an empty tube); §12 (C-00 05.10): a tactical reload has three beats, no bolt release
-                    _magazine.Begin(_equippedId == ClassicWeaponId.Rl1, !_classic.ReloadIsEmpty);
+                    _magazine.Begin(DD.Prototype.Weapons.Attachments.WeaponAttachments.MagazineVisualFor(_equippedId), !_classic.ReloadIsEmpty);   // WP-104 B4: tube / belt box / the part
                     _magazineVisual.Bind(_equippedId == ClassicWeaponId.Rl1 || _classicRig == null ? null : _classicRig.transform);
                     _magazineMode = CameraModeService.Current;
                 }

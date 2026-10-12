@@ -80,6 +80,17 @@ namespace DD.Prototype.Weapons
 
         private const int NoReloadYet = 1 << 20;
 
+        // WP-104 B2 (S-02): the run tree's view of the weapon in hand, built once at Equip; the fire-path hooks read it by ref.
+        private DD.Prototype.Rounds.TreeWeaponProfile _treeProfile;
+        private float _autoReloadCarry;   // mg_autoload: the fraction of a round the Auto-Loader carries between frames
+        private int _shotSerial;          // mg_endless / sp_twin: pulls consumed (1-based), the Twin Barrel rhythm
+
+        [PrototypeOnly(PendingDecisions.None, "WP-104 B2: hit-sweep radius a tree-sized round (sh_bore, merged shots) grows from when its own is 0 (bullets, pellets), metres. Invented.", true)]
+        public const float TreeSweepBaseRadius = 0.05f;
+
+        /// <summary>WP-104 B2: the run tree's profile of the weapon in hand (set at <see cref="Equip"/>).</summary>
+        public ref readonly DD.Prototype.Rounds.TreeWeaponProfile TreeProfile => ref _treeProfile;
+
         // ------------------------------------------------------------------ identity
 
         public ClassicWeaponId Id => _settings != null ? _settings.Id : ClassicWeaponId.AssaultRifle;
@@ -92,13 +103,13 @@ namespace DD.Prototype.Weapons
         public WeaponDefinition Definition => _settings != null ? _settings.Definition : null;
 
         /// <summary>WP-069: single / burst / auto (auto without a definition — the M3 hold-to-fire).</summary>
-        public WeaponFireMode FireMode => Definition != null ? Definition.fire.fireMode : WeaponFireMode.Auto;
+        public WeaponFireMode FireMode => DD.Prototype.Rounds.TreeHooks.FireMode(Definition != null ? Definition.fire.fireMode : WeaponFireMode.Auto);   // WP-104 B2 sp_fullauto
 
         // ------------------------------------------------------------------ ammo
 
         public int Ammo { get; private set; }
 
-        public int MagazineSize => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.MagazineSize(Id, _settings.MagazineSize)) : 1;   // + WP-077 fork.smg_1.x / seal.lmg_1
+        public int MagazineSize => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.TreeHooks.MagazineSize(DD.Prototype.Rounds.RunTreeHooks.MagazineSize(Id, _settings.MagazineSize), _treeProfile)) : 1;   // + WP-077 fork.smg_1.x / seal.lmg_1, WP-104 B2 mg_ext / mg_double / Full-Auto box
 
         /// <summary>
         /// WP-069 × WP-077 (link.arc.storm): put up to <paramref name="rounds"/> into the magazine — parked or in hand —,
@@ -160,7 +171,8 @@ namespace DD.Prototype.Weapons
                 }
 
                 float multiplier = _modifiers != null ? _modifiers.FireRateMultiplier : 1f;
-                return Mathf.Max(0.05f, _settings.FireRate * multiplier * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds));
+                return Mathf.Max(0.05f, _settings.FireRate * multiplier * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds)
+                    * DD.Prototype.Rounds.TreeHooks.FireRateScale(_treeProfile, 0f, Time.time));   // WP-104 B2 sp_rate / sp_fullauto / sp_twin / Overclock (its own clock)
             }
         }
 
@@ -196,7 +208,9 @@ namespace DD.Prototype.Weapons
         /// impulse alone — lmg_2 (0.50) got the shotgun's directional camera punch 7× a second under a held trigger, the
         /// camera drift REQ-126 forbids.
         /// </summary>
-        public WeaponPower Power
+        public WeaponPower Power => DD.Prototype.Rounds.TreeHooks.ShotPower(PowerRaw, _treeProfile);   // WP-104 B2: a converted single-shot weapon drops Heavy
+
+        private WeaponPower PowerRaw
         {
             get
             {
@@ -285,7 +299,7 @@ namespace DD.Prototype.Weapons
         {
             WeaponDefinition d = Definition;
             if (d == null) return 1f;
-            float m = firing ? DD.Prototype.Rounds.RunTreeHooks.FiringMoveSpeed(Id, Mathf.Max(0.1f, d.accuracy.moveSpeedMultiplier)) : 1f;   // + WP-077 seal.smg_1 / fork.lmg_1.y
+            float m = firing ? DD.Prototype.Rounds.TreeHooks.FiringMoveFactor(DD.Prototype.Rounds.RunTreeHooks.FiringMoveSpeed(Id, Mathf.Max(0.1f, d.accuracy.moveSpeedMultiplier))) : 1f;   // + WP-077 seal.smg_1 / fork.lmg_1.y, WP-104 B2 sp_move
             float focus = CameraModeService.Current == CameraMode.TopDown ? d.accuracy.focusMoveSpeedMultiplier : d.accuracy.adsMoveSpeedMultiplier;
             return m * Mathf.Lerp(1f, Mathf.Max(0.1f, focus), _ads01);
         }
@@ -297,6 +311,11 @@ namespace DD.Prototype.Weapons
         {
             _settings = settings;
             _modifiers = modifiers;
+            // WP-104 B2: WeaponController published this weapon's profile just before (OnClassicEquipping); a direct caller builds it.
+            ref readonly DD.Prototype.Rounds.TreeWeaponProfile inHand = ref DD.Prototype.Rounds.TreeHooks.InHand;
+            _treeProfile = settings != null && inHand.Key != null && inHand.Id == settings.Id ? inHand
+                : DD.Prototype.Rounds.RunTreeV2.ProfileOf(settings != null ? settings.Id : ClassicWeaponId.AssaultRifle);
+            _autoReloadCarry = 0f;
 
             Ammo = MagazineSize;
             _cooldown = 0f;
@@ -354,7 +373,13 @@ namespace DD.Prototype.Weapons
         {
             WeaponDefinition d = Definition;
             if (d == null || d.ammo.reserve < 0) return 0;
-            return Mathf.RoundToInt(d.ammo.reserve * (1f + Mathf.Max(0f, d.ammo.reserveRoundCoef) * Mathf.Max(0, round - 1)));
+            return DD.Prototype.Rounds.TreeHooks.ReserveAllowance(Mathf.RoundToInt(d.ammo.reserve * (1f + Mathf.Max(0f, d.ammo.reserveRoundCoef) * Mathf.Max(0, round - 1))), _treeProfile);   // WP-104 B2: a converted weapon keeps its count of magazines
+        }
+
+        /// <summary>WP-104 B2: the tree's stats changed (a purchase, a re-resolve) — a magazine never holds more than its size.</summary>
+        public void ClampAmmoToMagazine()
+        {
+            if (_settings != null && Ammo > MagazineSize) Ammo = MagazineSize;
         }
 
         /// <summary>WP-107 (R4): a full magazine and at least this round's reserve - a wall buy refill would add nothing.</summary>
@@ -438,6 +463,19 @@ namespace DD.Prototype.Weapons
             }
 
             TickFloor(dt);
+
+            // WP-104 B2 mg_autoload: idle for the node's delay, the magazine refills by itself — from the reserve, like a reload.
+            if (!IsReloading && !InfiniteAmmo && _settings != null)
+            {
+                int mag = MagazineSize;
+                int missing = Mathf.Max(0, Mathf.Min(mag - Ammo, ReserveInfinite ? int.MaxValue : _reserve));
+                int add = Mathf.Min(missing, DD.Prototype.Rounds.TreeHooks.AutoReloadTick(dt, _sinceShot, missing, mag, ref _autoReloadCarry));
+                if (add > 0)
+                {
+                    Ammo += add;
+                    if (!ReserveInfinite) _reserve -= add;
+                }
+            }
 
             if (!IsReloading)
             {
@@ -644,7 +682,7 @@ namespace DD.Prototype.Weapons
                 int needed = MagazineSize - Ammo;
                 _shellsQueued = ReserveInfinite ? needed : Mathf.Min(needed, _reserve);
                 _shellsLoaded = 0;
-                float mult = ReloadMultiplier;
+                float mult = ReloadMultiplier * DD.Prototype.Rounds.TreeHooks.ReloadTimeScale(_treeProfile, d.ammo.reloadTacSeconds);   // WP-104 B2 mg_reload
                 _shellStartSeconds = d.ammo.reloadTacSeconds * PerShellStartShare * mult;
                 _shellSeconds = Mathf.Max(0.05f, d.ammo.perShellSeconds * mult);
                 float close = d.ammo.reloadTacSeconds * (1f - PerShellStartShare) * mult;
@@ -653,7 +691,8 @@ namespace DD.Prototype.Weapons
             }
             else if (d != null)
             {
-                ReloadDuration = Mathf.Max(0.05f, (_emptyReload ? d.ammo.reloadEmptySeconds : d.ammo.reloadTacSeconds) * ReloadMultiplier);
+                float baseSeconds = _emptyReload ? d.ammo.reloadEmptySeconds : d.ammo.reloadTacSeconds;
+                ReloadDuration = Mathf.Max(0.05f, baseSeconds * ReloadMultiplier * DD.Prototype.Rounds.TreeHooks.ReloadTimeScale(_treeProfile, baseSeconds));   // WP-104 B2 mg_reload, Full-Auto rl_1 box 3.0 s
             }
             else
             {
@@ -702,7 +741,8 @@ namespace DD.Prototype.Weapons
         /// <summary>Book-keeping for one shot: ammo, fire clock (mode-aware), spread bloom, game recoil.</summary>
         public void ConsumeShot()
         {
-            if (!InfiniteAmmo)
+            _shotSerial++;
+            if (!InfiniteAmmo && DD.Prototype.Rounds.TreeHooks.ConsumesAmmo(_shotSerial, Time.time))   // WP-104 B2 mg_endless window / sp_twin free round
             {
                 // WP-077: seal.sg_2 takes both barrels' rounds, cap.lmg_1's free window none.
                 Ammo = Mathf.Max(0, Ammo - DD.Prototype.Rounds.RunTreeHooks.RoundsPerPull(Id, Ammo));
@@ -710,7 +750,8 @@ namespace DD.Prototype.Weapons
 
             if (_roundsSinceReload < NoReloadYet) _roundsSinceReload++;
             WeaponDefinition d = Definition;
-            float fireRateMult = (_modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f) * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds);
+            float fireRateMult = (_modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f) * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds)
+                * DD.Prototype.Rounds.TreeHooks.FireRateScale(_treeProfile, 0f, Time.time);   // WP-104 B2
 
             // Add rather than assign, so a frame that fires twice does not lose the
             // second interval and the weapon cannot drift faster than its fire rate.
@@ -843,8 +884,16 @@ namespace DD.Prototype.Weapons
 
         public ProjectileLaunch Launch(int pelletIndex)
         {
+            return Launch(pelletIndex, 1f);
+        }
+
+        /// <summary>WP-104 B2: <paramref name="mergedSizeScale"/> = the volley plan's merged-shot size (1 = none).</summary>
+        public ProjectileLaunch Launch(int pelletIndex, float mergedSizeScale)
+        {
             ProjectileLaunch launch = ProjectileLaunch.From(Definition, Id, Range);
             launch.PelletIndex = pelletIndex;
+            float size = DD.Prototype.Rounds.TreeHooks.ProjectileSizeScale * mergedSizeScale;   // WP-104 B2 sh_bore × merged shots; neutral 1 keeps the ray
+            if (size > 1.0001f) launch.SweepRadius = Mathf.Max(launch.SweepRadius, TreeSweepBaseRadius) * size;
             launch.HeadMultiplier = DD.Prototype.Rounds.RunTreeHooks.HeadMultiplier(Id, launch.HeadMultiplier);   // WP-077 seal.ar_2
             if (_modifiers != null)
             {
@@ -916,9 +965,19 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public ShotRequest BuildShot(Vector3 origin, Vector3 aimDirection, int pelletIndex)
         {
+            return BuildShot(origin, aimDirection, pelletIndex, 0);
+        }
+
+        /// <summary>
+        /// WP-104 B2: one pellet of volley <paramref name="volleyIndex"/> (0 = the main shot; the run tree's extra shots repeat the
+        /// whole shot, WeaponController.FireClassicOnce). Ricochet rides the volleys <see cref="DD.Prototype.Rounds.TreeHooks.VolleyCarriesRicochet"/> names.
+        /// </summary>
+        public ShotRequest BuildShot(Vector3 origin, Vector3 aimDirection, int pelletIndex, int volleyIndex)
+        {
             WeaponModifierState m = _modifiers;
             bool multiPellet = PelletCount > 1;
             bool perShotCarrier = !multiPellet || pelletIndex == 0;
+            bool carrier = perShotCarrier && DD.Prototype.Rounds.TreeHooks.VolleyCarriesRicochet(volleyIndex);   // WP-104 B2 Pinball Storm
             WeaponDefinition def = Definition;
 
             // WP-069: the top-down game recoil drifts the shot sideways (the look modes move the camera instead).
@@ -961,7 +1020,8 @@ namespace DD.Prototype.Weapons
                 Origin = origin,
                 Direction = direction,
                 Damage = (_settings != null ? _settings.Damage : 1f) * (_modifiers != null ? _modifiers.DamageMultiplier : 1f)   // WP-077 Hearth
-                    * DD.Prototype.Rounds.RunTreeHooks.ShotDamageScale(Id, _move01, _sinceShot, _roundsSinceReload),   // WP-077 fork.lmg_1.x / fork.lmg_2.y / fork.sr_1.x
+                    * DD.Prototype.Rounds.RunTreeHooks.ShotDamageScale(Id, _move01, _sinceShot, _roundsSinceReload)   // WP-077 fork.lmg_1.x / fork.lmg_2.y / fork.sr_1.x
+                    * DD.Prototype.Rounds.TreeHooks.ShotDamageScale(_treeProfile, 0f, Time.time, CarriedGold(), Ammo, MagazineSize),   // WP-104 B2 sh_heavy / mg_drum / ec_midas / Full-Auto (before ConsumeShot: Ammo counts this round)
                 Range = Range,
                 // On the shared DamageForce scale, NOT the raw config knob. See WeaponImpulse.
                 ImpactForce = WeaponImpulse.ForClassic(_settings, _modifiers != null ? _modifiers.ImpactStaggerBonus : 0f),   // WP-069 §6 Impact
@@ -969,8 +1029,10 @@ namespace DD.Prototype.Weapons
                 Power = Power,
 
                 DrawTracer = true,
-                TracerWidth = multiPellet ? 0.022f : 0.03f,
-                TracerLifetime = multiPellet ? 0.075f : 0.09f
+                TracerWidth = (multiPellet ? 0.022f : 0.03f) * DD.Prototype.Rounds.TreeHooks.ProjectileSizeScale,   // WP-104 B2 sh_bore
+                TracerLifetime = multiPellet ? 0.075f : 0.09f,
+                VolleyIndex = volleyIndex,
+                SizeScale = DD.Prototype.Rounds.TreeHooks.ProjectileSizeScale
             };
 
             // WP-069 (C-00 30.09, DEC-112): BuildShot runs before ConsumeShot, so the round in flight is total − left + 1.
@@ -978,15 +1040,15 @@ namespace DD.Prototype.Weapons
 
             if (m != null)
             {
-                request.PierceTargets = m.PierceTargets;
-                request.PierceDamageFalloff = m.PierceDamageFalloff;
+                request.PierceTargets = DD.Prototype.Rounds.TreeHooks.PierceCount(m.PierceTargets);   // WP-104 B2 sh_pierce
+                request.PierceDamageFalloff = DD.Prototype.Rounds.TreeHooks.PierceKeep(m.PierceDamageFalloff);
 
                 // Per-shot branches: the first pellet of a trigger pull carries them, the
                 // rest of the spread does not (WeaponBranchContract.ResolutionOf == PerShot).
-                request.RicochetChance = perShotCarrier ? m.RicochetChance : 0f;
-                request.RicochetBounces = perShotCarrier ? DD.Prototype.Rounds.RunTreeHooks.RicochetBounces(Id, m.RicochetBounces) : 0;   // + WP-077 cap.smg_1
-                request.RicochetRadius = m.RicochetRadius;
-                request.RicochetDamageScale = m.RicochetDamageScale;
+                request.RicochetChance = carrier ? DD.Prototype.Rounds.TreeHooks.RicochetChance(m.RicochetChance) : 0f;   // WP-104 B2 sh_ricochet
+                request.RicochetBounces = carrier ? DD.Prototype.Rounds.TreeHooks.RicochetBounces(DD.Prototype.Rounds.RunTreeHooks.RicochetBounces(Id, m.RicochetBounces)) : 0;   // + WP-077 cap.smg_1
+                request.RicochetRadius = DD.Prototype.Rounds.TreeHooks.RicochetRadius(m.RicochetRadius);
+                request.RicochetDamageScale = DD.Prototype.Rounds.TreeHooks.RicochetKeep(m.RicochetDamageScale);
 
                 // WP-077 link.arc.conductor: +1 jump while Raiju's link window is open (the Chain branch must be owned).
                 request.ChainTargets = perShotCarrier ? m.ChainTargets + (m.HasChain ? SpecialLinks.ConductorBonusJumps() : 0) : 0;
@@ -1007,6 +1069,13 @@ namespace DD.Prototype.Weapons
             }
 
             return request;
+        }
+
+        /// <summary>WP-104 B2 ec_midas: the gold the player carries (0 without a gold service). A managed reference check, no engine call.</summary>
+        private static int CarriedGold()
+        {
+            DD.Prototype.Economy.GoldService gold = DD.Prototype.Economy.GoldService.Instance;
+            return !ReferenceEquals(gold, null) && gold.Wallet != null ? gold.Wallet.Balance : 0;
         }
 
         /// <summary>WP-069: pellet 0 is the centre; the rest fill the definition's rings in order, each ring at equal arc length.</summary>

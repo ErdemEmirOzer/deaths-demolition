@@ -59,6 +59,26 @@ namespace DD.Prototype.Weapons
         public bool HasTracerOrigin;
         public Vector3 TracerOrigin;
         public int PresentationGroupId;
+
+        /// <summary>WP-104 B2: the run tree's volley of the trigger pull (0 = the main shot; extra shots 1…). Per-pull listeners read volley 0 only.</summary>
+        public int VolleyIndex;
+
+        /// <summary>WP-104 B2: the round's size (sh_bore × a merged shot) for the trail (S-07); 0 = unset, reads as 1 (<see cref="EffectiveSizeScale"/>).</summary>
+        public float SizeScale;
+
+        /// <summary>WP-104 B2 kx_crit: the pull's luck-crit multiplier (0 / 1 = no crit); the direct hit takes it and marks the hit.</summary>
+        public float CritMultiplier;
+
+        /// <summary>WP-104 B2: RunTreeHooks.TreeRound* bits the weapon tags at spawn (OR-ed into ProjectileState.TreeFlags), 0 = none.</summary>
+        public int TreeFlags;
+
+        /// <summary>WP-104 B3 (TreeHitFacts): the pull's trigger rate, shots a second (CWR.EffectiveFireRate) — the Mini Nuke's N and the shock chain's event rate; 0 = unknown.</summary>
+        public float PullsPerSecond;
+
+        /// <summary>WP-104 B3 (TreeHitFacts): what one hit of this round counts toward the Mini Nuke — 1 a bullet, 1 / pellets a pellet (a full shell counts 1); 0 reads as 1.</summary>
+        public float HitWeight;
+
+        public readonly float EffectiveSizeScale => SizeScale > 0f ? SizeScale : 1f;   // readonly: no defensive copy through an in parameter
     }
 
     /// <summary>What one shot did. Enough for the weapon to decide on recoil and audio.</summary>
@@ -118,6 +138,9 @@ namespace DD.Prototype.Weapons
 
         private static int s_enemyQueryMask;
         private static bool s_maskResolved;
+
+        /// <summary>WP-104 B3 el_shock: when the last shock chain event fired (<see cref="TreeShockChain"/>).</summary>
+        private static float s_shockEventAt = float.NegativeInfinity;
 
         /// <summary>Enemy bodies and enemy hitboxes, for radius queries.</summary>
         public static int EnemyQueryMask
@@ -301,9 +324,13 @@ namespace DD.Prototype.Weapons
             // C-00 30.09: bullets and pellets also meet body capsules (Enemy layer) — see CapsuleOnlyHit.
             bool bodyCapsules = p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Bullet || p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Pellet;
             int mask = PrototypeLayers.BulletHitMask | (bodyCapsules ? 1 << PrototypeLayers.Enemy : 0);
-            int count = p.SweepRadius > 0f
-                ? Physics.SphereCastNonAlloc(from, p.SweepRadius, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide)
-                : Physics.RaycastNonAlloc(from, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide);
+            int count;
+            using (DD.Prototype.Rounds.TreeMarkers.ProjectileQueries.Auto())   // WP-104 B2: sh_bore turns rays into sphere sweeps
+            {
+                count = p.SweepRadius > 0f
+                    ? Physics.SphereCastNonAlloc(from, p.SweepRadius, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide)
+                    : Physics.RaycastNonAlloc(from, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide);
+            }
 
             if (count <= 0)
             {
@@ -326,6 +353,8 @@ namespace DD.Prototype.Weapons
                 bool treeChainNow = false;   // WP-077 cap.ar_2 / cap.smg_2: one forced chain after the segment
                 Vector3 treeChainPoint = Vector3.zero;
                 float treeChainDamage = 0f;
+                bool shockChainNow = false;   // WP-104 B3 el_shock: one shock chain after the segment
+                Vector3 shockChainPoint = Vector3.zero;
                 float speed = p.Velocity.magnitude;
 
                 for (int i = 0; i < count; i++)
@@ -405,6 +434,7 @@ namespace DD.Prototype.Weapons
                     DamageResult r;
                     try
                     {
+                        if (p.Shot.CritMultiplier > 1f) { damage *= p.Shot.CritMultiplier; DamageHitContext.MarkCrit(); }   // WP-104 B2 kx_crit: the pull's luck crit on the direct hit
                         damage *= DD.Prototype.Rounds.RunTreeHooks.BeforeTreeHit(ref p, in target, region, point);   // WP-077 K10b: armour bypass, plate break, close range
                         r = ApplyHit(target, damage, region, point, direction,
                             p.Shot.ImpactForce, p.Shot.Source, p.Shot.Power, normal, p.Shot.PresentationGroupId);
@@ -420,6 +450,19 @@ namespace DD.Prototype.Weapons
                         treeChainNow = true;
                         treeChainPoint = point;
                         treeChainDamage = p.Shot.Damage * share;
+                    }
+
+                    // WP-104 B3 (S-04 systems, S-03 receivers): a landed hit feeds the run tree once — this hit's element (Shock runs
+                    // the chain below, after the segment), the Mini Nuke count, the Black Hole; Explosive Rounds blast at the round's
+                    // 1st / 4th / 8th body (GD-TREE §7); a luck-crit kill rings. Everything queues, nothing detonates here. Neutral: no-ops.
+                    if (!DamageResults.IsEmpty(in r))
+                    {
+                        int bodyHit = ++p.BodiesHit;
+                        var facts = new DD.Prototype.Rounds.TreeHitFacts { PullsPerSecond = p.Shot.PullsPerSecond, HitWeight = p.Shot.HitWeight, Crit = p.Shot.CritMultiplier > 1f, Pierced = bodyHit > 1, Weapon = p.WeaponId };
+                        DD.Prototype.Rounds.TreeElement element = DD.Prototype.Rounds.TreeZombieBinding.OnWeaponHit(target.Receiver as DD.Prototype.Enemies.ZombieEnemy, point, in facts);
+                        if ((element & DD.Prototype.Rounds.TreeElement.Shock) != 0 && !shockChainNow) { shockChainNow = true; shockChainPoint = point; }
+                        if (!rocket && (bodyHit == 1 || bodyHit == 4 || bodyHit == 8)) DD.Prototype.Rounds.TreeBlastQueue.EnqueueExplosiveRound(point, damage);   // sh_explosive
+                        if (facts.Crit && r.Killed) DD.Prototype.Rounds.TreeBlastQueue.EnqueueCritRing(point, damage);   // kx_crit2 Fortune's Edge
                     }
 
                     if (!p.BranchesResolved && !branchesNow && !rocket)   // a rocket's branches are its blast (Blast / Cluster)
@@ -444,7 +487,7 @@ namespace DD.Prototype.Weapons
 
                     // A pierced shot is a weakened shot: piercing buys reach, not free damage (WP-077 ks.piercing.line: not through the first bodies).
                     if ((treeHit & DD.Prototype.Rounds.RunTreeHooks.TreeHitKeepDamage) == 0)   // WP-077 cap.lmg_2: a plate break passes at full damage
-                        p.DamageScale *= DD.Prototype.Rounds.RunTreeHooks.PierceKeep(p.TouchedCount, p.PenetrationKeep);
+                        p.DamageScale *= DD.Prototype.Rounds.TreeHooks.PierceKeep(DD.Prototype.Rounds.RunTreeHooks.PierceKeep(p.TouchedCount, p.PenetrationKeep));   // + WP-104 B2 sh_pierce (v1 inner call goes when v1 retires)
                 }
 
                 if (branchesNow)
@@ -465,6 +508,17 @@ namespace DD.Prototype.Weapons
                     int before = s_touched.Count;
                     ApplyChain(chain, treeChainPoint, ref result);
                     for (int t = before; t < s_touched.Count; t++) p.AddTouched(s_touched[t]);
+                }
+
+                if (shockChainNow)
+                {
+                    ShotRequest shock = p.Shot;
+                    if (TreeShockChain(ref shock))
+                    {
+                        int before = s_touched.Count;
+                        ApplyChain(shock, shockChainPoint, ref result, true);
+                        for (int t = before; t < s_touched.Count; t++) p.AddTouched(s_touched[t]);
+                    }
                 }
 
                 return stopped;
@@ -513,7 +567,8 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        private static void ApplyChain(in ShotRequest request, Vector3 from, ref ShotResult result)
+        /// <param name="treeShock">WP-104 B3: the run tree's shock chain (<see cref="TreeShockChain"/>) — every chained body also gets the tree's shock (Thunder Lord stagger).</param>
+        private static void ApplyChain(in ShotRequest request, Vector3 from, ref ShotResult result, bool treeShock = false)
         {
             float damage = request.Damage * Mathf.Clamp(request.ChainDamageScale, 0.05f, 1f);
             Vector3 current = from;
@@ -540,6 +595,7 @@ namespace DD.Prototype.Weapons
                 result.AnyArmorBreak |= r.ArmorBroke;
 
                 HitFeedbackDirector.Instance.ReportLink(current, point, false);
+                if (treeShock) DD.Prototype.Rounds.TreeZombieBinding.OnChainShock(next.Receiver as DD.Prototype.Enemies.ZombieEnemy, current);   // WP-104 B3 el_shock3
 
                 // WP-077 ks.chain.web: the first jump splits — the extra arcs start where the chain did.
                 if (jump == 0)
@@ -556,12 +612,38 @@ namespace DD.Prototype.Weapons
                         result.AnyKill |= f.Killed;
                         result.AnyArmorBreak |= f.ArmorBroke;
                         HitFeedbackDirector.Instance.ReportLink(from, forkPoint, false);
+                        if (treeShock) DD.Prototype.Rounds.TreeZombieBinding.OnChainShock(fork.Receiver as DD.Prototype.Enemies.ZombieEnemy, from);   // WP-104 B3 el_shock3
                     }
                 }
 
                 current = point;
                 damage *= Mathf.Clamp(request.ChainDamageFalloff, 0.1f, 1f);
             }
+        }
+
+        /// <summary>
+        /// WP-104 B3 el_shock (GD-TREE: S-02 owns the chain, S-04 picks the element). An event rate of min(pulls a second, eventMax);
+        /// each event chains <see cref="DD.Prototype.Rounds.TreeStats.ShockJumps"/> bodies at ShockShare × SG ÷ that rate a jump, so every
+        /// weapon class deals ≈ jumps × k × SG a second. At most one event per 1 / rate s here, and the systems' shared gate
+        /// (≤ <see cref="DD.Prototype.Rounds.TreeGuardrails.ShockEventsPerSecond"/> a second, Thunder Cascade bolts included).
+        /// Fills <paramref name="chain"/> (a copy of the round's request) for <see cref="ApplyChain"/>; false = no event now. No allocation.
+        /// </summary>
+        private static bool TreeShockChain(ref ShotRequest chain)
+        {
+            ref readonly DD.Prototype.Rounds.TreeStats s = ref DD.Prototype.Rounds.TreeRuntime.Current;
+            if (s.ShockJumps <= 0 || s.ShockShare <= 0f || s.WeaponPower <= 0f) return false;
+            float rate = Mathf.Max(0.05f, chain.PullsPerSecond > 0f ? chain.PullsPerSecond : 1f);
+            if (s.ShockEventsMax > 0f) rate = Mathf.Min(rate, s.ShockEventsMax);
+            float now = Time.time;
+            if (now >= s_shockEventAt && now - s_shockEventAt < 1f / rate - 1e-4f) return false;
+            if (!DD.Prototype.Rounds.TreeSystemsRunner.TryShockEvent()) return false;
+            s_shockEventAt = now;
+            chain.ChainTargets = Mathf.Min(s.ShockJumps, DD.Prototype.Rounds.TreeGuardrails.ShockJumpsMax);
+            chain.Damage = s.ShockShare * s.WeaponPower * (s.ElementDamageScale > 0f ? s.ElementDamageScale : 1f) / rate;   // element damage: SG share × Fusion
+            chain.ChainDamageScale = 1f;   // flat per jump: no share of the round, no falloff
+            chain.ChainDamageFalloff = 1f;
+            DD.Prototype.Rounds.RunTreeHooks.ForcedChainRequest(ref chain);   // the radius: the round's Chain branch, else the branch's tier-1 numbers
+            return true;
         }
 
         private static void ApplyRicochet(in ShotRequest request, Vector3 from, ref ShotResult result)
@@ -600,10 +682,11 @@ namespace DD.Prototype.Weapons
         /// system owns that rule, and it is reached through <see cref="IExplosionReceiver"/>
         /// exactly so this class cannot get it subtly wrong.
         /// </summary>
-        public static void Explode(Vector3 origin, float totalDamage, float radius, ref ShotResult result, int presentationGroupId = 0)
+        public static void Explode(Vector3 origin, float totalDamage, float radius, ref ShotResult result, int presentationGroupId = 0,
+            ExplosionSource source = ExplosionSource.Small)
         {
             int group = presentationGroupId != 0 ? presentationGroupId : FeelEventRouter.NextGroupId();
-            HitFeedbackDirector.Instance.ReportExplosion(origin, radius, group);
+            HitFeedbackDirector.Instance.ReportExplosion(origin, radius, group, source);   // WP-104 B2: a tree blast passes ExplosionSource.Tree (one Proc presents it)
 
             int count = Physics.OverlapSphereNonAlloc(
                 origin, radius, s_overlapBuffer, EnemyQueryMask, QueryTriggerInteraction.Collide);
@@ -862,12 +945,18 @@ namespace DD.Prototype.Weapons
         /// <summary>Standalone blast for callers outside a shot (debug panel, future grenades).</summary>
         public static void Explode(Vector3 origin, float totalDamage, float radius)
         {
+            Explode(origin, totalDamage, radius, ExplosionSource.Small);
+        }
+
+        /// <summary>WP-104 B2: a standalone blast with its presentation source (a run-tree blast passes <see cref="ExplosionSource.Tree"/>: its one TreeEvents.Proc presents it).</summary>
+        public static void Explode(Vector3 origin, float totalDamage, float radius, ExplosionSource source)
+        {
             DamageTransaction.Begin();
             try
             {
                 var result = new ShotResult();
                 s_touched.Clear();
-                Explode(origin, totalDamage, radius, ref result);
+                Explode(origin, totalDamage, radius, ref result, 0, source);
             }
             finally
             {
@@ -1032,6 +1121,7 @@ namespace DD.Prototype.Weapons
             s_touched.Clear();
             s_maskResolved = false;
             s_enemyQueryMask = 0;
+            s_shockEventAt = float.NegativeInfinity;
         }
     }
 }

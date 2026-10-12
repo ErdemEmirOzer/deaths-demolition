@@ -230,6 +230,7 @@ namespace DD.Prototype.Weapons
             float inner = e.innerRadius + BlastInnerPerTier * tier;
             float outer = e.outerRadius + BlastOuterPerTier * tier;
             DD.Prototype.Rounds.RunTreeHooks.ShapeRocketBlast(weapon, ref damage, ref inner, ref outer);   // WP-077 fork.rl_1.x / fork.rl_1.y
+            float ownBlast = DD.Prototype.Rounds.TreeHooks.OwnBlastRadiusScale; inner *= ownBlast; outer *= ownBlast;   // WP-104 B2 sh_explosive on rl_1: its own blast grows
             int group = FeelEventRouter.NextGroupId();
 
             int split = DD.Prototype.Rounds.RunTreeHooks.RocketSplitCount(weapon);   // WP-077 cap.rl_1 Ash Rain
@@ -239,6 +240,7 @@ namespace DD.Prototype.Weapons
                 : Blast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, ExplosionSource.Rocket, out hits);
             float self = HurtPlayer(weapon, origin, damage, inner, outer, e);   // the unsplit blast's share (one hit on the player)
             DD.Prototype.Rounds.RunTreeHooks.OnRocketBlast(weapon, origin, damage, outer);   // WP-077 ks.explosion.ashcloud / seal.rl_1 burning ground
+            DD.Prototype.Rounds.TreeBlastQueue.OnBarrageRocketImpact(origin, damage);   // WP-104 B3 sy_barrage: every 4th rocket splits into cluster parts (queued)
 
             Detonations++;
             if (kind == RocketBlastKind.AirBurst) AirBursts++;
@@ -341,7 +343,7 @@ namespace DD.Prototype.Weapons
             Transform player = PlayerOverride;
             WeaponController controller = WeaponRegistry.ActiveController;
             if (player == null && controller != null) player = controller.transform.root;
-            if (player == null || e.selfDamageShare <= 0f) return 0f;
+            if (player == null || e.selfDamageShare <= 0f || DD.Prototype.Rounds.TreeHooks.RocketSelfImmune(DD.Prototype.Rounds.TreeHooks.InHand)) return 0f;   // WP-104 B2: Barrage / Full-Auto rl_1
 
             float distance = Vector3.Distance(origin, player.position + Vector3.up * PlayerCentreHeight);
             float amount = SelfDamageAt(distance, damage, inner, outer, e.selfDamageShare, e.selfDamageMax, e.falloffExponent);

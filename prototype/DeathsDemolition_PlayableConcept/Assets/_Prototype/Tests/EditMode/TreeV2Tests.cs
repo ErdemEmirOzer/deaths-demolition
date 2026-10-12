@@ -131,11 +131,13 @@ namespace DD.Prototype.Tests.EditMode
         public void EffectPending_NotSoldUntilLive()
         {
             TreeLiveV2.TreatAllAsLive = false;
-            Begin();
-            Give(500);
-            _tree.Open(1);
-            Assert.AreEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("sh_heavy")));
-            Assert.IsFalse(_tree.TryBuy(Idx("sh_heavy")));
+            Begin(TreeMode.Demolition);
+            Give(2000);
+            _tree.Open(5);
+            Assert.IsTrue(_tree.TryBuy(Idx("sh_heavy")), "B2 wires Heavy Rounds");
+            Assert.IsTrue(_tree.TryBuy(Idx("sh_pierce")), "B2 wires Piercing Rounds");
+            Assert.AreEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("sh_rail")), "no receiver reads PierceStaggerSeconds yet");
+            Assert.IsFalse(_tree.TryBuy(Idx("sh_rail")));
             Assert.AreEqual(TreeNodeState.Available, _tree.StateOf(Idx("ec_gold1")), "B1 wires Coin Sense");
         }
 

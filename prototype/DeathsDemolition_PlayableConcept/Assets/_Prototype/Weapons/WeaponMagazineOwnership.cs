@@ -74,6 +74,13 @@ namespace DD.Prototype.Weapons
         /// <summary>A beat landed: the step and whether the clip sent it (false = the deadline).</summary>
         public event Action<MagazineStep, bool> Stepped;
 
+        /// <summary>WP-104 B4 (S-06): the reload's magazine visual picks the beats — rl_1's tube starts empty; a belt box or the weapon's
+        /// own part runs the magazine beats (<see cref="Begin(bool, bool)"/>).</summary>
+        public void Begin(DD.Prototype.Weapons.Attachments.MagazineVisualKind kind, bool tactical)
+        {
+            Begin(kind == DD.Prototype.Weapons.Attachments.MagazineVisualKind.Tube, tactical);
+        }
+
         /// <summary>
         /// A reload of a magazine weapon starts: the magazine is in the weapon, the first beat is next. <paramref name="emptyTube"/>
         /// (rl_1, S-06 05.10): the tube starts empty — nothing to detach; the round comes to the hand (mag_hand_attach), goes in

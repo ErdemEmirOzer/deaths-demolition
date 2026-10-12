@@ -191,6 +191,8 @@ namespace DD.Prototype.Weapons
             _recoilAccum = 0f;   // WP-069 × WP-073 A4.2: a new Special starts with the recoil room full
 
             Duration = settings != null ? settings.CapSeconds(id) : (_def != null && _def.specialLifecycle.activeCapSeconds > 0f ? _def.specialLifecycle.activeCapSeconds : 11f);
+            // WP-104 B2 Special resonance (KARAR-WP104 §6): Storm Chain owned - Raiju's time cap × 1.3, read once per pickup (neutral 1).
+            if (id == SpecialWeaponId.Raiju) Duration *= DD.Prototype.Rounds.TreeHooks.RaijuDurationScale;
             Remaining = Duration;
             IsActive = true;
             _cooldown = 0f;

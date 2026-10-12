@@ -571,7 +571,19 @@ namespace DD.Prototype.Rounds
         private static readonly HashSet<string> s_live = new HashSet<string>
         {
             // B1 (S-04): economy read by GoldRewardCalculator (gold ×) and the round-end interest.
-            "ec_gold1", "ec_gold2", "ec_gold3", "ec_interest"
+            "ec_gold1", "ec_gold2", "ec_gold3", "ec_interest",
+            // B2 (S-02 fire path, TreeHooks table): Shot / Magazine / Speed / crit, PlayerHealth + PlayerMotor, WP-107 wall buy, Midas.
+            "sh_heavy", "sh_bore", "sh_double", "sh_triple", "sh_fan", "sh_pierce", "sh_ricochet",
+            "mg_ext", "mg_double", "mg_reload1", "mg_reload2", "mg_autoload", "mg_drum", "mg_endless", "mg_cap",
+            "sp_rate1", "sp_rate2", "sp_rate3", "sp_move", "sp_dash", "sp_fullauto", "sp_twin", "sp_cap",
+            "kx_crit",
+            "sv_hp1", "sv_hp2", "sv_hp3", "sv_shield", "sv_leech", "sv_dodge",
+            "ec_dealer", "ec_midas",
+            // B2 × B3 (S-02 HitscanEngine: TreeZombieBinding.OnWeaponHit + the shock chain, TreeBlastQueue explosive round / crit ring;
+            // S-04 systems and S-03 receivers already on main): elements, the crit ring, Mini Nuke, Black Hole, Mass Collapse.
+            "el_fire", "el_fire2", "el_fire3", "el_ice", "el_ice2", "el_ice3", "el_shock", "el_shock2", "el_shock3",
+            "el_venom", "el_venom2", "el_venom3", "el_fusion",
+            "sh_explosive", "kx_crit2", "kx_nuke", "kx_hole", "kx_mass"
         };
 
         /// <summary>Dev presets / F1 / tests: every node sells (the effect may still be a no-op until its hook lands).</summary>

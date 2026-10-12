@@ -16,6 +16,9 @@ namespace DD.Prototype.Feedback
     {
         Small = 0,
         Rocket = 1,
+        /// <summary>WP-104 B2 (S-04 / S-07 12.10): a run-tree blast (TreeBlastQueue). Its one merged TreeEvents.Proc presents it: the
+        /// ExplosionDirector draws no card and no explosion sound plays for this source (S-07 / S-08 read it).</summary>
+        Tree = 2,
     }
 
     /// <summary>Everything the director needs to dress one landed hit on an enemy.</summary>

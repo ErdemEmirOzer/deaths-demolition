@@ -215,6 +215,7 @@ namespace DD.Prototype.Weapons
             // The authored model has no spinning action part; the spin ramp becomes a no-op.
             _action = null;
             modelRoot.transform.SetParent(_body, false);
+            _modelRoot = modelRoot.transform;   // WP-104 B4 (S-06): the attachment presenter mounts on it
             modelRoot.transform.localPosition = Vector3.zero;
             modelRoot.transform.localRotation = Quaternion.identity;
             modelRoot.transform.localScale = Vector3.one;
@@ -249,6 +250,11 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-037: true once <see cref="SetModel"/> installed an authored model.</summary>
         public bool HasAuthoredModel { get; private set; }
+
+        private Transform _modelRoot;
+
+        /// <summary>WP-104 B4 (S-06): the authored model <see cref="SetModel"/> installed (null before one; the weapon attachments mount on it).</summary>
+        public Transform ModelRoot => _modelRoot;
 
         private Transform _ejection;
         private Transform _magMarker;
