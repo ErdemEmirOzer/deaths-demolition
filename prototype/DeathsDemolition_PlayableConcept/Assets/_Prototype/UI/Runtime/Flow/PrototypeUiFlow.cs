@@ -682,7 +682,38 @@ namespace DD.Prototype.UI
                 yield break;
             }
 
+            // WP-101b (S-07, S-02 measure 12.10): the VFX settle scans (≈ 150 ms, 3.4 MB once per world) run behind the doors.
+            if (!fast) yield return WaitForVfxSettle();
+            if (generation != s_loadGeneration)
+            {
+                yield break;
+            }
+
             curtain.Open(fast);
+        }
+
+        /// <summary>WP-101b: the longest the doors wait for the VFX settle scans (a 30-frame settle at ≥ 30 fps fits).</summary>
+        public const float VfxSettleCapSeconds = 1.5f;
+
+        /// <summary>The doors' extra wait for the VFX settle scans on the last arrival, seconds (0 = none).</summary>
+        public static float LastVfxSettleWaitSeconds { get; private set; }
+
+        /// <summary>
+        /// WP-101b (S-07): <see cref="DD.Prototype.Feedback.Vfx.AmbientVfxSystem"/> and the lantern flames scan the world once more
+        /// a few frames after it activates (a world finishes building over a few frames) - a FindObjectsOfType pass the player saw
+        /// as a ~150 ms hitch early in Fighting. The doors stay shut until that frame has run, for at most
+        /// <see cref="VfxSettleCapSeconds"/>.
+        /// </summary>
+        private static IEnumerator WaitForVfxSettle()
+        {
+            LastVfxSettleWaitSeconds = 0f;
+            float t0 = Time.unscaledTime;
+            while (DD.Prototype.Feedback.Vfx.VfxSettleGate.Holding && Time.unscaledTime - t0 < VfxSettleCapSeconds)
+            {
+                yield return null;
+            }
+
+            LastVfxSettleWaitSeconds = Time.unscaledTime - t0;
         }
 
         /// <summary>The doors' extra wait for the menu's world on the last arrival, seconds (0 = none; probes, the R2 report).</summary>

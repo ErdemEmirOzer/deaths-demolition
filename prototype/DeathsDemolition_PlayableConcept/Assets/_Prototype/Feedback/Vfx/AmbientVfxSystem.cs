@@ -270,6 +270,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (Active != this || !Ready) return;
             Rescan();
             _settleFrame = Time.frameCount + 30;   // a world that finishes building over a few frames: one more scan, inside its first second
+            VfxSettleGate.HoldUntil(_settleFrame);   // WP-101b: behind the loading curtain, never in the first seconds of Fighting
         }
 
         private void OnDestroy()

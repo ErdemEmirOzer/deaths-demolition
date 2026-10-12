@@ -550,7 +550,8 @@ namespace DD.Prototype.Feedback.Vfx
         private PrototypePool<FlipbookEffect> _cards;
         private Transform _root;
         // C-00 01.10 GC finding: the scene stamp is read every frame (0 B) and a changed scene is scanned at once, then once more
-        // SettleFrames later — both inside a scene's first half second, never on a steady frame. Scan has its own ProfilerMarker.
+        // SettleFrames later — both inside a scene's first half second, never on a steady frame, and behind the loading curtain
+        // (WP-101b: VfxSettleGate holds the reveal until the settle frame). Scan has its own ProfilerMarker.
         public const int SettleFrames = 30;
         private static readonly Unity.Profiling.ProfilerMarker s_scanMarker = new Unity.Profiling.ProfilerMarker("LanternFlames.Scan");
         private int _settleFrame = -1;
@@ -1152,6 +1153,7 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 _sceneStamp = stamp;
                 _settleFrame = Time.frameCount + SettleFrames;
+                VfxSettleGate.HoldUntil(_settleFrame);   // WP-101b: the settle scan stays behind the loading curtain
                 using (s_scanMarker.Auto()) Scan();
                 return;
             }
