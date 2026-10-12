@@ -371,6 +371,26 @@ class Wp064GateV2Tests(unittest.TestCase):
                 self.assertTrue(run.heavy(row, None, {}))
         self.assertTrue(run.controller_or_presentation({"args": "/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -daemon"}))
 
+    def test_c00_1210_a_command_that_only_names_a_player_or_unity_is_not_forbidden(self):
+        """C-00 12.10 (a shasum over a build folder turned a guard window FOREIGN_WRITER): the executable decides."""
+        run = load_wp064_run()
+        player = "/k/b/DeathsDemolition.app/Contents/MacOS/Deaths Demolition - Playable Concept"
+        unity = "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"
+        rows = [
+            ({"exe": player, "args": player + " -ddPilotPerfProbe /x"}, True),
+            ({"exe": unity, "args": unity + " -batchmode -projectPath /p"}, True),
+            ({"exe": "/usr/bin/perl", "args": "/usr/bin/perl /usr/bin/shasum -a 256 ./b/DeathsDemolition.app/Contents/MacOS/Deaths Demolition"}, False),
+            ({"exe": "/usr/bin/grep", "args": "grep -r /Unity.app/Contents/MacOS/Unity /tmp"}, False),
+            ({"exe": "python3", "args": "python3 /x/DeathsDemolition.app/Contents/MacOS/thing"}, True),   # relative argv[0]: safe side
+            ({"exe": "", "args": player}, True),                                                          # unknown argv[0]: safe side
+            ({"exe": "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/Frameworks/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client",
+              "args": "Unity.Licensing.Client"}, False),
+        ]
+        for i, (row, want) in enumerate(rows):
+            row.update(pid=900000 + i, ppid=1, cpu=0.0)
+            with self.subTest(args=row["args"][:60]):
+                self.assertEqual(want, run.forbidden(row, None, {}))
+
     def test_finding4_missing_or_empty_log_fails(self):
         gate = load_wp064_gate()
         with tempfile.TemporaryDirectory() as directory:

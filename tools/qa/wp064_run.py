@@ -49,14 +49,30 @@ def process_rows():
             })
         except ValueError:
             continue
+    # C-00 12.10: each process's executable (argv[0]) on its own line end — the comm column above splits at a space
+    exes = {}
+    for line in subprocess.run(["ps", "-axo", "pid=,comm="], capture_output=True, text=True, errors="replace").stdout.splitlines():
+        p, _, c = line.strip().partition(" ")
+        if p.isdigit():
+            exes[int(p)] = c.strip()
+    for row in rows:
+        row["exe"] = exes.get(row["pid"], "")
     return rows
+
+
+def forbidden_target(row):
+    """C-00 12.10: what decides "is this a Unity / Blender / Player": the executable (argv[0]) when it is an absolute path —
+    a `shasum … ./x/DeathsDemolition.app/Contents/MacOS/…` or a grep naming the path is not one — else the whole command
+    line (a relative or unknown argv[0]: the safe side)."""
+    exe = row.get("exe") or ""
+    return exe if exe.startswith("/") else row["args"]
 
 
 def forbidden(row, allowed_pid=None, rows_by_pid=None):
     # the launched Player runs under player-run.sh (allowed_pid): it and its descendants are this run, not a competitor
     if row["pid"] in {os.getpid(), allowed_pid} or process_is_descendant(row, rows_by_pid or {}, allowed_pid):
         return False
-    command = row["args"]
+    command = forbidden_target(row)
     return (
         ("/Unity.app/Contents/MacOS/Unity" in command and "Licensing" not in command)
         or "/Blender.app/Contents/MacOS/Blender" in command
