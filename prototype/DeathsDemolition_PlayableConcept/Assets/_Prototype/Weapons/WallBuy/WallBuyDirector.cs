@@ -206,7 +206,7 @@ namespace DD.Prototype.Weapons
             return true;
         }
 
-        public const float SettleSearchMetres = 12f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
+        public const float SettleSearchMetres = 20f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
 
         /// <summary>
         /// WP-107B (AD 12.10 MUST 1): the top-down camera sits south of and above the player (north is screen up), so a tall roof

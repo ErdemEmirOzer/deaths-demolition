@@ -199,41 +199,48 @@ namespace DD.Prototype.Weapons
             model.transform.rotation = transform.rotation * Quaternion.Euler(0f, 90f, 0f);
             model.transform.localScale = Vector3.one;
             Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
-            float length = 0f;
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                renderers[i].shadowCastingMode = ShadowCastingMode.Off;
-                if (renderers[i] is MeshRenderer && renderers[i].TryGetComponent(out MeshFilter f) && f.sharedMesh != null)
-                {
-                    // The barrel axis is the model's +Z: its length is the mesh bounds' z extent at the renderer's own scale.
-                    length = Mathf.Max(length, f.sharedMesh.bounds.size.z * renderers[i].transform.lossyScale.z);
-                }
-            }
+            for (int i = 0; i < renderers.Length; i++) renderers[i].shadowCastingMode = ShadowCastingMode.Off;
 
-            float fit = length > 0.05f && silhouetteLength > 0f ? Mathf.Clamp(silhouetteLength / length, WeaponScaleMin, WeaponScaleMax) : scale;
-            model.transform.localScale = Vector3.one * Mathf.Max(0.05f, fit);
+            // The whole weapon in station space (every part's mesh corners: a model is several parts, and b107j scaled by the
+            // longest PART - the guns came out twice the decal and ran off the board). Lying on the board its barrel runs along
+            // the station's X.
+            if (TryStationBounds(renderers, out Bounds whole) && whole.size.x > 0.05f && silhouetteLength > 0f)
+                model.transform.localScale = Vector3.one * Mathf.Clamp(silhouetteLength / whole.size.x, WeaponScaleMin, WeaponScaleMax);
+            else
+                model.transform.localScale = Vector3.one * Mathf.Max(0.05f, scale);
 
-            // b107h: the model's pivot is its grip, so at the socket the barrel ran off the board's left edge. Centre its bounds on
-            // the panel (the decal socket) across the face; the depth stays the weapon socket's, in front of the panel.
-            Bounds bounds = default;
-            bool any = false;
-            for (int i = 0; i < renderers.Length; i++)
+            // b107h: the model's pivot is its grip, so at the socket the barrel ran off the board's left edge. Centre it on the
+            // panel (the decal socket) across the face; the depth stays the weapon socket's, in front of the panel.
+            if (TryStationBounds(renderers, out whole))
             {
-                if (!(renderers[i] is MeshRenderer)) continue;
-                if (!any) { bounds = renderers[i].bounds; any = true; }
-                else bounds.Encapsulate(renderers[i].bounds);
-            }
-
-            if (any)
-            {
-                Vector3 shift = centre.position - bounds.center;
-                shift -= transform.forward * Vector3.Dot(shift, transform.forward);
-                model.transform.position += shift;
+                Vector3 target = transform.InverseTransformPoint(centre.position);
+                model.transform.position += transform.TransformVector(new Vector3(target.x - whole.center.x, target.y - whole.center.y, 0f));
             }
 
             Transform[] parts = model.GetComponentsInChildren<Transform>(true);
             for (int i = 0; i < parts.Length; i++) parts[i].gameObject.layer = DisplayLayer;
             return model;
+        }
+
+        /// <summary>The bounds of every mesh part, in this station's space (null meshes skipped); false without one.</summary>
+        private bool TryStationBounds(Renderer[] renderers, out Bounds bounds)
+        {
+            bounds = default;
+            bool any = false;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (!(renderers[i] is MeshRenderer) || !renderers[i].TryGetComponent(out MeshFilter f) || f.sharedMesh == null) continue;
+                Bounds m = f.sharedMesh.bounds;
+                for (int c = 0; c < 8; c++)
+                {
+                    Vector3 corner = m.center + Vector3.Scale(m.extents, new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f));
+                    Vector3 p = transform.InverseTransformPoint(renderers[i].transform.TransformPoint(corner));
+                    if (!any) { bounds = new Bounds(p, Vector3.zero); any = true; }
+                    else bounds.Encapsulate(p);
+                }
+            }
+
+            return any;
         }
 
         private Renderer BuildDecal(Transform socket, Material decal, float size)
