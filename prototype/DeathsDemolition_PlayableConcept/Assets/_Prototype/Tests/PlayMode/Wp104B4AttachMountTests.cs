@@ -356,6 +356,97 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(olculen, 0, "hiçbir silah ölçülmedi");
         }
 
+        // ------------------------------------------------------------------ 6
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator TdOkunurluk_PikselOlcum()
+        {
+            // C-00 Q4 (B4-PLAN §7, "measure first"): how many pixels each attachment covers on the game's TopDown camera at the
+            // user's 1496×842 window and at 1920×1080 — the LOD0 meshes' bounds projected through the live camera (its aspect set to
+            // the target's for the reading). A measurement: a log + CSV, never red but for missing setup.
+            KutuphaneGerekli();
+            yield return Kur();
+            Camera cam = PrototypeCameraRig.Active != null ? PrototypeCameraRig.Active.Camera : null;
+            Assert.IsTrue(cam != null, "oyun kamerası yok — piksel ölçülemez");
+            var adimlar = new (string ad, TreeStats st)[]
+            {
+                ("E1", Istatistik(WeaponAttachRules.DefaultExtScale, 1, false, 0, TreeElement.None, false)),
+                ("E2-S", Istatistik(3f, 2, false, 0, TreeElement.None, false)),
+                ("E2-M", Istatistik(3f, 3, false, 0, TreeElement.None, false)),
+                ("E2-L+E3+E5+E4", Istatistik(3f, 4, true, 4, TreeElement.Fire, false)),
+            };
+
+            var csv = new StringBuilder("weapon,step,att,px1496_w,px1496_h,px1920_w,px1920_h\n");
+            int olculen = 0;
+            foreach (ClassicWeaponId id in new[] { ClassicWeaponId.AssaultRifle, ClassicWeaponId.Smg2, ClassicWeaponId.Lmg1 })
+            {
+                if (_lib.Find(id) == null) continue;
+                _s.Controller.EquipClassic(id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(30);
+                foreach ((string ad, TreeStats st) in adimlar)
+                {
+                    TreeStats s = st;
+                    TreeRuntime.SetTestStats(in s);
+                    TreeEvents.RaiseStatsChanged();
+                    yield return SpecialWeaponSahne.Kareler(3);
+                    WeaponAttachMount m = _sunucu != null ? _sunucu.Mount : Sunucu().Mount;
+                    if (m == null) continue;
+                    foreach (GameObject ek in Ekler(m))
+                    {
+                        Vector2 a = Piksel(cam, ek, 1496, 842), b = Piksel(cam, ek, 1920, 1080);
+                        if (a.x <= 0f) continue;
+                        string key = _lib.Find(id).key;
+                        csv.Append(key).Append(',').Append(ad).Append(',').Append(ek.name).Append(',').Append(P1(a.x)).Append(',').Append(P1(a.y))
+                           .Append(',').Append(P1(b.x)).Append(',').Append(P1(b.y)).Append('\n');
+                        Debug.Log("[DD-TEST] wp104b4.px weapon=" + key + " step=" + ad + " att=" + ek.name + " px1496=" + P1(a.x) + "x" + P1(a.y) +
+                                  " px1920=" + P1(b.x) + "x" + P1(b.y));
+                        olculen++;
+                    }
+                }
+            }
+
+            string yol = Path.Combine(Application.temporaryCachePath, "wp104b4-px.csv");
+            File.WriteAllText(yol, csv.ToString());
+            Debug.Log("[DD-TEST] wp104b4.px rows=" + olculen + " camera=" + cam.name + " fov=" + F(cam.fieldOfView) + " ortho=" + cam.orthographic + " csv=" + yol);
+            Assert.Greater(olculen, 0, "hiçbir ek ölçülmedi");
+        }
+
+        /// <summary>The on-screen box (px) of the add-on's LOD0 meshes at <paramref name="w"/>×<paramref name="h"/> through
+        /// <paramref name="cam"/> (the camera's aspect set to the target's for the reading, then reset to the window's).</summary>
+        private static Vector2 Piksel(Camera cam, GameObject ek, int w, int h)
+        {
+            cam.aspect = (float)w / h;
+            try
+            {
+                var min = new Vector2(float.MaxValue, float.MaxValue);
+                var max = new Vector2(float.MinValue, float.MinValue);
+                bool any = false;
+                foreach (MeshFilter f in ek.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (f.sharedMesh == null || AuthoredWeaponModel.LodIndexOf(f.name) > 0) continue;
+                    Bounds b = f.sharedMesh.bounds;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        Vector3 c = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                        Vector3 v = cam.WorldToViewportPoint(f.transform.TransformPoint(c));
+                        if (v.z <= 0f) continue;
+                        min = Vector2.Min(min, new Vector2(v.x * w, v.y * h));
+                        max = Vector2.Max(max, new Vector2(v.x * w, v.y * h));
+                        any = true;
+                    }
+                }
+
+                return any ? max - min : Vector2.zero;
+            }
+            finally
+            {
+                cam.ResetAspect();   // back to the window's own aspect
+            }
+        }
+
+        private static string P1(float v) => v.ToString("F1", CultureInfo.InvariantCulture);
+
         // ------------------------------------------------------------------ setup
 
         private void KutuphaneGerekli()

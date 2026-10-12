@@ -1,0 +1,644 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c80200c4470a43f89c900dba18592b8, type: 3}
+  m_Name: DD_WeaponAttach
+  m_EditorClassIdentifier: 
+  sourceSha256: 72fc8e604d6629319385947293b277ad49b88b6b04337caa0914d7edf6083f00
+  rows:
+  - id: 0
+    key: ar_1
+    mag:
+      position: {x: 0, y: 0.014110016, z: 0.0954}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.06756013, z: 0.7999}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.02609941, y: 0.0676, z: 0.359955}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.03193987, z: 0.9499}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.84219015}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.03193987, z: 0.9499}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.8606074}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.03693987, z: 1.0199}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.84219015}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.03693987, z: 1.0199}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.8606074}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04443987, z: 1.1099}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.84219015}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04443987, z: 1.1099}
+      powerMuzzle: {x: 0, y: 0.06756013, z: 0.8606074}
+      e5Scale: 1.227817
+      bridge: {fileID: 0}
+  - id: 1
+    key: smg_1
+    mag:
+      position: {x: 0, y: 0.006480016, z: 0.096}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.064800076, z: 0.4758}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.022282328, y: 0.0648, z: 0.21411}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.034699924, z: 0.6258}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.51457834}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.034699924, z: 0.6258}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.5313495}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.039699923, z: 0.6958}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.51457834}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.039699923, z: 0.6958}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.5313495}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.047199924, z: 0.7858}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.51457834}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.047199924, z: 0.7858}
+      powerMuzzle: {x: 0, y: 0.064800076, z: 0.5313495}
+      e5Scale: 1.118074
+      bridge: {fileID: 0}
+  - id: 2
+    key: sg_1
+    mag:
+      position: {x: 0, y: 0.020843837, z: 0.1}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.07068008, z: 0.496}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.020496752, y: 0.0707, z: 0.2232}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 0
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0.035133, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.06395286, z: 0.64599997}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.5749902}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: fb4742cf54b4945ed8ef89ffb573f1aa, type: 2}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0.059117, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.087937266, z: 0.64599997}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.6106106}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: 966420b7b443c4980a6128c49f47eb42, type: 2}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0.035133, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.06895286, z: 0.716}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.5749902}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: fb4742cf54b4945ed8ef89ffb573f1aa, type: 2}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0.059117, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.09293727, z: 0.716}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.6106106}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: 966420b7b443c4980a6128c49f47eb42, type: 2}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0.035133, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.07645286, z: 0.806}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.5749902}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: fb4742cf54b4945ed8ef89ffb573f1aa, type: 2}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0.059117, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.10043727, z: 0.806}
+      powerMuzzle: {x: 0, y: 0.07068008, z: 0.6106106}
+      e5Scale: 2.374694
+      bridge: {fileID: 4300000, guid: 966420b7b443c4980a6128c49f47eb42, type: 2}
+  - id: 3
+    key: ar_2
+    mag:
+      position: {x: 0, y: 0.026000023, z: 0.137}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.08300011, z: 0.6849}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.023399081, y: 0.083, z: 0.308205}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.016499892, z: 0.83489996}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.7262455}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.016499892, z: 0.83489996}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.74421996}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.02149989, z: 0.9049}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.7262455}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.02149989, z: 0.9049}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.74421996}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.028999891, z: 0.9949}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.7262455}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.028999891, z: 0.9949}
+      powerMuzzle: {x: 0, y: 0.08300011, z: 0.74421996}
+      e5Scale: 1.198297
+      bridge: {fileID: 0}
+  - id: 4
+    key: smg_2
+    mag:
+      position: {x: -0.0305, y: 0.053900003, z: 0.01799999}
+      rotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
+    muzzle:
+      position: {x: 0, y: 0.05785006, z: 0.3658}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.029236045, y: 0.0578, z: 0.16461}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04164994, z: 0.5158}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.40477347}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04164994, z: 0.5158}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.42163604}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04664994, z: 0.5858}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.40477347}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.04664994, z: 0.5858}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.42163604}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.05414994, z: 0.67579997}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.40477347}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.05414994, z: 0.67579997}
+      powerMuzzle: {x: 0, y: 0.05785006, z: 0.42163604}
+      e5Scale: 1.124171
+      bridge: {fileID: 0}
+  - id: 5
+    key: sg_2
+    mag:
+      position: {x: 0, y: 0.020082925, z: 0.1}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.04410009, z: 0.5587}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.027719226, y: 0.0441, z: 0.251415}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 0
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0.071637, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.12703712, z: 0.7087}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.6645872}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: 619fe98ff12354a1eac2c249cd0ae57b, type: 2}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0.104111, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.1595109, z: 0.7087}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.7128156}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: d5e02ed240ac84251b04cc92615ff315, type: 2}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0.071637, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.13203713, z: 0.77870005}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.6645872}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: 619fe98ff12354a1eac2c249cd0ae57b, type: 2}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0.104111, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.1645109, z: 0.77870005}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.7128156}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: d5e02ed240ac84251b04cc92615ff315, type: 2}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0.071637, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.13953713, z: 0.8687}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.6645872}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: 619fe98ff12354a1eac2c249cd0ae57b, type: 2}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0.104111, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.1720109, z: 0.8687}
+      powerMuzzle: {x: 0, y: 0.04410009, z: 0.7128156}
+      e5Scale: 3.215225
+      bridge: {fileID: 4300000, guid: d5e02ed240ac84251b04cc92615ff315, type: 2}
+  - id: 8
+    key: sr_1
+    mag:
+      position: {x: 0, y: 0.011750015, z: 0.099}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.06480017, z: 1.0509}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.019355264, y: 0.0648, z: 0.472905}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.034699827, z: 1.2009}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.0859}
+      e5Scale: 1
+      bridge: {fileID: 0}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.034699827, z: 1.2009}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.1008999}
+      e5Scale: 1
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.039699826, z: 1.2709}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.0859}
+      e5Scale: 1
+      bridge: {fileID: 0}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.039699826, z: 1.2709}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.1008999}
+      e5Scale: 1
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.047199827, z: 1.3608999}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.0859}
+      e5Scale: 1
+      bridge: {fileID: 0}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.047199827, z: 1.3608999}
+      powerMuzzle: {x: 0, y: 0.06480017, z: 1.1008999}
+      e5Scale: 1
+      bridge: {fileID: 0}
+  - id: 6
+    key: lmg_1
+    mag:
+      position: {x: 0, y: -0.0049999664, z: 0.205}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.08200015, z: 0.9196}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.057098117, y: 0.082, z: 0.41382}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0.006214, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.023713628, z: 1.0696}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 0.97728205}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: 60c185c7d80f5458688f9ff29ba32e80, type: 2}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0.023473, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.040972643, z: 1.0696}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 1.0029143}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: ef23f4776bf4249cd8e3083853e4c41b, type: 2}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0.006214, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.028713627, z: 1.1396}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 0.97728205}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: 60c185c7d80f5458688f9ff29ba32e80, type: 2}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0.023473, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.045972645, z: 1.1396}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 1.0029143}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: ef23f4776bf4249cd8e3083853e4c41b, type: 2}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0.006214, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.036213625, z: 1.2296}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 0.97728205}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: 60c185c7d80f5458688f9ff29ba32e80, type: 2}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0.023473, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.053472646, z: 1.2296}
+      powerMuzzle: {x: 0, y: 0.08200015, z: 1.0029143}
+      e5Scale: 1.708814
+      bridge: {fileID: 4300000, guid: ef23f4776bf4249cd8e3083853e4c41b, type: 2}
+  - id: 7
+    key: lmg_2
+    mag:
+      position: {x: 0, y: 0.14800003, z: 0.17899998}
+      rotation: {x: 0, y: 0, z: 1, w: 6.123234e-17}
+    muzzle:
+      position: {x: 0, y: 0.09200013, z: 0.7693}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.054363932, y: 0.092, z: 0.346185}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 1
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0.046472, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.05397197, z: 0.91929996}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.85664505}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: cbc2d6f7ca42646aea26df463970aed7, type: 2}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0.073094, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.080593385, z: 0.91929996}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.8961818}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: e7bb927f3f2f347edb0d95883c994a22, type: 2}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0.046472, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.058971968, z: 0.9893}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.85664505}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: cbc2d6f7ca42646aea26df463970aed7, type: 2}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0.073094, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.08559339, z: 0.9893}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.8961818}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: e7bb927f3f2f347edb0d95883c994a22, type: 2}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0.046472, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.06647197, z: 1.0792999}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.85664505}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: cbc2d6f7ca42646aea26df463970aed7, type: 2}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0.073094, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.09309339, z: 1.0792999}
+      powerMuzzle: {x: 0, y: 0.09200013, z: 0.8961818}
+      e5Scale: 2.635784
+      bridge: {fileID: 4300000, guid: e7bb927f3f2f347edb0d95883c994a22, type: 2}
+  - id: 9
+    key: rl_1
+    mag:
+      position: {x: 0, y: 0.027185056, z: 0.14}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    muzzle:
+      position: {x: 0, y: 0.078300074, z: 0.4455}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    side:
+      position: {x: 0.060397413, y: 0.0783, z: 0.200475}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+    magOnPart: 0
+    combos:
+    - e3: 1
+      e5: 1
+      e3Offset: {x: 0, y: -0.043266, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.06446576, z: 0.5955}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.53048265}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: 09a133931b5284749912da469c06454f, type: 2}
+    - e3: 1
+      e5: 2
+      e3Offset: {x: 0, y: -0.069142, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.09034154, z: 0.5955}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.568912}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: d1a4e5460eb40452981431d0b6d245a7, type: 2}
+    - e3: 2
+      e5: 1
+      e3Offset: {x: 0, y: -0.043266, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.069465764, z: 0.6655}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.53048265}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: 09a133931b5284749912da469c06454f, type: 2}
+    - e3: 2
+      e5: 2
+      e3Offset: {x: 0, y: -0.069142, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.09534153, z: 0.6655}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.568912}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: d1a4e5460eb40452981431d0b6d245a7, type: 2}
+    - e3: 3
+      e5: 1
+      e3Offset: {x: 0, y: -0.043266, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.076965764, z: 0.75549996}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.53048265}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: 09a133931b5284749912da469c06454f, type: 2}
+    - e3: 3
+      e5: 2
+      e3Offset: {x: 0, y: -0.069142, z: 0}
+      e5Offset: {x: 0, y: 0, z: 0.003}
+      secondaryMuzzle: {x: 0, y: -0.10284153, z: 0.75549996}
+      powerMuzzle: {x: 0, y: 0.078300074, z: 0.568912}
+      e5Scale: 2.561958
+      bridge: {fileID: 4300000, guid: d1a4e5460eb40452981431d0b6d245a7, type: 2}
+  e1: {fileID: 2706740862657684991, guid: 79867a7a35c174cdf83c459efaf3340d, type: 3}
+  e6: {fileID: 2912653846170912667, guid: bf9cc8c13c0924c63b4c9d54a49825b9, type: 3}
+  e2:
+  - {fileID: 503462789153350345, guid: 67f695ac439404b7581568ce44c71c27, type: 3}
+  - {fileID: 2724217780420391210, guid: 537b3f213912b4de5a93974a6c4b77b7, type: 3}
+  - {fileID: 9136464648984442196, guid: ca80aef71268a4d97a9de626ae183963, type: 3}
+  e3:
+  - {fileID: 2543624277774628065, guid: 530a76299f69c4fbcb4a93e11e93d8c5, type: 3}
+  - {fileID: 2077828574005571826, guid: b93121bebb88c46ca815ee6e8268241d, type: 3}
+  - {fileID: 5494942880211318095, guid: 49705e8c32dc54fca92b2dee6e38d649, type: 3}
+  e4:
+  - {fileID: 5646522447924129448, guid: af5ca11aad2d34a1e908d228c858b923, type: 3}
+  - {fileID: 2449263140982027357, guid: 7222ff44b2efe4839baaa7a2ad2dc4e7, type: 3}
+  - {fileID: 1518997525295244150, guid: 22a550ee77837473c8261d21738fa5ea, type: 3}
+  - {fileID: 6493318164924726310, guid: 8a0e945690ac34b4987d16adef02ef79, type: 3}
+  e5:
+  - {fileID: 8387661754145571063, guid: b2ca29e5df714448e93ebc63543c4045, type: 3}
+  - {fileID: 3965776481102787145, guid: 18c61f6228834411fbdc41aab67905fa, type: 3}
