@@ -63,6 +63,10 @@ namespace DD.Prototype.World
             WorldSource source = settings != null ? settings.Source : WorldSource.Procedural;
             string origin = settings != null ? "asset" : "default (no " + ResourceName + " asset)";
 
+            // WP-112 (C-00 12.10, S-05's note): a release player plays the asset's world (V6) - the old M3 world World_AP005
+            // and any other scene are reachable only through these flags / environment variables, so they are read in
+            // development builds, the Editor and release-probe (measurements) only.
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
             string forced = Arg(CommandLineFlag);
             if (string.IsNullOrEmpty(forced))
             {
@@ -74,9 +78,11 @@ namespace DD.Prototype.World
                 source = parsed;
                 origin = "override '" + forced + "'";
             }
+#endif
 
             if (source == WorldSource.V6) sceneName = V6SceneName;
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
             string sceneOverride = Arg(SceneFlag);
             if (string.IsNullOrEmpty(sceneOverride)) sceneOverride = Environment.GetEnvironmentVariable(SceneEnvironmentVariable);
             if (!string.IsNullOrEmpty(sceneOverride))
@@ -84,6 +90,7 @@ namespace DD.Prototype.World
                 sceneName = sceneOverride;
                 origin += ", scene override '" + sceneOverride + "'";
             }
+#endif
 
             if (!s_logged)
             {

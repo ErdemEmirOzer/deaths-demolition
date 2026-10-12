@@ -61,6 +61,7 @@ namespace DD.Prototype.Core.Boot
                     return true;
                 }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
                 Config.PrototypeConfig config = Config.PrototypeConfig.Active;
                 if (config != null && config.System.DirectToRun)
                 {
@@ -68,11 +69,18 @@ namespace DD.Prototype.Core.Boot
                 }
 
                 return PlayerPrefs.GetInt(DirectToRunPrefKey, 0) != 0;
+#else
+                // WP-112 (C-00 12.10): a release player never skips the main menu on a stored switch - the F1 panel's
+                // machine-wide PlayerPrefs key or the prototype config field; only the process-local smoke flag above.
+                return false;
+#endif
             }
             set
             {
                 s_sessionOverride = value;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
                 PlayerPrefs.SetInt(DirectToRunPrefKey, value ? 1 : 0);
+#endif
             }
         }
 
