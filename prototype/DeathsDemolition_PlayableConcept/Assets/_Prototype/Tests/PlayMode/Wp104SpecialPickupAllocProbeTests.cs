@@ -163,6 +163,100 @@ namespace DD.Prototype.Tests.PlayMode
 
         private const int BosKare = 600, BuyukKare = 1000;
 
+        /// <summary>
+        /// The run-start burst, recorded for an offline look: the Unity Profiler's binary log (Profiler.logFile, the runtime API - no live
+        /// ProfilerDriver, which locked the batch Editor) over the first <see cref="LogKare"/> frames after the scene is up, to
+        /// DD_PROBE_RAW. Wp104ProfilerRawDumpTests (EditMode, Explicit) opens it and names who allocates in the biggest frames.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Bosta_ProfilLogu_KosuBasi()
+        {
+            string raw = System.Environment.GetEnvironmentVariable("DD_PROBE_RAW");
+            Assert.IsFalse(string.IsNullOrEmpty(raw), "DD_PROBE_RAW yok");
+            Application.targetFrameRate = -1;
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count");
+            UnityEngine.Profiling.Profiler.logFile = raw;
+            UnityEngine.Profiling.Profiler.enableBinaryLog = true;
+            UnityEngine.Profiling.Profiler.enabled = true;
+            long enFazla = 0;
+            int enFazlaKare = -1;
+            try
+            {
+                yield return _s.SpawnEt(0.5f);
+                for (int i = 0; i < LogKare; i++)
+                {
+                    yield return null;
+                    if (count.LastValue > enFazla) { enFazla = count.LastValue; enFazlaKare = Time.frameCount - 1; }
+                }
+            }
+            finally
+            {
+                UnityEngine.Profiling.Profiler.enabled = false;
+                UnityEngine.Profiling.Profiler.enableBinaryLog = false;
+                UnityEngine.Profiling.Profiler.logFile = "";
+                count.Dispose();
+            }
+
+            Debug.Log("[DD-PROBE] wp104.runStartRaw raw=" + raw + " kare=" + LogKare + " enFazla=" + enFazla + " frame=" + enFazlaKare);
+        }
+
+        private const int LogKare = 120;
+
+        /// <summary>The post-pickup burst, recorded the same way (DD_PROBE_RAW): the log starts 60 frames after the run-start scans, then two
+        /// pickups with <see cref="AlimKare"/> frames after each.</summary>
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Alim_ProfilLogu_IkiAlim()
+        {
+            string raw = System.Environment.GetEnvironmentVariable("DD_PROBE_RAW");
+            Assert.IsFalse(string.IsNullOrEmpty(raw), "DD_PROBE_RAW yok");
+            Application.targetFrameRate = -1;
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            for (int i = 0; i < 60; i++) yield return null;   // past the run-start settle scans
+            var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count");
+            var rapor = new StringBuilder();
+            UnityEngine.Profiling.Profiler.logFile = raw;
+            UnityEngine.Profiling.Profiler.enableBinaryLog = true;
+            UnityEngine.Profiling.Profiler.enabled = true;
+            try
+            {
+                for (int tur = 0; tur < 2; tur++)
+                {
+                    yield return _s.SpawnEt(0.5f);
+                    for (int i = 0; i < 4; i++) yield return null;
+                    _s.PickupaGit(_s.CanliPickup());
+                    rapor.Append("\n  tur ").Append(tur).Append(" f").Append(Time.frameCount).Append(':');
+                    for (int i = 0; i < AlimKare; i++)
+                    {
+                        yield return null;
+                        rapor.Append(' ').Append(count.LastValue);
+                    }
+
+                    Time.captureDeltaTime = 0.05f;
+                    float r0 = Time.realtimeSinceStartup;
+                    while (_s.Controller.SpecialWeaponActive && Time.realtimeSinceStartup - r0 < 60f) yield return null;
+                    Time.captureDeltaTime = 0f;
+                    for (int i = 0; i < 3; i++) yield return null;
+                }
+            }
+            finally
+            {
+                Time.captureDeltaTime = 0f;
+                UnityEngine.Profiling.Profiler.enabled = false;
+                UnityEngine.Profiling.Profiler.enableBinaryLog = false;
+                UnityEngine.Profiling.Profiler.logFile = "";
+                count.Dispose();
+            }
+
+            Debug.Log("[DD-PROBE] wp104.pickupRaw raw=" + raw + rapor);
+        }
+
+        private const int AlimKare = 15;
+
         /// <summary>What may have just been built: the wall buy stations, the zombies in the scene, the run phase / round, the frame.</summary>
         private static string Durum()
         {
