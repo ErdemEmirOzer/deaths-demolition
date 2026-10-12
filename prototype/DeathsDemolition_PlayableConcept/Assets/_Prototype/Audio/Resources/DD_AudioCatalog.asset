@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v025+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
-  _sourceHash: 38e430466f04290a9e49bd33e046356255ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
+  _manifestVersion: ap011-v026+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
+  _sourceHash: 3831a4ab1ea1c0e368148110391cd3ac55ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
   _entries:
   - Sound: 10
     Clips:
@@ -4223,12 +4223,16 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 9ad3aae015bca4797a5d7312ff2cc290, type: 3}
     - {fileID: 8300000, guid: 3492c4c5dc8f94f8ba765d0d4428672f, type: 3}
     - {fileID: 8300000, guid: a387b6c98b52a42328017eb00fdd9c0b, type: 3}
+    - {fileID: 8300000, guid: d698fd4f22f3910df4521f3ada41f81c, type: 3}
+    - {fileID: 8300000, guid: 3e20ed6a6bd7b92674d2c770e8683ebd, type: 3}
     Loop: 0
     Lufs: -20.54
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 light calibre:
-      impact_stone + footstep_stone front / ceramic chips"
+      impact_stone + footstep_stone front / ceramic chips \xB7 v026 (WP-101): +2
+      Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav;
+      imp_stone_light_4.wav)"
     NoiseFloorDb: -120
     DcDb: -124.2
     Clipped: 0
@@ -4255,12 +4259,16 @@ MonoBehaviour:
     - {fileID: 8300000, guid: b043dc0be7a2d4670bf66fc28c24f93f, type: 3}
     - {fileID: 8300000, guid: e376d4681699540e3bf536cd25e378f3, type: 3}
     - {fileID: 8300000, guid: 5f40a938494af419d8e63bffe78bb9f1, type: 3}
+    - {fileID: 8300000, guid: 132cda5dbeee1683ff463318d29b3dd2, type: 3}
+    - {fileID: 8300000, guid: 0ec12744179590126abbc12a8d9c2ecf, type: 3}
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 heavy calibre:
-      impact_stone + footstep_stone front / ceramic chips"
+      impact_stone + footstep_stone front / ceramic chips \xB7 v026 (WP-101): +2
+      Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav;
+      imp_stone_heavy_2.wav)"
     NoiseFloorDb: -120
     DcDb: -112.2
     Clipped: 0
@@ -4418,14 +4426,16 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 505cce8b2f46f45568260889e6b146c5, type: 3}
     - {fileID: 8300000, guid: 66832f353edfc46ca9d40616809e2f1d, type: 3}
     - {fileID: 8300000, guid: 595cc8a19087b4b7e824d8df9a58f2ff, type: 3}
+    - {fileID: 8300000, guid: f01190458c14d41e6b7c70a26efd9446, type: 3}
     Loop: 0
     Lufs: -19.64
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Metal \xD7 light calibre:
-      impact_metal + armour tink front"
+      impact_metal + armour tink front \xB7 v026 (WP-101): +1 Adobe Firefly takes
+      one event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
     NoiseFloorDb: -120
-    DcDb: -159.3
+    DcDb: -146.7
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)

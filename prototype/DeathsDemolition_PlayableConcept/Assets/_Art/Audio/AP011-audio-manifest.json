@@ -1,5 +1,5 @@
 {
- "version": "ap011-v025",
+ "version": "ap011-v026",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -3548,13 +3548,14 @@
    "files": [
     "ImpactV3MetalLight_01.wav",
     "ImpactV3MetalLight_02.wav",
-    "ImpactV3MetalLight_03.wav"
+    "ImpactV3MetalLight_03.wav",
+    "ImpactV3MetalLight_04.wav"
    ],
    "loop": false,
    "lufs": -19.64,
    "truePeakDb": -1.5,
    "noiseFloorDb": -120.0,
-   "dcDb": -159.3,
+   "dcDb": -146.7,
    "clipped": 0,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -3564,7 +3565,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Metal × light calibre: impact_metal + armour tink front"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Metal × light calibre: impact_metal + armour tink front · v026 (WP-101): +1 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
   },
   {
    "sound": "ImpactV3MetalMedium",
@@ -3668,7 +3669,9 @@
    "files": [
     "ImpactV3StoneHeavy_01.wav",
     "ImpactV3StoneHeavy_02.wav",
-    "ImpactV3StoneHeavy_03.wav"
+    "ImpactV3StoneHeavy_03.wav",
+    "ImpactV3StoneHeavy_04.wav",
+    "ImpactV3StoneHeavy_05.wav"
    ],
    "loop": false,
    "lufs": -18.0,
@@ -3684,7 +3687,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × heavy calibre: impact_stone + footstep_stone front / ceramic chips"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × heavy calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav; imp_stone_heavy_2.wav)"
   },
   {
    "sound": "ImpactV3StoneLight",
@@ -3692,7 +3695,9 @@
    "files": [
     "ImpactV3StoneLight_01.wav",
     "ImpactV3StoneLight_02.wav",
-    "ImpactV3StoneLight_03.wav"
+    "ImpactV3StoneLight_03.wav",
+    "ImpactV3StoneLight_04.wav",
+    "ImpactV3StoneLight_05.wav"
    ],
    "loop": false,
    "lufs": -20.54,
@@ -3708,7 +3713,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × light calibre: impact_stone + footstep_stone front / ceramic chips"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × light calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav; imp_stone_light_4.wav)"
   },
   {
    "sound": "ImpactV3StoneMedium",

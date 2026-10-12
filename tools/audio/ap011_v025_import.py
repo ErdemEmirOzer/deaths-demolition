@@ -18,7 +18,7 @@ sources / edit / limiterDb, sounds[].sound / added / new), SHA256SUMS and the WA
        Sonniss takes …" appended to provenance once;
      - one new row ImpactSniperCrack (the 18 AP-011 fields in order, SFX-World, spatial, target -22 LUFS: files peak-bound at
        -24.4, the sound gate's level), merged in sound order;
-     - "version" → ap011-v025.
+     - "version" → ap011-<the package version> (v025, v026 …; the provenance tag and origin follow the package MANIFEST).
      Every row passes ap011_r4_import.gate_failures (the manifest half of the EditMode AP-011 gates) or nothing is written.
 Not touched: AudioSoundId.cs (ImpactSniperCrack = 1064 is code, committed with the binding) and DD_AudioCatalog.asset
 (AudioCatalogBuilder rebuilds it in the EditMode run: the AP011 manifest hash changed).
@@ -35,14 +35,17 @@ import ap011_r4_import as r4  # noqa: E402  (stamps, meta template, GUID index, 
 
 SRC = dd_paths.KPROJ / "asset-production" / "AP-011" / "v025" / "final"
 SRC_LABEL = "K/asset-production/AP-011/v025/final/"
-VERSION = "ap011-v025"
 SALT = "dd-v025-ap011:"
 SNIPER = "ImpactSniperCrack"
 SNIPER_EVENT = "ProjectileEvents.Impact sr_1 layer (over its Heavy impact)"
 # The house SFX floor (EditMode band [-22.1; -15.9]); the files sit at -24.4..-24.25 LUFS-I, peak-bound: at the -1.5 dBTP ceiling
 # 6 dB of look-ahead limiting does not reach -22 (the v025 sound gate measured it), the placement gain (1.0) carries the rest.
 SNIPER_TARGET = -22.0
-TAG = " · v025 (WP-101)"
+TAG = " · v025 (WP-101)"   # the v025 tag; a later package tags its own version (tag_of)
+
+
+def tag_of(version):
+    return f" · {version} (WP-101)"
 
 
 class Failed(Exception):
@@ -60,6 +63,9 @@ def plan(root, src=SRC):
     out_dir, man_path = root / r4.OUT_DIR, root / r4.MANIFEST
     bad = []
     man_src = json.loads((src / "MANIFEST.json").read_text(encoding="utf-8"))
+    ver = man_src.get("version", "v025")
+    tag, origin = tag_of(ver), man_src.get("origin", "real Sonniss takes")
+    version = "ap011-" + ver
     sums = r4.read_sums(src) or {}
     files = man_src["files"]
     by_sound = {}
@@ -140,9 +146,10 @@ def plan(root, src=SRC):
         row["dcDb"] = round(max(s["dc"] for s in st), 1)
         row["clipped"] = int(sum(s["clipped"] for s in st))
         row["endSilenceDb"] = round(max(s["end"] for s in st), 1)
-        if sound != SNIPER and TAG not in row["provenance"]:
+        if sound != SNIPER and tag not in row["provenance"]:
             srcs = sorted({s.rsplit('/', 1)[-1] for f in fl for s in f["sources"]})
-            row["provenance"] += f"{TAG}: +{len(names)} real Sonniss takes through the v018 calibre transform, levelled to the set ({'; '.join(srcs)})"
+            how = "through the v018 calibre transform, levelled to the set" if ver == "v025" else "one event each, levelled on the set's first 100 ms"
+            row["provenance"] += f"{tag}: +{len(names)} {origin} {how} ({'; '.join(srcs)})"
         row = {k: row[k] for k in r4.FIELDS}
         bad += r4.gate_failures(row)
         new_rows[sound] = row
@@ -157,7 +164,7 @@ def plan(root, src=SRC):
         entries.sort(key=lambda e: e["sound"])
     merged["entries"] = entries
     if changed_rows:
-        merged["version"] = VERSION if man.get("version", "") < VERSION else man["version"]
+        merged["version"] = version if man.get("version", "") < version else man["version"]
     out = r4.dump(merged, trailing)
     if json.loads(out) != merged:
         raise Failed(["manifest round trip failed"])

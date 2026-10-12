@@ -20,6 +20,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
         {
             (AudioSoundId.ImpactV3DefaultHeavy, 4), (AudioSoundId.ImpactV3DirtLight, 4), (AudioSoundId.ImpactV3DirtHeavy, 4),
             (AudioSoundId.ImpactV3WoodHeavy, 4),
+            // AP-011 v026 (Adobe Firefly bullet impacts, user approval 12.10, gate K/wp-097/evidence/v026-gate-1210): one event each.
+            (AudioSoundId.ImpactV3StoneLight, 5), (AudioSoundId.ImpactV3StoneHeavy, 5), (AudioSoundId.ImpactV3MetalLight, 4),
             (AudioSoundId.ImpactV3StoneMedium, 3), (AudioSoundId.ImpactV3MetalHeavy, 3), (AudioSoundId.ImpactV3WaterMedium, 3),
             (AudioSoundId.ImpactV3WoodLight, 3), (AudioSoundId.ImpactV3DefaultLight, 3), (AudioSoundId.ImpactV3DirtMedium, 3),
             (AudioSoundId.ImpactV3FoliageMedium, 3), (AudioSoundId.ImpactV3PaperMedium, 3),
