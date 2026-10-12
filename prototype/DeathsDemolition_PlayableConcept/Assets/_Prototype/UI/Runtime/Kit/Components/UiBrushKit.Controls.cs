@@ -188,6 +188,43 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// C18 · the two-line status (R4 WP-105, U2): the glyph stays on the right, the <paramref name="words"/> go UNDER the
+        /// label (MenuSmall, left) instead of beside it - for a condition too long to share the line with a name (a locked
+        /// title's "LOCKED · DEFEAT AN EXECUTIONER" cut the name itself at text 1.25). The row grows by the words' line;
+        /// returns its new height (the caller's stack takes it). Build time only, before the row's first lift.
+        /// </summary>
+        public static float SetRowStatusBelow(UiButton row, string statusIconKey, string words)
+        {
+            RowParts parts = row != null ? row.GetComponent<RowParts>() : null;
+            if (parts == null)
+            {
+                return 0f;   // not a ListRow
+            }
+
+            SetRowStatus(row, statusIconKey, null);   // the glyph and its tint; the label's right edge keeps the glyph's room
+            var rect = (RectTransform)row.transform;
+            float line = UiFactory.LineHeight(UiType.MenuSmall);
+            float height = rect.sizeDelta.y + line;
+            rect.sizeDelta = new Vector2(rect.sizeDelta.x, height);
+
+            float glyphSpace = parts.Status.enabled ? parts.Glyph + (int)UiSpace.M : 0f;
+            RectTransform labelRect = row.LabelText.rectTransform;
+            labelRect.offsetMin = new Vector2(labelRect.offsetMin.x, labelRect.offsetMin.y + line);   // the name in the band above
+            labelRect.offsetMax = new Vector2(-glyphSpace, labelRect.offsetMax.y);
+
+            TMP_Text trailing = parts.Trailing;
+            trailing.text = words ?? string.Empty;
+            trailing.alignment = TextAlignmentOptions.TopLeft;
+            RectTransform trailingRect = trailing.rectTransform;
+            trailingRect.anchorMin = new Vector2(0f, 0f);
+            trailingRect.anchorMax = new Vector2(1f, 0f);
+            trailingRect.pivot = new Vector2(0f, 0f);
+            trailingRect.offsetMin = new Vector2(labelRect.offsetMin.x, 0f);   // the band the row grew by: under the name, never on it
+            trailingRect.offsetMax = new Vector2(-glyphSpace, line);
+            return height;
+        }
+
+        /// <summary>
         /// C21 · caption + hero number + hairline; Currency draws in StateGold (the gold reserve lives here). RollTo counts up.
         /// The counter's root is <paramref name="name"/>, <see cref="UiBrushTokens.ValueColumn"/> wide until the caller sizes
         /// it (caption, number and line stretch with it); <paramref name="hero"/> false: a NumericL number.

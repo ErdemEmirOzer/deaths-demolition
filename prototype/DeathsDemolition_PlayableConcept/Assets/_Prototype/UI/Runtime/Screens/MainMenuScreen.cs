@@ -4097,14 +4097,21 @@ namespace DD.Prototype.UI
                     UiSound.Play(UiSoundKind.Denied);
                 }
             });
-            stack.Add((RectTransform)button.transform, PaneLook.ListRowHeight);
-            stack.Cursor += PaneLook.ListRowGap;
-            EnterRow(button.transform);
-            if (!string.IsNullOrEmpty(trailing))
+            // R4 WP-105 (R2 U2): a locked option's condition goes under its name - beside it, "LOCKED · DEFEAT AN EXECUTIONER"
+            // left the name "Executi…" at text 1.25 (Mac UI 1.2 cut four titles). NEW and the check stay on the name's line.
+            float height = PaneLook.ListRowHeight;
+            if (!unlocked && !string.IsNullOrEmpty(trailing))
+            {
+                height = Mathf.Max(height, UiBrushKit.SetRowStatusBelow(button, icon, trailing));
+            }
+            else if (!string.IsNullOrEmpty(trailing))
             {
                 UiBrushKit.SetRowStatus(button, icon, trailing);
             }
 
+            stack.Add((RectTransform)button.transform, height);
+            stack.Cursor += PaneLook.ListRowGap;
+            EnterRow(button.transform);
             button.SetSelectedChoice(selected);   // the state the pad / tests read; the check glyph draws it
             button.SetInteractable(unlocked);
             options.Add(button);
@@ -4259,8 +4266,8 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-098B 2a · an unlocked-content line in C18's look, read-only (the profile's lists are reading, not choices): the
-        /// name (MenuBody; TextSecondary while locked - TextMuted is not text on the wash), the open / lock glyph and the word
-        /// (UNLOCKED / LEVEL n, MenuSmall) on the right. Shape + word carry the state; no filled chip.
+        /// name (MenuBody; TextSecondary while locked - TextMuted is not text on the wash), on the right the check alone for an open
+        /// row, the lock + "LOCKED · LEVEL n" (MenuSmall) for a locked one. Shape (+ word) carries the state; no filled chip.
         /// </summary>
         private void AddUnlockRow(ref UiStack stack, UiUnlockLine line)
         {
@@ -4283,11 +4290,13 @@ namespace DD.Prototype.UI
 
             // R4 WP-105 (V-12): one lock pattern on both lists - "LOCKED · LEVEL 3" / "KİLİTLİ · SEVİYE 3", as the titles say it (the
             // bare "LEVEL 3" read as the weapon's level). The state word is measured (TR 1.25 outgrew the fixed 200 px column).
+            // R4 WP-105 (R2 U1, C-00 12.10): an open row is its check glyph alone - WP-107 opened every weapon, and nine
+            // "UNLOCKED" words (72 letters) took the Profile pane under the R1 cut (0.212 < 0.25). A locked row keeps its words.
             TMP_Text state = UiFactory.Label(
                 "State", row,
-                line.Unlocked ? UiStrings.Get("profile.unlocked", "UNLOCKED") : UiStrings.Format("profile.locked.level", "value", line.RequiredLevel.ToString(), "LOCKED · LEVEL {value}"),
+                line.Unlocked ? string.Empty : UiStrings.Format("profile.locked.level", "value", line.RequiredLevel.ToString(), "LOCKED · LEVEL {value}"),
                 UiType.MenuSmall, UiColor.TextSecondary, TextAnchor.MiddleRight);
-            float stateWidth = Mathf.Max(ValueColumnWidth, Mathf.Ceil(state.GetPreferredValues(state.text).x) + 2f);
+            float stateWidth = line.Unlocked ? 0f : Mathf.Max(ValueColumnWidth, Mathf.Ceil(state.GetPreferredValues(state.text).x) + 2f);
             RectTransform stateRect = state.rectTransform;
             stateRect.anchorMin = new Vector2(1f, 0f);
             stateRect.anchorMax = new Vector2(1f, 1f);
