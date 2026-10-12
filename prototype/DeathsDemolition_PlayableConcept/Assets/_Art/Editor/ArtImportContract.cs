@@ -57,7 +57,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool WantsLightmapUv(string assetPath)
         {
-            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) && !IsSurfaceModel(assetPath) && !IsVegetationAsset(assetPath);
+            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) && !IsSurfaceModel(assetPath) && !IsVegetationAsset(assetPath)
+                   && !ArtAp040WorldKit.IsFloraModel(assetPath);   // WP-108: AP-040 flora is probe-lit like the AP-031 kit (no UV2, never lightmapped)
         }
 
         // ------------------------------------------------------------------ WP-093 vegetation (AP-031)
@@ -192,7 +193,13 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-084 · AP-025 mask flipbook (3×3 sheet of 1024² single-channel slices) imported as a Texture2DArray, BC4, linear.</summary>
             Array = 9,
             /// <summary>WP-092 C · AP-030 lamp emission map (<c>_EmissionMap</c>): sRGB colour, no alpha, the colour format; its role's class.</summary>
-            Emission = 10
+            Emission = 10,
+            /// <summary>WP-108 · AP-040 ready URP mask (R metallic, G AO, B 0, A smoothness), bound as delivered (no repack). Linear, alpha kept, mask cap.</summary>
+            MaskMap = 11,
+            /// <summary>WP-108 · AP-040 vegetation ORM (R AO, G roughness, B translucency; the AP-031 contract). Linear, no alpha, mask cap.</summary>
+            VegetationOrm = 12,
+            /// <summary>WP-108 · AP-040 flora petal mask (single channel: flower cells 1, leaf / woody cells 0). Linear, no alpha, mask cap.</summary>
+            PetalMask = 13
         }
 
         /// <summary>WP-084 · the AP-025 mask array: a 3×3 flipbook sheet → 9 slices (Skin 0-2, Dirt 3-5, Blood 6-8), 1024² each.</summary>
@@ -425,6 +432,15 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap030_boardwalk", TextureClass.Structure },
             { "ap030_drain", TextureClass.Structure },
             { "ap030_props", TextureClass.Structure },
+            // WP-108 · AP-040 v001 world kit (P-05). The shared atlas row covers the texture role of ap040_props / glow / flora — its maps live
+            // under Assets/_Prototype (S-02 WP-107B import, outside this contract); the staged maps: the 2048² apocalypse_hf set (a 1.5 m
+            // plaza set piece) Structure, the 1024² jizo / produce-basket sets Prop, the flora VegetationORM / PetalMask and the HF momiji Foliage.
+            { "ap040_shared", TextureClass.Structure },
+            { "ap040_apocalypse_hf", TextureClass.Structure },
+            { "ap040_jizo_hf", TextureClass.Prop },
+            { "ap040_produce_basket_hf", TextureClass.Prop },
+            { "ap040_flora", TextureClass.Foliage },
+            { "ap040_momiji_hf", TextureClass.Foliage },
             // WP-074 B5 · AP-023 world v5 kit (2K sources, namako 1K). Hero = the karamon / torii / lantern-set / palace-plinth stone and
             // metal (ADR-015-1 v3 ≤ 24 sets); ground-cover surfaces Ground; bark, culms and card atlases Foliage; the rest Structure.
             { "ap023_copper", TextureClass.Hero },
@@ -514,7 +530,9 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool IsCappedMaskRole(TextureRole role)
         {
-            return IsDerivedMaskRole(role) || role == TextureRole.Mask || role == TextureRole.Orm;
+            // WP-108: the AP-040 ready mask, vegetation ORM and petal mask take the same cap as every other mask map.
+            return IsDerivedMaskRole(role) || role == TextureRole.Mask || role == TextureRole.Orm
+                   || role == TextureRole.MaskMap || role == TextureRole.VegetationOrm || role == TextureRole.PetalMask;
         }
 
         /// <summary>
@@ -589,6 +607,9 @@ namespace DD.Art.Pipeline.EditorTools
         public static bool IsShippedMap(string assetPath)
         {
             TextureRole role = RoleOf(assetPath);
+            // WP-108: the AP-040 VegetationORM / PetalMask maps are staged for a DD/World Vegetation path no material takes yet — provenance
+            // like the Packed maps until one binds them (SevkSatiri_MateryalinBagladigiHerSozlesmeHaritasi_Sayilir then turns red).
+            if (role == TextureRole.VegetationOrm || role == TextureRole.PetalMask) return false;
             return role != TextureRole.Packed && (role != TextureRole.Mask || IsBoundMask(assetPath));
         }
 
@@ -738,21 +759,25 @@ namespace DD.Art.Pipeline.EditorTools
                 case "ORM": return TextureRole.Orm;
                 case "Array": return TextureRole.Array;
                 case "Emission": return TextureRole.Emission;
+                case "MaskMap": return TextureRole.MaskMap;               // WP-108 · AP-040
+                case "VegetationORM": return TextureRole.VegetationOrm;   // WP-108 · AP-040
+                case "PetalMask": return TextureRole.PetalMask;           // WP-108 · AP-040
                 default: return TextureRole.Unknown;
             }
         }
 
-        /// <summary>Every non-colour map is linear data: normals, packed/derived masks, the AP-007 ID mask and its detail mask.</summary>
+        /// <summary>Every non-colour map is linear data: normals, packed/derived masks, the AP-007 ID mask and its detail mask; WP-108: the AP-040 MaskMap / VegetationORM / PetalMask.</summary>
         public static bool IsLinearRole(TextureRole role)
         {
             return role == TextureRole.Normal || role == TextureRole.Packed || role == TextureRole.MetallicSmoothness ||
-                   role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Orm || role == TextureRole.Array;
+                   role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Orm || role == TextureRole.Array ||
+                   role == TextureRole.MaskMap || role == TextureRole.VegetationOrm || role == TextureRole.PetalMask;
         }
 
-        /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate; a sheet's coverage).</summary>
+        /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate; a sheet's coverage; WP-108: the AP-040 MaskMap's smoothness).</summary>
         public static bool KeepsAlpha(TextureRole role)
         {
-            return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Sheet;
+            return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Sheet || role == TextureRole.MaskMap;
         }
 
         /// <summary>
@@ -1209,7 +1234,7 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             if (role == TextureRole.Unknown)
             {
-                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet|ORM|Array|Emission>.png)");
+                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet|ORM|Array|Emission|MaskMap|VegetationORM|PetalMask>.png)");
             }
 
             bool linear = IsLinearRole(role);

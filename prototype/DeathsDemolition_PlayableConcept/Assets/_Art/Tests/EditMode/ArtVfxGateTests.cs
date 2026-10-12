@@ -45,7 +45,7 @@ namespace DD.Art.Tests.EditMode
         public void BitkiMateryalleri_FoliageWindUzerinde_KesimVeCiftYuzDogru()
         {
             string[] roller = ArtLibraryMaterialRoles.RolesOn(ArtLibraryMaterialRoles.ShaderKind.FoliageWind);
-            Assert.AreEqual(30, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23; WP-092 C AP-030 v002: + ap030_props_cloth (çamaşır / noren kumaşı) = 24; WP-109 (AD r2 MUST-2): + 6 kabuk (bark_01..03, ap023_bark_maple/pine/sakura; yalnız taç saydamlığı için, rüzgârsız) = 30.");
+            Assert.AreEqual(32, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23; WP-092 C AP-030 v002: + ap030_props_cloth (çamaşır / noren kumaşı) = 24; WP-109 (AD r2 MUST-2): + 6 kabuk (bark_01..03, ap023_bark_maple/pine/sakura; yalnız taç saydamlığı için, rüzgârsız) = 30; + WP-108 AP-040 flora (ap040_flora, ap040_momiji_hf, rüzgârsız) = 32.");
             var ihlaller = new List<string>();
             foreach (string rol in roller)
             {
@@ -55,10 +55,12 @@ namespace DD.Art.Tests.EditMode
                 ArtLibraryMaterialRoles.Spec spec = ArtLibraryMaterialRoles.Get(rol);
                 bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout;
                 if (m.IsKeywordEnabled("_ALPHATEST_ON") != cutout) ihlaller.Add(rol + ": _ALPHATEST_ON " + m.IsKeywordEnabled("_ALPHATEST_ON") + " (beklenen " + cutout + ")");
-                if (Mathf.Abs(m.GetFloat("_Cull") - (cutout && !spec.SingleSided ? 0f : 2f)) > 0.01f) ihlaller.Add(rol + ": _Cull " + m.GetFloat("_Cull"));
+                // WP-108: an opaque double-sided row (AP-040 flora) draws both faces like a two-sided cutout.
+                if (Mathf.Abs(m.GetFloat("_Cull") - ((cutout && !spec.SingleSided) || spec.DoubleSided ? 0f : 2f)) > 0.01f) ihlaller.Add(rol + ": _Cull " + m.GetFloat("_Cull"));
                 if (Mathf.Abs(m.GetFloat("_AlphaToMask") - (cutout ? 1f : 0f)) > 0.01f) ihlaller.Add(rol + ": _AlphaToMask " + m.GetFloat("_AlphaToMask"));
+                // WP-108: the row's wind multiplier and back-face rule (1 / 1 for every row before AP-040; the AP-040 flora 0 / 0).
                 if (Mathf.Abs(m.GetFloat("_WindScale") - spec.WindScale) > 0.01f) ihlaller.Add(rol + ": _WindScale " + m.GetFloat("_WindScale") + " (beklenen " + spec.WindScale + ")");
-                if (Mathf.Abs(m.GetFloat("_BackfaceLighting") - 1f) > 0.01f) ihlaller.Add(rol + ": _BackfaceLighting " + m.GetFloat("_BackfaceLighting"));
+                if (Mathf.Abs(m.GetFloat("_BackfaceLighting") - spec.BackfaceLighting) > 0.01f) ihlaller.Add(rol + ": _BackfaceLighting " + m.GetFloat("_BackfaceLighting") + " (beklenen " + spec.BackfaceLighting + ")");
                 if (m.GetTexture("_BaseMap") == null) ihlaller.Add(rol + ": _BaseMap yok");
                 if (spec.HasNormalMap != m.IsKeywordEnabled("_NORMALMAP")) ihlaller.Add(rol + ": _NORMALMAP " + m.IsKeywordEnabled("_NORMALMAP"));
                 if (m.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")) ihlaller.Add(rol + ": saydam olmamalı");

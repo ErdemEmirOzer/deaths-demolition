@@ -681,7 +681,10 @@ namespace DD.Prototype.World.Vegetation
                     case VegetationZone.Courtyard:
                         return !anchor || Corner(grid, j, dist.Building);
                     case VegetationZone.MossCourt:
-                        return courtSeed != null && Edge(grid, j, courtSeed, half) <= ac.mossCourtRim;
+                    case VegetationZone.Lawn:
+                        // WP-108 MUST-1 (AD 12.10): the garden lawns and the whole moss court take ajisai (an ajisai-dera court) —
+                        // the 06 / 07 frames are Lawn / MossCourt and had no purple-pink (0.003 / 0.005)
+                        return true;
                     default:
                         return false;
                 }
@@ -815,7 +818,14 @@ namespace DD.Prototype.World.Vegetation
 
             // ---- 4. kurinsō (SL variant 3) + fuki (LC) leaves: shaded edges
             int lc = (int)VegetationType.LeafClump;
-            bool PrimroseCell(int j) => ground[j] && field.Layers[sl][j] == 0 && Keeps(field, j, slSp);
+            // WP-108 MUST-1 (AD 12.10): the garden lawns are mostly corridor, which the flower ground keeps clear — the kurinsō
+            // (0.30–0.45 m, under the corridor's 0.45 m cap, R1 principle 2) may stand inside it on the lawn / moss court / courtyard.
+            bool[] lowGround = FlowerGround(grid, recipe, dist, zoneOf, corridorOf, clear, groveR, true);
+            bool GardenZone(int j) => zoneOf[j] == (byte)VegetationZone.Lawn || zoneOf[j] == (byte)VegetationZone.MossCourt || zoneOf[j] == (byte)VegetationZone.Courtyard
+                                      || zoneOf[j] == (byte)VegetationZone.DesirePath;
+            // the moss court's 0.15 m cap would drop every kurinsō there: its cells take mossCourtPrimroseCap (as the ajisai take theirs)
+            bool CourtCell(int j) => zoneOf[j] == (byte)VegetationZone.MossCourt;
+            bool PrimroseCell(int j) => (ground[j] || (lowGround[j] && GardenZone(j))) && field.Layers[sl][j] == 0 && (Keeps(field, j, slSp) || CourtCell(j));
             bool LeafCell(int j) => ground[j];
 
             bool PrimroseSite(int j)
@@ -826,6 +836,10 @@ namespace DD.Prototype.World.Vegetation
                     case VegetationZone.WallBaseShadow:
                     case VegetationZone.BuildingShadow:
                     case VegetationZone.BambooEdge:
+                    case VegetationZone.MossCourt:   // WP-108 MUST-1: kurinsō through the moss court (shade garden), the lawns and courtyards
+                    case VegetationZone.Lawn:
+                    case VegetationZone.Courtyard:
+                    case VegetationZone.DesirePath:   // WP-108: the garden's worn earth (06: 21 % of the frame) — low carpets only
                         return true;
                     // w6: V6 has almost none of the shadow zones above (~2 m² in all) — its shade is the building band's and the wall
                     // base's shadow face (within 2 m) and the bamboo grove's edge (within 1.5 m of open ground)
@@ -881,7 +895,13 @@ namespace DD.Prototype.World.Vegetation
                 int plants = prMin + (int)(VegetationHash.Cell01(i, 2, SaltPrimrose) * (prMax - prMin + 1));
                 List<int> picked = PlantDisc(grid, p, r, PrimroseCell, Mathf.Min(plants, prMax), prMin, 0f, SaltPrimrose + 1, buffer);
                 if (picked == null) continue;
-                WriteSpiderLily(field, picked, perCell, 3);
+                // WP-108: 40 % of the clusters in the hanashōbu purple (variant 2), the rest kurinsō pink (variant 3)
+                WriteSpiderLily(field, picked, perCell, VegetationHash.Cell01(i, 4, SaltPrimrose) < ac.primrosePurpleShare ? 2 : 3);
+                for (int q = 0; q < picked.Count; q++)
+                {
+                    int j = picked[q];
+                    if (CourtCell(j) && field.HeightCapAt(j) < ac.mossCourtPrimroseCap) field.SetHeight(j, field.HeightScaleAt(j), ac.mossCourtPrimroseCap);
+                }
 
                 // Fuki leaves in the ring around the flowers: the average density that lands 3–4 leaves (layer clamp aside).
                 int leaves = leafMin + (int)(VegetationHash.Cell01(i, 3, SaltPrimrose) * (leafMax - leafMin + 1));
@@ -914,7 +934,8 @@ namespace DD.Prototype.World.Vegetation
         /// bare soil / bridge approach / plaza edge / plaza joint / path edge / under a crown (0–0.8 R, and a forced grove),
         /// ≥ 0.8 m from a path, ≥ 1.5 m from the plaza, ≥ 3 m from a spawn point, ≥ 2.5 m from a weapon / door point.
         /// </summary>
-        private static bool[] FlowerGround(VegetationGrid grid, VegetationRecipe recipe, Distances dist, byte[] zoneOf, bool[] corridorOf, byte[] clear, float[] groveR)
+        private static bool[] FlowerGround(VegetationGrid grid, VegetationRecipe recipe, Distances dist, byte[] zoneOf, bool[] corridorOf, byte[] clear, float[] groveR,
+            bool corridorOk = false)
         {
             VegetationRecipe.Accents ac = recipe.accents;
             VegetationRecipe.Transitions tr = recipe.transitions;
@@ -930,8 +951,11 @@ namespace DD.Prototype.World.Vegetation
             for (int i = 0; i < ok.Length; i++)
             {
                 if (!grid.Growable(i) || zoneOf[i] == 0 || clear[i] != 0) continue;
-                if (corridorOf[i] && Edge(grid, i, outsideSeed, half) > ac.flowerCorridorMargin) continue;
-                if (!FlowerZone((VegetationZone)zoneOf[i]) || groveR[i] < tr.groveInner) continue;
+                if (!corridorOk && corridorOf[i] && Edge(grid, i, outsideSeed, half) > ac.flowerCorridorMargin) continue;
+                // WP-108: the low flower pass (corridorOk) keeps only the crown's inner ac.lowFlowerCrownInner (the sakura court is
+                // the moss court under one crown: groveInner 0.8 left it no flower ground at all — vegdiag 12.10)
+                bool lowFlowerZone = corridorOk && zoneOf[i] == (byte)VegetationZone.DesirePath;   // WP-108: worn garden earth takes the low carpets
+                if ((!FlowerZone((VegetationZone)zoneOf[i]) && !lowFlowerZone) || groveR[i] < (corridorOk ? ac.lowFlowerCrownInner : tr.groveInner)) continue;
                 if (Edge(grid, i, dist.Path, half) < ac.flowerPathClear || Edge(grid, i, dist.Plaza, half) < ac.flowerPlazaClear) continue;
                 // The rects / circles too: the zone priority puts shore and pond bank before the bridge approach.
                 Vector2 c = grid.CellCenter(i);

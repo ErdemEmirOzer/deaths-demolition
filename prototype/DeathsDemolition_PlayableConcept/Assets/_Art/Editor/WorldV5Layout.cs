@@ -332,7 +332,7 @@ namespace DD.Art.Pipeline.EditorTools
                 else
                 {
                     if (item.PartsOff.Length > 0) report.PartsOff += PartsOff(go, item);
-                    if (Array.IndexOf(StoneFitFamilies, item.Family) >= 0) report.StonesFitted += FitStoneCollider(go);
+                    if (Array.IndexOf(StoneFitFamilies, item.Family) >= 0) report.StonesFitted += FitStoneCollider(go, Array.IndexOf(ExactFitFamilies, item.Family) < 0);
                     AuditTop(go, item, report);
                 }
                 report.Items++;
@@ -368,6 +368,7 @@ namespace DD.Art.Pipeline.EditorTools
         private static string RoleOf(Item item)
         {
             if (item.Role == "road") return "structure";   // the AP-030 road kit: a lightmapped walking surface
+            if (item.Role == "plant") return "vegetation";   // WP-108: the AP-040 flora (no UV2) — not static, not lightmapped, probe-lit
             if (Array.IndexOf(PlantFamilies, item.Family) >= 0) return "dressing";
             return item.Footprint >= 2f ? "structure" : "dressing";
         }
@@ -841,26 +842,33 @@ namespace DD.Art.Pipeline.EditorTools
             return kept;
         }
 
-        /// <summary>WP-103 (R4 #4): the boulders whose kit box is wider than the stone (the walk scan stopped the hero up to 0.47 m short).</summary>
-        public static readonly string[] StoneFitFamilies = { "rock_large" };
+        /// <summary>WP-103 (R4 #4): the boulders whose kit box is wider than the stone (the walk scan stopped the hero up to 0.47 m short);
+        /// WP-108: the AP-040 sake barrel stack, whose one proxy box spans the empty corners of the stack (19 oversize steps).</summary>
+        public static readonly string[] StoneFitFamilies = { "rock_large", "sakadaru_stack" };
+
+        /// <summary>WP-108: the fitted families whose LOD0 is concave — a convex hull would still bridge the hollows between the
+        /// barrels — collide on the LOD0 mesh itself (static, non-convex).</summary>
+        public static readonly string[] ExactFitFamilies = { "sakadaru_stack" };
 
         /// <summary>
         /// WP-103: the stone itself is the collision — a convex MeshCollider on the LOD0 mesh (beside its renderer), the kit boxes off.
-        /// Returns 1 when fitted, 0 when the piece has no LOD0 mesh (it keeps its box).
+        /// Returns 1 when fitted, 0 when the piece has no LOD0 mesh (it keeps its box). The AP-030 kit names the node "rock_LOD0", the
+        /// AP-040 kit just "LOD0" (WP-108: the sake stacks kept their boxes — "4 stones fitted", the walk test red at P4-11).
+        /// <paramref name="convex"/> false: the LOD0 mesh as it is (<see cref="ExactFitFamilies"/>).
         /// </summary>
-        internal static int FitStoneCollider(GameObject go)
+        internal static int FitStoneCollider(GameObject go, bool convex = true)
         {
             MeshFilter lod0 = null;
             foreach (MeshFilter mf in go.GetComponentsInChildren<MeshFilter>(true))
             {
-                if (mf.sharedMesh != null && mf.name.EndsWith("_LOD0", StringComparison.Ordinal)) { lod0 = mf; break; }
+                if (mf.sharedMesh != null && (mf.name == "LOD0" || mf.name.EndsWith("_LOD0", StringComparison.Ordinal))) { lod0 = mf; break; }
             }
 
             if (lod0 == null) return 0;
             foreach (BoxCollider box in go.GetComponentsInChildren<BoxCollider>(true)) box.gameObject.SetActive(false);
             var hull = lod0.gameObject.AddComponent<MeshCollider>();
             hull.sharedMesh = lod0.sharedMesh;
-            hull.convex = true;
+            hull.convex = convex;
             return 1;
         }
 

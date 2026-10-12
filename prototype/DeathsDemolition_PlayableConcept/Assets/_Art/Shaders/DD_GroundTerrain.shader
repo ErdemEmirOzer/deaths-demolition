@@ -51,11 +51,17 @@ Shader "DD/GroundTerrain"
         // melts into a shaded moss ring ≈ 0.03; solved on the ground side): cushion 4.0 → 4.8, patch 1.9 → 2.28.
         // w7 (td3, the bamboo path edges: yellow-brown 26 %, gold 4.4 %, visible soil 33 %): leaf cover 0.30 → 0.18, bamboo litter
         // (0.20, 0.17, 0.10) → (0.15, 0.15, 0.11), off the yellow band.
+        // WP-108 R4 #9 (user: "the green plants and moss paint the map green"; AD 12.10 MUST-1): between the two notes — moss cover
+        // 0.30 → 0.18 (R3 before was 0.12), moss saturation 0.65 → 0.45 (olive-grey, not yellow: the yellow clamp stays); the leaf
+        // cover / mute stay at w7 (the bamboo edges' yellow-brown). The colour comes from the runtime momiji litter and the flower
+        // clusters (VegetationRecipe), not from the soil. (A 12.10 edit of the .mat alone was undone by the rebuild: these defaults.)
+        // AD MUST-1 check (chain-6): the sunlit desaturated moss slid into the yellow band (05: 0.059 → 0.079, the limit R3 + 0.02)
+        // — the yellow clamp 0.45 → 0.42 keeps it on the green side.
         [Header(Grade (linear))]
         _MossValue("Moss value (cushion set)", Range(0.5, 8)) = 4.8
         _Moss2Value("Moss 2 value (patch set)", Range(0.5, 8)) = 2.28
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.65
-        _MossYellowClamp("Moss yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0.45
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.45
+        _MossYellowClamp("Moss yellow clamp: linear red <= green x this (0 = off)", Range(0, 1)) = 0.42
         // Tints and albedos are linear multipliers (Vector: a Color property would be sRGB-decoded in this Linear project).
         _MossTintShade("Moss tint, shade end of the tone field (linear)", Vector) = (0.52, 1.05, 1.07, 1)
         _MossTintSun("Moss tint, sun end of the tone field (linear)", Vector) = (0.58, 1.11, 0.90, 1)
@@ -78,7 +84,7 @@ Shader "DD/GroundTerrain"
         _ToneScale("Tone field (m)", Range(4, 40)) = 11.0
         _ToneValue("Tone value swing", Range(0, 0.4)) = 0.12
         _PatchScale("Moss / soil patch field (m)", Range(1, 20)) = 4.6
-        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.30
+        _MossCover("Moss cover of the open ground", Range(-1, 1)) = 0.18
         _HeightBlend("Height-blend strength", Range(0, 2)) = 0.9
         _LeafScale("Leaf cell (m; a leaf ≈ 0.85 × 0.5 of it)", Range(0.03, 0.4)) = 0.09
         _LeafCover("Leaf cells taken at litter 1", Range(0, 1)) = 0.18

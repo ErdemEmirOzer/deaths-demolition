@@ -99,19 +99,75 @@ namespace DD.Art
             public bool RevealSolid;
 
             /// <summary>DD/Foliage Wind roles: the wind multiplier (_WindScale); 0 for the bark (WP-109: it rides Foliage Wind for the
-            /// reveal only, the trunks never sway).</summary>
+            /// reveal only, the trunks never sway) and for the AP-040 flora (WP-108: its vertex colour is vc1, not the AP003_Wind schema).</summary>
             public float WindScale = 1f;
 
             public bool HasColourGrade => Saturation != 1f || HueShift != 0f || PetalBoost != 0f || PetalColor != Color.white;
 
-            public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap;
+            /// <summary>
+            /// WP-108 · A texture set that lives outside <see cref="ArtPipelinePaths.TexturesSource"/>: the maps are
+            /// <c>&lt;TextureFolder&gt;/&lt;TextureStem&gt;_&lt;Map&gt;.png</c> (the AP-040 shared atlas S-02 imports once under
+            /// Assets/_Prototype/Art/AP040/Shared/Textures for the wall buy stations and this kit). Null = the WP-011 naming.
+            /// </summary>
+            public string TextureFolder;
+            /// <summary>WP-108 · File stem of the external set (<c>T_AP040_Shared</c>); used with <see cref="TextureFolder"/> only.</summary>
+            public string TextureStem;
+
+            /// <summary>
+            /// WP-108 · The set ships a ready URP mask (<c>T_…_MaskMap</c>: R metallic, G AO, A smoothness): it binds as
+            /// <c>_MetallicGlossMap</c> and <c>_OcclusionMap</c> as delivered, so there is no Packed map and no derived mask (no repack).
+            /// </summary>
+            public bool MaskMapReady;
+
+            /// <summary>WP-108 · An opaque role drawn from both sides (<c>_Cull</c> 0, double-sided GI) without an alpha cutout: the AP-040 flora (atlas alpha 255 everywhere).</summary>
+            public bool DoubleSided;
+
+            /// <summary>
+            /// WP-108 · DD/Foliage Wind <c>_BackfaceLighting</c>: 1 flips the normal on back faces (cards). 0 keeps the authored normal on both
+            /// faces — the AP-040 flora's upper-hemisphere normals (integration v001), which a flip would turn to face the ground.
+            /// </summary>
+            public float BackfaceLighting = 1f;
+
+            public bool HasExternalTextures => !string.IsNullOrEmpty(TextureFolder);
+
+            public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap && !MaskMapReady;
             public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasBaseColorMap => Kind != Kind.Flat;
             public bool HasEmission => !string.IsNullOrEmpty(EmissionTextureRole) && EmissionIntensity > 0f;
+
+            /// <summary>WP-108 · Asset path of one of this role's maps (BaseColor, Normal, MaskMap, …): the external set when the row has one, else <c>T_&lt;TextureRole&gt;_&lt;map&gt;.png</c>.</summary>
+            public string TexturePath(string map)
+            {
+                return HasExternalTextures ? TextureFolder + "/" + TextureStem + "_" + map + ".png" : ArtPipelinePaths.SourceTexture(TextureRole, map);
+            }
+
+            /// <summary>WP-108 · Asset path of the emission map: the external set when the emission role is the row's own texture role, else <c>T_&lt;EmissionTextureRole&gt;_Emission.png</c>.</summary>
+            public string EmissionTexturePath()
+            {
+                return HasExternalTextures && string.Equals(EmissionTextureRole, TextureRole, StringComparison.Ordinal)
+                    ? TexturePath("Emission")
+                    : ArtPipelinePaths.SourceTexture(EmissionTextureRole, "Emission");
+            }
         }
 
         /// <summary>WP-092 C · Material roles of the AP-030 kit (P-05: atlas roles ap030_&lt;atlas&gt;, glow roles ap030_&lt;family&gt;_glow).</summary>
         public const string Ap030RolePrefix = "ap030_";
+
+        /// <summary>WP-108 · Material roles of the AP-040 world kit (P-05 v001: ap040_props / ap040_glow / ap040_flora on the shared atlas, ap040_&lt;family&gt;_hf on the HF sets).</summary>
+        public const string Ap040RolePrefix = "ap040_";
+        /// <summary>WP-108 · Texture role of the AP-040 shared atlas (S-02 WP-107B, 8aef79f4): one copy for the wall buy stations and the world kit.</summary>
+        public const string Ap040SharedTextureRole = "ap040_shared";
+        public const string Ap040SharedTextureFolder = "Assets/_Prototype/Art/AP040/Shared/Textures";
+        public const string Ap040SharedTextureStem = "T_AP040_Shared";
+        /// <summary>WP-108 · Linear multiplier of the shared Emission map on ap040_glow (C-00 brief; the delivery carries no strength — AP-030 used 2.0–3.0).</summary>
+        public const float Ap040GlowIntensity = 2.5f;
+        /// <summary>
+        /// WP-108 · Scalar smoothness of the AP-040 flora roles: 1 − roughness, VegetationORM G measured on the delivered maps (shared flora
+        /// cells median 191/255, HF momiji 192/255 everywhere) → 0.25. The ORM is not bound on DD/Foliage Wind (no slot for it).
+        /// </summary>
+        public const float Ap040FloraSmoothness = 0.25f;
+        /// <summary>WP-108 · The three HF families on URP/Lit with their own BaseColor + Normal + MaskMap (the fourth, momiji_hf, is flora).</summary>
+        public static readonly string[] Ap040HfLitFamilies = { "apocalypse_hf", "jizo_hf", "produce_basket_hf" };
 
         /// <summary>WP-092 C · Texture roles that ship an Emission map (distinct, in row order).</summary>
         public static string[] EmissionTextureRoles()
@@ -432,6 +488,32 @@ namespace DD.Art
             foreach ((string family, float strength) in new[] { ("andon", 2.0f), ("kerosene_lamp", 3.0f), ("wall_sconce", 2.5f), ("hibachi", 2.5f) })
             {
                 rows.Add(new Spec { Role = Ap030RolePrefix + family + "_glow", Kind = Kind.Textured, TextureRole = Ap030RolePrefix + "lamp", EmissionTextureRole = Ap030RolePrefix + "lamp", EmissionIntensity = strength });
+            }
+
+            // WP-108 · AP-040 v001 world kit (P-05; wp-108/ap040-intake/stage-ap040.py). FBX slot → role: M_AP040_Shared → ap040_props,
+            // M_AP040_Glow → ap040_glow, M_VEG_Flora → ap040_flora, M_VEG_Flora_HF → ap040_momiji_hf, M_AP040_<family>_HF → ap040_<family>.
+            //   props / glow  URP/Lit opaque on the shared 2048² atlas S-02 imported (WP-107B, Assets/_Prototype/Art/AP040/Shared/Textures):
+            //                 the MaskMap is already the URP mask (R metallic, G AO, A smoothness) and binds as delivered — no ORM repack.
+            //                 glow adds the shared Emission map (sRGB) × Ap040GlowIntensity, baked into GI like the AP-030 lamps.
+            //   flora         DD/Foliage Wind, NOT DD/World Vegetation (the delivery's contract): that shader is written for the runtime
+            //                 instancing path (VegetationDrawSet) and does not hold for a placed prefab — its distance-density shrink
+            //                 multiplies by the global _DD_VegFade.z, which only VegetationDrawSet.Render sets, so with no vegetation
+            //                 system in the scene (prefab preview, showcase, any scene without it) every vertex collapses onto the root and
+            //                 the plant is invisible; with it, a placed plant thins by camera height like the scattered grass; and it has
+            //                 no ShadowCaster pass (AP040_shadow_cast 1 on ginkgo, wisteria, …) and no LOD cross-fade. DD/Foliage Wind has
+            //                 all four passes and LOD_FADE_CROSSFADE. Its vertex-colour wind reads AP003_Wind (R sway, B flutter, A
+            //                 stiffness), not vc1 (R bend², G phase, B stiffness, A root AO), so the wind is off (WindScale 0); the authored
+            //                 upper-hemisphere normals stay on both faces (BackfaceLighting 0); opaque two-sided (atlas alpha 255
+            //                 everywhere). VegetationORM / PetalMask are staged for S-07's placed-prefab path on DD/World Vegetation.
+            //   momiji_hf     the same flora recipe on its own HF set (BaseColor + Normal; its VegetationORM is staged, not bound).
+            //   <family>_hf   URP/Lit on the per-family HF set (BaseColor + Normal + MaskMap; the native ORM.B is metallic — not staged).
+            rows.Add(new Spec { Role = Ap040RolePrefix + "props", Kind = Kind.Textured, TextureRole = Ap040SharedTextureRole, TextureFolder = Ap040SharedTextureFolder, TextureStem = Ap040SharedTextureStem, MaskMapReady = true });
+            rows.Add(new Spec { Role = Ap040RolePrefix + "glow", Kind = Kind.Textured, TextureRole = Ap040SharedTextureRole, TextureFolder = Ap040SharedTextureFolder, TextureStem = Ap040SharedTextureStem, MaskMapReady = true, EmissionTextureRole = Ap040SharedTextureRole, EmissionIntensity = Ap040GlowIntensity });
+            rows.Add(new Spec { Role = Ap040RolePrefix + "flora", Kind = Kind.BaseColorOnly, TextureRole = Ap040SharedTextureRole, TextureFolder = Ap040SharedTextureFolder, TextureStem = Ap040SharedTextureStem, Shader = ShaderKind.FoliageWind, Smoothness = Ap040FloraSmoothness, DoubleSided = true, WindScale = 0f, BackfaceLighting = 0f });
+            rows.Add(new Spec { Role = Ap040RolePrefix + "momiji_hf", Kind = Kind.Textured, TextureRole = Ap040RolePrefix + "momiji_hf", NoPackedMap = true, Shader = ShaderKind.FoliageWind, Smoothness = Ap040FloraSmoothness, DoubleSided = true, WindScale = 0f, BackfaceLighting = 0f });
+            foreach (string family in Ap040HfLitFamilies)
+            {
+                rows.Add(new Spec { Role = Ap040RolePrefix + family, Kind = Kind.Textured, TextureRole = Ap040RolePrefix + family, MaskMapReady = true });
             }
 
             return rows;

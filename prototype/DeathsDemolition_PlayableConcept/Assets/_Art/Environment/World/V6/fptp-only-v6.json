@@ -2,9 +2,9 @@
     "schema": "dd.fptp-only/v1",
     "ruleVersion": 2,
     "world": "Assets/_Art/Scenes/World_V6_Greybox.unity",
-    "contentHash": "2e451379644793b10854141874ff13b912562e0f",
+    "contentHash": "c46f4bb8f83bd7b61bef5719ca384ecfa4b06fc4",
     "rule": "move = movable unit (WorldFptpSplit.StaticPin null) with 0 px in every TD pose (2.4:1 + 16:9 crop, FOV +1.5deg, LOD0, fader emulated, opaque + transparent passes), 0 px in the plaza planar reflection, no shadow into a pose frustum (sun sweep to y -2, 60 m) and no shadow-casting point/spot light range on a pose",
-    "units": 3403,
+    "units": 3607,
     "moved": 168,
     "entries": [
         {

@@ -120,6 +120,14 @@ namespace DD.Art.Pipeline.EditorTools
                                                     PrototypeLayers.CameraOccluderName + "' do not exist in this project.");
             }
 
+            // WP-108: the AP-040 world kit's naming (SM_<family>_VNN_LODn, [AP040_]<family>_VNN_proxyNN_COL, SOCKET_<name>[.NNN]) is checked
+            // before anything is built; its shadow flags and collider rules are applied below.
+            bool ap040 = string.Equals(ap, ArtAp040WorldKit.Package, StringComparison.Ordinal);
+            if (ap040)
+            {
+                ArtAp040WorldKit.CheckNames(family, variation);
+            }
+
             var root = new GameObject(variation.prefab);
             try
             {
@@ -175,6 +183,9 @@ namespace DD.Art.Pipeline.EditorTools
                         Renderer built = BuildLod(parent, name, mesh, materials, lod);
                         // WP-038G (M3 closure K1): AP-017 derivative litter / piles cast no shadow (flat, ≤ 0.4 m; ~450 instances × 2 cascades).
                         if (family.IsDerivative) built.shadowCastingMode = ShadowCastingMode.Off;
+                        // WP-108: AP-040 obeys the delivery's AP040_shadow_cast — 0 = no LOD casts (tufts, litter, low dressing); 1 = the
+                        // house rule above (LOD0 / LOD1 cast, LOD2 never: the far band is in the fog, past the 45 m shadow distance).
+                        if (ap040 && !ArtAp040WorldKit.CastsShadow(family.family, variation.id)) built.shadowCastingMode = ShadowCastingMode.Off;
                         sink[lod].Add(built);
                     }
                 }
@@ -203,6 +214,13 @@ namespace DD.Art.Pipeline.EditorTools
                     }
 
                     List<Shell> shells = ManifestShells(col) ?? SplitShells(mesh);
+                    if (ap040)
+                    {
+                        // WP-108: AP-040 proxies sit under Geometry only (no roof / broken parts; CheckNames enforced it).
+                        colliderIndex = BuildAp040Collider(geometry, colliderIndex, family.family, variation.prefab, col, mesh, shells);
+                        continue;
+                    }
+
                     for (int s = 0; s < shells.Count; s++)
                     {
                         int index = parent == geometry ? colliderIndex++ : parent == roof ? roofColliders++ : brokenColliders++;
@@ -561,6 +579,104 @@ namespace DD.Art.Pipeline.EditorTools
                 box.size = shell.size;
                 box.isTrigger = trigger;
             }
+        }
+
+        /// <summary>
+        /// WP-108 · One AP-040 collider proxy (integration v001: render off, outside the LODGroup, "static / convex MeshCollider"). A proxy
+        /// whose shells are all boxes (v001: all 34, one 8-corner box each) becomes one BoxCollider per shell — the same volume as a convex
+        /// hull, and the Import Contract keeps Read/Write off; any other proxy becomes one convex MeshCollider on the proxy mesh itself.
+        /// Plaza pieces: a top in the S-05 Y5 band (1.20, 1.39] m is lowered to 1.20 m (barricade_cart 1.225, hokora 1.220); a top in
+        /// the S-05 §6 band (0.30, 0.50) m is reported (Ap040KitTests fails on it). Flora carries no collider (throws). Returns the next index.
+        /// </summary>
+        private static int BuildAp040Collider(Transform geometry, int index, string family, string prefab, ArtLibraryManifest.Collider col, Mesh mesh, List<Shell> shells)
+        {
+            if (ArtAp040WorldKit.IsFlora(family))
+            {
+                throw new InvalidOperationException("[ArtLibrary] " + prefab + ": collider " + col.@object + " on a flora family (AP-040 integration v001: vegetation has no colliders).");
+            }
+
+            bool plaza = ArtAp040WorldKit.IsPlaza(family);
+            bool boxes = shells.Count > 0;
+            foreach (Shell s in shells) boxes &= s.IsBox;
+            if (boxes)
+            {
+                foreach (Shell s in shells)
+                {
+                    Shell shell = s;
+                    if (plaza)
+                    {
+                        shell = LowerToShootOverTop(shell, prefab, col.@object);
+                        float top = BlenderTop(shell);
+                        if (ArtAp040WorldKit.InForbiddenBand(top))
+                        {
+                            Debug.LogWarning("[ArtLibrary] " + prefab + " / " + col.@object + ": collider top " + top.ToString("0.000") + " m is in the S-05 §6 band (0.30, 0.50) m.");
+                        }
+                    }
+
+                    BuildCollider(geometry, index++, shell, col.IsTrigger);
+                }
+
+                return index;
+            }
+
+            // Mesh space is (bx, by, -bz): the Blender top is minus the lowest mesh z.
+            float meshTop = -mesh.bounds.min.z;
+            if (plaza && ArtAp040WorldKit.InShootOverBand(meshTop))
+            {
+                throw new InvalidOperationException("[ArtLibrary] " + prefab + " / " + col.@object + ": a non-box proxy with its top at " + meshTop.ToString("0.000") +
+                                                    " m (S-05 Y5 wants ≤ 1.20 m) — a mesh collider cannot be lowered here; the proxy needs a P-05 fix.");
+            }
+
+            var go = new GameObject("COL_" + index);
+            go.transform.SetParent(geometry, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            var meshCollider = go.AddComponent<MeshCollider>();
+            meshCollider.sharedMesh = mesh;
+            meshCollider.convex = true;
+            meshCollider.isTrigger = col.IsTrigger;
+            return index + 1;
+        }
+
+        /// <summary>WP-108 · The Blender-space top (metres above the pivot) of a shell in mesh space (Blender up is mesh −Z).</summary>
+        private static float BlenderTop(Shell shell)
+        {
+            if (!shell.Oriented)
+            {
+                return -shell.Bounds.min.z;
+            }
+
+            float lowest = float.MaxValue;
+            for (int i = 0; i < 8; i++)
+            {
+                var half = new Vector3(((i & 1) != 0 ? 0.5f : -0.5f) * shell.ObbSize.x, ((i & 2) != 0 ? 0.5f : -0.5f) * shell.ObbSize.y, ((i & 4) != 0 ? 0.5f : -0.5f) * shell.ObbSize.z);
+                lowest = Mathf.Min(lowest, (shell.ObbCenter + shell.ObbRotation * half).z);
+            }
+
+            return -lowest;
+        }
+
+        /// <summary>WP-108 · S-05 Y5 on a plaza shell: a top in (1.20, 1.39] m comes down to 1.20 m, the bottom stays. Oriented shells are not lowered (none in v001: throws).</summary>
+        private static Shell LowerToShootOverTop(Shell shell, string prefab, string proxy)
+        {
+            float top = BlenderTop(shell);
+            if (!ArtAp040WorldKit.InShootOverBand(top))
+            {
+                return shell;
+            }
+
+            if (shell.Oriented)
+            {
+                throw new InvalidOperationException("[ArtLibrary] " + prefab + " / " + proxy + ": an oriented shell with its top at " + top.ToString("0.000") +
+                                                    " m (S-05 Y5 wants ≤ 1.20 m) cannot be lowered here; the proxy needs a P-05 fix.");
+            }
+
+            Bounds b = shell.Bounds;
+            b.SetMinMax(new Vector3(b.min.x, b.min.y, -ArtAp040WorldKit.ShootOverTop), b.max);
+            shell.Bounds = b;
+            Debug.Log("[ArtLibrary] " + prefab + " / " + proxy + ": collider top " + top.ToString("0.000") + " m → " + ArtAp040WorldKit.ShootOverTop.ToString("0.00") + " m (S-05 Y5).");
+            return shell;
         }
 
         /// <summary>

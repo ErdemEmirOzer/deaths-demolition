@@ -341,7 +341,7 @@ namespace DD.Art.Pipeline.EditorTools
                     break;
 
                 case ArtLibraryMaterialRoles.Kind.BaseColorOnly:
-                    ApplyBaseColorOnly(material, spec.TextureRole, spec.Smoothness);
+                    ApplyBaseColorOnly(material, spec.TextureRole, spec.Smoothness, spec);
                     material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
                     if (spec.AlphaCutout) ApplyCutout(material, spec.Cutoff);   // WP-038L: the koi card sheet
                     break;
@@ -351,13 +351,22 @@ namespace DD.Art.Pipeline.EditorTools
                     break;
             }
 
+            if (spec.DoubleSided)
+            {
+                // WP-108: AP-040 flora — opaque, both faces drawn (and both faces' GI), no alpha cut.
+                material.SetFloat(CullId, 0f);
+                material.doubleSidedGI = true;
+            }
+
             if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
             {
                 ApplyFoliageWind(material, spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout);
                 ApplyColourGrade(material, spec);
-                SetFloat(material, "_WindScale", spec.WindScale);   // WP-109: the bark rides Foliage Wind with no wind
+                SetFloat(material, "_WindScale", spec.WindScale);   // WP-109: the bark rides Foliage Wind with no wind; WP-108: the AP-040 flora's row too
                 // WP-109: an opaque role that thins over the hero in top-down (the cutout crowns always do)
                 if (spec.RevealSolid) material.EnableKeyword("_TREE_REVEAL_SOLID"); else material.DisableKeyword("_TREE_REVEAL_SOLID");
+                // WP-108: the row's back-face normal rule (1 — what ApplyFoliageWind writes — for every role before AP-040)
+                SetFloat(material, "_BackfaceLighting", spec.BackfaceLighting);
             }
 
             if (spec.HasDetailNormal)
@@ -383,7 +392,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         private static void ApplyEmission(Material m, ArtLibraryMaterialRoles.Spec spec)
         {
-            m.SetTexture("_EmissionMap", LoadTexture(ArtPipelinePaths.SourceTexture(spec.EmissionTextureRole, "Emission")));
+            // WP-108: the spec resolves the path (T_<role>_Emission, or the AP-040 shared set for ap040_glow).
+            m.SetTexture("_EmissionMap", LoadTexture(spec.EmissionTexturePath()));
             m.SetColor("_EmissionColor", EncodeForColorProperty(new Color(spec.EmissionIntensity, spec.EmissionIntensity, spec.EmissionIntensity, 1f)));
             m.EnableKeyword("_EMISSION");
             m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
@@ -621,8 +631,30 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static void ApplyTextured(Material m, string role, ArtLibraryMaterialRoles.Spec spec = null)
         {
-            Texture2D baseMap = LoadTexture(ArtPipelinePaths.SourceTexture(role, "BaseColor"));
-            Texture2D normal = LoadTexture(ArtPipelinePaths.SourceTexture(role, "Normal"));
+            // WP-108: a library row resolves its own paths (the AP-040 shared atlas lives outside Textures/Source); the WP-011 roles keep T_<role>_<Map>.
+            Texture2D baseMap = LoadTexture(spec != null ? spec.TexturePath("BaseColor") : ArtPipelinePaths.SourceTexture(role, "BaseColor"));
+            Texture2D normal = LoadTexture(spec != null ? spec.TexturePath("Normal") : ArtPipelinePaths.SourceTexture(role, "Normal"));
+            if (spec != null && spec.MaskMapReady)
+            {
+                // WP-108 · AP-040: the delivered MaskMap is already the URP mask (R metallic, G AO, A smoothness) — bound as is, scalars at 1
+                // so the map is authoritative, smoothness from the metallic alpha, occlusion from its G (URP reads _OcclusionMap.g).
+                Texture2D ready = LoadTexture(spec.TexturePath("MaskMap"));
+                m.SetTexture(BaseMapId, baseMap);
+                m.SetColor(BaseColorId, Color.white);
+                m.SetTexture(BumpMapId, normal);
+                m.SetFloat(BumpScaleId, 1f);
+                m.SetTexture(MetallicGlossMapId, ready);
+                m.SetFloat(MetallicId, 1f);
+                m.SetFloat(SmoothnessId, 1f);
+                m.SetFloat(SmoothnessChannelId, 0f); // 0 = Metallic Alpha
+                m.EnableKeyword("_NORMALMAP");
+                m.EnableKeyword("_METALLICSPECGLOSSMAP");
+                m.SetTexture("_OcclusionMap", ready);
+                m.SetFloat("_OcclusionStrength", 1f);
+                m.EnableKeyword("_OCCLUSIONMAP");
+                return;
+            }
+
             if (spec != null && spec.NoPackedMap)
             {
                 // WP-074 B5 · the AP-023 card atlases: albedo + normal, scalar smoothness (production roughness 0.6), metallic 0.
@@ -665,9 +697,9 @@ namespace DD.Art.Pipeline.EditorTools
             }
         }
 
-        private static void ApplyBaseColorOnly(Material m, string role, float smoothness)
+        private static void ApplyBaseColorOnly(Material m, string role, float smoothness, ArtLibraryMaterialRoles.Spec spec = null)
         {
-            Texture2D baseMap = LoadTexture(ArtPipelinePaths.SourceTexture(role, "BaseColor"));
+            Texture2D baseMap = LoadTexture(spec != null ? spec.TexturePath("BaseColor") : ArtPipelinePaths.SourceTexture(role, "BaseColor"));
 
             m.SetTexture(BaseMapId, baseMap);
             m.SetColor(BaseColorId, Color.white);

@@ -86,6 +86,26 @@ namespace DD.Art
 
             /// <summary>Prefab-root space rotation (<see cref="WorldPlacementAsset.ToUnityYaw"/>): its +Z is the Blender-space flow direction.</summary>
             public Quaternion PrefabRotation => WorldPlacementAsset.ToUnityYaw(yawDeg);
+
+            /// <summary>WP-108 · The socket's kind: its name without a Blender duplicate suffix (<see cref="KindOf"/>).</summary>
+            public string Kind => KindOf(name);
+
+            /// <summary>
+            /// WP-108 · <c>SOCKET_Flame.001</c> → <c>SOCKET_Flame</c>. AP-040 toro_post V02 carries two lamps whose second EMPTY kept
+            /// Blender's copy suffix; the node (and the prefab child) keeps the delivered name, and a lookup matches on this prefix so it
+            /// finds both lamps — an exact-name lookup sees the first only.
+            /// </summary>
+            public static string KindOf(string socketName)
+            {
+                if (socketName == null) return null;
+                int n = socketName.Length;
+                if (n > 4 && socketName[n - 4] == '.' && char.IsDigit(socketName[n - 3]) && char.IsDigit(socketName[n - 2]) && char.IsDigit(socketName[n - 1]))
+                {
+                    return socketName.Substring(0, n - 4);
+                }
+
+                return socketName;
+            }
         }
 
         [Serializable]

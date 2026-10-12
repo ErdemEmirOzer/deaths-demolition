@@ -1,0 +1,346 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP040_Library
+  m_EditorClassIdentifier: 
+  ap: AP-040
+  items:
+  - family: apocalypse_hf
+    variation: V01
+    prefab: {fileID: 8818708035222051191, guid: 1b38d5e536fc44b7384397faa7c19592, type: 3}
+  - family: apocalypse_set
+    variation: V01
+    prefab: {fileID: 1987366015458530718, guid: ed52da8d9b9aa43c893c4ca55f43f512, type: 3}
+  - family: apocalypse_set
+    variation: V02
+    prefab: {fileID: 3655108779515650465, guid: 62e25d9808a6149e9a039fbd26f65095, type: 3}
+  - family: autumn_dry_shrub
+    variation: V01
+    prefab: {fileID: 9153375861839412590, guid: 630301e1a458d4b618cefc18eaa4b687, type: 3}
+  - family: autumn_dry_shrub
+    variation: V02
+    prefab: {fileID: 6728186470210857015, guid: d735887c6b6144f5695c40b79dbb0ce6, type: 3}
+  - family: autumn_dry_shrub
+    variation: V03
+    prefab: {fileID: 3056200147473302146, guid: d443d597c630b497381517a04ef3dfe6, type: 3}
+  - family: bamboo_fence
+    variation: V01
+    prefab: {fileID: 1565216334017359440, guid: c2926fe319bd94f43be9c50f309511ed, type: 3}
+  - family: bamboo_fence
+    variation: V02
+    prefab: {fileID: 565488465810332276, guid: 474099e0121474af29377631b396c03c, type: 3}
+  - family: barricade_cart
+    variation: V01
+    prefab: {fileID: 2111256689845077363, guid: 197c566330db14f95a130a531446754d, type: 3}
+  - family: barricade_cart
+    variation: V02
+    prefab: {fileID: 3512476394625618012, guid: 5d4e03e2cdadf4fd5beef862a17144c5, type: 3}
+  - family: camellia_shrub
+    variation: V01
+    prefab: {fileID: 4787362294911051721, guid: 6259db114c7ce4327a8091b341ac6f35, type: 3}
+  - family: camellia_shrub
+    variation: V02
+    prefab: {fileID: 146614078920601517, guid: d2de8843791144b0b928a02157be6da4, type: 3}
+  - family: camellia_shrub
+    variation: V03
+    prefab: {fileID: 2193042246305868970, guid: c99101b123b4f426d96fd0648cab9c28, type: 3}
+  - family: clover_white
+    variation: V01
+    prefab: {fileID: 8779261405779613315, guid: 11663297544d044eeb6f282c9250d9c7, type: 3}
+  - family: clover_white
+    variation: V02
+    prefab: {fileID: 2215759292557558440, guid: 51d097dab7a384b419f02e6af391626e, type: 3}
+  - family: clover_white
+    variation: V03
+    prefab: {fileID: 3417330135885506671, guid: fe74e62a51f0d4bf1880986968598618, type: 3}
+  - family: daihachi_cart
+    variation: V01
+    prefab: {fileID: 4516583827608969171, guid: 05560305d60934775b4bae0f1ef2fbf4, type: 3}
+  - family: daihachi_cart
+    variation: V02
+    prefab: {fileID: 8290135541312992772, guid: a144e8dc1acf541919a39b2a38311f05, type: 3}
+  - family: debris_small
+    variation: V01
+    prefab: {fileID: 8465881352000192352, guid: 5acf198a57f5c4f49a83cc733d229f9b, type: 3}
+  - family: debris_small
+    variation: V02
+    prefab: {fileID: 6144783267830620382, guid: 920448a3ea7d64ec6a26ca2c411bf6d8, type: 3}
+  - family: debris_small
+    variation: V03
+    prefab: {fileID: 4552929157042606615, guid: 8e3d84183f4064392ae9334a906efafc, type: 3}
+  - family: debris_small
+    variation: V04
+    prefab: {fileID: 1281604173926718472, guid: abb8c1d9f270644c691d180a348b7d26, type: 3}
+  - family: debris_small
+    variation: V05
+    prefab: {fileID: 252980140002844397, guid: dd2ba1ab1108e47579b61f8e08dce8c2, type: 3}
+  - family: debris_small
+    variation: V06
+    prefab: {fileID: 5526466430445992804, guid: 70148aa917e324d2c9852543fc92414e, type: 3}
+  - family: dry_grass
+    variation: V01
+    prefab: {fileID: 5564081302365623449, guid: 246df9ff85b1848f6a1ecd86f54fb3ee, type: 3}
+  - family: dry_grass
+    variation: V02
+    prefab: {fileID: 6423964575186045949, guid: b11827e3dfebc411694ed114cbf7c4d2, type: 3}
+  - family: dry_grass
+    variation: V03
+    prefab: {fileID: 8977694252083016771, guid: b2261b0885d40480780a5e9ebf264a76, type: 3}
+  - family: fallen_log_root
+    variation: V01
+    prefab: {fileID: 6704927981204932937, guid: e50df8481f90e4666b90c8fa9925bff0, type: 3}
+  - family: fallen_log_root
+    variation: V02
+    prefab: {fileID: 6366028572523618225, guid: d244a8b275429456e99a7ab830a526d9, type: 3}
+  - family: fern
+    variation: V01
+    prefab: {fileID: 2494344949507485425, guid: 4925ec2f1124b400e9a87f9d89f71aef, type: 3}
+  - family: fern
+    variation: V02
+    prefab: {fileID: 2906223791411066824, guid: 99a342696ebda46bb8da2c4829b34ca3, type: 3}
+  - family: fern
+    variation: V03
+    prefab: {fileID: 3197418098189948653, guid: 5b7d1e9be07a04afe82fb83d2f2a9196, type: 3}
+  - family: garden_tools
+    variation: V01
+    prefab: {fileID: 6395662713918484437, guid: e9dbe75e1ae484869975e5821e556328, type: 3}
+  - family: garden_tools
+    variation: V02
+    prefab: {fileID: 4544691666377796638, guid: dd73af3d69a8f448392463dfc711e972, type: 3}
+  - family: ginkgo_sapling
+    variation: V01
+    prefab: {fileID: 3147330624913891910, guid: 20955db6763ae432dbc6f082d52b7e4b, type: 3}
+  - family: ginkgo_sapling
+    variation: V02
+    prefab: {fileID: 606208847882587971, guid: 0038bdf85abab474aa6e4b69f8715dfd, type: 3}
+  - family: ginkgo_sapling
+    variation: V03
+    prefab: {fileID: 8025898361554776380, guid: eb345cd66f8e34cc9a1e79d29e0d3148, type: 3}
+  - family: hagi
+    variation: V01
+    prefab: {fileID: 4125664614999142239, guid: 4ed83a405e4d54b6fba4b7fb4322ba4e, type: 3}
+  - family: hagi
+    variation: V02
+    prefab: {fileID: 8556106709088263013, guid: 2be210341f6294d8abb023d06c822f3a, type: 3}
+  - family: hagi
+    variation: V03
+    prefab: {fileID: 4870474502273510312, guid: ac729bb1a986c41f1a086d215686a8f2, type: 3}
+  - family: higanbana
+    variation: V01
+    prefab: {fileID: 1105574033304652438, guid: 514135d3852324c9daed4225e4e4fbe8, type: 3}
+  - family: higanbana
+    variation: V02
+    prefab: {fileID: 5607657397997165808, guid: 7663e6adfe4b945b39b8fbb9119a983d, type: 3}
+  - family: higanbana
+    variation: V03
+    prefab: {fileID: 1938973898780650843, guid: 2856d107b1546409e88f097365efefdd, type: 3}
+  - family: hokora
+    variation: V01
+    prefab: {fileID: 8556074661708920210, guid: d777f617c4f1445bd982c977f3ab7792, type: 3}
+  - family: hokora
+    variation: V02
+    prefab: {fileID: 2914401272841231933, guid: 3f8ef65f735934767aebb97c7e3d1b3b, type: 3}
+  - family: ido
+    variation: V01
+    prefab: {fileID: 5688060662369014224, guid: 359c23b2a61e143b6b37087f76181a1d, type: 3}
+  - family: ido
+    variation: V02
+    prefab: {fileID: 5712511587776450619, guid: 16bc36bf8db33466197d8a52b19b59a1, type: 3}
+  - family: ishidoro_small
+    variation: V01
+    prefab: {fileID: 6270215908778089148, guid: 3bbc4def1dd3a4f3890c07e96be3194a, type: 3}
+  - family: ishidoro_small
+    variation: V02
+    prefab: {fileID: 7221294896131671732, guid: 60fd46061d56a480091f197885f99b6b, type: 3}
+  - family: jizo
+    variation: V01
+    prefab: {fileID: 4138507391104703544, guid: 3a548c4fcf65047f19803b9da04daf1f, type: 3}
+  - family: jizo
+    variation: V02
+    prefab: {fileID: 6849426533709241672, guid: f2943938be9b3424b9ef5806eef5812a, type: 3}
+  - family: jizo_hf
+    variation: V01
+    prefab: {fileID: 4062835819417983083, guid: d391eb88379cb44038f6daf8f629d29c, type: 3}
+  - family: kakine_broken
+    variation: V01
+    prefab: {fileID: 8360881283547215373, guid: 0f8f9dc0c40364f4693f900dd6d6027d, type: 3}
+  - family: kakine_broken
+    variation: V02
+    prefab: {fileID: 2457459579542026651, guid: b1881c21a29fa45ccb87c2d9801dd3e4, type: 3}
+  - family: kibako_stack
+    variation: V01
+    prefab: {fileID: 4667792670162860719, guid: 8945e9f7ffd38408886737886f666a64, type: 3}
+  - family: kibako_stack
+    variation: V02
+    prefab: {fileID: 920992147539085509, guid: 53c00c7d6eadd4e169570c3f2c5949b4, type: 3}
+  - family: kibako_stack
+    variation: V03
+    prefab: {fileID: 254693405885879148, guid: 4b707458c120d4a90ba58c79414e6e3f, type: 3}
+  - family: leaf_litter
+    variation: V01
+    prefab: {fileID: 4064927121088321610, guid: 7fa67cb092e7044309cd57bb430bd310, type: 3}
+  - family: leaf_litter
+    variation: V02
+    prefab: {fileID: 4898368322760230173, guid: 51ecf8b711b214148ac5c264cef64134, type: 3}
+  - family: leaf_litter
+    variation: V03
+    prefab: {fileID: 3678996600901110530, guid: 745dcbc3325814720b881ada15773787, type: 3}
+  - family: maki_stack
+    variation: V01
+    prefab: {fileID: 5818392901951508121, guid: 374e4d0dd7781445d81182cad731afe8, type: 3}
+  - family: maki_stack
+    variation: V02
+    prefab: {fileID: 1344122995795295954, guid: e8c5d3187c4cf42ef997a1727c91367e, type: 3}
+  - family: momiji_hf
+    variation: V01
+    prefab: {fileID: 3453704971564362810, guid: d3719927ec4534727a42e782aa158476, type: 3}
+  - family: momiji_sapling
+    variation: V01
+    prefab: {fileID: 8542460877582553562, guid: 4b9496b0db3cf40309e1ebe54515833b, type: 3}
+  - family: momiji_sapling
+    variation: V02
+    prefab: {fileID: 7000508441519699397, guid: c09c5a4eb60d8425ca02a61463b0a565, type: 3}
+  - family: momiji_sapling
+    variation: V03
+    prefab: {fileID: 4280828520704091474, guid: 4e82ebf1b371948d0b7dffeb57f62a99, type: 3}
+  - family: nobori_pole
+    variation: V01
+    prefab: {fileID: 4973406670544609905, guid: a0a4bb2ef889944fea9a40eafbf88fc1, type: 3}
+  - family: nobori_pole
+    variation: V02
+    prefab: {fileID: 7005591285232532408, guid: 8115c4836ddbf4eea903a2001e8e65cc, type: 3}
+  - family: nobori_pole
+    variation: V03
+    prefab: {fileID: 5202651788930583736, guid: 84c7b5dbfc1324b35acb899335b01ba9, type: 3}
+  - family: oke_set
+    variation: V01
+    prefab: {fileID: 4975820531104546823, guid: 6411f2a17fea94514b31c409f8867522, type: 3}
+  - family: oke_set
+    variation: V02
+    prefab: {fileID: 3781437022231255872, guid: dea77e3985583431bb2575d715e143e4, type: 3}
+  - family: path_marker
+    variation: V01
+    prefab: {fileID: 272416587732240444, guid: e16691e6c60fe48fcba2ddc5abd0b00c, type: 3}
+  - family: path_marker
+    variation: V02
+    prefab: {fileID: 8442005783231865037, guid: 1faf56aed04f7404c9ff88a64d0f67ce, type: 3}
+  - family: pottery_cluster
+    variation: V01
+    prefab: {fileID: 3303900335316894004, guid: c8deedbf8b00a4b2c90a1778b71bee41, type: 3}
+  - family: pottery_cluster
+    variation: V02
+    prefab: {fileID: 4757132928187256154, guid: abfe70a4766a04107964dd800cc12448, type: 3}
+  - family: produce_basket_hf
+    variation: V01
+    prefab: {fileID: 3330287283745746262, guid: 02999d4ae64d849daa5f5ed77f6fc91d, type: 3}
+  - family: produce_stall
+    variation: V01
+    prefab: {fileID: 7825991863784909067, guid: 093901d47c1d748c58f2ec6e990543c5, type: 3}
+  - family: produce_stall
+    variation: V02
+    prefab: {fileID: 8413421581364807259, guid: bfbac38e17f644527abf894a88f079ab, type: 3}
+  - family: sakadaru_stack
+    variation: V01
+    prefab: {fileID: 608400675756820517, guid: 8043a5e3bfaf143d08026997cc33f67a, type: 3}
+  - family: sakadaru_stack
+    variation: V02
+    prefab: {fileID: 1268951807329593240, guid: 1081b405516c745c7b394227e3447104, type: 3}
+  - family: sakadaru_stack
+    variation: V03
+    prefab: {fileID: 7943909374695368169, guid: 238eea84640484458a42eb682e9b6273, type: 3}
+  - family: stone_bridge_steps
+    variation: V01
+    prefab: {fileID: 5314513327875116095, guid: 36d7d828766bf429db399d41e3f56552, type: 3}
+  - family: stone_bridge_steps
+    variation: V02
+    prefab: {fileID: 2646110152253045118, guid: 06d43ffed9c954e8283b34a932788999, type: 3}
+  - family: stone_cluster_lichen
+    variation: V01
+    prefab: {fileID: 1117052826720420509, guid: cf26c1afb7a574ac7b0da77ace155b97, type: 3}
+  - family: stone_cluster_lichen
+    variation: V02
+    prefab: {fileID: 5032244455246379722, guid: 995cfb3d25f0c41f083143565542f7aa, type: 3}
+  - family: stone_cluster_lichen
+    variation: V03
+    prefab: {fileID: 2137002072288788716, guid: 57290779d753c47e49c3fa53b3a1b9c0, type: 3}
+  - family: stone_lantern
+    variation: V01
+    prefab: {fileID: 2360326702082870589, guid: 27856e0bbe1b6432586e59fed81b7714, type: 3}
+  - family: stone_lantern
+    variation: V02
+    prefab: {fileID: 3909238857480337189, guid: 2e628402915bf4854b198a7585923b95, type: 3}
+  - family: susuki_dry
+    variation: V01
+    prefab: {fileID: 5757857924178914394, guid: 280076bdc8294449cbf17bb03cde9285, type: 3}
+  - family: susuki_dry
+    variation: V02
+    prefab: {fileID: 2155656365492136649, guid: f8cc87e5e8392486aa30fff534c29d6a, type: 3}
+  - family: susuki_dry
+    variation: V03
+    prefab: {fileID: 7260331892123185064, guid: 5f88937023a3e46d8b767bcab57f2bdf, type: 3}
+  - family: taiko_stand
+    variation: V01
+    prefab: {fileID: 3433168228550314539, guid: 47e00d4040d814fa69316523c2efabb3, type: 3}
+  - family: tea_stall
+    variation: V01
+    prefab: {fileID: 2412139951040718951, guid: cfdc4fcab4fe94c31a88fa73b97deeba, type: 3}
+  - family: tea_stall
+    variation: V02
+    prefab: {fileID: 4501745281869692699, guid: a308e4e65860041f792f57b06e10a6b8, type: 3}
+  - family: toro_post
+    variation: V01
+    prefab: {fileID: 7692386139370572449, guid: 01fd092d6294a45fa99708edfd86b97f, type: 3}
+  - family: toro_post
+    variation: V02
+    prefab: {fileID: 6885562401488099177, guid: fd52d2352569743d3b403373859d42d0, type: 3}
+  - family: tsukubai
+    variation: V01
+    prefab: {fileID: 3668869887359814579, guid: 16035de594d6b406592714a0145441a6, type: 3}
+  - family: tsukubai
+    variation: V02
+    prefab: {fileID: 3711903365723519405, guid: 4e20c1174129d43849be38c84f9f20e9, type: 3}
+  - family: water_trough
+    variation: V01
+    prefab: {fileID: 6939245705861696253, guid: 649c9da2511d2488ebb0f08081ba0e31, type: 3}
+  - family: water_trough
+    variation: V02
+    prefab: {fileID: 6960821153673114776, guid: 7cb9b178e990e42669f8fe91121d5078, type: 3}
+  - family: wisteria_arbor
+    variation: V01
+    prefab: {fileID: 4794825331894445611, guid: 5fafea34ca60243c3a7b98cf316fc78d, type: 3}
+  - family: wisteria_arbor
+    variation: V02
+    prefab: {fileID: 8855762062957238899, guid: bf2f73569d2484b56b3357f44db78bfb, type: 3}
+  - family: wisteria_arbor
+    variation: V03
+    prefab: {fileID: 1774026503146668478, guid: d42e585deeb634eb5bdb403efb6fd7ad, type: 3}
+  - family: yamabuki
+    variation: V01
+    prefab: {fileID: 3819799944997852564, guid: bbf37a67e4ea142ebaf2f622ed24712b, type: 3}
+  - family: yamabuki
+    variation: V02
+    prefab: {fileID: 2594436653967223893, guid: 9a8f42300a79245de9bb837e4df36648, type: 3}
+  - family: yamabuki
+    variation: V03
+    prefab: {fileID: 1507232572115553635, guid: 04c5d1b191e2545338dce3f8c9950d65, type: 3}
+  - family: yatai
+    variation: V01
+    prefab: {fileID: 259952591637798378, guid: 117ce5eb7b3ce4ee1bb7db2ddbc4ba4b, type: 3}
+  - family: yatai
+    variation: V02
+    prefab: {fileID: 4968156270014741040, guid: 5c3e034c0eda44fd8ad35c77d0e7ca81, type: 3}
+  - family: yatai_broken
+    variation: V01
+    prefab: {fileID: 144644934874298272, guid: 0a6d7bf92d3054e87b912b7dde8ca32d, type: 3}
+  - family: yatai_broken
+    variation: V02
+    prefab: {fileID: 1082247885507618015, guid: ce62e66e095794987aa08f902d6d8515, type: 3}

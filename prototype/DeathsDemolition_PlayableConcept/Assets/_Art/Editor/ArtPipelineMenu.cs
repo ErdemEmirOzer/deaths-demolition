@@ -388,6 +388,51 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
+        /// WP-108 · The AP-040 v001 world kit (P-05 plaza / garden / hf; staged by wp-108/ap040-intake/stage-ap040.py --wt): the AP-030
+        /// chain on the AP-040 rows only — inputs present, contract import (models: lightmap UVs except the flora; T_ap040_* maps: MaskMap /
+        /// VegetationORM / PetalMask linear), the ap040_* materials (the WP-107B shared atlas bound in place, the MaskMap as delivered — no
+        /// repack step), one prefab per variation (LODGroup, primitive colliders with the S-05 Y5 plaza tops, SOCKET_* children,
+        /// AP040_shadow_cast), the showcase (the AP-040 shelf is appended after AP-030). Batch: <see cref="RunLibraryAp040Cli"/>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Library AP-040 (WP-108)", priority = 310)]
+        public static void RunLibraryAp040()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Library AP-040 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Library AP-040: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Inputs (AP040_Library.json, 110 FBX, WP-107B shared atlas, 14 staged maps)", ArtAp040WorldKit.Preflight);
+            LibraryStep(2, "Contract models (AP-040 FBX: mesh compression, lightmap UVs except the flora)", ReimportContractModels);
+            LibraryStep(3, "Contract textures (T_ap040_* : HF sets, flora VegetationORM / PetalMask)", ReimportContractTextures);
+            LibraryStep(4, "Library materials (ap040_* roles; no mask repack — the MaskMap is the URP mask)", () =>
+            {
+                foreach (ArtLibraryMaterialRoles.Spec spec in ArtLibraryMaterialRoles.All)
+                    if (spec.Role.StartsWith(ArtLibraryMaterialRoles.Ap040RolePrefix, StringComparison.Ordinal)) ArtMaterialBuilder.BuildLibraryRole(spec);
+                AssetDatabase.SaveAssets();
+            });
+            LibraryStep(5, "AP-040 prefabs", () => ArtLibraryPrefabBuilder.BuildLibrary(ArtAp040WorldKit.Package));
+            LibraryStep(6, "Rebuild library showcase", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Library AP-040: done in " + Seconds(total) + " s.");
+        }
+
+        /// <summary>
+        /// WP-108 · Batch entry: <c>-executeMethod DD.Art.Pipeline.EditorTools.ArtPipelineMenu.RunLibraryAp040Cli</c>. Runs
+        /// <see cref="RunLibraryAp040"/>, then <see cref="ArtAp040WorldKit.Verify"/> (110 prefabs with a 3-LOD root LODGroup, 18 sockets,
+        /// 34 proxies, no flora collider, plaza collider tops) and logs its one-line summary — the run's log is the evidence. Any failure
+        /// throws, so the batch exit code is non-zero.
+        /// </summary>
+        public static void RunLibraryAp040Cli()
+        {
+            RunLibraryAp040();
+            Debug.Log(ArtAp040WorldKit.Verify());
+        }
+
+        /// <summary>
         /// WP-038 · The surface half of <see cref="RunWorldV4"/> only: surface materials (parameter round), the placement
         /// import with the AP-015P plates (scene, NavMesh with the water rows, build settings) and the bake preparation.
         /// Models, textures and prefabs are untouched — re-bake afterwards (<c>ArtLightingBake.BakeWorld</c>).

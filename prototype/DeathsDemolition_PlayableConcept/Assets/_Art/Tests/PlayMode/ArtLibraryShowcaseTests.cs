@@ -37,7 +37,7 @@ namespace DD.Art.Tests
             Assert.IsTrue(scene.isLoaded, "Vitrin sahnesi yüklenmedi: " + ArtLibraryPaths.ShowcaseScene);
 
             // Per shelf (ArtLibraryShowcaseBuilder: one root per package, one instance per index item with a prefab).
-            int ornek = 0, ap023 = 0, ap030 = 0;
+            int ornek = 0, ap023 = 0, ap030 = 0, ap040 = 0;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
@@ -47,6 +47,7 @@ namespace DD.Art.Tests
                         ornek++;
                         if (root.name == "AP-023") ap023++;
                         if (root.name == "AP-030") ap030++;   // WP-092 C: the AP-030 kit is held to its index like AP-023
+                        if (root.name == "AP-040") ap040++;   // WP-108: the AP-040 world kit too
                     }
                 }
             }
@@ -62,7 +63,7 @@ namespace DD.Art.Tests
                     if (item != null && item.prefab != null) dizin++;
             }
 
-            Assert.AreEqual(175, ornek - ap023 - ap030, "12 + 42 + 53 + 12 + 6 + 50 (AP-017 Faz 1+2+2b, WP-038L v003) varyasyon örneği, AP-023 ve AP-030 hariç");   // name kept (169 → 175)
+            Assert.AreEqual(175, ornek - ap023 - ap030 - ap040, "12 + 42 + 53 + 12 + 6 + 50 (AP-017 Faz 1+2+2b, WP-038L v003) varyasyon örneği, AP-023, AP-030 ve AP-040 hariç");   // name kept (169 → 175)
             Assert.AreEqual(dizin, ornek, "vitrin = kütüphane dizinlerindeki her varyasyon (AP-023 " + ap023 + ")");
 
             for (int i = 0; i < 10; i++) yield return null;
