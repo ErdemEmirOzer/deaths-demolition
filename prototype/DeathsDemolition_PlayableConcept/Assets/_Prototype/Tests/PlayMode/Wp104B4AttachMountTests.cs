@@ -378,7 +378,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
         }
 
-        /// <summary>S-02's B2 commit adds the presenter in WeaponController.Awake; until then the test adds it.</summary>
+        /// <summary>WeaponController.Awake adds the presenter (S-02 B2); the fallback only covers a controller that skipped it.</summary>
         private WeaponAttachPresenter Sunucu()
         {
             if (_sunucu == null) _sunucu = _s.Controller.GetComponent<WeaponAttachPresenter>();
@@ -407,13 +407,8 @@ namespace DD.Prototype.Tests.PlayMode
             return m;
         }
 
-        /// <summary>The live classic model root: the LODGroup above the rig's muzzle (the AP-021 model's own Muzzle socket).</summary>
-        private Transform ModelKoku()
-        {
-            Transform namlu = _s.Controller.Muzzle;
-            LODGroup g = namlu != null ? namlu.GetComponentInParent<LODGroup>() : null;
-            return g != null ? g.transform : null;
-        }
+        /// <summary>The live classic model root (S-02 B2: the root WeaponVisualRig.SetModel installed).</summary>
+        private Transform ModelKoku() => _s.Controller.ClassicModelRoot;
 
         private static TreeStats E5Istatistik() => Istatistik(3f, 3, true, 4, TreeElement.Fire, false);
 
