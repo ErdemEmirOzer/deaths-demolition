@@ -139,6 +139,23 @@ namespace DD.Prototype.Rounds
             AfterReset?.Invoke();
         }
 
+        /// <summary>
+        /// WP-104 guard wave around the player (TreeHooks: Stone Guardian on a shield break, Undying Oath on the saving blow): every
+        /// body within <paramref name="radius"/> is stunned for <paramref name="stunSeconds"/> (Bulwark kind; Elite / Ultra at the
+        /// heavy share) and pushed away. Through the blast queue (caps, no reentrancy); the source already raised the moment.
+        /// </summary>
+        public static bool GuardWave(Vector3 point, float radius, float stunSeconds)
+        {
+            if (radius <= 0f) return false;
+            Vector3 at = s_hasAnchor ? s_anchor : point;
+            var r = new TreeBlastRequest
+            {
+                Kind = TreeProcKind.ShieldBreak, Point = at, Radius = radius, StunSeconds = Mathf.Max(0f, stunSeconds),
+                StunKind = TreeStunKind.Bulwark, PushSpeed = TreeSystemsTuning.GuardWavePushSpeed, NoProc = true
+            };
+            return TreeBlastQueue.Enqueue(in r);   // the driver is up: Needed() includes the guard-wave nodes, the first weapon hit binds
+        }
+
         /// <summary>The player position for Element Nova / Doomsday Bell (the driver sets it every frame).</summary>
         public static void SetAnchor(Vector3 position)
         {
@@ -255,7 +272,8 @@ namespace DD.Prototype.Rounds
         /// <summary>True when the build uses any B3 system (a body must then be bound for blasts / chains to see it).</summary>
         public static bool Needed(in TreeStats s) =>
             s.Elements != TreeElement.None || s.Core != TreeChaosCore.None || s.ChainChance > 0f || s.ExplosiveRadius > 0f
-            || s.NovaCooldown > 0f || s.BellCooldown > 0f || s.CritRingRadius > 0f || (s.Synergies & TreeSynergy.Barrage) != 0;
+            || s.NovaCooldown > 0f || s.BellCooldown > 0f || s.CritRingRadius > 0f || (s.Synergies & TreeSynergy.Barrage) != 0
+            || s.BulwarkRadius > 0f || s.UndyingPushRadius > 0f;
 
         /// <summary>Chance that a death of generation <paramref name="deathDepth"/> blasts: ChainChance × falloff^depth (Thunder Cascade ×0.7).</summary>
         public static float ChainChanceAt(in TreeStats s, int deathDepth)

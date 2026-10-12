@@ -468,6 +468,19 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Seek_RicochetVsExtraShots_Pinball()
+        {
+            Begin();
+            foreach (string id in new[] { "sh_heavy", "sh_bore", "sh_double", "sh_ricochet", "sh_storm" }) _tree.GrantFree(id);
+            Assert.AreEqual(20f, TreeRuntime.Current.SeekDegrees, 1e-4f, "Pinball Storm 20° over Bouncing Storm 15° (bounce search)");
+            Assert.AreEqual(0f, TreeRuntime.Current.ExtraShotSeekDegrees, "only Seeker Swarm homes the extra shots");
+            foreach (string id in new[] { "sh_triple", "sh_fan", "sh_cap" }) _tree.GrantFree(id);
+            Assert.AreEqual(25f, TreeRuntime.Current.ExtraShotSeekDegrees, 1e-4f);
+            Assert.AreEqual(25f, TreeHooks.ExtraShotSeekDegrees, 1e-4f);
+            Assert.AreEqual(25f, TreeRuntime.Current.SeekDegrees, 1e-4f);
+        }
+
+        [Test]
         public void Presets_ResolveToCatalogNodes()
         {
             foreach (TreePresetsV2.Preset p in TreePresetsV2.All)

@@ -211,6 +211,11 @@ namespace DD.Prototype.Rounds
         public float RaijuDurationScale;
         public int RaijuExtraJumps;
         public bool NamekujiFreezes;
+        /// <summary>Undying Oath: the saving blow pushes bodies within this radius away (sv_cap radius 6).</summary>
+        public float UndyingPushRadius;
+        /// <summary>Seeker Swarm: the EXTRA shots of a pull home inside this cone (sh_cap 25°). <see cref="SeekDegrees"/> stays the
+        /// ricochet search (Bouncing Storm 15°, Seeker Swarm 25°, Pinball Storm 20°) — S-02 12.10.</summary>
+        public float ExtraShotSeekDegrees;
 
         public int BranchTier(TreeBranch branch) => (BranchTiers >> ((int)branch * 3)) & 7;
 

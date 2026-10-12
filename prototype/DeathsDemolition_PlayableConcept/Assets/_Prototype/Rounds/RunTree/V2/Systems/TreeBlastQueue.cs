@@ -29,6 +29,11 @@ namespace DD.Prototype.Rounds
         /// <summary>Wildfire Rounds: leaves a fire ground at the point.</summary>
         public bool FireGround;
         public TreeSynergy Synergy;
+        /// <summary>WP-104 guard wave (Stone Guardian / Undying Oath): bodies inside are pushed AWAY from the point at this speed
+        /// (S-03 ApplyPull toward a point beyond them); 0 = no push.</summary>
+        public float PushSpeed;
+        /// <summary>The moment was already raised by its source (TreeHooks ShieldBreak / UndyingOath): the queue raises no proc.</summary>
+        public bool NoProc;
     }
 
     /// <summary>
@@ -96,6 +101,9 @@ namespace DD.Prototype.Rounds
         public static int Count => s_count;
         public static int Enqueued { get; private set; }
         public static int Detonated { get; private set; }
+        /// <summary>Bodies pushed by guard waves (tests, F1).</summary>
+        public static int PushesApplied { get; private set; }
+
         public static int Presented { get; private set; }
         public static int Quiet { get; private set; }
         /// <summary>Blasts fused into another (overflow + same-spot), K6.</summary>
@@ -121,7 +129,7 @@ namespace DD.Prototype.Rounds
         public static bool Enqueue(in TreeBlastRequest request)
         {
             if (request.Radius <= 0f) return false;
-            if (request.Damage <= 0f && request.StunSeconds <= 0f && request.IceStacks <= 0 && !request.ApplyElementStates) return false;
+            if (request.Damage <= 0f && request.StunSeconds <= 0f && request.IceStacks <= 0 && !request.ApplyElementStates && request.PushSpeed <= 0f) return false;
             if (request.Depth > TreeGuardrails.ChainDepth)
             {
                 DepthRefused++;
@@ -265,7 +273,7 @@ namespace DD.Prototype.Rounds
                 if (b.Depth > MaxDepthDetonated) MaxDepthDetonated = b.Depth;
 
                 int n = TreeStatusSystem.Query(b.Point, b.Radius, s_targets);
-                if (presented)
+                if (presented && !b.NoProc)
                 {
                     TreeSystemsRunner.Raise(b.Kind, b.Point, b.Radius, b.Damage, b.Element, BranchOf(b.Kind), b.Synergy, null, b.Depth);
                 }
@@ -331,6 +339,14 @@ namespace DD.Prototype.Rounds
 
                     if (!body.IsAlive) continue;   // died: OnBodyDied only queued
                     if (b.StunSeconds > 0f) body.ApplyStun(b.StunSeconds, b.StunKind);
+                    if (b.PushSpeed > 0f)
+                    {
+                        Vector3 away = body.Position - b.Point;
+                        away.y = 0f;
+                        if (away.sqrMagnitude < 1e-4f) away = Vector3.forward;
+                        body.ApplyPull(body.Position + away.normalized * TreeSystemsTuning.GuardWavePushDistance, b.PushSpeed, TreeSystemsTuning.GuardWavePushSeconds);
+                        PushesApplied++;
+                    }
                     if (b.IceStacks > 0) TreeStatusSystem.ApplyIce(body, b.IceStacks);
                     if (b.ApplyElementStates) TreeStatusSystem.ApplyFullStates(body, b.Element, b.Point);
                 }
@@ -448,6 +464,8 @@ namespace DD.Prototype.Rounds
             into.ApplyElementStates |= from.ApplyElementStates;
             into.FireGround |= from.FireGround;
             into.Synergy |= from.Synergy;
+            into.PushSpeed = Mathf.Max(into.PushSpeed, from.PushSpeed);
+            into.NoProc &= from.NoProc;
         }
 
         private static int Priority(TreeProcKind kind)

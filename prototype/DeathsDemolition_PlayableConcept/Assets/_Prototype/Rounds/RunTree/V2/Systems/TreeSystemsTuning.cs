@@ -79,5 +79,9 @@ namespace DD.Prototype.Rounds
 
         [PrototypeOnly(PendingDecisions.None, "WP-104 B3: how often a ready Element Nova / Doomsday Bell looks for a body in range (s).", true)]
         public const float AnchorCheckSeconds = 0.25f;
-    }
+    
+        /// <summary>WP-104 guard waves (Stone Guardian shield break, Undying Oath): how far beyond the body the push aims, its hold
+        /// and its speed (PrototypeOnly tuning; the radii and stun come from the nodes).</summary>
+        public const float GuardWavePushDistance = 3f, GuardWavePushSeconds = 0.3f, GuardWavePushSpeed = 9f;
+}
 }

@@ -583,7 +583,10 @@ namespace DD.Prototype.Rounds
             // S-04 systems and S-03 receivers already on main): elements, the crit ring, Mini Nuke, Black Hole, Mass Collapse.
             "el_fire", "el_fire2", "el_fire3", "el_ice", "el_ice2", "el_ice3", "el_shock", "el_shock2", "el_shock3",
             "el_venom", "el_venom2", "el_venom3", "el_fusion",
-            "sh_explosive", "kx_crit2", "kx_nuke", "kx_hole", "kx_mass"
+            "sh_explosive", "kx_crit2", "kx_nuke", "kx_hole", "kx_mass",
+            // S-04 guard waves (TreeHooks → TreeSystemsRunner.GuardWave → S-03 ApplyStun / ApplyPull) and Quick Hands III
+            // (reload ×0.45 through ReloadTimeScale; the game has no reload movement penalty, so ReloadMoveFree adds nothing).
+            "sv_bulwark", "sv_cap", "mg_reload3"
         };
 
         /// <summary>Dev presets / F1 / tests: every node sells (the effect may still be a no-op until its hook lands).</summary>

@@ -86,6 +86,13 @@ namespace DD.Prototype.Rounds
                     if (a && b) s.Synergies |= sy.Synergy;
                 }
 
+                if (s.Has(TreeSynergy.PinballStorm))
+                {
+                    TreeSynergyDefV2 pin = null;
+                    for (int i = 0; i < doc.synergies.Length; i++) if (doc.synergies[i] != null && doc.synergies[i].Synergy == TreeSynergy.PinballStorm) pin = doc.synergies[i];
+                    if (pin != null) s.SeekDegrees = Mathf.Max(s.SeekDegrees, pin.Arg("seek", 0f));   // Pinball Storm: the bounce search 20°
+                }
+
                 if (s.Has(TreeSynergy.Barrage))
                 {
                     TreeFullAutoDefV2 row = TreeCatalogV2.FullAutoFor(w.Key);
@@ -178,6 +185,7 @@ namespace DD.Prototype.Rounds
                     break;
                 case "sh_cap":
                     s.SeekDegrees = Mathf.Max(s.SeekDegrees, n.Arg("seek", 0f));
+                    s.ExtraShotSeekDegrees = Mathf.Max(s.ExtraShotSeekDegrees, n.Arg("seek", 0f));
                     s.ExtraShotDamage = Mathf.Max(s.ExtraShotDamage, n.Arg("extraDmg", 0f));
                     break;
 
@@ -400,6 +408,7 @@ namespace DD.Prototype.Rounds
                     s.UndyingPerRound = (int)n.Arg("perRound", 0f);
                     s.UndyingSeconds = n.Arg("seconds", 0f);
                     s.UndyingHealthShare = n.Arg("hp", 0f);
+                    s.UndyingPushRadius = n.Arg("radius", 0f);
                     break;
 
                 // ---------------------------------------------------------------- Economy

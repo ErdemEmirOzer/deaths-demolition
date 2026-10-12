@@ -883,6 +883,7 @@ namespace DD.Prototype.Rounds
                         }
 
                         Raise(TreeProcKind.ShieldBreak, point, radius, TreeBranch.Survival, s_inHand.Id);
+                        if (radius > 0f) TreeSystemsRunner.GuardWave(point, radius, s.BulwarkStunSeconds);   // Stone Guardian: stun + push wave
                     }
                 }
 
@@ -894,7 +895,8 @@ namespace DD.Prototype.Rounds
                     hit.HealthFloor = floor;
                     hit.Damage = Mathf.Max(0f, health - floor);
                     hit.Outcome = TreeHitOutcome.Undying;
-                    Raise(TreeProcKind.UndyingOath, point, 0f, TreeBranch.Survival, s_inHand.Id);
+                    Raise(TreeProcKind.UndyingOath, point, s.UndyingPushRadius, TreeBranch.Survival, s_inHand.Id);
+                    if (s.UndyingPushRadius > 0f) TreeSystemsRunner.GuardWave(point, s.UndyingPushRadius, 0f);   // Undying Oath: push wave
                 }
 
                 return hit;
@@ -983,6 +985,16 @@ namespace DD.Prototype.Rounds
             };
             TreeEvents.RaiseProc(in info);
         }
+
+        /// <summary>Seeker Swarm: extra shots (VolleyIndex &gt; 0) lock the nearest body in this cone at spawn and steer to it. Neutral 0.
+        /// The ricochet search stays <see cref="SeekDegrees"/>.</summary>
+        public static float ExtraShotSeekDegrees => Mathf.Max(0f, TreeRuntime.Current.ExtraShotSeekDegrees);
+
+        /// <summary>
+        /// Rail Line: seconds every pierced body is stunned after the hit (S-02 HitscanEngine, one call per pierced body; S-03's
+        /// rail stun kind applies the Elite / Ultra share). Neutral 0.
+        /// </summary>
+        public static float PierceStaggerSeconds => Mathf.Max(0f, TreeRuntime.Current.PierceStaggerSeconds);
 
         // ------------------------------------------------------------------ Special resonance (KARAR-WP104 6)
 

@@ -707,6 +707,30 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void GuardWave_StoneGuardianAndUndying_StunAndPushAway_NoSecondProc()
+        {
+            TreeStats s = Base();
+            s.BulwarkRadius = 4f;
+            s.BulwarkStunSeconds = 1f;
+            Use(s);
+            Assert.IsTrue(TreeSystemsRunner.Needed(in s), "a bulwark build needs the systems");
+            FakeBody near = Body(2f), far = Body(9f);
+            TreeSystemsRunner.SetAnchor(Vector3.zero);
+            int procs = TreeEvents.ProcCount;
+            Assert.IsTrue(TreeSystemsRunner.GuardWave(Vector3.zero, s.BulwarkRadius, s.BulwarkStunSeconds));
+            Frame();
+            Assert.AreEqual(TreeStunKind.Bulwark, near.StunKind);
+            Assert.AreEqual(1f, near.StunSeconds, 1e-5f);
+            Assert.AreEqual(1, near.PullCalls, "pushed");
+            Assert.Greater((near.LastPullCenter - Vector3.zero).magnitude, near.Position.magnitude, "the push aims beyond the body, away from the player");
+            Assert.AreEqual(0, far.StunCalls, "outside the radius");
+            Assert.AreEqual(0, far.PullCalls);
+            Assert.AreEqual(procs, TreeEvents.ProcCount, "the source (TreeHooks) already raised the moment: no second proc");
+            Assert.AreEqual(0f, near.BlastDamage, "a guard wave deals no damage");
+            Assert.IsFalse(TreeSystemsRunner.GuardWave(Vector3.zero, 0f, 1f), "no radius, no wave");
+        }
+
+        [Test]
         public void ExplosiveRound_WildfireRounds_LeavesGround()
         {
             TreeStats s = Base();
@@ -1115,9 +1139,12 @@ namespace DD.Prototype.Tests.EditMode
                 return true;
             }
 
+            public Vector3 LastPullCenter;
+
             public void ApplyPull(Vector3 center, float speed, float hold)
             {
                 PullCalls++;
+                LastPullCenter = center;
                 LastPullSpeed = speed;
                 LastPullHold = hold;
             }
