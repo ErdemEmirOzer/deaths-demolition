@@ -744,6 +744,14 @@ def sample(directory, regex, owner, holder=None):
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
     env["LC_ALL"] = "C"
     r = subprocess.run(["ps", "-axo", "pid=,ppid=,lstart=,command="], capture_output=True, text=True, env=env)
+    # C-00 12.10: the executable of each process (argv[0], `ps -o comm`) — a command line that only MENTIONS the Player path
+    # (a shasum over a build folder) is no Player; an absolute argv[0] decides, a relative or unknown one keeps the line
+    rc = subprocess.run(["ps", "-axo", "pid=,comm="], capture_output=True, text=True, env=env)
+    exes = {}
+    for line in rc.stdout.splitlines():
+        p, _, c = line.strip().partition(" ")
+        if p.isdigit():
+            exes[p] = c.strip()
     rows, parent = [], {}
     for line in r.stdout.splitlines():
         parts = line.split(None, 7)
@@ -766,6 +774,9 @@ def sample(directory, regex, owner, holder=None):
     log, lineage = [], []
     for pid, ppid, start, command in rows:
         if not pat.search(command) or "userdata_guard_io.py" in command or pid in above:
+            continue
+        exe = exes.get(pid, "")
+        if exe.startswith("/") and not pat.search(exe):
             continue
         owned, p, steps = 0, pid, 0
         while p and p not in ("0", "1") and steps < 64:

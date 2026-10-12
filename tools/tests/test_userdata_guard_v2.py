@@ -111,12 +111,17 @@ def args(pid):
     rest = raw[4:]; i = rest.index(b"\0"); exe = rest[:i].decode("utf-8", "replace"); rest = rest[i:].lstrip(b"\0")
     parts = rest.split(b"\0")[:argc]
     return " ".join(p.decode("utf-8", "replace") for p in parts) or exe
+def argv0(pid):
+    mib = (ctypes.c_int * 3)(1, 49, int(pid)); size = ctypes.c_size_t(1 << 18); buf = ctypes.create_string_buffer(size.value)
+    if libc.sysctl(mib, 3, buf, ctypes.byref(size), None, ctypes.c_size_t(0)) != 0: return None
+    rest = buf.raw[4:size.value]; i = rest.index(b"\0"); rest = rest[i:].lstrip(b"\0")
+    return rest.split(b"\0")[0].decode("utf-8", "replace") or None
 def field(info, name):
     if name == "pid": return str(info["pid"])
     if name == "ppid": return str(info["ppid"])
     if name == "lstart": return time.strftime("%a %b %e %H:%M:%S %Y", time.localtime(info["start"]))
     if name in ("command", "args"): return args(info["pid"]) or info["comm"]
-    if name == "comm": return (args(info["pid"]) or info["comm"]).split(" ")[0]
+    if name == "comm": return argv0(info["pid"]) or info["comm"]   # like macOS ps: argv[0] (C-00 12.10)
     if name == "stat": return {1: "I", 2: "R", 3: "S", 4: "T", 5: "Z"}.get(info["status"], "S")
     raise SystemExit("ps shim: unsupported field " + name)
 argv = sys.argv[1:]; fields = None; pids = None; every = False; i = 0
@@ -325,13 +330,31 @@ class SnapshotTests(GuardFixture):
         self.assert_failed_clean()
 
     def test_Snapshot_CanliPlayer_Cikis30SlotBirakildi(self):
-        (self.tmp / "pgrep-player").write_text("4242 /fixture/Player\n")
+        (self.tmp / "pgrep-player").write_text("99999 /fixture/Player\n")   # a pid that cannot exist: ps knows nothing, the line stays
         rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "all")
         self.assertEqual(30, rc, out + err)
         self.assert_failed_clean()
 
+    def test_Snapshot_PlayerYolunuAnanKomut_PlayerSayilmaz_RealPlayerYineSayilir(self):
+        """C-00 12.10: pgrep -f also finds a process that only MENTIONS the Player path in its arguments (a shasum over a build
+        folder); its executable (argv[0]) is absolute and not the Player, so the snapshot is not refused for it. A process
+        whose argv[0] IS the Player path still refuses (30)."""
+        fake = "%s/Build.app/Contents/MacOS/Deaths Demolition - Playable Concept" % self.tmp
+        mentioner = subprocess.Popen(["/bin/sh", "-c", "sleep 30; :", fake])
+        player = subprocess.Popen(["/bin/sh", "-c", 'exec -a "%s" sleep 30' % fake])
+        self.addCleanup(lambda: [q.kill() or q.wait() for q in (mentioner, player)])
+        time.sleep(0.3)
+        (self.tmp / "pgrep-player").write_text("%d /bin/sh -c sleep 30; : %s\n" % (mentioner.pid, fake))
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "player")
+        self.assertEqual(0, rc, out + err)
+        rc, out, err = self.run_guard("restore", self.dir, "--scope", "player")
+        self.assertEqual(0, rc, out + err)
+        (self.tmp / "pgrep-player").write_text("%d %s\n" % (player.pid, fake))
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ug2", "--scope", "player")
+        self.assertEqual(30, rc, out + err)
+
     def test_Snapshot_EditorKapsamCanliPlayer_Cikis30Degil(self):
-        (self.tmp / "pgrep-player").write_text("4242 /fixture/Player\n")
+        (self.tmp / "pgrep-player").write_text("99999 /fixture/Player\n")   # a pid that cannot exist: ps knows nothing, the line stays
         rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor")
         self.assertEqual(0, rc, out + err)
         self.assertNotIn("pgrep", self.log.read_text())   # INV-S1: editor scope never asks
@@ -404,7 +427,7 @@ class SnapshotTests(GuardFixture):
         self.assertNotIn("defaults delete", self.log.read_text())
 
     def test_Snapshot_BasarisizSonraAyniDir_Cikis0(self):
-        (self.tmp / "pgrep-player").write_text("4242 /fixture/Player\n")
+        (self.tmp / "pgrep-player").write_text("99999 /fixture/Player\n")   # a pid that cannot exist: ps knows nothing, the line stays
         rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "player")
         self.assertEqual(30, rc, out + err)
         (self.tmp / "pgrep-player").unlink()
@@ -1309,6 +1332,20 @@ class ClassCodeTests(RestoreBase):
         rc, out, _ = self.window_through("true;")
         self.assertEqual(30, rc, out)
         self.assertIn("FOREIGN_WRITER", out)
+
+    def test_Ornekleyici_KomutSatiriYalnizPlayerYolunuAnar_PlayerSayilmaz_Cikis0(self):
+        """C-00 12.10: a process outside the window whose ARGUMENTS carry the Player path (a `shasum -a 256 … ./build/
+        DeathsDemolition.app/Contents/MacOS/Deaths Demolition …`) but whose executable is not the Player — it neither refuses
+        the snapshot nor counts as a foreign writer (an S-04 bot restore went FOREIGN_WRITER over 8 shasums)."""
+        fake = "%s/Build.app/Contents/MacOS/Deaths Demolition - Playable Concept" % self.tmp
+        subprocess.run(["/bin/sh", "-c", '(/bin/sh -c "sleep 40; :" "%s" &)' % fake], check=True)   # double fork: reparented
+        self.addCleanup(lambda: [os.kill(int(p), signal.SIGTERM) for p in subprocess.run(   # our own fixture only (unique tmp)
+            ["pgrep", "-f", fake], capture_output=True, text=True).stdout.split()])
+        time.sleep(0.5)
+        self.assertTrue(subprocess.run(["pgrep", "-f", fake], capture_output=True, text=True).stdout.strip(), "the mentioner runs")
+        rc, out, _ = self.window_through("true;")
+        self.assertEqual(0, rc, out)
+        self.assertNotIn("FOREIGN_WRITER", out); self.assertNotIn("REFUSED", out)
 
     def test_ForeignWriter_DegisiklikYok_Cikis0(self):
         self.snap("player")

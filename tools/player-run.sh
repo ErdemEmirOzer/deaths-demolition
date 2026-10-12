@@ -27,7 +27,10 @@ DD_SLOT_TAG="player-run-$$"
 trap 'dd_slot_release player' EXIT
 dd_slot_acquire player || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
 dd_disk_gate || exit $?   # C-00 30.09: no Player below 15 GiB free disk / under swap pressure (dd-env.sh dd_disk_gate, WP-099 08.10)
-OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v "$$" )
+# C-00 12.10: only processes whose executable (argv[0]) is the Player — not a shasum / grep whose arguments mention the path
+OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v "$$" | while read -r pid rest; do
+  exe=$(ps -o comm= -p "$pid" 2>/dev/null); case "$exe" in /*) print -r -- "$exe" | grep -qE "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" || continue ;; esac
+  print -r -- "$pid $rest"; done)
 [ -n "$OTHERS" ] && dd_log "WARNING player-run: another Player is running (user's game or an unwrapped launch): $(echo "$OTHERS" | cut -c1-120 | tr '\n' ';')"
 [[ " $* " == *" -ddTelemetryDir "* ]] || dd_log "WARNING player-run: no -ddTelemetryDir — this run writes the real telemetry folder"
 # C-00 12.10 (WP-104 B1a, profile v6): a Player that opens the REAL profile migrates it to v6 and keeps a .v5.bak beside it,

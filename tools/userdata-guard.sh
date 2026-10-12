@@ -86,6 +86,17 @@ source "${0:A:h}/dd-env.sh"
 CMD="${1:-}"; DIR="${2:-}"; SCOPE=all
 [ "${3:-}" = "--scope" ] && SCOPE="${4:-}"
 PLAYER_RE="Contents/MacOS/(Deaths Demolition|DeathsDemolition)"
+# C-00 12.10: a Player is a process whose EXECUTABLE (argv[0], `ps -o comm`) is the Player binary — not any command line that
+# merely mentions its path: a `shasum -a 256 … ./dev/DeathsDemolition.app/Contents/MacOS/Deaths Demolition …` over a build
+# folder was taken for 8 foreign Players and turned an S-04 bot restore into FOREIGN_WRITER (it would refuse a snapshot or
+# make an area BUSY the same way). An absolute argv[0] that is not the Player drops the line; a relative or unknown one keeps
+# it (the safe side).
+players_live() { local pid rest exe
+  pgrep -fl "$PLAYER_RE" 2>/dev/null | while read -r pid rest; do
+    exe=$(ps -o comm= -p "$pid" 2>/dev/null)
+    case "$exe" in /*) print -r -- "$exe" | grep -qE -- "$PLAYER_RE" || continue ;; esac
+    print -r -- "$pid $rest"
+  done; }
 KG_DEFAULT="Screenmanager Fullscreen mode=1;Screenmanager Resolution Width=1920;Screenmanager Resolution Height=1080;Screenmanager Window Position X=0;Screenmanager Window Position Y=0"
 KNOWN_GOOD="${DD_GUARD_KNOWN_GOOD:-$KG_DEFAULT}"; KGSRC=default; [ -n "${DD_GUARD_KNOWN_GOOD:-}" ] && KGSRC=env   # Q3: env only by a written C-00 decision
 [[ "$CMD" == (snapshot|restore) && -n "$DIR" && "$SCOPE" == (all|editor|player) ]] || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
@@ -307,7 +318,7 @@ if [ "$CMD" = snapshot ]; then
     [ -n "$HOLDER_PID" ] && { HOLDER_LSTART=$(python3 "$IO" lstart "$HOLDER_PID") || snap_fail 75; }
     dd_log "userdata-guard: $HOLDER_LINE (held until restore, owner pid $PO)"
     # S3 a live Player would put its transient state into the snapshot
-    LIVE=$(pgrep -fl "$PLAYER_RE" 2>/dev/null)
+    LIVE=$(players_live)
     if [ -n "$LIVE" ]; then
       dd_log "userdata-guard: REFUSED — a Deaths Demolition Player is running; a snapshot now would capture its transient state: $(echo "$LIVE" | cut -c1-140 | tr '\n' ';')"
       snap_fail 30
@@ -391,7 +402,7 @@ print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "wi
   done
   # D5 review SHOULD-1: restore checks the COPY's display values — re-check them, and a Player that started meanwhile
   if in_scope player; then
-    LIVE=$(pgrep -fl "$PLAYER_RE" 2>/dev/null)
+    LIVE=$(players_live)
     [ -n "$LIVE" ] && { dd_log "userdata-guard: REFUSED — a Player started during the snapshot: $(echo "$LIVE" | cut -c1-140 | tr '\n' ';')"; snap_fail 30; }
     DEV=$(kg_deviation "$SNAP/PR/p1.plist")
     if [ -n "$DEV" ]; then
@@ -598,7 +609,7 @@ for a in $AREAS; do
     if [ $a = editor ]; then F=$D1; else F=$D2; fi
     wait_unlocked "$F" || { AREA_CLASS[$a]=BUSY; add_class BUSY; dd_log "userdata-guard: NOT restored ($a) — a live process holds the profile (retry when it exits)"; continue; }
   fi
-  if [ $a = player ] && [ -n "$(pgrep -fl "$PLAYER_RE" 2>/dev/null)" ]; then AREA_CLASS[$a]=BUSY; add_class BUSY; dd_log "userdata-guard: a Player is running — player area BUSY"; continue; fi
+  if [ $a = player ] && [ -n "$(players_live)" ]; then AREA_CLASS[$a]=BUSY; add_class BUSY; dd_log "userdata-guard: a Player is running — player area BUSY"; continue; fi
   WRITE_AREAS+=($a)
 done
 [ "$GUARD_SIG" -ne 0 ] && add_class INTERRUPTED
@@ -774,7 +785,7 @@ if [ "$LREC" -eq 1 ]; then
     if [ $a = editor ]; then F=$D1; else F=$D2; fi
     if ! cmp -s "$DIR/before-$a.txt" "${CUR[$a]:-/dev/null}"; then OOSWHY+=("$a=changed since the snapshot")
     elif [ -n "$(lock_holder "$F")" ]; then OOSWHY+=("$a=a live lock holder")
-    elif [ $a = player ] && [ -n "$(pgrep -fl "$PLAYER_RE" 2>/dev/null)" ]; then OOSWHY+=("$a=a running Player"); fi
+    elif [ $a = player ] && [ -n "$(players_live)" ]; then OOSWHY+=("$a=a running Player"); fi
   done
   LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" L_R="$RETRY" L_RC="$RC" L_WHY="${(j:;:)OOSWHY}" python3 -c 'import json, os
 e = os.environ; d = e["L_DIR"]; areas = {}
