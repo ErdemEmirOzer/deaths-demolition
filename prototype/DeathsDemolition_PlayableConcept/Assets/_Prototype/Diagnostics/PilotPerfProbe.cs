@@ -581,6 +581,9 @@ namespace DD.Prototype.Diagnostics
             public int shots;                    // FeelEvents.ShotFired inside the window (trigger pulls)
             public int blasts;                   // FeelEvents.Explosion inside the window (-ddPilotVfxStress's included)
             public int reserveTopUps;            // autofire: times an empty reserve was topped up to the round's allowance (warm-up to the 04 record)
+            public int round;                    // RunDirector.Round as the window opened (S-10: -ddStartRound 15 proved in the record)
+            public int treeEvents;               // WP-104 TreeEvents.ProcCount inside the window (tree moments; 0 = no tree effect ran)
+            public int treeShapedShots;          // WP-104 TreeEvents.ShapedShots inside the window (trigger pulls the tree changed)
 
             // ---- 04 window: load integrity
             public int activeMin;
@@ -1145,7 +1148,8 @@ namespace DD.Prototype.Diagnostics
                 long sweepOnScreenSum = 0;
                 int sweepSamples = 0;
                 ZeroWindowCounters();   // WP-111 R4: shots / blasts of exactly this window
-                // WP-104 (once TreeEvents.ProcCount / ShapedShots land on main): TreeEvents.ResetCounters() here, with the zero.
+                TreeEvents.ResetCounters();   // WP-104 B1b (S-10 12.10): tree moments / shaped shots of exactly this window
+                int windowRound = RunDirector.Instance != null ? RunDirector.Instance.Round : 0;   // S-10: the round the window measures
                 t0 = Time.realtimeSinceStartup;
                 while (true)
                 {
@@ -1229,11 +1233,14 @@ namespace DD.Prototype.Diagnostics
                 int windowShots = WindowShots;
                 int windowBlasts = WindowBlasts;
                 DisarmWindowCounters();
-                // WP-104 (once on main): read TreeEvents.ProcCount / TreeEvents.ShapedShots here (→ 04-window treeEvents / treeShapedShots).
+                int windowTreeEvents = TreeEvents.ProcCount;
+                int windowTreeShaped = TreeEvents.ShapedShots;
                 string weaponKey = WeaponRegistry.ActiveController != null ? KeyOrName(WeaponRegistry.ActiveController.Classic.Id) : null;
                 if (AutoFire)
                 {
-                    Debug.Log("[PilotPerfProbe] autofire weapon=" + weaponKey + " shots=" + windowShots);   // the S-10 kit's needle (R4 treemax cell)
+                    // the S-10 kit's needle (R4 treemax cell) starts the line; the round and the tree counts follow it
+                    Debug.Log("[PilotPerfProbe] autofire weapon=" + weaponKey + " shots=" + windowShots + " round=" + windowRound +
+                              " treeEvents=" + windowTreeEvents + " treeShapedShots=" + windowTreeShaped);
                 }
 
                 if (profilerLog)
@@ -1317,6 +1324,9 @@ namespace DD.Prototype.Diagnostics
                 s4.shots = windowShots;
                 s4.blasts = windowBlasts;
                 s4.reserveTopUps = _reserveTopUps;
+                s4.round = windowRound;
+                s4.treeEvents = windowTreeEvents;
+                s4.treeShapedShots = windowTreeShaped;
                 // Integrity, not speed: enough frames to be a distribution, and the load the
                 // window was meant to measure actually present for (nearly) all of it.
                 s4.pass = frames >= s4.frameCountRequired && s4.loadIntegrityFraction >= LoadIntegrityRequired;
