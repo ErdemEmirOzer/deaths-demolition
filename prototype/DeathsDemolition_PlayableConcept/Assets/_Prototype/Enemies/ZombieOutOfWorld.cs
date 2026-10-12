@@ -95,7 +95,8 @@ namespace DD.Prototype.Enemies
         /// AND it either has no complete path or has hardly moved, the first time it is re-routed with a side step,
         /// the second time it is removed like an out-of-world body (despawn, no reward). A body that is fighting
         /// (inside 1.6 × attack range), queued at a chokepoint, waiting in the crowd, netted, staggering or rising
-        /// never counts — a real crowd chasing the player keeps closing or keeps moving.
+        /// never counts — a real crowd chasing the player keeps closing or keeps moving. C-00 12.10: the wait exempts for at most
+        /// WaitWatchdogExemptSeconds (past it only a crowd ahead does — WaitingInCrowd), and the last bodies never wait at all.
         /// </summary>
         private bool TickStuck()
         {
@@ -106,7 +107,7 @@ namespace DD.Prototype.Enemies
 
             Vector3 p = transform.position;
             float distance = target != null ? FlatDistance(p, target.position) : -1f;
-            bool exempt = target == null || IsRising || _waiting || IsNetted || TreeHolds || IsPulled || _animator.IsStaggering || _attack.IsAttacking
+            bool exempt = target == null || IsRising || WaitExemptsWatchdog || IsNetted || TreeHolds || IsPulled || _animator.IsStaggering || _attack.IsAttacking
                           || _attack.IsGrabbing || BodyState > ZombieBodyState.Staggered   // WP-076 §2.4-4: held grab, slide / downed / shock
                           || (_pathFollower != null && _pathFollower.IsQueued)
                           || distance <= _attack.Range * 1.6f

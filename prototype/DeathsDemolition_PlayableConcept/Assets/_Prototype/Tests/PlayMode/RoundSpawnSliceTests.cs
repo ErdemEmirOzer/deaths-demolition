@@ -303,6 +303,90 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// C-00 12.10 (S-04 bot series, Demolition R8 held at 105/108 for 420 s): the round's last zombie stalls where the NavMesh
+        /// shows a way (here a pen of four walls the NavMesh does not know, 14 m from the player). It must not take the wait state —
+        /// the last bodies have no crowd to wait behind — so the stuck watchdog sees it: a recovery, then the removal, and the round
+        /// completes. Before the fix the stalled body read as waiting, TickStuck exempted it and the round never ended.
+        /// </summary>
+        [UnityTest]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P13_AgildaTakilanSonZombi_BeklemeyeGecmez_RoundBiter()
+        {
+            yield return RunSahnesiniHazirla();
+            yield return YeniRound();
+            ZombieEnemy.ResetOutOfWorldStatics();
+            ZombieEnemy.StuckWindowOverride = 1.5f;
+            int temizlendi = 0;
+            Action<int> t = r => temizlendi++;
+            _director.RoundCleared += t;
+            var duvarlar = new List<GameObject>();
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 60f && !(_director.Population.Unspawned == 0 && DirectorYasayanZombi() == 1))
+                {
+                    IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                    int alive = DirectorYasayanZombi();
+                    for (int i = live.Count - 1; i >= 0 && alive > 1; i--)
+                        if (live[i] != null && live[i].IsAlive && live[i].SpawnTicket > 0) { live[i].Kill(); alive--; }
+                    yield return null;
+                }
+
+                Assert.AreEqual(0, _director.Population.Unspawned, "havuz tükenmedi");
+                ZombieEnemy son = BirYasayanDirectorZombisi();
+                Assert.IsNotNull(son);
+
+                // 14 m out on the mesh, inside a 3 m pen of Environment walls the NavMesh does not know: its path runs through a wall
+                Vector3 oyuncu = _rig.transform.position;
+                Vector3 yon = son.transform.position - oyuncu; yon.y = 0f;
+                yon = yon.sqrMagnitude > 1e-4f ? yon.normalized : Vector3.right;
+                Vector3 p = NavPathFollower.ClampToNavMesh(oyuncu + yon * 14f, 4f);
+                var cc = son.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+                son.transform.position = p;
+                if (cc != null) cc.enabled = true;
+                int ortam = DD.Prototype.Core.PrototypeLayers.Environment;
+                Vector3[] merkezler = { new Vector3(0f, 0f, 1.6f), new Vector3(0f, 0f, -1.6f), new Vector3(1.6f, 0f, 0f), new Vector3(-1.6f, 0f, 0f) };
+                Vector3[] olcekler = { new Vector3(3.6f, 3f, 0.4f), new Vector3(3.6f, 3f, 0.4f), new Vector3(0.4f, 3f, 3.6f), new Vector3(0.4f, 3f, 3.6f) };
+                for (int i = 0; i < 4; i++)
+                {
+                    GameObject d = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    d.name = "S03_SonZombiAgili_" + i;
+                    d.layer = ortam;
+                    d.transform.position = p + merkezler[i] + Vector3.up * 1.5f;
+                    d.transform.localScale = olcekler[i];
+                    duvarlar.Add(d);
+                }
+
+                int temiz0 = temizlendi;
+                bool bekledi = false;
+                float duraklama = 0f;
+                float tPen = Time.realtimeSinceStartup;
+                while (son.IsAlive && son.SpawnTicket > 0 && Time.realtimeSinceStartup - tPen < 20f)
+                {
+                    bekledi |= son.IsWaiting;
+                    if (son.RealGroundSpeed < 0.15f) duraklama += Time.deltaTime;
+                    yield return null;
+                }
+
+                Debug.Log("[DD-TEST] wp102.lastbody waited=" + bekledi + " stalled=" + duraklama.ToString("F1") + "s recoveries=" + ZombieEnemy.StuckRecoveries
+                          + " removals=" + ZombieEnemy.StuckRemovals + " alive=" + (son.IsAlive && son.SpawnTicket > 0));
+                Assert.Greater(duraklama, 1f, "senaryo kurulmadı: gövde ağılda takılmadı");
+                Assert.IsFalse(bekledi, "son gövde beklemeye geçti (bekçi onu görmez, round kilitlenir)");
+                Assert.IsFalse(son.IsAlive && son.SpawnTicket > 0, "ağılda takılı son gövde 20 s'de kaldırılmadı");
+                Assert.GreaterOrEqual(ZombieEnemy.StuckRecoveries, 1, "önce bir kurtarma denendi");
+                yield return Bekle(() => temizlendi > temiz0, 5f, "round tamamlanmadı (takılı son gövde)");
+            }
+            finally
+            {
+                _director.RoundCleared -= t;
+                ZombieEnemy.StuckWindowOverride = 0f;
+                foreach (GameObject d in duvarlar) if (d != null) UnityEngine.Object.Destroy(d);
+            }
+        }
+
+        /// <summary>
         /// WP-084 (C-00 06.10, S-05 r4 finding) · MEASUREMENT before the fix: a stationary, invulnerable player and the real director's crowd
         /// (round 10, active target 32, the round's own pool) for 60 s with the shipped stuck window (9 s). Every stuck removal is logged:
         /// the body's distance to the player, bodies within 3 m of the player (the front ring) and in the cone between the body and the

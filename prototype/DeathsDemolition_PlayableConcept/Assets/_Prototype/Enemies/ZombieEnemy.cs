@@ -1244,6 +1244,40 @@ namespace DD.Prototype.Enemies
         private float _stallSeconds, _moveSeconds;
         private bool _waiting;
 
+        [PrototypeOnly(PendingDecisions.None, "C-00 12.10 (S-04 bot series, Demolition R8 held at 105/108): with this many bodies alive or fewer there is " +
+            "no crowd to wait behind — the last bodies never take the wait state, keep walking at the player and stay visible to the stuck watchdog.", true)]
+        private const int LoneBodyMaxAlive = 3;
+
+        [PrototypeOnly(PendingDecisions.None, "C-00 12.10: a wait longer than this exempts the body from the stuck watchdog only with a crowd ahead " +
+            "(WaitingInCrowd) — a body stalled alone behind a wall is recovered, then removed, instead of holding the round for ever.", true)]
+        private const float WaitWatchdogExemptSeconds = 12f;
+
+        private float _waitingSince;
+        private static int s_aliveFrame = -1, s_aliveCount;
+
+        /// <summary>Bodies alive this frame (counted once per frame: the roster keeps the corpses until they despawn).</summary>
+        private static int AliveCount
+        {
+            get
+            {
+                int frame = Time.frameCount;
+                if (frame == s_aliveFrame) return s_aliveCount;
+                s_aliveFrame = frame;
+                int n = 0;
+                for (int i = 0; i < s_live.Count; i++)
+                {
+                    ZombieEnemy z = s_live[i];
+                    if (z != null && z._alive && !z._dying) n++;
+                }
+
+                s_aliveCount = n;
+                return n;
+            }
+        }
+
+        /// <summary>The wait still exempts the body from the stuck watchdog (TickStuck): a wait of at most WaitWatchdogExemptSeconds.</summary>
+        private bool WaitExemptsWatchdog => _waiting && Time.time - _waitingSince < WaitWatchdogExemptSeconds;
+
         [PrototypeOnly(PendingDecisions.None, "WP-052: distance at which the Executioner 'notices' the player once per life (upper-body clip when AP-009 ships it).", true)]
         private const float UltraNoticeRange = 12f;
         private bool _noticed;
@@ -1275,10 +1309,12 @@ namespace DD.Prototype.Enemies
             if (stalled && !busy) { _stallSeconds += dt; _moveSeconds = 0f; }
             else if (movingSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
 
-            bool waiting = !busy && (queued || _stallSeconds >= _waitStallSeconds);
+            // C-00 12.10: the round's last bodies (LoneBodyMaxAlive) have no crowd to wait behind — they never wait
+            bool waiting = !busy && (queued || _stallSeconds >= _waitStallSeconds) && AliveCount > LoneBodyMaxAlive;
             if (waiting != _waiting)
             {
                 _waiting = waiting;
+                if (waiting) _waitingSince = Time.time;
                 _animator.SetWaiting(waiting);
             }
         }
