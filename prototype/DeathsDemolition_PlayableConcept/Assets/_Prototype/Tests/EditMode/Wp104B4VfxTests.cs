@@ -646,6 +646,184 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(5f, VfxClock.OffsetAfter(100f, 5f, 200f, 120f, 210f), 1e-4f);
         }
 
+        // ------------------------------------------------------------------ B4-2 B9 bending seeker trail (TreeSeekTrail, S-07 F)
+
+        [Test]
+        public void B9_KivrilanIz_YolBoyuncaArdisikSegmentler_TTekSefer()
+        {
+            // a seeker that turned 30° at P1: spawned at P0, P1 3 m on, its head 1 m past P1 on the turned heading
+            Vector3 p0 = Vector3.zero, p1 = new Vector3(3f, 0f, 0f), turned = Quaternion.Euler(0f, -30f, 0f) * Vector3.right;
+            Vector3 head = p1 + turned;
+            var path = new[] { p0, p1 };
+            var segs = new TreeSeekTrail.Segment[12];
+            float arc = TreeSeekTrail.ArcLength(path, 2, head);
+            Assert.AreEqual(4f, arc, 1e-5f, "yol boyu: 3 + 1 m");
+
+            // S-07 12.10 decision (a): the seeker's streak is its kept path, up to 10 m (the Shot ladder's ceiling)
+            float length = TreeSeekTrail.SeekLength(arc);
+            Assert.AreEqual(arc, length, 1e-6f, "iz boyu = tutulan yol boyu");
+            Assert.AreEqual(TreeVfxLadder.TrailMaxMetres, TreeSeekTrail.SeekLength(25f), "en çok 10 m");
+            Assert.AreEqual(10f, TreeVfxLadder.TrailMaxMetres, "Atış merdiveninin tavanı");
+            Assert.AreEqual(0f, TreeSeekTrail.SeekLength(-1f));
+
+            int n = TreeSeekTrail.Lay(path, 2, head, length, 12, segs);
+            Assert.AreEqual(2, n, "bütün yol: kıvrımda birleşen iki ardışık segment");
+            Assert.That(Vector3.Distance(segs[0].Head, head), Is.LessThan(1e-5f), "baş mermide");
+            Assert.That(Vector3.Distance(segs[0].Tail, p1), Is.LessThan(1e-5f), "ilk segment kıvrımda biter");
+            Assert.That(Vector3.Distance(segs[1].Head, p1), Is.LessThan(1e-5f), "segmentler ardışık");
+            Assert.That(Vector3.Distance(segs[1].Tail, p0), Is.LessThan(1e-5f), "iz namluya (yolun en eski noktası) kadar");
+            Assert.AreEqual(4f, segs[0].HeadAt, 1e-5f, "baş: izin tüm boyu");
+            Assert.AreEqual(3f, segs[0].TailAt, 1e-5f);
+            Assert.AreEqual(segs[0].TailAt, segs[1].HeadAt, 1e-6f, "t kesintisiz: boncuk, kuyruk ve renk bütün izde bir kez (_Span.w < 0)");
+            Assert.AreEqual(0f, segs[1].TailAt, 1e-5f, "kuyruk ucu t = 0");
+
+            // the impact's tail-out (× 0.375 here): the tail runs in along the path, ending inside the older chord
+            n = TreeSeekTrail.Lay(path, 2, head, length * .375f, 12, segs);
+            Assert.AreEqual(2, n, "1,5 m'lik iz kıvrımı yine geçer");
+            Assert.That(Vector3.Distance(segs[1].Tail, new Vector3(2.5f, 0f, 0f)), Is.LessThan(1e-5f), "iz yol boyunca ölçülür: kıvrımdan 0,5 m geri");
+            Assert.AreEqual(1.5f, segs[0].HeadAt, 1e-5f);
+            Assert.AreEqual(.5f, segs[0].TailAt, 1e-5f);
+            Assert.AreEqual(0f, segs[1].TailAt, 1e-5f);
+
+            // a path longer than 10 m: the newest 10 m of it
+            var far = new[] { p0, new Vector3(20f, 0f, 0f) };
+            Vector3 farHead = new Vector3(20f, 0f, 0f) + turned;
+            int m = TreeSeekTrail.Lay(far, 2, farHead, TreeSeekTrail.SeekLength(TreeSeekTrail.ArcLength(far, 2, farHead)), 12, segs);
+            Assert.AreEqual(2, m);
+            Assert.That(Vector3.Distance(segs[1].Tail, new Vector3(11f, 0f, 0f)), Is.LessThan(1e-4f), "1 m dönüş + 9 m geri = 10 m");
+            Assert.AreEqual(10f, segs[0].HeadAt, 1e-5f);
+
+            // a path that never turned: one segment — the straight streak
+            Assert.AreEqual(1, TreeSeekTrail.Lay(new[] { p0 }, 1, new Vector3(5f, 0f, 0f), 2f, 12, segs));
+            Assert.That(Vector3.Distance(segs[0].Tail, new Vector3(3f, 0f, 0f)), Is.LessThan(1e-5f));
+            Assert.AreEqual(2f, segs[0].HeadAt, 1e-6f);
+            Assert.AreEqual(0f, segs[0].TailAt, 1e-6f);
+        }
+
+        [Test]
+        public void B9_KisaSegmentBirlesir_KilKuyrukDuser_EnEskiNoktaGecilmez_ButceBoyuKorur()
+        {
+            var segs = new TreeSeekTrail.Segment[12];
+
+            // a live record: S-02's newest point is where the round is now (on the head) and P1 sits 0.1 m behind it — both closer
+            // than the 0.12 m floor (DD/VFX Ribbon would draw a < 4 px segment as its end-on dot): merged into the chord to P0
+            var live = new[] { Vector3.zero, new Vector3(3f, 0f, 0f), new Vector3(3.1f, 0f, 0f) };
+            Vector3 head = new Vector3(3.1f, 0f, 0f);
+            Assert.AreEqual(1, TreeSeekTrail.Lay(live, 3, head, 1f, 12, segs), "kısa segmentler birleşir");
+            Assert.That(Vector3.Distance(segs[0].Tail, new Vector3(2.1f, 0f, 0f)), Is.LessThan(1e-5f));
+            Assert.AreEqual(3.1f, TreeSeekTrail.ArcLength(live, 3, head), 1e-5f, "boy da aynı yürüyüşle ölçülür");
+
+            // a hair of a tail end past the turn (0.05 m < 0.12 m): dropped, its α is the tail ramp's ≈ 0
+            var turn = new[] { Vector3.zero, new Vector3(2f, 0f, 0f) };
+            Vector3 turnedHead = new Vector3(2f, 0f, 1f);
+            Assert.AreEqual(1, TreeSeekTrail.Lay(turn, 2, turnedHead, 1.05f, 12, segs), "kıl kuyruk çizilmez");
+            Assert.AreEqual(.05f, segs[0].TailAt, 1e-5f, "t yine bütün izin boyuyla");
+
+            // the path's oldest point (the muzzle while the path is short) is never passed
+            Assert.AreEqual(1, TreeSeekTrail.Lay(new[] { Vector3.zero }, 1, new Vector3(1f, 0f, 0f), 3f, 12, segs));
+            Assert.That(segs[0].Tail.magnitude, Is.LessThan(1e-5f), "namlunun gerisine iz çizilmez");
+            Assert.AreEqual(2f, segs[0].TailAt, 1e-5f);
+
+            // a record out of instance room (one segment left): the streak keeps its length straight on along its first chord
+            Assert.AreEqual(1, TreeSeekTrail.Lay(turn, 2, turnedHead, 1.5f, 1, segs), "bütçe: tek segment");
+            Assert.AreEqual(1.5f, Vector3.Distance(segs[0].Head, segs[0].Tail), 1e-5f, "boy korunur");
+            Assert.AreEqual(0f, segs[0].TailAt, 1e-5f);
+
+            // nothing to lay: the caller keeps its straight streak
+            Assert.AreEqual(0, TreeSeekTrail.Lay(turn, 2, turnedHead, 1f, 0, segs));
+            Assert.AreEqual(0, TreeSeekTrail.Lay(turn, 0, turnedHead, 1f, 12, segs));
+            Assert.AreEqual(0, TreeSeekTrail.Lay(turn, 2, turnedHead, 0f, 12, segs));
+            Assert.AreEqual(0, TreeSeekTrail.Lay(null, 2, turnedHead, 1f, 12, segs));
+
+            // ≤ PathPoints segments a record (S-02 keeps 12 points + now): a long zigzag lays at most the scratch's 12
+            var zig = new Vector3[13];
+            for (int i = 0; i < zig.Length; i++) zig[i] = new Vector3(i, 0f, i % 2 == 0 ? 0f : 1f);
+            var twelve = new TreeSeekTrail.Segment[DD.Prototype.Weapons.ProjectileSystem.PathPoints];
+            int laid = TreeSeekTrail.Lay(zig, zig.Length, new Vector3(13f, 0f, 1f), 100f, 99, twelve);
+            Assert.AreEqual(DD.Prototype.Weapons.ProjectileSystem.PathPoints, laid, "kayıt başına en çok PathPoints segment");
+            for (int i = 1; i < laid; i++) Assert.AreEqual(twelve[i - 1].TailAt, twelve[i].HeadAt, 1e-4f, "t kesintisiz");
+        }
+
+        // ------------------------------------------------------------------ B4-2 socket glint card (AD-B4 §6 / M9 post, S-07 F)
+
+        [TestCase(1, false, false)]
+        [TestCase(2, false, false)]
+        [TestCase(3, true, false)]
+        [TestCase(4, true, true)]
+        [TestCase(5, true, true)]
+        public void M9post_SoketKarti_YalnizBloomBasamaginda_GizliykenYok(int tier, bool e4, bool e5)
+        {
+            Assert.AreEqual(e4, TreeSocketCard.Shows(TreeVfxLadder.AddOnGlow.Side, tier, true, true), "E4: III+ (1.4 / 1.6 / 2.0 ≥ bloom eşiği 1.25)");
+            Assert.AreEqual(e5, TreeSocketCard.Shows(TreeVfxLadder.AddOnGlow.Ring, tier, true, true), "E5: IV+ (1.4 / 2.0)");
+            Assert.IsFalse(TreeSocketCard.Shows(TreeVfxLadder.AddOnGlow.Side, tier, false, true), "ek gizliyken (Shown false) kart yok");
+            Assert.IsFalse(TreeSocketCard.Shows(TreeVfxLadder.AddOnGlow.Ring, tier, false, true), "ek gizliyken (Shown false) kart yok");
+            Assert.IsFalse(TreeSocketCard.Shows(TreeVfxLadder.AddOnGlow.Side, tier, true, false), "ışıma yuvası yok (V03 elektrik): kart yok");
+        }
+
+        [Test]
+        public void M9post_SoketKarti_DegerXFlashScale_RenkEkinSahibinden_AltinDisi_Boy()
+        {
+            // AD-B4 M9 "değer × FlashScale": the add-on's ladder value on the hue's brightest channel; Reduce Flashes' 0.4 takes every
+            // glint under the bloom threshold (RF: no bloom, accepted) and keeps it
+            foreach (TreeElement e in new[] { TreeElement.Fire, TreeElement.Ice, TreeElement.Venom })
+            {
+                for (int tier = 3; tier <= 5; tier++)
+                {
+                    Vector4 t = TreeSocketCard.Tint(TreeVfxLadder.AddOnGlow.Side, tier, e, 0, 1f);
+                    Assert.AreEqual(TreeVfxLadder.AddOnEmissive(TreeVfxLadder.AddOnGlow.Side, tier), Mathf.Max(t.x, Mathf.Max(t.y, t.z)), 1e-4f, e + " " + tier + ": tepe = merdiven değeri");
+                    Vector4 rf = TreeSocketCard.Tint(TreeVfxLadder.AddOnGlow.Side, tier, e, 0, .4f);
+                    Assert.Less(Mathf.Max(rf.x, Mathf.Max(rf.y, rf.z)), TreeVfxLadder.BloomThreshold, e + " " + tier + ", Reduce Flashes: bloom eşiği altı");
+                    Assert.Greater(Mathf.Max(rf.x, Mathf.Max(rf.y, rf.z)), 0f, "RF'de parıltı kalır");
+                    Assert.AreEqual(1f, t.w);
+                }
+            }
+
+            Assert.AreEqual(new Vector4(2f, 2f, 2f, 1f), TreeSocketCard.Tint(TreeVfxLadder.AddOnGlow.Ring, 5, TreeElement.None, 1, 1f), "E5 V hız: beyaz-sıcak sayfanın kendisi × 2.0");
+            Assert.AreEqual(new Vector4(1.4f, 1.4f, 1.4f, 1f), TreeSocketCard.Tint(TreeVfxLadder.AddOnGlow.Ring, 4, TreeElement.None, 1, 1f), "E5 IV: 1.4");
+            Vector4 off = TreeSocketCard.Tint(TreeVfxLadder.AddOnGlow.Ring, 5, TreeElement.None, 1, 0f);
+            Assert.AreEqual(0f, off.x + off.y + off.z, "FlashScale 0: ışık yok");
+
+            // the hue's owner (AD §1.1 (c)): E4 the element (glow + core), E5 Speed's white-hot, the chaos ring its violet edge
+            Color.RGBToHSV(TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Side, TreeElement.Fire, 0).gamma, out float hFire, out float sFire, out _);
+            Assert.Less(hFire * 360f, 35f, "ateş turuncu: altın rezervinin (35–65°) dışında (A17)");
+            Assert.Greater(sFire, .3f, "ateş kimliği doygun");
+            Color.RGBToHSV(TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Side, TreeElement.Ice, 0).gamma, out float hIce, out _, out _);
+            Assert.That(hIce * 360f, Is.InRange(180f, 210f), "buz camgöbeği");
+            Color.RGBToHSV(TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Side, TreeElement.Venom, 0).gamma, out float hVenom, out _, out _);
+            Assert.That(hVenom * 360f, Is.InRange(70f, 100f), "zehir sarı-yeşil, altın dışında");
+            Assert.AreEqual(Color.white, TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Ring, TreeElement.None, 1), "E5 hız: beyaz (A17: s 0)");
+            Color chaos = TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Ring, TreeElement.None, 2);
+            Assert.That(chaos.b, Is.EqualTo(1f).Within(1e-5f));
+            Assert.Greater(chaos.r, chaos.g, "kaos halkası: mor kenar #9B5CFF");
+            foreach (TreeElement e in new[] { TreeElement.Fire, TreeElement.Ice, TreeElement.Venom, TreeElement.Shock, TreeElement.None })
+            {
+                Color h = TreeSocketCard.Hue(TreeVfxLadder.AddOnGlow.Side, e, 0);
+                Assert.AreEqual(1f, Mathf.Max(h.r, Mathf.Max(h.g, h.b)), 1e-5f, e + ": en parlak kanal 1 (değer = HDR tepe)");
+            }
+
+            // size: 3 × the add-on mesh's diagonal (AP-040 E4 V01 ≈ 0.197 m → 0.59 m: its bright core ≈ the add-on's own screen area),
+            // clamped; lifted half the diagonal towards the rig
+            Assert.AreEqual(.591f, TreeSocketCard.Size(.197f), 1e-4f);
+            Assert.AreEqual(TreeSocketCard.SizeMinMetres, TreeSocketCard.Size(.01f));
+            Assert.AreEqual(TreeSocketCard.SizeMaxMetres, TreeSocketCard.Size(5f));
+            Assert.AreEqual(.0985f, TreeSocketCard.Lift(.197f), 1e-5f);
+            Assert.AreEqual(TreeSocketCard.LiftMinMetres, TreeSocketCard.Lift(0f));
+
+            // an existing AP-041 page, no new asset: the tree catalog's B7 heat-glint row, its first cell (the four-point star)
+            Assert.AreEqual("fb_ap041t_b7_heat_glint", TreeVfxIds.Id(TreeSocketCard.Row));
+            Assert.AreEqual(0, TreeSocketCard.Frame);
+
+            // facing the TD rig (PrototypeCameraRig.ApplyFeel: yaw × (0, height, −back)), the quad's face (−Z) towards it, +Y screen-up
+            DD.Prototype.Core.Config.CameraFeel cam = DD.Prototype.Core.Config.FeelRuntime.Current.Camera;
+            Vector3 f = TreeSocketCard.Facing(in cam);
+            Vector3 want = (Quaternion.Euler(0f, cam.yawDegrees, 0f) * new Vector3(0f, cam.heightMeters, -cam.backDistanceMeters)).normalized;
+            Assert.That(Vector3.Distance(f, want), Is.LessThan(1e-5f), "TD rig yönü");
+            Assert.Greater(f.y, 0f);
+            Quaternion q = TreeSocketCard.Rotation(f);
+            Assert.That(Vector3.Distance(q * Vector3.back, f), Is.LessThan(1e-4f), "kartın yüzü kameraya");
+            Assert.Greater((q * Vector3.up).y, 0f, "yıldızın dikey kolu ekranın yukarısı");
+        }
+
         // ------------------------------------------------------------------ helpers
 
         private static string Hex(Color c)

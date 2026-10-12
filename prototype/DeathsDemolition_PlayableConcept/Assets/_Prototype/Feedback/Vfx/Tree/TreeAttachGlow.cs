@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons.Attachments;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DD.Prototype.Feedback.Vfx
 {
@@ -23,6 +25,11 @@ namespace DD.Prototype.Feedback.Vfx
     /// ≈ 30 px at 101 px/m from the game's 49° TD rig; E5 V01 ≈ 3 px from above, 1–7 px from the rig. A straight-down capture
     /// therefore cannot see this ladder; the slot's binding (URP Lit, <c>_EMISSION</c>, <c>_EmissionColor</c>) is sound and
     /// <see cref="EmissionOffRenderers"/> stays 0.
+    /// <para>WP-104 B4-2 (AD-B4 §6 / M9 post): the slot's bloom spot is a socket glint card (<see cref="TreeSocketCard"/>) — one own
+    /// quad per add-on (E4, E5), the AP-041 glint sheet added at the glow slot's world position, painted with the ladder (value ×
+    /// FlashScale, E4 III+ / E5 IV+, none while hidden) and moved onto the slot every frame (0 B, marker <c>WP104.Vfx.SocketCard</c>).
+    /// The cards are this component's children, never the add-on's: S-06's renderers, their bounds and the AD capture's glow-slot
+    /// mask stay the add-on's own.</para>
     /// </summary>
     [DefaultExecutionOrder(962)]
     public sealed class TreeAttachGlow : MonoBehaviour
@@ -33,6 +40,11 @@ namespace DD.Prototype.Feedback.Vfx
         public const string EmissionKeyword = "_EMISSION";
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int FrameId = Shader.PropertyToID("_Frame");
+        private static readonly int AlphaId = Shader.PropertyToID("_Alpha");
+        private static readonly int AlphaCapId = Shader.PropertyToID("_AlphaCap");
+        private static readonly int TintId = Shader.PropertyToID("_Tint");
+        private static readonly int DstBlendId = Shader.PropertyToID("_DstBlend");
         private static readonly List<Renderer> s_renderers = new List<Renderer>(16);
         private static readonly List<Material> s_materials = new List<Material>(4);
 
@@ -41,6 +53,23 @@ namespace DD.Prototype.Feedback.Vfx
         private WeaponAttachMount _mount;
         private bool _shown;
         private float _flash = -1f;
+
+        // WP-104 B4-2 · the socket glint cards (one own quad per add-on; the catalog row's material once, added)
+        private sealed class SocketCard
+        {
+            public MeshRenderer Renderer;
+            public MaterialPropertyBlock Block;
+            public Transform Anchor;   // the add-on's glow-slot renderer
+            public Vector3 Local;      // the glow slot's centre in the anchor's space
+            public float Size, Lift;
+            public Vector4 Tint;
+            public bool On;
+        }
+
+        private readonly SocketCard _sideCard = new SocketCard(), _ringCard = new SocketCard();
+        private Material _cardMaterial;
+        private bool _cardMaterialTried;
+        private bool _cardsEnabled = true;
 
         /// <summary>The mount last painted (tests / F1).</summary>
         public WeaponAttachMount Mount => _mount;
@@ -56,6 +85,38 @@ namespace DD.Prototype.Feedback.Vfx
         public Color SideEmission { get; private set; }
         public Color RingEmission { get; private set; }
 
+        // WP-104 B4-2 socket glint cards (tests / F1 / the AD capture)
+        /// <summary>The E4 / E5 socket glint card is drawn.</summary>
+        public bool SideCardShown => _sideCard.On;
+        public bool RingCardShown => _ringCard.On;
+        /// <summary>The card's linear <c>_Tint</c> (hue × the ladder value × FlashScale; 0 while off).</summary>
+        public Vector4 SideCardTint => _sideCard.On ? _sideCard.Tint : Vector4.zero;
+        public Vector4 RingCardTint => _ringCard.On ? _ringCard.Tint : Vector4.zero;
+        /// <summary>The card's edge (m) — <see cref="TreeSocketCard.Size"/> of its add-on.</summary>
+        public float SideCardSize => _sideCard.On ? _sideCard.Size : 0f;
+        public float RingCardSize => _ringCard.On ? _ringCard.Size : 0f;
+        /// <summary>The card quads (null until a card was first needed).</summary>
+        public Renderer SideCardRenderer => _sideCard.Renderer;
+        public Renderer RingCardRenderer => _ringCard.Renderer;
+        /// <summary>The AP-041 glint row resolved (the catalog has <see cref="TreeSocketCard.Row"/> with a material).</summary>
+        public bool CardRowReady => _cardMaterial != null;
+
+        /// <summary>
+        /// Tests / captures: false takes both cards off at once (true paints them back with the ladder). The AD capture's glow-slot mask
+        /// (the slot drawn unlit white vs black into an 8-bit frame) must read the slot without an added card over it.
+        /// </summary>
+        public bool CardsEnabled
+        {
+            get => _cardsEnabled;
+            set
+            {
+                if (_cardsEnabled == value) return;
+                _cardsEnabled = value;
+                if (!value) HideCards();
+                else Paint();
+            }
+        }
+
         private void Awake()
         {
             _block = new MaterialPropertyBlock();
@@ -63,7 +124,18 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void OnEnable() => Subscribe();
 
-        private void OnDisable() => WeaponAttachEvents.Changed -= OnChanged;
+        private void OnDisable()
+        {
+            WeaponAttachEvents.Changed -= OnChanged;
+            HideCards();
+            _flash = -1f;   // re-enabled: the next poll repaints (and shows the cards again)
+        }
+
+        private void OnDestroy()
+        {
+            if (_cardMaterial != null) Destroy(_cardMaterial);
+            _cardMaterial = null;
+        }
 
         /// <summary>(Re)subscribes (TreeVfxBinder.Rearm after a fixture cleared the static bus) and adopts the mount in hand.</summary>
         public void Subscribe()
@@ -92,11 +164,14 @@ namespace DD.Prototype.Feedback.Vfx
                     _mount = null;
                     WeaponAttachMount active = WeaponAttachments.Active;
                     if (active != null) OnChanged(active);
+                    else HideCards();   // WP-104 B4-2: no mount, no glint
                     return;
                 }
 
                 if (m.Shown != _shown || Mathf.Abs(Mathf.Clamp01(GameFeelSettings.FlashScale) - _flash) > 1e-4f) Paint();
             }
+
+            TrackCards();   // WP-104 B4-2: the glint follows the slot every frame
         }
 
         /// <summary>The ladder on the current mount's E4 / E5 glow slots (event time; tests call it after building a mount).</summary>
@@ -110,17 +185,25 @@ namespace DD.Prototype.Feedback.Vfx
             SideEmission = TreeVfxLadder.AddOnEmission(TreeVfxLadder.AddOnGlow.Side, set.SideTier, _flash, _shown && set.Side != TreeElement.None);
             RingEmission = TreeVfxLadder.AddOnEmission(TreeVfxLadder.AddOnGlow.Ring, set.RingTier, _flash, _shown && set.Ring > 0);
             int glow = 0, slotless = 0, emissionOff = 0;
-            PaintAddOn(m.SideAttachment, SideEmission, ref glow, ref slotless, ref emissionOff);
-            PaintAddOn(m.RingAttachment, RingEmission, ref glow, ref slotless, ref emissionOff);
+            Renderer sideSlot = PaintAddOn(m.SideAttachment, SideEmission, ref glow, ref slotless, ref emissionOff);
+            Renderer ringSlot = PaintAddOn(m.RingAttachment, RingEmission, ref glow, ref slotless, ref emissionOff);
             GlowRenderers = glow;
             SlotlessRenderers = slotless;
             EmissionOffRenderers = emissionOff;
             Applies++;
+            using (TreeSocketCard.Marker.Auto())
+            {
+                // WP-104 B4-2 (AD-B4 §6): the bloom spot as a glint card on each lit slot (E4 III+, E5 IV+), × FlashScale, none while hidden
+                PaintCard(_sideCard, sideSlot, TreeVfxLadder.AddOnGlow.Side, set.SideTier, set.Side, 0, _shown && set.Side != TreeElement.None);
+                PaintCard(_ringCard, ringSlot, TreeVfxLadder.AddOnGlow.Ring, set.RingTier, TreeElement.None, set.Ring, _shown && set.Ring > 0);
+            }
         }
 
-        private void PaintAddOn(GameObject addOn, Color emission, ref int glow, ref int slotless, ref int emissionOff)
+        /// <summary>Paints the add-on's glow-slot renderers; returns the first of them (the socket card's anchor), null when none.</summary>
+        private Renderer PaintAddOn(GameObject addOn, Color emission, ref int glow, ref int slotless, ref int emissionOff)
         {
-            if (addOn == null) return;
+            if (addOn == null) return null;
+            Renderer first = null;
             addOn.GetComponentsInChildren(true, s_renderers);
             for (int i = 0; i < s_renderers.Count; i++)
             {
@@ -141,10 +224,121 @@ namespace DD.Prototype.Feedback.Vfx
                 _block.SetColor(EmissionColorId, emission);
                 r.SetPropertyBlock(_block, GlowSlot);
                 glow++;
+                if (first == null) first = r;
             }
 
             s_renderers.Clear();
             s_materials.Clear();
+            return first;
+        }
+
+        // ------------------------------------------------------------------ WP-104 B4-2 socket glint cards (AD-B4 §6 / M9 post)
+
+        /// <summary>
+        /// Event time (a paint): the card of one add-on — off unless <see cref="TreeSocketCard.Shows"/> (and the glint row resolved,
+        /// and FlashScale above 0); else anchored on <paramref name="slot"/>'s glow submesh, sized by its mesh, tinted by the ladder ×
+        /// FlashScale, on the add-on's layer (the cameras that see the add-on see its glint), and placed at once.
+        /// </summary>
+        private void PaintCard(SocketCard c, Renderer slot, TreeVfxLadder.AddOnGlow kind, int tier, TreeElement element, int ring, bool shown)
+        {
+            if (!_cardsEnabled || _flash <= 0f || !TreeSocketCard.Shows(kind, tier, shown, slot != null)
+                || !TreeSocketCard.TryAnchor(slot, out Vector3 local, out float diagonal))
+            {
+                HideCard(c);
+                return;
+            }
+
+            Material material = CardMaterial();
+            if (material == null)
+            {
+                HideCard(c);
+                return;
+            }
+
+            if (c.Renderer == null) BuildCard(c, kind == TreeVfxLadder.AddOnGlow.Side ? "E4 glint card" : "E5 glint card");
+            c.Anchor = slot.transform;
+            c.Local = local;
+            c.Size = TreeSocketCard.Size(diagonal);
+            c.Lift = TreeSocketCard.Lift(diagonal);
+            c.Tint = TreeSocketCard.Tint(kind, tier, element, ring, _flash);
+            MeshRenderer r = c.Renderer;
+            if (r.gameObject.layer != slot.gameObject.layer) r.gameObject.layer = slot.gameObject.layer;
+            if (r.sharedMaterial != material) r.sharedMaterial = material;
+            r.transform.localScale = new Vector3(c.Size, c.Size, 1f);
+            c.Block.SetFloat(FrameId, TreeSocketCard.Frame);
+            c.Block.SetFloat(AlphaId, 1f);
+            c.Block.SetFloat(AlphaCapId, 1f);
+            c.Block.SetVector(TintId, c.Tint);   // linear HDR: no gamma step (SetColor would raise 2.0 to 4.6)
+            r.SetPropertyBlock(c.Block);
+            c.On = true;
+            Place(c, TreeSocketCard.Facing(FeelRuntime.Current.Camera));
+            if (!r.enabled) r.enabled = true;
+        }
+
+        /// <summary>Every frame: each shown card onto its slot, facing the TD rig (0 B); a card whose add-on went is hidden until the
+        /// next paint.</summary>
+        private void TrackCards()
+        {
+            if (!_sideCard.On && !_ringCard.On) return;
+            using (TreeSocketCard.Marker.Auto())
+            {
+                Vector3 facing = TreeSocketCard.Facing(FeelRuntime.Current.Camera);
+                Place(_sideCard, facing);
+                Place(_ringCard, facing);
+            }
+        }
+
+        private static void Place(SocketCard c, Vector3 facing)
+        {
+            if (!c.On) return;
+            if (c.Anchor == null)
+            {
+                HideCard(c);
+                return;
+            }
+
+            c.Renderer.transform.SetPositionAndRotation(c.Anchor.TransformPoint(c.Local) + facing * c.Lift, TreeSocketCard.Rotation(facing));
+        }
+
+        private void HideCards()
+        {
+            HideCard(_sideCard);
+            HideCard(_ringCard);
+        }
+
+        private static void HideCard(SocketCard c)
+        {
+            c.On = false;
+            c.Anchor = null;
+            if (c.Renderer != null && c.Renderer.enabled) c.Renderer.enabled = false;
+        }
+
+        /// <summary>The glint row's material once (VfxLibrary), as an own copy drawn ADDED: the premultiplied sheet on Blend One One.
+        /// Null without the catalog row (the art pipeline has not run): no card, the ladder unchanged.</summary>
+        private Material CardMaterial()
+        {
+            if (_cardMaterial != null || _cardMaterialTried) return _cardMaterial;
+            _cardMaterialTried = true;
+            if (!VfxLibrary.TryGetPlayable(TreeVfxIds.Id(TreeSocketCard.Row), out VfxCatalogEntry row)) return null;
+            _cardMaterial = new Material(row.Material) { name = row.Material.name + " (WP-104 socket glint, added)", hideFlags = HideFlags.DontSave };
+            _cardMaterial.SetFloat(DstBlendId, (float)BlendMode.One);
+            return _cardMaterial;
+        }
+
+        private void BuildCard(SocketCard c, string name)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(transform, false);
+            go.AddComponent<MeshFilter>().sharedMesh = VfxLibrary.Quad;
+            MeshRenderer r = go.AddComponent<MeshRenderer>();
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.lightProbeUsage = LightProbeUsage.Off;
+            r.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            r.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+            r.enabled = false;
+            c.Renderer = r;
+            c.Block = new MaterialPropertyBlock();
         }
 
         /// <summary>S-06's slot-1 contract: the shared <c>M_AP040_Glow</c> (URP Lit with _EMISSION).</summary>

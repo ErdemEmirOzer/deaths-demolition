@@ -16,6 +16,7 @@ using DD.Prototype.Weapons.Attachments;
 using NUnit.Framework;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
@@ -38,7 +39,17 @@ namespace DD.Prototype.Tests.PlayMode
     /// ×4 glow off | on, seen from the game's TD rig angle ("td-rig": the glow slot is each add-on's side-facing window, which a
     /// straight-down camera never sees), measured on the glow-slot pixels (ignored while DD_WeaponAttach is not built, as
     /// Wp104B4VfxPlayTests).</item>
+    /// <item>B4-2 (12.10): 33 · 34 S2's aura III on each whole ground (lumStepMean: E's light inner line); 35 · 36 B9, Seeker Swarm's
+    /// bending trail on each whole ground — Shot V AR extra-volley TD records: the designed curve (3 m + a 30° turn + 3 m) and its
+    /// straight twin laid by F's SetTdPathForTests, and (optional) a real round turning toward a body at the 25° cone edge whose path
+    /// S-02 keeps (TryGetPath) and F's TickTd reads — every new API by reflection ("missing" without it); 27–29 again for M9post with
+    /// F's socket glint cards (hidden while the glow-slot mask and M9's raw binding frame render).</item>
     /// </list>
+    /// Every "alone on black" render (the ground off: the tracer core layer, the halos) is taken beside a bare ground-off render of the
+    /// same Unity frame with nothing of the capture queued: coreLeakPx / haloLeakPx count what that bare render holds (0 = the measure saw
+    /// only its own frame's draws) and the core / halo measures count a pixel's rise over it. The camera leaves the Environment layer out
+    /// (b4-r3: an earlier fixture's Run scene veiled every ground-off render through the world's volumetric light, ad.r3RootCause);
+    /// groundVeilLevels proves each frame's ground is the bare ground.
     /// Numbers come from the raw render (HDR camera without post-processing: A5's bright-core definition, WP-101's streak / warm
     /// metrics; an ARGBHalf twin for the unclamped peaks); the PNGs are the same frame through the game's post stack
     /// (WorldAtmosphere's runtime volume: Neutral tonemap, bloom 1.25). The "dark frame first" rule of Wp101MermiSinifTdTests holds —
@@ -85,7 +96,20 @@ namespace DD.Prototype.Tests.PlayMode
         private static readonly List<HalfM> s_halves = new List<HalfM>();
         private static readonly List<GlowM> s_glows = new List<GlowM>();
         private static readonly SortedDictionary<int, int> s_darkLeak = new SortedDictionary<int, int>();
-        private static string s_header, s_blindKey;
+        private static readonly SortedDictionary<int, int> s_coreLeak = new SortedDictionary<int, int>(), s_haloLeak = new SortedDictionary<int, int>();
+        private static readonly SortedDictionary<int, float> s_veil = new SortedDictionary<int, float>();
+        private static readonly List<SeekM> s_seeks = new List<SeekM>();
+        private static string s_header, s_blindKey, s_seekMissing, s_realMissing, s_seekNote, s_cardJson;
+        private static readonly Color32 Black32 = new Color32(0, 0, 0, 255);
+        /// <summary>B4-2 B9 (GD-TREE sh_cap Seeker Swarm): extra shots lock a body inside ExtraShotSeekDegrees 25° up to ProjectileSystem's
+        /// SeekRangeMetres 20 m. The capture's body sits at both edges — the nearest an AR round can still reach: 2 · v / ω · sin 25° ≈
+        /// 17.5 m at 260 m/s and 720°/s.</summary>
+        private const float SeekConeDegrees = 25f, SeekBodyMetres = 20f, SeekBandMetres = 1f;
+        private const string GroupMust = "MUST", GroupShould = "SHOULD", GroupB42 = "B4-2";
+        /// <summary>The B4-2 summary line (C-00 12.10): S2, S3, S4, M8 at FireUnderAlpha .225, M9post (F's socket card), B9.</summary>
+        private static readonly string[] B42Ids = { "S2", "S3", "S4", "M8", "M9post", "B9" };
+        private const string AdKabulA1 = "C-00 12.10: M5 A1 AD kabul - ölçülmeye devam (kademe I, ıslak arduvaz)";
+        private const string AdKabulA4 = "C-00 12.10: M6 A4 AD kabul - ölçülmeye devam (iki zemin)";
 
         private enum Floor { Light, Slate, Split }
 
@@ -134,12 +158,40 @@ namespace DD.Prototype.Tests.PlayMode
             public float LumStep, PeakLum, SatSum, HueX, HueY;
         }
 
-        /// <summary>One tracer frame's renders: ground only (raw / post), layer 0 alone on black, every layer (raw / post / HDR
-        /// luminance), the halos alone on black (taken on the next Unity frame).</summary>
+        /// <summary>One tracer frame's renders: ground only (raw / post), the bare ground-off render, layer 0 alone on black, every layer
+        /// (raw / post / HDR luminance); on the next Unity frame the bare ground-off render again and the halos alone on black. The leaks
+        /// and the ground veil are their checks (see <see cref="Shoot"/>).</summary>
         private sealed class Shots
         {
-            public Color32[] Dark, DarkLook, Core, Lit, Look, Halo;
+            public Color32[] Dark, DarkLook, Black, Core, Lit, Look, HaloBlack, Halo;
             public float[] Hdr;
+            public int Ink, DarkLeak, CoreLeak, HaloLeak, BlackMax, HaloInstances;
+            public float Veil;
+        }
+
+        /// <summary>B4-2 B9: one record of a seeker frame (35 / 36): KIVRILAN / DUZ (designed, synthetic) or GERCEK (a real round).</summary>
+        private sealed class SeekLane
+        {
+            public string Key, Label;
+            public bool Designed, Laid;
+            public int Slot, Generation, PathCount;
+            /// <summary>GERCEK: the body it turns to; designed: the path's newest point.</summary>
+            public Vector3 Body;
+            public Vector3[] Path;
+            /// <summary>GERCEK: its position after every fixed step, from the muzzle; designed: the path's points.</summary>
+            public readonly List<Vector3> Flight = new List<Vector3>();
+        }
+
+        /// <summary>B4-2 B9: what one lane of a seeker frame measured (the "ad" B9 criterion reads it).</summary>
+        private sealed class SeekM
+        {
+            public int Frame, PathPoints, TrailPx, Visible025, Visible05, Layer2025, Layer205, Bright025, Quad025, RecordSeekPoints;
+            public string Key, Ground;
+            public bool Designed;
+            public bool? Tracer;
+            public float PathBendM, FlightBendM, DrawnBendM, DrawnLengthM, RecordHaloPx;
+            /// <summary>The same bend over every pixel the streak moved ≥ 8 levels (its faint tail too): what is drawn, against what reads.</summary>
+            public float DrawnBendFaintM, DrawnLengthFaintM;
         }
 
         /// <summary>One round of a tracer frame (one lane on one ground): what the AD thresholds read.</summary>
@@ -173,6 +225,8 @@ namespace DD.Prototype.Tests.PlayMode
             public bool Present;
             public float Emission, AreaPx, SizeX, SizeY, CentreX, CentreY, PeakOn, PeakOff;
             public float MeanLumOff = float.NaN, MeanLumOn = float.NaN, MeanHdrOff = float.NaN, MeanHdrOn = float.NaN, SlotOff = float.NaN, SlotOn = float.NaN;
+            /// <summary>B4-2: the same ON mean with F's socket cards shown (MeanLumOn is the slot alone, cards hidden: M9's binding).</summary>
+            public float MeanLumOnCard = float.NaN;
             public int MaskPx, GlowSpot, RawSaturated;
         }
 
@@ -218,8 +272,16 @@ namespace DD.Prototype.Tests.PlayMode
             s_halves.Clear();
             s_glows.Clear();
             s_darkLeak.Clear();
+            s_coreLeak.Clear();
+            s_haloLeak.Clear();
+            s_veil.Clear();
+            s_seeks.Clear();
             s_header = null;
             s_blindKey = null;
+            s_seekMissing = null;
+            s_realMissing = null;
+            s_seekNote = null;
+            s_cardJson = null;
         }
 
         [UnitySetUp]
@@ -463,6 +525,9 @@ namespace DD.Prototype.Tests.PlayMode
             s_blindKey = Obj(P("frame", 32), P(BlindNames[0], Roman(order[0])), P(BlindNames[1], Roman(order[1])), P(BlindNames[2], Roman(order[2])), P("seed", seed));
             SetFloor(Floor.Split);
             yield return CaptureTracers(tracer, 32, "32-iz-a11-kor-siralama.png", "32 A11 KOR SIRALAMA: A / B / C (ANAHTAR B4AD.JSON)", blind);
+
+            // 35 · 36 — B4-2 B9: Seeker Swarm's bending trail on each whole ground (SeekFrames)
+            yield return SeekFrames(tracer);
             tracer.Clear();
             TreeRuntime.ClearTestStats();
             AssertWritten();
@@ -576,8 +641,11 @@ namespace DD.Prototype.Tests.PlayMode
             string viewDetail = "TD rig angle (DD_FeelConfig height " + F(td.heightMeters) + " / back " + F(td.backDistanceMeters) + " / yaw " + F(td.yawDegrees)
                                 + "): camera along (" + F(rigDir.x) + ", " + F(rigDir.y) + ", " + F(rigDir.z) + ") x " + F(CamHeight) + " m from the weapon, FOV " + F(Fov);
             Vector2 c = Px(centre);
-            // M9's "ek maskesi": each add-on's glow-slot pixels as the rig sees them (GlowMask: slot 1 white, the rest black, unlit)
+            // M9's "ek maskesi": each add-on's glow-slot pixels as the rig sees them (GlowMask: slot 1 white, the rest black, unlit) — with
+            // F's socket glint cards hidden (S-07 12.10: an added card over the slot saturates the 8-bit mask render), shown again after
+            string cardsForMask = SetCards(glow, false);
             bool[] sideMask = GlowMask(mount.SideAttachment, out int sidePx), ringMask = GlowMask(mount.RingAttachment, out int ringPx);
+            SetCards(glow, true);
             const int cw = 160, ch = 90, k = 4;   // ×4 nearest-neighbour crops of the same 160 × 90 px around the weapon
             int cellW = cw * k, cellH = ch * k, gw = cellW * 2, gh = cellH * 2;
             var grid = new Color32[gw * gh];   // light stone above, wet slate below; glow off | glow on
@@ -593,19 +661,30 @@ namespace DD.Prototype.Tests.PlayMode
 
                 // ON first: FlashScale 1 and TreeAttachGlow repainted (it compares Reduce Flashes once a frame)
                 yield return SetFlash(glow, 1f);
+                // M9 (B4-1, the binding) reads the glow slot alone, as b4-r4 did: the raw ON frame with F's cards hidden (they follow
+                // FlashScale, so the OFF frame has none); then the cards back for the PNG, M9post's bloom spot and the ×4 crop
+                SetCards(glow, false);
+                Color32[] onBare = Grab(false, true);
+                float[] hdrBare = GrabHdrLum();   // the shared HDR buffer: read before the next GrabHdrLum
+                float lumSideBare = MeanLum(onBare, sideMask), lumRingBare = MeanLum(onBare, ringMask);
+                float hdrSideBare = MeanOf(hdrBare, sideMask), hdrRingBare = MeanOf(hdrBare, ringMask);
+                SetCards(glow, true);
+                yield return null;   // the cards repainted (Paint) and tracked onto their slots (LateUpdate)
+                yield return null;
                 Color sideOn = glow.SideEmission, ringOn = glow.RingEmission;
                 Color32[] onRaw = Grab(false, true);
                 Color32[] onLook = _lookPost ? Grab(true, true) : onRaw;
                 float[] hdr = GrabHdrLum();
+                string cardOn = CardJson(glow, glowGo, model.gameObject);   // M9post (B4-2): F's socket glow card, by reflection
                 var e4 = new GlowM
                 {
                     Ground = groundKey, AddOn = "E4", Name = "E4 ates III (side)", Emission = sideOn.r, MaskPx = sidePx,
-                    MeanLumOn = MeanLum(onRaw, sideMask), MeanHdrOn = MeanOf(hdr, sideMask), SlotOn = SlotEmission(mount.SideAttachment, scratch)
+                    MeanLumOn = lumSideBare, MeanHdrOn = hdrSideBare, MeanLumOnCard = MeanLum(onRaw, sideMask), SlotOn = SlotEmission(mount.SideAttachment, scratch)
                 };
                 var e5 = new GlowM
                 {
                     Ground = groundKey, AddOn = "E5", Name = "E5 V (ring)", Emission = ringOn.r, MaskPx = ringPx,
-                    MeanLumOn = MeanLum(onRaw, ringMask), MeanHdrOn = MeanOf(hdr, ringMask), SlotOn = SlotEmission(mount.RingAttachment, scratch)
+                    MeanLumOn = lumRingBare, MeanHdrOn = hdrRingBare, MeanLumOnCard = MeanLum(onRaw, ringMask), SlotOn = SlotEmission(mount.RingAttachment, scratch)
                 };
 
                 // OFF: the ladder × 0 — the same model and add-ons, the glow slot black
@@ -613,6 +692,8 @@ namespace DD.Prototype.Tests.PlayMode
                 Color32[] offRaw = Grab(false, true);
                 Color32[] offLook = _lookPost ? Grab(true, true) : offRaw;
                 hdr = GrabHdrLum();
+                string cardOff = CardJson(glow, glowGo, model.gameObject);
+                float veil = GroundVeil(offRaw);
                 e4.MeanLumOff = MeanLum(offRaw, sideMask);
                 e4.MeanHdrOff = MeanOf(hdr, sideMask);
                 e4.SlotOff = SlotEmission(mount.SideAttachment, scratch);
@@ -628,19 +709,22 @@ namespace DD.Prototype.Tests.PlayMode
                 string ground = floor == Floor.Light ? "ACIK TAS" : "ISLAK ARDUVAZ";
                 string common = Obj(P("model", _modelNote), P("set", "Side Fire / SideTier 3 / Ring 1 / RingTier 5"), P("glowRenderers", glow.GlowRenderers),
                     P("slotlessRenderers", glow.SlotlessRenderers), P("emissionOffRenderers", glow.EmissionOffRenderers), P("applies", glow.Applies),
-                    P("mountPainted", glow.Mount == mount), P("visibleRenderers", VisibleRenderers(model.gameObject)));
+                    P("mountPainted", glow.Mount == mount), P("visibleRenderers", VisibleRenderers(model.gameObject)),
+                    P("cardsForGlowMask", cardsForMask), P("m9RawCards", "hidden (the glow slot alone; CardsEnabled false for the ON raw frame)"));
                 var marks = new List<Mark>();
                 Bounds? side = BoundsOf(mount.SideAttachment), ring = BoundsOf(mount.RingAttachment);
                 if (side.HasValue) marks.Add(MarkAt(side.Value.center + new Vector3(0f, 0f, -.45f), "E4"));
                 if (ring.HasValue) marks.Add(MarkAt(ring.Value.center + new Vector3(0f, 0f, .35f), "E5"));
                 marks.AddRange(FloorMarks());
                 int n = 27 + pass;
+                s_veil[n] = veil;
+                if (pass == 0) s_cardJson = cardOn;
                 string file = n + (pass == 0 ? "-ek-isima-e4-ates-III-e5-V-acik-tas.png" : "-ek-isima-e4-ates-III-e5-V-islak-arduvaz.png");
                 string label = n + " E4 ATES III (" + F(e4.Emission) + ") + E5 V (" + F(e5.Emission) + ") / " + ground;
                 AddFrame(n, file, label, onLook, onRaw, W, H, Roi(centre, 4f),
                     Obj(P("n", n), P("file", file), P("label", label), P("kind", "addOnGlow"), P("ground", FloorName()), P("view", "td-rig"),
-                        P("viewDetail", viewDetail), P("order", "FlashScale 1, then 0; the glow-slot masks before both"),
-                        PR("mount", common), PR("e4", GlowJson(e4)), PR("e5", GlowJson(e5))), marks);
+                        P("viewDetail", viewDetail), P("order", "FlashScale 1, then 0; the glow-slot masks before both"), P("groundVeilLevels", veil),
+                        PR("mount", common), PR("socketCardOn", cardOn), PR("socketCardOff", cardOff), PR("e4", GlowJson(e4)), PR("e5", GlowJson(e5))), marks);
 
                 Color32[] off = Crop(offLook, c, cw, ch, k), on = Crop(onLook, c, cw, ch, k);
                 int rowBase = pass == 0 ? cellH : 0;   // bottom-up buffer: the first pass is the upper row
@@ -694,32 +778,54 @@ namespace DD.Prototype.Tests.PlayMode
         // ------------------------------------------------------------------ tracer capture
 
         /// <summary>
-        /// One tracer frame, on a Unity frame of its own: dark (ground only, raw + post) → layer 0 alone on black (A5's bright core)
-        /// → every layer + ink (raw, post, HDR luminance); the next frame, the halos alone on black. Measures each round, writes the PNG.
+        /// One tracer capture's renders, the first on a Unity frame of its own (AD-B4 M2: DrawTd queues Graphics.DrawMeshInstanced for
+        /// EVERY render of the Unity frame, and the previous capture queued its halo pass after its own yield — b4-r2's frames 02 / 07
+        /// rendered 01's / 06's halos as their core): ground only (raw + post) and the bare ground-off render → layer 0 alone on black
+        /// (A5's bright core) → every layer + ink (raw, post, HDR luminance); on the next Unity frame the bare ground-off render again,
+        /// then the halos alone on black. The checks: darkLeakPx (the ground-only render is the two ground colours), coreLeakPx /
+        /// haloLeakPx (each bare ground-off render is black: nothing queued earlier in its Unity frame or left from the previous one,
+        /// nothing a loaded world draws over black — b4-r3), groundVeilLevels (the ground is the bare ground).
         /// </summary>
-        private IEnumerator CaptureTracers(TracerRibbonRenderer tracer, int n, string file, string label, List<Lane> lanes)
+        private IEnumerator Shoot(TracerRibbonRenderer tracer, Shots s)
         {
-            // M2 (AD-B4 §2.2): DrawTd queues Graphics.DrawMeshInstanced for EVERY render of the Unity frame, and the previous capture
-            // queued its halo pass (DrawTd(2)) after its own yield — a capture called straight after another one rendered those halos
-            // into its dark, core and lit frames (b4-r2: frames 02 / 07 after 01 / 06, brightCorePx 33 / 24 and visiblePx 19 / 6
-            // against 8 and 41). A fresh frame first; darkLeakPx proves the dark render is bare ground.
             yield return null;
-            var s = new Shots();
             s.Dark = Grab(false, true);
             s.DarkLook = _lookPost ? Grab(true, true) : s.Dark;
+            s.Black = Grab(false, false);
             DrawTd(tracer, 0);
             s.Core = Grab(false, false);
             DrawTd(tracer, 1);
             DrawTd(tracer, 2);
-            int ink = InvokeInk(tracer);
+            s.Ink = InvokeInk(tracer);
             s.Lit = Grab(false, true);
             s.Look = _lookPost ? Grab(true, true) : s.Lit;
             s.Hdr = GrabHdrLum();
-            yield return null;   // a new frame: the queued draws are gone
-            DrawTd(tracer, 2);
+            yield return null;   // a new frame: the queued draws are gone (haloLeakPx proves it)
+            s.HaloBlack = Grab(false, false);
+            s.HaloInstances = DrawTd(tracer, 2);
             s.Halo = Grab(false, false);
-            int leak = DarkLeak(s.Dark);
-            s_darkLeak[n] = leak;
+            s.DarkLeak = DarkLeak(s.Dark);
+            s.CoreLeak = BlackLeak(s.Black, out int coreMax);
+            s.HaloLeak = BlackLeak(s.HaloBlack, out int haloMax);
+            s.BlackMax = Mathf.Max(coreMax, haloMax);
+            s.Veil = GroundVeil(s.Dark);
+        }
+
+        private static void Leaks(int n, Shots s)
+        {
+            s_darkLeak[n] = s.DarkLeak;
+            s_coreLeak[n] = s.CoreLeak;
+            s_haloLeak[n] = s.HaloLeak;
+            s_veil[n] = s.Veil;
+        }
+
+        /// <summary>One tracer frame (<see cref="Shoot"/>): measures each round, writes the PNG.</summary>
+        private IEnumerator CaptureTracers(TracerRibbonRenderer tracer, int n, string file, string label, List<Lane> lanes)
+        {
+            var s = new Shots();
+            yield return Shoot(tracer, s);
+            Leaks(n, s);
+            int ink = s.Ink, leak = s.DarkLeak;
             s_rounds.RemoveAll(r => r.Frame == n);
 
             var lanesJson = new List<string>();
@@ -734,10 +840,12 @@ namespace DD.Prototype.Tests.PlayMode
             marks.AddRange(FloorMarks());
             Stats all = Region(s.Lit, s.Dark, 0, W - 1, 0, H - 1);
             string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "tracer"), P("ground", FloorName()),
-                P("flashScale", GameFeelSettings.FlashScale), P("inkDrawn", ink), P("changedPx", all.Changed), P("darkLeakPx", leak), P("hdr", s.Hdr != null),
+                P("flashScale", GameFeelSettings.FlashScale), P("inkDrawn", ink), P("changedPx", all.Changed), P("darkLeakPx", leak), P("coreLeakPx", s.CoreLeak),
+                P("haloLeakPx", s.HaloLeak), P("blackMaxLevel", s.BlackMax), P("groundVeilLevels", s.Veil), P("hdr", s.Hdr != null),
                 P("nonEmpty", all.Changed > 1000), PR("lanes", Arr(lanesJson)));
             AddFrame(n, file, label, s.Look, s.Lit, W, H, new RectInt(0, 0, W, H), json, marks);
-            Debug.Log("[DD-TEST] wp104b4.ad " + file + " changed=" + all.Changed + " lanes=" + lanes.Count + " ink=" + ink + " darkLeak=" + leak);
+            Debug.Log("[DD-TEST] wp104b4.ad " + file + " changed=" + all.Changed + " lanes=" + lanes.Count + " ink=" + ink + " darkLeak=" + leak
+                      + " coreLeak=" + s.CoreLeak + " haloLeak=" + s.HaloLeak + " veil=" + F(s.Veil));
             Assert.Greater(all.Changed, 1000, file + ": iz çizilmedi (boş kare)");
         }
 
@@ -760,7 +868,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// One round: across the streak (a screen column) at 0.1 / 0.25 / 0.5 / 1 / 2 m behind the head — the bright core (layer 0
-        /// on black, brightest channel ≥ 254: A5), the quad's faint edge (≥ 8), the halo alone on black (≥ 0.10), the visible streak
+        /// on black, brightest channel ≥ 254: A5), the quad's faint edge (a channel risen ≥ 8), the halo alone on black (risen ≥ 0.10) —
+        /// each against the bare ground-off render of its own Unity frame (black when clean: then the plain thresholds) — the visible streak
         /// (lit vs dark, a channel moved ≥ 0.10: WP-101; and the same on the post frames) — and, over the streak's band (from the
         /// record's origin, so a longer streak measures longer, to 0.15 m past the head): WP-101's saturated-warm share (S ≥ 0.45, hue
         /// 8–50°), the mean hue of the coloured pixels (S ≥ 0.15), the raw / HDR / post peaks and the glow's post median (A1).
@@ -777,11 +886,11 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 if (behind[i] > rec.Trail - .1f) continue;
                 Vector2 c = Px(rec.Head + Vector3.left * behind[i]);
-                int b = Column(s.Core, c, across, 254), h = Column(s.Halo, c, across, Moved);
+                int b = ColumnOver(s.Core, s.Black, c, across, 254, true), h = ColumnOver(s.Halo, s.HaloBlack, c, across, Moved, false);
                 if (i == 0)
                 {
                     bright = b;
-                    quad = Column(s.Core, c, across, 8);
+                    quad = ColumnOver(s.Core, s.Black, c, across, 8, false);
                 }
 
                 if (i == 1)
@@ -892,8 +1001,7 @@ namespace DD.Prototype.Tests.PlayMode
 
                     Color32 p = s.Look[i];
                     peakPost = Mathf.Max(peakPost, Lum(p));
-                    Color32 k = s.Core[i];
-                    if (Mathf.Max(k.r, Mathf.Max(k.g, k.b)) >= 8) continue;   // the core quad: the glow is the rest
+                    if (Over(s.Core[i], s.Black != null ? s.Black[i] : Black32, 8, false)) continue;   // the core quad (risen ≥ 8 on black): the glow is the rest
                     hr[p.r]++;
                     hg[p.g]++;
                     hb[p.b]++;
@@ -933,6 +1041,53 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         private static bool Far(Color32 p, Color32 q) => Mathf.Max(Mathf.Abs(p.r - q.r), Mathf.Max(Mathf.Abs(p.g - q.g), Mathf.Abs(p.b - q.b))) >= Moved;
+
+        /// <summary>coreLeakPx / haloLeakPx: pixels of a bare ground-off render (nothing of the capture queued in its Unity frame) whose
+        /// brightest channel is ≥ 8 — the lowest threshold a ground-off measure uses (coreQuadPx). 0 = the core / halo measure saw only its
+        /// own frame's draws. b4-r3 would read the whole frame here: a loaded world's volumetric in-scatter (≥ 8 everywhere, ≥ 26 east).
+        /// <paramref name="max"/>: the brightest channel seen (blackMaxLevel).</summary>
+        private static int BlackLeak(Color32[] bare, out int max)
+        {
+            int n = 0;
+            max = 0;
+            for (int i = 0; i < bare.Length; i++)
+            {
+                int m = MaxC(bare[i]);
+                if (m > max) max = m;
+                if (m >= 8) n++;
+            }
+
+            return n;
+        }
+
+        /// <summary>groundVeilLevels: how far (8-bit levels, the worst channel) the four 5 × 5 corner patches of a ground-only render sit
+        /// from the bare ground — URP/Unlit sRGB 0.75 → 191 (light stone), 0.20 → 51 (wet slate), each corner its own half. ≤ 1 on a clean
+        /// frame (b4-r4: 191 / 51 exactly); b4-r3's frames carried a loaded world's in-scatter (wet slate 54–60, light stone 189–190).</summary>
+        private float GroundVeil(Color32[] ground)
+        {
+            float worst = 0f;
+            for (int corner = 0; corner < 4; corner++)
+            {
+                bool west = (corner & 1) == 0;
+                int cx = west ? 10 : W - 11, cy = (corner & 2) == 0 ? 10 : H - 11;
+                float expect = 255f * (_floor == Floor.Light || (_floor == Floor.Split && west) ? LightGrey : SlateGrey);
+                float r = 0f, g = 0f, b = 0f;
+                for (int dy = -2; dy <= 2; dy++)
+                {
+                    for (int dx = -2; dx <= 2; dx++)
+                    {
+                        Color32 p = ground[(cy + dy) * W + cx + dx];
+                        r += p.r;
+                        g += p.g;
+                        b += p.b;
+                    }
+                }
+
+                worst = Mathf.Max(worst, Mathf.Max(Mathf.Abs(r / 25f - expect), Mathf.Max(Mathf.Abs(g / 25f - expect), Mathf.Abs(b / 25f - expect))));
+            }
+
+            return worst;
+        }
 
         private static Lane NewLane(string label, int shotTier, int elementTier, TreeElement element, float z, ClassicWeaponId weapon = ClassicWeaponId.AssaultRifle)
         {
@@ -1056,6 +1211,531 @@ namespace DD.Prototype.Tests.PlayMode
             return default;
         }
 
+        // ------------------------------------------------------------------ 35 · 36 B4-2 B9 seeker trail
+
+        /// <summary>
+        /// S-02's seeker path and its lock (d97fd189), read by reflection: this file builds before and after F, and without them the B9
+        /// frames are "missing". <see cref="Lock"/> does to a round what ProjectileSystem.LockSeek does to one that found a body — the
+        /// rig has no zombie, so the lock is the capture's: SeekTrail on, the path started where the round is, the next point one
+        /// PathStepSeconds of flight later. The kept points themselves are ProjectileSystem's own (StepOne pushes them).
+        /// </summary>
+        private sealed class SeekApi
+        {
+            public MethodInfo TryGetPath, PathPush;
+            public FieldInfo SeekTrail, Live, PathNext, PathCount;
+            public float PathStep = float.NaN, Turn = 720f;
+            public int PathPoints;
+            public string Missing;
+
+            public static SeekApi Resolve()
+            {
+                const BindingFlags pub = BindingFlags.Public | BindingFlags.Static, priv = BindingFlags.NonPublic | BindingFlags.Static;
+                Type t = typeof(ProjectileSystem);
+                var a = new SeekApi
+                {
+                    TryGetPath = t.GetMethod("TryGetPath", pub, null, new[] { typeof(int), typeof(Vector3[]) }, null),
+                    PathPush = t.GetMethod("PathPush", priv, null, new[] { typeof(int), typeof(Vector3) }, null),
+                    SeekTrail = typeof(ProjectileState).GetField("SeekTrail", BindingFlags.Public | BindingFlags.Instance),
+                    Live = t.GetField("s_live", priv),
+                    PathNext = t.GetField("s_pathNext", priv),
+                    PathCount = t.GetField("s_pathCount", priv)
+                };
+                FieldInfo step = t.GetField("PathStepSeconds", pub), points = t.GetField("PathPoints", pub), turn = t.GetField("SeekTurnDegreesPerSecond", pub);
+                if (step != null && step.FieldType == typeof(float)) a.PathStep = (float)step.GetValue(null);
+                if (points != null && points.FieldType == typeof(int)) a.PathPoints = (int)points.GetValue(null);
+                if (turn != null && turn.FieldType == typeof(float)) a.Turn = (float)turn.GetValue(null);
+                var missing = new List<string>();
+                if (a.TryGetPath == null || a.TryGetPath.ReturnType != typeof(int)) missing.Add("ProjectileSystem.TryGetPath");
+                if (a.SeekTrail == null || a.SeekTrail.FieldType != typeof(bool)) missing.Add("ProjectileState.SeekTrail");
+                if (a.PathPush == null) missing.Add("ProjectileSystem.PathPush");
+                if (a.Live == null || a.Live.FieldType != typeof(ProjectileState[])) missing.Add("ProjectileSystem.s_live");
+                if (a.PathNext == null || a.PathNext.FieldType != typeof(float[])) missing.Add("ProjectileSystem.s_pathNext");
+                if (float.IsNaN(a.PathStep) || a.PathPoints <= 0) missing.Add("ProjectileSystem.PathStepSeconds / PathPoints");
+                a.Missing = missing.Count > 0 ? string.Join(", ", missing) : null;
+                return a;
+            }
+
+            public ProjectileState[] States => (ProjectileState[])Live.GetValue(null);
+
+            public void Lock(int slot)
+            {
+                ProjectileState[] live = States;
+                object boxed = live[slot];
+                SeekTrail.SetValue(boxed, true);
+                live[slot] = (ProjectileState)boxed;
+                if (PathCount != null && PathCount.GetValue(null) is int[] counts) counts[slot] = 0;
+                PathPush.Invoke(null, new object[] { slot, live[slot].Position });
+                ((float[])PathNext.GetValue(null))[slot] = PathStep;
+            }
+
+            public int Path(int generation, Vector3[] into) => (int)TryGetPath.Invoke(null, new object[] { generation, into });
+        }
+
+        /// <summary>
+        /// 35 · 36 — B9 (B4-2) on each whole ground: Shot V AR extra-volley TD records (VolleyIndex 1, sh_cap's seeking shot: a body
+        /// streak in TD; sh_cap is the Shot branch's tier-V capstone), their streak laid along the kept path up to 10 m (S-07 12.10
+        /// decision (a)):
+        /// <list type="bullet">
+        /// <item>KIVRILAN — the designed curve (C-00 / S-07 12.10): 3 m straight, a 30° turn, 3 m — a synthetic record whose kept path
+        /// F's <c>SetTdPathForTests</c> lays (reflection), its head on the path's newest point (StopTdProjectile, as the tracer frames);</item>
+        /// <item>DUZ — the same record kind on a straight 6 m path through the same draw path: the width reference and the bend
+        /// measure's control;</item>
+        /// <item>GERCEK (optional) — B9's whole chain: a real AR round at the weapon's speed, locked the capture's way
+        /// (<see cref="SeekApi.Lock"/>) and turned before every fixed step as ProjectileSystem.Steer turns a round toward a body 20 m off
+        /// at the 25° cone edge until its next step would leave the frame or come within 1.5 m of it; S-02 keeps its path, F's TickTd
+        /// reads it. Its steps run first: TickTd ages every record, and the designed ones are stopped streaks.</item>
+        /// </list>
+        /// The game clock is then held (timeScale 0) while the two grounds are captured: ProjectileDriver cannot move the real round.
+        /// </summary>
+        private IEnumerator SeekFrames(TracerRibbonRenderer tracer)
+        {
+            tracer.Clear();
+            ProjectileSystem.Clear();
+            TreeStats stats = TreeStats.Neutral;
+            stats.SetBranchTier(TreeBranch.Shot, 5);
+            TreeRuntime.SetTestStats(stats);
+            s_seeks.Clear();
+            s_seekMissing = s_realMissing = s_seekNote = null;
+            yield return null;
+            float speed = WeaponSpeed(ClassicWeaponId.AssaultRifle, out WeaponCaliber caliber);
+            var lanes = new List<SeekLane>();
+            SeekApi api = SeekApi.Resolve();
+            if (api.Missing != null) s_realMissing = api.Missing;
+            else
+            {
+                SeekLane real = RealSeeker(tracer, api, speed);
+                if (real != null) lanes.Add(real);
+            }
+
+            MethodInfo setPath = typeof(TracerRibbonRenderer).GetMethod("SetTdPathForTests", BindingFlags.Public | BindingFlags.Instance, null,
+                new[] { typeof(int), typeof(Vector3[]), typeof(int) }, null);
+            if (setPath == null)
+            {
+                s_seekMissing = "TracerRibbonRenderer.SetTdPathForTests (F)";
+            }
+            else
+            {
+                lanes.Insert(0, Designed(tracer, setPath, "KIVRILAN", "KIVRILAN: 3 M + 30 DERECE + 3 M", O + new Vector3(-9f, LaneY, 3.8f), -30f, speed, caliber));
+                lanes.Insert(1, Designed(tracer, setPath, "DUZ", "DUZ: AYNI KAYIT TURU, 6 M", O + new Vector3(-9f, LaneY, .4f), 0f, speed, caliber));
+            }
+
+            Debug.Log("[DD-TEST] wp104b4.ad B9 lanes=" + lanes.Count + " designed=" + (s_seekMissing ?? "ok") + " real=" + (s_realMissing ?? "ok"));
+            if (lanes.Count == 0) yield break;
+            float previousScale = Time.timeScale;
+            Time.timeScale = 0f;   // ProjectileDriver ticks on Time.deltaTime: the real round stays where its kept path ends
+            SetFloor(Floor.Light);
+            yield return CaptureSeek(tracer, 35, "35-iz-b9-kivrilan-seeker-acik-tas.png", "35 B4-2 B9 KIVRILAN SEEKER IZI (SH_CAP EK ATIS, ATIS V) / ACIK TAS", lanes);
+            SetFloor(Floor.Slate);
+            yield return CaptureSeek(tracer, 36, "36-iz-b9-kivrilan-seeker-islak-arduvaz.png", "36 B4-2 B9 KIVRILAN SEEKER IZI (SH_CAP EK ATIS, ATIS V) / ISLAK ARDUVAZ", lanes);
+            Time.timeScale = previousScale;
+            ProjectileSystem.Clear();
+            tracer.Clear();
+        }
+
+        /// <summary>GERCEK (see <see cref="SeekFrames"/>): null, with s_realMissing, when the round cannot fly its path.</summary>
+        private SeekLane RealSeeker(TracerRibbonRenderer tracer, SeekApi api, float speed)
+        {
+            float dt = ProjectileSystem.FixedStep, cone = SeekConeDegrees * Mathf.Deg2Rad;
+            Vector3 muzzle = O + new Vector3(-9.3f, LaneY, -4.3f);
+            var lane = new SeekLane { Key = "GERCEK", Label = "GERCEK SEEKER: AR " + Mathf.RoundToInt(speed) + " M/S, GOVDE 20 M / 25 DERECE" };
+            lane.Body = muzzle + new Vector3(Mathf.Cos(cone), 0f, Mathf.Sin(cone)) * SeekBodyMetres;
+            int total = SeekSteps(muzzle, lane.Body, speed, api.Turn, dt);
+            if (total < 1)
+            {
+                s_realMissing = "GERCEK: ilk adımda kareden çıkıyor (" + F(speed) + " m/s)";
+                return null;
+            }
+
+            ProjectileState[] live = api.States;
+            lane.Slot = SpawnVolley(muzzle, speed, out lane.Generation);
+            api.Lock(lane.Slot);
+            lane.Flight.Add(muzzle);
+            for (int k = 0; k < total; k++)
+            {
+                SteerToward(live, lane.Slot, lane.Body, api.Turn, dt);
+                ProjectileSystem.Step(dt);
+                tracer.TickTd(dt);
+                lane.Flight.Add(live[lane.Slot].Position);
+            }
+
+            if (!live[lane.Slot].Alive || live[lane.Slot].Generation != lane.Generation)
+            {
+                s_realMissing = "GERCEK: mermi uçuşta bitti";
+                ProjectileSystem.Clear();
+                return null;
+            }
+
+            lane.Path = new Vector3[api.PathPoints + 1];
+            lane.PathCount = api.Path(lane.Generation, lane.Path);
+            s_seekNote = "GERCEK: AR " + F(speed) + " m/s, sabit adım 1/" + Mathf.RoundToInt(1f / dt) + " s, " + total + " adım (" + F(total * dt) + " s); S-02 yolu her "
+                         + F(api.PathStep) + " s'de bir nokta = " + F(speed * api.PathStep) + " m uçuş; dönüş " + F(api.Turn) + "°/s (R = v / ω = "
+                         + F(speed / Mathf.Max(1e-3f, api.Turn * Mathf.Deg2Rad)) + " m)";
+            return lane;
+        }
+
+        /// <summary>KIVRILAN / DUZ: a synthetic Shot V AR extra-volley TD record (VolleyIndex 1, as S-02 spawns sh_cap's shots) from
+        /// <paramref name="start"/>; its kept path — 3 m along +x, then 3 m turned by <paramref name="turnDegrees"/> — laid by F's
+        /// SetTdPathForTests; the head on the path's newest point (StopTdProjectile).</summary>
+        private SeekLane Designed(TracerRibbonRenderer tracer, MethodInfo setPath, string key, string label, Vector3 start, float turnDegrees, float speed,
+            WeaponCaliber caliber)
+        {
+            float a = turnDegrees * Mathf.Deg2Rad;
+            Vector3 p1 = start + Vector3.right * 3f, p2 = p1 + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3f;
+            var lane = new SeekLane { Key = key, Label = label, Designed = true, Generation = _nextId++, Path = new[] { start, p1, p2 }, PathCount = 3, Body = p2 };
+            lane.Flight.AddRange(lane.Path);
+            var info = new ProjectileSpawnInfo(lane.Generation, int.MaxValue, ClassicWeaponId.AssaultRifle, ProjectileKind.Bullet, caliber, start, Vector3.right, speed, 0, 1, 1f);
+            Assert.IsTrue(tracer.RecordTdProjectile(info), "B9 TD kaydı alınmadı: " + key);
+            lane.Laid = setPath.Invoke(tracer, new object[] { lane.Generation, lane.Path, lane.PathCount }) is bool laid && laid;
+            tracer.StopTdProjectile(lane.Generation, p2);
+            return lane;
+        }
+
+        /// <summary>The fixed steps SEEK flies before its next one would leave the frame (x &gt; 9 m, |z| &gt; 5 m from O at 1 m high) or
+        /// come within 1.5 m of its body (in the game it hits there): ProjectileSystem's step (v · dt along the turned velocity, no gravity)
+        /// with Steer's turn, without a projectile.</summary>
+        private static int SeekSteps(Vector3 from, Vector3 body, float speed, float turnDegrees, float dt)
+        {
+            Vector3 pos = from, dir = Vector3.right;
+            for (int k = 0; k < 64; k++)
+            {
+                Vector3 to = body - pos;
+                if (to.sqrMagnitude > 1e-4f) dir = Vector3.RotateTowards(dir, to.normalized, turnDegrees * Mathf.Deg2Rad * dt, 0f);
+                Vector3 next = pos + dir * (speed * dt), local = next - O;
+                if (local.x > 9f || Mathf.Abs(local.z) > 5f || (body - next).sqrMagnitude < 1.5f * 1.5f) return k;
+                pos = next;
+            }
+
+            return 64;
+        }
+
+        /// <summary>A real AR extra-volley round (VolleyIndex 1: sh_cap's seeking shot, a body streak in TD) from <paramref name="muzzle"/>
+        /// along +x: its pool slot, and its generation (the TD record id).</summary>
+        private static int SpawnVolley(Vector3 muzzle, float speed, out int generation)
+        {
+            var shot = new ShotRequest { Origin = muzzle, Direction = Vector3.right, Damage = 1f, Range = 200f, PierceDamageFalloff = 1f, VolleyIndex = 1 };
+            var launch = new ProjectileLaunch
+            {
+                WeaponId = ClassicWeaponId.AssaultRifle, Kind = ProjectileKind.Bullet, Speed = speed, MaxRange = 200f, MaxLifetime = 10f,
+                FalloffStart = 200f, FalloffEnd = 200f, FalloffMinShare = 1f, PenetrationDamageKeep = 1f
+            };
+            int slot = ProjectileSystem.Spawn(in shot, in launch);
+            Assert.GreaterOrEqual(slot, 0, "ProjectileSystem.Spawn (B9)");
+            generation = ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Generation;
+            return slot;
+        }
+
+        /// <summary>ProjectileSystem.Steer's turn toward <paramref name="body"/> (before the step: the swept segment is the turned one).</summary>
+        private static void SteerToward(ProjectileState[] live, int slot, Vector3 body, float degreesPerSecond, float dt)
+        {
+            ref ProjectileState p = ref live[slot];
+            Vector3 to = body - p.Position;
+            float speed = p.Velocity.magnitude;
+            if (to.sqrMagnitude < 1e-4f || speed < 1e-3f) return;
+            p.Velocity = Vector3.RotateTowards(p.Velocity / speed, to.normalized, degreesPerSecond * Mathf.Deg2Rad * dt, 0f) * speed;
+        }
+
+        /// <summary>One B9 frame (<see cref="Shoot"/>: the same renders and leak checks as a tracer frame), every lane measured, F's
+        /// readouts beside them (reflection): LiveTdSeekPaths, the TdBentInstances the frame's draws added, and the halo frame's layer-2
+        /// instances laid along a path (DD/VFX Ribbon <c>_Span.w</c> &lt; 0).</summary>
+        private IEnumerator CaptureSeek(TracerRibbonRenderer tracer, int n, string file, string label, List<SeekLane> lanes)
+        {
+            int bentBefore = IntProperty(tracer, "TdBentInstances");
+            var s = new Shots();
+            yield return Shoot(tracer, s);
+            Leaks(n, s);
+            int bentAfter = IntProperty(tracer, "TdBentInstances"), seekPaths = IntProperty(tracer, "LiveTdSeekPaths"), bentSpans = BentSpans(tracer, s.HaloInstances);
+            s_seeks.RemoveAll(m => m.Frame == n);
+            float ppm = PxPerMetre(LaneY);
+            var lanesJson = new List<string>();
+            var marks = new List<Mark>();
+            foreach (SeekLane lane in lanes)
+            {
+                lanesJson.Add(SeekJson(tracer, n, lane, s, ppm));
+                // the designed lanes' labels above their start (KIVRILAN turns down), the real one's under it (the frame title holds the
+                // top-left); the body the real round turns to as a "+" with its name below
+                marks.Add(MarkAt(lane.Flight[0] + new Vector3(-.05f, 0f, lane.Designed ? .45f : -.4f), lane.Label));
+                if (lane.Designed) continue;
+                marks.Add(MarkAt(lane.Body + new Vector3(-.05f, 0f, 0f), "+"));
+                marks.Add(MarkAt(lane.Body + new Vector3(-1.4f, 0f, -.4f), "SEEK HEDEFI"));
+            }
+
+            marks.AddRange(FloorMarks());
+            Stats all = Region(s.Lit, s.Dark, 0, W - 1, 0, H - 1);
+            string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "seekTrail"), P("ground", FloorName()), P("flashScale", GameFeelSettings.FlashScale),
+                P("inkDrawn", s.Ink), P("changedPx", all.Changed), P("darkLeakPx", s.DarkLeak), P("coreLeakPx", s.CoreLeak), P("haloLeakPx", s.HaloLeak),
+                P("blackMaxLevel", s.BlackMax), P("groundVeilLevels", s.Veil), P("hdr", s.Hdr != null),
+                P("liveTdSeekPaths", seekPaths), P("tdBentInstancesDelta", bentBefore >= 0 && bentAfter >= 0 ? bentAfter - bentBefore : -1),
+                P("haloFrameLayer2Instances", s.HaloInstances), P("haloFrameBentSpans", bentSpans),
+                P("designed", "KIVRILAN / DUZ: synthetic Shot V AR extra-volley records (VolleyIndex 1), kept path laid by TracerRibbonRenderer.SetTdPathForTests (F), "
+                              + "head = the path's newest point (StopTdProjectile); streak length = min(kept path, 10 m) (S-07 12.10 decision (a))"),
+                P("designedMissing", s_seekMissing), P("real", s_seekNote),
+                P("realLock", "GERCEK: the rig has no zombie - SeekTrail set and the path started as ProjectileSystem.LockSeek does (reflection), turned before every fixed "
+                              + "step as Steer turns a round; ProjectileSystem kept the path itself; the game clock held during the capture"),
+                P("realMissing", s_realMissing), P("nonEmpty", all.Changed > 200), PR("lanes", Arr(lanesJson)));
+            AddFrame(n, file, label, s.Look, s.Lit, W, H, new RectInt(0, 0, W, H), json, marks);
+            Debug.Log("[DD-TEST] wp104b4.ad " + file + " changed=" + all.Changed + " darkLeak=" + s.DarkLeak + " coreLeak=" + s.CoreLeak + " haloLeak=" + s.HaloLeak
+                      + " veil=" + F(s.Veil) + " seekPaths=" + seekPaths + " bentSpans=" + bentSpans + " " + SeekLog(n));
+            Assert.Greater(all.Changed, 200, file + ": iz çizilmedi (boş kare)");
+        }
+
+        /// <summary>A public int property by name (F's B9 readouts), −1 when there is none.</summary>
+        private static int IntProperty(object target, string name)
+        {
+            PropertyInfo p = target != null ? target.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance) : null;
+            return p != null && p.PropertyType == typeof(int) && p.GetIndexParameters().Length == 0 ? (int)p.GetValue(target) : -1;
+        }
+
+        /// <summary>Of the first <paramref name="n"/> instances DrawTd last wrote, those laid along a kept path (DD/VFX Ribbon's
+        /// <c>_Span.w</c> &lt; 0: −the bent streak's length); −1 without the array.</summary>
+        private static int BentSpans(TracerRibbonRenderer tracer, int n)
+        {
+            FieldInfo f = typeof(TracerRibbonRenderer).GetField("_span", Private);
+            if (f == null || !(f.GetValue(tracer) is Vector4[] span)) return -1;
+            int bent = 0;
+            for (int i = 0; i < n && i < span.Length; i++)
+            {
+                if (span[i].w < 0f) bent++;
+            }
+
+            return bent;
+        }
+
+        /// <summary>
+        /// One B9 lane: the drawn trail's pixels (<see cref="TrailPixels"/>) and their bend (<see cref="CentreBend"/>), the kept path's and the
+        /// flight's own bend (world, <see cref="BendOf"/>), and across the flight's direction 0.25 / 0.5 m behind the head the visible width
+        /// (lit vs dark), the layer-2 width (halo or body, the halo-only render over its bare one) and layer 0's bright core and quad.
+        /// </summary>
+        private string SeekJson(TracerRibbonRenderer tracer, int n, SeekLane lane, Shots s, float ppm)
+        {
+            var flight = new List<Vector2>(lane.Flight.Count);
+            foreach (Vector3 p in lane.Flight) flight.Add(Px(p));
+            var kept = new List<Vector2>(lane.PathCount);
+            for (int i = 0; i < lane.PathCount; i++) kept.Add(Px(lane.Path[i]));
+            Vector3 headW = lane.Flight[lane.Flight.Count - 1];
+            Vector3 dirHead = (headW - lane.Flight[lane.Flight.Count - 2]).normalized;
+            // what reads (a channel moved ≥ 0.10, WP-101's visibility) and what is drawn (≥ 8 levels: the faint end of the tail too)
+            List<Vector2> trail = TrailPixels(s, flight, kept, SeekBandMetres * ppm, Moved), faint = TrailPixels(s, flight, kept, SeekBandMetres * ppm, 8);
+            float bendPx = CentreBend(trail, Px(headW), out float lengthPx), faintPx = CentreBend(faint, Px(headW), out float faintLengthPx);
+            int across = Mathf.CeilToInt(ppm * .6f);
+            var vis = new int[2];
+            var layer2 = new int[2];
+            int bright = 0, quad = 0;
+            float[] behind = { .25f, .5f };
+            for (int b = 0; b < behind.Length; b++)
+            {
+                Vector3 at = Behind(lane.Flight, behind[b], out Vector3 dir);
+                Vector2 c = Px(at), d = (Px(at + dir * .1f) - c).normalized, nrm = new Vector2(-d.y, d.x);
+                vis[b] = Across(s.Lit, s.Dark, c, nrm, across, Moved, 0);
+                layer2[b] = Across(s.Halo, s.HaloBlack, c, nrm, across, Moved, 1);
+                if (b != 0) continue;
+                bright = Across(s.Core, s.Black, c, nrm, across, 254, 2);
+                quad = Across(s.Core, s.Black, c, nrm, across, 8, 1);
+            }
+
+            object tracerFlag = RecordValue(tracer, lane.Generation, "Tracer"), haloStep = RecordValue(tracer, lane.Generation, "HaloPx");
+            object look = RecordValue(tracer, lane.Generation, "Look"), seekPoints = RecordValue(tracer, lane.Generation, "SeekPoints");
+            object trailK = RecordValue(tracer, lane.Generation, "TrailScale"), coreM = RecordValue(tracer, lane.Generation, "Core"), haloM = RecordValue(tracer, lane.Generation, "Halo");
+            var m = new SeekM
+            {
+                Frame = n, Key = lane.Key, Ground = HalfName('C'), Designed = lane.Designed, PathPoints = lane.PathCount, TrailPx = trail.Count,
+                PathBendM = BendOf(lane.Path, lane.PathCount), FlightBendM = BendOf(lane.Flight.ToArray(), lane.Flight.Count),
+                DrawnBendM = float.IsNaN(bendPx) ? float.NaN : bendPx / ppm, DrawnLengthM = lengthPx / ppm,
+                DrawnBendFaintM = float.IsNaN(faintPx) ? float.NaN : faintPx / ppm, DrawnLengthFaintM = faintLengthPx / ppm,
+                Visible025 = vis[0], Visible05 = vis[1], Layer2025 = layer2[0], Layer205 = layer2[1], Bright025 = bright, Quad025 = quad,
+                Tracer = tracerFlag is bool tb ? tb : (bool?)null, RecordHaloPx = haloStep is float hs ? hs : float.NaN, RecordSeekPoints = seekPoints is int sp ? sp : -1
+            };
+            s_seeks.Add(m);
+            var path = new List<string>(lane.PathCount);
+            for (int i = 0; i < lane.PathCount; i++) path.Add(XZ(lane.Path[i]));
+            return Obj(P("key", lane.Key), P("label", lane.Label), P("ground", m.Ground), P("designed", lane.Designed), PB("pathLaid", lane.Designed ? lane.Laid : (bool?)null),
+                P("id", lane.Generation), P("volleyIndex", 1), P("steps", lane.Flight.Count - 1),
+                P("recordLook", look is int lk ? lk : -1), PR("recordTracer", tracerFlag is bool tf ? (tf ? "true" : "false") : "null"), P("recordHaloPx", m.RecordHaloPx),
+                P("recordTrailScale", trailK is float tk ? tk : float.NaN), P("recordCoreM", coreM is float cm ? cm : float.NaN), P("recordHaloM", haloM is float hm ? hm : float.NaN),
+                P("recordSeekPoints", m.RecordSeekPoints), P("pathPoints", lane.PathCount), PR("pathXZ", Arr(path)), PR("headXZ", XZ(headW)),
+                P("headingDeg", Mathf.Atan2(dirHead.z, dirHead.x) * Mathf.Rad2Deg), P("pathBendM", m.PathBendM), P("flightBendM", m.FlightBendM),
+                P("drawnBendM", m.DrawnBendM), P("drawnLengthM", m.DrawnLengthM), P("trailPx", m.TrailPx), P("drawnBendFaintM", m.DrawnBendFaintM),
+                P("drawnLengthFaintM", m.DrawnLengthFaintM), P("trailPxFaint", faint.Count),
+                PR("widthsPx", Obj(P("visible025", m.Visible025), P("visible05", m.Visible05), P("layer2025", m.Layer2025), P("layer205", m.Layer205),
+                    P("brightCore025", m.Bright025), P("coreQuad025", m.Quad025))));
+        }
+
+        private static string XZ(Vector3 w) => "[" + F(w.x - O.x) + ", " + F(w.z - O.z) + "]";
+
+        private static string SeekLog(int n)
+        {
+            var sb = new StringBuilder();
+            foreach (SeekM m in s_seeks)
+            {
+                if (m.Frame != n) continue;
+                sb.Append(m.Key).Append(" path=").Append(m.PathPoints).Append(" bend=").Append(F(m.DrawnBendM)).Append("m (kept ").Append(F(m.PathBendM)).Append(", flight ")
+                    .Append(F(m.FlightBendM)).Append(") len=").Append(F(m.DrawnLengthM)).Append("m vis=").Append(m.Visible025).Append(" l2=").Append(m.Layer2025).Append(' ');
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        /// <summary>B9: the changed pixels (lit vs dark, a channel moved ≥ <paramref name="threshold"/> levels) within <paramref name="band"/>
+        /// px of the round's flight or of its kept path (whichever the streak is laid along), over their screen box.</summary>
+        private static List<Vector2> TrailPixels(Shots s, List<Vector2> flight, List<Vector2> kept, float band, int threshold)
+        {
+            float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+            foreach (List<Vector2> line in new[] { flight, kept })
+            {
+                foreach (Vector2 p in line)
+                {
+                    x0 = Mathf.Min(x0, p.x);
+                    y0 = Mathf.Min(y0, p.y);
+                    x1 = Mathf.Max(x1, p.x);
+                    y1 = Mathf.Max(y1, p.y);
+                }
+            }
+
+            var px = new List<Vector2>();
+            if (x0 > x1) return px;
+            int xa = Mathf.Clamp(Mathf.FloorToInt(x0 - band), 0, W - 1), xb = Mathf.Clamp(Mathf.CeilToInt(x1 + band), 0, W - 1);
+            int ya = Mathf.Clamp(Mathf.FloorToInt(y0 - band), 0, H - 1), yb = Mathf.Clamp(Mathf.CeilToInt(y1 + band), 0, H - 1);
+            float band2 = band * band;
+            for (int y = ya; y <= yb; y++)
+            {
+                for (int x = xa; x <= xb; x++)
+                {
+                    int i = y * W + x;
+                    if (MaxAbs(s.Lit[i], s.Dark[i]) < threshold) continue;
+                    var q = new Vector2(x, y);
+                    if (Dist2(q, flight) > band2 && Dist2(q, kept) > band2) continue;
+                    px.Add(q);
+                }
+            }
+
+            return px;
+        }
+
+        /// <summary>Squared distance from <paramref name="q"/> to a polyline (to its one point when it has one; +∞ when empty).</summary>
+        private static float Dist2(Vector2 q, List<Vector2> line)
+        {
+            if (line.Count == 0) return float.PositiveInfinity;
+            if (line.Count == 1) return (q - line[0]).sqrMagnitude;
+            float best = float.PositiveInfinity;
+            for (int i = 1; i < line.Count; i++)
+            {
+                Vector2 a = line[i - 1], ab = line[i] - a;
+                float l2 = ab.sqrMagnitude, t = l2 > 1e-6f ? Mathf.Clamp01(Vector2.Dot(q - a, ab) / l2) : 0f;
+                best = Mathf.Min(best, (q - (a + ab * t)).sqrMagnitude);
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// B9's drawn bend (px): the trail's pixels binned (32) along the axis from the pixel farthest from the head to the head; each bin's
+        /// centroid is the trail's centre line there; the largest distance of a centroid from the chord of the first and the last centroid.
+        /// Width-free — a straight streak of any width reads ≈ 0 — and blind to where the streak ends. NaN without a trail.
+        /// </summary>
+        private static float CentreBend(List<Vector2> px, Vector2 head, out float lengthPx)
+        {
+            lengthPx = 0f;
+            if (px.Count < 12) return float.NaN;
+            Vector2 far = head;
+            float best = -1f;
+            foreach (Vector2 q in px)
+            {
+                float d = (q - head).sqrMagnitude;
+                if (d <= best) continue;
+                best = d;
+                far = q;
+            }
+
+            Vector2 axis = head - far;
+            float len = axis.magnitude;
+            lengthPx = len;
+            if (len < 4f) return float.NaN;
+            axis /= len;
+            const int bins = 32;
+            var sx = new double[bins];
+            var sy = new double[bins];
+            var count = new int[bins];
+            foreach (Vector2 q in px)
+            {
+                int k = Mathf.Clamp((int)(Vector2.Dot(q - far, axis) / len * bins), 0, bins - 1);
+                sx[k] += q.x;
+                sy[k] += q.y;
+                count[k]++;
+            }
+
+            var centres = new List<Vector2>(bins);
+            for (int k = 0; k < bins; k++)
+            {
+                if (count[k] >= 3) centres.Add(new Vector2((float)(sx[k] / count[k]), (float)(sy[k] / count[k])));
+            }
+
+            if (centres.Count < 3) return 0f;
+            Vector2 a = centres[0], ab = centres[centres.Count - 1] - a;
+            float l = ab.magnitude;
+            if (l < 1e-3f) return 0f;
+            float bend = 0f;
+            foreach (Vector2 q in centres) bend = Mathf.Max(bend, Mathf.Abs((q.x - a.x) * ab.y - (q.y - a.y) * ab.x) / l);
+            return bend;
+        }
+
+        /// <summary>World xz: the farthest of the inner <paramref name="count"/> points from the chord of the first and the last (m); 0 for
+        /// two points, NaN for none.</summary>
+        private static float BendOf(Vector3[] pts, int count)
+        {
+            if (pts == null || count < 1) return float.NaN;
+            if (count < 3) return 0f;
+            var a = new Vector2(pts[0].x, pts[0].z);
+            Vector2 ab = new Vector2(pts[count - 1].x, pts[count - 1].z) - a;
+            float l = ab.magnitude;
+            if (l < 1e-4f) return 0f;
+            float best = 0f;
+            for (int i = 1; i < count - 1; i++)
+            {
+                Vector2 q = new Vector2(pts[i].x, pts[i].z) - a;
+                best = Mathf.Max(best, Mathf.Abs(q.x * ab.y - q.y * ab.x) / l);
+            }
+
+            return best;
+        }
+
+        /// <summary>The point <paramref name="metres"/> back from the flight's end along it, and the flight's direction there.</summary>
+        private static Vector3 Behind(List<Vector3> flight, float metres, out Vector3 dir)
+        {
+            int last = flight.Count - 1;
+            dir = last > 0 ? (flight[last] - flight[last - 1]).normalized : Vector3.right;
+            float left = metres;
+            for (int i = last; i > 0; i--)
+            {
+                Vector3 seg = flight[i] - flight[i - 1];
+                float len = seg.magnitude;
+                if (len < 1e-5f) continue;
+                dir = seg / len;
+                if (left <= len) return flight[i] - dir * left;
+                left -= len;
+            }
+
+            return flight[0];
+        }
+
+        /// <summary>Pixels along the screen line through <paramref name="c"/> along <paramref name="nrm"/> (±<paramref name="half"/> px)
+        /// that pass: mode 0 a channel moved ≥ threshold against <paramref name="reference"/> (lit vs dark), 1 risen over it (alone on
+        /// black vs its bare render), 2 saturated where the bare render is not (A5).</summary>
+        private static int Across(Color32[] img, Color32[] reference, Vector2 c, Vector2 nrm, int half, int threshold, int mode)
+        {
+            int count = 0;
+            for (int k = -half; k <= half; k++)
+            {
+                int x = Mathf.RoundToInt(c.x + nrm.x * k), y = Mathf.RoundToInt(c.y + nrm.y * k);
+                if (x < 0 || y < 0 || x >= W || y >= H) continue;
+                int i = y * W + x;
+                Color32 r = reference != null ? reference[i] : Black32;
+                if (mode == 0 ? MaxAbs(img[i], r) >= threshold : Over(img[i], r, threshold, mode == 2)) count++;
+            }
+
+            return count;
+        }
+
+        private static int MaxAbs(Color32 a, Color32 b) => Mathf.Max(Mathf.Abs(a.r - b.r), Mathf.Max(Mathf.Abs(a.g - b.g), Mathf.Abs(a.b - b.b)));
+
         // ------------------------------------------------------------------ proc / aura / ensō capture
 
         /// <summary>One tree moment through the binder (TreeVfxBinder.Play: no audio, no telemetry), centred on the seam, captured at
@@ -1068,6 +1748,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (flames != null) flames.Clear();
             yield return null;
             Color32[] dark = Grab(false, true);
+            float veil = GroundVeil(dark);
             float t0 = VfxClock.Now;
             bool played = binder.Play(in info);
             RectInt tile = roiMetres > 0f ? Roi(O, roiMetres) : new RectInt(0, 0, W, H);
@@ -1093,12 +1774,13 @@ namespace DD.Prototype.Tests.PlayMode
                 float edgeW = EdgeLum(lit, dark, centre, 0, seam - 1, rw.R98 - 6f, rw.R98), edgeE = EdgeLum(lit, dark, centre, seam, W - 1, rw.R98 - 6f, rw.R98);
                 AddHalf(n, info.Kind.ToString(), HalfKey(true), 0, moments[k], west, ppm, rw, edgeW);
                 AddHalf(n, info.Kind.ToString(), HalfKey(false), 0, moments[k], east, ppm, re, edgeE);
+                s_veil[n] = veil;
                 var pairs = new List<string>
                 {
                     P("n", n), P("file", file), P("label", label), P("kind", info.Kind.ToString()), P("tier", info.Tier), P("radiusM", info.Radius),
                     P("seconds", info.Seconds), P("depth", info.Depth), P("element", info.Element.ToString()), P("tTargetS", moments[k]), P("tActualS", age),
                     P("played", played), P("preview", TreeVfxPreview.Active), P("clock", TreeVfxPreview.Active ? "unscaled (preview), real time" : "game time, captureDeltaTime 1/60"),
-                    P("ground", FloorName()), P("nonEmpty", west.Changed + east.Changed > 200), PR("centrePx", "[" + F(centre.x) + ", " + F(centre.y) + "]"),
+                    P("ground", FloorName()), P("groundVeilLevels", veil), P("nonEmpty", west.Changed + east.Changed > 200), PR("centrePx", "[" + F(centre.x) + ", " + F(centre.y) + "]"),
                     PR("binder", BinderJson(binder)), PR(HalfKey(true), HalfJson(west, ppm, rw, edgeW)), PR(HalfKey(false), HalfJson(east, ppm, re, edgeE))
                 };
                 if (flames != null && info.Kind == TreeProcKind.FireGround)
@@ -1126,6 +1808,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return null;   // TreeAuraVfx hid its layers (level 0)
             Color32[] dark = Grab(false, true);
+            float veil = GroundVeil(dark);
             TreeAuraVfx aura = binder.Aura;
             Assert.IsNotNull(aura, "TreeAuraVfx");
             for (int level = 1; level <= TreeVfxLadder.AuraLevels; level++)
@@ -1148,19 +1831,59 @@ namespace DD.Prototype.Tests.PlayMode
                 Radial rw = RadialOf(lit, dark, look, centre, 0, seam - 1), re = RadialOf(lit, dark, look, centre, seam, W - 1);
                 AddHalf(n, "aura", HalfKey(true), level, .4f, west, ppm, rw, float.NaN);
                 AddHalf(n, "aura", HalfKey(false), level, .4f, east, ppm, re, float.NaN);
+                s_veil[n] = veil;
                 string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "aura"), P("level", level), P("tint", tint),
                     P("radiusM", TreeVfxLadder.AuraRadius(level)), P("alphaCap", TreeVfxLadder.AuraAlpha(level)), P("sparksPerSecond", TreeVfxLadder.AuraSparksPerSecond(level)),
                     P("tActualS", VfxClock.Now - t0), P("drawnLevel", aura.Level), P("ringVisible", aura.RingVisible), P("sparksVisible", aura.SparksVisible),
                     P("smokeVisible", aura.SmokeVisible), P("domeVisible", aura.DomeVisible), P("sparkAlphaCap", aura.SparkAlphaCap), P("ringScaleM", aura.RingScale),
-                    P("ringRow", aura.RingRow != null ? aura.RingRow.Id : null), P("ground", FloorName()), P("nonEmpty", west.Changed + east.Changed > 200),
+                    P("ringRow", aura.RingRow != null ? aura.RingRow.Id : null), P("ground", FloorName()), P("groundVeilLevels", veil), P("nonEmpty", west.Changed + east.Changed > 200),
                     PR(HalfKey(true), HalfJson(west, ppm, rw, float.NaN)), PR(HalfKey(false), HalfJson(east, ppm, re, float.NaN)));
                 AddFrame(n, file, label, look, lit, W, H, Roi(O, 8f), json, FloorMarks());
                 Debug.Log("[DD-TEST] wp104b4.ad " + file + " ring=" + aura.RingVisible + " changed=" + (west.Changed + east.Changed));
                 Assert.Greater(west.Changed + east.Changed, 200, "aura " + level + ": görsel yok (boş kare)");
             }
 
+            // 33 · 34 — B4-2 S2: aura III on each whole ground (E: a light inner line, the ring's value step for the red-weak eye),
+            // lumStepMean over the ring's changed pixels on both grounds; the dark frame at level 0 after binder.Clear (no entry pulse left)
+            for (int g = 0; g < 2; g++)
+            {
+                Floor floorW = g == 0 ? Floor.Light : Floor.Slate;
+                s.AuraLevel = 0;
+                TreeVfxPreview.SetStats(s);
+                binder.Clear();
+                SetFloor(floorW);
+                yield return null;
+                yield return null;   // TreeAuraVfx hid its layers (level 0)
+                Color32[] darkW = Grab(false, true);
+                float veilW = GroundVeil(darkW);
+                s.AuraLevel = 3;
+                TreeVfxPreview.SetStats(s);
+                float t0W = VfxClock.Now;
+                yield return WaitPresentation(t0W, .4f);
+                Color32[] litW = Grab(false, true);
+                Color32[] lookW = _lookPost ? Grab(true, true) : litW;
+                int nW = 33 + g;
+                string keyW = g == 0 ? KeyStone : KeySlate, groundW = g == 0 ? "ACIK TAS" : "ISLAK ARDUVAZ";
+                string tintW = "#" + ColorUtility.ToHtmlStringRGB(TreeVfxLadder.AuraTint(3));
+                string fileW = nW + (g == 0 ? "-aura-III-acik-tas.png" : "-aura-III-islak-arduvaz.png");
+                string labelW = nW + " B11 AURA III " + tintW + " / " + groundW + " (S2)";
+                Stats allW = Region(litW, darkW, 0, W - 1, 0, H - 1);
+                float ppmW = PxPerMetre(0f);
+                Radial radW = RadialOf(litW, darkW, lookW, Px(O), 0, W - 1);
+                AddHalf(nW, "auraIII", keyW, 3, .4f, allW, ppmW, radW, float.NaN);
+                s_veil[nW] = veilW;
+                string jsonW = Obj(P("n", nW), P("file", fileW), P("label", labelW), P("kind", "auraWhole"), P("level", 3), P("tint", tintW),
+                    P("radiusM", TreeVfxLadder.AuraRadius(3)), P("alphaCap", TreeVfxLadder.AuraAlpha(3)), P("tActualS", VfxClock.Now - t0W), P("drawnLevel", aura.Level),
+                    P("ringVisible", aura.RingVisible), P("sparksVisible", aura.SparksVisible), P("smokeVisible", aura.SmokeVisible), P("ground", FloorName()),
+                    P("groundVeilLevels", veilW), P("nonEmpty", allW.Changed > 200), PR(keyW, HalfJson(allW, ppmW, radW, float.NaN)));
+                AddFrame(nW, fileW, labelW, lookW, litW, W, H, Roi(O, 8f), jsonW, FloorMarks());
+                Debug.Log("[DD-TEST] wp104b4.ad " + fileW + " ring=" + aura.RingVisible + " changed=" + allW.Changed + " lumStep=" + F(LumStepOf(allW)));
+                Assert.Greater(allW.Changed, 200, "aura III " + groundW + ": görsel yok (boş kare)");
+            }
+
             s.AuraLevel = 0;
             TreeVfxPreview.SetStats(s);
+            SetFloor(Floor.Split);
             yield return null;
         }
 
@@ -1174,6 +1897,8 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return null;
             Color32[] dark = Grab(false, true);
+            float veil = GroundVeil(dark);
+            s_veil[n] = veil;
             TreeProcInfo e = Info(TreeProcKind.SynergyFirstTrigger, hero.position, 0f, 1);
             e.Synergy = TreeSynergy.FrozenGravity;
             float t0 = VfxClock.Now;
@@ -1193,7 +1918,8 @@ namespace DD.Prototype.Tests.PlayMode
             AddHalf(n, "synergyEnso", "leftHalf", 0, .55f, west, ppm, rw, float.NaN);
             AddHalf(n, "synergyEnso", "rightHalf", 0, .55f, east, ppm, re, float.NaN);
             string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "synergyEnso"), P("synergy", "FrozenGravity"), P("tints", EnsoTints(TreeSynergy.FrozenGravity)),
-                P("played", played), P("tTargetS", .55f), P("tActualS", VfxClock.Now - t0), P("ground", FloorName()), P("nonEmpty", west.Changed + east.Changed > 200),
+                P("played", played), P("tTargetS", .55f), P("tActualS", VfxClock.Now - t0), P("ground", FloorName()), P("groundVeilLevels", veil),
+                P("nonEmpty", west.Changed + east.Changed > 200),
                 PR("binder", BinderJson(binder)), PR("leftHalf", HalfJson(west, ppm, rw, float.NaN)), PR("rightHalf", HalfJson(east, ppm, re, float.NaN)));
             AddFrame(n, file, label, look, lit, W, H, Roi(hero.position, 10f), json, FloorMarks());
             Debug.Log("[DD-TEST] wp104b4.ad " + file + " played=" + played + " changed=" + (west.Changed + east.Changed));
@@ -1328,8 +2054,99 @@ namespace DD.Prototype.Tests.PlayMode
             return Obj(P("name", g.Name), P("present", true), P("emission", g.Emission), PR("screenPx", "[" + F(g.SizeX) + ", " + F(g.SizeY) + "]"),
                 P("screenAreaPx", g.AreaPx), P("centreX", g.CentreX), P("centreY", g.CentreY), P("glowSpotPx", g.GlowSpot), P("peakLumOn", g.PeakOn),
                 P("peakLumOff", g.PeakOff), P("rawSaturatedPx", g.RawSaturated), P("glowMaskPx", g.MaskPx), P("maskLumOffRaw", g.MeanLumOff),
-                P("maskLumOnRaw", g.MeanLumOn), P("maskLumDeltaRaw", delta), P("maskLumHdrOff", g.MeanHdrOff), P("maskLumHdrOn", g.MeanHdrOn),
+                P("maskLumOnRaw", g.MeanLumOn), P("maskLumOnRawWithCard", g.MeanLumOnCard), P("maskLumDeltaRaw", delta), P("maskLumHdrOff", g.MeanHdrOff), P("maskLumHdrOn", g.MeanHdrOn),
                 P("slotEmissionOff", g.SlotOff), P("slotEmissionOn", g.SlotOn), P("m9Raw", m9Raw), P("m9Post", g.GlowSpot >= g.AreaPx));
+        }
+
+        /// <summary>
+        /// M9post (B4-2, F): what the capture can see of the socket glow card — TreeAttachGlow's public int / float / bool members whose
+        /// name holds "Card" or "Socket" (by reflection: this file builds before and after F), the component types under the glow host
+        /// and the weapon whose name holds "Card", and the enabled renderers under the glow host with their materials (a card F parents
+        /// there). "missing" when there is nothing of the kind. A card drawn with Graphics.DrawMesh from a LateUpdate never reaches this
+        /// capture's renders (they run in the coroutine, before LateUpdate): it must be a renderer, or be queued earlier in the frame.
+        /// </summary>
+        private static string CardJson(TreeAttachGlow glow, GameObject host, GameObject weapon)
+        {
+            var pairs = new List<string>();
+            const BindingFlags members = BindingFlags.Public | BindingFlags.Instance;
+            if (glow != null)
+            {
+                foreach (PropertyInfo p in typeof(TreeAttachGlow).GetProperties(members))
+                {
+                    if (p.GetIndexParameters().Length != 0 || !CardName(p.Name)) continue;
+                    object v;
+                    try
+                    {
+                        v = p.GetValue(glow);
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                    AddScalar(pairs, p.Name, v);
+                }
+
+                foreach (FieldInfo f in typeof(TreeAttachGlow).GetFields(members | BindingFlags.Static))
+                {
+                    if (CardName(f.Name)) AddScalar(pairs, f.Name, f.GetValue(f.IsStatic ? null : glow));
+                }
+            }
+
+            var types = new List<string>();
+            foreach (GameObject root in new[] { host, weapon })
+            {
+                if (root == null) continue;
+                foreach (Component c in root.GetComponentsInChildren<Component>(true))
+                {
+                    if (c == null) continue;
+                    string name = c.GetType().Name;
+                    if (name.IndexOf("Card", StringComparison.Ordinal) >= 0 && !types.Contains(Q(name))) types.Add(Q(name));
+                }
+            }
+
+            var renderers = new List<string>();
+            if (host != null)
+            {
+                foreach (Renderer r in host.GetComponentsInChildren<Renderer>(false))
+                {
+                    if (r != null && r.enabled && renderers.Count < 8) renderers.Add(Q(r.name + " / " + (r.sharedMaterial != null ? r.sharedMaterial.name : "-")));
+                }
+            }
+
+            if (pairs.Count == 0 && types.Count == 0 && renderers.Count == 0) return Q("missing");
+            pairs.Add(PR("cardComponents", Arr(types)));
+            pairs.Add(PR("hostRenderers", Arr(renderers)));
+            return Obj(pairs);
+        }
+
+        private static bool CardName(string name) => name.IndexOf("Card", StringComparison.Ordinal) >= 0 || name.IndexOf("Socket", StringComparison.Ordinal) >= 0;
+
+        /// <summary>One readout as JSON: numbers, flags, text, a tint (Vector4 / Color), a renderer (name, enabled, last seen, material).</summary>
+        private static void AddScalar(List<string> pairs, string name, object v)
+        {
+            if (v is int iv) pairs.Add(P(name, iv));
+            else if (v is float fv) pairs.Add(P(name, fv));
+            else if (v is bool bv) pairs.Add(P(name, bv));
+            else if (v is string sv) pairs.Add(P(name, sv));
+            else if (v is Vector4 v4) pairs.Add(PR(name, "[" + F(v4.x) + ", " + F(v4.y) + ", " + F(v4.z) + ", " + F(v4.w) + "]"));
+            else if (v is Color col) pairs.Add(PR(name, "[" + F(col.r) + ", " + F(col.g) + ", " + F(col.b) + ", " + F(col.a) + "]"));
+            else if (v is Renderer rr && rr != null)
+            {
+                pairs.Add(PR(name, Obj(P("name", rr.name), P("enabled", rr.enabled), P("visibleLastFrame", rr.isVisible),
+                    P("material", rr.sharedMaterial != null ? rr.sharedMaterial.name : null))));
+            }
+            else if (v == null || v is Object) pairs.Add(PR(name, "null"));
+        }
+
+        /// <summary>F's TreeAttachGlow.CardsEnabled (reflection; S-07 12.10: hide the socket cards while the glow-slot mask renders): "on" /
+        /// "off" as set, "missing" when there is no such property.</summary>
+        private static string SetCards(TreeAttachGlow glow, bool on)
+        {
+            PropertyInfo p = glow != null ? typeof(TreeAttachGlow).GetProperty("CardsEnabled", BindingFlags.Public | BindingFlags.Instance) : null;
+            if (p == null || !p.CanWrite || p.PropertyType != typeof(bool)) return "missing";
+            p.SetValue(glow, on);
+            return on ? "on" : "off";
         }
 
         /// <summary>AD-B4 M9's "ek maskesi" (C, 12.10): the add-on's glow-slot pixels in the raw frame — its renderers drawn unlit with
@@ -1507,6 +2324,7 @@ namespace DD.Prototype.Tests.PlayMode
             _cam.farClipPlane = 200f;
             _cam.clearFlags = CameraClearFlags.SolidColor;
             _cam.backgroundColor = Color.black;
+            _cam.cullingMask = CaptureMask();   // b4-r3: never one of the world's cameras (see CaptureMask)
             _cam.targetTexture = _rt;
             _cam.aspect = (float)W / H;
             _cam.enabled = false;
@@ -1524,6 +2342,46 @@ namespace DD.Prototype.Tests.PlayMode
             _lookPost = _post != null && BuildLookVolume();
             FeedbackCameraRef.Set(_cam);   // camera-facing cards billboard to this camera
             Physics.SyncTransforms();
+        }
+
+        /// <summary>
+        /// b4-r3 (12.10): Wp101MermiSinifTdTests / Wp095MermiTdKareTests load the Run scene (LoadScene Single) and leave it; its v6 world
+        /// keeps DD.Art.VolumetricLight live, and VolumetricLightFeature (BeforeRenderingTransparents, one full-screen composite) and
+        /// PlanarReflection draw into every base game camera whose culling mask holds the Environment layer (PlanarReflection.RendersWorld)
+        /// — this camera, with Everything, took the world's in-scatter on every render. Every layer but Environment: nothing this capture
+        /// draws is on it (the grounds and stand-ins are Default, the tracers DrawMeshInstanced on 0, the binder's cards and the add-ons
+        /// their own), so no world pass ever draws into the capture, loaded world or not.
+        /// </summary>
+        private static int CaptureMask()
+        {
+            int environment = DD.Prototype.Core.PrototypeLayers.Environment;
+            return environment >= 0 && environment < 32 ? ~(1 << environment) : ~0;
+        }
+
+        /// <summary>A loaded world's state the header records (by type name: this assembly does not reference DD.Art): "missing" when the
+        /// type or member is not there.</summary>
+        private static string WorldFlag(string typeName, string member)
+        {
+            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type t;
+                try
+                {
+                    t = a.GetType(typeName, false);
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+
+                if (t == null) continue;
+                PropertyInfo p = t.GetProperty(member, BindingFlags.Public | BindingFlags.Static);
+                if (p != null) return Convert.ToString(p.GetValue(null), CultureInfo.InvariantCulture);
+                FieldInfo f = t.GetField(member, BindingFlags.Public | BindingFlags.Static);
+                return f != null ? Convert.ToString(f.GetValue(null), CultureInfo.InvariantCulture) : "missing";
+            }
+
+            return "missing";
         }
 
         /// <summary>
@@ -1709,15 +2567,32 @@ namespace DD.Prototype.Tests.PlayMode
                     P("png", _lookPost ? "the game's post stack: WorldAtmosphere.EnsureVolume runtime profile (Neutral tonemap, contrast 8, bloom 1.25 / 0.5 / 0.62, vignette 0.2)" : "raw (URP post-processing unavailable)"),
                     P("measured", "raw: HDR camera without post-processing into an 8-bit sRGB target (the A5 / Wp101TdIzZeminTests set-up)"),
                     P("hdr", _hdrOk), P("hdrMeasure", _hdrOk ? "the same raw render into a linear ARGBHalf target, read unclamped: peakLumHdr, meanLumHdr" : "unavailable"),
-                    P("tracerFrame", "each tracer capture starts on a Unity frame of its own (AD-B4 M2); darkLeakPx = 0 proves the ground-only render is bare"))),
+                    P("tracerFrame", "each tracer capture starts on a Unity frame of its own (AD-B4 M2); darkLeakPx = 0 proves the ground-only render is bare; "
+                                     + "coreLeakPx / haloLeakPx = 0 that the bare ground-off render of the core's / the halo's Unity frame is black"),
+                    P("cullingMask", "0x" + _cam.cullingMask.ToString("X8", CultureInfo.InvariantCulture)),
+                    P("environmentLayer", DD.Prototype.Core.PrototypeLayers.Environment),
+                    P("worldPasses", "the capture camera leaves the Environment layer out: PlanarReflection.RendersWorld is false for it, so VolumetricLightFeature "
+                                     + "and the planar reflection never draw into it (b4-r3), whatever world an earlier fixture left loaded"))),
+                PR("world", Obj(P("activeScene", SceneManager.GetActiveScene().name), P("sceneCount", SceneManager.sceneCount),
+                    P("volumetricLightActive", WorldFlag("DD.Art.VolumetricLight", "Active")), P("screenAtmosphereWorldActive", WorldFlag("DD.Art.ScreenAtmosphereFeature", "WorldActive")),
+                    P("note", "the state at the first SetUp: a loaded world (e.g. the Run scene an earlier fixture left) with volumetricLightActive True is the b4-r3 condition; "
+                              + "haloLeakPx / coreLeakPx / groundVeilLevels show whether it still reached the frames"))),
                 P("vfxTier", VfxTier.Current.ToString()), P("captureDeltaTime", "1/60 (game time) until the preview frames 21-26, then 0 (real time)"),
                 P("fog", false), P("reducedMotion", false),
                 PR("tracerStyle", Constants(typeof(TracerStyle), null)), PR("tracerTd", Constants(typeof(TracerRibbonRenderer), "Td")),
                 PR("ladder", Constants(typeof(TreeVfxLadder), null)),
                 PR("definitions", Obj(
-                    P("brightCorePx", "tracer layer 0 alone on black: pixels whose brightest channel >= 254 across the streak 0.1 m behind the head (A5); Max over 0.1-2 m"),
-                    P("coreQuadPx", "the same column, brightest channel >= 8 (the core quad with its soft edge)"),
-                    P("haloPx", "tracer halos alone on black: brightest channel >= 0.10 across the streak 0.25 m behind the head; Max over 0.1-2 m"),
+                    P("brightCorePx", "tracer layer 0 alone on black: pixels whose brightest channel >= 254 (and not already in the bare ground-off render of that Unity frame) across the streak 0.1 m behind the head (A5); Max over 0.1-2 m"),
+                    P("coreQuadPx", "the same column, a channel risen >= 8 over the bare ground-off render (the core quad with its soft edge)"),
+                    P("haloPx", "tracer halos alone on black: a channel risen >= 0.10 over the bare ground-off render of the halo's Unity frame, across the streak 0.25 m behind the head; Max over 0.1-2 m"),
+                    P("coreLeakPx", "tracer frame: pixels of the bare ground-off render taken in the core's Unity frame before any of the capture's draws whose brightest channel >= 8 (0 = layer 0's measures are its own draws)"),
+                    P("haloLeakPx", "tracer frame: the same for the halo's Unity frame, before DrawTd(2) (0 = nothing of the previous frame left queued, nothing a loaded world draws over black; b4-r3 had its whole frame here)"),
+                    P("blackMaxLevel", "tracer frame: the brightest channel in either bare ground-off render (0 on a clean frame)"),
+                    P("groundVeilLevels", "every frame: the four 5 x 5 corner patches of its ground-only render against the bare ground (Unlit sRGB 0.75 -> 191, 0.20 -> 51), worst channel, 8-bit levels (<= 2 clean; b4-r3's world in-scatter: 3-9)"),
+                    P("seekTrail", "35-36 (B4-2 B9): KIVRILAN / DUZ = designed paths laid by SetTdPathForTests (pathPoints 3), GERCEK = a real round (pathPoints = ProjectileSystem.TryGetPath's kept + now); "
+                                   + "recordSeekPoints = the TD record's SeekPoints (F); pathBendM / flightBendM = the kept path's / the driven flight's farthest point from its chord (world xz); "
+                                   + "drawnBendM = the drawn trail's pixels (lit vs dark >= 0.10, within 1 m of the flight or the kept path) binned along the axis from the pixel farthest from the head to the head: the largest distance of a bin centroid from the chord of the first and last centroid (width-free); drawnBendFaintM the same over pixels moved >= 8 levels (the faint tail end too); "
+                                   + "widths across the flight's direction 0.25 / 0.5 m behind the head: visiblePx (lit vs dark >= 0.10), layer2Px (halo-only render risen >= 0.10 over its bare render), brightCorePx / coreQuadPx (layer 0)"),
                     P("visiblePx", "lit vs dark (ground only), a channel moved >= 0.10, across the streak: median / max over 0.1-2 m (WP-101)"),
                     P("visiblePxPost", "the same on the post frames (lit vs ground-only, both through the post stack): median over 0.1-2 m (S1)"),
                     P("lengthM", "band bboxM[0]: the changed pixels' width from the record's origin (<= 10.5 m behind the head) to 0.15 m past it, in metres at the 1 m tracer height"),
@@ -1767,7 +2642,9 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static float Lum(Color c) => .2126f * c.r + .7152f * c.g + .0722f * c.b;
 
-        private static int Column(Color32[] img, Vector2 c, int half, int threshold)
+        /// <summary>A screen column of an "alone on black" render counted against <paramref name="bare"/>, the bare ground-off render of the
+        /// same Unity frame (black on a clean frame: the plain thresholds then) — see <see cref="Over"/>.</summary>
+        private static int ColumnOver(Color32[] img, Color32[] bare, Vector2 c, int half, int threshold, bool saturation)
         {
             int x = (int)c.x, n = 0;
             if (x < 0 || x >= W) return 0;
@@ -1775,12 +2652,19 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 int y = (int)c.y + dy;
                 if (y < 0 || y >= H) continue;
-                Color32 k = img[y * W + x];
-                if (Mathf.Max(k.r, Mathf.Max(k.g, k.b)) >= threshold) n++;
+                int i = y * W + x;
+                if (Over(img[i], bare != null ? bare[i] : Black32, threshold, saturation)) n++;
             }
 
             return n;
         }
+
+        /// <summary>A pixel of an alone-on-black render that is the capture's own: a channel risen ≥ <paramref name="threshold"/> over the
+        /// bare render; for A5's bright core (<paramref name="saturation"/>) its brightest channel ≥ the threshold where the bare one is not.</summary>
+        private static bool Over(Color32 k, Color32 bare, int threshold, bool saturation) =>
+            saturation ? MaxC(k) >= threshold && MaxC(bare) < threshold : Mathf.Max(k.r - bare.r, Mathf.Max(k.g - bare.g, k.b - bare.b)) >= threshold;
+
+        private static int MaxC(Color32 k) => Mathf.Max(k.r, Mathf.Max(k.g, k.b));
 
         private static int ColumnDiff(Color32[] lit, Color32[] dark, Vector2 c, int half, int threshold)
         {
@@ -1998,22 +2882,40 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------ AD-B4 §3 / §4 thresholds (b4ad.json "ad")
 
-        /// <summary>One AD-B4 MUST / SHOULD: its checks (measured, threshold, pass), the data it lacked and notes. PASS = every check
-        /// passed with nothing missing; FAIL = a check failed; open (null) = data missing (a test not run, a frame absent).</summary>
+        /// <summary>One AD-B4 MUST / SHOULD or B4-2 criterion: its checks (measured, threshold, pass), the data it lacked and notes. PASS =
+        /// every check passed with nothing missing; AD KABUL = the only misses are checks the AD accepted (C-00 12.10: M5 A1, M6 A4 — still
+        /// measured); FAIL = a check failed; open (null, "?") = data missing (a test not run, a frame absent, an API not there yet).</summary>
         private sealed class Crit
         {
-            public readonly string Id, Title, Basis;
-            public readonly bool Must;
+            public readonly string Id, Title, Basis, Group;
             public readonly List<string> Checks = new List<string>(), Missing = new List<string>(), Notes = new List<string>();
             public string Detail;
-            public int Passed, Failed;
+            public int Passed, Failed, Accepted;
 
-            public Crit(string id, bool must, string title, string basis)
+            public Crit(string id, string group, string title, string basis)
             {
                 Id = id;
-                Must = must;
+                Group = group;
                 Title = title;
                 Basis = basis;
+            }
+
+            public bool Must => Group == GroupMust;
+
+            /// <summary>A check the AD accepted under its threshold: measured and written; a miss reads "AD kabul" and never fails the
+            /// criterion.</summary>
+            public void AddAccepted(string name, float measured, string threshold, bool pass, string why)
+            {
+                if (float.IsNaN(measured) || float.IsInfinity(measured))
+                {
+                    Missing.Add(name);
+                    return;
+                }
+
+                Checks.Add(Obj(P("check", name), P("measured", measured), P("threshold", threshold), P("pass", pass), P("verdict", pass ? "PASS" : "AD kabul"),
+                    P("adKabul", !pass), P("why", why)));
+                if (pass) Passed++;
+                else Accepted++;
             }
 
             public void Add(string name, float measured, string threshold, bool pass)
@@ -2036,42 +2938,66 @@ namespace DD.Prototype.Tests.PlayMode
                 else Failed++;
             }
 
-            public bool? Pass => Failed > 0 ? false : Missing.Count > 0 || Passed == 0 ? (bool?)null : true;
+            public bool? Pass => Failed > 0 ? false : Missing.Count > 0 || Passed + Accepted == 0 ? (bool?)null : true;
 
-            public string Word => Pass == true ? "PASS" : Pass == false ? "FAIL" : "?";
+            public string Word => Pass == true ? (Accepted > 0 ? "AD KABUL" : "PASS") : Pass == false ? "FAIL" : "?";
 
-            public string Json() => Obj(P("id", Id), P("must", Must), P("title", Title), P("basis", Basis), PB("pass", Pass), P("passed", Passed),
-                P("failed", Failed), PR("missing", Strs(Missing)), PR("notes", Strs(Notes)), PR("detail", Detail ?? "null"), PR("checks", Arr(Checks)));
+            public string Json() => Obj(P("id", Id), P("group", Group), P("must", Must), P("title", Title), P("basis", Basis), PB("pass", Pass), P("verdict", Word),
+                P("passed", Passed), P("failed", Failed), P("accepted", Accepted), PR("missing", Strs(Missing)), PR("notes", Strs(Notes)), PR("detail", Detail ?? "null"),
+                PR("checks", Arr(Checks)));
         }
 
-        private static string AdJson(out string mustLine, out string shouldLine)
+        private static string AdJson(out string mustLine, out string shouldLine, out string b42Line)
         {
-            var crits = new List<Crit> { M1(), M2(), M3(), M4(), M5(), M6(), M7(), M8(), M9(), M10(), S1(), S2(), S3(), S4() };
+            var crits = new List<Crit> { M1(), M2(), M3(), M4(), M5(), M6(), M7(), M8(), M9(), M10(), S1(), S2(), S3(), S4(), M9Post(), B9() };
             var must = new StringBuilder("AD-B4 MUST:");
             var should = new StringBuilder("AD-B4 SHOULD:");
-            int pass = 0, fail = 0, open = 0;
+            var b42 = new StringBuilder("B4-2:");
+            int pass = 0, accepted = 0, fail = 0, open = 0;
             var items = new List<string>();
             foreach (Crit c in crits)
             {
-                (c.Must ? must : should).Append(' ').Append(c.Id).Append(' ').Append(c.Word).Append(" |");
+                if (c.Group == GroupMust) must.Append(' ').Append(c.Id).Append(' ').Append(c.Word).Append(" |");
+                else if (c.Group == GroupShould) should.Append(' ').Append(c.Id).Append(' ').Append(c.Word).Append(" |");
                 if (c.Must)
                 {
                     if (c.Pass == true) pass++;
                     else if (c.Pass == false) fail++;
                     else open++;
+                    if (c.Pass == true && c.Accepted > 0) accepted++;
                 }
 
                 items.Add(c.Json());
             }
 
+            foreach (string id in B42Ids)
+            {
+                Crit c = crits.Find(x => x.Id == id);
+                b42.Append(' ').Append(id).Append(' ').Append(c != null ? c.Word : "?").Append(" |");
+            }
+
             mustLine = must.ToString().TrimEnd('|', ' ');
             shouldLine = should.ToString().TrimEnd('|', ' ');
-            return Obj(P("source", "K/wp-104/b4-s07/evidence/AD-B4.md §3 MUST / §4 SHOULD (12.10): every threshold evaluated on this run's frames; PASS / FAIL is never asserted"),
-                P("mustSummary", mustLine), P("shouldSummary", shouldLine), P("mustPass", pass), P("mustFail", fail), P("mustOpen", open),
+            b42Line = b42.ToString().TrimEnd('|', ' ');
+            return Obj(P("source", "K/wp-104/b4-s07/evidence/AD-B4.md §3 MUST / §4 SHOULD (12.10) + B4-2 (C-00 12.10): every threshold evaluated on this run's frames; PASS / FAIL is never asserted"),
+                P("mustSummary", mustLine), P("shouldSummary", shouldLine), P("b42Summary", b42Line), PR("b42", Strs(new List<string>(B42Ids))),
+                P("mustPass", pass), P("mustAdKabul", accepted), P("mustFail", fail), P("mustOpen", open),
+                P("adKabul", "C-00 12.10: M5 A1 (ΔE ≥ 25, kademe I) and M6 A4 (ΔE ≥ 30, halka r farkı) accepted by the AD — measured on, a miss reads 'AD kabul', "
+                             + "the criterion 'AD KABUL' when nothing else fails"),
                 PR("a11Key", s_blindKey ?? "null"),
                 P("m2RootCause", "b4-r2: CaptureTracers 02 and 07 ran in the Unity frame where 01 / 06 had queued their halo-only pass (DrawTd(2) after their own yield); "
                     + "Graphics.DrawMeshInstanced draws in every render of its frame, so 02 / 07 rendered those halos into their dark, core and lit frames (brightCorePx 33 / 24 = "
                     + "halo pixels, visiblePx 19 / 6 = lit minus a dark that held the halo). Fixed: every tracer capture starts on a fresh Unity frame; darkLeakPx per frame"),
+                P("r3RootCause", "b4-r3 (haloPx I / IV / V 64 / 91 / 123 on frames 01-02, coreQuadPx 123 = the whole +-0.6 m column on every round, every wet-slate half 123): "
+                    + "the run had Wp101MermiSinifTdTests / Wp095MermiTdKareTests before this fixture; they load the Run scene (LoadScene Single) and leave it, and its v6 world "
+                    + "keeps DD.Art.VolumetricLight live. VolumetricLightFeature composites its raymarched in-scatter (BeforeRenderingTransparents, full screen) into every base "
+                    + "camera whose culling mask holds the Environment layer (PlanarReflection.RendersWorld) - the capture camera had Everything. With the ground on, the veil is "
+                    + "the same in the lit and the dark render (lit - dark clean, darkLeakPx 0; only the ground drifted: wet slate 54-60 for 51, brighter east, light stone 189-190 "
+                    + "for 191 in b4-r3's raw PNGs); in the ground-off renders (layer 0 alone, the halos alone) the ray ends in the sky (30 m) and the veil lies on black: >= 8/255 "
+                    + "everywhere (coreQuadPx = the column), >= 26/255 where the cloud cookie lets the sun through (the halo columns of lanes I / IV / V, every east half). "
+                    + "b4-r4 ran without those fixtures: clean. Fixed: the capture camera leaves the Environment layer out (no world pass draws into it); the core / halo "
+                    + "measures count a pixel's rise over a bare ground-off render of the same Unity frame; coreLeakPx / haloLeakPx (those bare renders are black) and "
+                    + "groundVeilLevels (each frame's ground is the bare ground) prove every frame, M2 checks them"),
                 PR("criteria", Arr(items)));
         }
 
@@ -2087,7 +3013,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M1()
         {
-            var c = new Crit("M1", true, "Merdiven: AR I-V hale +5 px / çekirdek sabit / iz boyu; LMG V, SR V; A11",
+            var c = new Crit("M1", GroupMust, "Merdiven: AR I-V hale +5 px / çekirdek sabit / iz boyu; LMG V, SR V; A11",
                 "AD-B4 §1, §3 M1 · kare 01 (açık taş) / 02 (ıslak arduvaz) AR I-V; 30 / 31 LMG ve SR I + V; 32 A11 kör sıralama");
             for (int g = 0; g < 2; g++)
             {
@@ -2167,7 +3093,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M2()
         {
-            var c = new Crit("M2", true, "Ölçüm tutarlılığı", "AD-B4 §2.2, §3 M2 · aynı WP-101 AR I izi: kare 02 ↔ 03 (ıslak arduvaz), 01 ↔ 03 (açık taş); bütün iz kareleri");
+            var c = new Crit("M2", GroupMust, "Ölçüm tutarlılığı",
+                "AD-B4 §2.2, §3 M2 · aynı WP-101 AR I izi: kare 02 ↔ 03 (ıslak arduvaz), 01 ↔ 03 (açık taş); bütün iz kareleri; her ölçü kendi karesinde: darkLeakPx, coreLeakPx, haloLeakPx (b4-r3), bütün karelerde groundVeilLevels");
             for (int g = 0; g < 2; g++)
             {
                 int f = g == 0 ? 1 : 2;
@@ -2197,6 +3124,23 @@ namespace DD.Prototype.Tests.PlayMode
             if (rounds == 0) c.Missing.Add("iz kareleri");
             else c.AddRaw("bütün iz mermileri: brightCorePx ≤ max(8, sınıf tabanı)", Obj(P("rounds", rounds), P("over", over), PR("offenders", Arr(offenders))), "over = 0", over == 0);
             foreach (KeyValuePair<int, int> kv in s_darkLeak) c.Add("kare " + kv.Key + " darkLeakPx", kv.Value, "0", kv.Value == 0);
+            // b4-r3: each alone-on-black measure is its own Unity frame's draws only — the bare ground-off render of that frame is black
+            foreach (KeyValuePair<int, int> kv in s_coreLeak) c.Add("kare " + kv.Key + " coreLeakPx (çekirdek karesinin zeminsiz çıplak render'ı)", kv.Value, "0", kv.Value == 0);
+            foreach (KeyValuePair<int, int> kv in s_haloLeak) c.Add("kare " + kv.Key + " haloLeakPx (hale karesinin zeminsiz çıplak render'ı)", kv.Value, "0", kv.Value == 0);
+            int veiled = 0;
+            float worst = 0f;
+            var veils = new List<string>();
+            foreach (KeyValuePair<int, float> kv in s_veil)
+            {
+                worst = Mathf.Max(worst, kv.Value);
+                if (kv.Value <= 2f) continue;
+                veiled++;
+                if (veils.Count < 12) veils.Add(Q("kare " + kv.Key + ": " + F(kv.Value)));
+            }
+
+            if (s_veil.Count == 0) c.Missing.Add("groundVeilLevels");
+            else c.AddRaw("bütün kareler: zemin peçesi groundVeilLevels ≤ 2 seviye (yüklü dünya peçesi / sis yok)",
+                Obj(P("frames", s_veil.Count), P("over", veiled), P("worstLevels", worst), PR("offenders", Arr(veils))), "over = 0", veiled == 0);
             return c;
         }
 
@@ -2212,7 +3156,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M3()
         {
-            var c = new Crit("M3", true, "Reduce Flashes: biçim korunur, HDR kısılır", "AD-B4 §3 M3 · kare 06 (RF kapalı) ↔ 07 (RF açık 0.4): ATES V ve NOTR (WP-101), iki zemin");
+            var c = new Crit("M3", GroupMust, "Reduce Flashes: biçim korunur, HDR kısılır", "AD-B4 §3 M3 · kare 06 (RF kapalı) ↔ 07 (RF açık 0.4): ATES V ve NOTR (WP-101), iki zemin");
             foreach (string key in new[] { KeyRfFire, KeyRfNeutral })
             {
                 for (int g = 0; g < 2; g++)
@@ -2259,7 +3203,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M4()
         {
-            var c = new Crit("M4", true, "K3 işaretli mermi", "AD-B4 §3 M4 · kare 05 (işaretli + normal, iki zemin)");
+            var c = new Crit("M4", GroupMust, "K3 işaretli mermi", "AD-B4 §3 M4 · kare 05 (işaretli + normal, iki zemin)");
             RoundM n = FindRound(5, KeyNormal, KeyStone), m = FindRound(5, KeyMarked, KeyStone), mw = FindRound(5, KeyMarked, KeySlate);
             if (n == null || m == null)
             {
@@ -2288,7 +3232,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M5()
         {
-            var c = new Crit("M5", true, "Element kimliği açık taşta; A1 kademe I", "AD-B4 §3 M5, AD-VISUAL §6 A1 · kare 03 (kademe I, Atış = Element = I)");
+            var c = new Crit("M5", GroupMust, "Element kimliği açık taşta; A1 kademe I", "AD-B4 §3 M5, AD-VISUAL §6 A1 · kare 03 (kademe I, Atış = Element = I)");
             foreach (TreeElement e in Elements)
             {
                 RoundM r = FindRound(3, ElementWord(e) + " I", KeyStone);
@@ -2328,18 +3272,20 @@ namespace DD.Prototype.Tests.PlayMode
                     for (int j = i + 1; j < Elements.Length; j++)
                     {
                         float de = DeltaE76(med[i], med[j]);
-                        c.Add("A1 ıslak arduvaz · ΔE76 " + ElementWord(Elements[i]) + "-" + ElementWord(Elements[j]) + " (#" + Hex(med[i]) + " / #" + Hex(med[j]) + ")", de, "≥ 25", de >= 25f);
+                        c.AddAccepted("A1 ıslak arduvaz · ΔE76 " + ElementWord(Elements[i]) + "-" + ElementWord(Elements[j]) + " (#" + Hex(med[i]) + " / #" + Hex(med[j]) + ")", de,
+                            "≥ 25", de >= 25f, AdKabulA1);
                     }
                 }
             }
 
             c.Notes.Add("ΔE = CIE76 (AD-VISUAL §6 A1): glow medyanı = post karede, şeridin değişen pikselleri içinde çekirdek dörtgeni (katman 0 ≥ 8) dışındakilerin kanal başına medyanı.");
+            c.Notes.Add(AdKabulA1 + ": A1 çiftleri eşiğin altında kalırsa 'AD kabul' yazılır, M5'i düşürmez; açık taş colouredShare / ton denetimleri olağan PASS / FAIL.");
             return c;
         }
 
         private static Crit M6()
         {
-            var c = new Crit("M6", true, "Aura açık taşta; A4; A17", "AD-B4 §3 M6, AD-VISUAL §6 A4 / A17 · kare 22-24 (dikiş: batı açık taş, doğu ıslak arduvaz)");
+            var c = new Crit("M6", GroupMust, "Aura açık taşta; A4; A17", "AD-B4 §3 M6, AD-VISUAL §6 A4 / A17 · kare 22-24 (dikiş: batı açık taş, doğu ıslak arduvaz)");
             var halves = new HalfM[3, 2];
             for (int lv = 0; lv < 3; lv++)
             {
@@ -2374,16 +3320,20 @@ namespace DD.Prototype.Tests.PlayMode
                         }
 
                         float de = DeltaE76(x.R.MeanPost, y.R.MeanPost);
-                        c.Add(GroundTag(g) + " · A4 ΔE76 aura " + Roman(a + 1) + "-" + Roman(b + 1) + " (#" + Hex(x.R.MeanPost) + " / #" + Hex(y.R.MeanPost) + ")", de, "≥ 30", de >= 30f);
+                        c.AddAccepted(GroundTag(g) + " · A4 ΔE76 aura " + Roman(a + 1) + "-" + Roman(b + 1) + " (#" + Hex(x.R.MeanPost) + " / #" + Hex(y.R.MeanPost) + ")", de,
+                            "≥ 30", de >= 30f, AdKabulA4);
                     }
                 }
 
                 for (int a = 0; a < 2; a++)
                 {
                     int ra = RingPx(halves[a, g]), rb = RingPx(halves[a + 1, g]);
-                    c.Add(GroundTag(g) + " · A4 halka r " + Roman(a + 1) + "-" + Roman(a + 2) + " (" + ra + " → " + rb + " px)", rb - ra, "≥ 12 px", rb - ra >= 12);
+                    c.AddAccepted(GroundTag(g) + " · A4 halka r " + Roman(a + 1) + "-" + Roman(a + 2) + " (" + ra + " → " + rb + " px)", rb - ra, "≥ 12 px", rb - ra >= 12,
+                        AdKabulA4);
                 }
             }
+
+            c.Notes.Add(AdKabulA4 + ": A4 (ΔE ve halka r farkı) eşiğin altında kalırsa 'AD kabul' yazılır, M6'yı düşürmez; açık taş changedPx ve A17 olağan PASS / FAIL.");
 
             if (halves[1, 0] != null && halves[1, 1] != null)
             {
@@ -2402,7 +3352,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M7()
         {
-            var c = new Crit("M7", true, "Can emme ipliği açık taşta", "AD-B4 §3 M7 · kare 21 (kurban doğuda / ıslak arduvaz, kahraman batıda / açık taş)");
+            var c = new Crit("M7", GroupMust, "Can emme ipliği açık taşta", "AD-B4 §3 M7 · kare 21 (kurban doğuda / ıslak arduvaz, kahraman batıda / açık taş)");
             HalfM l = FindHalf(21, KeyStone), w = FindHalf(21, KeySlate);
             if (l == null || w == null)
             {
@@ -2419,7 +3369,12 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M8()
         {
-            var c = new Crit("M8", true, "Ateş zemini açık taşta", "AD-B4 §3 M8 · kare 17 (t 0.3 s), 18 (t 1.5 s); ıslak arduvaz b4-r2'ye göre ±%10");
+            var c = new Crit("M8", GroupMust, "Ateş zemini açık taşta (B4-2: FireUnderAlpha .225, iki eşik birlikte)",
+                "AD-B4 §3 M8 · kare 17 (t 0.3 s), 18 (t 1.5 s); açık taş satMean ≥ .35 / ton 10-35 ve ıslak arduvaz b4-r2'ye göre ±%10, aynı koşuda; C-00 12.10: alt çizim α .225");
+            // C-00 12.10: M8 is measured at E's .225 underlay — the constant in effect is part of the evidence (by name: E owns it)
+            float alpha = LadderFloat("FireUnderAlpha");
+            if (float.IsNaN(alpha)) c.Notes.Add("TreeVfxLadder.FireUnderAlpha: missing (yansımayla bulunamadı)");
+            else c.Add("TreeVfxLadder.FireUnderAlpha (alt çizim #E0702A α; AD ≤ .30)", alpha, "0.21 ±0.005 (C-00 12.10: .225 b42-r1 geçmedi)", Mathf.Abs(alpha - .21f) <= .005f && alpha <= .30f);
             for (int k = 0; k < 2; k++)
             {
                 int f = 17 + k;
@@ -2443,10 +3398,12 @@ namespace DD.Prototype.Tests.PlayMode
             return c;
         }
 
+        /// <summary>M9 (B4-1): the binding — the glow slot shows and its raw-frame luminance steps up FlashScale 0 → 1. The post bloom
+        /// spot is <see cref="M9Post"/> (AD-B4 §6: it moved to B4-2 and does not hold B4-1's PASS).</summary>
         private static Crit M9()
         {
-            var c = new Crit("M9", true, "Ek ışıması (E4 ateş III, E5 V)",
-                "AD-B4 §3 M9 · kare 27 (açık taş), 28 (ıslak arduvaz), td-rig görünüşü: FlashScale 0 → 1, ışıma yuvası (yuva 1) piksellerinde");
+            var c = new Crit("M9", GroupMust, "Ek ışıması bağlaması, ham kare (E4 ateş III, E5 V)",
+                "AD-B4 §3 M9 · kare 27 (açık taş), 28 (ıslak arduvaz), td-rig görünüşü: FlashScale 0 → 1, ışıma yuvası (yuva 1) piksellerinde; post bloom eşiği M9post'ta (AD-B4 §6, B4-2)");
             foreach (string ground in Grounds)
             {
                 string tag = ground == KeyStone ? GroundTag(0) : GroundTag(1);
@@ -2463,26 +3420,45 @@ namespace DD.Prototype.Tests.PlayMode
                     float d = g.MeanLumOn - g.MeanLumOff;
                     c.Add(tag + " · " + addOn + " ham kare yuva maskesi ort. luminans 0 → 1 (" + F(g.MeanLumOff) + " → " + F(g.MeanLumOn) + "; HDR " + F(g.MeanHdrOff) + " → " + F(g.MeanHdrOn) + ")",
                         d, "≥ +0.15", d >= .15f);
-                    if (!g.Present)
-                    {
-                        c.Missing.Add(tag + " " + addOn + " ekran alanı");
-                        continue;
-                    }
-
-                    c.Add(tag + " · " + addOn + " post glowSpotPx (ekran alanı " + F(g.SizeX) + " × " + F(g.SizeY) + ")", g.GlowSpot,
-                        "≥ " + F(g.AreaPx) + " (AD ≈ " + (addOn == "E4" ? 100 : 58) + ")", g.GlowSpot >= g.AreaPx);
                     c.Notes.Add(tag + " " + addOn + ": emisyon (FlashScale 1) " + F(g.Emission) + ", yuva 1 MPB _EmissionColor.r kapalı / açık " + F(g.SlotOff) + " / " + F(g.SlotOn));
                 }
             }
 
-            c.Notes.Add("Görünüş td-rig (C, 12.10): ışıma yuvası eklerin yana bakan penceresidir; dik kamerada E4 0 px, E5 ≈ 3 px görünür, oyunun ≈ 49° TD rig açısından 12-31 px. "
-                        + "Ekran alanı = ekin sınır kutusunun bu görünüşteki izdüşümü (AD'nin ≈ 100 / ≈ 58 px'i dik kameradandı).");
+            c.Notes.Add("Görünüş td-rig (C, 12.10): ışıma yuvası eklerin yana bakan penceresidir; dik kamerada E4 0 px, E5 ≈ 3 px görünür, oyunun ≈ 49° TD rig açısından 12-31 px.");
+            return c;
+        }
+
+        /// <summary>M9post (B4-2, AD-B4 §6): the add-on glow's bloom spot on the post frame — with F's socket glint card — covers at least
+        /// the add-on's own screen area (td-rig view), each add-on on each ground.</summary>
+        private static Crit M9Post()
+        {
+            var c = new Crit("M9post", GroupB42, "Ek ışıması post: soket parıltı kartı ile glowSpotPx ≥ ekin ekran alanı",
+                "AD-B4 §3 M9 (post eşiği) + §6 (B4-2: AP-041 parıltı sayfasından soket kartı, yeni varlık yok) · kare 27 (açık taş), 28 (ıslak arduvaz), 29 (×4), td-rig görünüşü; RF 0.4'te bloom yok: AD kabul");
+            foreach (string ground in Grounds)
+            {
+                string tag = ground == KeyStone ? GroundTag(0) : GroundTag(1);
+                foreach (string addOn in new[] { "E4", "E5" })
+                {
+                    GlowM g = FindGlow(ground, addOn);
+                    if (g == null || !g.Present)
+                    {
+                        c.Missing.Add(tag + " " + addOn + (g == null ? "" : " ekran alanı"));
+                        continue;
+                    }
+
+                    c.Add(tag + " · " + addOn + " post glowSpotPx (ekran alanı " + F(g.SizeX) + " × " + F(g.SizeY) + "; tepe lum kapalı / açık " + F(g.PeakOff) + " / " + F(g.PeakOn) + ")",
+                        g.GlowSpot, "≥ " + F(g.AreaPx) + " (AD ≈ " + (addOn == "E4" ? 100 : 58) + ")", g.GlowSpot >= g.AreaPx);
+                }
+            }
+
+            c.Notes.Add("Soket parıltı kartı (F, yansımayla; FlashScale 1, açık taş): " + (s_cardJson ?? "kare 27-28 koşmadı"));
+            c.Notes.Add("glowSpotPx = ekin merkezinin 24 px içinde post luminansı FlashScale 0 → 1 en az 0.06 artan pikseller (ışıma + bloom + kart); ekran alanı = ekin sınır kutusunun td-rig izdüşümü.");
             return c;
         }
 
         private static Crit M10()
         {
-            var c = new Crit("M10", true, "B8 ölçeği", "AD-B4 §3 M10 · kare 14-16 (R 3 m, III, birinci kuşak): halka dış çapı 0.8-1.0 × 2R × 0.9");
+            var c = new Crit("M10", GroupMust, "B8 ölçeği", "AD-B4 §3 M10 · kare 14-16 (R 3 m, III, birinci kuşak): halka dış çapı 0.8-1.0 × 2R × 0.9");
             float best = float.NaN, bestWet = float.NaN;
             var per = new List<string>();
             for (int f = 14; f <= 16; f++)
@@ -2521,27 +3497,58 @@ namespace DD.Prototype.Tests.PlayMode
             return float.NaN;
         }
 
+        /// <summary>The same for <see cref="TreeVfxLadder"/> (E owns its B4-2 values: FireUnderAlpha …).</summary>
+        private static float LadderFloat(string name)
+        {
+            FieldInfo f = typeof(TreeVfxLadder).GetField(name, BindingFlags.Public | BindingFlags.Static);
+            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(null);
+            PropertyInfo p = typeof(TreeVfxLadder).GetProperty(name, BindingFlags.Public | BindingFlags.Static);
+            if (p != null && p.PropertyType == typeof(float) && p.GetIndexParameters().Length == 0) return (float)p.GetValue(null);
+            return float.NaN;
+        }
+
         private static Crit S1()
         {
-            var c = new Crit("S1", false, "V'te hale HDR ×1.5", "AD-B4 §4 S1 · kare 02 (ıslak arduvaz), post karede");
+            var c = new Crit("S1", GroupShould, "V'te hale HDR ×1.5", "AD-B4 §4 S1 · kare 02 (ıslak arduvaz), post karede");
             RoundM iv = FindRound(2, "ATIS IV", KeySlate), v = FindRound(2, "ATIS V", KeySlate);
             if (iv == null || v == null) c.Missing.Add("kare 02 ATIS IV / V");
             else c.Add("post visiblePx V − IV (" + v.VisiblePost + " − " + iv.VisiblePost + ")", v.VisiblePost - iv.VisiblePost, "≥ 6", v.VisiblePost - iv.VisiblePost >= 6);
             return c;
         }
 
+        /// <summary>S2 (B4-2: E's light inner line on aura III): the ring's value step on BOTH grounds — the AD's ≥ .08 on the wet slate,
+        /// and the same floor on the light stone (C-00 12.10 "iki zemin": the line must not wash out the light stone's reading) — on the
+        /// whole-ground frames 33 / 34; frame 24's split halves beside it in the notes.</summary>
         private static Crit S2()
         {
-            var c = new Crit("S2", false, "Aura III değer artışı", "AD-B4 §4 S2 · kare 24 ıslak arduvaz");
-            HalfM w = FindHalf(24, KeySlate);
-            if (w == null) c.Missing.Add("kare 24");
-            else c.Add("ıslak arduvaz lumStepMean", w.S.Changed > 0 ? LumStepOf(w.S) : float.NaN, "≥ 0.08", LumStepOf(w.S) >= .08f);
+            var c = new Crit("S2", GroupShould, "Aura III değer artışı, iki zemin",
+                "AD-B4 §4 S2 (ıslak arduvaz lumStepMean ≥ .08, #E8302A ×1.3) + B4-2 (C-00 12.10: iki zemin) · kare 33 (aura III, tüm kare açık taş), 34 (tüm kare ıslak arduvaz)");
+            for (int g = 0; g < 2; g++)
+            {
+                int f = 33 + g;
+                HalfM h = FindHalf(f, Grounds[g]);
+                if (h == null)
+                {
+                    c.Missing.Add("kare " + f);
+                    continue;
+                }
+
+                c.Add(GroundTag(g) + " · aura III lumStepMean (changedPx " + h.S.Changed + ")", h.S.Changed > 0 ? LumStepOf(h.S) : float.NaN, "≥ 0.08", LumStepOf(h.S) >= .08f);
+            }
+
+            HalfM wl = FindHalf(24, KeyStone), ww = FindHalf(24, KeySlate);
+            if (wl != null && ww != null)
+            {
+                c.Notes.Add("kare 24 (ayrık zemin) lumStepMean: açık taş yarısı " + F(LumStepOf(wl.S)) + ", ıslak arduvaz yarısı " + F(LumStepOf(ww.S)) + " (b4-r4: .1814 / .0182)");
+            }
+
+            c.Notes.Add("Açık taşta aynı ≥ .08 tabanı: açık iç çizgi açık taşın değer okumasını silmemeli (C-00 12.10 'iki zemin').");
             return c;
         }
 
         private static Crit S3()
         {
-            var c = new Crit("S3", false, "Sumi halkalar ıslak arduvazda", "AD-B4 §4 S3 · kare 10 (B5 III t 0.35), 16 (B8 t 0.35): halka kenarı = açık taş yarısının r98 halkası (6 px)");
+            var c = new Crit("S3", GroupShould, "Sumi halkalar ıslak arduvazda", "AD-B4 §4 S3 · kare 10 (B5 III t 0.35), 16 (B8 t 0.35): halka kenarı = açık taş yarısının r98 halkası (6 px)");
             foreach (int f in new[] { 10, 16 })
             {
                 HalfM w = FindHalf(f, KeySlate), l = FindHalf(f, KeyStone);
@@ -2559,7 +3566,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit S4()
         {
-            var c = new Crit("S4", false, "Zehir bulutu açık taşta", "AD-B4 §4 S4 · kare 19 (t 0.3), 20 (t 1.5), M8 yöntemi");
+            var c = new Crit("S4", GroupShould, "Zehir bulutu açık taşta", "AD-B4 §4 S4 · kare 19 (t 0.3), 20 (t 1.5), M8 yöntemi");
             foreach (int f in new[] { 19, 20 })
             {
                 HalfM l = FindHalf(f, KeyStone);
@@ -2567,6 +3574,74 @@ namespace DD.Prototype.Tests.PlayMode
                 else c.Add("kare " + f + " açık taş colouredShare", ColouredOf(l.S), "≥ 0.50", ColouredOf(l.S) >= .50f);
             }
 
+            return c;
+        }
+
+        private static SeekM FindSeek(int frame, string key) => s_seeks.Find(m => m.Frame == frame && m.Key == key);
+
+        /// <summary>
+        /// B9 (B4-2, F): Seeker Swarm's trail bends where its round turned — on the designed curve (KIVRILAN: 3 m + 30° + 3 m, F's
+        /// SetTdPathForTests) the drawn trail's centre line strays ≥ 0.5 m from its chord (C-00 12.10; the design's own 0.78 m) — while its
+        /// width stays the round's own: against the same record kind on a straight path through the same draw path (DUZ, ±2 px; also the
+        /// measure's control, ≤ 0.15 m), and for a tracer its halo on the B4-1 ladder (base + the tier step ±2 px). GERCEK, when it ran,
+        /// proves the chain on a real round: S-02 kept its path (TryGetPath ≥ 3) and F's TickTd read it (SeekPoints ≥ 3); its drawn bend
+        /// is written as a note (it depends on S-02's path spacing at the weapon's speed, not on F's drawing).
+        /// </summary>
+        private static Crit B9()
+        {
+            var c = new Crit("B9", GroupB42, "Kıvrılan seeker izi (sh_cap ek atışı): kıvrım görünür, en / hale B4-1 merdiveniyle tutarlı",
+                "B4-2 B9 (F, C-00 / S-07 12.10) · kare 35 (açık taş), 36 (ıslak arduvaz): KIVRILAN = tasarlanmış yol 3 m + 30° + 3 m (F SetTdPathForTests), DUZ = aynı kayıt türü, "
+                + "düz 6 m; ikisi Atış V AR ek atışı (VolleyIndex 1, TD'de gövde izi); iz boyu = min(tutulan yol, 10 m) (karar a); GERCEK = gerçek AR mermisi, "
+                + "S-02 TryGetPath → F TickTd (isteğe bağlı)");
+            if (s_seekMissing != null) c.Missing.Add("missing: " + s_seekMissing);
+            for (int g = 0; g < 2; g++)
+            {
+                int f = 35 + g;
+                string tag = GroundTag(g);
+                SeekM k = FindSeek(f, "KIVRILAN"), d = FindSeek(f, "DUZ"), r = FindSeek(f, "GERCEK");
+                if (k == null || d == null)
+                {
+                    if (s_seekMissing == null) c.Missing.Add("kare " + f);
+                }
+                else
+                {
+                    c.Add(tag + " · KIVRILAN kayıt SeekPoints (F SetTdPathForTests yolu serdi)", k.RecordSeekPoints, "≥ 3", k.RecordSeekPoints >= 3);
+                    c.Add(tag + " · KIVRILAN çizilen kıvrım (merkez çizgisinin kirişten en uzak sapması; tasarım " + F(k.PathBendM) + " m; çizilen boy " + F(k.DrawnLengthM) + " m)",
+                        k.DrawnBendM, "≥ 0.5 m", k.DrawnBendM >= .5f);
+                    c.Notes.Add(tag + " KIVRILAN: soluk kuyruk dahil (≥ 8 seviye) kıvrım " + F(k.DrawnBendFaintM) + " m, boy " + F(k.DrawnLengthFaintM)
+                                + " m — çizilen geometri; eşik görünür izde (≥ 0.10, WP-101): kuyruğun sönen ucu kıvrımın bir bacağını kısaltabilir");
+                    c.Add(tag + " · DUZ kontrolü: düz izin kıvrımı (çizilen boy " + F(d.DrawnLengthM) + " m)", d.DrawnBendM, "≤ 0.15 m", d.DrawnBendM <= .15f);
+                    if (k.Tracer == d.Tracer)
+                    {
+                        c.Add(tag + " · görünür en KIVRILAN − DUZ, başın 0.25 m gerisi (" + k.Visible025 + " / " + d.Visible025 + " px)", k.Visible025 - d.Visible025, "±2 px",
+                            Mathf.Abs(k.Visible025 - d.Visible025) <= 2);
+                        c.Add(tag + " · katman 2 (hale / gövde) en KIVRILAN − DUZ, 0.25 m (" + k.Layer2025 + " / " + d.Layer2025 + " px)", k.Layer2025 - d.Layer2025, "±2 px",
+                            Mathf.Abs(k.Layer2025 - d.Layer2025) <= 2);
+                    }
+                    else
+                    {
+                        c.Notes.Add(tag + ": KIVRILAN ve DUZ farklı türde çizildi (iz " + k.Tracer + " / " + d.Tracer + "): en karşılaştırması yapılmadı");
+                    }
+
+                    if (k.Tracer == true)
+                    {
+                        int target = ArHaloPx + Mathf.RoundToInt(float.IsNaN(k.RecordHaloPx) ? 4 * HaloStepPx : k.RecordHaloPx);
+                        c.Add(tag + " · KIVRILAN hale, B4-1 merdiveni (taban 44 + kayıt adımı " + F(k.RecordHaloPx) + ")", k.Layer2025, target + " ±2",
+                            Mathf.Abs(k.Layer2025 - target) <= 2);
+                    }
+                }
+
+                if (r == null) continue;
+                c.Add(tag + " · GERCEK: S-02 tutulan yol noktası (TryGetPath, tutulan + şimdiki)", r.PathPoints, "≥ 3", r.PathPoints >= 3);
+                c.Add(tag + " · GERCEK: kayıt SeekPoints (F TickTd yolu okudu)", r.RecordSeekPoints, "≥ 3", r.RecordSeekPoints >= 3);
+                c.Notes.Add(tag + " GERCEK: çizilen kıvrım " + F(r.DrawnBendM) + " m (çizilen boy " + F(r.DrawnLengthM) + " m), tutulan yol " + F(r.PathBendM) + " m, uçuş "
+                            + F(r.FlightBendM) + " m; en 0.25 m: görünür " + r.Visible025 + " / katman 2 " + r.Layer2025 + " px"
+                            + (d != null ? " (DUZ " + d.Visible025 + " / " + d.Layer2025 + ")" : ""));
+            }
+
+            if (s_realMissing != null) c.Notes.Add("GERCEK seeker (isteğe bağlı): missing: " + s_realMissing);
+            if (s_seekNote != null) c.Notes.Add(s_seekNote);
+            c.Notes.Add("Ek atış TD'de gövde izidir (S-02: VolleyIndex > 0 tracer olmaz); B4-1 hale merdiveni tracer içindir: gövde izinin görünür eni ve katman 2 eni DUZ ile karşılaştırılır.");
             return c;
         }
 
@@ -2606,21 +3681,22 @@ namespace DD.Prototype.Tests.PlayMode
         private void WriteOutputs()
         {
             if (string.IsNullOrEmpty(_dir) || s_frames.Count == 0) return;
-            string ad = AdJson(out string mustLine, out string shouldLine);
+            string ad = AdJson(out string mustLine, out string shouldLine, out string b42Line);
             var sb = new StringBuilder();
             sb.Append("{\n  \"header\": ").Append(s_header ?? "{}").Append(",\n  \"ad\": ").Append(ad).Append(",\n  \"frames\": [\n");
             int k = 0;
             foreach (Frame f in s_frames.Values) sb.Append(k++ == 0 ? "    " : ",\n    ").Append(f.Json);
             sb.Append("\n  ]\n}\n");
             File.WriteAllText(Path.Combine(_dir, "b4ad.json"), sb.ToString());
-            Debug.Log("[DD-TEST] wp104b4.ad " + mustLine + " || " + shouldLine);
+            Debug.Log("[DD-TEST] wp104b4.ad " + mustLine + " || " + shouldLine + " || " + b42Line);
 
-            const int band = 2 * LabelH + 10;   // the MUST / SHOULD summary above the tiles
+            const int band = 3 * LabelH + 10;   // the MUST / SHOULD / B4-2 summary above the tiles
             int rows = (s_frames.Count + Columns - 1) / Columns, cellH = TH + LabelH, sw = Columns * TW, sh = rows * cellH + band;
             var sheet = new Color32[sw * sh];
             for (int i = 0; i < sheet.Length; i++) sheet[i] = new Color32(18, 18, 20, 255);
             Text(sheet, sw, sh, 8, sh - 6, mustLine, 2, Ink, false, sw - 16);
             Text(sheet, sw, sh, 8, sh - 6 - LabelH, shouldLine, 2, Ink, false, sw - 16);
+            Text(sheet, sw, sh, 8, sh - 6 - 2 * LabelH, b42Line, 2, Ink, false, sw - 16);
             k = 0;
             foreach (Frame f in s_frames.Values)
             {

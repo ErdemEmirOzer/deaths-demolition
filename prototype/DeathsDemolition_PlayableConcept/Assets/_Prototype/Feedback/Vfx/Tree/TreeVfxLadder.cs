@@ -229,7 +229,21 @@ namespace DD.Prototype.Feedback.Vfx
         public static int AuraSparksPerSecond(int level) => level < 1 ? 0 : s_auraSparksPerSecond[ClampAura(level) - 1];
         public static int AuraSparksLive(int level) => level < 1 ? 0 : s_auraSparksLive[ClampAura(level) - 1];
 
-        // ---------------------------------------------------------------- light-stone underdraws (AD-B4 M6 / M7 / M8)
+        /// <summary>
+        /// AD-B4 S2 (B4-2): aura III's light inner line — the crimson ring sits on wet slate at the slate's own luminance (#E8302A × 1.3
+        /// moved only the red channel, 0.21 of luma), so a thin procedural line (TreeAuraVfx: a soft annulus, no sheet) runs just inside
+        /// the band, #FF605C (the ring's hue, 1.5°, luma 0.51) at α 0.9: the value step the red-weak eye reads. Its radius is
+        /// <see cref="AuraLineRadiusShare"/> × the level's ring radius (the B11 III band's inner edge, 1.30 of 1.60 m), its width
+        /// <see cref="AuraLineWidthMetres"/>. A CPU model of b4-r4 frame 24 gives wet slate lumStepMean 0.018 → ≈ 0.10, light stone
+        /// ≈ 0.18, and keeps A4 on wet slate (ΔE II–III 33.9 → ≈ 35.7; a paler pink line dropped it under 30).
+        /// </summary>
+        public static readonly Color AuraLineTint = Hex(0xFF605C);
+        public const float AuraLineAlpha = .9f, AuraLineRadiusShare = .82f, AuraLineWidthMetres = .07f;
+
+        /// <summary>The inner line's α at an aura level: III only (S2 measures III; I and II read by hue and value already).</summary>
+        public static float AuraLine(int level) => level >= AuraLevels ? AuraLineAlpha : 0f;
+
+        // ---------------------------------------------------------------- underdraws and edges (AD-B4 M6 / M7 / M8, B4-2 S3 / S4)
 
         /// <summary>
         /// AD-B4 M6: the aura ring drawn once more UNDER itself with its own sheet and frame — sumi #12100F, α ≤ 0.35, ×1.04, alpha-
@@ -257,7 +271,44 @@ namespace DD.Prototype.Feedback.Vfx
         /// (GroundFireSystem.OnTreeIgnited); RunTreeGroundFire's own zones draw as WP-073 left them.
         /// </summary>
         public static readonly Color FireUnderTint = Hex(0xE0702A);
-        public const float FireUnderAlpha = .21f;   // b4-r3: .28 lifted wet slate satMean +13 % (AD ±10 %); light stone .41 → ≈ .37 (≥ .35)
+        // C-00 12.10: .21 (accepted). b4-r3 .28: light stone t 0.3 satMean .407, wet slate × 1.128 (AD ±10 %); b4-r4 .21: .339, × 1.092;
+        // b42-r1 .225: .335 (fire noise > the step) - the two thresholds do not hold together, back to .21 as C-00 ruled (no extra run)
+        public const float FireUnderAlpha = .21f;
+
+        /// <summary>
+        /// AD-B4 S3 (B4-2): the T3 ink shock's washi edge — the near-black premultiplied ink takes no light tint, so a procedural rim
+        /// (TreeVfxBinder's InkWashiSheet: the ink sheet's own per-frame outer edge, measured) lies under the ring just outside it,
+        /// paper cream (AD-VISUAL §1.2 washi / krem kâğıt, UI Cream100), α <see cref="InkWashiAlpha"/>, from
+        /// <see cref="InkWashiInset"/> inside the ink's half-max edge to <see cref="InkWashiWidth"/> past its 10 % edge (half-card
+        /// units), rising over <see cref="InkWashiRise"/> of it. Every T3 ring carries it (B5 / B8 / nuke III–IV, crit ring, collapse).
+        /// CPU model of b4-r4 frames 10 / 16 (the sheet replicated texel for texel): wet slate edge |Δlum| 0.051 → ≈ 0.11 and
+        /// 0.016 → ≈ 0.19 (S3 ≥ 0.06); light stone's ink edge stays (0.13 → ≈ 0.14, 0.09 → ≈ 0.11).
+        /// </summary>
+        public static readonly Color InkWashiTint = Hex(0xF3EEE3);
+        public const float InkWashiAlpha = .4f, InkWashiInset = .015f, InkWashiWidth = .025f, InkWashiRise = .35f;
+
+        /// <summary>
+        /// AD-B4 S4 (B4-2, M8's method + density): the venom cloud once more under itself — the same B4 sheet, frame, card and life —
+        /// so its smoky low-coverage parts read green on light stone. The sheet darkens as its coverage falls (a plain tint only
+        /// darkened it: .34 / .43 in the CPU model, B4-1 B's .37 / .53), so the underdraw is the sheet's own colour lifted to the venom
+        /// core #E8FFB0 × <see cref="VenomUnderGain"/> (linear, <see cref="HdrTint"/>), its coverage × <see cref="VenomUnderCoverage"/>,
+        /// alpha-blended at α ≤ <see cref="VenomUnderAlpha"/>. CPU model of b4-r4 frames 19 / 20: light stone colouredShare
+        /// 0.23 → ≈ 0.65 and 0.31 → ≈ 0.75 (S4 ≥ 0.50); wet slate hue 87° → 88°, its faint cloud edge now visible.
+        /// </summary>
+        public static readonly Color VenomUnderTint = VenomCore;
+        public const float VenomUnderAlpha = .30f, VenomUnderGain = 4f, VenomUnderCoverage = 2f;
+
+        /// <summary>
+        /// An HDR tint for a MaterialPropertyBlock colour (the block decodes rgb from gamma): <paramref name="srgb"/>'s linear value ×
+        /// <paramref name="linearGain"/> after the decode, <paramref name="alpha"/> untouched (DD/VFX Flipbook: the coverage scale).
+        /// Unity's own curve pair (Mathf.LinearToGammaSpace / Color.linear) — runtime only, never from a static initialiser.
+        /// </summary>
+        public static Color HdrTint(Color srgb, float linearGain, float alpha)
+        {
+            Color lin = srgb.linear;
+            float g = Mathf.Max(0f, linearGain);
+            return new Color(Mathf.LinearToGammaSpace(lin.r * g), Mathf.LinearToGammaSpace(lin.g * g), Mathf.LinearToGammaSpace(lin.b * g), alpha);
+        }
 
         // ---------------------------------------------------------------- B8 chain blast scale (AD-B4 M10)
 

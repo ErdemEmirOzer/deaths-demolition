@@ -633,6 +633,175 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-104 B4-2 (S-07 F · AD-B4 §6 / M9 post): the socket glint card on S-06's real mount (a bare ar_1 root, as above). E4 fire
+        /// III and E5 V each get one own quad of the AP-041 glint sheet (<see cref="Vfx.TreeSocketCard.Row"/>, frame 0, added) at their
+        /// glow slot's world position lifted towards the TD rig and facing it; its tint is the ladder value × FlashScale (Reduce Flashes
+        /// 0.4: under the bloom threshold, still drawn; FlashScale 0: none); never while the add-ons are hidden; none under the bloom
+        /// rungs (E4 II, E5 III) nor on the slotless V03; it follows the slot when the weapon moves, goes at once with CardsEnabled, is
+        /// never a child of an add-on (S-06's renderers, their bounds and the AD capture's glow-slot mask stay theirs), goes with the
+        /// mount, and its frame costs 0 B.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator EkIsimasi_SoketKarti_YuvadaDurur_DegerXFlashScale_GizliykenYok()
+        {
+            KutuphaneGerekli();
+            WeaponAttachLibrary.Row row = _lib.Find(ClassicWeaponId.AssaultRifle);
+            Assert.IsTrue(row != null, "ar_1 satırı (DD_WeaponAttach)");
+            Assert.IsTrue(Vfx.VfxLibrary.TryGetPlayable(Vfx.TreeVfxIds.Id(Vfx.TreeSocketCard.Row), out Vfx.VfxCatalogEntry parilti),
+                "AP-041 parıltı satırı (" + Vfx.TreeVfxIds.Id(Vfx.TreeSocketCard.Row) + ") katalogda yok: ArtAp041TreeIntake.Run");
+            float oncekiFlash = Vfx.GameFeelSettings.FlashScale;
+            var sahip = new List<UnityEngine.Object>();
+            try
+            {
+                Vfx.GameFeelSettings.FlashScale = 1f;
+                var kok = new GameObject("WP104 kart kökü");
+                sahip.Add(kok);
+                kok.transform.SetPositionAndRotation(new Vector3(0f, 400f, 0f), Quaternion.identity);
+                var isimaGo = new GameObject("WP104 kart TreeAttachGlow");
+                sahip.Add(isimaGo);
+                Vfx.TreeAttachGlow glow = isimaGo.AddComponent<Vfx.TreeAttachGlow>();
+                WeaponAttachMount m = WeaponAttachMount.Ensure(kok.transform, row);
+                Assert.IsTrue(m != null, "ar_1 montajı (çıplak kök)");
+                var set = new WeaponAttachSet { Side = TreeElement.Fire, SideTier = 3, Ring = 1, RingTier = 5 };
+                m.Apply(in set, _lib);   // S-06 raises WeaponAttachEvents.Changed → the ladder and the cards
+                Assert.AreSame(m, glow.Mount, "TreeAttachGlow S-06'nın Changed olayını almadı");
+                yield return null;
+
+                Assert.IsTrue(glow.CardRowReady, "parıltı malzemesi kurulmadı");
+                Assert.IsTrue(glow.SideCardShown, "E4 ateş III (1,4 ≥ bloom eşiği): kart");
+                Assert.IsTrue(glow.RingCardShown, "E5 V (2,0): kart");
+                Renderer e4 = IlkYuva(m.SideAttachment), e5 = IlkYuva(m.RingAttachment);
+                Assert.IsTrue(e4 != null && e5 != null, "E4 / E5 ışıma yuvalı renderer'ı yok");
+                Renderer k4 = glow.SideCardRenderer, k5 = glow.RingCardRenderer;
+                Assert.IsTrue(k4 != null && k4.enabled && k5 != null && k5.enabled, "kart quad'ları çizilmiyor");
+                Assert.IsFalse(k4.transform.IsChildOf(m.transform) || k5.transform.IsChildOf(m.transform), "kart ekin / modelin çocuğu olmamalı (S-06 sınırları, AD maskesi)");
+                Assert.AreEqual(e4.gameObject.layer, k4.gameObject.layer, "kart ekin katmanında: eki gören kamera parıltıyı da görür");
+
+                // where: the glow slot's world position, lifted towards the TD rig, facing it
+                Vector3 yuz = Vfx.TreeSocketCard.Facing(FeelRuntime.Current.Camera);
+                KartYuvada(k4, e4, yuz, "E4");
+                KartYuvada(k5, e5, yuz, "E5");
+
+                // the existing AP-041 glint page, added, its first cell; the ladder value × FlashScale (AD-B4 M9)
+                KartBlok(k4, glow.SideCardTint, parilti, "E4");
+                KartBlok(k5, glow.RingCardTint, parilti, "E5");
+                Assert.AreEqual(1.4f, Tepe(glow.SideCardTint), 1e-4f, "E4 III = 1,4 (rengin en parlak kanalı)");
+                Assert.AreEqual(new Vector4(2f, 2f, 2f, 1f), glow.RingCardTint, "E5 V = 2,0 beyaz-sıcak");
+                Assert.IsTrue(Vfx.TreeSocketCard.TryAnchor(e4, out _, out float kosegen4), "E4 yuvası");
+                Assert.AreEqual(Vfx.TreeSocketCard.Size(kosegen4), glow.SideCardSize, 1e-5f, "boy: ekin köşegeni × 3");
+                Assert.AreEqual(glow.SideCardSize, k4.transform.lossyScale.x, 1e-4f, "quad o boyda");
+
+                // Reduce Flashes (no event: the poll): the glint stays under the bloom threshold; FlashScale 0: none
+                Vfx.GameFeelSettings.FlashScale = .4f;
+                yield return null;
+                Assert.IsTrue(glow.SideCardShown && glow.RingCardShown, "Reduce Flashes: parıltı kalır");
+                Assert.AreEqual(1.4f * .4f, Tepe(glow.SideCardTint), 1e-4f, "E4 III × 0,4");
+                Assert.Less(Tepe(glow.RingCardTint), Vfx.TreeVfxLadder.BloomThreshold, "RF 0,4: E5 V 0,8 — bloom yok (AD M9: kabul)");
+                Vfx.GameFeelSettings.FlashScale = 0f;
+                yield return null;
+                Assert.IsFalse(glow.SideCardShown || glow.RingCardShown, "FlashScale 0: kart yok");
+                Assert.IsFalse(k4.enabled || k5.enabled, "FlashScale 0: quad çizilmez");
+                Vfx.GameFeelSettings.FlashScale = 1f;
+                yield return null;
+                Assert.IsTrue(glow.SideCardShown && glow.RingCardShown, "FlashScale 1: kart geri");
+
+                // hidden add-ons (S-06: TopDown only; SetShown raises no event): no card, back with them
+                m.SetShown(false);
+                yield return null;
+                Assert.IsFalse(glow.SideCardShown || glow.RingCardShown, "ek gizliyken kart yok");
+                Assert.IsFalse(k4.enabled || k5.enabled, "ek gizliyken quad çizilmez");
+                m.SetShown(true);
+                yield return null;
+                Assert.IsTrue(glow.SideCardShown && glow.RingCardShown, "ekler görününce kart geri");
+
+                // it follows the slot: the weapon moves 1 m, the card with it the same frame (LateUpdate after the weapon's IK)
+                Vector3 once = k4.transform.position;
+                kok.transform.position += new Vector3(1f, 0f, 0f);
+                yield return null;
+                Assert.AreEqual(1f, k4.transform.position.x - once.x, 1e-4f, "kart soketi her kare izler");
+                KartYuvada(k4, e4, yuz, "E4, taşındıktan sonra");
+
+                // the capture switch (AD capture: the glow-slot mask is read without a card over it): off at once, back with the ladder
+                glow.CardsEnabled = false;
+                Assert.IsFalse(k4.enabled || k5.enabled || glow.SideCardShown, "CardsEnabled false: iki kart hemen kapalı");
+                glow.CardsEnabled = true;
+                Assert.IsTrue(k4.enabled && k5.enabled && glow.SideCardShown && glow.RingCardShown, "CardsEnabled true: kartlar geri");
+
+                // a frame with both cards on (the poll + the track): 0 B
+                var late = (Action)Delegate.CreateDelegate(typeof(Action), glow,
+                    typeof(Vfx.TreeAttachGlow).GetMethod("LateUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic));
+                late();
+                Assert.That(() => { for (int i = 0; i < 100; i++) late(); },
+                    UnityEngine.TestTools.Constraints.ConstraintExtensions.AllocatingGCMemory(UnityEngine.TestTools.Constraints.Is.Not), "kart izleme ayırmasız");
+
+                // under the bloom rungs (E4 II 0.3, E5 III 0.6) and on the slotless electric capsule (V03): no card
+                var alt = new WeaponAttachSet { Side = TreeElement.Fire, SideTier = 2, Ring = 1, RingTier = 3 };
+                m.Apply(in alt, _lib);
+                Assert.IsFalse(glow.SideCardShown || glow.RingCardShown, "bloom basamağının altında kart yok (E4 II, E5 III)");
+                var elektrik = new WeaponAttachSet { Side = TreeElement.Shock, SideTier = 5, Ring = 1, RingTier = 5 };
+                m.Apply(in elektrik, _lib);
+                Assert.IsFalse(glow.SideCardShown, "V03 elektrik kapsülü yuvasız: kart yok");
+                Assert.IsTrue(glow.RingCardShown, "E5 V kartı kalır");
+
+                // the weapon goes (a switch destroys the model): no mount, no glint
+                UnityEngine.Object.Destroy(kok);
+                yield return null;
+                yield return null;
+                Assert.IsFalse(glow.SideCardShown || glow.RingCardShown, "montaj yok: kart yok");
+                Debug.Log("[DD-TEST] wp104b4.card sizeE4=" + F(Vfx.TreeSocketCard.Size(kosegen4)) + " diagE4=" + F(kosegen4) + " lift=" + F(Vfx.TreeSocketCard.Lift(kosegen4)) +
+                          " row=" + parilti.Id);
+            }
+            finally
+            {
+                Vfx.GameFeelSettings.FlashScale = oncekiFlash;
+                for (int i = sahip.Count - 1; i >= 0; i--)
+                {
+                    if (sahip[i] != null) UnityEngine.Object.Destroy(sahip[i]);
+                }
+            }
+        }
+
+        /// <summary>The add-on's first renderer whose slot 1 is M_AP040_Glow — the one TreeAttachGlow anchors its card on.</summary>
+        private static Renderer IlkYuva(GameObject ek)
+        {
+            if (ek == null) return null;
+            foreach (Renderer r in ek.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] mats = r.sharedMaterials;
+                if (mats.Length > Vfx.TreeAttachGlow.GlowSlot && Vfx.TreeAttachGlow.IsGlowMaterial(mats[Vfx.TreeAttachGlow.GlowSlot])) return r;
+            }
+
+            return null;
+        }
+
+        /// <summary>The card sits on the glow slot's world position (the same screen point), lifted towards the TD rig, facing it.</summary>
+        private static void KartYuvada(Renderer kart, Renderer yuva, Vector3 yuz, string ad)
+        {
+            Assert.IsTrue(Vfx.TreeSocketCard.TryAnchor(yuva, out Vector3 yerel, out float kosegen), ad + ": ışıma yuvası okunamadı");
+            Vector3 fark = kart.transform.position - yuva.transform.TransformPoint(yerel);
+            float kalkis = Vector3.Dot(fark, yuz);
+            Assert.AreEqual(Vfx.TreeSocketCard.Lift(kosegen), kalkis, 1e-4f, ad + ": kart yuvadan TD rig'ine doğru kalkar");
+            Assert.Less((fark - yuz * kalkis).magnitude, 1e-4f, ad + ": kart ışıma yuvasının dünya konumunda");
+            Assert.Less(Vector3.Distance(kart.transform.rotation * Vector3.back, yuz), 1e-3f, ad + ": kart TD rig'ine bakar");
+        }
+
+        /// <summary>The card's material and block: the catalog row's own sheet (no new asset), drawn added, frame 0, the tint as read.</summary>
+        private static void KartBlok(Renderer kart, Vector4 renk, Vfx.VfxCatalogEntry satir, string ad)
+        {
+            Material mat = kart.sharedMaterial;
+            Assert.IsTrue(mat != null && mat.GetTexture("_Sheet") == satir.Texture, ad + ": kart AP-041 parıltı sayfasını çizmiyor");
+            Assert.AreEqual((float)UnityEngine.Rendering.BlendMode.One, mat.GetFloat("_SrcBlend"), ad + ": eklenen (One)");
+            Assert.AreEqual((float)UnityEngine.Rendering.BlendMode.One, mat.GetFloat("_DstBlend"), ad + ": eklenen (One One): zemini karartmaz");
+            var blok = new MaterialPropertyBlock();
+            kart.GetPropertyBlock(blok);
+            Assert.AreEqual(0f, blok.GetFloat("_Frame"), ad + ": sayfanın ilk karesi (dört kollu yıldız)");
+            Assert.AreEqual(renk, blok.GetVector("_Tint"), ad + ": _Tint doğrusal (SetVector)");
+        }
+
+        private static float Tepe(Vector4 v) => Mathf.Max(v.x, Mathf.Max(v.y, v.z));
+
         private struct IsimaOlcumu
         {
             public int Px;                  // the glow slot's visible pixels (the unlit swap)

@@ -7,6 +7,9 @@
 // (seen end-on) or a head-dot instance drawn as a soft round dot. Additive, HDR (bloom does the glow's core).
 // WP-104 B4-1 (AD-B4): a TD tracer halo widens by its tier's px step (_Extra.y < 0, px at 1080p over its metre width) and an
 // element halo covers the ground outside its core (_TailColor.a: the premultiplied α grows, the added colour does not).
+// WP-104 B4-2 (B9): a bending seeker streak is several consecutive instances; _Span.w < 0 marks one of them — t runs along the WHOLE
+// streak (its distance along it, _Span.x → .y, over the streak's length −w), so the head bead, the tail falloff and the colour run
+// once, and the muzzle fade-in is skipped. Every other instance writes w ≥ 0: unchanged.
 // All-float CBUFFER (Metal); per-instance data through UNITY_INSTANCING_BUFFER (MaterialPropertyBlock arrays).
 Shader "DD/VFX Ribbon"
 {
@@ -57,7 +60,7 @@ Shader "DD/VFX Ribbon"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Tail)      // xyz tail (world), w head bead (0..1 of the length)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _HeadColor) // rgb HDR (linear), a alpha
                 UNITY_DEFINE_INSTANCED_PROP(float4, _TailColor) // rgb HDR (linear), a a premultiplied halo's coverage gain outside its core (WP-104 B4-1; 0 = none, additive layers ignore it)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Span)      // x tail / y head distance from the muzzle (m), z fade distance (0 = none; < 0 = edge-tint share, WP-101), w fade-in start (m)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Span)      // x tail / y head distance from the muzzle (m), z fade distance (0 = none; < 0 = edge-tint share, WP-101), w fade-in start (m) or a bent streak's segment (−w = the streak's length, x / y its distances along it; WP-104 B4-2)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Extra)     // x min width px, y dot size px (dot mode / end-on) or a TD halo's tier step (−y px at 1080p, WP-104 B4-1), z first-person flag (> 0.5) or a TD ceiling (−z px at 1080p, WP-104 B4), w 1 = head dot or the ceiling's floor (−w m, WP-104 B4)
             UNITY_INSTANCING_BUFFER_END(Props)
 
@@ -149,7 +152,7 @@ Shader "DD/VFX Ribbon"
                 float4 span = UNITY_ACCESS_INSTANCED_PROP(Props, _Span);
                 float4 extra = UNITY_ACCESS_INSTANCED_PROP(Props, _Extra);
 
-                float t = saturate(i.uv.x);
+                float t = span.w < 0.0 ? saturate(i.muzzleDist / -span.w) : saturate(i.uv.x);   // WP-104 B4-2: a bent streak's segment reads t along the whole streak
                 float bead = tail.w;                                    // the head bead's share of the length
                 float body = exp(-(1.0 - t) * _TailFalloff);            // exponential tail
                 body = t < _TailRampShare ? min(body, _TailRampLevel * (t / max(_TailRampShare, 1e-4))) : body;   // the last 40 % stays ≤ 0.15 (defaults)
@@ -179,7 +182,7 @@ Shader "DD/VFX Ribbon"
                     alpha *= 1.0 - smoothstep(span.z * 0.6, span.z, i.muzzleDist);   // pellet bars die out
                 }
 
-                alpha *= smoothstep(span.w, span.w + 0.4, i.muzzleDist);               // fade in off the muzzle
+                if (span.w >= 0.0) alpha *= smoothstep(span.w, span.w + 0.4, i.muzzleDist);   // fade in off the muzzle (a bent streak's segment: none, WP-104 B4-2)
                 if (extra.z > 0.5)
                 {
                     float eye = length(GetCameraPositionWS() - i.world);

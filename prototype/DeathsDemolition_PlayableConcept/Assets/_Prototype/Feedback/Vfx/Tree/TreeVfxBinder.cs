@@ -19,6 +19,8 @@ namespace DD.Prototype.Feedback.Vfx
         public static readonly ProfilerMarker Glow = new ProfilerMarker("WP104.Vfx.Glow");
         /// <summary>The K3 marked rounds' sumi cores (TracerRibbonRenderer.DrawTdInk).</summary>
         public static readonly ProfilerMarker Ink = new ProfilerMarker("WP104.Vfx.Ink");
+        /// <summary>B4-2: the one-time procedural textures (the T3 washi edge, the aura III inner line), built at configure.</summary>
+        public static readonly ProfilerMarker Procedural = new ProfilerMarker("WP104.Vfx.Procedural");
     }
 
     /// <summary>
@@ -86,8 +88,9 @@ namespace DD.Prototype.Feedback.Vfx
     /// when S-02 passes it. One DDOL owner made by <see cref="VfxDressing.Configure"/> (as ExplosionDirector), next to
     /// <see cref="TreeAuraVfx"/> (B11 aura, B14 dome) and <see cref="TreeAttachGlow"/> (S-06 add-on emissive ladder); the K3 marked
     /// round and the tracer ladder are TracerRibbonRenderer's (TracerStyle). Every proc picks its sheets, sizes a hit by the tier ladder (AD §2 "İsabet olayı
-    /// ölçeği", <see cref="TreeVfxLadder"/>) and an area event by its gameplay radius, adds the tier's single sumi layer (III ink shock, IV ensō on
-    /// gravity, V spatter) and keeps the AD caps:
+    /// ölçeği", <see cref="TreeVfxLadder"/>) and an area event by its gameplay radius, adds the tier's single sumi layer (III ink shock over its
+    /// washi edge — B4-2 S3, <see cref="InkWashiSheet"/> —, IV ensō on gravity, V spatter) and keeps the AD caps (a venom cloud lies over
+    /// its lifted underdraw, B4-2 S4):
     /// <list type="bullet">
     /// <item>A9 — B5 + B8 ≤ 8, B6 ≤ 1, B7 ≤ 1, tree scorches ≤ 12 (the oldest fades), sumi ≤ 3; over a cap the visual MERGES (a live blast
     /// re-pops × 1.1) — power is the gameplay's, never dropped there; a visual that has nowhere to merge is skipped (K9 order).</item>
@@ -136,15 +139,26 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>AD-B4 M7: a camera-facing underdraw sits this much farther from the camera than its layer, so the back-to-front
         /// transparent queue draws it first (the two cards share a centre otherwise: an undefined order).</summary>
         public const float UnderBehindMetres = .05f;
+        /// <summary>AD-B4 S3 / S4: a ground card's underdraw lies this much lower than its layer (FeetLift) — farther from any camera
+        /// above, so it is drawn first (TreeAuraVfx's ring underdraw is the same rule): the T3 washi edge 5 mm (over the 2 cm scorch
+        /// decals), the venom cloud's underdraw 1 cm.</summary>
+        public const float WashiBelowMetres = .005f, CloudUnderBelowMetres = .01f;
+        /// <summary>The sumi layer's α cap and fade-out share (every T3 / T4 / T5 card) and the venom cloud's (its underdraw shares both).</summary>
+        public const float InkAlpha = .8f, InkFadeOut = .4f, CloudAlpha = .6f, CloudFadeOut = .35f;
+        // AD-B4 S3: washi cream, its α the coverage scale (the rim texture peaks at 1; the cap holds the same α)
+        private static readonly Color s_washiTint = new Color(TreeVfxLadder.InkWashiTint.r, TreeVfxLadder.InkWashiTint.g, TreeVfxLadder.InkWashiTint.b,
+            TreeVfxLadder.InkWashiAlpha);
 
         private enum Fam
         {
             Blast = 0, Nuke, NukeShock, Glint, Hole, HoleRing, HoleEnso, Endless, Sumi, Crit, ElementHit, Coating, Cloud, Thread, Ghost,
-            Ceremony, Misc, ShieldHit, Under, Count
+            Ceremony, Misc, ShieldHit, Under, Washi, CloudUnder, Count
         }
 
-        // A9 / K9 caps per family (sum stays under the High pool of 48 in any realistic frame); Under: the threads' jade underdraws
-        private static readonly int[] s_caps = { 8, 1, 1, 1, 1, 1, 1, 1, 3, 4, 6, 6, TreeGuardrails.VenomCloudsActive, 4, 4, 2, 6, 1, 4 };
+        // A9 / K9 caps per family (sum stays under the High pool of 48 in any realistic frame); Under: the threads' jade underdraws;
+        // Washi / CloudUnder (B4-2 S3 / S4): one per T3 ink ring / venom cloud, the same caps as theirs
+        private static readonly int[] s_caps = { 8, 1, 1, 1, 1, 1, 1, 1, 3, 4, 6, 6, TreeGuardrails.VenomCloudsActive, 4, 4, 2, 6, 1, 4, 3,
+            TreeGuardrails.VenomCloudsActive };
 
         private const int RecentAny = 0, RecentExplosive = 1, RecentChain = 2;
         private const int CeremonyHeal = 0, CeremonyLevelUp = 1, CeremonyUndying = 2, CeremonySynergy = 3;
@@ -192,6 +206,12 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly int[] _hitCounts = new int[8];
         private readonly float[] _shockHits = new float[ShockHitsPerSecondReduced];
         private int _fireId;
+        // B4-2 S3: the T3 ink ring's washi edge (a runtime row: InkWashiSheet's texture on a copy of the T3 material), owned here;
+        // S4: the venom underdraw's HDR tint (made in Configure: Unity's colour curves never run in a static initialiser)
+        private VfxCatalogEntry _washi;
+        private Texture2D _washiTex;
+        private Material _washiMat;
+        private Color _venomUnderTint;
         private PlayerRig _weaponsRig;
         private DD.Prototype.Weapons.WeaponController _weapons;
         private readonly int[] _byKind = new int[32];
@@ -230,6 +250,14 @@ namespace DD.Prototype.Feedback.Vfx
         public TreeVfxRow LastSpawnedRow { get; private set; } = TreeVfxRow.Count;
         /// <summary>The last leech thread's jade underdraw (AD-B4 M7; LastSpawned stays the thread itself).</summary>
         public FlipbookEffect LastUnderlay { get; private set; }
+        /// <summary>B4-2 S3: the last T3 ink ring's washi edge (LastSpawned stays the ink ring) and its runtime row (null until the T3
+        /// row is in the catalog).</summary>
+        public FlipbookEffect LastWashi { get; private set; }
+        public VfxCatalogEntry WashiRow => _washi;
+        /// <summary>B4-2 S4: the last venom cloud's underdraw (LastSpawned stays the cloud).</summary>
+        public FlipbookEffect LastCloudUnder { get; private set; }
+        /// <summary>The venom underdraw's tint as given to the card (gamma HDR rgb, α = its coverage scale; tests compare the block).</summary>
+        public Color VenomUnderTint => _venomUnderTint;
         /// <summary>Endless Window is open (S-06 reads it for the E2 mask's ≤ 1 Hz indigo pulse).</summary>
         public static bool EndlessWindowActive { get; private set; }
 
@@ -294,6 +322,8 @@ namespace DD.Prototype.Feedback.Vfx
 
             RowsResolved = resolved;
             RowsReady = resolved == (int)TreeVfxRow.Count;
+            EnsureWashi();
+            _venomUnderTint = TreeVfxLadder.HdrTint(TreeVfxLadder.VenomUnderTint, TreeVfxLadder.VenomUnderGain, TreeVfxLadder.VenomUnderCoverage);
             if (_pool == null)
             {
                 var template = new GameObject("FX_WP104_Tree");
@@ -362,6 +392,29 @@ namespace DD.Prototype.Feedback.Vfx
             if (_subscribedScene) SceneManager.activeSceneChanged -= OnSceneChanged;
             _subscribedScene = false;
             if (s_instance == this) s_instance = null;
+            if (_washiMat != null) Destroy(_washiMat);
+            if (_washiTex != null) Destroy(_washiTex);
+            _washi = null;
+        }
+
+        /// <summary>B4-2 S3: the washi edge's runtime row, once the T3 row is in the catalog (idempotent: Configure runs per scene).
+        /// The T3 material copied (DD/VFX Flipbook premultiplied, 4 × 4) with <see cref="InkWashiSheet"/>'s texture; the T3 row's
+        /// grid, frames, fps, life, size and origin, so a washi card played with the ink's arguments is its frame-for-frame twin.</summary>
+        private void EnsureWashi()
+        {
+            if (_washi != null) return;
+            VfxCatalogEntry ink = _rows[(int)TreeVfxRow.T3InkShock];
+            if (ink == null || ink.Material == null || ink.Columns != InkWashiSheet.Grid || ink.Rows != InkWashiSheet.Grid) return;
+            using (TreeVfxMarkers.Procedural.Auto()) _washiTex = InkWashiSheet.Build();
+            _washiMat = new Material(ink.Material) { name = "DD_InkWashi (runtime)", hideFlags = HideFlags.DontSave };
+            _washiMat.SetTexture(InkWashiSheet.SheetId, _washiTex);
+            _washi = new VfxCatalogEntry
+            {
+                Id = "rt_ap041t_t3_washi", Family = ink.Family, Kind = ink.Kind, Texture = _washiTex, Material = _washiMat, Columns = ink.Columns,
+                Rows = ink.Rows, FramesUsed = Mathf.Min(ink.FramesUsed, InkWashiSheet.Frames), Fps = ink.Fps, DurationSeconds = ink.DurationSeconds,
+                Loop = ink.Loop, WorldSizeMetres = ink.WorldSizeMetres, WorldHeightMetres = ink.WorldHeightMetres, OriginUv = ink.OriginUv,
+                Premultiplied = true
+            };
         }
 
         /// <summary>Tests: re-subscribe after a fixture cleared the static buses.</summary>
@@ -510,12 +563,7 @@ namespace DD.Prototype.Feedback.Vfx
             float size = WorldSize(TreeVfxRow.B13Crit) * TreeVfxLadder.ImpactScale(tier);
             bool flash = FlashAllowed(size);
             Spawn(TreeVfxRow.B13Crit, Fam.Crit, p, Quaternion.identity, FlipbookEffect.Facing.Camera, size, flash ? Color.white : Dim(), flash ? 1f : .6f, .3f, -1f);
-            if (ringRadius > 0f)
-            {
-                Spawn(TreeVfxRow.T3InkShock, Fam.Sumi, Ground(p) + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed,
-                    RadiusSize(TreeVfxRow.T3InkShock, ringRadius, tier, 1f), Color.white, .8f, .4f, -1f);
-            }
-
+            if (ringRadius > 0f) InkShock(Ground(p), RadiusSize(TreeVfxRow.T3InkShock, ringRadius, tier, 1f));
             return true;
         }
 
@@ -676,8 +724,7 @@ namespace DD.Prototype.Feedback.Vfx
             DespawnFamily(Fam.HoleRing);
             DespawnFamily(Fam.HoleEnso);
             Vector3 g = Ground(p);
-            Spawn(TreeVfxRow.T3InkShock, Fam.Sumi, g + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed,
-                RadiusSize(TreeVfxRow.T3InkShock, radius, Mathf.Max(3, tier), 1f), Color.white, .8f, .4f, -1f);
+            InkShock(g, RadiusSize(TreeVfxRow.T3InkShock, radius, Mathf.Max(3, tier), 1f));
             // Frozen Gravity: S-04 raises its ice blast as its own Shatter proc (B2 shards there); only when the queue fused that ice
             // blast into this collapse (Element carries ice) does the collapse draw the breaking glass itself
             if ((synergy & TreeSynergy.FrozenGravity) != 0 && (element & TreeElement.Ice) != 0)
@@ -800,13 +847,29 @@ namespace DD.Prototype.Feedback.Vfx
             return true;
         }
 
-        /// <summary>A venom zone opened (S-04 §5: one proc, Seconds = its life): the cloud loops for that long on the ground.</summary>
+        /// <summary>
+        /// A venom zone opened (S-04 §5: one proc, Seconds = its life): the cloud loops for that long on the ground, over its underdraw
+        /// (AD-B4 S4, B4-2: M8's method + density) — the same sheet, card and life 1 cm lower, the sheet's own colour lifted to the venom
+        /// core × <see cref="TreeVfxLadder.VenomUnderGain"/>, its coverage × <see cref="TreeVfxLadder.VenomUnderCoverage"/>, alpha-blended
+        /// at α ≤ <see cref="TreeVfxLadder.VenomUnderAlpha"/>: the cloud's smoky low-coverage parts read green on light stone. Played
+        /// with the cloud's arguments, it keeps its frame; no CloudUnder slot leaves the cloud alone (K9); LastSpawned stays the cloud.
+        /// </summary>
         private bool Cloud(Vector3 p, float radius, int tier, float seconds)
         {
             float life = seconds > 0f ? seconds : TreeRuntime.Current.VenomCloudSeconds > 0f ? TreeRuntime.Current.VenomCloudSeconds : -1f;
-            FlipbookEffect fx = Spawn(TreeVfxRow.B4Cloud, Fam.Cloud, Ground(p) + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed,
-                RadiusSize(TreeVfxRow.B4Cloud, radius, tier, 1f), Color.white, .6f, .35f, life);
-            if (fx == null) Merged++;   // TreeGuardrails.VenomCloudsActive: the zones merge, so do the clouds
+            Vector3 g = Ground(p);
+            float size = RadiusSize(TreeVfxRow.B4Cloud, radius, tier, 1f);
+            FlipbookEffect fx = Spawn(TreeVfxRow.B4Cloud, Fam.Cloud, g + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed, size, Color.white,
+                CloudAlpha, CloudFadeOut, life);
+            if (fx == null)
+            {
+                Merged++;   // TreeGuardrails.VenomCloudsActive: the zones merge, so do the clouds
+                return true;
+            }
+
+            FlipbookEffect under = Place(_rows[(int)TreeVfxRow.B4Cloud], Fam.CloudUnder, g + Vector3.up * (FeetLift - CloudUnderBelowMetres), Flat,
+                FlipbookEffect.Facing.Fixed, size, _venomUnderTint, TreeVfxLadder.VenomUnderAlpha, CloudFadeOut, life);
+            if (under != null) LastCloudUnder = under;
             return true;
         }
 
@@ -1075,8 +1138,27 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             float ws = WorldSize(row);
-            Spawn(row, Fam.Sumi, ground + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed,
-                Mathf.Clamp(baseSize * 1.2f, ws * .5f, ws * 1.5f), Color.white, .8f, .4f, -1f);
+            float size = Mathf.Clamp(baseSize * 1.2f, ws * .5f, ws * 1.5f);
+            if (row == TreeVfxRow.T3InkShock) InkShock(ground, size);
+            else Spawn(row, Fam.Sumi, ground + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed, size, Color.white, InkAlpha, InkFadeOut, -1f);
+        }
+
+        /// <summary>
+        /// AD §2 III "isabet şok halkasına mürekkep kenarı": the T3 ink shock ring on the ground and, 5 mm under it, its washi edge
+        /// (AD-B4 S3, B4-2) — <see cref="InkWashiSheet"/>'s rim played with the ink's own arguments (card, size, frames, life, fade), so
+        /// it follows the ring frame for frame, cream at α <see cref="TreeVfxLadder.InkWashiAlpha"/>: the near-black ring's paper edge
+        /// on wet slate. Every T3 ring (sumi layer, crit ring, collapse). Never a rim without its ink: no Washi slot or pool instance
+        /// leaves the ink alone (K9); LastSpawned stays the ink ring.
+        /// </summary>
+        private FlipbookEffect InkShock(Vector3 ground, float size)
+        {
+            FlipbookEffect ink = Spawn(TreeVfxRow.T3InkShock, Fam.Sumi, ground + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed, size,
+                Color.white, InkAlpha, InkFadeOut, -1f);
+            if (ink == null || _washi == null) return ink;
+            FlipbookEffect rim = Place(_washi, Fam.Washi, ground + Vector3.up * (FeetLift - WashiBelowMetres), Flat, FlipbookEffect.Facing.Fixed,
+                size, s_washiTint, TreeVfxLadder.InkWashiAlpha, InkFadeOut, -1f);
+            if (rim != null) LastWashi = rim;
+            return ink;
         }
 
         private void Scorch(Vector3 p, float radius)
@@ -1114,7 +1196,18 @@ namespace DD.Prototype.Feedback.Vfx
         private FlipbookEffect Spawn(TreeVfxRow row, Fam fam, Vector3 at, Quaternion rotation, FlipbookEffect.Facing facing, float size, Color tint,
             float alphaCap, float fadeOut, float seconds)
         {
-            VfxCatalogEntry entry = row < TreeVfxRow.Count ? _rows[(int)row] : null;
+            FlipbookEffect fx = Place(row < TreeVfxRow.Count ? _rows[(int)row] : null, fam, at, rotation, facing, size, tint, alphaCap, fadeOut, seconds);
+            if (fx == null) return null;
+            LastSpawned = fx;
+            LastSpawnedRow = row;
+            return fx;
+        }
+
+        /// <summary>One card of <paramref name="entry"/> in a free <paramref name="fam"/> slot — <see cref="Spawn"/> without the
+        /// LastSpawned readout (B4-2: an underdraw or edge placed after its layer leaves the readout on the layer).</summary>
+        private FlipbookEffect Place(VfxCatalogEntry entry, Fam fam, Vector3 at, Quaternion rotation, FlipbookEffect.Facing facing, float size,
+            Color tint, float alphaCap, float fadeOut, float seconds)
+        {
             if (entry == null || _pool == null)
             {
                 Missing++;
@@ -1140,8 +1233,6 @@ namespace DD.Prototype.Feedback.Vfx
             _slotRows[(int)fam][slot] = entry;
             _spawnsThisFrame++;
             Played++;
-            LastSpawned = fx;
-            LastSpawnedRow = row;
             return fx;
         }
 
@@ -1422,6 +1513,8 @@ namespace DD.Prototype.Feedback.Vfx
             LastSpawned = null;
             LastSpawnedRow = TreeVfxRow.Count;
             LastUnderlay = null;
+            LastWashi = null;
+            LastCloudUnder = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -1429,6 +1522,106 @@ namespace DD.Prototype.Feedback.Vfx
         {
             s_instance = null;
             EndlessWindowActive = false;
+        }
+    }
+
+    /// <summary>
+    /// WP-104 B4-2 (S-07, AD-B4 S3) · The T3 ink shock's washi edge as a procedural flipbook — no asset: 4 × 4 cells of <see cref="Cell"/>
+    /// px, premultiplied white in a linear RGBA32 texture (rgb = α), built once by <see cref="TreeVfxBinder"/> (≈ 1.3 MB with mips; 0 B
+    /// per frame). Cell f is a soft annulus just outside the ink of AP-041 G_T3_ink_shock's frame f — from
+    /// <see cref="TreeVfxLadder.InkWashiInset"/> inside the sheet's outer half-max edge to <see cref="TreeVfxLadder.InkWashiWidth"/> past
+    /// its 10 % edge, a quick rise over <see cref="TreeVfxLadder.InkWashiRise"/> of it and a soft fall — its coverage following the
+    /// ink's (frames 12–15 fade) and a slow fibre wobble (± <see cref="FibreDepth"/>) around it, so it reads as paper, not a drawn
+    /// circle. The edges are the sheet measured at its imported 1024 size (half-card units; the ring is round within ± 1.5 %; the
+    /// b4-r4 frames 10 / 16 match its frame 7 to ≤ 8 bytes on light stone).
+    /// </summary>
+    public static class InkWashiSheet
+    {
+        public const int Grid = 4, Cell = 128, Frames = 16, FibreSegments = 24;
+        public const float FibreDepth = .25f;
+        /// <summary>The ink's steady mean peak coverage (frames 0–11): a frame's rim α × its own peak / this.</summary>
+        public const float SteadyPeak = .42f;
+        internal static readonly int SheetId = Shader.PropertyToID("_Sheet");
+
+        private static readonly float[] s_outerHalfMax =
+            { .227f, .289f, .352f, .414f, .469f, .516f, .562f, .602f, .641f, .672f, .695f, .719f, .742f, .758f, .766f, .766f };
+        private static readonly float[] s_outer10 =
+            { .242f, .305f, .367f, .430f, .484f, .531f, .578f, .617f, .656f, .688f, .711f, .734f, .758f, .773f, .781f, .781f };
+        private static readonly float[] s_peak =
+            { .421f, .420f, .423f, .417f, .418f, .420f, .429f, .419f, .421f, .428f, .422f, .425f, .397f, .274f, .126f, .016f };
+
+        /// <summary>The ink's outer half-max edge in <paramref name="frame"/> (half-card units).</summary>
+        public static float OuterHalfMax(int frame) => s_outerHalfMax[Mathf.Clamp(frame, 0, Frames - 1)];
+
+        /// <summary>The ink's outer 10 % edge in <paramref name="frame"/> (half-card units).</summary>
+        public static float Outer10(int frame) => s_outer10[Mathf.Clamp(frame, 0, Frames - 1)];
+
+        /// <summary>The ink's mean peak coverage in <paramref name="frame"/>.</summary>
+        public static float Peak(int frame) => s_peak[Mathf.Clamp(frame, 0, Frames - 1)];
+
+        /// <summary>The rim's α at radius <paramref name="r"/> (half-card units) in <paramref name="frame"/>, before the fibre wobble.</summary>
+        public static float RimAlpha(int frame, float r)
+        {
+            float r0 = OuterHalfMax(frame) - TreeVfxLadder.InkWashiInset, r1 = Outer10(frame) + TreeVfxLadder.InkWashiWidth;
+            if (r <= r0 || r >= r1) return 0f;
+            float t = (r - r0) / (r1 - r0), rise = Mathf.Clamp(TreeVfxLadder.InkWashiRise, .05f, .95f);
+            float a = t < rise ? Smooth(t / rise) : 1f - Smooth((t - rise) / (1f - rise));
+            return a * Mathf.Min(1f, Peak(frame) / SteadyPeak);
+        }
+
+        public static Texture2D Build()
+        {
+            int size = Grid * Cell;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true, true)
+            {
+                name = "DD_InkWashi (runtime)", hideFlags = HideFlags.DontSave, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+            };
+            var px = new Color32[size * size];
+            var fibre = new float[FibreSegments];
+            uint seed = 0x9E3779B9u;
+            for (int i = 0; i < FibreSegments; i++)
+            {
+                seed ^= seed << 13;
+                seed ^= seed >> 17;
+                seed ^= seed << 5;
+                fibre[i] = (seed & 0xFFFF) / 65535f * 2f - 1f;
+            }
+
+            float half = Cell * .5f;
+            for (int f = 0; f < Frames; f++)
+            {
+                float r1 = Outer10(f) + TreeVfxLadder.InkWashiWidth;
+                int x0 = (f % Grid) * Cell, y0 = (Grid - 1 - f / Grid) * Cell;   // DD/VFX Flipbook: row 0 is the sheet's top
+                for (int y = 0; y < Cell; y++)
+                {
+                    float dy = (y + .5f - half) / half;
+                    for (int x = 0; x < Cell; x++)
+                    {
+                        float dx = (x + .5f - half) / half;
+                        float r = Mathf.Sqrt(dx * dx + dy * dy);
+                        if (r >= r1) continue;
+                        float a = RimAlpha(f, r);
+                        if (a <= 0f) continue;
+                        float s = (Mathf.Atan2(dy, dx) / (2f * Mathf.PI) + .5f) * FibreSegments;
+                        int i0 = (int)s % FibreSegments;
+                        float u = s - Mathf.Floor(s);
+                        float w = Mathf.Lerp(fibre[i0], fibre[(i0 + 1) % FibreSegments], u * u * (3f - 2f * u));
+                        a = Mathf.Clamp01(a * (1f + FibreDepth * w));
+                        byte b = (byte)(a * 255f + .5f);
+                        px[(y0 + y) * size + x0 + x] = new Color32(b, b, b, b);
+                    }
+                }
+            }
+
+            tex.SetPixels32(px);
+            tex.Apply(true, true);
+            return tex;
+        }
+
+        private static float Smooth(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
         }
     }
 }

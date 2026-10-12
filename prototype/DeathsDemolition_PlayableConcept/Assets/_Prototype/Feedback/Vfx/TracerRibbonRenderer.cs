@@ -113,6 +113,7 @@ namespace DD.Prototype.Feedback.Vfx
             public float Age, Speed, Target, StopAge, Core, Halo, CoreMinPx;
             public int Look, Merged; public float Size, CapPx, Base; public bool Extra;   // WP-104 B4: look, S-02 size, ceiling, WP-101 width, volley
             public float HaloPx, TrailScale, HaloHdr;   // WP-104 B4-1 (AD-B4 §1): the tier's halo step (px at 1080p), trail factor, V's halo HDR
+            public int SeekPoints;   // WP-104 B4-2 (B9): points of a seeking round's kept path (TracerRibbonRenderer.Tree.cs), 0 = a straight streak
             public Vector3 Origin, Head, Direction;
         }
         // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
@@ -194,6 +195,7 @@ namespace DD.Prototype.Feedback.Vfx
                     // DEC-112 Third Eye: the burst's marked round is always a full tracer
                     if (!r.Tracer && !r.Pellet && IsThirdEyeRound(p.TreeFlags)) TdLook(ref r, VfxWeaponProfiles.For(p.WeaponId), true);
                     TdMarked(ref r, in p);   // WP-104 B4 (AD K3): the chaos core's marked round (RunTreeHooks.TreeRoundMarkedChaos)
+                    TdSeekPath(i, ref r, in p, lift);   // WP-104 B4-2 (B9): a seeking round keeps S-02's path for its bending streak
                     break;
                 }
             }
@@ -276,6 +278,7 @@ namespace DD.Prototype.Feedback.Vfx
                 if (layer == 2 && r.Tracer && r.Look == TracerStyle.NeutralLook) _span[n].z = -TdHaloEdgeShare;   // the halo's amber rim (DD_VfxRibbon _EdgeTint) - WP-104 B4: the neutral look's (an element halo is its own glow, K1)
                 _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : cover;   // WP-104 B4-1: a halo's coverage gain (0 = WP-101)
                 n++;
+                n = BendTd(n, i, layer == 1, layer == 0 && r.Tracer ? TdTracerBead : 0f);   // WP-104 B4-2 (B9): a seeking round's streak laid along its path (none: as written)
             }
             if (n == 0) return 0;
             if (layer == 2) SyncTdEdgeTint(flash);   // WP-104 B4-1 (AD-B4 M3): the neutral halo's amber rim dims with its HDR

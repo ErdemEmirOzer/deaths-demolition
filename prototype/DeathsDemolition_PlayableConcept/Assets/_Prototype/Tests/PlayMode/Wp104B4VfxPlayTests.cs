@@ -30,12 +30,14 @@ namespace DD.Prototype.Tests.PlayMode
     /// RunTreeHooks.TreeRoundMarkedChaos) turns violet with a sumi core; the whole style path allocates nothing.</item>
     /// <item>Procs (need the imported AP-041 tree rows — ArtAp041TreeIntake.Run; they fail loudly without them, that is the B4 gate):
     /// K6 B5 + the death's chain blast a frame later → B8, B5 + B8 ≤ 8, one nuke, no heat glint under Reduce Flashes, a tree blast's
-    /// ExplosionSource.Tree draws nothing in ExplosionDirector, B8 at its damage area × the tier's event scale (AD-B4 M10), S-04's
-    /// zones (FireGround → GroundFireSystem as a tree zone with its #E0702A ember underdraw (M8) + B1 scorch, WP-073's own zone
-    /// unchanged; VenomCloud for Seconds), the leech thread from the victim (Point, S-04 B5b) over its jade underdraw (M7), the ensō
-    /// once per synergy per run in the ceremony slot, 0 B.</item>
-    /// <item>The aura (B11 ring / colour / sparks and the ring's sumi underdraw (M6), K7 with the B14 dome; ShieldBreak / ShieldUp /
-    /// ShieldHit) and the tree preview clock (timeScale 0: a diorama tracer and card move, a world card stays frozen).</item>
+    /// ExplosionSource.Tree draws nothing in ExplosionDirector, B8 at its damage area × the tier's event scale (AD-B4 M10) with the
+    /// III ink ring's washi edge under it (B4-2 S3), S-04's zones (FireGround → GroundFireSystem as a tree zone with its #E0702A ember
+    /// underdraw (M8, α .225) + B1 scorch, WP-073's own zone unchanged; VenomCloud for Seconds over its lifted underdraw (B4-2 S4)),
+    /// the leech thread from the victim (Point, S-04 B5b) over its jade underdraw (M7), the ensō once per synergy per run in the
+    /// ceremony slot, 0 B.</item>
+    /// <item>The aura (B11 ring / colour / sparks and the ring's sumi underdraw (M6), III's light inner line (B4-2 S2), K7 with the B14
+    /// dome; ShieldBreak / ShieldUp / ShieldHit) and the tree preview clock (timeScale 0: a diorama tracer and card move, a world card
+    /// stays frozen).</item>
     /// <item>S-06's add-on glow: a real WeaponAttachMount (ar_1, DD_WeaponAttach) — E4 fire III and E5 V take 0.6 / 1.5 on their
     /// M_AP040_Glow slot through a MaterialPropertyBlock, × FlashScale, black while hidden, the electric capsule counted slotless,
     /// the per-frame poll 0 B (ignored while DD_WeaponAttach is not built).</item>
@@ -319,6 +321,117 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// WP-104 B4-2 B9 (S-07 F): a record that keeps a path (S-02 sh_cap's seeker: TickTd copies ProjectileSystem.TryGetPath; here
+        /// SetTdPathForTests on a TD record of its own) lays its streak along it — consecutive DD/VFX Ribbon instances, the same width,
+        /// colours and ceiling, _Span = (its tail / head distance along the streak, the rim z, −the streak's length) so the head bead and
+        /// the tail run once over the whole bent streak; its length is the kept path up to 10 m (S-07 12.10 decision (a):
+        /// TreeSeekTrail.SeekLength, the Shot ladder's ceiling); the halo and a body streak (an extra volley: what a real seeker is) ride
+        /// the same path; on impact the tail runs in along it; a straight round's instance stays byte-identical beside it; 0 B.
+        /// </summary>
+        [Test]
+        public void TdIz_B9_KivrilanArayici_YolBoyuncaSegmentler_DuzMermiBirebir_0B()
+        {
+            TracerRibbonRenderer tracer = AttachTdTracer();
+            TreeRuntime.SetTestStats(TreeStats.Neutral);
+
+            // a straight round first (record 0): its instance alone, then beside a bending one
+            int duz = 9200, arayan = 9201;
+            Vector3 duzO = O + Vector3.forward * 4f;
+            Assert.That(tracer.RecordTdProjectile(TdSpawn(duz, ClassicWeaponId.AssaultRifle, duzO)), Is.True);
+            tracer.StopTdProjectile(duz, duzO + Vector3.right * 3f);
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
+            string[] buffers = { "_head", "_tail", "_headColor", "_tailColor", "_span", "_extra" };
+            var yalniz = new Vector4[buffers.Length];
+            for (int b = 0; b < buffers.Length; b++) yalniz[b] = TracerBuffer(tracer, buffers[b])[0];
+
+            // the bending round (record 1): spawned at O, turned 30° at P1 3 m on, stopped 1 m past it — a 4 m kept path
+            Vector3 p1 = O + Vector3.right * 3f, turned = Quaternion.Euler(0f, -30f, 0f) * Vector3.right, head = p1 + turned;
+            const float yol = 4f;
+            Assert.That(tracer.RecordTdProjectile(TdSpawn(arayan, ClassicWeaponId.AssaultRifle, O)), Is.True);
+            tracer.StopTdProjectile(arayan, head);
+            var path = new[] { O, p1 };
+            Assert.That(tracer.SetTdPathForTests(arayan, path, path.Length), Is.True);
+            Assert.That(RecordField<int>(tracer, arayan, "SeekPoints"), Is.EqualTo(2));
+            Assert.That(tracer.LiveTdSeekPaths, Is.EqualTo(1));
+            int bent0 = tracer.TdBentInstances;
+
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(3), "düz mermi 1 + kıvrılan iz 2 segment (bütün yol: kıvrımdan namluya)");
+            for (int b = 0; b < buffers.Length; b++) Assert.That(TracerBuffer(tracer, buffers[b])[0], Is.EqualTo(yalniz[b]), "düz mermi birebir: " + buffers[b]);
+            Vector4[] h = TracerBuffer(tracer, "_head"), t = TracerBuffer(tracer, "_tail"), s = TracerBuffer(tracer, "_span");
+            Assert.That(((Vector3)h[1] - head).magnitude, Is.LessThan(1e-4f), "baş mermide");
+            Assert.That(((Vector3)t[1] - p1).magnitude, Is.LessThan(1e-4f), "ilk segment kıvrımda biter");
+            Assert.That(((Vector3)h[2] - p1).magnitude, Is.LessThan(1e-4f), "segmentler ardışık");
+            Assert.That(((Vector3)t[2] - O).magnitude, Is.LessThan(1e-4f), "karar (a): iz = tutulan yol (≤ 10 m), namluya kadar");
+            Assert.That(s[1].x, Is.EqualTo(yol - 1f).Within(1e-4f));
+            Assert.That(s[1].y, Is.EqualTo(yol).Within(1e-4f), "baş: izin tüm boyu");
+            Assert.That(s[2].x, Is.EqualTo(0f).Within(1e-4f), "kuyruk ucu t = 0");
+            Assert.That(s[2].y, Is.EqualTo(s[1].x).Within(1e-6f), "t kesintisiz");
+            Assert.That(s[1].w, Is.EqualTo(-yol).Within(1e-4f), "DD/VFX Ribbon: _Span.w < 0 = bütün iz boyunca t");
+            Assert.That(s[2].w, Is.EqualTo(-yol).Within(1e-4f));
+            Assert.That(t[1].w, Is.EqualTo(TracerRibbonRenderer.TdTracerBead / yol).Within(1e-5f), "baş boncuğu bütün izin payı");
+            Assert.That(t[2].w, Is.EqualTo(t[1].w));
+            Assert.That(h[1].w, Is.EqualTo(h[2].w), "aynı en");
+            Assert.That(TracerBuffer(tracer, "_headColor")[1], Is.EqualTo(TracerBuffer(tracer, "_headColor")[2]), "aynı renk");
+            Assert.That(TracerBuffer(tracer, "_extra")[1], Is.EqualTo(TracerBuffer(tracer, "_extra")[2]), "aynı taban / tavan");
+            Assert.That(tracer.TdBentInstances - bent0, Is.EqualTo(1), "kayıt başına ek instance: segment − 1");
+
+            // the halo rides the same path, its amber rim (z) kept
+            Assert.That(DrawTd(tracer, 2), Is.EqualTo(3));
+            Assert.That(TracerBuffer(tracer, "_span")[1].z, Is.EqualTo(-TracerRibbonRenderer.TdHaloEdgeShare), "nötr hale kenarı");
+            Assert.That(TracerBuffer(tracer, "_span")[2].w, Is.EqualTo(-yol).Within(1e-4f));
+
+            // on impact the tail runs in along the path: half the tail-out, half the streak (2 m: still past the turn)
+            tracer.TickTd(TracerRibbonRenderer.TdTailOutSeconds * .5f);
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(3));
+            Assert.That(TracerBuffer(tracer, "_span")[1].w, Is.EqualTo(-yol * .5f).Within(1e-4f), "kuyruk yol boyunca içeri akar");
+            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[2] - (p1 + Vector3.left)).magnitude, Is.LessThan(1e-4f), "kıvrımdan 1 m geri");
+
+            // a body streak (an extra volley: what a real seeker is) 0.3 m past the turn: its whole 3.3 m path, bent
+            tracer.Clear();
+            int govde = 9300;
+            Vector3 head2 = p1 + turned * .3f;
+            Assert.That(tracer.RecordTdProjectile(TdSpawn(govde, ClassicWeaponId.AssaultRifle, O, 1, 1f)), Is.True);
+            tracer.StopTdProjectile(govde, head2);
+            Assert.That(tracer.SetTdPathForTests(govde, path, path.Length), Is.True);
+            Assert.That(DrawTd(tracer, 0), Is.Zero, "ek voley gövde izidir (çekirdek yok)");
+            Assert.That(DrawTd(tracer, 2), Is.EqualTo(2), "gövde izi kıvrımı geçer");
+            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - O).magnitude, Is.LessThan(1e-4f), "gövde izi de bütün yol");
+            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(-3.3f).Within(1e-4f));
+            Assert.That(TracerBuffer(tracer, "_tail")[0].w, Is.Zero, "gövde izinde boncuk yok");
+
+            // a kept path longer than 10 m: its newest 10 m (TreeVfxLadder.TrailMaxMetres, the Shot ladder's ceiling)
+            tracer.Clear();
+            int uzun = 9310;
+            Vector3 p20 = O + Vector3.right * 20f, head3 = p20 + turned;
+            var farPath = new[] { O, p20 };
+            Assert.That(tracer.RecordTdProjectile(TdSpawn(uzun, ClassicWeaponId.AssaultRifle, O)), Is.True);
+            tracer.StopTdProjectile(uzun, head3);
+            Assert.That(tracer.SetTdPathForTests(uzun, farPath, farPath.Length), Is.True);
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(2));
+            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(-TreeVfxLadder.TrailMaxMetres).Within(1e-4f), "en çok 10 m");
+            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - (O + Vector3.right * 11f)).magnitude, Is.LessThan(1e-3f), "1 m dönüş + 9 m geri");
+
+            // 0 B: the path read-in and the lay-out allocate nothing
+            var draw = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), tracer, typeof(TracerRibbonRenderer).GetMethod("DrawTd", Private));
+            var ink = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), tracer, typeof(TracerRibbonRenderer).GetMethod("DrawTdInk", Private));
+            draw(0); draw(1); draw(2); ink();
+            tracer.Clear();
+            int id = 9400;
+            Assert.That(() =>
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    ProjectileSpawnInfo e = TdSpawn(id++, ClassicWeaponId.AssaultRifle, O, 1, 1f);
+                    tracer.RecordTdProjectile(in e);
+                    tracer.StopTdProjectile(e.ProjectileId, head2);
+                    tracer.SetTdPathForTests(e.ProjectileId, path, path.Length);
+                    tracer.TickTd(.004f);
+                    draw(0); draw(1); draw(2); ink();
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "kıvrılan iz yolu ayırmasız");
+        }
+
+        /// <summary>
         /// AD A5 on the TD camera's scale (≈ 95–100 px/m, 1080p; the Wp101TdIzZeminTests set-up without post-processing, so the core's
         /// bright part is the pixels whose brightest channel saturates, ≥ 254): an AR tracer at Shot V + fire draws a bright core of
         /// 3–8 px (the quad clamped at max(11.1 px, its WP-101 width)), and the sniper's — already ≈ 11 px in WP-101 — neither grows
@@ -528,6 +641,31 @@ namespace DD.Prototype.Tests.PlayMode
             float t3 = binder.Row(TreeVfxRow.T3InkShock).WorldSizeMetres;
             Assert.That(binder.LastSpawned.transform.GetChild(0).localScale.x, Is.EqualTo(Mathf.Clamp(5.4f * 1.2f, t3 * .5f, t3 * 1.5f)).Within(1e-3f), "sumi halkası kartı izler");
             Assert.That(binder.LiveBlasts, Is.EqualTo(1));
+
+            // AD-B4 S3 (B4-2): the ink ring's washi edge — its own procedural rim row on the ink's card, frames and life, 5 mm under it
+            FlipbookEffect ink = binder.LastSpawned, rim = binder.LastWashi;
+            Assert.That(binder.WashiRow, Is.Not.Null, "S3: washi kenarı satırı (T3 malzemesinin kopyası + prosedürel doku)");
+            Assert.That(rim, Is.Not.Null, "S3: mürekkep halkasının washi kenarı");
+            Assert.That(rim, Is.Not.SameAs(ink));
+            Assert.That(rim.Row, Is.SameAs(binder.WashiRow));
+            Assert.That(rim.Row.Material, Is.Not.SameAs(ink.Row.Material), "kendi dokusu: koyu ön-çarpımlı T3 tint ile açılmaz");
+            Assert.That(rim.Row.Material.shader, Is.SameAs(ink.Row.Material.shader), "aynı DD/VFX Flipbook yolu");
+            Assert.That(rim.Row.FramesUsed, Is.EqualTo(ink.Row.FramesUsed));
+            Assert.That(rim.Row.Fps, Is.EqualTo(ink.Row.Fps).Within(1e-5f));
+            Assert.That(rim.LifeSeconds, Is.EqualTo(ink.LifeSeconds).Within(1e-4f), "halkayla aynı ömür ve kare");
+            Assert.That(rim.transform.GetChild(0).localScale.x, Is.EqualTo(ink.transform.GetChild(0).localScale.x).Within(1e-4f), "halkanın kartı");
+            Assert.That(rim.AlphaCap, Is.EqualTo(TreeVfxLadder.InkWashiAlpha).Within(1e-5f), "α ≤ 0.40");
+            Assert.That(rim.transform.position.y, Is.LessThan(ink.transform.position.y), "halkanın altında: önce çizilir");
+            var rimBlock = new MaterialPropertyBlock();
+            rim.transform.GetChild(0).GetComponent<MeshRenderer>().GetPropertyBlock(rimBlock);
+            Color cream = TreeVfxLadder.InkWashiTint;
+            cream.a = TreeVfxLadder.InkWashiAlpha;
+            var creamProbe = new MaterialPropertyBlock();
+            creamProbe.SetColor("_Tint", cream);   // the runtime row's own tint is white
+            Assert.That(rimBlock.GetColor("_Tint").g, Is.EqualTo(creamProbe.GetColor("_Tint").g).Within(1e-3f), "washi kreması #F3EEE3");
+            Assert.That(InkWashiSheet.RimAlpha(7, InkWashiSheet.OuterHalfMax(7) - .03f), Is.EqualTo(0f), "mürekkep bandının içinde kenar yok");
+            Assert.That(InkWashiSheet.RimAlpha(7, InkWashiSheet.Outer10(7)), Is.GreaterThan(.5f), "mürekkebin dış kenarında");
+            Assert.That(InkWashiSheet.RimAlpha(15, InkWashiSheet.Outer10(15)), Is.LessThan(.05f), "mürekkep sönünce kenar da söner");
         }
 
         [UnityTest]
@@ -563,6 +701,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(ink.a, Is.EqualTo(TreeVfxLadder.AuraUnderCoverage).Within(1e-5f), "örtü ölçeği (shader fade)");
             Assert.That(under.GetFloat("_AlphaCap"), Is.EqualTo(TreeVfxLadder.AuraUnderAlpha).Within(1e-5f), "α ≤ 0.35");
             Assert.That(aura.UnderRenderer.bounds.center.y, Is.LessThan(aura.RingRenderer.bounds.center.y), "halkanın altında: üstteki her kameradan uzak, önce çizilir");
+            Assert.That(aura.LineVisible, Is.False, "S2: açık iç çizgi yalnız III");
             var late = (Action)Delegate.CreateDelegate(typeof(Action), aura, typeof(TreeAuraVfx).GetMethod("LateUpdate", Private));
             late();
             Assert.That(() => { for (int i = 0; i < 50; i++) late(); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "aura + alt çizim kare yolu ayırmasız");
@@ -597,10 +736,30 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(aura.SmokeVisible, Is.True, "III: sumi dumanı");
             Assert.That(aura.UnderRow, Is.SameAs(aura.RingRow), "alt çizim seviyeyle döner");
 
+            // AD-B4 S2 (B4-2): III's light inner line — a procedural annulus on its own row, #FF605C α 0.9, still, over the ring
+            Assert.That(aura.LineVisible, Is.True, "S2: III açık iç çizgi");
+            Assert.That(aura.LineRow, Is.Not.Null);
+            Assert.That(aura.LineRenderer.sharedMaterial, Is.Not.SameAs(aura.RingRenderer.sharedMaterial), "kendi dokusu (halka sayfası değil)");
+            Assert.That(aura.LineRenderer.sharedMaterial.shader, Is.SameAs(aura.RingRenderer.sharedMaterial.shader), "halkanın shader yolu");
+            Assert.That(aura.LineScale, Is.EqualTo(TreeAuraVfx.LineQuadSize(3)).Within(1e-4f));
+            Assert.That(TreeAuraVfx.LineQuadSize(3) * .5f * TreeAuraVfx.LineTexRadius,
+                Is.EqualTo(TreeVfxLadder.AuraRadius(3) * TreeVfxLadder.AuraLineRadiusShare).Within(1e-4f), "bandın iç kenarında (r ≈ 1.31 m)");
+            var lineBlock = new MaterialPropertyBlock();
+            aura.LineRenderer.GetPropertyBlock(lineBlock);
+            Assert.That(lineBlock.GetFloat("_AlphaCap"), Is.EqualTo(TreeVfxLadder.AuraLineAlpha).Within(1e-5f), "α 0.9");
+            Assert.That(lineBlock.GetFloat("_Frame"), Is.EqualTo(0f), "durağan çizgi (tek kare)");
+            Color coral = TreeVfxLadder.AuraLineTint;
+            coral.a = TreeVfxLadder.AuraLineAlpha;
+            var coralProbe = new MaterialPropertyBlock();
+            coralProbe.SetColor("_Tint", coral);
+            Assert.That(lineBlock.GetColor("_Tint").g, Is.EqualTo(coralProbe.GetColor("_Tint").g).Within(1e-3f), "#FF605C");
+            Assert.That(aura.LineRenderer.bounds.center.y, Is.GreaterThan(aura.RingRenderer.bounds.center.y), "halkanın üstünde, kıvılcımların altında");
+            Assert.That(() => { for (int i = 0; i < 50; i++) late(); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "III + iç çizgi kare yolu ayırmasız");
+
             s.AuraLevel = 0;
             TreeVfxPreview.SetStats(in s);
             yield return null;
-            Assert.That(aura.RingVisible || aura.UnderVisible, Is.False, "aura yok: halka da alt çizim de yok");
+            Assert.That(aura.RingVisible || aura.UnderVisible || aura.LineVisible, Is.False, "aura yok: halka, alt çizim, iç çizgi yok");
         }
 
         [UnityTest]
@@ -660,6 +819,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(ember.b, Is.EqualTo(want.b).Within(1));
             Assert.That(ember.a / 255f, Is.LessThanOrEqualTo(.30f + .5f / 255f), "α ≤ 0.30");
             Assert.That(ember.a / 255f, Is.GreaterThan(0f));
+            Assert.That(TreeVfxLadder.FireUnderAlpha, Is.EqualTo(.21f).Within(1e-6f), "M8 (C-00 12.10): alt çizim α .21 (.225 b42-r1'de açık taşı geçirmedi)");
             Assert.That(particles[0].startSize, Is.EqualTo(2.5f * .87f * 2f).Within(1e-3f), "çarın diski (boy)");
             float charFudge = flames.SystemOf(3).GetComponent<ParticleSystemRenderer>().sortingFudge;
             float glowFudge = flames.SystemOf(2).GetComponent<ParticleSystemRenderer>().sortingFudge;
@@ -679,6 +839,28 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(binder.LastSpawnedRow, Is.EqualTo(TreeVfxRow.B4Cloud));
             Assert.That(binder.LastSpawned.LifeSeconds, Is.EqualTo(4f).Within(1e-4f), "bulut zonun ömrü kadar döner");
             Assert.That(binder.LiveClouds, Is.EqualTo(1));
+
+            // AD-B4 S4 (B4-2): the cloud's underdraw — the same sheet, card and life 1 cm under it, the sheet lifted to the venom core
+            FlipbookEffect cloudFx = binder.LastSpawned, cloudUnder = binder.LastCloudUnder;
+            Assert.That(cloudUnder, Is.Not.Null, "S4: bulutun alt çizimi");
+            Assert.That(cloudUnder, Is.Not.SameAs(cloudFx));
+            Assert.That(cloudUnder.Row, Is.SameAs(cloudFx.Row), "aynı sayfa (yeni varlık yok)");
+            Assert.That(cloudUnder.LifeSeconds, Is.EqualTo(cloudFx.LifeSeconds).Within(1e-4f), "aynı ömür ve kare");
+            Assert.That(cloudUnder.transform.GetChild(0).localScale.x, Is.EqualTo(cloudFx.transform.GetChild(0).localScale.x).Within(1e-4f), "aynı kart");
+            Assert.That(cloudUnder.AlphaCap, Is.EqualTo(TreeVfxLadder.VenomUnderAlpha).Within(1e-5f), "α ≤ 0.30");
+            Assert.That(cloudUnder.transform.position.y, Is.LessThan(cloudFx.transform.position.y), "bulutun altında: önce çizilir");
+            Color lifted = TreeVfxLadder.HdrTint(TreeVfxLadder.VenomUnderTint, TreeVfxLadder.VenomUnderGain, TreeVfxLadder.VenomUnderCoverage);
+            Assert.That(Mathf.GammaToLinearSpace(lifted.g), Is.EqualTo(TreeVfxLadder.VenomUnderTint.linear.g * TreeVfxLadder.VenomUnderGain).Within(.02f),
+                "zehir çekirdeği #E8FFB0 × 4 (doğrusal)");
+            Color manifestTint = cloudFx.Row.DefaultTint;
+            manifestTint.a = 1f;
+            var liftProbe = new MaterialPropertyBlock();
+            liftProbe.SetColor("_Tint", binder.VenomUnderTint * manifestTint);   // FlipbookEffect.Play's tint × the row's own
+            var underBlock = new MaterialPropertyBlock();
+            cloudUnder.transform.GetChild(0).GetComponent<MeshRenderer>().GetPropertyBlock(underBlock);
+            Color underTint = underBlock.GetColor("_Tint");
+            Assert.That(underTint.g, Is.EqualTo(liftProbe.GetColor("_Tint").g).Within(1e-3f), "HDR zehir tonu bloğa geçer");
+            Assert.That(underTint.a, Is.EqualTo(TreeVfxLadder.VenomUnderCoverage).Within(1e-4f), "örtü ölçeği × 2 (shader fade)");
             flames.Clear();
         }
 
