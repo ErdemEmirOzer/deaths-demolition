@@ -255,6 +255,39 @@ namespace DD.Prototype.Profile
         }
 
         /// <summary>
+        /// WP-112 (C-00 12.10): meta nodes taken out of the catalog after players could buy them, with what each cost. A node a
+        /// release does not carry must not keep the player's Ash: <see cref="RetireMetaNodes"/> gives it back in full.
+        /// </summary>
+        public static readonly (string Id, int AshCost)[] RetiredMetaNodes =
+        {
+            ("aw_rethink", 150)   // Second Thoughts: no system read it (WP-112); back after R4 with its refund command
+        };
+
+        /// <summary>
+        /// WP-112: every load (<see cref="ProfileService.EnsureLoaded"/>) drops a retired meta node from the profile and gives its
+        /// Ash back in full through the B1a refund notice (PendingAshRefundNotice grows; the notice shows once, its acknowledgement
+        /// writes the profile). In memory only, idempotent: a profile without the node is untouched. Returns the Ash given back.
+        /// </summary>
+        public static int RetireMetaNodes(ProfileData data)
+        {
+            if (data == null || data.MetaNodes == null) return 0;
+            int refund = 0;
+            foreach ((string id, int ash) in RetiredMetaNodes)
+            {
+                if (data.MetaNodes.RemoveAll(x => x == id) > 0) refund = ProfileProgression.SaturatingAdd(refund, ash);
+                if (data.MetaPinnedNode == id) data.MetaPinnedNode = string.Empty;
+            }
+
+            if (refund == 0) return 0;
+            refund = System.Math.Min(refund, System.Math.Max(0, data.AshSpentTotal));   // never more than was spent
+            data.AshSpentTotal = System.Math.Max(0, data.AshSpentTotal - refund);
+            data.AshBalance = data.AshEarnedTotal - data.AshSpentTotal;
+            data.PendingAshRefundNotice = ProfileProgression.SaturatingAdd(System.Math.Max(0, data.PendingAshRefundNotice), refund);
+            data.MetaSeen = System.Math.Min(System.Math.Max(0, data.MetaSeen), data.MetaNodes.Count);
+            return refund;
+        }
+
+        /// <summary>
         /// v5 → v6 (WP-104, C-00 11.10 decision 2): the full free respec. The weapon page is retired and the Ash meaning of
         /// the PATH changes (Awakening), so every Ash spent comes back instead of a page-by-page refund: the simplest rule that
         /// cannot lose a point. Runs on the in-memory document only; ProfileStore keeps the v5 bytes before the first write.

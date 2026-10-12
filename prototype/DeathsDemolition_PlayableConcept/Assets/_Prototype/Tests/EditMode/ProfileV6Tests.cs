@@ -171,6 +171,44 @@ namespace DD.Prototype.Tests.EditMode
             StringAssert.Contains("\"SaveVersion\":5", File.ReadAllText(TestPath), "ilk yazıma kadar disk v5");
         }
 
+        /// <summary>WP-112 (C-00 12.10): a profile that owns the retired aw_rethink loads without it, its 150 Ash back in full, the
+        /// refund notice once; acknowledged and reloaded, nothing is refunded twice.</summary>
+        [Test]
+        public void Wp112_EmekliUyanisDugumu_YuklemedeKulIade_BildirimBirKez()
+        {
+            File.WriteAllText(TestPath, V5Json());
+            ProfileData p = ProfileService.Current;   // a valid v6 profile (the v5 step ran)
+            p.MetaNodes.Clear();
+            p.MetaNodes.Add("aw_codex");
+            p.MetaNodes.Add("aw_rethink");
+            p.MetaPinnedNode = "aw_rethink";
+            p.MetaSeen = 2;
+            p.AshSpentTotal = 250;
+            p.AshBalance = p.AshEarnedTotal - p.AshSpentTotal;
+            p.PendingAshRefundNotice = 0;
+            Assert.IsTrue(p.IsValid());
+            Assert.IsTrue(ProfileService.Save());
+            StringAssert.Contains("aw_rethink", File.ReadAllText(TestPath), "the old build's profile on disk");
+
+            Bosalt();
+            ProfileData q = ProfileService.Current;
+            CollectionAssert.AreEqual(new[] { "aw_codex" }, q.MetaNodes, "the retired node is gone, the rest kept");
+            Assert.AreEqual(100, q.AshSpentTotal, "aw_rethink's 150 back");
+            Assert.AreEqual(q.AshEarnedTotal - 100, q.AshBalance);
+            Assert.AreEqual(150, ProfileService.PendingAshRefundNotice, "refund notice = the Ash given back");
+            Assert.AreEqual(string.Empty, q.MetaPinnedNode);
+            Assert.LessOrEqual(q.MetaSeen, q.MetaNodes.Count);
+            Assert.IsTrue(q.IsValid());
+
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.AcknowledgeAshRefundNotice());
+            Assert.IsFalse(File.ReadAllText(TestPath).Contains("aw_rethink"), "the acknowledgement wrote the profile without it");
+            Bosalt();
+            ProfileData r = ProfileService.Current;
+            Assert.AreEqual(0, ProfileService.PendingAshRefundNotice, "notice once");
+            Assert.AreEqual(100, r.AshSpentTotal, "no second refund");
+            Assert.AreEqual(0, ProfileMigration.RetireMetaNodes(r), "idempotent");
+        }
+
         [Test]
         public void V5Bak_BaytEsit_UzerineYazilmaz()
         {

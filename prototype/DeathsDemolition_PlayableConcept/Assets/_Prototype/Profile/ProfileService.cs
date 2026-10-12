@@ -822,6 +822,7 @@ namespace DD.Prototype.Profile
             }
 
             s_data = ProfileStore.Load();
+            ProfileMigration.RetireMetaNodes(s_data);   // WP-112: a retired meta node's Ash comes back (refund notice); persisted by the next save
 
             // Establish the unlock baseline WITHOUT reporting it. Everything the current
             // level already entitles the profile to is recorded here, so the first

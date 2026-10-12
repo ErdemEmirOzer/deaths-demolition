@@ -1,6 +1,6 @@
 {
  "schema": "dd-meta-tree-v1",
- "note": "WP-104 B1a (S-04, KARAR-WP104-11.10 decision 2): the meta PATH is Ash's Awakening page — variety, never power (12 nodes, GD-TREE §3); the weapons page is retired (WP-107 opens every weapon but rl_1 at a wall buy) and pa_eco_3/4 retired with the Purse and capstone discount. Special leanings and passives keep their DEC-098 prices. PrototypeOnly until C-00 records it; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
+ "note": "WP-104 B1a (S-04, KARAR-WP104-11.10 decision 2): the meta PATH is Ash's Awakening page — variety, never power (11 nodes, GD-TREE §3; aw_rethink retired for R4, WP-112); the weapons page is retired (WP-107 opens every weapon but rl_1 at a wall buy) and pa_eco_3/4 retired with the Purse and capstone discount. Special leanings and passives keep their DEC-098 prices. PrototypeOnly until C-00 records it; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
  "nodes": [
   {
    "id": "sp_arc_draw",
@@ -707,24 +707,6 @@
    "exclusionGroup": 0,
    "weaponKey": "",
    "stringKey": "tree.meta.awakening.head_start"
-  },
-  {
-   "id": "aw_rethink",
-   "page": "awakening",
-   "row": 2,
-   "column": 2,
-   "kind": "Awakening",
-   "shortName": "2nd Thoughts",
-   "displayName": "Second Thoughts",
-   "description": "Once per run, take back one tree node for a full refund.",
-   "levelGate": 1,
-   "ashCost": 150,
-   "effectId": "awakening.second_thoughts",
-   "effectValue": 1.0,
-   "parents": [],
-   "exclusionGroup": 0,
-   "weaponKey": "",
-   "stringKey": "tree.meta.awakening.second_thoughts"
   }
  ]
 }

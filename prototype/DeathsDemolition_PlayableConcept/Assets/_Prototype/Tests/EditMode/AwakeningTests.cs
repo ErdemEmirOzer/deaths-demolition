@@ -41,7 +41,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreNotEqual(TreeAwakening.None, TreeAwakening.FromProfile(p), n.Id + " TreeAwakening'de okunur");
             }
 
-            Assert.AreEqual(12, sayi);
+            Assert.AreEqual(11, sayi, "WP-112: aw_rethink R4'te emekli");
         }
 
         [Test]
@@ -49,8 +49,8 @@ namespace DD.Prototype.Tests.EditMode
         {
             var p = new ProfileData();
             foreach (string id in new[] { "aw_alt_sh", "aw_alt_kx", "aw_alt_ec", "aw_third", "aw_twincore", "aw_codex", "aw_headstart", "aw_rethink" }) p.MetaNodes.Add(id);
-            TreeAwakening a = TreeAwakening.FromProfile(p);
-            Assert.IsTrue(a.ThirdAffinity && a.TwinCores && a.SynergyCodex && a.HeadStart && a.SecondThoughts);
+            TreeAwakening a = TreeAwakening.FromProfile(p);   // WP-112: an unknown (retired) id is ignored, never a crash
+            Assert.IsTrue(a.ThirdAffinity && a.TwinCores && a.SynergyCodex && a.HeadStart);
             Assert.IsTrue(a.HasAltCapstone(TreeBranch.Shot));
             Assert.IsTrue(a.HasAltCapstone(TreeBranch.Chaos));
             Assert.IsTrue(a.HasAltCapstone(TreeBranch.Economy));
@@ -60,7 +60,7 @@ namespace DD.Prototype.Tests.EditMode
             var q = new ProfileData();
             foreach (string id in new[] { "aw_alt_mg", "aw_alt_sp", "aw_alt_el", "aw_alt_sv" }) q.MetaNodes.Add(id);
             TreeAwakening b = TreeAwakening.FromProfile(q);
-            Assert.IsFalse(b.ThirdAffinity || b.TwinCores || b.SynergyCodex || b.HeadStart || b.SecondThoughts);
+            Assert.IsFalse(b.ThirdAffinity || b.TwinCores || b.SynergyCodex || b.HeadStart);
             Assert.AreEqual((1 << 1) | (1 << 2) | (1 << 3) | (1 << 5), b.AltCapstones);
         }
     }

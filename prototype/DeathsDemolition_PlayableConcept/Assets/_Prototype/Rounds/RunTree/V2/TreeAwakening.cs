@@ -17,8 +17,6 @@ namespace DD.Prototype.Rounds
         public bool SynergyCodex;
         /// <summary>aw_headstart: round 1 starts with extra gold (Normal / Hard only - the tree applies the mode rule).</summary>
         public bool HeadStart;
-        /// <summary>aw_rethink: one node per run can be refunded in full.</summary>
-        public bool SecondThoughts;
         /// <summary>Bit per <see cref="TreeBranch"/> index: that branch's alternative capstone is unlocked (aw_alt_*).</summary>
         public byte AltCapstones;
 
@@ -38,7 +36,6 @@ namespace DD.Prototype.Rounds
         public const string TwinCoresId = "aw_twincore";
         public const string SynergyCodexId = "aw_codex";
         public const string HeadStartId = "aw_headstart";
-        public const string SecondThoughtsId = "aw_rethink";
 
         public bool HasAltCapstone(TreeBranch branch)
         {
@@ -69,7 +66,6 @@ namespace DD.Prototype.Rounds
                     case TwinCoresId: a.TwinCores = true; break;
                     case SynergyCodexId: a.SynergyCodex = true; break;
                     case HeadStartId: a.HeadStart = true; break;
-                    case SecondThoughtsId: a.SecondThoughts = true; break;
                 }
             }
 

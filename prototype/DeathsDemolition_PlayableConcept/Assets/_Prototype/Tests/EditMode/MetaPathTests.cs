@@ -113,8 +113,9 @@ namespace DD.Prototype.Tests.EditMode
 
             // WP-104 (C-00 11.10 karar 2): silah sayfası emekli → Uyanış (GD-TREE §3, 12 düğüm ≈ 3 250 Kül); Special korunur;
             // Pasif'ten capstone indirimi (pa_eco_4) ve Kese başlangıçta (pa_eco_3, Kese emekli) çıktı.
-            Assert.AreEqual(0, w); Assert.AreEqual(10, s); Assert.AreEqual(16, p); Assert.AreEqual(12, a);
-            Assert.AreEqual(3250, kul, "Uyanış toplamı");
+            Assert.AreEqual(0, w); Assert.AreEqual(10, s); Assert.AreEqual(16, p); Assert.AreEqual(11, a, "WP-112: aw_rethink emekli");
+            Assert.AreEqual(3100, kul, "Uyanış toplamı (3 250 − aw_rethink 150)");
+            Assert.IsNull(MetaPathCatalog.Find("aw_rethink"), "WP-112");
             Assert.IsNull(MetaPathCatalog.Find("w_ar_2"));
             Assert.IsNull(MetaPathCatalog.Find("pa_eco_3"));
             Assert.IsNull(MetaPathCatalog.Find("pa_eco_4"));
@@ -281,7 +282,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.SetMetaPin("aw_codex"));
             var s = new MetaPathSnapshot();
             s.Refresh();
-            Assert.AreEqual(38, s.Count, "Special 10 + Pasif 16 + Uyanış 12");
+            Assert.AreEqual(37, s.Count, "Special 10 + Pasif 16 + Uyanış 11 (WP-112)");
             Assert.AreEqual(s.IndexOf("aw_codex"), s.NextIndex);
             Assert.IsFalse(s.NextIsAuto);
             Assert.IsTrue(s.Nodes[s.NextIndex].IsPinned);

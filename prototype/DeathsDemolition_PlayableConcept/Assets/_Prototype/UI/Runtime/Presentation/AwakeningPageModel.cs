@@ -54,11 +54,11 @@ namespace DD.Prototype.UI
         {
             "aw_alt_sh", "aw_alt_mg", "aw_alt_sp", "aw_alt_el", "aw_alt_kx", "aw_alt_sv",
             "aw_alt_ec", "aw_third", "aw_twincore",
-            "aw_codex", "aw_headstart", "aw_rethink"
+            "aw_codex", "aw_headstart"   // WP-112 (C-00 12.10): aw_rethink retired for R4; S-09 re-arranges the 11 cells
         };
 
-        private static readonly int[] s_row = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2 };
-        private static readonly int[] s_column = { 0, 1, 2, 3, 4, 5, 0, 3, 4, 0, 1, 2 };
+        private static readonly int[] s_row = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
+        private static readonly int[] s_column = { 0, 1, 2, 3, 4, 5, 0, 3, 4, 0, 1 };
 
         public const int Columns = 6;
         public const int Rows = 3;

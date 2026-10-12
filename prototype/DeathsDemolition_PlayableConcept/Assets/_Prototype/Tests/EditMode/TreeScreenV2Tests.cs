@@ -454,7 +454,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             var model = new AwakeningPageModel();
             model.ResetToLayout();
-            Assert.AreEqual(12, model.Entries.Count, "seven alternative capstones, two forks, three aids");
+            Assert.AreEqual(11, model.Entries.Count, "seven alternative capstones, two forks, two aids (WP-112: aw_rethink retired)");
             Assert.IsTrue(model.Pending, "before B1: the page reads pending");
             var places = new HashSet<int>();
             foreach (AwakeningEntry e in model.Entries)
