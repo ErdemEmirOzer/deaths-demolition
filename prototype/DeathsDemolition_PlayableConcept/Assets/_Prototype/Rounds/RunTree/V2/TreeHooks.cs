@@ -984,6 +984,17 @@ namespace DD.Prototype.Rounds
             TreeEvents.RaiseProc(in info);
         }
 
+        // ------------------------------------------------------------------ Special resonance (KARAR-WP104 6)
+
+        /// <summary>Raiju (sw_arc) lifetime scale: Storm Chain owned → ×1,3 (design §3). Neutral 1. S-02's Special path reads it once per pickup.</summary>
+        public static float RaijuDurationScale => Mathf.Max(1f, TreeRuntime.Current.RaijuDurationScale);
+
+        /// <summary>Extra chain jumps of Raiju's lightning: Storm Chain owned → +2. Neutral 0.</summary>
+        public static int RaijuExtraJumps => Math.Max(0, TreeRuntime.Current.RaijuExtraJumps);
+
+        /// <summary>Namekuji's (sw_gel) slick floor freezes the bodies in it: Deep Freeze owned. Neutral false.</summary>
+        public static bool NamekujiFreezes => TreeRuntime.Current.NamekujiFreezes;
+
         // ------------------------------------------------------------------ run boundary / install
 
         /// <summary>A new run (or its end): crit pity, Endless counter and window, Overclock edge, kill clock, Undying, leech window.</summary>

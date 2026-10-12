@@ -206,6 +206,11 @@ namespace DD.Prototype.Rounds
         public float StunHeavyShare;
         /// <summary>Stone Guardian push wave stun (s).</summary>
         public float BulwarkStunSeconds;
+        /// <summary>WP-104 Special resonance (design §3, KARAR-WP104 6; replaces the v1 Special links): Storm Chain owned → Raiju
+        /// lasts this × longer and jumps this many more; Deep Freeze owned → Namekuji's gel freezes.</summary>
+        public float RaijuDurationScale;
+        public int RaijuExtraJumps;
+        public bool NamekujiFreezes;
 
         public int BranchTier(TreeBranch branch) => (BranchTiers >> ((int)branch * 3)) & 7;
 
@@ -249,7 +254,8 @@ namespace DD.Prototype.Rounds
             AmmoBuyScale = 1f,
             HearthDamageScale = 1f,
             // S-03 B3: a stun from a node without its own arg still reaches Elite·Ultra at half length (0 would mean immune).
-            StunHeavyShare = 0.5f
+            StunHeavyShare = 0.5f,
+            RaijuDurationScale = 1f
         };
     }
 }

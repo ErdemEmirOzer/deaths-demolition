@@ -260,6 +260,7 @@ namespace DD.Prototype.Rounds
                     s.FreezeCooldown = n.Arg("cooldown", 0f);
                     s.FreezeVulnerability = n.Arg("vuln", 1f);
                     s.FreezeEliteShare = n.Arg("eliteShare", 0.5f);
+                    s.NamekujiFreezes = n.Arg("gelFreeze", 0f) > 0f;
                     s.FreezeUltraSlow = n.Arg("ultraSlow", 0.5f);
                     break;
                 case "el_ice3":
@@ -271,6 +272,8 @@ namespace DD.Prototype.Rounds
                 case "el_shock3":
                     s.Elements |= TreeElement.Shock;
                     s.ShockJumps = Mathf.Max(s.ShockJumps, (int)n.Arg("jumps", 0f));
+                    s.RaijuDurationScale = Mathf.Max(s.RaijuDurationScale, n.Arg("raijuDuration", 1f));
+                    s.RaijuExtraJumps = Mathf.Max(s.RaijuExtraJumps, (int)n.Arg("raijuJumps", 0f));
                     s.ShockShare = n.Arg("k", s.ShockShare);
                     s.ShockEventsMax = Mathf.Max(s.ShockEventsMax, n.Arg("eventMax", 0f));
                     s.ShockStaggerSeconds = Mathf.Max(s.ShockStaggerSeconds, n.Arg("stagger", 0f));

@@ -448,6 +448,24 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void SpecialResonance_StormChainAndDeepFreeze()
+        {
+            Begin();
+            Assert.AreEqual(1f, TreeHooks.RaijuDurationScale);
+            Assert.AreEqual(0, TreeHooks.RaijuExtraJumps);
+            Assert.IsFalse(TreeHooks.NamekujiFreezes);
+            _tree.GrantFree("el_shock");
+            Assert.AreEqual(1f, TreeHooks.RaijuDurationScale, "Arc Rounds alone: no resonance");
+            _tree.GrantFree("el_shock2");
+            Assert.AreEqual(1.3f, TreeHooks.RaijuDurationScale, 1e-4f, "Storm Chain: Raiju ×1,3");
+            Assert.AreEqual(2, TreeHooks.RaijuExtraJumps, "Storm Chain: +2 jumps");
+            _tree.GrantFree("el_ice");
+            Assert.IsFalse(TreeHooks.NamekujiFreezes);
+            _tree.GrantFree("el_ice2");
+            Assert.IsTrue(TreeHooks.NamekujiFreezes, "Deep Freeze: the gel freezes");
+        }
+
+        [Test]
         public void Presets_ResolveToCatalogNodes()
         {
             foreach (TreePresetsV2.Preset p in TreePresetsV2.All)
