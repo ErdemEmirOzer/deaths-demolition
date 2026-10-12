@@ -151,8 +151,11 @@ namespace DD.Prototype.UI
         /// One AP-021 model's rest on the post caps, in the weapon mount (+Z along the post line, +Y up, origin on SOCKET_Weapon):
         /// the model's LOD0 centre slides <see cref="Slide"/> m along the line, the model tilts <see cref="Tilt"/>° about the mount's
         /// x (+ nose down) and its centre stands <see cref="Lift"/> m above the socket - so its underside lies on both caps
-        /// (<see cref="Gap"/>: the rise over the other cap where two-cap contact is out of reach). <see cref="Scale"/> is the fit the
-        /// numbers were measured at; a model whose fit differs (re-exported) falls back to standing level on the cap plane.
+        /// (<see cref="Gap"/>: the rise over the other cap where two-cap contact is out of reach). Where it is, the set's post shim
+        /// (<see cref="ShimName"/>: the cap's own block, the shared material) stands <see cref="Shim"/> m tall on the cap at
+        /// <see cref="ShimPost"/> (−1 the cap at mount z −0.22, +1 at +0.22), so that cap carries the weapon too. <see cref="Scale"/>
+        /// is the fit the numbers were measured at; a model whose fit differs (re-exported) falls back to standing level on the cap
+        /// plane, without a shim.
         /// </summary>
         public readonly struct Seat
         {
@@ -162,8 +165,10 @@ namespace DD.Prototype.UI
             public readonly float Tilt;
             public readonly float Lift;
             public readonly float Gap;
+            public readonly float Shim;
+            public readonly int ShimPost;
 
-            public Seat(string key, float scale, float slide, float tilt, float lift, float gap)
+            public Seat(string key, float scale, float slide, float tilt, float lift, float gap, float shim = 0f, int shimPost = 0)
             {
                 Key = key;
                 Scale = scale;
@@ -171,6 +176,8 @@ namespace DD.Prototype.UI
                 Tilt = tilt;
                 Lift = lift;
                 Gap = gap;
+                Shim = shim;
+                ShimPost = shimPost;
             }
         }
 
@@ -179,13 +186,14 @@ namespace DD.Prototype.UI
         /// footprint, slide within ±0.12 m - the well's ±6 % - tilt within ±10°, lowest point ≥ 0.71 m). Seven lie on both caps (gap
         /// &lt; 1 mm). rl_1 lies on both when slid 0.1325 m (6.7 % of the well, S-09 12.10: seated over centred). Two cannot within
         /// those bounds - a grip or magazine hangs where the second cap would be - and lie level on one cap: ar_2 (2.9 cm over the
-        /// other), smg_1 (7.1 cm); an AP-040 cradle for them is asked of C-00.
+        /// rear cap) and smg_1 (7.1 cm over the front cap) get the post shim of that height there (C-00 12.10, option b), so both lie
+        /// on two supports. The gap side is the seat's higher underside (seat-results.json u: [rear, front]).
         /// </summary>
         public static readonly Seat[] Seats =
         {
             new Seat("ar_1", 0.7917f, +0.0200f, +5.122f, -0.0503f, 0f),
-            new Seat("ar_2", 0.8637f, +0.0475f, 0f, +0.0456f, 0.0287f),
-            new Seat("smg_1", 0.9412f, -0.0275f, 0f, -0.0464f, 0.0708f),
+            new Seat("ar_2", 0.8637f, +0.0475f, 0f, +0.0456f, 0.0287f, 0.0287f, -1),   // u [−0.0629, −0.0916]: the rear cap's gap
+            new Seat("smg_1", 0.9412f, -0.0275f, 0f, -0.0464f, 0.0708f, 0.0708f, +1),  // u [+0.0004, +0.0712]: the front cap's gap
             new Seat("smg_2", 1.1111f, +0.0600f, -0.170f, -0.0563f, 0.0003f),
             new Seat("sg_1", 1.1539f, -0.0125f, +4.019f, -0.0143f, 0.0002f),
             new Seat("sg_2", 0.9783f, -0.0475f, +1.009f, -0.0163f, 0.0002f),
@@ -197,6 +205,13 @@ namespace DD.Prototype.UI
 
         /// <summary>The fit a seat holds for (relative): past it the model was re-exported and its seat is stale.</summary>
         public const float SeatScaleTolerance = 0.005f;
+
+        /// <summary>
+        /// The set's post shim (PrepareRunStageBuilder): the turntable mesh's +x post cap block (0.11 × 0.056 × 0.14 m, its top at the
+        /// object's origin) under SOCKET_Turntable at the cap's top, inactive. A seat with a <see cref="Seat.Shim"/> stretches it to
+        /// that height on its cap; every other weapon hides it.
+        /// </summary>
+        public const string ShimName = "PR_PostShim";
 
         /// <summary>One piece of the AP-040 set: the prefab child, its FBX, its place in Blender metres (preview json placements).</summary>
         public readonly struct SetPiece
@@ -242,8 +257,9 @@ namespace DD.Prototype.UI
             public readonly bool Shadows;
             public readonly float FixedIntensity;
             public readonly float FixedAngle;
+            public readonly float Trim;
 
-            public StageLight(string name, Vector3 blenderPosition, Vector3 blenderAim, float watts, float kelvin, bool shadows, float fixedIntensity = 0f, float fixedAngle = 0f)
+            public StageLight(string name, Vector3 blenderPosition, Vector3 blenderAim, float watts, float kelvin, bool shadows, float fixedIntensity = 0f, float fixedAngle = 0f, float trim = 1f)
             {
                 Name = name;
                 BlenderPosition = blenderPosition;
@@ -253,6 +269,7 @@ namespace DD.Prototype.UI
                 Shadows = shadows;
                 FixedIntensity = fixedIntensity;
                 FixedAngle = fixedAngle;
+                Trim = trim;
             }
 
             public Vector3 Position
@@ -268,7 +285,7 @@ namespace DD.Prototype.UI
             /// <summary>The spot's intensity on the stage (× <see cref="StageExposure"/>).</summary>
             public float Intensity
             {
-                get { return FixedIntensity > 0f ? FixedIntensity * StageExposure : SpotIntensity(Watts); }
+                get { return (FixedIntensity > 0f ? FixedIntensity * StageExposure : SpotIntensity(Watts)) * Trim; }
             }
 
             /// <summary>The spot's full cone, degrees.</summary>
@@ -287,10 +304,17 @@ namespace DD.Prototype.UI
         public static readonly StageLight[] Lights =
         {
             new StageLight("PR_KeyWarm2800", new Vector3(-1.05f, 0.205f, 1.47f), new Vector3(0f, 0f, 0.94f), 105f, 2800f, true),
-            new StageLight("PR_FillCoolSoft", new Vector3(1.05f, 0.205f, 1.77f), new Vector3(0f, 0f, 1.05f), 62f, 6500f, false),
+            new StageLight("PR_FillCoolSoft", new Vector3(1.05f, 0.205f, 1.77f), new Vector3(0f, 0f, 1.05f), 62f, 6500f, false, 0f, 0f, FillTrim),
             new StageLight("PR_RimWarmSoft", new Vector3(0f, 0.85f, 2.65f), new Vector3(0f, 0f, 0.85f), 80f, 3400f, false),
             new StageLight("PR_PanelWash", new Vector3(0f, 0.5f, 2.6f), new Vector3(0f, 1.3f, 1.1f), 0f, 3000f, false, 8f, 72f),   // w106-after2: 28 lit the paper Y 132-204
         };
+
+        /// <summary>
+        /// C-00 12.10 (M2 ratio, w106-after3 m2-pil: the weapon box median Y 63 against the paper's 100.5 - 1.77:1 for ≥ 2.0): the
+        /// fill on the camera's side brings the weapon's mid-tones, so it is halved; the key and the rim still make its highlights
+        /// (P95), the fill's cone misses the paper crop, the wash and the exposure stay. Target: the weapon median ≤ Y 55.
+        /// </summary>
+        public const float FillTrim = 0.5f;
 
         /// <summary>AD M2: exposure on every stage light (1 = the physical conversion of the json's watts).</summary>
         public const float StageExposure = 1.3f;
@@ -332,6 +356,11 @@ namespace DD.Prototype.UI
         private GameObject _root;
         private Transform _turntable;
         private Transform _mount;
+        private Transform _shim;
+        private Vector3 _shimRest;
+        private float _shimBlock = 1f;
+        private readonly float[] _shimHeights = new float[16];
+        private readonly int[] _shimPosts = new int[16];
         private Quaternion _turntableRest = Quaternion.identity;
         private Vector3 _spinAxis = Vector3.up;
         private Camera _camera;
@@ -500,6 +529,7 @@ namespace DD.Prototype.UI
 
             _weaponIndex = index;
             WeaponId = KeyOf(id);
+            ApplyShim(index);
             _dirty = true;
         }
 
@@ -567,6 +597,12 @@ namespace DD.Prototype.UI
         internal Transform WeaponSocketTransform
         {
             get { return _mount != null ? _mount.parent : null; }
+        }
+
+        /// <summary>Tests: the set's post shim (null without the set or in a set built before it).</summary>
+        internal Transform PostShim
+        {
+            get { return _shim; }
         }
 
         internal Camera StageCamera
@@ -796,6 +832,11 @@ namespace DD.Prototype.UI
                 _turntable = FindDeep(set.transform, TurntableSocket);
                 socket = FindDeep(set.transform, WeaponSocket);
                 HasSet = _turntable != null && socket != null && socket.IsChildOf(_turntable);
+                if (HasSet)
+                {
+                    FindShim(set.transform);
+                }
+
                 if (!HasSet)
                 {
                     Debug.LogWarning("[UI] Prepare Run stage: " + StageResource + " has no " + WeaponSocket + " under " + TurntableSocket + "; the weapon turns on a bare pivot.");
@@ -821,6 +862,51 @@ namespace DD.Prototype.UI
             if (socketScale > 1e-4f && Mathf.Abs(socketScale - 1f) > 1e-3f)
             {
                 _mount.localScale = Vector3.one * (1f / socketScale);
+            }
+        }
+
+        /// <summary>The set's post shim under the turntable (null in a set built before it): its rest place and its block height.</summary>
+        private void FindShim(Transform set)
+        {
+            Transform shim = FindDeep(set, ShimName);
+            MeshFilter filter = shim != null ? shim.GetComponent<MeshFilter>() : null;
+            if (filter == null || filter.sharedMesh == null || !shim.IsChildOf(_turntable) || filter.sharedMesh.bounds.size.y < 1e-4f)
+            {
+                return;
+            }
+
+            _shim = shim;
+            _shimRest = shim.localPosition;
+            _shimBlock = filter.sharedMesh.bounds.size.y;
+            _shim.gameObject.SetActive(false);
+        }
+
+        /// <summary>The shim for the weapon on show: stretched to its seat's height on the gap's cap, or hidden. ShowWeapon only.</summary>
+        private void ApplyShim(int index)
+        {
+            if (_shim == null)
+            {
+                return;
+            }
+
+            float height = index >= 0 && index < _shimHeights.Length ? _shimHeights[index] : 0f;
+            if (height <= 0f)
+            {
+                if (_shim.gameObject.activeSelf)
+                {
+                    _shim.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            // The block's top is its origin: stretched to the height, its origin on the cap's top plus the height.
+            float side = _shimPosts[index] < 0 ? -1f : 1f;
+            _shim.localPosition = new Vector3(Mathf.Abs(_shimRest.x) * side, _shimRest.y + height, _shimRest.z);
+            _shim.localScale = new Vector3(1f, height / _shimBlock, 1f);
+            if (!_shim.gameObject.activeSelf)
+            {
+                _shim.gameObject.SetActive(true);
             }
         }
 
@@ -903,6 +989,7 @@ namespace DD.Prototype.UI
         /// <summary>A weapon model under the mount: WeaponController.EnsureClassicModel's source order, the stage's frame, fit and seat.</summary>
         private GameObject BuildModel(ClassicWeaponId id)
         {
+            int index = (int)id;
             GameObject model = InstantiateModel(id, out string modelKey);
             if (model == null)
             {
@@ -931,6 +1018,8 @@ namespace DD.Prototype.UI
             {
                 t.localRotation = SeatRotation(seat);
                 t.localPosition = SeatPosition(bounds, scale, seat);
+                _shimHeights[index] = seat.Shim;
+                _shimPosts[index] = seat.ShimPost;
             }
             else
             {

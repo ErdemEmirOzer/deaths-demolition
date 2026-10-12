@@ -176,6 +176,48 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// C-00 12.10 · the post shim: ar_2 and smg_1 lie on a cap block stretched to their gap on the gap's cap (ar_2 the rear, smg_1
+        /// the front); every other weapon hides it. Switching only shows / moves it (no rebuild, no per-frame work).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Takoz_YalnizAr2Smg1de_BoslukYuksekligindeDogruBaslikta()
+        {
+            PrepareRunStage stage = NewStage(out _);
+            stage.AutoTurn = false;
+            yield return LifecycleTestKit.Bekle(() => stage.Renders >= 1, Wait, "çizim olmadı");
+            if (!stage.HasSet)
+            {
+                Assert.Ignore("AP-040 seti yok: çıplak pivotta takoz yok.");
+            }
+
+            Transform shim = stage.PostShim;
+            Assert.IsNotNull(shim, PrepareRunStage.ShimName + " sette yok (PrepareRunStageBuilder yeniden koşulmalı)");
+            Transform turntable = shim.parent;
+            float block = shim.GetComponent<MeshFilter>().sharedMesh.bounds.size.y;
+            float capTop = PrepareRunStage.PostCapTop - turntable.localPosition.y;
+
+            string[] keys = { "ar_1", "ar_2", "smg_2", "smg_1", "sr_1" };
+            foreach (string key in keys)
+            {
+                int renders = stage.Renders;
+                stage.ShowWeapon(key);
+                yield return LifecycleTestKit.Bekle(() => stage.Renders > renders, Wait, key + " çizilmedi");
+                Assert.IsTrue(PrepareRunStage.TrySeat(key, stage.CurrentModel.transform.localScale.x, out PrepareRunStage.Seat seat), key + " koltuğu");
+                if (seat.Shim <= 0f)
+                {
+                    Assert.IsFalse(shim.gameObject.activeSelf, key + ": takoz gizli");
+                    continue;
+                }
+
+                Assert.IsTrue(shim.gameObject.activeSelf, key + ": takoz görünür");
+                Assert.AreEqual(seat.ShimPost * PrepareRunStage.PostOffset, shim.localPosition.x, 0.003f, key + ": boşluk tarafındaki başlıkta");
+                Assert.AreEqual(seat.Shim / block, shim.localScale.y, 1e-4f, key + ": boşluk yüksekliğinde");
+                Assert.AreEqual(capTop + seat.Shim, shim.localPosition.y, 0.001f, key + ": üst yüz silahın altında");
+                Assert.AreEqual(capTop, shim.localPosition.y - block * shim.localScale.y, 0.001f, key + ": alt yüz başlığın üstünde");
+            }
+        }
+
         // ------------------------------------------------------------------ 3 · orbit and zoom
 
         [UnityTest]

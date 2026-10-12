@@ -151,6 +151,16 @@ namespace DD.Prototype.Tests.EditMode
                 // S-09 12.10: rl_1 slides 0.1325 m (6.7 %) to lie on both caps - seated over centred; the rest stay within ±6 %.
                 Assert.LessOrEqual(Mathf.Abs(s.Slide), s.Key == "rl_1" ? 0.14f : 0.12f, s.Key + ": kuyunun ±%6'sı (rl_1 %7)");
                 Assert.LessOrEqual(Mathf.Abs(s.Tilt), 10f, s.Key + ": eğim ≤ 10°");
+                if (s.Shim > 0f)
+                {
+                    Assert.AreEqual(s.Gap, s.Shim, 1e-4f, s.Key + ": takoz boşluğun yüksekliğinde");
+                    Assert.AreEqual(1, Mathf.Abs(s.ShimPost), s.Key + ": takoz bir başlıkta (−1 arka, +1 ön)");
+                    Assert.LessOrEqual(s.Shim, 0.08f, s.Key + ": takoz ≤ 8 cm");
+                }
+                else
+                {
+                    Assert.LessOrEqual(s.Gap, 0.001f, s.Key + ": takozsuz koltuk iki başlığa oturur");
+                }
             }
 
             Assert.AreEqual(10, keys.Count, "on klasik");
@@ -233,6 +243,16 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1.3f, PrepareRunStage.StageExposure, Eps, "AD M2: pozlama 1.3");
             Assert.AreEqual(1.6f, PrepareRunStage.SpotCoverRadius, Eps, "AD M2: koni 1.6 m");
             Assert.AreEqual(105f / (Mathf.PI * Mathf.PI) * 1.3f, PrepareRunStage.Lights[0].Intensity, 1e-4f, "P / π² × pozlama");
+            Assert.AreEqual(0.5f, PrepareRunStage.FillTrim, Eps, "C-00 M2 oranı: dolgu yarıda");
+            Assert.AreEqual(62f / (Mathf.PI * Mathf.PI) * 1.3f * PrepareRunStage.FillTrim, PrepareRunStage.Lights[1].Intensity, 1e-4f, "dolgu × kırpma");
+            Assert.AreEqual(1f, PrepareRunStage.Lights[0].Trim, Eps, "anahtar (P95) ve kontur dokunulmadı");
+            Assert.AreEqual(1f, PrepareRunStage.Lights[2].Trim, Eps);
+            Assert.AreEqual(1f, PrepareRunStage.Lights[3].Trim, Eps, "yıkama dokunulmadı");
+
+            // The fill's cone misses the paper crop (w106-after3 m2-pil 880..920 × 320..360 px: the panel near (0.1, 1.7, −1.3)).
+            PrepareRunStage.StageLight fill = PrepareRunStage.Lights[1];
+            float paperOff = Vector3.Angle(fill.Aim - fill.Position, new Vector3(0.1f, 1.7f, -1.3f) - fill.Position);
+            Assert.Greater(paperOff, fill.Angle * 0.5f, "dolgu panel kırpmasına düşmez: " + paperOff.ToString("F1") + "°");
             Assert.AreEqual(107f, PrepareRunStage.Lights[0].Angle, 1f, "anahtar koni ~107°");
 
             PrepareRunStage.StageLight wash = PrepareRunStage.Lights[3];
@@ -380,6 +400,21 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.GreaterOrEqual(renderers, 5, "LOD0: kaide tabanı + tablası, panel, iki fener");
+
+            // C-00 12.10: the post shim - the +x cap block under the turntable, inactive, the shared material, its top at its origin.
+            Transform shim = Find(prefab.transform, PrepareRunStage.ShimName);
+            Assert.IsNotNull(shim, PrepareRunStage.ShimName + " (builder yeniden koşulmalı)");
+            Assert.IsTrue(shim.IsChildOf(turntable), "takoz rotorla döner");
+            Assert.IsFalse(shim.gameObject.activeSelf, "takoz yalnız ar_2 / smg_1'de açılır");
+            Mesh shimMesh = shim.GetComponent<MeshFilter>().sharedMesh;
+            Assert.IsNotNull(shimMesh);
+            Assert.AreEqual(PrepareRunStage.PostCapLength, shimMesh.bounds.size.x, 0.004f, "başlığın boyu");
+            Assert.AreEqual(PrepareRunStage.PostCapDepth, shimMesh.bounds.size.z, 0.004f, "başlığın derinliği");
+            Assert.AreEqual(0.056f, shimMesh.bounds.size.y, 0.003f, "başlık bloğunun yüksekliği");
+            Assert.AreEqual(0f, shimMesh.bounds.max.y, 0.001f, "üst yüz orijinde");
+            Assert.AreEqual(PrepareRunStage.PostOffset, shim.localPosition.x, 0.003f, "+x başlığının üstünde");
+            Assert.AreEqual(PrepareRunStage.PostCapTop - 0.70f, shim.localPosition.y, 0.003f);
+            StringAssert.StartsWith("M_AP040_PR_Shared", shim.GetComponent<MeshRenderer>().sharedMaterial.name, "aynı malzeme");
         }
 
         // ------------------------------------------------------------------ AD M1 · the seats against the imported meshes
@@ -429,10 +464,13 @@ namespace DD.Prototype.Tests.EditMode
                     float rear = Underside(tris, -PrepareRunStage.PostOffset);
                     float front = Underside(tris, PrepareRunStage.PostOffset);
                     Assert.IsFalse(float.IsInfinity(rear) || float.IsInfinity(front), entry.rosterKey + ": bir kapağın üstünde silah yok");
-                    float low = Mathf.Min(rear, front), gap = Mathf.Abs(rear - front);
-                    Assert.AreEqual(PrepareRunStage.CapBelowSocket, low, 0.002f, entry.rosterKey + ": alt yüz kapakta (arka " + rear.ToString("F4") + ", ön " + front.ToString("F4") + ")");
-                    Assert.LessOrEqual(gap, Mathf.Max(seat.Gap, 0.001f) + 0.002f, entry.rosterKey + ": öbür kapağa boşluk " + gap.ToString("F4") + " m");
-                    if (seat.Gap < 0.001f) Assert.LessOrEqual(gap, 0.003f, entry.rosterKey + ": iki kapak");
+                    // C-00 12.10: a seat with a shim lies on the shim's top over its cap (cap + shim) and on the bare other cap.
+                    float rearSupport = PrepareRunStage.CapBelowSocket + (seat.ShimPost < 0 ? seat.Shim : 0f);
+                    float frontSupport = PrepareRunStage.CapBelowSocket + (seat.ShimPost > 0 ? seat.Shim : 0f);
+                    float rearGap = rear - rearSupport, frontGap = front - frontSupport;
+                    float low = Mathf.Min(rearGap, frontGap), gap = Mathf.Abs(rearGap - frontGap);
+                    Assert.AreEqual(0f, low, 0.002f, entry.rosterKey + ": alt yüz dayanakta (arka " + rear.ToString("F4") + ", ön " + front.ToString("F4") + ", takoz " + seat.Shim.ToString("F4") + ")");
+                    Assert.LessOrEqual(gap, 0.003f, entry.rosterKey + ": öbür dayanağa boşluk " + gap.ToString("F4") + " m (≤ 1 cm kabul; iki dayanak)");
                     Assert.GreaterOrEqual(PrepareRunStage.WeaponSocketHeight + lowest, 0.71f - 0.001f, entry.rosterKey + ": en alt nokta disk üstünde");
                     TestContext.WriteLine(entry.rosterKey + " seat gap " + gap.ToString("F4") + " lowest " + (PrepareRunStage.WeaponSocketHeight + lowest).ToString("F3"));
                     checkedModels++;

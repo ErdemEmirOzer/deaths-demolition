@@ -29,6 +29,10 @@ namespace DD.Prototype.UI.EditorTools
     ///      ([−x, z, −y], AD S1: the warm key lantern V01 at x +1.05, the cool fill V02 at x −1.05, the backdrop at z −1.3) - unpacked; the *_COL proxies, the LOD1 / LOD2 meshes and every LODGroup removed (a close-up
     ///      shows LOD0); every object on <see cref="PrepareRunStage.StageLayer"/>; SOCKET_Weapon checked under SOCKET_Turntable
     ///      at 0.94 m. Saved to <see cref="PrefabPath"/>.
+    ///   5. C-00 12.10 (two-cap rest for ar_2 / smg_1): the post shim - the turntable LOD0 mesh's +x post cap block (its
+    ///      triangles at or above the cap's foot, normals / tangents / UVs kept, the top centre the origin) saved as
+    ///      <see cref="ShimMeshPath"/> and placed once, inactive, under SOCKET_Turntable at that cap's top as
+    ///      <see cref="PrepareRunStage.ShimName"/> with the shared material; the stage stretches it per weapon.
     /// Throws on any failure (the batch run exits non-zero); logs one summary line on success.
     /// </summary>
     public static class PrepareRunStageBuilder
@@ -39,6 +43,11 @@ namespace DD.Prototype.UI.EditorTools
         public const string MaterialsFolder = Folder + "/Materials";
         public const string ResourcesFolder = Folder + "/Resources/PrepareRun";
         public const string PrefabPath = ResourcesFolder + "/PR_Stage.prefab";
+        public const string ShimMeshPath = Folder + "/Meshes/SM_AP040_PR_PostShim.asset";
+
+        /// <summary>The turntable mesh the shim is cut from, and the cap block's foot over SOCKET_Turntable (0.838 − 0.70 m).</summary>
+        public const string TurntableMeshName = "SM_display_pedestal_turntable_V01_LOD0";
+        public const float CapFootOverTurntable = 0.138f;
 
         public const string SourceFlag = "-ddAp040Export";
         private const string LogPrefix = "[UI] Prepare Run stage builder: ";
@@ -348,6 +357,8 @@ namespace DD.Prototype.UI.EditorTools
                     throw new InvalidOperationException(LogPrefix + PrepareRunStage.WeaponSocket + " at " + height.ToString("F3") + " m, the json says " + WeaponSocketHeight + " m.");
                 }
 
+                BuildShim(root.transform, turntable);
+
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                 {
                     t.gameObject.layer = PrepareRunStage.StageLayer;
@@ -373,6 +384,143 @@ namespace DD.Prototype.UI.EditorTools
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        /// <summary>
+        /// The post shim: the +x post cap block cut from the turntable's LOD0 mesh into SOCKET_Turntable's frame, re-centred on the cap's
+        /// top (x, z the block's centre, y its top), saved as a mesh asset (updated in place, its GUID kept) and placed inactive at the
+        /// cap's top with the turntable's own material. Throws when the cap is not where the stage measured it (x ±0.22, top 0.894 m).
+        /// </summary>
+        private static void BuildShim(Transform root, Transform turntable)
+        {
+            MeshFilter source = null;
+            foreach (MeshFilter f in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (f.name == TurntableMeshName) source = f;
+            }
+
+            if (source == null || source.sharedMesh == null)
+            {
+                throw new InvalidOperationException(LogPrefix + TurntableMeshName + " not found for the post shim.");
+            }
+
+            Mesh mesh = source.sharedMesh;
+            Matrix4x4 toTurntable = turntable.worldToLocalMatrix * source.transform.localToWorldMatrix;
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+            Vector4[] tangents = mesh.tangents;
+            Vector2[] uvs = mesh.uv;
+            int[] triangles = mesh.triangles;
+            var local = new Vector3[vertices.Length];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                local[i] = toTurntable.MultiplyPoint3x4(vertices[i]);
+            }
+
+            var keep = new List<int>();
+            for (int i = 0; i + 2 < triangles.Length; i += 3)
+            {
+                bool cap = true;
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector3 v = local[triangles[i + k]];
+                    cap &= v.x > 0.1f && v.y >= CapFootOverTurntable - 0.002f;
+                }
+
+                if (cap)
+                {
+                    keep.Add(triangles[i]);
+                    keep.Add(triangles[i + 1]);
+                    keep.Add(triangles[i + 2]);
+                }
+            }
+
+            if (keep.Count == 0)
+            {
+                throw new InvalidOperationException(LogPrefix + "no post cap triangles above " + CapFootOverTurntable + " m in " + TurntableMeshName + ".");
+            }
+
+            var remap = new Dictionary<int, int>();
+            var outVertices = new List<Vector3>();
+            var outNormals = new List<Vector3>();
+            var outTangents = new List<Vector4>();
+            var outUvs = new List<Vector2>();
+            var outTriangles = new List<int>(keep.Count);
+            Vector3 min = Vector3.positiveInfinity, max = Vector3.negativeInfinity;
+            for (int i = 0; i < keep.Count; i++)
+            {
+                if (!remap.TryGetValue(keep[i], out int index))
+                {
+                    index = outVertices.Count;
+                    remap.Add(keep[i], index);
+                    Vector3 v = local[keep[i]];
+                    outVertices.Add(v);
+                    min = Vector3.Min(min, v);
+                    max = Vector3.Max(max, v);
+                    if (normals.Length == vertices.Length) outNormals.Add(toTurntable.MultiplyVector(normals[keep[i]]).normalized);
+                    if (tangents.Length == vertices.Length)
+                    {
+                        Vector4 tg = tangents[keep[i]];
+                        Vector3 axis = toTurntable.MultiplyVector(new Vector3(tg.x, tg.y, tg.z)).normalized;
+                        outTangents.Add(new Vector4(axis.x, axis.y, axis.z, tg.w));
+                    }
+
+                    if (uvs.Length == vertices.Length) outUvs.Add(uvs[keep[i]]);
+                }
+
+                outTriangles.Add(index);
+            }
+
+            var top = new Vector3((min.x + max.x) * 0.5f, max.y, (min.z + max.z) * 0.5f);
+            float capTop = PrepareRunStage.PostCapTop - turntable.localPosition.y;
+            if (Mathf.Abs(top.x - PrepareRunStage.PostOffset) > 0.005f || Mathf.Abs(top.y - capTop) > 0.002f || Mathf.Abs(top.z) > 0.005f)
+            {
+                throw new InvalidOperationException(LogPrefix + "the post cap's top is at " + top.ToString("F3") + ", the stage measured (" + PrepareRunStage.PostOffset + ", " + capTop + ", 0).");
+            }
+
+            for (int i = 0; i < outVertices.Count; i++)
+            {
+                outVertices[i] -= top;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(ShimMeshPath));
+            Mesh shim = AssetDatabase.LoadAssetAtPath<Mesh>(ShimMeshPath);
+            bool created = shim == null;
+            if (created)
+            {
+                shim = new Mesh();
+            }
+            else
+            {
+                shim.Clear();
+            }
+
+            shim.name = "SM_AP040_PR_PostShim";
+            shim.SetVertices(outVertices);
+            if (outNormals.Count == outVertices.Count) shim.SetNormals(outNormals);
+            if (outTangents.Count == outVertices.Count) shim.SetTangents(outTangents);
+            if (outUvs.Count == outVertices.Count) shim.SetUVs(0, outUvs);
+            shim.SetTriangles(outTriangles, 0);
+            shim.RecalculateBounds();
+            if (created)
+            {
+                AssetDatabase.CreateAsset(shim, ShimMeshPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(shim);
+            }
+
+            AssetDatabase.SaveAssets();
+
+            var go = new GameObject(PrepareRunStage.ShimName, typeof(MeshFilter), typeof(MeshRenderer));
+            go.transform.SetParent(turntable, false);
+            go.transform.localPosition = top;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            go.GetComponent<MeshFilter>().sharedMesh = shim;
+            go.GetComponent<MeshRenderer>().sharedMaterial = source.GetComponent<MeshRenderer>().sharedMaterial;
+            go.SetActive(false);
         }
 
         /// <summary>One model under the stage, unpacked, its proxies, LOD1 / LOD2 meshes and LODGroups removed; returns the objects removed.</summary>
