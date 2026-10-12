@@ -281,7 +281,7 @@ namespace DD.Prototype.UI
         /// <summary>
         /// lights[] (position_blender_m / aim_blender_m / energy_w / temperature_K): PR_KeyWarm2800 (now at x +1.05, by the warm
         /// lantern), PR_FillCoolSoft (x −1.05), PR_RimWarmSoft; and AD M2's PR_PanelWash - Unity (0, 2.6, −0.5) to (0, 1.1, −1.3),
-        /// 72°, 3000 K, 28 at exposure 1, no shadow - which washes the shoji and keeps the weapon (0, 1.05, 0) 46° off its axis,
+        /// 72°, 3000 K, 8 at exposure 1 (the review's 28 measured the paper at Y 132-204 against its 60-120), no shadow - which washes the shoji and keeps the weapon (0, 1.05, 0) 46° off its axis,
         /// outside its 36° half cone.
         /// </summary>
         public static readonly StageLight[] Lights =
@@ -289,7 +289,7 @@ namespace DD.Prototype.UI
             new StageLight("PR_KeyWarm2800", new Vector3(-1.05f, 0.205f, 1.47f), new Vector3(0f, 0f, 0.94f), 105f, 2800f, true),
             new StageLight("PR_FillCoolSoft", new Vector3(1.05f, 0.205f, 1.77f), new Vector3(0f, 0f, 1.05f), 62f, 6500f, false),
             new StageLight("PR_RimWarmSoft", new Vector3(0f, 0.85f, 2.65f), new Vector3(0f, 0f, 0.85f), 80f, 3400f, false),
-            new StageLight("PR_PanelWash", new Vector3(0f, 0.5f, 2.6f), new Vector3(0f, 1.3f, 1.1f), 0f, 3000f, false, 28f, 72f),
+            new StageLight("PR_PanelWash", new Vector3(0f, 0.5f, 2.6f), new Vector3(0f, 1.3f, 1.1f), 0f, 3000f, false, 8f, 72f),   // w106-after2: 28 lit the paper Y 132-204
         };
 
         /// <summary>AD M2: exposure on every stage light (1 = the physical conversion of the json's watts).</summary>

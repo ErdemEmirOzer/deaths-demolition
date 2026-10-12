@@ -238,7 +238,7 @@ namespace DD.Prototype.Tests.EditMode
             PrepareRunStage.StageLight wash = PrepareRunStage.Lights[3];
             Assert.AreEqual("PR_PanelWash", wash.Name);
             Assert.AreEqual(72f, wash.Angle, Eps, "AD M2: 72°");
-            Assert.AreEqual(28f * 1.3f, wash.Intensity, 1e-3f, "28 (pozlama 1'de) × 1.3");
+            Assert.AreEqual(8f * 1.3f, wash.Intensity, 1e-3f, "8 (pozlama 1'de) × 1.3");
             Assert.IsFalse(wash.Shadows);
             Vector3 axis = (wash.Aim - wash.Position).normalized;
             float offAxis = Vector3.Angle(axis, new Vector3(0f, 1.05f, 0f) - wash.Position);
