@@ -1,6 +1,7 @@
 #!/bin/zsh
 # WP-043C · tools/compile-check.sh [ref] [--ci-dir DIR] [--out DIR] [--player dev|release|release-probe]
 #           tools/compile-check.sh --lease-status [--ci-dir DIR]
+#           tools/compile-check.sh --player dev|release|release-probe --player-log <log>   (read-only, no Unity)
 #
 # Fast "does it compile" gate for the end of a multi-session integration batch (C-00 25.09: two commits that
 # compile on their own branches broke main together — 6d69dafd × 47bf74c4). Checks out <ref> (default: main)
@@ -26,15 +27,15 @@
 #   · 75 busy · 124 stalled/timed out · 64 usage · 130/143/129 INT/TERM/HUP
 set -u
 source "${0:A:h}/dd-env.sh"
-REF=""; CI_DIR="$DD_KPROJ/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0; PLAYER=""; PLAYER_LOG=""
+REF=""; CI_DIR="$DD_KPROJ/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0; PLAYER=""; PLAYER_LOG=""; CI_DIR_SET=0
 CC_USAGE="usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR] [--player dev|release|release-probe] | compile-check.sh --lease-status [--ci-dir DIR] | compile-check.sh --player <mode> --player-log <log>"
 while [ $# -gt 0 ]; do case "$1" in
-  --ci-dir) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; CI_DIR="$2"; shift ;;
+  --ci-dir) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; CI_DIR="$2"; CI_DIR_SET=1; shift ;;
   --out) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; OUT="$2"; shift ;;
   # WP-099 R4 (C-00 12.10): also compile the PLAYER scripts of a mode (DdBuild.CompilePlayerScripts) — the Editor always
   # defines UNITY_EDITOR, so only a player compile sees code a release / release-probe player lacks
   --player) [ $# -ge 2 ] && [[ "$2" == (dev|release|release-probe) ]] || { echo "$CC_USAGE" >&2; exit 64; }; PLAYER="$2"; shift ;;
-  --player-log) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; PLAYER_LOG="$2"; shift ;;
+  --player-log) [ $# -ge 2 ] && [ -n "$2" ] || { echo "$CC_USAGE" >&2; exit 64; }; PLAYER_LOG="$2"; shift ;;   # gt S2: "" is no fall-through
   --lease-status) LEASE_STATUS=1 ;;
   -*) echo "$CC_USAGE" >&2; exit 64 ;;
   *) REF="$1" ;; esac; shift; done
@@ -50,29 +51,36 @@ fi
 # avoid it — the graph lives in Library). So the verdict is DdBuild's (its assemblies), the errors that count are the CS lines
 # after the LAST "Tundra requires additional run" (the real pass; a real error repeats there), and a "compiled" with errors in
 # that pass, or with a non-zero Unity exit, is no green (3). Prints the errors / the DdBuild line; returns 0 · 2 · 3.
+# gt 12.10: line numbers only from LC_ALL=C grep -an (no awk over the log text: an invalid UTF-8 byte stopped awk in a UTF-8
+# locale and closed the contradiction net — S1; a NUL byte dropped the line), and the pass boundary is the last "Tundra requires
+# additional run" BEFORE the DdBuild line (one after it must not hide the final pass — N1).
 cc_player_verdict() {   # <mode> <log> <unity exit> <label>
-  local mode=$1 log=$2 ux=$3 label=$4 pl last stale ferrs final
-  pl=$(grep -ao "\[DdBuild\] player scripts mode=$mode .*" "$log" 2>/dev/null | tr -d '\r' | tail -1)
+  local mode=$1 log=$2 ux=$3 label=$4 pl d t=0 n line stale=0 ferrs="" final why
+  pl=$(LC_ALL=C grep -ao "\[DdBuild\] player scripts mode=$mode .*" "$log" 2>/dev/null | tr -d '\r' | tail -1)
   [ -n "$pl" ] || { echo "RESULT: $label player $mode NOT checked — no \"[DdBuild] player scripts\" line (a ref before DdBuild.CompilePlayerScripts?) — $log"; return 3; }
-  last=$(grep -an "Tundra requires additional run" "$log" 2>/dev/null | tail -1 | cut -d: -f1); last=${last:-0}
-  stale=$(awk -v t="$last" 'NR <= t+0 && /error CS[0-9]+:/' "$log" | grep -c .)
-  ferrs=$(awk -v t="$last" 'NR > t+0 && /error CS[0-9]+:/' "$log" | tr -d '\r' | sed 's/^[[:space:]]*//' | sort -u)
-  final=$(printf '%s' "$ferrs" | grep -c .)
+  d=$(LC_ALL=C grep -an "\[DdBuild\] player scripts mode=$mode " "$log" 2>/dev/null | tail -1 | cut -d: -f1)
+  for n in $(LC_ALL=C grep -an "Tundra requires additional run" "$log" 2>/dev/null | cut -d: -f1); do (( n < d )) && t=$n; done
+  while IFS= read -r line; do n=${line%%:*}; [[ "$n" == <-> ]] || continue
+    if (( n <= t )); then stale=$((stale + 1)); elif (( n < d )); then ferrs+="${line#*:}"$'\n'; fi
+  done < <(LC_ALL=C grep -an 'error CS[0-9]*:' "$log" 2>/dev/null)
+  ferrs=$(printf '%s' "$ferrs" | LC_ALL=C tr -d '\r' | LC_ALL=C sed 's/^[[:space:]]*//' | LC_ALL=C sort -u)
+  final=$(printf '%s' "$ferrs" | LC_ALL=C grep -c .)
   if [[ "$pl" == *"— compiled"* ]]; then
     if [ "$final" -gt 0 ] || [ "$ux" != 0 ]; then
       [ "$final" -gt 0 ] && printf '%s\n' "$ferrs" | head -8
-      echo "RESULT: $label player $mode NOT checked — DdBuild says compiled, but unity exit $ux and $final CS errors in the final pass: contradictory, tell C-00 — $log"; return 3
+      why=(); [ "$final" -gt 0 ] && why+=("$final CS errors in the final pass"); [ "$ux" != 0 ] && why+=("unity exit $ux")
+      echo "RESULT: $label player $mode NOT checked — DdBuild says compiled, but ${(j: and :)why}: contradictory, tell C-00 — $log"; return 3
     fi
     echo "$pl"
     [ "$stale" -gt 0 ] && echo "player $mode: $stale CS lines of the first pass on the out-of-date build graph ignored (Unity re-ran it, DdBuild compiled)"
     return 0
   fi
-  [ -n "$ferrs" ] || ferrs=$(grep -a 'error CS[0-9]*:' "$log" | tr -d '\r' | sed 's/^[[:space:]]*//' | sort -u)
+  [ -n "$ferrs" ] || ferrs=$(LC_ALL=C grep -a 'error CS[0-9]*:' "$log" | LC_ALL=C tr -d '\r' | LC_ALL=C sed 's/^[[:space:]]*//' | LC_ALL=C sort -u)
   [ -n "$ferrs" ] && printf '%s\n' "$ferrs" | head -8
   echo "RESULT: $label does NOT compile (player $mode) ($(printf '%s' "$ferrs" | grep -c .) errors; $pl) — $log"; return 2
 }
 if [ -n "$PLAYER_LOG" ]; then   # read-only: re-read a player compile log (no Unity, no slot, nothing written)
-  [ -n "$PLAYER" ] && [ -z "$REF" ] && [ -z "$OUT" ] && [ -f "$PLAYER_LOG" ] || { echo "$CC_USAGE" >&2; exit 64; }
+  [ -n "$PLAYER" ] && [ -z "$REF" ] && [ -z "$OUT" ] && [ "$CI_DIR_SET" -eq 0 ] && [ -f "$PLAYER_LOG" ] || { echo "$CC_USAGE" >&2; exit 64; }
   cc_player_verdict "$PLAYER" "$PLAYER_LOG" 0 log; V=$?
   [ "$V" -eq 0 ] && echo "RESULT: log player $PLAYER compiles — $PLAYER_LOG"
   exit $V

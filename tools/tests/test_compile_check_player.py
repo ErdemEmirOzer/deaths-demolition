@@ -3,7 +3,7 @@
 nothing taken). The Unity side — DdBuild.CompilePlayerScripts compiling, catching an unguarded dev-only file, the out-of-date
 first pass after a file was added or deleted — is proven by real runs (K/wp-099/evidence/cc-player-1210/,
 cc-player-2phase-1210/). usage: python3 tools/tests/test_compile_check_player.py"""
-import subprocess, tempfile, unittest
+import os, subprocess, tempfile, unittest
 from pathlib import Path
 
 TOOL = Path(__file__).resolve().parents[1] / "compile-check.sh"
@@ -34,7 +34,12 @@ class CompileCheckPlayerArgsTests(unittest.TestCase):
             log = Path(d, "p.log"); log.write_text(COMPILED + "\n")
             for args in (["--player-log", str(log)], ["main", "--player", "release-probe", "--player-log", str(log)],
                          ["--player", "release-probe", "--player-log", str(Path(d, "yok.log"))],
-                         ["--lease-status", "--player-log", str(log)]):
+                         ["--lease-status", "--player-log", str(log)],
+                         # gt S2: an empty value is no fall-through to the Unity flow. A temp --ci-dir / --out keep a regression
+                         # harmless: it would stop at "no checkout" (3), before any slot, Unity or the real CI checkout
+                         ["--ci-dir", str(Path(d, "ci", "deaths-demolition")), "--out", str(Path(d, "out")),
+                          "--player", "release-probe", "--player-log", ""],
+                         ["--ci-dir", d, "--player", "release-probe", "--player-log", str(log)]):
                 with self.subTest(args=args):
                     self.assertEqual(64, self.run_cc(*args).returncode)
 
@@ -63,11 +68,12 @@ class PlayerLogVerdictTests(unittest.TestCase):
     logs CS errors (a new file missing, a deleted one still listed), then "Tundra requires additional run" and the real pass.
     Real-log replays: K/wp-099/evidence/cc-player-2phase-1210/verdict-replay.txt."""
 
-    def verdict(self, *lines):
+    def verdict(self, *lines, env=None):
+        data = b"".join((l if isinstance(l, bytes) else l.encode()) + b"\n" for l in lines)
         with tempfile.TemporaryDirectory() as d:
-            log = Path(d, "compile-player-release-probe.log"); log.write_text("\n".join(lines) + "\n")
+            log = Path(d, "compile-player-release-probe.log"); log.write_bytes(data)
             return subprocess.run(["zsh", str(TOOL), "--player", "release-probe", "--player-log", str(log)],
-                                  capture_output=True, text=True, timeout=60)
+                                  capture_output=True, text=True, errors="replace", timeout=60, env=env)
 
     def test_EskiGrafikIlkGecisHatasi_SonraDerlendi_Yesil(self):   # main 250b40aa / 0b60e5d9, scratch X1: a NEW file
         r = self.verdict(RECOMPILE, E_NEW, TUNDRA, "Starting: bee_backend …", COMPILED)
@@ -97,6 +103,19 @@ class PlayerLogVerdictTests(unittest.TestCase):
                 r = self.verdict(RECOMPILE, TUNDRA, err, COMPILED)
                 self.assertEqual(3, r.returncode, r.stdout + r.stderr)
                 self.assertIn("contradictory, tell C-00", r.stdout)
+
+    def test_GecersizUtf8YaDaNul_CeliskiAginiKapatmaz(self):   # gt S1: awk in a UTF-8 locale stopped at an invalid byte → 0
+        env = dict(os.environ, LANG="en_US.UTF-8", LC_ALL="en_US.UTF-8")
+        for bad in (b"Building \xff\xfe garbage", E_NEW.encode().replace(b"CcTwo", b"Cc\x00Two")):
+            with self.subTest(bad=bad[:20]):
+                r = self.verdict(RECOMPILE, TUNDRA, bad, E_NEW, COMPILED, env=env)
+                self.assertEqual(3, r.returncode, r.stdout + r.stderr)
+                self.assertIn("CS errors in the final pass: contradictory", r.stdout)   # the NUL line is itself one
+                self.assertNotIn("unity exit", r.stdout, "gt N2: a zero exit is not a reason")
+
+    def test_DdBuildSonrasiTundra_SonGecisiGizlemez(self):   # gt N1
+        r = self.verdict(RECOMPILE, TUNDRA, E_NEW, COMPILED, TUNDRA)
+        self.assertEqual(3, r.returncode, r.stdout + r.stderr)
 
     def test_TundraSatiriYok_TemizDerleme_Yesil_HataliDerleme_Kirmizi(self):
         self.assertEqual(0, self.verdict(RECOMPILE, COMPILED).returncode)
