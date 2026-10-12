@@ -170,6 +170,31 @@ namespace DD.Prototype.UI
                     yield return new WaitForSecondsRealtime(0.5f);
                 }
 
+                // 06 / 07 - C-00 12.10: the two weapons that lie on the post shim (PrepareRunStage.Seats: ar_2 on the rear cap,
+                // smg_1 on the front one), chosen like 02 and seen in the default view.
+                if (stage != null)
+                {
+                    for (int k = 0; k < PrepareShimWeapons.Length; k++)
+                    {
+                        string key = PrepareShimWeapons[k];
+                        UiButton row = OpenWeapon(screen, key);
+                        if (row == null)
+                        {
+                            Debug.LogWarning("[UiCapture] prepare: no open " + key + " row - no shim frame");
+                            continue;
+                        }
+
+                        UiInput.Focus(row);
+                        Submit(row.gameObject);
+                        yield return WaitFor(() => stage.WeaponId == key, 10f);
+                        stage.ResetView();
+                        yield return new WaitForSecondsRealtime(0.8f);
+                        string name = "0" + (6 + k) + "-prepare-shim-" + key.Replace("_", string.Empty);
+                        yield return Frame(folder, name);
+                        AppendPrepareFrame(json, name, screen, stage, false);
+                    }
+                }
+
                 json.Append("]}");
                 File.WriteAllText(Path.Combine(folder, "prepare.json"), json.ToString());
                 Debug.Log("[UiCapture] prepare " + json);
@@ -179,6 +204,25 @@ namespace DD.Prototype.UI
                 modes.Select(modeBefore);
                 Debug.Log("[UiCapture] prepare done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>C-00 12.10: the weapons the post shim carries (frames 06 / 07).</summary>
+            private static readonly string[] PrepareShimWeapons = { "ar_2", "smg_1" };
+
+            /// <summary>The open (pressable) row of weapon <paramref name="weaponId"/>, or null.</summary>
+            private static UiButton OpenWeapon(SelectionScreen screen, string weaponId)
+            {
+                UiButton[] rows = screen.WeaponRows;
+                for (int i = 0; rows != null && i < rows.Length; i++)
+                {
+                    UiButton row = rows[i];
+                    if (row != null && row.ConfirmCue && row.name.StartsWith("Weapon." + weaponId + ".", System.StringComparison.Ordinal))
+                    {
+                        return row;
+                    }
+                }
+
+                return null;
             }
 
             private static UiButton SecondOpenWeapon(SelectionScreen screen)
