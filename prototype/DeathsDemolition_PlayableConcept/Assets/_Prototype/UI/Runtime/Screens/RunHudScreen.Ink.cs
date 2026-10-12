@@ -575,7 +575,11 @@ namespace DD.Prototype.UI
                 _modeWord.text = UiStrings.Get("difficulty." + id + ".name", id.ToUpperInvariant());
             }
 
-            _modeWord.transform.parent.gameObject.SetActive(show);
+            // AD S8: the word's right edge on the seal's (the round plate's right end), not on the cluster's margin edge.
+            var root = (RectTransform)_modeWord.transform.parent;
+            float sealRight = _roundSeal != null ? Mathf.Min(0f, _roundSeal.anchoredPosition.x + _roundSeal.sizeDelta.x * 0.5f) : 0f;
+            root.anchoredPosition = new Vector2(-InkMargin + sealRight, root.anchoredPosition.y);
+            root.gameObject.SetActive(show);
         }
 
         /// <summary>WP-102: the mode word on show (null in Normal; tests).</summary>

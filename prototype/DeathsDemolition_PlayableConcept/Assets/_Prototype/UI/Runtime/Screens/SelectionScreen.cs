@@ -56,6 +56,9 @@ namespace DD.Prototype.UI
         private const float RowSideMax = 128f;              // R3 m12: the rows' side-view slot (the longest weapon's width), at most
 
         private const float StatBarHeight = 8f;
+
+        /// <summary>AD S3 (WP-106): a stat that has a value never draws an empty-looking bar - its fill is at least this share.</summary>
+        public const float StatBarMinFill = 0.08f;
         private const float StatIcon = 20f;
         private const float PreviewMin = 120f;              // under this the gaps close first
         private const float PreviewHide = 56f;              // under this the preview gives its room up (never a text)
@@ -1508,7 +1511,7 @@ namespace DD.Prototype.UI
                 if (hasBar)
                 {
                     // E9: the bars move with the focus (eased by UiBar); the first show lands at once.
-                    _statBars[s].SetValue(_stats[s].Bar01, first);
+                    _statBars[s].SetValue(_stats[s].Bar01 > 0f ? Mathf.Max(StatBarMinFill, _stats[s].Bar01) : 0f, first);
                 }
             }
 

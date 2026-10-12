@@ -122,6 +122,15 @@ namespace DD.Prototype.UI
                 _faceCaptured = true;
             }
 
+            // R4 WP-106 (AD M3): the lift moves the face on y only; its x is the layout's as it is now. A ListRow's status
+            // (UiBrushKit.SetRowStatus) moves the label's right edge after the capture - pivot 0.5 shifts anchoredPosition.x by
+            // half of it - and a stale x put a re-chosen row's word 26 px off its column.
+            _faceRest.x = _label.rectTransform.anchoredPosition.x;
+            if (_brushGlyph != null)
+            {
+                _glyphRest.x = _brushGlyph.rectTransform.anchoredPosition.x;
+            }
+
             bool up = lifted && !UiMotion.ReducedMotion;
             UiPresets.HoverLift(_label.rectTransform, _faceRest, up);
             if (_brushGlyph != null)

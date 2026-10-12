@@ -40,6 +40,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(UiStrings.Get("difficulty.hard.name", "HARD"), hud.ModeWord.text);
             Assert.IsTrue(UiHudInk.HasHalo(hud.ModeWord), "the HUD halo (V-53)");
             Assert.AreEqual(4, hud.Clusters.Count, "the word is not a fifth cluster");
+            // AD S8: the word's right edge is the seal's - the round plate's right end, not the margin 88 px past it.
+            var corners = new Vector3[4];
+            hud.ModeWord.rectTransform.GetWorldCorners(corners);
+            float wordRight = corners[2].x;
+            hud.RoundSeal.GetWorldCorners(corners);
+            Assert.AreEqual(corners[2].x, wordRight, 1.5f, "the mode word ends where the seal ends");
             Assert.AreEqual(UiStrings.Get("difficulty.hard.name", "HARD"), ResultsViewModel.DescribeMode(DifficultyService.RunMode),
                 "Results names the same mode on its reason line");
 

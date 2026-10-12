@@ -240,6 +240,12 @@ namespace DD.Prototype.Tests.PlayMode
             yield return OpenPrepareRun();
             SelectionScreen screen = PrepareScreen();
             Assert.IsNotNull(screen.Stage, "3B önizleme");
+            int firstChosen = ChosenRow(screen);
+            var lefts = new float[screen.WeaponRows.Length];
+            for (int i = 0; i < lefts.Length; i++)
+            {
+                lefts[i] = WorldRect(screen.WeaponRows[i].LabelText.rectTransform).xMin;
+            }
 
             UiButton other = null;
             int otherIndex = -1;
@@ -290,6 +296,22 @@ namespace DD.Prototype.Tests.PlayMode
             EventSystem.current.SetSelectedGameObject(null);
             yield return null;
             Assert.AreEqual(otherIndex, screen.StageIndex);
+
+            // AD M3: the old choice and the new one lifted and settled again - every word stays on its column (the lift's
+            // rest follows SetRowStatus's re-layout; it had put the old choice 26 px left, the new one 26 px right).
+            foreach (int row in new[] { firstChosen, otherIndex, firstChosen })
+            {
+                EventSystem.current.SetSelectedGameObject(screen.WeaponRows[row].gameObject);
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+
+            EventSystem.current.SetSelectedGameObject(Named(screen, "Start").gameObject);
+            yield return new WaitForSecondsRealtime(0.6f);
+            for (int i = 0; i < lefts.Length; i++)
+            {
+                Assert.AreEqual(lefts[i], WorldRect(screen.WeaponRows[i].LabelText.rectTransform).xMin, 1f, screen.WeaponRows[i].name + ": the word stays on its column");
+            }
+
             PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
         }
