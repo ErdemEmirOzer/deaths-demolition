@@ -182,17 +182,19 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Less(Vector3.Distance(PursuitPlanner.OpenSide(new[] { 0, 1, 1, 1, 0, 1, 1, 1 }, Vector3.forward), Vector3.forward), 1e-3f, "iki açık yan: oyuncunun baktığı");
         }
 
-        /// <summary>C-00 KARAR-WP104 §11.3 / §11.5 / 4 (12.10): R21+ health × 1.25^(R−20) and the late Elite / Ultra share 2.5 / 2.0 per
+        /// <summary>C-00 KARAR-WP104 §11.3 / §11.5 / 4 + 12.10 balance (S-04): R16+ health × 1.45^(R−15) and the late Elite / Ultra share 2.5 / 2.0 per
         /// round (every mode); the mode
         /// gold scale exact over a run (the fraction carries); Demolition's opening gold.</summary>
         [Test]
         public void GecOyunCanEgrisi_GecElitUltraPayi_ModAltini()
         {
             PrototypeConfig c = PrototypeConfig.Active;
-            for (int r = 1; r <= 20; r++)
+            Assert.AreEqual(16, c.Rounds.LateHealthFromRound, "12.10 denge: geç eğri R16'da başlar");
+            Assert.AreEqual(1.45f, c.Rounds.LateHealthGrowth, 1e-6f, "12.10 denge: ×1,45");
+            for (int r = 1; r <= 15; r++)
                 Assert.AreEqual(1f + c.Rounds.HealthMultiplierPerRound * (r - 1), c.EnemyHealthMultiplier(r), 1e-4f, "R" + r + " doğrusal kalır");
-            Assert.AreEqual((1f + 0.12f * 20f) * 1.25f, c.EnemyHealthMultiplier(21), 1e-3f, "R21 × 1,25");
-            Assert.AreEqual((1f + 0.12f * 27f) * Mathf.Pow(1.25f, 8f), c.EnemyHealthMultiplier(28), 1e-2f, "R28 × 1,25^8");
+            Assert.AreEqual((1f + 0.12f * 15f) * 1.45f, c.EnemyHealthMultiplier(16), 1e-3f, "R16 × 1,45");
+            Assert.AreEqual((1f + 0.12f * 27f) * Mathf.Pow(1.45f, 13f), c.EnemyHealthMultiplier(28), 0.5f, "R28 × 1,45^13");
             Assert.IsFalse(float.IsInfinity(c.EnemyHealthMultiplier(int.MaxValue)), "uç round sonlu");
             EnemyTierSettings elite = c.Enemies.Find(EnemyTier.Elite), ultra = c.Enemies.Find(EnemyTier.Ultra), std = c.Enemies.Find(EnemyTier.Standard);
             Assert.AreEqual(elite.SpawnWeightMax, elite.ResolveSpawnWeight(20), 1e-4f, "Elite R20 tavanda");

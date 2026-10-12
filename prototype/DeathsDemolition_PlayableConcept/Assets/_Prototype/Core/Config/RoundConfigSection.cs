@@ -47,7 +47,7 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104 (C-00 11.10 §11.3): the late-game health curve starts at this round — the WP-104 tree keeps the power fantasy going past R25 on the linear curve alone")]
         public int LateHealthFromRound = 21;
 
-        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104: late-game health × this^(R − LateHealthFromRound + 1) (1.25 = ×1.25^(R−20), C-00 KARAR-WP104 4 12.10: the B5 simulator is flat past R25, the top of the 1.15–1.25 range; the FINAL bot series sets the value)")]
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-102 / WP-104: late-game health × this^(R − LateHealthFromRound + 1) (the asset: R16+ × 1.45^(R−15), C-00 12.10 balance - the in-game bot series lived past R26 on Hard; the B5 simulator puts Normal's median at R27 with this; code default stays R21 × 1.25)")]
         public float LateHealthGrowth = 1.25f;
 
         [Header("Flow")]
@@ -78,12 +78,15 @@ namespace DD.Prototype.Core.Config
             return Mathf.Clamp(target, 1, AbsoluteSafetyCeiling);
         }
 
+        /// <summary>Ceiling of <see cref="EnemyHealthMultiplier"/>: far past any playable round, small enough that base health × it stays finite.</summary>
+        public const float MaxHealthMultiplier = 1e12f;
+
         public float EnemyHealthMultiplier(int round)
         {
             float m = 1f + HealthMultiplierPerRound * Mathf.Max(0, round - 1);
-            int late = round - LateHealthFromRound + 1;   // WP-102 / WP-104: R21+ × 1.25^(R−20)
-            if (late > 0 && LateHealthGrowth > 1f) m *= Mathf.Pow(LateHealthGrowth, Mathf.Min(late, 200));   // finite for any round
-            return m;
+            int late = round - LateHealthFromRound + 1;   // WP-102 / WP-104: from LateHealthFromRound × growth^(R − from + 1) (asset R16 × 1.45)
+            if (late > 0 && LateHealthGrowth > 1f) m *= Mathf.Pow(LateHealthGrowth, Mathf.Min(late, 200));
+            return Mathf.Min(m, MaxHealthMultiplier);   // finite for any round and growth (1.45^200 × the linear part overflows a float)
         }
 
         public float EnemyDamageMultiplier(int round)

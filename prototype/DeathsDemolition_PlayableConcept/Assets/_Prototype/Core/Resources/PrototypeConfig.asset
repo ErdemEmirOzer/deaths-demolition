@@ -180,8 +180,8 @@ MonoBehaviour:
     AbsoluteSafetyCeiling: 40
     HealthMultiplierPerRound: 0.12
     DamageMultiplierPerRound: 0.08
-    LateHealthFromRound: 21
-    LateHealthGrowth: 1.25
+    LateHealthFromRound: 16
+    LateHealthGrowth: 1.45
     SpawnRefillInterval: 0.45
     RoundStartCountdown: 3
     MaxSpawnsPerRefillTick: 2

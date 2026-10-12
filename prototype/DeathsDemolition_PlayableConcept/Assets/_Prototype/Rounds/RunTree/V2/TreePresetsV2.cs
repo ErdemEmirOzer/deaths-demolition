@@ -55,6 +55,15 @@ namespace DD.Prototype.Rounds
             },
             new Preset
             {
+                // C-00 12.10 balance check: the in-game Hard Shot bot's tree around R14 (its line's first 20; 23 nodes at R15 in the
+                // s3 series) so the R14-R22 window plays in one 25-minute cell (-ddDifficulty hard -ddStartRound 14).
+                Name = "hardshot_r14", WeaponKey = "ar_1", Round = 14,
+                Nodes = new[] { "sh_heavy", "sp_rate1", "sh_double", "mg_ext", "mg_reload1", "sv_hp1", "sp_rate2", "sh_bore", "sh_ricochet",
+                                "sh_triple", "sp_fullauto", "mg_double", "sh_pierce", "sv_hp2", "sp_rate3", "sh_explosive", "sh_fan", "mg_reload2",
+                                "kx_crit", "sv_shield" }
+            },
+            new Preset
+            {
                 // Design §8: the worst build for the perf gate (rl_1 auto + triple + explosive + chain + nuke, 40 zombies).
                 Name = "perf_worst", WeaponKey = "rl_1", Round = 15,
                 Nodes = new[] { "sp_rate1", "sp_rate2", "sp_rate3", "sp_fullauto", "sp_twin", "sh_heavy", "sh_double", "sh_triple", "sh_fan",

@@ -145,7 +145,7 @@ namespace DD.Prototype.Difficulty
                     s.SpawnWeightGrowthPerRound = new[] { -1f, 4f, 2f, 1f };
                     s.SpawnWeightMax = new[] { -1f, 50f, 30f, 14f };
                     s.DamageScale = 1.4f; s.TelegraphScale = 0.85f; s.RecoveryScale = 0.85f; s.CooldownScale = 0.8f;
-                    s.HealthScale = 1.15f; s.HealthMultiplierPerRound = 0.14f;
+                    s.HealthScale = 1.15f; s.HealthMultiplierPerRound = 0.20f;   // C-00 12.10 balance (S-04): the Hard bot lived past R26
                     s.PoolScale = 1.25f; s.ActiveBase = 9f; s.ActivePerRound = 2.5f; s.ActiveCap = 36;
                     s.SpawnRefillInterval = 0.35f; s.MaxSpawnsPerRefillTick = 2;
                     s.ArmorGrowthScale = 1.33f; s.ArmorMaxAdd = 0.10f;
