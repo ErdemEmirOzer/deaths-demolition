@@ -206,6 +206,12 @@ namespace DD.Prototype.UI
             return index >= 0 && index < _nodes.Length && _nodes[index] != null ? _nodes[index].Button : null;
         }
 
+        /// <summary>Tests (AD M2): node <paramref name="index"/>'s purchase stamp.</summary>
+        internal Image NodeStamp(int index)
+        {
+            return index >= 0 && index < _nodes.Length && _nodes[index] != null ? _nodes[index].StampSeal : null;
+        }
+
         public UiButton SynergyButton(int index)
         {
             return index >= 0 && index < _synergies.Length && _synergies[index] != null ? _synergies[index].Button : null;
@@ -281,6 +287,7 @@ namespace DD.Prototype.UI
             _fogLabel.enableWordWrapping = false;
 
             BuildHeader();
+            _fogPlate.transform.SetAsLastSibling();   // AD M3: the fog line stands in the tier band, over the header's paper
             _synergyHeader = UiFactory.Label("SynergyHeader", _block, string.Empty, UiType.Label, TreeArt.InkText, TextAnchor.MiddleCenter);
             TopLeft(_synergyHeader.rectTransform);
             _synergyHeader.enableWordWrapping = false;
@@ -837,6 +844,7 @@ namespace DD.Prototype.UI
             v.Seal.enabled = purchased && v.Seal.sprite != null;
             v.Seal.color = pigment;
             v.StampSeal.color = pigment;
+            v.StampSeal.enabled = false;   // AD M2: the stamp is the purchase's moment; the corner seal + wash are the lasting look
             v.SynergyMark.enabled = (n.Synergies & active) != 0 && v.SynergyMark.sprite != null;
             v.TargetRing.enabled = n.IsTarget || n.OnTargetPath;
             v.TargetRing.color = WithAlpha(UiTokens.Get(TreeArt.InkText), n.IsTarget ? 1f : 0.45f);
@@ -889,6 +897,11 @@ namespace DD.Prototype.UI
             bool fogged = s.OpenTier < TreeV2Layout.Tiers;
             _fog.gameObject.SetActive(fogged);
             _fogPlate.gameObject.SetActive(fogged && s.NextTierRound > 0);
+            for (int t = 0; t < _tierLabels.Length; t++)
+            {
+                _tierLabels[t].gameObject.SetActive(true);   // AD M3: the fog line below takes back the numerals it carries or covers
+            }
+
             if (!fogged)
             {
                 return;
@@ -898,11 +911,26 @@ namespace DD.Prototype.UI
             Set(_fog.rectTransform, x, _layout.TreeTop, _layout.FogRight - x, _layout.TreeBottom - _layout.TreeTop);
             if (s.NextTierRound > 0)
             {
-                _fogLabel.text = TreeV2Text.Fog(s.NextTierRound);
-                float width = Mathf.Min(_layout.FogRight - x - 8f, Mathf.Ceil(_fogLabel.GetPreferredValues(_fogLabel.text).x) + (int)UiSpace.L);
-                Set(_fogPlate.rectTransform, x + 4f, _layout.TreeTop + 4f, Mathf.Max(48f, width), UiFactory.LineHeight(UiType.Label) + (int)UiSpace.S);
+                // AD M3 (12.10): the line stood at TreeTop + 4, over the first row's upper nodes (22 px of two icons). It now takes
+                // the first fogged column's place in the tier band - "II · UNLOCKS AT ROUND 3" - so it meets no node; the numerals
+                // it carries or covers step back.
+                // Only V fogged leaves one column: the line then reaches back over IV's band from the tree's end.
+                _fogLabel.text = RomanNumerals.Cached(s.OpenTier + 1) + " · " + TreeV2Text.Fog(s.NextTierRound);
+                float width = Mathf.Max(48f, Mathf.Ceil(_fogLabel.GetPreferredValues(_fogLabel.text).x) + (int)UiSpace.L);
+                float left = Mathf.Max(_layout.TierX(1), Mathf.Min(x + 4f, _layout.FogRight - 4f - width));
+                width = Mathf.Min(width, _layout.FogRight - 4f - left);
+                Set(_fogPlate.rectTransform, left, TreeV2Layout.HeaderHeight - TreeV2Layout.TierBand, width, TreeV2Layout.TierBand);
+                float right = left + width;
+                for (int t = 0; t < _tierLabels.Length; t++)
+                {
+                    float numeral = _layout.TierX(t + 1) + _layout.TierWidth * 0.5f;
+                    _tierLabels[t].gameObject.SetActive(numeral + FogNumeralClear < left || numeral - FogNumeralClear > right);
+                }
             }
         }
+
+        /// <summary>AD M3: half a numeral's width - a tier numeral whose centre is within it of the fog line steps back.</summary>
+        private const float FogNumeralClear = 16f;
 
         private void DrawEdges(TreeScreenSnapshot s)
         {
@@ -995,7 +1023,9 @@ namespace DD.Prototype.UI
             _dExtra.text = ExtraLines(s, target);
 
             bool purchased = n.State == TreeNodeState.Purchased;
-            _pricePlate.gameObject.SetActive(true);
+            // AD M1 (12.10): an owned node's plate stood empty - a 376 x 190 black box under its words. OWNED is the card's state
+            // line; the card ends at the description (LayoutDetail gives the closed plate no height).
+            _pricePlate.gameObject.SetActive(!purchased);
             _dPrice.text = purchased ? string.Empty : TreeV2Text.Gold(n.Price);
             _dDiscount.text = purchased ? string.Empty : TreeV2Text.Discount(n);
             _buy.gameObject.SetActive(!purchased);
@@ -1535,7 +1565,15 @@ namespace DD.Prototype.UI
 
             v.StampSeal.enabled = true;
             UiPresets.StampIn(v.StampSeal.rectTransform, 0f, GetInstanceID());
+            // AD M2 (12.10): the stamp stayed over the icon until the screen closed, and a node bought in an earlier round had none
+            // - one state, two looks. It lifts within 200 ms of its contact (held StampHold, then Fast); the next refresh puts it
+            // away, so what stays is the purchased look every owned node shares (pigment wash + corner seal).
+            UiMotion.TintAlpha(v.StampSeal, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor,
+                UiPresets.StampContactSeconds + StampHold, UiClock.Unscaled, GetInstanceID());
         }
+
+        /// <summary>AD M2: the stamp's hold after its contact before it lifts (hold + Fast 140 ms ≤ the AD's 200 ms).</summary>
+        internal const float StampHold = 0.05f;
 
         /// <summary>SetTarget on node <paramref name="index"/>, or −1 when it already is the Target (clears it).</summary>
         public void ToggleTarget(int index)

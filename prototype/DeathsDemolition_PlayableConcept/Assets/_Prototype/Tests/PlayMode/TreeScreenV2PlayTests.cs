@@ -116,7 +116,7 @@ namespace DD.Prototype.Tests.PlayMode
             return shop;
         }
 
-        private IEnumerator Open(Vector2 size)
+        private IEnumerator Open(Vector2 size, UiTreeCaptureShop shop = null)
         {
             Canvas canvas = UiFactory.CreateCanvas("TreeV2Test.Canvas", UiTokens.SortingScreen);
             _canvas = canvas.gameObject;
@@ -126,7 +126,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             _panel = UiTreeScreenV2.Create(host);
             _panel.Continued += () => _continued++;
-            _shop = Staged();
+            _shop = shop ?? Staged();
             _panel.Open(_shop);
             for (int i = 0; i < 3; i++)
             {
@@ -500,6 +500,121 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             page.Close();
+        }
+
+        // ------------------------------------------------------------------ AD 12.10 MUSTs (AD-REVIEW-TREE.md)
+
+        private int FirstNode(TreeNodeState state)
+        {
+            for (int i = 0; i < _shop.Snapshot.Nodes.Length; i++)
+            {
+                if (_shop.Snapshot.Nodes[i].State == state && _panel.NodeButton(i) != null)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// AD M1: an owned node in focus leaves no empty plate (the card ends at its words). AD M2: the purchase stamp lifts
+        /// within 200 ms of its contact - after it, the node bought here looks like every owned node (no stamp over the icon).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator AlinmisDugum_BosPlakaYok_DamgaTemastanSonraKalkar()
+        {
+            yield return Open(new Vector2(1920f, 1080f));
+            int owned = FirstNode(TreeNodeState.Purchased);
+            Assert.GreaterOrEqual(owned, 0, "the staged shop owns nodes");
+            UiInput.Focus(_panel.NodeButton(owned));
+            yield return null;
+            yield return null;
+            Assert.AreEqual(owned, _panel.DetailTarget, "the detail names the owned node");
+            Assert.IsFalse(_panel.PricePlateRect.gameObject.activeSelf, "M1: no price plate under an owned node");
+            Image earlier = _panel.NodeStamp(owned);
+            Assert.IsFalse(earlier.enabled, "M2: a node owned before this screen carries no stamp");
+
+            int buy = FirstNode(TreeNodeState.Available);
+            Assert.GreaterOrEqual(buy, 0, "a buyable node");
+            UiInput.Focus(_panel.NodeButton(buy));
+            yield return null;
+            Submit(_panel.NodeButton(buy));
+            yield return null;
+            Assert.AreEqual(TreeNodeState.Purchased, _shop.Snapshot.Nodes[buy].State, "A bought the node");
+            Image stamp = _panel.NodeStamp(buy);
+            if (stamp.sprite != null)
+            {
+                Assert.IsTrue(stamp.enabled, "M2: the purchase stamps the node");
+            }
+
+            yield return new WaitForSecondsRealtime(UiPresets.StampContactSeconds + UiTreeScreenV2.StampHold + 0.14f + 0.15f);
+            Assert.IsTrue(!stamp.enabled || stamp.color.a <= 0.01f, "M2: the stamp lifted after its contact (alpha " + stamp.color.a + ")");
+            Assert.AreEqual(buy, _panel.DetailTarget);
+            Assert.IsFalse(_panel.PricePlateRect.gameObject.activeSelf, "M1: the node just bought shows no empty plate");
+            _panel.Refresh();
+            Assert.IsFalse(stamp.enabled, "M2: a refresh puts the stamp away");
+        }
+
+        /// <summary>
+        /// AD M3: the fog line ("II · UNLOCKS AT ROUND 3") stands in the tier band and meets no node, with one to four tiers
+        /// open, EN / TR at text 1.25; its words fit their plate.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SisCizgisi_KademeBandinda_HicbirDugumeBinmez([Values(1, 3, 6, 10)] int round, [Values("en", "tr")] string language)
+        {
+            UiSettings.TextScale = 1.25f;
+            UiSettings.Language = language;
+            yield return Open(new Vector2(1920f, 1080f), new UiTreeCaptureShop(1350, round));
+            string when = language + " round " + round + " (open " + _shop.Snapshot.OpenTier + ")";
+            Assert.IsTrue(_panel.FogLabel.gameObject.activeInHierarchy, when + ": the fog line shows");
+            StringAssert.Contains(UiStrings.Number(_shop.Snapshot.NextTierRound), _panel.FogLabel.text, when);
+            Canvas.ForceUpdateCanvases();
+            Rect plate = World((RectTransform)_panel.FogLabel.transform.parent);
+            for (int i = 0; i < _shop.Snapshot.Nodes.Length; i++)
+            {
+                UiButton node = _panel.NodeButton(i);
+                if (node != null && node.gameObject.activeInHierarchy)
+                {
+                    Assert.IsFalse(Meet(plate, World((RectTransform)node.transform)), when + ": the fog line over node " + i);
+                }
+            }
+
+            AssertWords(_panel.FogLabel, when);
+        }
+
+        /// <summary>
+        /// AD M4: the Awakening page hides its host screen's own layers (the menu's logo, rail words, level bar; Results' lines)
+        /// while it is up - they read through the scrim under its title - and Close gives them back.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Uyanis_AcikkenEvSahibiKatmanlariGizli_KapaninciGeriGelir()
+        {
+            Canvas root = UiFactory.CreateCanvas("AwakeningTest.Canvas", UiTokens.SortingScreen);
+            _canvas = root.gameObject;
+            UiFactory.EnsureEventSystem();
+            RectTransform host = UiFactory.NewRect("Host", root.transform);
+            host.sizeDelta = new Vector2(1920f, 1080f);
+            RectTransform logo = UiFactory.NewRect("Logo", host);
+            RectTransform rail = UiFactory.NewRect("Rail", host);
+            RectTransform off = UiFactory.NewRect("AlreadyOff", host);
+            off.gameObject.SetActive(false);
+            yield return null;
+            UiAwakeningPage page = UiAwakeningPage.Create(host);
+            page.Open(new MixedAwakening(), null);
+            yield return null;
+            Assert.IsFalse(logo.gameObject.activeSelf, "the host's logo steps out");
+            Assert.IsFalse(rail.gameObject.activeSelf, "the host's rail steps out");
+            Assert.IsTrue(page.gameObject.activeSelf, "the page stays");
+            Transform scrim = host.Find(UiAwakeningPage.PaneName + ".Scrim");
+            Assert.IsTrue(scrim == null || scrim.gameObject.activeSelf, "the page's own scrim stays");
+            Assert.AreEqual(2, page.HostHiddenCount, "only the active host layers");
+
+            page.Close();
+            yield return null;
+            Assert.IsTrue(logo.gameObject.activeSelf && rail.gameObject.activeSelf, "Close gives the host layers back");
+            Assert.IsFalse(off.gameObject.activeSelf, "a layer that was off stays off");
+            Assert.AreEqual(0, page.HostHiddenCount);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -63,6 +64,7 @@ namespace DD.Prototype.UI
         private Selectable _opener;
         private int _focus = -1;
         private bool _open;
+        private readonly List<GameObject> _hostHidden = new List<GameObject>(16);
         private float _cellW;      // fix2: the tile geometry the state line is measured against
         private float _stateY;
         private float _stateH;
@@ -184,6 +186,7 @@ namespace DD.Prototype.UI
             EventSystem system = EventSystem.current;
             _opener = system != null && system.currentSelectedGameObject != null ? system.currentSelectedGameObject.GetComponent<Selectable>() : null;
             transform.SetAsLastSibling();
+            HideHost();
             _open = true;
             _note.text = string.Empty;
             Refresh();
@@ -210,6 +213,7 @@ namespace DD.Prototype.UI
 
             _open = false;
             _pane.HandleCancel();
+            RestoreHost();
             Action closed = _onClosed;
             _onClosed = null;
             if (_opener != null && _opener.gameObject.activeInHierarchy)
@@ -219,6 +223,48 @@ namespace DD.Prototype.UI
 
             closed?.Invoke();
         }
+
+        /// <summary>
+        /// AD M4 (12.10): the host screen's own layers - the menu's logo, rail words and level bar, Results' lines - read through
+        /// the Window scrim (linear blending) right under the page's title. While the page is up they step out; the world behind
+        /// and the page's own scrim stay. Close gives back exactly what Open took.
+        /// </summary>
+        private void HideHost()
+        {
+            if (_screenRoot == null)
+            {
+                return;
+            }
+
+            string scrim = PaneName + ".Scrim";
+            for (int i = 0; i < _screenRoot.childCount; i++)
+            {
+                Transform child = _screenRoot.GetChild(i);
+                if (child == transform || child.name == scrim || !child.gameObject.activeSelf || child.GetComponent<UiAwakeningPage>() != null)
+                {
+                    continue;
+                }
+
+                child.gameObject.SetActive(false);
+                _hostHidden.Add(child.gameObject);
+            }
+        }
+
+        private void RestoreHost()
+        {
+            for (int i = 0; i < _hostHidden.Count; i++)
+            {
+                if (_hostHidden[i] != null)
+                {
+                    _hostHidden[i].SetActive(true);
+                }
+            }
+
+            _hostHidden.Clear();
+        }
+
+        /// <summary>Tests (AD M4): the host layers the open page holds hidden.</summary>
+        internal int HostHiddenCount => _hostHidden.Count;
 
         /// <summary>Forwarded by the host's Update while open: Cancel closes, the focus is kept inside the page.</summary>
         public void HandleKeys()
