@@ -47,6 +47,14 @@ namespace DD.Prototype.Rounds
             },
             new Preset
             {
+                // S-06 B4 TD evidence: every weapon attachment on ar_1 at once — E2-L drum (mg_drum, tier IV opens R10), E3 twin
+                // barrel + E5 speed ring (sp_twin), E4 fire capsule glowing at tier III.
+                Name = "attach_r12", WeaponKey = "ar_1", Round = 12,
+                Nodes = new[] { "mg_ext", "mg_double", "mg_reload1", "mg_reload2", "mg_reload3", "mg_drum", "sp_rate1", "sp_rate2", "sp_rate3",
+                                "sp_twin", "el_fire", "el_fire2", "el_fire3" }
+            },
+            new Preset
+            {
                 // Design §8: the worst build for the perf gate (rl_1 auto + triple + explosive + chain + nuke, 40 zombies).
                 Name = "perf_worst", WeaponKey = "rl_1", Round = 15,
                 Nodes = new[] { "sp_rate1", "sp_rate2", "sp_rate3", "sp_fullauto", "sp_twin", "sh_heavy", "sh_double", "sh_triple", "sh_fan",
