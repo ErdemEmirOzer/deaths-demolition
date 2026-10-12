@@ -46,7 +46,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             MethodInfo draw = typeof(TracerRibbonRenderer).GetMethod("DrawTd", BindingFlags.Instance | BindingFlags.NonPublic);
             if (draw == null) return;
-            int layers = typeof(TracerRibbonRenderer).GetField("TdGlowAlpha") != null ? 3 : 2;
+            int layers = typeof(TracerRibbonRenderer).GetField("TdGlowAlpha") != null || typeof(TracerRibbonRenderer).GetField("TdHaloAlpha") != null ? 3 : 2;   // WP-101: the halo
             for (int layer = 0; layer < layers; layer++) draw.Invoke(tracer, new object[] { layer });
         }
         private static int Counter(VfxDressing vfx, string name)

@@ -3,6 +3,8 @@
 //   _EmissiveTex  optional additive layer sampled at the same cell (armour impact, muzzle, explosion)
 //   _Tint      colour multiplier (beacon / vignette runtime tint), _Alpha instance fade
 //   _SrcBlend/_DstBlend  alpha (5/10) or additive (1/1); ZWrite off; fog applied for alpha, not additive
+//   WP-101 (R4, AP-041): _Premultiplied 1 = a premultiplied sheet on Blend One OneMinusSrcAlpha (1/10): rgb is never
+//   multiplied by a again and a is never forced to 1; fades scale rgb and a together. 0 (default) = the paths above, unchanged.
 //   WP-019b: procedural (GPU) instancing for ParticleSystemRenderer mesh mode (blood droplets):
 //   the per-particle transform and colour come from unity_ParticleInstanceData (URP ParticlesInstancing.hlsl).
 // One material per catalog row; the frame index and fade come through a property block, so the
@@ -26,6 +28,7 @@ Shader "DD/VFX Flipbook"
         [HideInInspector] _DstBlend("Dst", Float) = 10
         [HideInInspector] _Cull("Cull", Float) = 0
         [HideInInspector] _ZTest("ZTest", Float) = 4
+        [HideInInspector] _Premultiplied("Premultiplied (WP-101)", Float) = 0
     }
 
     SubShader
@@ -73,6 +76,7 @@ Shader "DD/VFX Flipbook"
                 float _DstBlend;
                 float _Cull;
                 float _ZTest;
+                float _Premultiplied;
             CBUFFER_END
 
             struct Attributes
@@ -126,9 +130,37 @@ Shader "DD/VFX Flipbook"
                 return output;
             }
 
+            // WP-101 (R4, AP-041): premultiplied sheets. The file's rgb already carries its coverage (sRGB(linear × a); the
+            // sampler decodes it), so every fade - the block _Alpha, the tint / vertex alpha - scales rgb and a ONCE, the cap
+            // rescales both by the same ratio (newA / oldA), and a is never forced to 1 (Blend One OneMinusSrcAlpha keeps the
+            // background). The tint's rgb (HDR allowed) multiplies colour only; fog lerps towards fogColour × a.
+            half4 FragPremultiplied(Varyings input)
+            {
+                half4 s = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, input.uv);
+                float4 tint = _Tint * (float4)input.color;
+                float fade = tint.a * _Alpha;
+                float aRaw = s.a * fade;
+                float a = min(aRaw, _AlphaCap);
+                float k = fade * (a / max(aRaw, 1e-5));
+                float3 rgb = (float3)s.rgb * tint.rgb * k;
+                if (_UseEmissive > 0.5)
+                {
+                    half4 e = SAMPLE_TEXTURE2D(_EmissiveTex, sampler_EmissiveTex, input.uv);
+                    rgb += e.rgb * e.a * _EmissiveStrength * _Alpha;
+                }
+
+                rgb = MixFogColor(rgb, unity_FogColor.rgb * a, input.fogFactor);
+                return half4(rgb, a);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
+                if (_Premultiplied > 0.5)
+                {
+                    return FragPremultiplied(input);
+                }
+
                 half4 c = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, input.uv) * _Tint * input.color;
                 half a = min(c.a * _Alpha, _AlphaCap);
                 half3 rgb = c.rgb;

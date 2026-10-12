@@ -588,6 +588,11 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
             Assert.AreEqual(110, vfx, "AP-010 v004 manifest 109 PNG (v003 109 + fb_armor_break sheet + emissive, WP-047H − ofuda_seal / _burn, WP-073 B6) + AP010C 1 (barrel_heat_distort_tile) = 110.");
 
+            // WP-101 (R4, AP-041): the premultiplied sheets of the AP-041 v001 intake (15 TD muzzle + smoke + 5 impacts + 12 holes).
+            int ap041 = 0;
+            foreach (string f in ArtAp041VfxIntake.TextureFiles()) if (beklenen.Add(f)) ap041++;
+            if (ArtAp041VfxIntake.Active) Assert.AreEqual(ArtAp041VfxIntake.ExpectedTextures, ap041, "AP-041 v001: 15 TD namlu + duman + 5 isabet + 12 delik = 33");
+
             // WP-084 · AP-025 O1 atlas (intake manifest present, ORM staged): the body Packed / Mask and their derived MetallicSmoothness /
             // DetailMask are retired (tools/art/ap025-intake.json "retire"); one ORM + the 9-slice mask array sheet take their place.
             if (ArtAp025Intake.HasO1Atlas)

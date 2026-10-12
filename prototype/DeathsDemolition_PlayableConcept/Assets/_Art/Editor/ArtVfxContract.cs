@@ -26,6 +26,34 @@ namespace DD.Art.Pipeline.EditorTools
         public const string VfxRoot = ArtImportContract.ArtRoot + "/VFX/AP010";
         public const string ManifestPath = VfxRoot + "/AP010-vfx-manifest-v004.json";   // WP-047H: AP-010B v004 (explosion retint, pool lobes, fb_armor_break)
 
+        /// <summary>
+        /// WP-101 (R4, AP-041) · Codex's premultiplied photographic set (<see cref="ArtAp041VfxIntake"/>): sRGB, mips on, CLAMP,
+        /// BC7, never streamed like the AP-010 sheets — but Alpha Is Transparency OFF (the file's rgb is linear × coverage, and the
+        /// importer's transparent-texel dilation would paint colour under a = 0: an additive halo on Blend One OneMinusSrcAlpha).
+        /// Ship sizes: impact sheets 1024 (256² cells; FP / TP see them at eye level), TD muzzle flashes, the smoke and the holes
+        /// 512 (128² cells against ≤ 80 px on screen top-down; a 0.06–0.14 m hole). Own budget line <see cref="ShippedAp041BudgetMb"/>.
+        /// </summary>
+        public const string Ap041Root = ArtImportContract.ArtRoot + "/VFX/AP041";
+        /// <summary>WP-101 · AP-041 v001 resident line: 28 × 512² + 5 × 1024² BC7 with mips ≈ 16.0 MB.</summary>
+        public const int ShippedAp041BudgetMb = 20;
+
+        public static bool IsAp041Asset(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(Ap041Root + "/", StringComparison.Ordinal);
+        }
+
+        /// <summary>WP-101 · an AP-041 colour sheet (<c>*_srgb_pm.png</c>): premultiplied, no alpha dilation.</summary>
+        public static bool IsPremultipliedTexture(string assetPath)
+        {
+            return IsAp041Asset(assetPath) && System.IO.Path.GetFileNameWithoutExtension(assetPath).EndsWith("_srgb_pm", StringComparison.Ordinal);
+        }
+
+        /// <summary>WP-101 · AP-041 ship size from the file name (see <see cref="Ap041Root"/>).</summary>
+        public static int Ap041MaxSizeOf(string fileName)
+        {
+            return fileName.StartsWith("H_impact_", StringComparison.Ordinal) ? 1024 : 512;
+        }
+
         /// <summary>Resident budget for the VFX texture class (MB, BC7/BC5 with mips).</summary>
         /// <summary>Main VFX line. WP-019: 20 MB for the v002 set; WP-019b: 32 MB for the v003 HQ pass (ADR-019-1 amendment, reported against the release ceiling).</summary>
         public const int ShippedVfxBudgetMb = 32;
@@ -35,7 +63,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>True for a texture under a supplement folder (AP010B…), which counts against <see cref="ShippedBloodBudgetMb"/> instead of the main line.</summary>
         public static bool IsSupplementAsset(string assetPath)
         {
-            return IsVfxAsset(assetPath) && !assetPath.Replace('\\', '/').StartsWith(VfxRoot + "/", StringComparison.Ordinal);
+            return IsVfxAsset(assetPath) && !assetPath.Replace('\\', '/').StartsWith(VfxRoot + "/", StringComparison.Ordinal) && !IsAp041Asset(assetPath);   // WP-101: AP-041 has its own line
         }
 
         public enum VfxTextureRole
@@ -55,7 +83,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             string p = assetPath.Replace('\\', '/');
-            if (p.StartsWith(VfxRoot + "/", StringComparison.Ordinal))
+            if (p.StartsWith(VfxRoot + "/", StringComparison.Ordinal) || p.StartsWith(Ap041Root + "/", StringComparison.Ordinal))   // WP-101: + AP041
             {
                 return true;
             }
@@ -94,6 +122,7 @@ namespace DD.Art.Pipeline.EditorTools
                 }
             }
 
+            if (System.IO.Directory.Exists(Ap041Root)) list.Add(Ap041Root);   // WP-101 (R4, AP-041)
             return list.ToArray();
         }
 
@@ -136,6 +165,7 @@ namespace DD.Art.Pipeline.EditorTools
         public static int MaxSizeOf(string assetPath)
         {
             string name = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            if (IsAp041Asset(assetPath)) return Ap041MaxSizeOf(name);   // WP-101 (R4, AP-041)
             if (name.Contains("hud_marker")) return 256;
             if (name.StartsWith("AP010B_", StringComparison.Ordinal))
             {
@@ -205,7 +235,8 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.filterMode, FilterMode.Bilinear, v => importer.filterMode = v);
             changed |= Set(importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp, v => importer.wrapMode = v);
             changed |= Set(importer.anisoLevel, 1, v => importer.anisoLevel = v);
-            changed |= Set(importer.alphaIsTransparency, !normal, v => importer.alphaIsTransparency = v);
+            // WP-101: a premultiplied AP-041 sheet keeps its rgb under a = 0 at zero - no transparency dilation.
+            changed |= Set(importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath), v => importer.alphaIsTransparency = v);
             changed |= Set(importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput, v => importer.alphaSource = v);
             changed |= Set(importer.mipMapsPreserveCoverage, false, v => importer.mipMapsPreserveCoverage = v);
 
@@ -245,7 +276,7 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "streamingMipmaps", importer.streamingMipmaps, false);
             Check(v, "maxTextureSize", importer.maxTextureSize, maxSize);
             Check(v, "wrapMode", importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp);
-            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, !normal);
+            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath));   // WP-101: PM off
             Check(v, "alphaSource", importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput);
             TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);
             if (!st.overridden) v.Add("Standalone: not overridden");

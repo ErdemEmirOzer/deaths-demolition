@@ -588,10 +588,11 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(_system.LiveExplosions, Is.LessThanOrEqualTo(8));
         }
 
-        // User 10.10 (C-00): "the bullets stop half way ... more visible, orange-ish, realistic" - the 3 cm × 40 ms line became a warm
-        // core (the weapon's width × TdCoreScale, ≥ TdCoreMin) riding to the impact, its tail running in over TdTailOutSeconds.
+        // User 10.10 (C-00): every round rides to the impact, its tail running in over TdTailOutSeconds. WP-101 (user 11.10, "çok küçük
+        // ve fazla turuncu"; AD r1): a tracer round draws its class's white-hot core (layer 0, added) and its heat halo; every other
+        // round its premultiplied body streak (layer 2 with the halos - an added light line vanished on the light stone).
         [Test]
-        public void TdTracer_NormalWeaponClasses_WarmCoreToTheImpact_TailRunsInSixtyMs()
+        public void TdTracer_NormalWeaponClasses_TracerCoreOrBodyStreakToTheImpact_TailRunsInSixtyMs()
         {
             TracerRibbonRenderer tracer = AttachTdTracer();
             ClassicWeaponId[] weapons = { ClassicWeaponId.AssaultRifle, ClassicWeaponId.AutoSmg,
@@ -602,17 +603,47 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.That(tracer.RecordTdProjectile(in spawn), Is.True);
                 tracer.StopTdProjectile(spawn.ProjectileId, spawn.Position + Vector3.right * 3f);
             }
-            Assert.That(DrawTd(tracer, 0), Is.EqualTo(4));
-            Vector4[] head = TracerBuffer(tracer, "_head");
-            Vector4[] extra = TracerBuffer(tracer, "_extra");
+            // layer 2 (premultiplied): the tracers' halos and the body streaks; layer 0 (added): the tracer cores and the plain pellet
+            // bars - in record order
+            var inLayer2 = new System.Collections.Generic.List<int>();
+            var inLayer0 = new System.Collections.Generic.List<int>();
+            int tracers = 0;
             for (int i = 0; i < 4; i++)
             {
-                float core = Mathf.Max(VfxWeaponProfiles.For(weapons[i]).CoreWidth * TracerRibbonRenderer.TdCoreScale, TracerRibbonRenderer.TdCoreMin);
-                Assert.That(head[i].w, Is.EqualTo(core).Within(.00001f), weapons[i].ToString());
-                Assert.That(extra[i], Is.EqualTo(Vector4.zero), "TD must not inherit the old pixel width/head-dot floor");
-                Assert.That(new Vector3(head[i].x, head[i].y, head[i].z), Is.EqualTo(O + Vector3.forward * i + Vector3.right * 3f));
+                VfxWeaponProfile profile = VfxWeaponProfiles.For(weapons[i]);
+                bool pellet = weapons[i] == ClassicWeaponId.CombatShotgun;
+                bool isTracer = TracerRibbonRenderer.IsTdTracer(profile, int.MaxValue - i, pellet, 0);
+                if (isTracer) tracers++;
+                if (isTracer || !pellet) inLayer2.Add(i);
+                if (isTracer || pellet) inLayer0.Add(i);
             }
-            Assert.That(DrawTd(tracer, 2), Is.EqualTo(3), "the warm glow on the rifle, smg and lmg rounds - not on the shotgun pellet");
+            Assert.That(tracers, Is.InRange(1, 3), "the ids give a mix of tracer and plain rounds (the plain pellet)");
+            Assert.That(DrawTd(tracer, 2), Is.EqualTo(inLayer2.Count));
+            Vector4[] head = TracerBuffer(tracer, "_head");
+            Vector4[] extra = TracerBuffer(tracer, "_extra");
+            Vector4[] span = TracerBuffer(tracer, "_span");
+            for (int k = 0; k < inLayer2.Count; k++)
+            {
+                int i = inLayer2[k];
+                VfxWeaponProfile profile = VfxWeaponProfiles.For(weapons[i]);
+                bool isTracer = TracerRibbonRenderer.IsTdTracer(profile, int.MaxValue - i, weapons[i] == ClassicWeaponId.CombatShotgun, 0);
+                float width = isTracer ? TracerRibbonRenderer.TdCoreWidth(profile.Class) * TracerRibbonRenderer.TdHaloScale : TracerRibbonRenderer.TdBodyWidth;
+                Assert.That(head[k].w, Is.EqualTo(width).Within(.00001f), weapons[i] + (isTracer ? " halo" : " body"));
+                Assert.That(extra[k], Is.EqualTo(new Vector4(isTracer ? 0f : TracerRibbonRenderer.TdBodyMinPx, 0f, 0f, 0f)), "TD pixel floor only - no head dot");
+                Assert.That(span[k].z, Is.EqualTo(isTracer ? -TracerRibbonRenderer.TdHaloEdgeShare : 0f), "the amber rim on the halo only");
+                Assert.That(new Vector3(head[k].x, head[k].y, head[k].z), Is.EqualTo(O + Vector3.forward * i + Vector3.right * 3f));
+            }
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(inLayer0.Count), "the white-hot cores and the plain pellet's glint bar");
+            head = TracerBuffer(tracer, "_head"); extra = TracerBuffer(tracer, "_extra");
+            for (int k = 0; k < inLayer0.Count; k++)
+            {
+                int i = inLayer0[k];
+                bool pellet = weapons[i] == ClassicWeaponId.CombatShotgun;
+                VfxWeaponProfile profile = VfxWeaponProfiles.For(weapons[i]);
+                bool isTracer = TracerRibbonRenderer.IsTdTracer(profile, int.MaxValue - i, pellet, 0);
+                Assert.That(head[k].w, Is.EqualTo(isTracer ? TracerRibbonRenderer.TdCoreWidth(profile.Class) : TracerRibbonRenderer.TdPelletWidth).Within(.00001f), weapons[i].ToString());
+                Assert.That(extra[k].x, Is.GreaterThanOrEqualTo(isTracer ? TracerRibbonRenderer.TdCoreMinPx : TracerRibbonRenderer.TdBodyMinPx));
+            }
             tracer.TickTd(TracerRibbonRenderer.TdTailOutSeconds - .001f);
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(4));
             Assert.That(tracer.LiveTdSmoke, Is.Zero);
@@ -621,9 +652,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(DrawTd(tracer, 0), Is.Zero);
         }
 
-        // User 10.10: a round reaching an enemy 30 m out is drawn all the way (the old tracer ended ≈ 5 m out); ReduceFlashes dims the glow.
+        // User 10.10: a round reaching an enemy 30 m out is drawn all the way (the old tracer ended ≈ 5 m out); ReduceFlashes dims the halo.
         [Test]
-        public void TdTracer_RidesItsRoundToAFarImpact_WarmGlow_ReduceFlashesDims()
+        public void TdTracer_RidesItsRoundToAFarImpact_HeatHalo_ReduceFlashesDims()
         {
             TracerRibbonRenderer tracer = AttachTdTracer();
             VfxWeaponProfile ar = VfxWeaponProfiles.For(ClassicWeaponId.AssaultRifle);
@@ -638,10 +669,10 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 GameFeelSettings.FlashScale = 1f;
                 Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdGlowAlpha).Within(1e-5f));
+                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdHaloAlpha).Within(1e-5f));
                 GameFeelSettings.FlashScale = .4f;
                 Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdGlowAlpha * .4f).Within(1e-5f), "ReduceFlashes dims the glow");
+                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdHaloAlpha * .4f).Within(1e-5f), "ReduceFlashes dims the halo");
             }
             finally { GameFeelSettings.FlashScale = flash; }
             tracer.TickTd(1f);   // it arrived at 30 m (≈ 0.12 s) and its tail ran in
@@ -660,9 +691,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(1));
             Assert.That(tracer.LiveTdSmoke, Is.EqualTo(1));
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(Mathf.Max(VfxWeaponProfiles.For(ClassicWeaponId.Sr1).CoreWidth
-                * TracerRibbonRenderer.TdCoreScale, TracerRibbonRenderer.TdSniperCoreMin)).Within(.00001f));
-            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(Vector4.zero));
+            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.Sniper)).Within(.00001f));
+            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(new Vector4(TracerRibbonRenderer.TdHeavyCoreMinPx, 0f, 0f, 0f)));
             Assert.That(DrawTd(tracer, 1), Is.EqualTo(1));
             float firstSmokeAlpha = TracerBuffer(tracer, "_headColor")[0].w;
             tracer.TickTd(.002f);
@@ -678,6 +708,37 @@ namespace DD.Prototype.Tests.PlayMode
             tracer.TickTd(.002f);
             Assert.That(tracer.LiveTdSmoke, Is.Zero);
             Assert.That(DrawTd(tracer, 1), Is.Zero);
+        }
+
+        // WP-101 (user 11.10: "çok küçük ve fazla turuncu ... ultra gerçekçi"): white-hot core, warm white-yellow halo - no orange
+        // tracer; the streak is the round's motion blur (v × 1/60 s) and grows with the class; the body streak is much shorter.
+        [Test]
+        public void TdTracer_Wp101_WhiteHotCore_NoOrange_RealScaleByClass()
+        {
+            Color.RGBToHSV(TracerRibbonRenderer.TdCoreHead, out float coreHue, out float coreSat, out _);
+            Assert.That(coreSat, Is.LessThanOrEqualTo(.12f), "the core at the bullet is white-hot");
+            Color.RGBToHSV(TracerRibbonRenderer.TdHaloColor, out float haloHue, out float haloSat, out _);
+            Assert.That(haloHue * 360f, Is.InRange(30f, 50f), "the halo is warm yellow, not orange (R3: 22°)");
+            Assert.That(haloSat, Is.LessThanOrEqualTo(.45f), "the halo is a pale warm veil (R3: S 1)");
+            Assert.That(TracerRibbonRenderer.TdHaloAlpha, Is.LessThanOrEqualTo(.65f), "the halo veils, never paints the ground (R3: α 1)");
+            Color.RGBToHSV(TracerRibbonRenderer.TdCoreTail, out float tailHue, out _, out _);
+            Assert.That(tailHue * 360f, Is.GreaterThanOrEqualTo(25f), "the fading end only warms toward amber");
+            Assert.That(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.Smg), Is.LessThan(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle)));
+            Assert.That(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle), Is.LessThan(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.Lmg)));
+            Assert.That(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.Lmg), Is.LessThan(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.Sniper)));
+            Assert.That(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle), Is.GreaterThanOrEqualTo(.10f), "≈ 3 × the R3 3.5 cm core (sonra-r1: × 2 read as a 2 px thread)");
+            TracerRibbonRenderer tracer = AttachTdTracer();
+            VfxWeaponProfile ar = VfxWeaponProfiles.For(ClassicWeaponId.AssaultRifle);
+            Assert.That(tracer.Emit(O, O + Vector3.forward * 60f, ar, false, false, false), Is.True);
+            tracer.TickTd(.1f);
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
+            Vector4 h = TracerBuffer(tracer, "_head")[0], t = TracerBuffer(tracer, "_tail")[0];
+            float streak = Vector3.Distance(new Vector3(h.x, h.y, h.z), new Vector3(t.x, t.y, t.z));
+            Assert.That(streak, Is.EqualTo(Mathf.Clamp(ar.Speed * TracerRibbonRenderer.TdExposureSeconds, TracerRibbonRenderer.TdTailMin, TracerRibbonRenderer.TdTailMax)).Within(.01f),
+                "a tracer streak is the round's one-exposure blur");
+            Assert.That(Mathf.Clamp(ar.Speed * TracerRibbonRenderer.TdBodyExposureSeconds, TracerRibbonRenderer.TdBodyMin, TracerRibbonRenderer.TdBodyMax),
+                Is.LessThan(streak * .5f), "the body streak is much shorter than the tracer");
+            Assert.That(TracerRibbonRenderer.TdTracerEveryN(VfxWeaponClass.Sniper), Is.EqualTo(1), "every sniper round is a tracer");
         }
 
         [Test]

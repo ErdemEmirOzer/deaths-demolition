@@ -1,0 +1,1419 @@
+{
+  "schema_version": 1,
+  "package": "AP-041",
+  "version": "v001",
+  "date": "2026-10-11",
+  "consumer": "WP-101 (R4) S-07 - ArtAp041VfxIntake (DD.Art.Pipeline.EditorTools)",
+  "source_manifest": "asset-production/AP-041/exports/v001/AP041-manifest-v001.json",
+  "source_manifest_sha256": "359505466f67399ca34b9b5dfeac8ec6099aaa05d7ac8c8caf2ac5a1d18a5686",
+  "encoding": {
+    "color": "sRGB-encoded linear premultiplied RGB; linear coverage alpha",
+    "data": "linear signed RG UNORM displacement, not Unity Normal",
+    "grid": "row-major top-left; stable origin_uv; 8px transparent cell borders"
+  },
+  "scope": "WP-101 only: 15 TD muzzle + muzzle smoke + 5 impacts + 12 holes (stone / wood / metal). Tracers stay procedural; B1-B13 = WP-104.",
+  "items": [
+    {
+      "file": "muzzle/H_muzzle_pistol_TD_var01_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pistol_td_01",
+      "source_path": "exports/v001/muzzle/H_muzzle_pistol_TD_var01_srgb_pm.png",
+      "sha256": "85704fbe397d85444531d2ae397f6f1a70e1afae3ff51ac305de2cb7cccaa8da",
+      "bytes": 147360,
+      "kind": "flipbook",
+      "family": "muzzle_pistol",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.5,
+        0.4
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_pistol_TD_var02_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pistol_td_02",
+      "source_path": "exports/v001/muzzle/H_muzzle_pistol_TD_var02_srgb_pm.png",
+      "sha256": "6634bb0b70521f82aa44598932760eea8094cf9372b918bec5108945e27122e6",
+      "bytes": 150882,
+      "kind": "flipbook",
+      "family": "muzzle_pistol",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.5,
+        0.4
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_pistol_TD_var03_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pistol_td_03",
+      "source_path": "exports/v001/muzzle/H_muzzle_pistol_TD_var03_srgb_pm.png",
+      "sha256": "2b7e140e16d43f2bc758bf5fe61d3ad8259b614dd89aec572f85be01afbc4fb7",
+      "bytes": 163459,
+      "kind": "flipbook",
+      "family": "muzzle_pistol",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.5,
+        0.4
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_rifle_TD_var01_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_rifle_td_01",
+      "source_path": "exports/v001/muzzle/H_muzzle_rifle_TD_var01_srgb_pm.png",
+      "sha256": "24ea35edd2a645df3520c4708500658e97d8e4583b8e797fa3a8671f4faed667",
+      "bytes": 173941,
+      "kind": "flipbook",
+      "family": "muzzle_rifle",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.55
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_rifle_TD_var02_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_rifle_td_02",
+      "source_path": "exports/v001/muzzle/H_muzzle_rifle_TD_var02_srgb_pm.png",
+      "sha256": "c9f9aeea4a97edc0df8bdcc37deb64998ed6278c47cb6304180f59843e1a58c4",
+      "bytes": 167456,
+      "kind": "flipbook",
+      "family": "muzzle_rifle",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.55
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_rifle_TD_var03_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_rifle_td_03",
+      "source_path": "exports/v001/muzzle/H_muzzle_rifle_TD_var03_srgb_pm.png",
+      "sha256": "264188a373fa9383fdf3f90549e8f4d32c47cd078edb704acf14c6104f05445b",
+      "bytes": 175579,
+      "kind": "flipbook",
+      "family": "muzzle_rifle",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.55
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_lmg_TD_var01_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_lmg_td_01",
+      "source_path": "exports/v001/muzzle/H_muzzle_lmg_TD_var01_srgb_pm.png",
+      "sha256": "4b63e2a25c60b5a5d6316f583cb28915805679d1fc1a7d88907c0fe1fd033b55",
+      "bytes": 260438,
+      "kind": "flipbook",
+      "family": "muzzle_lmg",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.95,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_lmg_TD_var02_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_lmg_td_02",
+      "source_path": "exports/v001/muzzle/H_muzzle_lmg_TD_var02_srgb_pm.png",
+      "sha256": "1c00d7cf42ea26f4da347ffbf17ed855188bf9a2e758c54c61e1fbaaa9372189",
+      "bytes": 271712,
+      "kind": "flipbook",
+      "family": "muzzle_lmg",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.95,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_lmg_TD_var03_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_lmg_td_03",
+      "source_path": "exports/v001/muzzle/H_muzzle_lmg_TD_var03_srgb_pm.png",
+      "sha256": "7306f3ba2f2f686decd8eb832b90aad94a6b3e28d24ba7d6ed2ac50021ecf1f3",
+      "bytes": 203238,
+      "kind": "flipbook",
+      "family": "muzzle_lmg",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.95,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_sniper_TD_var01_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_sniper_td_01",
+      "source_path": "exports/v001/muzzle/H_muzzle_sniper_TD_var01_srgb_pm.png",
+      "sha256": "4bcd35eb4659d47af39d4fca941e36d749f41af01e8727e796d57788db98c7e8",
+      "bytes": 120326,
+      "kind": "flipbook",
+      "family": "muzzle_sniper",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.15,
+        0.45
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_sniper_TD_var02_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_sniper_td_02",
+      "source_path": "exports/v001/muzzle/H_muzzle_sniper_TD_var02_srgb_pm.png",
+      "sha256": "b65d907bd4e652e4d1bb99c9e6adfd9736e10ca1edda7c4521ab68534070e561",
+      "bytes": 106739,
+      "kind": "flipbook",
+      "family": "muzzle_sniper",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.15,
+        0.45
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_sniper_TD_var03_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_sniper_td_03",
+      "source_path": "exports/v001/muzzle/H_muzzle_sniper_TD_var03_srgb_pm.png",
+      "sha256": "dd11979c54aff00f80644a316fb43fb05aa37eee91a4f607a4e96d342eaf98f7",
+      "bytes": 112755,
+      "kind": "flipbook",
+      "family": "muzzle_sniper",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.15,
+        0.45
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_pellet_TD_var01_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pellet_td_01",
+      "source_path": "exports/v001/muzzle/H_muzzle_pellet_TD_var01_srgb_pm.png",
+      "sha256": "b8705b4a9b36420764e3c88d717e552658eca1659a50382b72702059e319623e",
+      "bytes": 266752,
+      "kind": "flipbook",
+      "family": "muzzle_pellet",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.65,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.49618784181820663
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_pellet_TD_var02_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pellet_td_02",
+      "source_path": "exports/v001/muzzle/H_muzzle_pellet_TD_var02_srgb_pm.png",
+      "sha256": "7a1a010f937ac31f0393f80781c3049a25b194c980e957f07bd50dcc3ef70920",
+      "bytes": 237398,
+      "kind": "flipbook",
+      "family": "muzzle_pellet",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.65,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.46728958593103687
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_pellet_TD_var03_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_pellet_td_03",
+      "source_path": "exports/v001/muzzle/H_muzzle_pellet_TD_var03_srgb_pm.png",
+      "sha256": "09d6c47222ad0adff46ebd6027719e822597988cb2c3537bb4c82300253c5395",
+      "bytes": 236390,
+      "kind": "flipbook",
+      "family": "muzzle_pellet",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 6,
+      "fps": 120,
+      "duration_s": 0.05,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.65,
+        0.65
+      ],
+      "origin_uv": [
+        0.109375,
+        0.5010728569681434
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "muzzle/H_muzzle_smoke_srgb_pm.png",
+      "unity_id": "fb_ap041_muzzle_smoke",
+      "source_path": "exports/v001/muzzle/H_muzzle_smoke_srgb_pm.png",
+      "sha256": "3f3462cb88bd85a45c0d142171b871ef815bbeb4f182e9496e2a01f79ea80c2c",
+      "bytes": 614204,
+      "kind": "flipbook",
+      "family": "muzzle_smoke",
+      "view": "TD",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20.0,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.8
+      ],
+      "origin_uv": [
+        0.4723246635610766,
+        0.4811076604554865
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "impacts/H_impact_stone_srgb_pm.png",
+      "unity_id": "fb_ap041_impact_stone",
+      "source_path": "exports/v001/impacts/H_impact_stone_srgb_pm.png",
+      "sha256": "5b5eb8f986c1f0b425e67b6bc31ababa74b8f4de2acd26eefaae265f6af49ff9",
+      "bytes": 999932,
+      "kind": "flipbook",
+      "family": "impact_stone",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 40.0,
+      "duration_s": 0.4,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.75,
+        0.75
+      ],
+      "origin_uv": [
+        0.4931785147991543,
+        0.506771934460888
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "impacts/H_impact_wood_srgb_pm.png",
+      "unity_id": "fb_ap041_impact_wood",
+      "source_path": "exports/v001/impacts/H_impact_wood_srgb_pm.png",
+      "sha256": "02255918df7d88bb9fc638e475afddd6b384642e05cab5ec4e632bc13f40d2a6",
+      "bytes": 969769,
+      "kind": "flipbook",
+      "family": "impact_wood",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 35.55555555555556,
+      "duration_s": 0.45,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.8
+      ],
+      "origin_uv": [
+        0.49808739626556015,
+        0.4922685425311204
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "impacts/H_impact_earth_srgb_pm.png",
+      "unity_id": "fb_ap041_impact_earth",
+      "source_path": "exports/v001/impacts/H_impact_earth_srgb_pm.png",
+      "sha256": "f95ae5e30fa11e7262f41d6a4f1702143ab8725d3b96e36898a14dfd2ed65aa4",
+      "bytes": 1057718,
+      "kind": "flipbook",
+      "family": "impact_earth",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 32.0,
+      "duration_s": 0.5,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.8,
+        0.8
+      ],
+      "origin_uv": [
+        0.5018890881147541,
+        0.4866483094262295
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "impacts/H_impact_metal_srgb_pm.png",
+      "unity_id": "fb_ap041_impact_metal",
+      "source_path": "exports/v001/impacts/H_impact_metal_srgb_pm.png",
+      "sha256": "e515e4e95301994ba27035f0da07b83e17763af3308f366cf0e87a370a42ff38",
+      "bytes": 583697,
+      "kind": "flipbook",
+      "family": "impact_metal",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 53.333333333333336,
+      "duration_s": 0.3,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.9,
+        0.9
+      ],
+      "origin_uv": [
+        0.5018364043824701,
+        0.47099103585657365
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "impacts/H_impact_flesh_srgb_pm.png",
+      "unity_id": "fb_ap041_impact_flesh",
+      "source_path": "exports/v001/impacts/H_impact_flesh_srgb_pm.png",
+      "sha256": "f9618b6542f42b66741f2f2029f0ab7a70588728183be144d35004dae858d728",
+      "bytes": 566529,
+      "kind": "flipbook",
+      "family": "impact_flesh",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 45.714285714285715,
+      "duration_s": 0.35,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.7,
+        0.7
+      ],
+      "origin_uv": [
+        0.49372270742358076,
+        0.4838973799126638
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_stone_var01_srgb_pm.png",
+      "unity_id": "decal_ap041_stone_01",
+      "source_path": "exports/v001/decals/H_decal_stone_var01_srgb_pm.png",
+      "sha256": "ddfd37137a20c9524649f8a926fd80650a01c3e95f84d4585c5530dceef057df",
+      "bytes": 894290,
+      "kind": "decal",
+      "family": "decal_stone",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.4605965698964497,
+        0.5406111316568047
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_stone_var02_srgb_pm.png",
+      "unity_id": "decal_ap041_stone_02",
+      "source_path": "exports/v001/decals/H_decal_stone_var02_srgb_pm.png",
+      "sha256": "01869408b549c3d651d92f0a466cd9d950a0891d5cc8da15401d59dbc89ef63c",
+      "bytes": 822795,
+      "kind": "decal",
+      "family": "decal_stone",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.47297378259202455,
+        0.5481211656441718
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_stone_var03_srgb_pm.png",
+      "unity_id": "decal_ap041_stone_03",
+      "source_path": "exports/v001/decals/H_decal_stone_var03_srgb_pm.png",
+      "sha256": "c5a9b1c046c17a4f2fad65e963355d01a59ff09348444f29ed2822c6f7c0d4ea",
+      "bytes": 809081,
+      "kind": "decal",
+      "family": "decal_stone",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.5088471912202381,
+        0.5466889880952381
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_stone_var04_srgb_pm.png",
+      "unity_id": "decal_ap041_stone_04",
+      "source_path": "exports/v001/decals/H_decal_stone_var04_srgb_pm.png",
+      "sha256": "94a535c9fc06040b730b3534abd24ccf724c4c9eccfc1fe830434bea30124b75",
+      "bytes": 822958,
+      "kind": "decal",
+      "family": "decal_stone",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.5158140120967742,
+        0.6028414818548387
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_wood_var01_srgb_pm.png",
+      "unity_id": "decal_ap041_wood_01",
+      "source_path": "exports/v001/decals/H_decal_wood_var01_srgb_pm.png",
+      "sha256": "7b0b41b92b33cc921bde7215816a5b0d43e943b9c30ac1f35fcd7eef7d5b2870",
+      "bytes": 1122076,
+      "kind": "decal",
+      "family": "decal_wood",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.4630174512987013,
+        0.49044997970779214
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_wood_var02_srgb_pm.png",
+      "unity_id": "decal_ap041_wood_02",
+      "source_path": "exports/v001/decals/H_decal_wood_var02_srgb_pm.png",
+      "sha256": "08483b4a2a9adf8fbb3c585cdef2014e67e61d4e92addf9e8cd43ab82f83ed98",
+      "bytes": 1105621,
+      "kind": "decal",
+      "family": "decal_wood",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.45928916202229303,
+        0.5093675358280254
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_wood_var03_srgb_pm.png",
+      "unity_id": "decal_ap041_wood_03",
+      "source_path": "exports/v001/decals/H_decal_wood_var03_srgb_pm.png",
+      "sha256": "c8d3b2cfd54f152b07802af79ba5aff109f7b3ddbf13508ff05cac0960db19a5",
+      "bytes": 1039340,
+      "kind": "decal",
+      "family": "decal_wood",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.4815340909090909,
+        0.48616893612852663
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_wood_var04_srgb_pm.png",
+      "unity_id": "decal_ap041_wood_04",
+      "source_path": "exports/v001/decals/H_decal_wood_var04_srgb_pm.png",
+      "sha256": "20f2bd82a6a2e2642cda59ab307da173c9c4467a3e3a6b6524c88f8009928528",
+      "bytes": 1061221,
+      "kind": "decal",
+      "family": "decal_wood",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.5032470703125,
+        0.5091918945312499
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_metal_var01_srgb_pm.png",
+      "unity_id": "decal_ap041_metal_01",
+      "source_path": "exports/v001/decals/H_decal_metal_var01_srgb_pm.png",
+      "sha256": "e2b3da666893fcfe954306348ae93a8edbb2897230f06148a1dab340cf018273",
+      "bytes": 1552341,
+      "kind": "decal",
+      "family": "decal_metal",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.4537317400147929,
+        0.485496024408284
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_metal_var02_srgb_pm.png",
+      "unity_id": "decal_ap041_metal_02",
+      "source_path": "exports/v001/decals/H_decal_metal_var02_srgb_pm.png",
+      "sha256": "b0732c9819dd7c15b63543d30a827658f5cbecb84d15e3c138a93995b9e78673",
+      "bytes": 1574949,
+      "kind": "decal",
+      "family": "decal_metal",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.4688975169939577,
+        0.492627100641994
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_metal_var03_srgb_pm.png",
+      "unity_id": "decal_ap041_metal_03",
+      "source_path": "exports/v001/decals/H_decal_metal_var03_srgb_pm.png",
+      "sha256": "11bcfa21dbf56d6e7d72b0d906ecf1d086219daaf0ce2fbbcba54b418a6a642e",
+      "bytes": 1626071,
+      "kind": "decal",
+      "family": "decal_metal",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.5106620908911672,
+        0.5015464806782335
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "decals/H_decal_metal_var04_srgb_pm.png",
+      "unity_id": "decal_ap041_metal_04",
+      "source_path": "exports/v001/decals/H_decal_metal_var04_srgb_pm.png",
+      "sha256": "c78e41c150eba3540fd992a4e42529157dd3535d5004c1b78718aab9e91b7136",
+      "bytes": 1633508,
+      "kind": "decal",
+      "family": "decal_metal",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.28,
+        0.28
+      ],
+      "origin_uv": [
+        0.5256884622434018,
+        0.5043129123900294
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "source_license": "03-sources/LICENSES.csv",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "alpha_is_transparency": false
+    }
+  ]
+}

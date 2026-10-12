@@ -49,6 +49,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_armor_break
     Family: 3
     Kind: 0
@@ -84,6 +85,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_impact_stone
     Family: 0
     Kind: 0
@@ -116,6 +118,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_impact_wood
     Family: 0
     Kind: 0
@@ -148,6 +151,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_impact_earth
     Family: 0
     Kind: 0
@@ -180,6 +184,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_muzzle
     Family: 1
     Kind: 0
@@ -214,6 +219,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_explosion
     Family: 2
     Kind: 0
@@ -249,6 +255,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_shockwave
     Family: 2
     Kind: 0
@@ -283,6 +290,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: card_smoke
     Family: 2
     Kind: 2
@@ -316,6 +324,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: card_shockwave
     Family: 2
     Kind: 2
@@ -350,6 +359,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_scorch
     Family: 2
     Kind: 1
@@ -383,6 +393,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_scorch_normal
     Family: 2
     Kind: 3
@@ -415,6 +426,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: atlas_armorbreak
     Family: 3
     Kind: 2
@@ -448,6 +460,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_lacquer_splinter
     Family: 3
     Kind: 1
@@ -480,6 +493,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: goldpack_albedo
     Family: 5
     Kind: 3
@@ -513,6 +527,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: goldpack_emissive
     Family: 5
     Kind: 3
@@ -545,6 +560,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: card_gold_sparkle
     Family: 5
     Kind: 2
@@ -578,6 +594,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: card_gold_trail
     Family: 5
     Kind: 2
@@ -610,6 +627,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: beacon_column
     Family: 6
     Kind: 3
@@ -644,6 +662,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: beacon_ring
     Family: 6
     Kind: 3
@@ -676,6 +695,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: beacon_ring_anim
     Family: 6
     Kind: 0
@@ -708,6 +728,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: vignette_damage
     Family: 7
     Kind: 3
@@ -741,6 +762,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_01
     Family: 8
     Kind: 0
@@ -773,6 +795,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_02
     Family: 8
     Kind: 0
@@ -804,6 +827,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_03
     Family: 8
     Kind: 0
@@ -835,6 +859,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_04
     Family: 8
     Kind: 0
@@ -866,6 +891,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_05
     Family: 8
     Kind: 0
@@ -897,6 +923,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_splash_06
     Family: 8
     Kind: 0
@@ -929,6 +956,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_death_01
     Family: 8
     Kind: 0
@@ -961,6 +989,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_death_02
     Family: 8
     Kind: 0
@@ -992,6 +1021,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_death_03
     Family: 8
     Kind: 0
@@ -1024,6 +1054,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_heavy_01
     Family: 8
     Kind: 0
@@ -1055,6 +1086,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_blood_heavy_02
     Family: 8
     Kind: 0
@@ -1086,6 +1118,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: sheet_blood_droplets
     Family: 8
     Kind: 0
@@ -1120,6 +1153,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_01_albedo
     Family: 8
     Kind: 1
@@ -1151,6 +1185,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_01_normal
     Family: 8
     Kind: 3
@@ -1182,6 +1217,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_01_height
     Family: 8
     Kind: 3
@@ -1213,6 +1249,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_02_albedo
     Family: 8
     Kind: 1
@@ -1244,6 +1281,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_02_normal
     Family: 8
     Kind: 3
@@ -1275,6 +1313,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_02_height
     Family: 8
     Kind: 3
@@ -1306,6 +1345,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_03_albedo
     Family: 8
     Kind: 1
@@ -1337,6 +1377,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_03_normal
     Family: 8
     Kind: 3
@@ -1368,6 +1409,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_03_height
     Family: 8
     Kind: 3
@@ -1399,6 +1441,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_04_albedo
     Family: 8
     Kind: 1
@@ -1430,6 +1473,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_04_normal
     Family: 8
     Kind: 3
@@ -1461,6 +1505,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_04_height
     Family: 8
     Kind: 3
@@ -1492,6 +1537,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_05_albedo
     Family: 8
     Kind: 1
@@ -1523,6 +1569,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_05_normal
     Family: 8
     Kind: 3
@@ -1554,6 +1601,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_05_height
     Family: 8
     Kind: 3
@@ -1585,6 +1633,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_06_albedo
     Family: 8
     Kind: 1
@@ -1616,6 +1665,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_06_normal
     Family: 8
     Kind: 3
@@ -1647,6 +1697,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_ground_06_height
     Family: 8
     Kind: 3
@@ -1678,6 +1729,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_01_albedo
     Family: 8
     Kind: 1
@@ -1709,6 +1761,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_01_normal
     Family: 8
     Kind: 3
@@ -1740,6 +1793,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_01_height
     Family: 8
     Kind: 3
@@ -1771,6 +1825,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_02_albedo
     Family: 8
     Kind: 1
@@ -1802,6 +1857,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_02_normal
     Family: 8
     Kind: 3
@@ -1833,6 +1889,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_02_height
     Family: 8
     Kind: 3
@@ -1864,6 +1921,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_03_albedo
     Family: 8
     Kind: 1
@@ -1895,6 +1953,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_03_normal
     Family: 8
     Kind: 3
@@ -1926,6 +1985,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_03_height
     Family: 8
     Kind: 3
@@ -1957,6 +2017,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_04_albedo
     Family: 8
     Kind: 1
@@ -1988,6 +2049,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_04_normal
     Family: 8
     Kind: 3
@@ -2019,6 +2081,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_wall_04_height
     Family: 8
     Kind: 3
@@ -2050,6 +2113,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: sheet_blood_pool_growth
     Family: 8
     Kind: 0
@@ -2081,6 +2145,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_pool_albedo
     Family: 8
     Kind: 1
@@ -2112,6 +2177,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_pool_normal
     Family: 8
     Kind: 3
@@ -2143,6 +2209,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_blood_pool_height
     Family: 8
     Kind: 3
@@ -2174,6 +2241,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: player_death_overlay
     Family: 12
     Kind: 3
@@ -2208,6 +2276,7 @@ MonoBehaviour:
     HdrIntensity: 1
     BlendNote: 'alpha (shader: desaturation = mask x t, darkening = 0.6 x mask x
       t; Unity drives t 0 -> 1 over 2.0 s)'
+    Premultiplied: 0
   - Id: player_death_overlay_pulse
     Family: 12
     Kind: 0
@@ -2241,6 +2310,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha (same shader as the overlay; runtime crossfade)
+    Premultiplied: 0
   - Id: barrel_heat
     Family: 9
     Kind: 2
@@ -2275,6 +2345,7 @@ MonoBehaviour:
     HdrIntensity: 1.5
     BlendNote: additive when heat > 0.6 (alpha blend below); Unity scales alpha by
       heat 0 -> 1 and lerps colour toward the dark anchor v 0.30
+    Premultiplied: 0
   - Id: barrel_heat_distort
     Family: 9
     Kind: 3
@@ -2308,6 +2379,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: data (heat-haze shader)
+    Premultiplied: 0
   - Id: leaf_burst
     Family: 10
     Kind: 0
@@ -2341,6 +2413,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.92, g: 0.75, b: 0.78, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: water_splash
     Family: 10
     Kind: 0
@@ -2376,6 +2449,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.62, g: 0.7, b: 0.72, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: water_splash_ring
     Family: 10
     Kind: 0
@@ -2409,6 +2483,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.62, g: 0.7, b: 0.72, a: 1}
     HdrIntensity: 1
     BlendNote: alpha (L = mask x pond tint)
+    Premultiplied: 0
   - Id: paper_tear
     Family: 10
     Kind: 0
@@ -2442,6 +2517,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: spark
     Family: 9
     Kind: 0
@@ -2476,6 +2552,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 3
     BlendNote: additive
+    Premultiplied: 0
   - Id: spark_streak
     Family: 9
     Kind: 0
@@ -2511,6 +2588,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 3
     BlendNote: additive
+    Premultiplied: 0
   - Id: chain_arc_sheet
     Family: 9
     Kind: 0
@@ -2546,6 +2624,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.55, g: 0.78, b: 0.86, a: 1}
     HdrIntensity: 2
     BlendNote: additive
+    Premultiplied: 0
   - Id: weapon_expire
     Family: 9
     Kind: 0
@@ -2581,6 +2660,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 0.82, b: 0.35, a: 1}
     HdrIntensity: 2
     BlendNote: additive
+    Premultiplied: 0
   - Id: weapon_pickup_flash
     Family: 9
     Kind: 0
@@ -2614,6 +2694,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 0.82, b: 0.35, a: 1}
     HdrIntensity: 2
     BlendNote: additive
+    Premultiplied: 0
   - Id: spawn_dust
     Family: 11
     Kind: 0
@@ -2649,6 +2730,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: death_special
     Family: 11
     Kind: 0
@@ -2683,6 +2765,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: death_ultra
     Family: 11
     Kind: 0
@@ -2718,6 +2801,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: claw_swipe
     Family: 11
     Kind: 0
@@ -2754,6 +2838,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.22, g: 0.2, b: 0.19, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: armor_crack_dust
     Family: 11
     Kind: 0
@@ -2789,6 +2874,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: breakable_residue
     Family: 10
     Kind: 1
@@ -2824,6 +2910,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha (decal)
+    Premultiplied: 0
   - Id: straw_puff
     Family: 10
     Kind: 0
@@ -2857,6 +2944,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: straw_puff_cloud
     Family: 10
     Kind: 0
@@ -2891,6 +2979,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: lantern_flame
     Family: 10
     Kind: 0
@@ -2926,6 +3015,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1.2
     BlendNote: alpha (hdr 1.2, below the 1.25 bloom threshold)
+    Premultiplied: 0
   - Id: dust_step
     Family: 11
     Kind: 0
@@ -2960,6 +3050,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: mag_drop
     Family: 9
     Kind: 1
@@ -2993,6 +3084,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: alpha (decal)
+    Premultiplied: 0
   - Id: mag_drop_dust
     Family: 9
     Kind: 0
@@ -3025,6 +3117,7 @@ MonoBehaviour:
     DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
     HdrIntensity: 1
     BlendNote: alpha
+    Premultiplied: 0
   - Id: decal_impact_flesh
     Family: 0
     Kind: 1
@@ -3057,6 +3150,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_armor
     Family: 0
     Kind: 1
@@ -3089,6 +3183,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_stone
     Family: 0
     Kind: 1
@@ -3121,6 +3216,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_stone_normal
     Family: 0
     Kind: 3
@@ -3153,6 +3249,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_wood
     Family: 0
     Kind: 1
@@ -3185,6 +3282,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_wood_normal
     Family: 0
     Kind: 3
@@ -3217,6 +3315,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_impact_earth
     Family: 0
     Kind: 1
@@ -3249,6 +3348,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_zombie_splat_01
     Family: 4
     Kind: 1
@@ -3281,6 +3381,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: decal_zombie_splat_02
     Family: 4
     Kind: 1
@@ -3313,6 +3414,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: goldpack_V01
     Family: 5
     Kind: 4
@@ -3347,6 +3449,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: goldpack_V01_review
     Family: 5
     Kind: 5
@@ -3379,6 +3482,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: hud_marker
     Family: 6
     Kind: 3
@@ -3411,6 +3515,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_impact_flesh
     Family: 0
     Kind: 0
@@ -3443,6 +3548,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: fb_zombiedeath
     Family: 4
     Kind: 0
@@ -3475,6 +3581,7 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0
   - Id: barrel_heat_distort_tile
     Family: 9
     Kind: 3
@@ -3508,6 +3615,1063 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: data (heat-haze shader)
+    Premultiplied: 0
+  - Id: fb_ap041_muzzle_pistol_td_01
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pistol_TD_var01_srgb_pm.png
+    Sha256: 85704fbe397d85444531d2ae397f6f1a70e1afae3ff51ac305de2cb7cccaa8da
+    Texture: {fileID: 2800000, guid: e042c1643894486b09a6dfde1df66f2b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 81665b7d8f93f4ef2977d09ad6febe40, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.5
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pistol_TD_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_pistol_td_02
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pistol_TD_var02_srgb_pm.png
+    Sha256: 6634bb0b70521f82aa44598932760eea8094cf9372b918bec5108945e27122e6
+    Texture: {fileID: 2800000, guid: 0575464d7e1c5b079d73b9e9fc74e083, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 6417670d659c347f9a9be503a256a724, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.5
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pistol_TD_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_pistol_td_03
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pistol_TD_var03_srgb_pm.png
+    Sha256: 2b7e140e16d43f2bc758bf5fe61d3ad8259b614dd89aec572f85be01afbc4fb7
+    Texture: {fileID: 2800000, guid: 1073f6121c1f4bb2577bd0c064a271fb, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 95cd43283b613413596081631cc7587a, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.5
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pistol_TD_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_rifle_td_01
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_rifle_TD_var01_srgb_pm.png
+    Sha256: 24ea35edd2a645df3520c4708500658e97d8e4583b8e797fa3a8671f4faed667
+    Texture: {fileID: 2800000, guid: f2aebe70d965984dc7e9403d07ff17ae, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: edf9ec7f175634f17a89f119d0d46847, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_rifle_TD_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.55
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_rifle_td_02
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_rifle_TD_var02_srgb_pm.png
+    Sha256: c9f9aeea4a97edc0df8bdcc37deb64998ed6278c47cb6304180f59843e1a58c4
+    Texture: {fileID: 2800000, guid: 10793a667ff58e2fd0ce213d1d23c322, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d221066e2bbe145c0b39f74c95bf2be7, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_rifle_TD_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.55
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_rifle_td_03
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_rifle_TD_var03_srgb_pm.png
+    Sha256: 264188a373fa9383fdf3f90549e8f4d32c47cd078edb704acf14c6104f05445b
+    Texture: {fileID: 2800000, guid: ad9db0ef4fa76f1e41671c469e2f1452, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 990dca1355715452f96f30d63dfb0b97, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_rifle_TD_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.55
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_lmg_td_01
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_lmg_TD_var01_srgb_pm.png
+    Sha256: 4b63e2a25c60b5a5d6316f583cb28915805679d1fc1a7d88907c0fe1fd033b55
+    Texture: {fileID: 2800000, guid: af7b6327eb6b5247f87a9f07eb71b70f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: f34573d43ca4945ada78c36c5275a9d7, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.95
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_lmg_TD_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_lmg_td_02
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_lmg_TD_var02_srgb_pm.png
+    Sha256: 1c00d7cf42ea26f4da347ffbf17ed855188bf9a2e758c54c61e1fbaaa9372189
+    Texture: {fileID: 2800000, guid: fea962e762283388c8f007abd67ea5e6, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 3f56cc6ad79e4495992589bc98f5b8f1, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.95
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_lmg_TD_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_lmg_td_03
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_lmg_TD_var03_srgb_pm.png
+    Sha256: 7306f3ba2f2f686decd8eb832b90aad94a6b3e28d24ba7d6ed2ac50021ecf1f3
+    Texture: {fileID: 2800000, guid: 283db80665a1279fe513244c0418c110, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 26ff5c011bd0b4a2e8e5ac0f9dfae509, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.95
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_lmg_TD_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_sniper_td_01
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_sniper_TD_var01_srgb_pm.png
+    Sha256: 4bcd35eb4659d47af39d4fca941e36d749f41af01e8727e796d57788db98c7e8
+    Texture: {fileID: 2800000, guid: dbdc1e4bffbc3607affe96b4375e6302, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 44785092d97554f0fa86327236d54d1d, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 1.15
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_sniper_TD_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.45
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_sniper_td_02
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_sniper_TD_var02_srgb_pm.png
+    Sha256: b65d907bd4e652e4d1bb99c9e6adfd9736e10ca1edda7c4521ab68534070e561
+    Texture: {fileID: 2800000, guid: 93c8b53915e50507716bb787ac0f4a90, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: cfd4ca44da3c645e295de493a2060959, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 1.15
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_sniper_TD_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.45
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_sniper_td_03
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_sniper_TD_var03_srgb_pm.png
+    Sha256: dd11979c54aff00f80644a316fb43fb05aa37eee91a4f607a4e96d342eaf98f7
+    Texture: {fileID: 2800000, guid: 8f71c7febf4a96a0b2254066a770a7a7, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e735665dc734045a4a58cb9de2712ed8, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 1.15
+    OriginUv: {x: 0.109375, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_sniper_TD_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.45
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_pellet_td_01
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pellet_TD_var01_srgb_pm.png
+    Sha256: b8705b4a9b36420764e3c88d717e552658eca1659a50382b72702059e319623e
+    Texture: {fileID: 2800000, guid: 280e0334cadfc666025e5300014c7e22, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 51a5925d7ce1341dcb8816a6eb6bc935, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.65
+    OriginUv: {x: 0.109375, y: 0.49618784}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pellet_TD_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_pellet_td_02
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pellet_TD_var02_srgb_pm.png
+    Sha256: 7a1a010f937ac31f0393f80781c3049a25b194c980e957f07bd50dcc3ef70920
+    Texture: {fileID: 2800000, guid: 15b1766707cf36f82997204a3a441be3, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 314f5ca3e84054c52ac1b42c34158581, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.65
+    OriginUv: {x: 0.109375, y: 0.4672896}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pellet_TD_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_pellet_td_03
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_pellet_TD_var03_srgb_pm.png
+    Sha256: 09d6c47222ad0adff46ebd6027719e822597988cb2c3537bb4c82300253c5395
+    Texture: {fileID: 2800000, guid: 8fd91d0b11b7493ca49e57271a1e21e7, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8ccad707dca7f47748edb8a8b7b4d109, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 6
+    Fps: 120
+    DurationSeconds: 0.05
+    Loop: 0
+    WorldSizeMetres: 0.65
+    OriginUv: {x: 0.109375, y: 0.5010729}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_pellet_TD_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_muzzle_smoke
+    Family: 1
+    Kind: 0
+    SourceFile: AP041/v001/muzzle/H_muzzle_smoke_srgb_pm.png
+    Sha256: 3f3462cb88bd85a45c0d142171b871ef815bbeb4f182e9496e2a01f79ea80c2c
+    Texture: {fileID: 2800000, guid: 938bf2c15d7673c916fbe5a700354392, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9d8a891aab4cd4955bbf03f1120ee1fd, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.47232467, y: 0.48110765}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): muzzle/H_muzzle_smoke_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_impact_stone
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/v001/impacts/H_impact_stone_srgb_pm.png
+    Sha256: 5b5eb8f986c1f0b425e67b6bc31ababa74b8f4de2acd26eefaae265f6af49ff9
+    Texture: {fileID: 2800000, guid: df9eff73c777fcf31b88603192770a6a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: c9ab4c872fee64f818f3036520c08943, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 40
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.75
+    OriginUv: {x: 0.49317852, y: 0.5067719}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): impacts/H_impact_stone_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.75
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_impact_wood
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/v001/impacts/H_impact_wood_srgb_pm.png
+    Sha256: 02255918df7d88bb9fc638e475afddd6b384642e05cab5ec4e632bc13f40d2a6
+    Texture: {fileID: 2800000, guid: 2abe616a17b201ed1685b7ecef3c5e7c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: dfb334c6fd33f46d785234be72f25cd2, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 35.555557
+    DurationSeconds: 0.45
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.4980874, y: 0.49226853}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): impacts/H_impact_wood_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_impact_earth
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/v001/impacts/H_impact_earth_srgb_pm.png
+    Sha256: f95ae5e30fa11e7262f41d6a4f1702143ab8725d3b96e36898a14dfd2ed65aa4
+    Texture: {fileID: 2800000, guid: 5b62eb841cff1f45ad6184f4530a7ac0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 89eaf5bbe22af49f6bc1e14e4fd2ebee, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 32
+    DurationSeconds: 0.5
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.5018891, y: 0.48664832}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): impacts/H_impact_earth_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_impact_metal
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/v001/impacts/H_impact_metal_srgb_pm.png
+    Sha256: e515e4e95301994ba27035f0da07b83e17763af3308f366cf0e87a370a42ff38
+    Texture: {fileID: 2800000, guid: ee1c53fe34b4fe540ef9e44c2d5f8bb1, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e209e18feef724cd2b59f4049dad3a1c, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 53.333332
+    DurationSeconds: 0.3
+    Loop: 0
+    WorldSizeMetres: 0.9
+    OriginUv: {x: 0.5018364, y: 0.47099105}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): impacts/H_impact_metal_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.9
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041_impact_flesh
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/v001/impacts/H_impact_flesh_srgb_pm.png
+    Sha256: f9618b6542f42b66741f2f2029f0ab7a70588728183be144d35004dae858d728
+    Texture: {fileID: 2800000, guid: 186b332fdb7bebeccaad3b4660524617, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8046b658dd5fc4897a7e8c6e6f4411a2, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 45.714287
+    DurationSeconds: 0.35
+    Loop: 0
+    WorldSizeMetres: 0.7
+    OriginUv: {x: 0.4937227, y: 0.4838974}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): impacts/H_impact_flesh_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.7
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_stone_01
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_stone_var01_srgb_pm.png
+    Sha256: ddfd37137a20c9524649f8a926fd80650a01c3e95f84d4585c5530dceef057df
+    Texture: {fileID: 2800000, guid: a43fd67884bdbe2a573646bb0ec642e6, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e5c8b0e84930a460f8658ec398bc3b39, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.46059656, y: 0.54061115}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_stone_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_stone_02
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_stone_var02_srgb_pm.png
+    Sha256: 01869408b549c3d651d92f0a466cd9d950a0891d5cc8da15401d59dbc89ef63c
+    Texture: {fileID: 2800000, guid: caca614ababbd90c574845be0ed1adc1, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 0a5351527bcd747b0a5a1137b7f2ee67, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.4729738, y: 0.54812115}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_stone_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_stone_03
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_stone_var03_srgb_pm.png
+    Sha256: c5a9b1c046c17a4f2fad65e963355d01a59ff09348444f29ed2822c6f7c0d4ea
+    Texture: {fileID: 2800000, guid: 826c382bb1be070965dfaff60c01d40f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: be581027d7d9148d7a10761984947af8, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5088472, y: 0.546689}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_stone_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_stone_04
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_stone_var04_srgb_pm.png
+    Sha256: 94a535c9fc06040b730b3534abd24ccf724c4c9eccfc1fe830434bea30124b75
+    Texture: {fileID: 2800000, guid: f2357714455288396ac386c6c17a9e2a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: aa2f7930da5cb4098ba070ea1c12978e, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.515814, y: 0.6028415}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_stone_var04_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_wood_01
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_wood_var01_srgb_pm.png
+    Sha256: 7b0b41b92b33cc921bde7215816a5b0d43e943b9c30ac1f35fcd7eef7d5b2870
+    Texture: {fileID: 2800000, guid: c0fbe1dcdb82fddea44b957f0438f26a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: ee05f181982854a5e99bbd0dc77bb8d0, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.46301746, y: 0.49044997}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_wood_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_wood_02
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_wood_var02_srgb_pm.png
+    Sha256: 08483b4a2a9adf8fbb3c585cdef2014e67e61d4e92addf9e8cd43ab82f83ed98
+    Texture: {fileID: 2800000, guid: 4678aae5ae82e46d7d2dca1d316fe133, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8df70792af0264bd494430c4d036ed7d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.45928916, y: 0.5093675}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_wood_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_wood_03
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_wood_var03_srgb_pm.png
+    Sha256: c8d3b2cfd54f152b07802af79ba5aff109f7b3ddbf13508ff05cac0960db19a5
+    Texture: {fileID: 2800000, guid: 01667e98fbb5941e7c16b6f68b545fdc, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 39eee635afaf74d20b6394f4406d266a, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.4815341, y: 0.48616895}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_wood_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_wood_04
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_wood_var04_srgb_pm.png
+    Sha256: 20f2bd82a6a2e2642cda59ab307da173c9c4467a3e3a6b6524c88f8009928528
+    Texture: {fileID: 2800000, guid: e08a5a4f144d482f2fdb6f3906690705, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b44be11bc16ba4058b22ec75e6072143, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5032471, y: 0.5091919}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_wood_var04_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_metal_01
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_metal_var01_srgb_pm.png
+    Sha256: e2b3da666893fcfe954306348ae93a8edbb2897230f06148a1dab340cf018273
+    Texture: {fileID: 2800000, guid: da1af2251c5090c216dec95f95125d26, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 24a308cb85121421fa7b2e0eb63a52cc, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.45373175, y: 0.485496}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_metal_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_metal_02
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_metal_var02_srgb_pm.png
+    Sha256: b0732c9819dd7c15b63543d30a827658f5cbecb84d15e3c138a93995b9e78673
+    Texture: {fileID: 2800000, guid: fb3e212f8430527a15db6b83fbcdcf41, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 576bc03577c594ceba803c64afc1ff87, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.46889752, y: 0.4926271}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_metal_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_metal_03
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_metal_var03_srgb_pm.png
+    Sha256: 11bcfa21dbf56d6e7d72b0d906ecf1d086219daaf0ce2fbbcba54b418a6a642e
+    Texture: {fileID: 2800000, guid: c72261a9a2ea63c8136ffe82ab492396, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: beba9081876cc42c9801b2f460580b10, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5106621, y: 0.5015465}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_metal_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041_metal_04
+    Family: 0
+    Kind: 1
+    SourceFile: AP041/v001/decals/H_decal_metal_var04_srgb_pm.png
+    Sha256: c78e41c150eba3540fd992a4e42529157dd3535d5004c1b78718aab9e91b7136
+    Texture: {fileID: 2800000, guid: 9bafb0729d0940dd619ded7c69d6a31b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 19cfee622d495408083fec431f5e3a46, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.52568847, y: 0.50431293}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 v001 premultiplied (WP-101): decals/H_decal_metal_var04_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-v001.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
   - Id: blood_droplet
     Family: 8
     Kind: 2
@@ -3539,3 +4703,4 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+    Premultiplied: 0

@@ -234,6 +234,30 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 - `fb_explosion` (+ emissive) retint: core h 30–32, outer h 19–21, v ≤ 0.90; smoke and alpha untouched.
 - Production scripts / reports: `asset-production/AP-010/05-blender/scripts/*_v004.py`, `exports/*-v004.json`; AP-010 README §v004.
 
+## WP-101 (R4) — AP-041 v001 premultiplied photographic set
+
+Codex AP-041 v001 (Higgsfield GPT Image 2.5 → PIL/numpy, sRGB(linear × coverage), Blend One OneMinusSrcAlpha). Only the
+WP-101 rows are imported (`wp-101 apply_ap041.py` → `AP041/v001/`, sha256 = Codex manifest; tracers stay procedural, the
+B1–B13 upgrade sheets are WP-104's): 15 TD muzzle flashes (5 classes × 3 variants), the muzzle smoke, 5 impact sheets,
+12 bullet holes. `ArtAp041VfxIntake` (batch `-executeMethod DD.Art.Pipeline.EditorTools.ArtAp041VfxIntake.Run`) writes
+33 catalog rows (`VfxIds.Ap041*`, `Premultiplied`) and `AP041/v001/Materials/M_vfx_<id>.mat` (`_Premultiplied 1`);
+`ArtVfxImporter.BuildCatalog` re-appends them on every catalog run. Licence register: `AP041/v001/AP041-v001-LICENSES.csv`.
+
+- Shader: `DD/VFX Flipbook` `_Premultiplied` (default 0 = every AP-010 material unchanged). 1: rgb is not multiplied by
+  a again, a is not forced to 1, `_Alpha` / tint alpha / vertex alpha scale rgb and a once, `_AlphaCap` rescales both
+  (newA / oldA), fog lerps towards fogColour × a. Decals use the same shader (DecalEffect), so holes share the path.
+- Import (`ArtVfxContract`, AP041 root): sRGB, mips, Clamp, BC7, not streamed, **Alpha Is Transparency off** (dilation
+  would paint colour under a = 0 → halo). Impacts 1024, TD muzzle / smoke / holes 512 → ≈ 16.0 MB (own line ≤ 20 MB).
+- Runtime (`VfxDressing`, `Ap041Vfx`): top-down muzzle = class card (AR → rifle, SMG → pistol, LMG → lmg, sniper → sniper,
+  shotgun → pellet; launcher and FP / TP keep `fb_muzzle`), three variants in turn, long axis = profile `FlashLength`,
+  height = manifest [w, h], pivot u 0.11 on the socket, life = 50 ms × duration scale (≥ 2 frames), HDR × 2 (ReduceFlashes
+  × 1, fade 0.4); the smoke card (≤ 1 per 0.35 / 0.2 / 0.16 s, alpha cap 0.5) replaces the particle puff top-down.
+  Impacts: AP-041 sheet of the same surface group in every mode; holes stone / wood / metal cycle 4 variants (dirt keeps
+  the AP-010 earth mark, scorch stays AP-010: 2.4 m blast mark + normal; AP-041 scorch is B1's 1.2 m ground burn, WP-104).
+  Calibre hole size (0.06 / 0.09 / 0.14 m) and the wet-stone card drop are unchanged. TD flesh: the AP-041 card, own lift.
+- Gates: `Wp101Ap041CatalogTests` (EditMode), `Wp101Ap041MappingTests` (EditMode), `Wp101Ap041DressingTests` (PlayMode,
+  PM composite pixels, class / variant / hole turns, 0 B).
+
 ## Contract — ADR-047-1 (event binding, throttles, pools, measurement)
 
 1. One entry per beat: the director for hit / death / armour / explosion / Special reports, `VfxEventBinder` for the buses

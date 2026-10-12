@@ -156,10 +156,14 @@ namespace DD.Prototype.Tests.PlayMode
             s.Play(World(SurfaceKind.Stone, WeaponCaliber.Light, a, Vector3.back, Vector3.forward));
             vfx.PlaySurfaceImpact(SurfaceKind.Stone, b, Vector3.back, 1f);
             s.Play(World(SurfaceKind.Stone, WeaponCaliber.Heavy, b, Vector3.back, Vector3.forward));
-            Assert.AreEqual(0.06f, NearestDecalSize(vfx, a), 1e-3f, "hafif kalibre deliği 0,06 m");
-            Assert.AreEqual(0.14f, NearestDecalSize(vfx, b), 1e-3f, "ağır kalibre deliği 0,14 m");
-            Assert.AreEqual(0, CardsAt(vfx, a, VfxIds.ImpactStone), "ıslak taş: hafif mermide toz kartı yok");
-            Assert.AreEqual(1, CardsAt(vfx, b, VfxIds.ImpactStone), "ağır mermide taş kartı kalır");
+            // WP-101 (AP-041): an imported AP-041 hole sheet carries its spall (Ap041Vfx.SpalledHole); the AP-010 hole is the calibre size
+            bool spall = VfxLibrary.TryGetPlayable(VfxIds.Ap041DecalStone01, out _);
+            Assert.AreEqual(spall ? Ap041Vfx.SpalledHole(0.06f) : 0.06f, NearestDecalSize(vfx, a), 1e-3f, "hafif kalibre deliği 0,06 m (+ AP-041 kırığı)");
+            Assert.AreEqual(spall ? Ap041Vfx.SpalledHole(0.14f) : 0.14f, NearestDecalSize(vfx, b), 1e-3f, "ağır kalibre deliği 0,14 m (+ AP-041 kırığı, ≤ 0,28)");
+            // WP-101 (R4, AP-041): the stone card is the AP-041 sheet once it is imported - the wet-stone rule is the same.
+            string stoneCard = vfx.ImpactCardId(SurfaceKind.Stone);
+            Assert.AreEqual(0, CardsAt(vfx, a, stoneCard), "ıslak taş: hafif mermide toz kartı yok");
+            Assert.AreEqual(1, CardsAt(vfx, b, stoneCard), "ağır mermide taş kartı kalır");
 
             // A pierced body sprays out of the back and stains the wall behind it.
             var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);

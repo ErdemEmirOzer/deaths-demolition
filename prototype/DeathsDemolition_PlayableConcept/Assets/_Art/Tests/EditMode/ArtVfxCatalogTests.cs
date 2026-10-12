@@ -47,7 +47,9 @@ namespace DD.Art.Tests.EditMode
             Dictionary<string, Dictionary<string, object>> manifest = ManifestRows();
             Assert.AreEqual(108, manifest.Count, "Manifest v004 107 varlık (v003 108 + fb_armor_break, WP-047H − ofuda_seal / _burn, WP-073 B6) + AP010C 1 (barrel_heat_distort_tile; sw_tide_well / _implode, sw_ofuda_dart çıktı).");
             // WP-019b: 108 v003 manifest rows + the synthesized blood_droplet row; WP-047E: + 4 AP010C rows; WP-047H: + fb_armor_break (v004).
-            Assert.AreEqual(109, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet).");
+            // WP-101 (R4, AP-041): + the 33 AP-041 v001 rows when the set is imported (their own gate: Wp101Ap041CatalogTests).
+            int ap041 = ArtAp041VfxIntake.Active ? ArtAp041VfxIntake.Table.Length : 0;
+            Assert.AreEqual(109 + ap041, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet) + AP-041 " + ap041 + " satır.");
 
             var hatalar = new List<string>();
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -55,6 +57,7 @@ namespace DD.Art.Tests.EditMode
             {
                 if (!ids.Add(e.Id)) hatalar.Add(e.Id + ": çift id");
                 if (e.ManifestFile == "synthesized") { if (e.Id != VfxIds.BloodDroplet) hatalar.Add(e.Id + ": beklenmeyen sentez satırı"); continue; }
+                if (e.ManifestFile == ArtAp041VfxIntake.ManifestName) continue;   // WP-101: checked against the AP-041 manifest (Wp101Ap041CatalogTests)
                 if (!manifest.TryGetValue(e.Id, out Dictionary<string, object> a)) { hatalar.Add(e.Id + ": manifestte yok"); continue; }
                 // Schema v003: grid may be null (1×1), world_size_m a number / [w, h] / string, capsule_cover_s replaces readability_limit_s.
                 List<object> grid = a.TryGetValue("grid", out object gr) && gr != null ? ArtJson.AsList(gr, "grid") : null;
@@ -153,7 +156,11 @@ namespace DD.Art.Tests.EditMode
                 if (m.GetTexture("_Sheet") != e.Texture) hatalar.Add(e.Id + ": _Sheet satırın dokusu değil");
                 bool particleAtlas = e.Id == VfxIds.BloodDroplet;   // the particle system picks the cell; the material grid is 1×1
                 if (!particleAtlas && (Mathf.Abs(m.GetFloat("_Cols") - e.Columns) > 0.01f || Mathf.Abs(m.GetFloat("_Rows") - e.Rows) > 0.01f)) hatalar.Add(e.Id + ": grid");
-                bool isAdditive = m.GetFloat("_SrcBlend") == (float)BlendMode.One;
+                // WP-101 (R4, AP-041): a premultiplied row is src One as well, but on OneMinusSrcAlpha with _Premultiplied 1 - not additive.
+                bool premultiplied = m.HasProperty("_Premultiplied") && m.GetFloat("_Premultiplied") > 0.5f;
+                if (premultiplied != e.Premultiplied) hatalar.Add(e.Id + ": _Premultiplied " + premultiplied + " ≠ satır " + e.Premultiplied);
+                if (premultiplied && (m.GetFloat("_SrcBlend") != (float)BlendMode.One || m.GetFloat("_DstBlend") != (float)BlendMode.OneMinusSrcAlpha)) hatalar.Add(e.Id + ": PM blend One / OneMinusSrcAlpha değil");
+                bool isAdditive = !premultiplied && m.GetFloat("_SrcBlend") == (float)BlendMode.One;
                 if (isAdditive != e.Additive) hatalar.Add(e.Id + ": blend " + isAdditive + " ≠ " + e.Additive);
                 if (isAdditive) additive++; else alpha++;
                 if ((e.Emissive != null) != (m.GetFloat("_UseEmissive") > 0.5f)) hatalar.Add(e.Id + ": emissive bayrağı");

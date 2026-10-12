@@ -83,5 +83,61 @@ namespace DD.Prototype.Feedback.Vfx
         // (_burn), the AP-014 Kagura / Ofuda use sheets) left with WP-073 B6's asset slice: Raiju / Namekuji draw procedurally.
         public const string BarrelHeatDistortTile = "barrel_heat_distort_tile";
         public const string ChainArcSheet = "chain_arc_sheet";
+
+        // ---- WP-101 (R4, AP-041 v001): Codex's premultiplied photographic set (ArtAp041VfxIntake writes the rows from the
+        // trimmed AP041-vfx-manifest-v001.json). Top-down muzzle flashes per class × three variants, the muzzle smoke, five
+        // impact sheets and four bullet holes each for stone / wood / metal. Ap041Vfx maps classes and surfaces onto them.
+        public const string Ap041MuzzlePrefix = "fb_ap041_muzzle_";
+        public const string Ap041MuzzlePistolTd01 = "fb_ap041_muzzle_pistol_td_01";
+        public const string Ap041MuzzlePistolTd02 = "fb_ap041_muzzle_pistol_td_02";
+        public const string Ap041MuzzlePistolTd03 = "fb_ap041_muzzle_pistol_td_03";
+        public const string Ap041MuzzleRifleTd01 = "fb_ap041_muzzle_rifle_td_01";
+        public const string Ap041MuzzleRifleTd02 = "fb_ap041_muzzle_rifle_td_02";
+        public const string Ap041MuzzleRifleTd03 = "fb_ap041_muzzle_rifle_td_03";
+        public const string Ap041MuzzleLmgTd01 = "fb_ap041_muzzle_lmg_td_01";
+        public const string Ap041MuzzleLmgTd02 = "fb_ap041_muzzle_lmg_td_02";
+        public const string Ap041MuzzleLmgTd03 = "fb_ap041_muzzle_lmg_td_03";
+        public const string Ap041MuzzleSniperTd01 = "fb_ap041_muzzle_sniper_td_01";
+        public const string Ap041MuzzleSniperTd02 = "fb_ap041_muzzle_sniper_td_02";
+        public const string Ap041MuzzleSniperTd03 = "fb_ap041_muzzle_sniper_td_03";
+        public const string Ap041MuzzlePelletTd01 = "fb_ap041_muzzle_pellet_td_01";
+        public const string Ap041MuzzlePelletTd02 = "fb_ap041_muzzle_pellet_td_02";
+        public const string Ap041MuzzlePelletTd03 = "fb_ap041_muzzle_pellet_td_03";
+        public const string Ap041MuzzleSmoke = "fb_ap041_muzzle_smoke";
+        public const string Ap041ImpactStone = "fb_ap041_impact_stone";
+        public const string Ap041ImpactWood = "fb_ap041_impact_wood";
+        public const string Ap041ImpactEarth = "fb_ap041_impact_earth";
+        public const string Ap041ImpactMetal = "fb_ap041_impact_metal";
+        public const string Ap041ImpactFlesh = "fb_ap041_impact_flesh";
+        public const string Ap041DecalStone01 = "decal_ap041_stone_01";
+        public const string Ap041DecalStone02 = "decal_ap041_stone_02";
+        public const string Ap041DecalStone03 = "decal_ap041_stone_03";
+        public const string Ap041DecalStone04 = "decal_ap041_stone_04";
+        public const string Ap041DecalWood01 = "decal_ap041_wood_01";
+        public const string Ap041DecalWood02 = "decal_ap041_wood_02";
+        public const string Ap041DecalWood03 = "decal_ap041_wood_03";
+        public const string Ap041DecalWood04 = "decal_ap041_wood_04";
+        public const string Ap041DecalMetal01 = "decal_ap041_metal_01";
+        public const string Ap041DecalMetal02 = "decal_ap041_metal_02";
+        public const string Ap041DecalMetal03 = "decal_ap041_metal_03";
+        public const string Ap041DecalMetal04 = "decal_ap041_metal_04";
+
+        /// <summary>WP-101 · TD flash rows by <see cref="Ap041MuzzleClass"/> (pistol, rifle, lmg, sniper, pellet) × variant 01–03.</summary>
+        public static readonly string[][] Ap041MuzzleTd =
+        {
+            new[] { Ap041MuzzlePistolTd01, Ap041MuzzlePistolTd02, Ap041MuzzlePistolTd03 },
+            new[] { Ap041MuzzleRifleTd01, Ap041MuzzleRifleTd02, Ap041MuzzleRifleTd03 },
+            new[] { Ap041MuzzleLmgTd01, Ap041MuzzleLmgTd02, Ap041MuzzleLmgTd03 },
+            new[] { Ap041MuzzleSniperTd01, Ap041MuzzleSniperTd02, Ap041MuzzleSniperTd03 },
+            new[] { Ap041MuzzlePelletTd01, Ap041MuzzlePelletTd02, Ap041MuzzlePelletTd03 }
+        };
+
+        /// <summary>WP-101 · Hole rows by set (stone, wood, metal) × variant 01–04.</summary>
+        public static readonly string[][] Ap041Decals =
+        {
+            new[] { Ap041DecalStone01, Ap041DecalStone02, Ap041DecalStone03, Ap041DecalStone04 },
+            new[] { Ap041DecalWood01, Ap041DecalWood02, Ap041DecalWood03, Ap041DecalWood04 },
+            new[] { Ap041DecalMetal01, Ap041DecalMetal02, Ap041DecalMetal03, Ap041DecalMetal04 }
+        };
     }
 }

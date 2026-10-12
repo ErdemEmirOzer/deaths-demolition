@@ -55,6 +55,15 @@ namespace DD.Prototype.Feedback.Vfx
         public int CasingsEjected { get; private set; }
         public PrototypePool<CasingEffect> CasingPool => _casings;
         private readonly LanternFlames _lanterns = new LanternFlames();
+        // WP-101 (R4, AP-041): rows resolved once at configure (a null class / false set = the AP-010 row plays), the per-class
+        // flash variant turn, the per-set hole variant turn and the smoke card throttle. Sized once: nothing allocates per shot.
+        private readonly VfxCatalogEntry[][] _ap041Muzzle = new VfxCatalogEntry[5][];
+        private VfxCatalogEntry _ap041Smoke;
+        private bool _ap041Impacts;
+        private readonly bool[] _ap041DecalSet = new bool[Ap041Vfx.DecalSets];
+        private readonly int[] _ap041MuzzleNext = new int[5];
+        private readonly int[] _ap041DecalNext = new int[Ap041Vfx.DecalSets];
+        private float _ap041SmokeAt = -1f;
         private static readonly List<VfxCatalogEntry> s_deathSheets = new List<VfxCatalogEntry>(4);
         private readonly Dictionary<int, BreakEventId> _breakIds = new Dictionary<int, BreakEventId>(64);
         public const int StrawBurstCapacity = 4;
@@ -65,6 +74,16 @@ namespace DD.Prototype.Feedback.Vfx
         public MuzzleVariant LastMuzzleVariant { get; private set; }
         public int MuzzlePlays { get; private set; }
         public string LastMuzzleNote { get; private set; } = string.Empty;
+        /// <summary>WP-101 (R4, AP-041): the catalog row the last flash played (fb_muzzle, or an fb_ap041_muzzle_*_td_0n row top-down).</summary>
+        public string LastMuzzleRowId { get; private set; } = string.Empty;
+        /// <summary>WP-101: the life (s) the last flash was given (test readout; the 50 ms TD flash may be gone a frame later).</summary>
+        public float LastMuzzleLifeSeconds { get; private set; } = -1f;
+        /// <summary>WP-101: the AP-041 TD variant index (0..2) of the last AP-041 flash; -1 before the first.</summary>
+        public int LastAp041MuzzleVariant { get; private set; } = -1;
+        public int Ap041MuzzlePlays { get; private set; }
+        public int Ap041SmokeCards { get; private set; }
+        /// <summary>WP-101 test seam: the profile the next flashes use instead of the held weapon's (null = the held weapon's).</summary>
+        internal static VfxWeaponProfile ProfileOverrideForTests;
         public LanternFlames Lanterns => _lanterns;
         private int _deathToggle;
         private Vector3 _lastBeaconPoint;
@@ -113,6 +132,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (_flipbooks == null)
             {
                 VfxLibrary.WarmMaterials(templateRoot);
+                ResolveAp041();
                 // WP-047 (S-02 WP-053 finding): every pool is prewarmed to capacity at configure time — growing on demand
                 // cost ≈ 12 allocations per Instantiate inside the hot path (the scorch decals of the first explosions
                 // were the "+100 per window"), and decals live long enough that the growth spanned a whole round.
@@ -509,6 +529,8 @@ namespace DD.Prototype.Feedback.Vfx
             _lastSurfacePoint = point;
             _lastSurfaceCard = _lastFlipbook;
             _lastSurfaceDecal = _lastDecal;
+            _lastSurfaceDecalSpall = Ap041Vfx.IsAp041Decal(decal);
+            _lastSurfaceDecalSet = Ap041Vfx.DecalSetOf(surface);
             return played;
         }
 
@@ -760,30 +782,49 @@ namespace DD.Prototype.Feedback.Vfx
         /// that made the TD blast flash read) - the flash is off with ReduceFlashes.
         /// </summary>
         public const float TdHitCardMetres = .7f, TdHitFlashMetres = .5f, TdHitFlashSeconds = .1f, TdHitTowardCamera = .2f;
+        /// <summary>WP-101 (AD r1 M5): the hit flash in the #FFF1C8 family (was (1, .78, .5) × 6 - its bloom painted the barrels
+        /// saturated yellow).</summary>
+        public static readonly Color TdHitFlashTint = new Color(1f, .95f, .82f) * 4f;
         /// <summary>The flesh card lifted so it reads on a dark zombie (a luminance step, not only a hue).</summary>
         public static readonly Color TdHitCardTint = new Color(1.4f, .62f, .5f);
+        /// <summary>
+        /// WP-101 (R4, AP-041): the photographic flesh sheet is painted in the blood band already (mean linear ≈ 0.32 / 0.06 / 0.06),
+        /// so it only takes a luminance lift, not the AP-010 recolour (which would push it darker on a dark zombie). AD calibrates.
+        /// </summary>
+        public static readonly Color TdHitCardTintAp041 = new Color(1.35f, 1.15f, 1.15f);
         public int TdHitCards { get; private set; }
         public int TdHitFlashes { get; private set; }
         private void PlayTdHit(Vector3 point, bool critical)
         {
             Vector3 at = point + (FeedbackCameraRef.TryGetPosition(out Vector3 cam) ? (cam - point).normalized : Vector3.up) * TdHitTowardCamera;
-            if (VfxLibrary.TryGetPlayable(VfxIds.ImpactFlesh, out VfxCatalogEntry blood) || VfxLibrary.TryGetPlayable(VfxIds.BloodSplash01, out blood))
+            // WP-101 (R4, AP-041): the photographic flesh sheet first (only the card's texture changes; the FeelBrush flow is as before).
+            bool ap041 = VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactFlesh, out VfxCatalogEntry blood);
+            if (ap041 || VfxLibrary.TryGetPlayable(VfxIds.ImpactFlesh, out blood) || VfxLibrary.TryGetPlayable(VfxIds.BloodSplash01, out blood))
             {
                 FlipbookEffect card = _flipbooks.Get(at, Quaternion.identity);
-                if (card != null) { card.Play(blood, FlipbookEffect.Facing.Camera, TdHitCardMetres * (critical ? 1.3f : 1f), TdHitCardTint, 1f, .3f); Played++; TdHitCards++; }
+                if (card != null) { card.Play(blood, FlipbookEffect.Facing.Camera, TdHitCardMetres * (critical ? 1.3f : 1f), ap041 ? TdHitCardTintAp041 : TdHitCardTint, 1f, .3f); Played++; TdHitCards++; }
             }
             if (GameFeelSettings.FlashScale >= .99f && VfxLibrary.TryGetPlayable(VfxIds.Explosion, out VfxCatalogEntry flash))
             {
                 FlipbookEffect fx = _flipbooks.Get(at, Quaternion.identity);
                 if (fx != null)
                 {
-                    fx.Play(flash, FlipbookEffect.Facing.Camera, TdHitFlashMetres * (critical ? 1.3f : 1f), new Color(1f, .78f, .5f) * 6f, 1f, .6f, TdHitFlashSeconds);   // bright, then fades over the last 60 %
+                    fx.Play(flash, FlipbookEffect.Facing.Camera, TdHitFlashMetres * (critical ? 1.3f : 1f), TdHitFlashTint, 1f, .6f, TdHitFlashSeconds);   // bright, then fades over the last 60 %
                     fx.HoldFrame(0); Played++; TdHitFlashes++;
                 }
             }
         }
 
         /// <summary>Family 2: muzzle sheet parented to the muzzle (4 used cells of 16, manifest known issue 4).</summary>
+        // WP-101 (sonra-r2 GC gate): the diagnostic note named the weapon with Enum.ToString - a fresh string per shot
+        private static readonly string[] s_classicNames = new string[16];
+        private static string ClassicName(DD.Prototype.Core.Config.ClassicWeaponId id)
+        {
+            int i = (int)id;
+            if (i < 0 || i >= s_classicNames.Length) return "classic";
+            return s_classicNames[i] ?? (s_classicNames[i] = id.ToString());
+        }
+
         public bool PlayMuzzle(Transform muzzle, float scale)
         {
             if (!_ready || muzzle == null || !VfxLibrary.TryGetPlayable(VfxIds.Muzzle, out VfxCatalogEntry row))
@@ -819,15 +860,16 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             LastMuzzleVariant = variant;
+            LastMuzzleRowId = row.Id;
             MuzzlePlays++;
             AddHeat(variant, muzzle);
             // WP-073 B1: the class profile drives the flash, the light, the smoke and the casing (a Special keeps A).
-            VfxWeaponProfile profile = VfxWeaponProfiles.Active();
+            VfxWeaponProfile profile = ProfileOverrideForTests ?? VfxWeaponProfiles.Active();
             bool firstPerson = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson;
             // sg_1 pump / sg_2 break-open shells come from the mechanism event (PlayPumpCasing), never the flash.
             if (active == null || active.Classic == null || !MechanismEjects(active.Classic.Id))
                 EjectCasing(variant, muzzle, profile);
-            LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
+            LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : ClassicName(active.Classic.Id);
             float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);
             // Reduce flashes: the sheet at × 0.4 (the light holds a steady 0.8 in MuzzleSystem).
             Color tint = GameFeelSettings.FlashScale < 0.99f ? new Color(1f, 1f, 1f, 0.4f) : Color.white;
@@ -839,9 +881,15 @@ namespace DD.Prototype.Feedback.Vfx
                     : size * profile.FlashScale;
                 size *= firstPerson ? 0.85f : 1f;
                 tint = new Color(tint.r * profile.FlashIntensity, tint.g * profile.FlashIntensity, tint.b * profile.FlashIntensity, tint.a);
-                fx.Play(row, FlipbookEffect.Facing.Camera, size, tint, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * profile.FlashDurationScale));
-                if (profile.FlashIntensity < 0.999f) fx.SetEmissiveScale(profile.FlashIntensity);
-                fx.SetStretch(profile.FlashStretch.x, profile.FlashStretch.y);
+                // WP-101 (R4, AP-041): top-down the class's photographic flash (and its smoke card) replaces the AP-010 sheet;
+                // FP / TP and the launcher keep the sheet below.
+                if (!PlayAp041Muzzle(fx, muzzle, profile, tint, out bool smokeCard))
+                {
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size, tint, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * profile.FlashDurationScale));
+                    if (profile.FlashIntensity < 0.999f) fx.SetEmissiveScale(profile.FlashIntensity);
+                    fx.SetStretch(profile.FlashStretch.x, profile.FlashStretch.y);
+                }
+
                 if (profile.Class == VfxWeaponClass.Shotgun)
                 {
                     _binder?.SchedulePumpSmoke(muzzle.position - muzzle.forward * 0.35f + Vector3.up * 0.05f, -muzzle.forward + Vector3.up * 0.6f, Time.time);
@@ -852,7 +900,7 @@ namespace DD.Prototype.Feedback.Vfx
                     _muzzleSystem = MuzzleSystem.Ensure();
                 }
 
-                _muzzleSystem?.Play(muzzle, profile, firstPerson);
+                _muzzleSystem?.Play(muzzle, profile, firstPerson, !smokeCard);
                 // M-60 (direction §1.1 rl_1): the backblast from the tube's rear — the Muzzle socket's forward runs down the barrel.
                 if (profile.Class == VfxWeaponClass.Launcher && ExplosionDirector.Instance != null)
                 {
@@ -868,6 +916,7 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     fx.SetAlign(muzzle.forward, true);
                 }
+                LastMuzzleLifeSeconds = fx.LifeSeconds;
                 Played++;
                 return true;
             }
@@ -889,6 +938,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             fx.SetAlign(muzzle.forward, true);   // AD M5: the v003 cone's +u points down the barrel, not a sphere
+            LastMuzzleLifeSeconds = fx.LifeSeconds;
             Played++;
             return true;
         }
@@ -1214,7 +1264,121 @@ namespace DD.Prototype.Feedback.Vfx
 
         // ------------------------------------------------------------------ internals
 
-        private static void ImpactIdsFor(SurfaceKind surface, out string flipbook, out string decal)
+        // ------------------------------------------------------------------ WP-101 (R4, AP-041) · photographic set
+
+        /// <summary>Top-down flash HDR gain over the premultiplied white core (bloom lifts it; ReduceFlashes keeps × 1). AD calibrates.</summary>
+        public const float Ap041MuzzleHdr = 2f;
+        /// <summary>The flash never lives under two 60 Hz frames (SMG: 50 ms × 0.6 → 33 ms, still the shortest of the classes).</summary>
+        public const float Ap041MinFlashSeconds = 2f / 60f;
+        /// <summary>The smoke card is sized against the rifle's smoke end (0.60 m → the manifest 0.8 m card) and capped at alpha 0.5 (AP-041 contract: dense cloud over the player ≤ 0.5).</summary>
+        public const float Ap041SmokeReferenceEnd = 0.60f, Ap041SmokeReferenceAlpha = 0.40f, Ap041SmokeAlphaCap = 0.5f;
+        /// <summary>One smoke card per this many seconds (Performance / High / Cinematic): held fire keeps ≤ 2 / 4 / 7 cards of the shared 48-card pool.</summary>
+        public static float Ap041SmokeInterval => VfxTier.Pick(0.35f, 0.2f, 0.16f);
+
+        /// <summary>True when the AP-041 impact sheets are imported (every camera mode plays them).</summary>
+        public bool Ap041ImpactsReady => _ap041Impacts;
+        /// <summary>True when the class's three TD flashes are imported.</summary>
+        public bool Ap041MuzzleReady(Ap041MuzzleClass muzzleClass) => muzzleClass != Ap041MuzzleClass.None && _ap041Muzzle[(int)muzzleClass] != null;
+
+        /// <summary>Resolves the AP-041 rows once (configure): a class / set counts only when all of its variants are playable.</summary>
+        private void ResolveAp041()
+        {
+            for (int c = 0; c < _ap041Muzzle.Length; c++)
+            {
+                VfxCatalogEntry[] rows = new VfxCatalogEntry[Ap041Vfx.MuzzleVariants];
+                bool all = true;
+                for (int v = 0; v < rows.Length; v++)
+                {
+                    all &= VfxLibrary.TryGetPlayable(Ap041Vfx.MuzzleId((Ap041MuzzleClass)c, v), out rows[v]);
+                }
+
+                _ap041Muzzle[c] = all ? rows : null;
+            }
+
+            _ap041Smoke = VfxLibrary.TryGetPlayable(VfxIds.Ap041MuzzleSmoke, out VfxCatalogEntry smoke) ? smoke : null;
+            _ap041Impacts = VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactStone, out _) && VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactWood, out _)
+                            && VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactEarth, out _) && VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactMetal, out _)
+                            && VfxLibrary.TryGetPlayable(VfxIds.Ap041ImpactFlesh, out _);
+            for (int s = 0; s < _ap041DecalSet.Length; s++)
+            {
+                bool all = true;
+                for (int v = 0; v < Ap041Vfx.DecalVariants; v++) all &= VfxLibrary.TryGetPlayable(Ap041Vfx.DecalId(s, v), out _);
+                _ap041DecalSet[s] = all;
+            }
+        }
+
+        /// <summary>
+        /// WP-101 (R4, AP-041) · The top-down flash. The class's three TD variants take turns (a per-class counter); the quad's
+        /// long axis is the §1.1 table length (<see cref="VfxWeaponProfile.FlashLength"/>, Wp073FlashSizeTests) and its height the
+        /// manifest [w, h] ratio - no stretch, so the pivot (origin u ≈ 0.11, the muzzle end of the cone) stays on the socket and
+        /// +u runs down the barrel (the caller aligns it). Life = the manifest 50 ms × the class's duration scale, floored at
+        /// <see cref="Ap041MinFlashSeconds"/>. ReduceFlashes: the caller's 0.4 fade, no HDR gain. The smoke card (one per
+        /// <see cref="Ap041SmokeInterval"/>) stands in for the particle puff: <paramref name="smokeHandled"/> true = no puff.
+        /// False = not top-down, the launcher, or the class's rows are not imported (the AP-010 sheet plays).
+        /// </summary>
+        private bool PlayAp041Muzzle(FlipbookEffect fx, Transform muzzle, VfxWeaponProfile profile, Color tint, out bool smokeHandled)
+        {
+            smokeHandled = false;
+            if (CameraModeService.Current != CameraMode.TopDown) return false;
+            Ap041MuzzleClass cls = Ap041Vfx.MuzzleClassOf(profile.Class);
+            VfxCatalogEntry[] rows = cls != Ap041MuzzleClass.None ? _ap041Muzzle[(int)cls] : null;
+            if (rows == null) return false;
+
+            int v = _ap041MuzzleNext[(int)cls];
+            _ap041MuzzleNext[(int)cls] = (v + 1) % Ap041Vfx.MuzzleVariants;
+            VfxCatalogEntry tdRow = rows[v];
+            float hdr = GameFeelSettings.FlashScale < 0.99f ? 1f : Ap041MuzzleHdr;
+            float life = Mathf.Max(Ap041MinFlashSeconds, tdRow.DurationSeconds * profile.FlashDurationScale);
+            float length = profile.FlashLength > 0f ? profile.FlashLength : tdRow.WorldSizeMetres;
+            fx.Play(tdRow, FlipbookEffect.Facing.Camera, length, new Color(tint.r * hdr, tint.g * hdr, tint.b * hdr, tint.a), 1f, 0f, life);
+            LastMuzzleRowId = tdRow.Id;
+            LastAp041MuzzleVariant = v;
+            Ap041MuzzlePlays++;
+            Played++;   // the TD flash is a flipbook like the AP-010 sheet it replaces (VfxGameFeelTests counts them)
+
+            if (_ap041Smoke == null || profile.SmokeSeconds <= 0f) return true;
+            float now = Time.time;
+            if (_ap041SmokeAt >= 0f && now >= _ap041SmokeAt && now - _ap041SmokeAt < Ap041SmokeInterval) { smokeHandled = true; return true; }
+            FlipbookEffect card = _flipbooks.Get(muzzle.position + muzzle.forward * 0.3f, Quaternion.identity);
+            if (card == null) return true;   // review: an empty pool leaves the particle smoke to MuzzleSystem
+            smokeHandled = true;
+            float size = _ap041Smoke.WorldSizeMetres * Mathf.Clamp(profile.SmokeEnd / Ap041SmokeReferenceEnd, 0.75f, 1.7f);
+            float alpha = Mathf.Clamp(profile.SmokeAlpha / Ap041SmokeReferenceAlpha, 0.5f, 1f);
+            card.Play(_ap041Smoke, FlipbookEffect.Facing.Camera, size, new Color(1f, 1f, 1f, alpha), Ap041SmokeAlphaCap, 0.35f,
+                _ap041Smoke.DurationSeconds * VfxTier.Pick(0.75f, 1f, 1.4f));
+            _ap041SmokeAt = now;
+            Ap041SmokeCards++;
+            Played++;
+            return true;
+        }
+
+        /// <summary>The impact sheet a surface plays now (AP-041 when imported, else AP-010) - probe / test readout, no variant turn.</summary>
+        public string ImpactCardId(SurfaceKind surface)
+        {
+            LegacyImpactIdsFor(surface, out string flipbook, out _);
+            return _ap041Impacts ? Ap041Vfx.ImpactIdFor(surface) : flipbook;
+        }
+
+        /// <summary>
+        /// WP-101 (R4, AP-041): the photographic sheet of the same surface group in every camera mode, and the hole's four variants
+        /// in turn on stone / wood / metal (dirt keeps the AP-010 earth mark; surfaces without a mark stay without). Rows not
+        /// imported → the AP-010 ids. <see cref="RefineSurfaceImpact"/> still sizes the hole by calibre and drops the light-calibre
+        /// stone card, whichever set drew them.
+        /// </summary>
+        private void ImpactIdsFor(SurfaceKind surface, out string flipbook, out string decal)
+        {
+            LegacyImpactIdsFor(surface, out flipbook, out decal);
+            if (_ap041Impacts) flipbook = Ap041Vfx.ImpactIdFor(surface);
+            int set = decal != null ? Ap041Vfx.DecalSetOf(surface) : -1;
+            if (set >= 0 && _ap041DecalSet[set])
+            {
+                int v = _ap041DecalNext[set];
+                _ap041DecalNext[set] = (v + 1) % Ap041Vfx.DecalVariants;
+                decal = Ap041Vfx.DecalId(set, v);
+            }
+        }
+
+        private static void LegacyImpactIdsFor(SurfaceKind surface, out string flipbook, out string decal)
         {
             switch (surface)
             {
@@ -1257,6 +1421,8 @@ namespace DD.Prototype.Feedback.Vfx
 
         private FlipbookEffect _lastFlipbook, _lastSurfaceCard;
         private DecalEffect _lastDecal, _lastSurfaceDecal;
+        private bool _lastSurfaceDecalSpall;   // WP-101: the last surface hole is an AP-041 sheet (hole + spall)
+        private int _lastSurfaceDecalSet;      // its set (AD r1 M6: metal × 1.4)
         private int _lastSurfaceFrame = -1;
         private Vector3 _lastSurfacePoint;
 
@@ -1276,7 +1442,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             if (_lastSurfaceDecal != null && _lastSurfaceDecal.IsSpawned)
             {
-                _lastSurfaceDecal.SetSize(ImpactSystem.HoleSize(calibre));
+                _lastSurfaceDecal.SetSize(_lastSurfaceDecalSpall ? Ap041Vfx.SpalledHole(ImpactSystem.HoleSize(calibre), _lastSurfaceDecalSet) : ImpactSystem.HoleSize(calibre));
             }
 
             if (surface == SurfaceKind.Stone && calibre != DD.Prototype.Core.Weapons.WeaponCaliber.Heavy && _lastSurfaceCard != null && _lastSurfaceCard.IsSpawned)

@@ -200,8 +200,11 @@ namespace DD.Prototype.Feedback.Vfx
             return CameraModeService.Current == CameraMode.TopDown ? DD.Prototype.Feedback.FeelProfileTD.Active.sustainedFlickerFloor : 0.6f;
         }
 
-        /// <summary>One shot's light and smoke.</summary>
-        public void Play(Transform muzzle, VfxWeaponProfile p, bool firstPerson)
+        /// <summary>
+        /// One shot's light and smoke. WP-101 (R4, AP-041): <paramref name="smoke"/> false = the caller drew this shot's smoke
+        /// (the top-down AP-041 smoke card, <see cref="VfxDressing.PlayMuzzle"/>), so the shared particle puff stays off.
+        /// </summary>
+        public void Play(Transform muzzle, VfxWeaponProfile p, bool firstPerson, bool smoke = true)
         {
             if (muzzle == null || p == null)
             {
@@ -265,7 +268,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             // ---- smoke: one shared world emitter, 0.3 m ahead of the muzzle (never inside the viewmodel)
-            if (_smoke != null && p.SmokeSeconds > 0f)
+            if (smoke && _smoke != null && p.SmokeSeconds > 0f)
             {
                 float life = p.SmokeSeconds * VfxTier.Pick(0.3f, 0.625f, 1.3f);   // DEC-100: Cinematic smoke lingers
                 Vector3 fwd = muzzle.forward;

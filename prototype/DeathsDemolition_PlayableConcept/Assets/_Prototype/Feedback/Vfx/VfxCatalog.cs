@@ -106,6 +106,11 @@ namespace DD.Prototype.Feedback.Vfx
         public float HdrIntensity = 1f;
         /// <summary>Manifest <c>blend</c> text (v003); empty for v002 rows.</summary>
         public string BlendNote;
+        /// <summary>
+        /// WP-101 (R4, AP-041) · The sheet's RGB is premultiplied (file = sRGB(linear × coverage)); its material runs
+        /// DD/VFX Flipbook's <c>_Premultiplied</c> path (Blend One OneMinusSrcAlpha). False for every AP-010 row.
+        /// </summary>
+        public bool Premultiplied;
 
         public int FrameCells => Columns * Rows;
     }

@@ -300,7 +300,9 @@ namespace DD.Art.Tests.PlayMode
                 if (f.Row != null && f.Row.Id == VfxIds.Muzzle) life = f.LifeSeconds;
             }
 
-            return life;
+            // WP-101 (R4, AP-041): top-down the flash is the 50 ms AP-041 card (the SMG's 33 ms) and may be back in the pool a
+            // frame later - the dressing's readout is the life it was given, whichever row played.
+            return life >= 0f && vfx.LastMuzzleRowId == VfxIds.Muzzle ? life : vfx.LastMuzzleLifeSeconds;
         }
 
         /// <summary>

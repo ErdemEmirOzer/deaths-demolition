@@ -26,50 +26,116 @@ namespace DD.Prototype.Feedback.Vfx
         public const int Capacity = 256;
         public const int TdCapacity = 48;
         /// <summary>
-        /// User 10.10 (C-00): "the bullets stop half way, hit the enemy further on, the hit is not seen; make them more visible,
-        /// orange-ish, realistic". The top-down tracer lived 0.04 s from birth (≈ 5 m at rifle speed) and was a 3 cm line. It now
-        /// rides its projectile all the way to the impact (or the range end), then its tail runs into the stopped head over
-        /// <see cref="TdTailOutSeconds"/>; the tail trails the head by clamp(v × <see cref="TdTailSeconds"/>, 1.5, 6 m) (sniper ≤ 10 m).
-        /// A white-hot core (<see cref="TdCoreHead"/> → <see cref="TdCoreTail"/>, the weapon's width ×<see cref="TdCoreScale"/>,
-        /// ≥ <see cref="TdCoreMin"/>) and an orange glow (<see cref="TdGlowColor"/>, premultiplied, ×<see cref="TdGlowScale"/> wide and
-        /// ≥ 2.5 × the core, α <see cref="TdGlowAlpha"/>, a flat tail; none on Performance).
-        /// ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR and the glow. A shotgun pellet keeps its short warm bar
-        /// (<see cref="PelletBarLength"/>, no glow) and dies out by <see cref="PelletFadeDistance"/>. Same pooled records and instanced draws.
+        /// WP-101 (R4, user 11.10: "mermiler bu sefer çok küçük ve fazla turuncu olmuş. mermi projectileleri ultra gerçekçi olacak").
+        /// The R3 top-down tracer was a 3.5 cm core (2 px at the TD distance) inside a 0.26 m orange glow at α 1 — the orange WAS the
+        /// tracer. Now every round is drawn as what a camera sees of a real bullet, and only the class's rhythm carries a tracer:
+        /// <list type="bullet">
+        /// <item>BODY (every round that is not a tracer): the bullet's own motion-blur streak — a mid-brass line
+        /// (<see cref="TdBodyWidth"/>), v × <see cref="TdBodyExposureSeconds"/> long (<see cref="TdBodyMin"/>–<see cref="TdBodyMax"/>), drawn
+        /// premultiplied at α <see cref="TdBodyAlpha"/>: a shade darker than the light stone and lighter than the wet slate (AD r1 M4 - an
+        /// added light line vanished on the light stone).</item>
+        /// <item>TRACER (every <see cref="TdTracerEveryN"/>th round of its class, Third Eye's marked round, sg_2's centre pellet): a
+        /// white-hot core streak at the class's real-scale width (<see cref="TdCoreWidth"/>, ≥ 3 px; LMG / sniper ≥ 4 px), as long as
+        /// the round travels in one exposure (v × <see cref="TdExposureSeconds"/>, <see cref="TdTailMin"/>–<see cref="TdTailMax"/>,
+        /// sniper ≤ <see cref="TdSniperTailMax"/>); a full-intensity <see cref="TdTracerBead"/> head (the bullet), a soft exponential tail (<see cref="TdCoreFalloff"/>), white (<see cref="TdCoreHead"/>)
+        /// at the bullet to warm yellow, and only the faint last third warms toward amber (<see cref="TdCoreTail"/>, where its α is
+        /// already ≤ 0.3). A heat halo (<see cref="TdHaloScale"/> × the core, warm white <see cref="TdHaloColor"/> → <see cref="TdHaloTail"/>,
+        /// its outer half warming to the amber rim <see cref="TdHaloEdge"/> (AD r1 M3: the light stone needs an edge), premultiplied at
+        /// α <see cref="TdHaloAlpha"/> - the halo carries the streak's width and weight (AD r1 M1/M2: an added white core alone read 2 px
+        /// on the light stone); none on Performance).</item>
+        /// <item>Shotgun pellets: <see cref="PelletBarLength"/> warm-white glint bars, added with the cores (<see cref="TdPelletWidth"/>,
+        /// α <see cref="TdPelletAlpha"/> - a dark bar vanished on the light stone), dead by
+        /// <see cref="PelletFadeDistance"/>; the sniper keeps its 0.4 s grey vapour trail.</item>
+        /// </list>
+        /// Every round rides its projectile to the impact (or the range end), then its tail runs into the stopped head over
+        /// <see cref="TdTailOutSeconds"/>. ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR (× 0.6 at the floor) and the
+        /// halo's α (× FlashScale); bodies and pellets keep their look (form, not flash). Same pooled 48 records, three instanced draws
+        /// (tracer cores + pellet bars · vapour · halos + bodies), 0 B.
         /// </summary>
-        public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdTailSeconds = .017f, TdTailMin = 1.5f, TdTailMax = 4.5f,
-            TdSniperTailMax = 10f, TdCoreScale = 1f, TdCoreMin = .035f, TdSniperCoreMin = .05f, TdGlowScale = 2.6f, TdGlowAlpha = 1f,
-            TdGlowFalloff = .5f, TdGlowRampShare = .15f;
-        /// <summary>AD 11.10 (M1 + S2) and C-00 11.10: one realistic top-down palette for every weapon - a thin warm-yellow core
-        /// (added; thin so it does not wash the light stone white), a deep orange glow drawn premultiplied at α 1 (it tints the
-        /// ground orange - on the light stone the abb27729 glow measured S 0.16–0.33 and read pale beige; on the blue reflection the
-        /// added orange had read salmon-pink), the glow ≥ 2.5 × the core; the tail "short but bright" (v × 0.017 s, 1.5–4.5 m).
-        /// The glow holds its strength along the tail (exp k <see cref="TdGlowFalloff"/>, the last <see cref="TdGlowRampShare"/>
-        /// a ramp to 0): with the ribbons' k 3.2 / 40 % ramp most of the glow's length sat at α ≤ 0.3 and 4c108065 still measured
-        /// S 0.17–0.32 - an orange tracer streak, not a fading wisp. The glow is 2.6 × the weapon's glow width (its soft edge
-        /// off the streak); a redder (1, .3, 0) read dusty pink at the low-α edge over the blue reflection (9e5c36f0, up to 21 %).
-        /// The core's HDR ×1.4 (was 1.8): its bloom fringe washed the glow next to it pale yellow (9d37f19c).</summary>
-        public static readonly Color TdCoreHead = new Color(1f, .82f, .45f) * 1.4f, TdCoreTail = new Color(1f, .62f, .2f) * 1f,
-            TdGlowColor = new Color(1f, .38f, 0f);
+        public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdExposureSeconds = 1f / 60f, TdTailMin = 1.5f, TdTailMax = 5.5f,
+            TdSniperTailMax = 10f, TdSniperExposureSeconds = 1f / 40f, TdCoreFalloff = 1.6f, TdCoreRampShare = .25f, TdHaloScale = 4f, TdHaloAlpha = .6f, TdHaloFalloff = 1.2f, TdHaloEdgeShare = 1f, TdHaloHdr = 2.2f,
+            TdBodyExposureSeconds = 1f / 160f, TdBodyMin = .6f, TdBodyMax = 2.5f, TdBodyWidth = .09f, TdBodyAlpha = .85f, TdPelletAlpha = .75f, TdPelletWidth = .05f,
+            TdCoreMinPx = 4f, TdHeavyCoreMinPx = 5f, TdBodyMinPx = 2f, TdTracerBead = .25f;
+        /// <summary>WP-101: white-hot at the bullet; the shader's head→tail blend (smoothstep) passes warm yellow ≈ (1, .82, .63)
+        /// mid-streak and reaches the faint amber only at the fading end; the halo a warm white-yellow (no orange). The body a warm
+        /// brass-grey; the pellets a warm white.</summary>
+        public static readonly Color TdCoreHead = new Color(1f, .97f, .9f) * 2.4f,
+            // TdCoreTail r9: S .32 - an added amber over the wet slate read saturated (AD r1 M3)
+            TdCoreTail = new Color(1f, .86f, .68f) * 1.1f, TdHaloColor = new Color(1f, .92f, .78f),
+            TdHaloTail = new Color(1f, .84f, .66f), TdHaloEdge = new Color(1f, .86f, .72f),
+            // AD r1 M4: drawn premultiplied (never added) - a mid brass a shade darker than the light stone, lighter than the wet slate
+            TdBodyColor = new Color(.21f, .19f, .15f), TdPelletColor = new Color(1f, .96f, .88f) * 1.6f;   // sonra-r11: a dark bar vanished on the light stone - the R3 warm-white glint, added   // r6: S ≤ .3 (M3 counted the brass as amber)
+
+        /// <summary>WP-101: the class's real-scale tracer core width (m) — a 5.56 tracer's burning base reads ≈ 6–7 cm on a camera at
+        /// TD distance once motion-blurred; the 7.62 belt and the .50-class sniper wider. At the TD camera ≈ 71 px/m (wp101 once-b46a3ca4:
+        /// 6 m = 427 px; 9 m capture ≈ 95 px/m): ar ≈ 8–10 px, smg 7–9, lmg 9–12, sr 11–15 (R3 core 2.5 px + a 15 px orange glow).</summary>
+        public static float TdCoreWidth(VfxWeaponClass c)
+        {
+            switch (c)
+            {
+                // sonra-r1 (≈ 95 px/m): ×1.0 read as a 2 px white thread beside the R3 streak's 15 px - "çok küçük" again; × 1.6
+                case VfxWeaponClass.Smg: return .10f;
+                case VfxWeaponClass.Lmg: return .13f;
+                case VfxWeaponClass.Sniper: return .16f;
+                case VfxWeaponClass.Shotgun: return .08f;   // sg_2's centre tracer pellet
+                default: return .11f;
+            }
+        }
+
+        /// <summary>WP-101: the top-down tracer rhythm (every Nth round of the class carries a tracer; the rest draw only their body
+        /// streak). Denser than a real belt (1 : 4–5) so the stream still reads where it lands.</summary>
+        public static int TdTracerEveryN(VfxWeaponClass c)
+        {
+            switch (c)
+            {
+                // AD r1 M1/M2 (the streak's weight ≥ R3, where every round glowed): rifles, the LMG belt and the sniper all tracer;
+                // the SMG keeps one body streak between two tracers (and the shotgun its plain pellets) - the body / tracer split
+                case VfxWeaponClass.Smg: return 2;
+                default: return 1;
+            }
+        }
+
+        /// <summary>Whether a top-down round with this id is a tracer (pellets: sg_2's centre pellet only).</summary>
+        public static bool IsTdTracer(VfxWeaponProfile profile, int roundId, bool pellet, int pelletIndex)
+        {
+            if (pellet) return profile.CentreTracer && pelletIndex == 0;
+            int n = TdTracerEveryN(profile.Class);
+            if (n <= 1) return true;
+            int m = roundId % n;
+            return (m < 0 ? m + n : m) == 0;
+        }
+
         private struct TdRound
         {
-            public bool Alive, Sniper, Stopped, Pellet;
+            public bool Alive, Sniper, Stopped, Pellet, Tracer;
             public int Id;
-            public float Age, Speed, Target, StopAge, Core, Glow;
+            public float Age, Speed, Target, StopAge, Core, Halo, CoreMinPx;
             public Vector3 Origin, Head, Direction;
         }
         // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
-        private static bool TdCoreLive(in TdRound r) => !(r.Pellet && (r.Head - r.Origin).sqrMagnitude >= PelletFadeDistance * PelletFadeDistance)
+        private static bool TdCoreLive(in TdRound r) => !(r.Pellet && !r.Tracer && (r.Head - r.Origin).sqrMagnitude >= PelletFadeDistance * PelletFadeDistance)
             && (r.Stopped ? r.Age - r.StopAge < TdTailOutSeconds : r.Age < TdMaxFlightSeconds);
-        private void TdLook(ref TdRound r, VfxWeaponProfile profile)
+        private static void TdLook(ref TdRound r, VfxWeaponProfile profile, bool tracer)
         {
             r.Sniper = profile.Class == VfxWeaponClass.Sniper;
-            r.Core = Mathf.Max(profile.CoreWidth * TdCoreScale, r.Sniper ? TdSniperCoreMin : TdCoreMin);
-            r.Glow = Mathf.Max(profile.GlowWidth * TdGlowScale, r.Core * 2.5f);
+            r.Tracer = tracer;
+            r.Core = tracer ? TdCoreWidth(profile.Class) : TdBodyWidth;
+            r.Halo = tracer ? r.Core * TdHaloScale : 0f;
+            r.CoreMinPx = !tracer ? TdBodyMinPx : r.Sniper || profile.Class == VfxWeaponClass.Lmg ? TdHeavyCoreMinPx : TdCoreMinPx;
+        }
+        /// <summary>The streak behind the head (m): a tracer's one-exposure blur, a body's short one, a pellet's bar.</summary>
+        private static float TdTrail(in TdRound r)
+        {
+            if (r.Pellet && !r.Tracer) return PelletBarLength;
+            return r.Tracer ? (r.Sniper ? Mathf.Clamp(r.Speed * TdSniperExposureSeconds, TdTailMin, TdSniperTailMax) : Mathf.Clamp(r.Speed * TdExposureSeconds, TdTailMin, TdTailMax))
+                : Mathf.Clamp(r.Speed * TdBodyExposureSeconds, TdBodyMin, TdBodyMax);
         }
         private readonly TdRound[] _tdRounds = new TdRound[TdCapacity];
         private int _tdSyntheticId;
         public int LiveTdTracers { get; private set; }
         public int LiveTdSmoke { get; private set; }
+        /// <summary>WP-101: live top-down records that carry a tracer (the rest draw their body streak only).</summary>
+        public int LiveTdTracerRounds { get; private set; }
 
         /// <summary>TD birth admission: each pellet is a shot, bounded to 48 shared tracer/smoke records.</summary>
         public bool RecordTdProjectile(in ProjectileSpawnInfo info)
@@ -80,11 +146,13 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 if (_tdRounds[i].Alive) continue;
                 VfxWeaponProfile profile = VfxWeaponProfiles.For(info.WeaponId);
+                bool pellet = info.Kind == ProjectileKind.Pellet;
                 _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId,
                     Origin = info.Position, Head = info.Position, Direction = info.Direction.normalized,
-                    Speed = info.Speed, Target = float.PositiveInfinity, Pellet = info.Kind == ProjectileKind.Pellet };
-                TdLook(ref _tdRounds[i], profile);
+                    Speed = info.Speed, Target = float.PositiveInfinity, Pellet = pellet };
+                TdLook(ref _tdRounds[i], profile, IsTdTracer(profile, info.ProjectileId, pellet, info.PelletIndex));
                 LiveTdTracers++;
+                if (_tdRounds[i].Tracer) LiveTdTracerRounds++;
                 if (_tdRounds[i].Sniper) LiveTdSmoke++;
                 return true;
             }
@@ -115,10 +183,12 @@ namespace DD.Prototype.Feedback.Vfx
                     Vector3 lift = MuzzleCatchUp(p, delta);
                     r.Head = p.Position + lift; r.Origin = p.Origin + lift;
                     r.Direction = p.Direction;
+                    // DEC-112 Third Eye: the burst's marked round is always a full tracer
+                    if (!r.Tracer && !r.Pellet && IsThirdEyeRound(p.TreeFlags)) TdLook(ref r, VfxWeaponProfiles.For(p.WeaponId), true);
                     break;
                 }
             }
-            LiveTdTracers = LiveTdSmoke = 0;
+            LiveTdTracers = LiveTdSmoke = LiveTdTracerRounds = 0;
             for (int i = 0; i < TdCapacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i]; if (!r.Alive) continue;
@@ -131,39 +201,62 @@ namespace DD.Prototype.Feedback.Vfx
                 }
                 bool core = TdCoreLive(r), smoke = r.Sniper && r.Age < .4f;
                 if (!core && !smoke) { r.Alive = false; continue; }
-                if (core) LiveTdTracers++;
+                if (core) { LiveTdTracers++; if (r.Tracer) LiveTdTracerRounds++; }
                 if (smoke) LiveTdSmoke++;
             }
         }
         private void ClearTd()
         {
             for (int i = 0; i < TdCapacity; i++) _tdRounds[i] = default;
-            LiveTdTracers = LiveTdSmoke = 0;
+            LiveTdTracers = LiveTdSmoke = LiveTdTracerRounds = 0;
         }
+        // layer 0: tracer cores + body streaks + pellet bars (additive, the streak material) · 1: sniper vapour · 2: tracer heat halo
         private int DrawTd(int layer)
         {
             int n = 0;
+            float flash = Mathf.Clamp01(GameFeelSettings.FlashScale);
             for (int i = 0; i < TdCapacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i];
-                if (!r.Alive || (layer != 1 && !TdCoreLive(r)) || (layer == 1 && (!r.Sniper || r.Age >= .4f)) || (layer == 2 && (_performance || r.Pellet))) continue;
+                // AD r1 (WP-101): 0 = the tracer cores (added) · 1 = the sniper vapour · 2 = premultiplied: the tracer halos (not on
+                // Performance) and every body streak / pellet bar (additive white vanished on the light stone)
+                bool plainPellet = r.Pellet && !r.Tracer;
+                if (!r.Alive || (layer != 1 && !TdCoreLive(r)) || (layer == 1 && (!r.Sniper || r.Age >= .4f))
+                    || (layer == 0 && !r.Tracer && !plainPellet) || (layer == 2 && (plainPellet || (r.Tracer && _performance)))) continue;
                 Vector3 tail;
                 if (layer == 1) tail = r.Origin;
                 else
                 {
-                    float trail = Mathf.Min((r.Head-r.Origin).magnitude, r.Pellet ? PelletBarLength : Mathf.Clamp(r.Speed * TdTailSeconds, TdTailMin, r.Sniper ? TdSniperTailMax : TdTailMax));
+                    float trail = Mathf.Min((r.Head-r.Origin).magnitude, TdTrail(r));
                     if (r.Stopped) trail *= 1f - Mathf.Clamp01((r.Age - r.StopAge) / TdTailOutSeconds);   // the tail runs into the impact
                     tail = r.Head - r.Direction * trail;
                 }
                 float length = (r.Head-tail).magnitude; if (length < .01f) continue;
-                float flash = Mathf.Clamp01(GameFeelSettings.FlashScale);
-                Color head = layer == 1 ? new Color(.48f,.50f,.52f) : layer == 2 ? TdGlowColor : TdCoreHead * Mathf.Lerp(.6f, 1f, flash);
-                Color back = layer == 1 ? head : layer == 2 ? TdGlowColor : TdCoreTail * Mathf.Lerp(.6f, 1f, flash);
-                Write(n, 0, r.Head, tail, layer == 1 ? .12f : layer == 2 ? r.Glow : r.Core,
-                    0f, length, 0f, 0f, 0f, head, back, false, false);
-                // Exact metre widths; TD does not inherit the older pixel floor/head dot.
-                _extra[n] = Vector4.zero;
-                float alpha = layer == 1 ? .16f * (1f-r.Age/.4f) : layer == 2 ? TdGlowAlpha * flash : 1f;
+                Color head, back;
+                float width, alpha, minPx = 0f;
+                if (layer == 1) { head = back = new Color(.48f, .50f, .52f); width = .12f; alpha = .16f * (1f - r.Age / .4f); }
+                // × TdHaloHdr: the sun-lit stone is HDR > 1 before the tonemap - an LDR premultiplied veil only darkened it (sonra-r4)
+                else if (layer == 2 && r.Tracer) { head = TdHaloColor * TdHaloHdr; back = TdHaloTail * TdHaloHdr; width = r.Halo; alpha = TdHaloAlpha * flash; }
+                else if (layer == 2)
+                {
+                    head = back = TdBodyColor; width = r.Core; alpha = TdBodyAlpha; minPx = r.CoreMinPx;
+                }
+                else if (plainPellet)
+                {
+                    head = back = TdPelletColor; width = TdPelletWidth; alpha = TdPelletAlpha; minPx = TdBodyMinPx;
+                }
+                else
+                {
+                    float hdr = Mathf.Lerp(.35f, 1f, flash);   // AD r1 M7: Reduce Flashes (0.4) → × 0.61 HDR
+                    head = TdCoreHead * hdr; back = TdCoreTail * hdr; width = r.Core; alpha = 1f; minPx = r.CoreMinPx;
+                }
+                // span: the vapour (layer 1, tail = the muzzle) keeps the shader's 0.4 m fade-in off the muzzle; a streak's tail is
+                // mid-air, so its span starts 1 m out (review: from 0 the fade ate 0.4 m of a 0.5–1.6 m body / pellet bar)
+                float tailD = layer == 1 ? 0f : 1f;
+                Write(n, 0, r.Head, tail, width, layer == 0 && r.Tracer ? TdTracerBead : 0f, tailD + length, tailD, 0f, 0f, head, back, false, false);
+                // Metre widths with the TD pixel floor (x; 0 = the material's 2 px); no head dot.
+                _extra[n] = new Vector4(minPx, 0f, 0f, 0f);
+                if (layer == 2 && r.Tracer) _span[n].z = -TdHaloEdgeShare;   // the halo's amber rim (DD_VfxRibbon _EdgeTint)
                 _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : 0f;
                 n++;
             }
@@ -171,8 +264,8 @@ namespace DD.Prototype.Feedback.Vfx
             _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
             _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
             _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
-            Graphics.DrawMeshInstanced(_quad, 0, layer == 2 && _tdGlowMaterial != null ? _tdGlowMaterial : _material, _matrices, n, _block,
-                ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
+            Material material = layer == 2 && _tdGlowMaterial != null ? _tdGlowMaterial : layer == 0 && _tdCoreMaterial != null ? _tdCoreMaterial : _material;
+            Graphics.DrawMeshInstanced(_quad, 0, material, _matrices, n, _block, ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
             return n;
         }
         public const string ShaderName = "DD/VFX Ribbon";
@@ -216,7 +309,7 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Vector4[] _span = new Vector4[Capacity];
         private readonly Vector4[] _extra = new Vector4[Capacity];
         private MaterialPropertyBlock _block;
-        private Material _material, _tdGlowMaterial;
+        private Material _material, _tdGlowMaterial, _tdCoreMaterial;
         private Mesh _quad;
         private int _next;
         private int _live;
@@ -305,12 +398,15 @@ namespace DD.Prototype.Feedback.Vfx
             if (shader != null && shader.isSupported)
             {
                 _material = new Material(shader) { name = "DD_VfxRibbon (runtime)", enableInstancing = true, hideFlags = HideFlags.DontSave };
-                // AD 11.10 M1: the TD glow is premultiplied (One / OneMinusSrcAlpha), the cores stay additive
-                _tdGlowMaterial = new Material(_material) { name = "DD_VfxRibbon TD glow (runtime)", hideFlags = HideFlags.DontSave };
+                // WP-101: the TD heat halo is premultiplied (One / OneMinusSrcAlpha) - a warm white-yellow veil, never an added orange
+                _tdGlowMaterial = new Material(_material) { name = "DD_VfxRibbon TD halo (runtime)", hideFlags = HideFlags.DontSave };
                 _tdGlowMaterial.SetFloat("_SrcBlend", (float)BlendMode.One); _tdGlowMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-                // the glow's tail: a flat exponential, its ramp starting where the curve is (no step)
-                _tdGlowMaterial.SetFloat("_TailFalloff", TdGlowFalloff); _tdGlowMaterial.SetFloat("_TailRampShare", TdGlowRampShare);
-                _tdGlowMaterial.SetFloat("_TailRampLevel", Mathf.Exp(-(1f - TdGlowRampShare) * TdGlowFalloff));
+                SetTail(_tdGlowMaterial, TdHaloFalloff, .2f);
+                _tdGlowMaterial.SetColor("_EdgeTint", TdHaloEdge * TdHaloHdr);
+                // WP-101: the TD streaks (tracer cores, body streaks, pellet bars) stay additive with a motion-blur tail - a soft
+                // exponential instead of the ribbons' k 3.2 / 40 % ramp (that read as a short dot with a wisp)
+                _tdCoreMaterial = new Material(_material) { name = "DD_VfxRibbon TD streak (runtime)", hideFlags = HideFlags.DontSave };
+                SetTail(_tdCoreMaterial, TdCoreFalloff, TdCoreRampShare);
             }
 
             _block = new MaterialPropertyBlock();
@@ -326,6 +422,13 @@ namespace DD.Prototype.Feedback.Vfx
             ProjectileEvents.Expired += OnExpired;
         }
 
+        // the tail: exponential k, its last share a linear ramp starting where the curve is (no step)
+        private static void SetTail(Material m, float falloff, float rampShare)
+        {
+            m.SetFloat("_TailFalloff", falloff); m.SetFloat("_TailRampShare", rampShare);
+            m.SetFloat("_TailRampLevel", Mathf.Exp(-(1f - rampShare) * falloff));
+        }
+
         private void OnDestroy()
         {
             ProjectileEvents.Impact -= OnImpact;
@@ -336,6 +439,7 @@ namespace DD.Prototype.Feedback.Vfx
             ProjectileDriver.DrawInterimTrails = true;
             if (_material != null) Destroy(_material);
             if (_tdGlowMaterial != null) Destroy(_tdGlowMaterial);
+            if (_tdCoreMaterial != null) Destroy(_tdCoreMaterial);
             if (_quad != null) Destroy(_quad);
         }
 
@@ -382,8 +486,12 @@ namespace DD.Prototype.Feedback.Vfx
                 for (int i = 0; i < TdCapacity; i++)
                     if (_tdRounds[i].Alive && _tdRounds[i].Id == info.ProjectileId)
                     {
-                        TdLook(ref _tdRounds[i], profile);
+                        // a legacy hitscan shot is a tracer (a pellet only as sg_2's centre one); the admission counted the default look
+                        bool wasTracer = _tdRounds[i].Tracer, wasSniper = _tdRounds[i].Sniper;
                         _tdRounds[i].Pellet = pellet;
+                        TdLook(ref _tdRounds[i], profile, !pellet || (profile.CentreTracer && centrePellet));
+                        LiveTdTracerRounds += (_tdRounds[i].Tracer ? 1 : 0) - (wasTracer ? 1 : 0);
+                        LiveTdSmoke += (_tdRounds[i].Sniper ? 1 : 0) - (wasSniper ? 1 : 0);
                         _tdRounds[i].Target = (end-origin).magnitude;
                         break;
                     }
@@ -524,7 +632,7 @@ namespace DD.Prototype.Feedback.Vfx
                 TickTd(dt);
                 _live = LiveTdTracers; _firstPerson = false; _performance = VfxTier.Current == VfxTierLevel.Performance;
                 DrawnCore = _material != null ? DrawTd(0) : 0;
-                DrawnGlow = _material != null ? DrawTd(1) + DrawTd(2) : 0;   // sniper smoke + the warm glow (none on Performance)
+                DrawnGlow = _material != null ? DrawTd(1) + DrawTd(2) : 0;   // sniper vapour + the tracers' heat halo (none on Performance)
                 DrawnGlint = 0;
                 return;
             }

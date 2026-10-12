@@ -148,6 +148,8 @@ namespace DD.Art.Pipeline.EditorTools
                 Debug.Log(LogPrefix + "Supplement manifest: " + supplement + " (" + extraAssets.Count + " assets)");
             }
 
+            // WP-101 (R4, AP-041): the premultiplied photographic set from its trimmed manifest (no-op when it is not imported).
+            ArtAp041VfxIntake.AppendRows(rows, seen, catalog, flipbook);
             rows.Add(SynthesizeDropletRow(rows, catalog, flipbook));
 
             catalog.Entries.Clear();

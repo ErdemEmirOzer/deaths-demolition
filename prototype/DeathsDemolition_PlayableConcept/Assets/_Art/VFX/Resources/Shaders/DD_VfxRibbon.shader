@@ -19,6 +19,8 @@ Shader "DD/VFX Ribbon"
         // premultiplied instance (One / OneMinusSrcAlpha) - added orange over the blue sky reflection read salmon-pink.
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst blend", Float) = 1
+        // WP-101 (AD M3): the top-down halo's outer half takes this tint (a negative _Span.z gives the share); white = none
+        _EdgeTint("Edge tint", Color) = (1, 1, 1, 1)
     }
 
     SubShader
@@ -45,6 +47,7 @@ Shader "DD/VFX Ribbon"
                 float _TailFalloff;
                 float _TailRampShare;
                 float _TailRampLevel;
+                float4 _EdgeTint;
             CBUFFER_END
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -52,7 +55,7 @@ Shader "DD/VFX Ribbon"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Tail)      // xyz tail (world), w head bead (0..1 of the length)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _HeadColor) // rgb HDR (linear), a alpha
                 UNITY_DEFINE_INSTANCED_PROP(float4, _TailColor) // rgb HDR (linear), a unused
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Span)      // x tail / y head distance from the muzzle (m), z fade distance (0 = none), w fade-in start (m)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Span)      // x tail / y head distance from the muzzle (m), z fade distance (0 = none; < 0 = edge-tint share, WP-101), w fade-in start (m)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Extra)     // x min width px, y dot size px (dot mode / end-on), z first-person flag, w 1 = head dot
             UNITY_INSTANCING_BUFFER_END(Props)
 
@@ -155,6 +158,11 @@ Shader "DD/VFX Ribbon"
                 }
 
                 float alpha = headColor.a * a * across;
+                if (span.z < 0.0 && i.dot < 0.5)
+                {
+                    // WP-101 (AD M3): the halo's outer half warms to _EdgeTint (an amber rim reads on the light stone)
+                    rgb = lerp(rgb, _EdgeTint.rgb, smoothstep(0.45, 0.85, abs(i.uv.y)) * saturate(-span.z));
+                }
                 if (span.z > 0.0)
                 {
                     alpha *= 1.0 - smoothstep(span.z * 0.6, span.z, i.muzzleDist);   // pellet bars die out

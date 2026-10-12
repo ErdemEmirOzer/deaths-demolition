@@ -28,7 +28,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public const float ConcurrentWindowSeconds = 0.4f;
         public const float GrazingDot = 0.26f;   // |dir · normal| below this = a grazing hit (≈ 15°)
-        public static readonly Color ImpactLightColour = new Color(1f, 0.878f, 0.69f, 1f);   // #FFE0B0
+        public static readonly Color ImpactLightColour = new Color(1f, 0.949f, 0.82f, 1f);   // WP-101 AD r1 M5: #FFF2D1 (was #FFE0B0, S .31)
         public static readonly Color32 SprayColour = new Color32(217, 225, 230, 128);        // #D9E1E6 α 0.5
         public static readonly Color32 StoneSprayColour = new Color32(217, 225, 230, 166);   // AD B2 MUST 2: the stone spray leads (α 0.65)
         /// <summary>AD B2 MUST 1: the impact light on wet slate — 1.2 / 1.2 m (was 3 / 2 m: a clipped white disc), 2 frames, one at a time.</summary>
