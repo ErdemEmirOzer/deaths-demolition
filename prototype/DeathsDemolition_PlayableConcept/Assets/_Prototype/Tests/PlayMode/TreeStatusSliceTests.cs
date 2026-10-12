@@ -12,6 +12,7 @@ using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
 using NUnit.Framework;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -30,6 +31,7 @@ namespace DD.Prototype.Tests.PlayMode
     ///   (d) WP-102: a held / pulled pursuit body keeps its role (the stall clock waits);
     ///   (e) neutral tree: the receivers read exactly 1 / zero and change no damage;
     ///   S5: a status tick passes armour and the flag never leaks into the next blast (MUST).
+    ///   (f) forty bodies frozen / pulled every frame: the receivers allocate nothing, WP104.Tree.ZombieStatus inside S-04's budget.
     /// (b) also logs the well's jitter (radial sign flips) and the crowd solver's contacts (S03-RECEIVER §5.3).
     /// </summary>
     [Category("WP104")]
@@ -492,5 +494,96 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static DamageHit Vurus(ZombieEnemy z) => new DamageHit { Amount = 10f, Region = BodyRegion.UpperBody,
             Point = z.transform.position + Vector3.up, Direction = z.transform.forward, ImpactForce = 0.25f, Source = DamageSourceKind.Bullet };
+
+        // ------------------------------------------------------------------------------------------------ perf (B3 plan §4)
+
+        /// <summary>WP-104 B3 plan §4 / S-04's status budget (TreeGuardrails): the mean per-frame WP104.Tree.ZombieStatus cost.</summary>
+        private const double StatusBudgetMs = 0.35;
+
+        /// <summary>
+        /// B3 plan §4: forty bodies under the tree's statuses — twenty kept frozen (Frozen Gravity's ignoreCooldown re-freezes a thawed
+        /// body) and twenty held in a black hole refreshed EVERY frame (the wells refresh at 10 Hz and the status ticks at 4 Hz: per
+        /// frame is the ceiling). Asserted: after warm-up the receivers allocate nothing, the marker is recorded, and its mean per
+        /// frame stays inside S-04's status budget. Logged: the whole frame's GC bytes without and with the statuses, the marker's
+        /// mean / peak, how many bodies were frozen / pulled at the end.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Yuk_40Govde_DonmaCekim_SifirAyirma_ButceIcinde()
+        {
+            yield return Hazirla();
+            TreeRuntime.SetTestStats(Agac());
+            int hedefKare = Application.targetFrameRate;
+            Application.targetFrameRate = -1;   // WP-053C: a capped frame rate zeroes ProfilerRecorder.LastValue
+            var zler = new List<ZombieEnemy>();
+            Vector3 merkez = _rig.transform.position;
+            for (int i = 0; i < 40; i++)
+            {
+                float a = i * Mathf.PI * 2f / 40f;
+                float r = 6f + (i % 4) * 2f;
+                zler.Add(Dogur(EnemyTier.Standard, merkez + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r)));
+            }
+
+            try
+            {
+                using (var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+                using (var durum = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "WP104.Tree.ZombieStatus"))
+                {
+                    // baseline: the same forty bodies walking in, no status
+                    for (int k = 0; k < 30; k++) yield return null;
+                    long gcTaban = 0;
+                    for (int k = 0; k < 60; k++) { yield return null; gcTaban += gc.LastValue; }
+
+                    Vector3 kuyu = NavPathFollower.ClampToNavMesh(merkez + new Vector3(8f, 0f, 0f), 6f);
+                    long ayirma = 0, gcDurum = 0, sureNs = 0, sureMaxNs = 0;
+                    int olcum = 0;
+                    for (int k = 0; k < 90; k++)
+                    {
+                        long b0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int i = 0; i < zler.Count; i++)
+                        {
+                            ZombieEnemy z = zler[i];
+                            if (z == null || !z.IsAlive) continue;
+                            if ((i & 1) == 0) { if (!z.IsFrozen) z.ApplyIce(4, true); }
+                            else z.ApplyPull(kuyu, 5f, 0.15f);
+                        }
+
+                        long b1 = GC.GetAllocatedBytesForCurrentThread();
+                        if (k >= 5) ayirma += b1 - b0;   // the first frames JIT the receivers
+                        yield return null;
+                        if (k < 10) continue;
+                        gcDurum += gc.LastValue;
+                        sureNs += durum.LastValue;
+                        sureMaxNs = Math.Max(sureMaxNs, durum.LastValue);
+                        olcum++;
+                    }
+
+                    int donuk = 0, cekilen = 0;
+                    foreach (ZombieEnemy z in zler)
+                    {
+                        if (z == null || !z.IsAlive) continue;
+                        if (z.IsFrozen) donuk++;
+                        if (z.IsPulled) cekilen++;
+                    }
+
+                    double ortMs = olcum > 0 ? sureNs / (double)olcum / 1e6 : 0, maxMs = sureMaxNs / 1e6;
+                    Debug.Log("[DD-TEST] wp104.b3.perf bodies=40 frozen=" + donuk + " pulled=" + cekilen + " receiverAlloc=" + ayirma + "B"
+                              + " statusMs mean=" + ortMs.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
+                              + " peak=" + maxMs.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
+                              + " (budget " + StatusBudgetMs.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + ")"
+                              + " frameGC base=" + (gcTaban / 60) + "B status=" + (olcum > 0 ? gcDurum / olcum : 0) + "B markerValid=" + durum.Valid);
+                    Assert.IsTrue(durum.Valid, "WP104.Tree.ZombieStatus kaydedilmedi (ölçüm kaynağı yok)");
+                    Assert.Greater(sureNs, 0L, "marker hiç örnek vermedi");
+                    Assert.Greater(donuk, 15, "donmuş gövde yok — senaryo kurulmadı");
+                    Assert.Greater(cekilen, 15, "çekilen gövde yok — senaryo kurulmadı");
+                    Assert.AreEqual(0L, ayirma, "alıcılar kare başı ayırma yaptı");
+                    Assert.LessOrEqual(ortMs, StatusBudgetMs, "WP104.Tree.ZombieStatus bütçeyi aştı");
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = hedefKare;
+            }
+        }
     }
 }
