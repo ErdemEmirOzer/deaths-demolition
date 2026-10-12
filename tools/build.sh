@@ -91,6 +91,15 @@ if [ "$BUILD_OK" -eq 1 ] && [ -x "$DD_TOOLS_DIR/build-report.sh" ]; then
   "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap-bytes "${DD_BUILD_CAP_BYTES:-5000000000}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
 fi
 
+# WP-112 (C-00 12.10, the user: no prototype trace in the release build): a macOS release shows "Deaths Demolition" in the
+# Dock, menu bar, About and window title — Info.plist only (tools/app-display-name.sh: productName, bundle id and the
+# executable stay, so user data, the guard and every tool path are unchanged; re-signed ad-hoc). Before the manifest.
+DISPLAY_NAME=""
+if [ "$BUILD_OK" -eq 1 ] && [ "$MODE" = release ] && [ "$TARGET" = mac ]; then
+  if DN=$(zsh "$DD_TOOLS_DIR/app-display-name.sh" "$APP" "Deaths Demolition" 2>&1); then DISPLAY_NAME="Deaths Demolition"; dd_log "$DN"
+  else dd_log "display name FAILED: $DN — no release"; BUILD_OK=0; fi
+fi
+
 # WP-079H: content manifest of the built player (before the smoke run touches anything) — verify a copy later with
 # `cd <out> && shasum -a 256 -c app-manifest.sha256` or `tools/app_manifest.py verify <out>`
 APPMAN=""
@@ -120,6 +129,7 @@ cat > "$REPORT" <<JSON
   "smoke": { "status": "$SMOKE_STATUS", "exitCode": $SMOKE_EXIT, "report": "$OUT/smoke-report.json" },
   "footprint": "$OUT/footprint.json",
   "appManifest": "$OUT/app-manifest.sha256",
+  "displayName": $([ -n "$DISPLAY_NAME" ] && echo "\"$DISPLAY_NAME\"" || echo null),
   "appManifestSha256": $([ -n "$APPMAN" ] && echo "\"$APPMAN\"" || echo null),
   "head": "$(git -C "$DD_REPO" rev-parse HEAD 2>/dev/null)",
   "utc": "$(date -u +%FT%TZ)"
