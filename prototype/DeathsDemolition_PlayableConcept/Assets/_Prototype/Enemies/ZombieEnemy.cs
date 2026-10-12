@@ -296,6 +296,27 @@ namespace DD.Prototype.Enemies
         }
 
         public void CompleteRise() => _riseRemaining = 0f;
+
+        [PrototypeOnly(PendingDecisions.None, "C-00 12.10 (S-04 bot series, Hard R12 held at 144/146 for 400 s): a rise still running after this long " +
+            "(the clip is 1.57 s) never reported its end — the clip was cut or its rise_end event missed — and is ended here, so the body " +
+            "walks and the watchdogs (which skip a rising body) see it again.", true)]
+        private const float RiseMaxSeconds = 5f;
+
+        private float _risingSince = -1f;
+
+        /// <summary>C-00 12.10: rises ended by <see cref="RiseMaxSeconds"/> since start-up (evidence and tests).</summary>
+        public static int RiseTimeouts { get; private set; }
+
+        /// <summary>A rise that never reported its end: the timer and the clip state both close, the pose goes back to locomotion.</summary>
+        private void EndStuckRise()
+        {
+            RiseTimeouts++;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            Debug.Log("[DD-AI] rise.timeout body=" + GetInstanceID() + " tier=" + _tier + " after=" + (Time.time - _risingSince).ToString("F1") + "s pos=" + transform.position.ToString("F1"));
+#endif
+            _riseRemaining = 0f;
+            if (_skinned != null) _skinned.ForceEndRise();
+        }
         public bool IsDying => _dying;
         public float Health => _body != null ? _body.Health : 0f;
         public float MaxHealth => _body != null ? _body.MaxHealth : 0f;
@@ -546,6 +567,7 @@ namespace DD.Prototype.Enemies
             // WP-040 (ADR-040-1) spawn beats: rise (the clip plays) or land (up and walking at once).
             _lastAttackPhase = ZombieAttackPhase.None;
             _wasRising = IsRising;
+            _risingSince = _wasRising ? Time.time : -1f;
             _landRaised = false;
             if (_wasRising)
             {
@@ -986,6 +1008,13 @@ namespace DD.Prototype.Enemies
             // ------------------------------------------------------------------ rise (WP-030)
             // WP-040: the rise → walk edge (rise_end on the clip, or the timer) is the spawn_land beat.
             bool risingNow = IsRising;
+            if (risingNow && !_wasRising) _risingSince = Time.time;
+            if (risingNow && _risingSince >= 0f && Time.time - _risingSince > RiseMaxSeconds)   // C-00 12.10: a rise never runs for ever
+            {
+                EndStuckRise();
+                risingNow = IsRising;
+            }
+
             if (_wasRising && !risingNow) RaiseLand(_skinned != null);
             _wasRising = risingNow;
 

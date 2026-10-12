@@ -984,6 +984,22 @@ namespace DD.Prototype.Characters
         public bool DeathFinished => _deathEnded;
         public bool IsRising => _rising;
 
+        /// <summary>
+        /// C-00 12.10 (ZombieEnemy.RiseMaxSeconds): the rise never reported its end (the clip was cut or rise_end missed) — end it and
+        /// hand the pose back to the locomotion state, so the body walks.
+        /// </summary>
+        public void ForceEndRise()
+        {
+            if (!_rising) return;
+            _rising = false;
+            if (_animator == null || !_animator.isActiveAndEnabled) return;
+            _animator.ResetTrigger(RiseId);
+            _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, 0f);
+        }
+
+        /// <summary>Tests: a rise whose clip end never comes (the state the bot series met), without playing the clip.</summary>
+        internal void BeginStuckRiseForTests() => _rising = true;
+
         [PrototypeOnly(PendingDecisions.None, "WP-040: cap on the heavy stagger hold when the clip's stagger_end never arrives (clip 0.9 s + grace).", true)]
         public const float HeavyStaggerCapSeconds = 1.4f;
         /// <summary>WP-040: the armour-break heavy stagger clip is playing (from PlayHeavyStagger until the clip's stagger_end, capped). The enemy neither walks nor swings meanwhile.</summary>

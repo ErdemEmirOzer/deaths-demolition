@@ -238,7 +238,7 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>Tests: zero the removal counter.</summary>
-        public static void ResetOutOfWorldStatics() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; }
+        public static void ResetOutOfWorldStatics() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; RiseTimeouts = 0; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOutOfWorldDomain() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; OutOfWorldRemoved = null; s_roundBase = default; }

@@ -303,6 +303,56 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// C-00 12.10 (S-04 bot series, Hard R12 held at 144/146 for 400 s): the round's last zombie stayed in its spawn rise — the
+        /// rise clip's end never came — and a rising body is skipped by both watchdogs, so the round never ended. The last body here
+        /// is put into a rise that never ends (the driven clip's state with no rise_end, or the timer for a block body); the rise must
+        /// end by RiseMaxSeconds and the body walk at the player.
+        /// </summary>
+        [UnityTest]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P14_KalkistaTakilanSonZombi_ZamanAsimi_Yurur()
+        {
+            Vector3 Duz(Vector3 v) { v.y = 0f; return v; }
+            yield return RunSahnesiniHazirla();
+            yield return YeniRound();
+            ZombieEnemy.ResetOutOfWorldStatics();
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 60f && !(_director.Population.Unspawned == 0 && DirectorYasayanZombi() == 1))
+            {
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                int alive = DirectorYasayanZombi();
+                for (int i = live.Count - 1; i >= 0 && alive > 1; i--)
+                    if (live[i] != null && live[i].IsAlive && live[i].SpawnTicket > 0) { live[i].Kill(); alive--; }
+                yield return null;
+            }
+
+            Assert.AreEqual(0, _director.Population.Unspawned, "havuz tükenmedi");
+            ZombieEnemy son = BirYasayanDirectorZombisi();
+            Assert.IsNotNull(son);
+            yield return Bekle(() => !son.IsRising, 10f, "son gövdenin kendi kalkışı bitmedi");
+
+            bool klip = son.Skinned != null && son.Skinned.Authored;
+            if (klip) son.Skinned.BeginStuckRiseForTests();
+            else son.BeginRise(9999f);
+            Assert.IsTrue(son.IsRising, "bitmeyen kalkış kurulmadı");
+            Vector3 p0 = son.transform.position;
+            float d0 = Vector3.Distance(Duz(p0), Duz(_rig.transform.position));
+            float tRise = Time.realtimeSinceStartup;
+            while (son.IsRising && Time.realtimeSinceStartup - tRise < 12f) yield return null;
+            float bitti = Time.realtimeSinceStartup - tRise;
+            Assert.IsFalse(son.IsRising, "kalkış 12 s'de bitmedi (zaman aşımı yok)");
+            Assert.GreaterOrEqual(ZombieEnemy.RiseTimeouts, 1, "kalkış zaman aşımıyla bitmedi");
+
+            float tWalk = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - tWalk < 4f && Vector3.Distance(Duz(son.transform.position), Duz(p0)) < 1f) yield return null;
+            float yurudu = Vector3.Distance(Duz(son.transform.position), Duz(p0));
+            Debug.Log("[DD-TEST] wp102.risetimeout clip=" + klip + " ended=" + bitti.ToString("F1") + "s timeouts=" + ZombieEnemy.RiseTimeouts
+                      + " walked=" + yurudu.ToString("F1") + "m d0=" + d0.ToString("F1"));
+            Assert.GreaterOrEqual(yurudu, 1f, "kalkış bittikten sonra gövde yürümedi");
+        }
+
+        /// <summary>
         /// C-00 12.10 (S-04 bot series, Demolition R8 held at 105/108 for 420 s): the round's last zombie stalls where the NavMesh
         /// shows a way (here a pen of four walls the NavMesh does not know, 14 m from the player). It must not take the wait state —
         /// the last bodies have no crowd to wait behind — so the stuck watchdog sees it: a recovery, then the removal, and the round
