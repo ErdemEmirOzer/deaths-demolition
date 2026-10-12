@@ -1027,6 +1027,142 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        // ------------------------------------------------------------------ B6 awakening alternatives
+
+        [Test]
+        public void Uyanis_YikimHalkasi_HerDorduncuTetikSekizliTamTur()
+        {
+            TreeStats s = TreeStats.Neutral;
+            s.RingEvery = 4;
+            s.RingShots = 8;
+            s.RingShare = 0.5f;
+            Use(s);
+
+            TreeVolleyPlan plan;
+            for (int i = 0; i < 3; i++)
+            {
+                TreeHooks.PlanVolley(Ar, 1, out plan);
+                Assert.AreEqual(1, plan.Count, "tetik " + (i + 1) + ": tek mermi");
+            }
+
+            TreeHooks.PlanVolley(Ar, 1, out plan);
+            Assert.AreEqual(8, plan.Count, "4. tetik: 8'li halka");
+            Assert.AreEqual(-22.5f, plan.YawDegrees(0), 1e-3f, "ana atış merkeze en yakın");
+            Assert.AreEqual(22.5f, plan.YawDegrees(1), 1e-3f);
+            Assert.AreEqual(-157.5f, plan.YawDegrees(6), 1e-3f);
+            Assert.AreEqual(157.5f, plan.YawDegrees(7), 1e-3f, "45° aralık, tam tur");
+            Assert.AreEqual(1f, plan.DamageScale(0));
+            Assert.AreEqual(0.5f, plan.DamageScale(1), 1e-5f, "halka mermisi %50");
+            TreeHooks.PlanVolley(Ar, 1, out plan);
+            Assert.AreEqual(1, plan.Count, "5. tetik yine tek");
+        }
+
+        [Test]
+        public void Uyanis_MermiCesmesi_OldurmeSarjoruDoldururVeHasarUcSaniye()
+        {
+            TreeStats s = TreeStats.Neutral;
+            s.FountainChance = 1f;
+            s.FountainDamage = 1.15f;
+            s.FountainSeconds = 3f;
+            Use(s);
+
+            float carry = 0f;
+            Assert.AreEqual(0, TreeHooks.AutoReloadTick(0.016f, 0f, 20, 30, ref carry), "öldürme yokken dolum yok");
+            TreeHooks.OnKill(1f);
+            Assert.AreEqual(20, TreeHooks.AutoReloadTick(0.016f, 0f, 20, 30, ref carry), "bütün şarjör bir kez");
+            Assert.AreEqual(0, TreeHooks.AutoReloadTick(0.016f, 0f, 20, 30, ref carry), "tek dolum");
+            Assert.AreEqual(1.15f, TreeHooks.ShotDamageScale(Ar, 0f, 2f, 0, 30, 30), 1e-5f);
+            Assert.AreEqual(1f, TreeHooks.ShotDamageScale(Ar, 0f, 4.1f, 0, 30, 30), 1e-5f, "3 sn sonra biter");
+
+            s.FountainChance = 0.03f;
+            Use(s);
+            TreeHooks.ResetRunState();
+            int refills = 0;
+            for (int i = 0; i < 10000; i++)
+            {
+                TreeHooks.OnKill(10f + i);
+                carry = 0f;
+                if (TreeHooks.AutoReloadTick(0.016f, 0f, 1, 30, ref carry) > 0) refills++;
+            }
+
+            Assert.That(refills / 10000f, NUnit.Framework.Is.InRange(0.02f, 0.04f), "%3 şans");
+        }
+
+        [Test]
+        public void Uyanis_GozKirpmaAtesi_OldurmeVeKacinmaSonrasiBirSaniyeIkiKat()
+        {
+            TreeStats s = TreeStats.Neutral;
+            s.BlinkRpm = 2f;
+            s.BlinkSeconds = 1f;
+            Use(s);
+
+            Assert.AreEqual(1f, TreeHooks.FireRateScale(Ar, 0f, 1f), 1e-5f);
+            TreeHooks.OnKill(1f);
+            Assert.AreEqual(2f, TreeHooks.FireRateScale(Ar, 0f, 1.5f), 1e-5f, "600 → 1 200 rpm");
+            Assert.AreEqual(1f, TreeHooks.FireRateScale(Ar, 0f, 2.1f), 1e-5f, "1 sn sonra biter");
+
+            s.DodgeChance = 0.3f;
+            Use(s);
+            TreeShieldState st = TreeShieldState.Create(5u);
+            float t = 100f;
+            while (TreeHooks.IncomingDamage(10f, t, 100f, 100f, ref st).Outcome != TreeHitOutcome.Dodged) t += 1f;
+            Assert.AreEqual(2f, TreeHooks.FireRateScale(Ar, 0f, t + 0.5f), 1e-5f, "kaçınma da açar");
+        }
+
+        [Test]
+        public void Uyanis_AltinYagmuru_HerBinAltindaOnSaniye()
+        {
+            TreeStats s = TreeStats.Neutral;
+            s.RainGoldStep = 1000;
+            s.RainDamage = 1.3f;
+            s.RainSeconds = 10f;
+            Use(s);
+
+            TreeHooks.OnGoldSpent(2500, 1f);
+            Assert.AreEqual(1f, TreeHooks.ShotDamageScale(Ar, 0f, 1.5f, 0, 30, 30), 1e-5f, "düğümden önceki harcama yağdırmaz");
+            TreeHooks.OnGoldSpent(3499, 2f);
+            Assert.AreEqual(1f, TreeHooks.ShotDamageScale(Ar, 0f, 2.5f, 0, 30, 30), 1e-5f);
+            TreeHooks.OnGoldSpent(3500, 3f);
+            Assert.AreEqual(1.3f, TreeHooks.ShotDamageScale(Ar, 0f, 5f, 0, 30, 30), 1e-5f, "+%30");
+            Assert.AreEqual(1f, TreeHooks.ShotDamageScale(Ar, 0f, 13.1f, 0, 30, 30), 1e-5f, "10 sn");
+            TreeHooks.OnGoldSpent(5600, 20f);
+            Assert.AreEqual(1.3f, TreeHooks.ShotDamageScale(Ar, 0f, 29.9f, 0, 30, 30), 1e-5f, "iki adım: süre tazelenir, toplanmaz");
+            Assert.AreEqual(1f, TreeHooks.ShotDamageScale(Ar, 0f, 30.1f, 0, 30, 30), 1e-5f);
+        }
+
+        [Test]
+        public void Uyanis_AnkaKusu_KosudaBirKezAtesPatlamasiVeOtuzYuzdeCan()
+        {
+            TreeStats s = TreeStats.Neutral;
+            s.WeaponPower = 100f;
+            s.PhoenixRadius = 6f;
+            s.PhoenixHealthShare = 0.3f;
+            s.PhoenixShare = 1.5f;
+            s.PhoenixSeconds = 2f;
+            Use(s);
+            try
+            {
+                TreeShieldState st = TreeShieldState.Create(1u);
+                TreeHitResult hit = TreeHooks.IncomingDamage(50f, 1f, 20f, 100f, ref st);
+                Assert.AreEqual(TreeHitOutcome.Undying, hit.Outcome);
+                Assert.AreEqual(30f, hit.HealthFloor, 1e-4f, "%30 canla kalkış");
+                Assert.AreEqual(1, Count(TreeProcKind.UndyingOath));
+                Assert.AreEqual(6f, _procs[_procs.Count - 1].Radius, 1e-5f, "6 m ateş patlaması anı");
+                Assert.AreEqual(1, TreeSystemsRunner.PhoenixBlasts);
+                Assert.AreEqual(TreeHitOutcome.Invulnerable, TreeHooks.IncomingDamage(80f, 2.9f, 30f, 100f, ref st).Outcome, "2 sn dokunulmaz");
+
+                TreeHooks.OnRoundStarted(2);
+                hit = TreeHooks.IncomingDamage(80f, 5f, 30f, 100f, ref st);
+                Assert.AreEqual(TreeHitOutcome.None, hit.Outcome, "koşuda bir kez: yeni round yenilemez");
+                Assert.AreEqual(80f, hit.Damage);
+                Assert.AreEqual(1, TreeSystemsRunner.PhoenixBlasts);
+            }
+            finally
+            {
+                TreeSystemsRunner.Reset();   // the blast sits in the static queue: leave nothing for the next fixture
+            }
+        }
+
         [Test]
         public void SicakYol_AyirmaYok()
         {

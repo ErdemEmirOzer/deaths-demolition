@@ -217,6 +217,24 @@ namespace DD.Prototype.Rounds
         /// ricochet search (Bouncing Storm 15°, Seeker Swarm 25°, Pinball Storm 20°) — S-02 12.10.</summary>
         public float ExtraShotSeekDegrees;
 
+        // ---------------------------------------------------------------- awakening alternative capstones (GD-TREE §3, B6)
+        /// <summary>Ring of Ruin: every Nth pull is a 360° ring of this many shots at this damage share (0 = off).</summary>
+        public int RingEvery, RingShots;
+        public float RingShare;
+        /// <summary>Ammo Fountain: a kill refills the magazine at this chance and the next seconds hit this × harder.</summary>
+        public float FountainChance, FountainDamage, FountainSeconds;
+        /// <summary>Blink Fire: a kill or a dodge doubles the fire rate (this ×) for these seconds.</summary>
+        public float BlinkRpm, BlinkSeconds;
+        /// <summary>Elemental Avatar: every cooldown the player becomes the element for seconds; each hit then pulses radius / share.</summary>
+        public float AvatarCooldown, AvatarSeconds, AvatarRadius, AvatarShare;
+        /// <summary>Event Horizon: a small black hole orbits the player (radius, damage share per second, orbit distance).</summary>
+        public float HorizonRadius, HorizonShare, HorizonOrbit;
+        /// <summary>Phoenix: once per RUN the killing blow becomes a fire blast (radius, share × SG) and a rise at this health share.</summary>
+        public float PhoenixRadius, PhoenixShare, PhoenixHealthShare, PhoenixSeconds;
+        /// <summary>Golden Rain: every this much gold spent, the next seconds hit this × harder.</summary>
+        public int RainGoldStep;
+        public float RainDamage, RainSeconds;
+
         public int BranchTier(TreeBranch branch) => (BranchTiers >> ((int)branch * 3)) & 7;
 
         public void SetBranchTier(TreeBranch branch, int tier)

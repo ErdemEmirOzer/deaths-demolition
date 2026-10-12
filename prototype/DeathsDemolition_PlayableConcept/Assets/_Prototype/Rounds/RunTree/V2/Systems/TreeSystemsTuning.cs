@@ -83,5 +83,9 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-104 guard waves (Stone Guardian shield break, Undying Oath): how far beyond the body the push aims, its hold
         /// and its speed (PrototypeOnly tuning; the radii and stun come from the nodes).</summary>
         public const float GuardWavePushDistance = 3f, GuardWavePushSeconds = 0.3f, GuardWavePushSpeed = 9f;
+
+        /// <summary>WP-104 B6 awakening alternatives: Elemental Avatar's per-hit pulse throttle (s); Event Horizon's orbit speed
+        /// (rad/s, one turn ≈ 5 s) and its pull as a share of the hole's pull speed (a small hole).</summary>
+        public const float AvatarPulseSeconds = 0.2f, HorizonAngularSpeed = 1.25f, HorizonPullShare = 0.6f;
 }
 }

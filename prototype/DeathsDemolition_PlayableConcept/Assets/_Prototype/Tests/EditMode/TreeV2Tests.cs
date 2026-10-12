@@ -140,15 +140,19 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(_tree.TryBuy(Idx("kx_chain")), "B2b lists S-04's Chain Reaction (B3, wired on main)");
             Assert.AreEqual(TreeNodeState.Available, _tree.StateOf(Idx("ec_gold1")), "B1 wires Coin Sense");
 
-            // An Awakening alternative capstone stays pending until S-04 wires its effect (S-04 updates this when it does).
+            // WP-104 B6: every catalog node is live now - the Awakening alternative capstones included.
+            foreach (TreeNodeDefV2 n in TreeCatalogV2.Document.nodes) Assert.IsTrue(TreeLiveV2.IsLive(n.id), n.id + " live");
+            Assert.AreEqual(TreeCatalogV2.Document.nodes.Length, TreeLiveV2.LiveCount, "the live list names only catalog nodes");
+
             var aw = TreeAwakening.None;
             aw.AltCapstones = 1 << (int)TreeBranch.Shot;
             _tree = new RunTreeV2();
             Begin(awakening: aw);
+            Give(5000);
             foreach (string id in new[] { "sh_heavy", "sh_double", "sh_triple", "sh_fan" }) _tree.GrantFree(id);
             _tree.Open(14);
-            Assert.AreEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("aw_alt_sh")), "no hook reads the Shot alternative capstone yet");
-            Assert.IsFalse(_tree.TryBuy(Idx("aw_alt_sh")));
+            Assert.AreNotEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("aw_alt_sh")), "B6 wires Ring of Ruin");
+            Assert.IsTrue(_tree.TryBuy(Idx("aw_alt_sh")));
         }
 
         [Test]

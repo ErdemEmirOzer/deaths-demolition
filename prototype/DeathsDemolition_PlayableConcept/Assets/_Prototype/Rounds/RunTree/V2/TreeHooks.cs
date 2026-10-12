@@ -205,11 +205,18 @@ namespace DD.Prototype.Rounds
             public float LastShotTime;
             public float SustainStart;
             public Vector3 LastMuzzle;
+            // B6 awakening alternatives
+            public int PullCount;
+            public bool FountainRefill;
+            public float FountainUntil, BlinkUntil, RainUntil;
+            public int RainSpentMark;
+            public uint FountainRng;
         }
 
         private struct BodyState
         {
             public int UndyingUsedThisRound;
+            public bool PhoenixUsed;   // B6 Phoenix: once per RUN
             public float LeechWindowStart;
             public float LeechInWindow;
         }
@@ -244,7 +251,9 @@ namespace DD.Prototype.Rounds
 
         private static ShotState NewShotState() => new ShotState
         {
-            LastKillTime = float.NegativeInfinity, WindowUntil = float.NegativeInfinity, LastShotTime = float.NegativeInfinity, SustainStart = float.NegativeInfinity
+            LastKillTime = float.NegativeInfinity, WindowUntil = float.NegativeInfinity, LastShotTime = float.NegativeInfinity, SustainStart = float.NegativeInfinity,
+            FountainUntil = float.NegativeInfinity, BlinkUntil = float.NegativeInfinity, RainUntil = float.NegativeInfinity, RainSpentMark = -1,
+            FountainRng = 0x9E3779B9u
         };
 
         private static BodyState NewBodyState() => new BodyState { LeechWindowStart = float.NegativeInfinity };
@@ -300,6 +309,10 @@ namespace DD.Prototype.Rounds
             pellets = Math.Max(1, pellets);
             ref readonly TreeStats s = ref TreeRuntime.Current;
             int n = VolleyCountOf(s);
+            // B6 Ring of Ruin (awakening, Shot V): every Nth pull is a 360° ring of RingShots at RingShare (the budget caps still hold).
+            s_shot.PullCount++;
+            bool ring = s.RingEvery > 0 && s.RingShots > 1 && s_shot.PullCount % s.RingEvery == 0;
+            if (ring) n = Math.Max(n, s.RingShots);
             if (Shapes(s, weapon, n)) TreeEvents.CountShapedShot();   // S-10 FINAL perf cell: proof the measured pulls ran the tree
             if (n <= 1)
             {
@@ -316,7 +329,7 @@ namespace DD.Prototype.Rounds
 
                 int count = Math.Min(n, budget);
                 int perVolley = Math.Max(1, Math.Min(pellets, budget / count));
-                float extra = Mathf.Max(0f, s.ExtraShotDamage);
+                float extra = ring ? Mathf.Max(0f, s.RingShare) : Mathf.Max(0f, s.ExtraShotDamage);
                 float wanted = pellets * (1f + (n - 1) * extra);
                 float fired = perVolley * (1f + (count - 1) * extra);
                 float merge = fired > 0f ? Mathf.Max(1f, wanted / fired) : 1f;
@@ -325,7 +338,7 @@ namespace DD.Prototype.Rounds
                     Count = count,
                     PelletsPerVolley = perVolley,
                     ExtraDamage = extra,
-                    ArcDegrees = Mathf.Max(0f, s.FanArcDegrees),
+                    ArcDegrees = ring ? 360f * (count - 1) / count : Mathf.Max(0f, s.FanArcDegrees),   // B6 ring: evenly round the player
                     MergedDamageScale = merge,
                     MergedSizeScale = merge > 1f + Epsilon ? Mathf.Min(MergedSizeMax, Mathf.Sqrt(merge)) : 1f,
                     Marked = ChaosShotArmed(in s)
@@ -450,6 +463,8 @@ namespace DD.Prototype.Rounds
                 float scale = s.DamageScale * s.HearthDamageScale * s.FullAutoDamageScale;
                 scale *= MidasScale(s, carriedGold);
                 scale *= TailScale(s, ammoLeft, magazineSize);
+                if (now < s_shot.FountainUntil) scale *= Mathf.Max(1f, s.FountainDamage);   // B6 Ammo Fountain
+                if (now < s_shot.RainUntil) scale *= Mathf.Max(1f, s.RainDamage);           // B6 Golden Rain
                 RateScale(s, weapon, now, out float overflow);
                 return scale * overflow;
             }
@@ -540,7 +555,8 @@ namespace DD.Prototype.Rounds
         private static float RateScale(in TreeStats s, in TreeWeaponProfile weapon, float now, out float overflow)
         {
             overflow = 1f;
-            float tree = s.FireRateScale * OverclockScale(s, now) * (InWindow(now) ? Mathf.Max(1f, s.EndlessFireRateScale) : 1f);
+            float tree = s.FireRateScale * OverclockScale(s, now) * (InWindow(now) ? Mathf.Max(1f, s.EndlessFireRateScale) : 1f)
+                         * (now < s_shot.BlinkUntil ? Mathf.Max(1f, s.BlinkRpm) : 1f);   // B6 Blink Fire
             if (tree > TreeGuardrails.TreeFireRateScaleMax)
             {
                 overflow *= tree / TreeGuardrails.TreeFireRateScaleMax;
@@ -712,6 +728,13 @@ namespace DD.Prototype.Rounds
         public static int AutoReloadTick(float dt, float sinceShot, int missing, int magazineSize, ref float carry)
         {
             ref readonly TreeStats s = ref TreeRuntime.Current;
+            if (s_shot.FountainRefill && missing > 0)
+            {
+                s_shot.FountainRefill = false;   // B6 Ammo Fountain: the whole magazine, once
+                carry = 0f;
+                return missing;
+            }
+
             if (s.AutoReloadIdleSeconds <= 0f || s.AutoReloadPerSecond <= 0f || missing <= 0 || sinceShot < s.AutoReloadIdleSeconds)
             {
                 carry = 0f;
@@ -753,6 +776,13 @@ namespace DD.Prototype.Rounds
         {
             s_shot.LastKillTime = now;
             ref readonly TreeStats s = ref TreeRuntime.Current;
+            if (s.BlinkSeconds > 0f) s_shot.BlinkUntil = now + s.BlinkSeconds;   // B6 Blink Fire
+            if (s.FountainChance > 0f && Next01(ref s_shot.FountainRng) < s.FountainChance)
+            {
+                s_shot.FountainRefill = true;   // B6 Ammo Fountain
+                s_shot.FountainUntil = now + Mathf.Max(0f, s.FountainSeconds);
+            }
+
             if (s.EndlessKills <= 0 || s.EndlessSeconds <= 0f) return;
             using (TreeMarkers.HitHooks.Auto())
             {
@@ -768,7 +798,30 @@ namespace DD.Prototype.Rounds
         }
 
         /// <summary>Per frame (WC.Update): closes the Endless window on time (raises EndlessWindowClose even when nobody fires).</summary>
-        public static void Tick(float now) => RefreshWindow(now);
+        public static void Tick(float now)
+        {
+            RefreshWindow(now);
+            if (TreeRuntime.Current.RainGoldStep <= 0) return;
+            DD.Prototype.Economy.GoldService gold = DD.Prototype.Economy.GoldService.Instance;
+            if (gold != null && gold.Wallet != null) OnGoldSpent(gold.Wallet.TotalSpent, now);
+        }
+
+        /// <summary>
+        /// Golden Rain (awakening, Economy IV): the run wallet's total spend (tree, rerolls, wall buys); every
+        /// <see cref="TreeStats.RainGoldStep"/> spent opens <see cref="TreeStats.RainSeconds"/> of ×<see cref="TreeStats.RainDamage"/>.
+        /// The first call only marks (gold spent before the node does not rain). Public for tests.
+        /// </summary>
+        public static void OnGoldSpent(int totalSpent, float now)
+        {
+            ref readonly TreeStats s = ref TreeRuntime.Current;
+            if (s.RainGoldStep <= 0) return;
+            if (s_shot.RainSpentMark < 0 || totalSpent < s_shot.RainSpentMark) s_shot.RainSpentMark = totalSpent;   // first look / a new run's wallet
+            while (totalSpent - s_shot.RainSpentMark >= s.RainGoldStep)
+            {
+                s_shot.RainSpentMark += s.RainGoldStep;   // B6 Golden Rain: every step of gold spent
+                s_shot.RainUntil = now + Mathf.Max(0f, s.RainSeconds);
+            }
+        }
 
         private static bool InWindow(float now) => s_shot.WindowOpen && now < s_shot.WindowUntil;
 
@@ -858,6 +911,7 @@ namespace DD.Prototype.Rounds
                     state.GhostUntil = now + Mathf.Max(0f, s.DodgeGhostSeconds);
                     hit.Damage = 0f;
                     hit.Outcome = TreeHitOutcome.Dodged;
+                    if (s.BlinkSeconds > 0f) s_shot.BlinkUntil = now + s.BlinkSeconds;   // B6 Blink Fire
                     Raise(TreeProcKind.Dodge, point, 0f, TreeBranch.Survival, s_inHand.Id);
                     return hit;
                 }
@@ -897,6 +951,18 @@ namespace DD.Prototype.Rounds
                     hit.Outcome = TreeHitOutcome.Undying;
                     Raise(TreeProcKind.UndyingOath, point, s.UndyingPushRadius, TreeBranch.Survival, s_inHand.Id);
                     if (s.UndyingPushRadius > 0f) TreeSystemsRunner.GuardWave(point, s.UndyingPushRadius, 0f);   // Undying Oath: push wave
+                }
+                else if (hit.Damage > 0f && health - hit.Damage <= 0f && s.PhoenixRadius > 0f && !s_body.PhoenixUsed)
+                {
+                    // B6 Phoenix (awakening, Survival V): once per RUN the killing blow becomes a fire blast and a rise.
+                    s_body.PhoenixUsed = true;
+                    float floor = Mathf.Max(1f, Mathf.Clamp01(s.PhoenixHealthShare) * maxHealth);
+                    state.InvulnerableUntil = now + Mathf.Max(0f, s.PhoenixSeconds);
+                    hit.HealthFloor = floor;
+                    hit.Damage = Mathf.Max(0f, health - floor);
+                    hit.Outcome = TreeHitOutcome.Undying;
+                    Raise(TreeProcKind.UndyingOath, point, s.PhoenixRadius, TreeBranch.Survival, s_inHand.Id, s.PhoenixSeconds);
+                    TreeSystemsRunner.PhoenixBlast(point, s.PhoenixRadius, s.PhoenixShare);
                 }
 
                 return hit;

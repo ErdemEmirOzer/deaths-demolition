@@ -1497,6 +1497,21 @@
      "name": "seconds",
      "value": 10.0,
      "unit": "sec"
+    },
+    {
+     "name": "cooldown",
+     "value": 25.0,
+     "unit": "sec"
+    },
+    {
+     "name": "radius",
+     "value": 2.0,
+     "unit": "m"
+    },
+    {
+     "name": "share",
+     "value": 0.4,
+     "unit": "raw"
     }
    ],
    "icon": "element_V_elemental_avatar_uyanis.png"
@@ -1813,6 +1828,11 @@
      "name": "share",
      "value": 0.4,
      "unit": "pct"
+    },
+    {
+     "name": "orbit",
+     "value": 3.0,
+     "unit": "m"
     }
    ],
    "icon": "kaos_V_event_horizon_uyanis.png"
@@ -2094,6 +2114,16 @@
      "name": "hp",
      "value": 0.3,
      "unit": "pct"
+    },
+    {
+     "name": "share",
+     "value": 1.5,
+     "unit": "raw"
+    },
+    {
+     "name": "seconds",
+     "value": 2.0,
+     "unit": "sec"
     }
    ],
    "icon": "hayatta_kalma_V_phoenix_uyanis.png"

@@ -937,6 +937,102 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(TreeStunKind.Nuke, elite.StunKind);
         }
 
+        // ================================================================== B6 uyanış alternatifleri
+
+        [Test]
+        public void Uyanis_ElementAvatari_FormdaHerIsabetNova_KisitliVeSureli()
+        {
+            TreeStats s = Base();
+            s.Elements = TreeElement.Fire;
+            s.FireDotShare = 0.1f;
+            s.FireSeconds = 3f;
+            s.AvatarCooldown = 25f;
+            s.AvatarSeconds = 10f;
+            s.AvatarRadius = 2f;
+            s.AvatarShare = 0.4f;
+            Use(s);
+            Assert.IsTrue(TreeSystemsRunner.Needed(in s));
+            FakeBody a = Body(0f), near = Body(1.5f), far = Body(5f);
+            TreeSystemsRunner.SetAnchor(Vector3.zero);
+            Frame();
+            Assert.AreEqual(1, TreeSystemsRunner.AvatarForms);
+            Assert.IsTrue(TreeSystemsRunner.AvatarActive);
+
+            TreeSystemsRunner.OnWeaponHit(a, a.Position, Facts());
+            TreeSystemsRunner.OnWeaponHit(a, a.Position, Facts());
+            Frame();
+            Assert.AreEqual(1, TreeSystemsRunner.AvatarPulses, "0,2 sn kısıt: aynı anda ikinci nova yok");
+            Assert.AreEqual(40f * TreeStatusSystem.ElementScale(in s), near.BlastDamage, 1e-3f, "0,4 × SG");
+            Assert.IsTrue(TreeStatusSystem.IsBurning(near), "nova element durumunu verir");
+            Assert.AreEqual(0f, far.BlastDamage, "2 m dışında");
+
+            Run(0.25f);
+            TreeSystemsRunner.OnWeaponHit(a, a.Position, Facts());
+            Frame();
+            Assert.AreEqual(2, TreeSystemsRunner.AvatarPulses);
+
+            Run(10f);
+            Assert.IsFalse(TreeSystemsRunner.AvatarActive, "10 sn form");
+            TreeSystemsRunner.OnWeaponHit(a, a.Position, Facts());
+            Frame();
+            Assert.AreEqual(2, TreeSystemsRunner.AvatarPulses, "form dışında nova yok");
+            Run(15f);
+            Assert.AreEqual(2, TreeSystemsRunner.AvatarForms, "25 sn bekleme");
+        }
+
+        [Test]
+        public void Uyanis_OlayUfku_OyuncununEtrafindaDonerCekerHasarVerir_SlotDisi()
+        {
+            TreeStats s = Base();
+            s.HorizonRadius = 2f;
+            s.HorizonShare = 0.4f;
+            s.HorizonOrbit = 3f;
+            Use(s);
+            Assert.IsTrue(TreeSystemsRunner.Needed(in s));
+            FakeBody onPath = Body(3f), behind = Body(-3f);
+            Frame();
+            Assert.IsFalse(TreeGravityWells.HorizonActive, "oyuncu yokken kuyu yok");
+
+            TreeSystemsRunner.SetAnchor(Vector3.zero);
+            Frame();
+            Assert.IsTrue(TreeGravityWells.HorizonActive);
+            Assert.AreEqual(3f, TreeGravityWells.HorizonCenter.magnitude, 1e-3f, "yörünge 3 m");
+            Assert.AreEqual(1, onPath.PullCalls);
+            Assert.AreEqual(TreeGravityWells.PullSpeed(in s) * TreeSystemsTuning.HorizonPullShare, onPath.LastPullSpeed, 1e-5f, "küçük kuyu");
+            Run(0.6f);
+            Assert.AreEqual(20f, onPath.StatusDamage, 1e-3f, "0,4 × SG × 0,5 sn tik");
+            Assert.AreEqual(TreeDamageKind.Hole, onPath.LastKind);
+            Assert.AreEqual(0, behind.PullCalls, "yörüngenin öbür yanı");
+            Assert.AreEqual(0, TreeGravityWells.ActiveCount, "kara delik slotlarını tutmaz");
+
+            Vector3 before = TreeGravityWells.HorizonCenter;
+            Run(1f);
+            Assert.Greater((TreeGravityWells.HorizonCenter - before).magnitude, 0.5f, "döner");
+            TreeSystemsRunner.ClearAnchor();
+            Frame();
+            Assert.IsFalse(TreeGravityWells.HorizonActive);
+        }
+
+        [Test]
+        public void Uyanis_AnkaPatlamasi_AltiMetreAtesIttirmeTekOlay()
+        {
+            TreeStats s = Base();
+            s.PhoenixRadius = 6f;
+            Use(s);
+            Assert.IsTrue(TreeSystemsRunner.Needed(in s));
+            FakeBody near = Body(3f), far = Body(9f);
+            TreeSystemsRunner.SetAnchor(Vector3.zero);
+            int procs = TreeEvents.ProcCount;
+            Assert.IsTrue(TreeSystemsRunner.PhoenixBlast(Vector3.zero, 6f, 1.5f));
+            Frame();
+            Assert.AreEqual(150f, near.BlastDamage, 1e-3f, "1,5 × SG");
+            Assert.AreEqual(1, near.PullCalls, "itilir");
+            Assert.AreEqual(0f, far.BlastDamage);
+            Assert.AreEqual(procs, TreeEvents.ProcCount, "anı kanca yükseltti: ikinci olay yok");
+            Assert.AreEqual(1, TreeSystemsRunner.PhoenixBlasts);
+            Assert.IsFalse(TreeSystemsRunner.PhoenixBlast(Vector3.zero, 0f, 1.5f));
+        }
+
         // ================================================================== yardımcılar
 
         private void Frame(float dt = Step)

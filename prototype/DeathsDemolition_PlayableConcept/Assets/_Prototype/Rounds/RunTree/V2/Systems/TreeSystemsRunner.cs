@@ -54,6 +54,7 @@ namespace DD.Prototype.Rounds
         private static Vector3 s_anchor;
         private static bool s_hasAnchor;
         private static int s_elementTurn;
+        private static float s_avatarUntil = float.NegativeInfinity, s_avatarReadyAt, s_avatarNextPulse;   // B6 Elemental Avatar
         private static readonly float[] s_shockWindow = new float[TreeGuardrails.ShockEventsPerSecond];
         private static int s_shockNext;
 
@@ -76,6 +77,12 @@ namespace DD.Prototype.Rounds
         public static int Bells { get; private set; }
         public static int ChainBlastsQueued { get; private set; }
         public static int DeathsSeen { get; private set; }
+        public static int AvatarForms { get; private set; }
+        public static int AvatarPulses { get; private set; }
+        public static int PhoenixBlasts { get; private set; }
+
+        /// <summary>WP-104 B6 Elemental Avatar: the element form is on (S-07 / S-09 may show it).</summary>
+        public static bool AvatarActive => Now < s_avatarUntil;
         public static bool NukeArmed => s_nukeArmed;
         public static float NukeCounter => s_nukeCounter;
 
@@ -100,6 +107,8 @@ namespace DD.Prototype.Rounds
 
             TreeStatusSystem.Tick(deltaTime, now);
             TreeGravityWells.Tick(deltaTime, now);
+            TreeGravityWells.TickHorizon(deltaTime, now, s_anchor, s_hasAnchor);   // B6 Event Horizon
+            TickAvatar(now);
             TreeBlastQueue.FlushPresented(now);
             TreeAreaPool.Tick(deltaTime);
             TreeBlastQueue.FlushQuiet(now);
@@ -129,6 +138,12 @@ namespace DD.Prototype.Rounds
             Bells = 0;
             ChainBlastsQueued = 0;
             DeathsSeen = 0;
+            s_avatarUntil = float.NegativeInfinity;
+            s_avatarReadyAt = 0f;
+            s_avatarNextPulse = 0f;
+            AvatarForms = 0;
+            AvatarPulses = 0;
+            PhoenixBlasts = 0;
 
             TreeStatusSystem.Reset();
             TreeAreaPool.Reset();
@@ -154,6 +169,24 @@ namespace DD.Prototype.Rounds
                 StunKind = TreeStunKind.Bulwark, PushSpeed = TreeSystemsTuning.GuardWavePushSpeed, NoProc = true
             };
             return TreeBlastQueue.Enqueue(in r);   // the driver is up: Needed() includes the guard-wave nodes, the first weapon hit binds
+        }
+
+        /// <summary>
+        /// WP-104 B6 Phoenix (awakening, Survival V): the saving blow's fire blast around the player — radius, share × SG, Fire
+        /// applied (bodies ignite). The hook already raised the UndyingOath moment with this radius, so the blast raises nothing.
+        /// </summary>
+        public static bool PhoenixBlast(Vector3 point, float radius, float share)
+        {
+            if (radius <= 0f) return false;
+            ref readonly TreeStats s = ref TreeRuntime.Current;
+            var r = new TreeBlastRequest
+            {
+                Kind = TreeProcKind.UndyingOath, Point = s_hasAnchor ? s_anchor : point, Radius = radius, Damage = Mathf.Max(0f, share) * s.WeaponPower,
+                Element = TreeElement.Fire, ApplyElementStates = true, PushSpeed = TreeSystemsTuning.GuardWavePushSpeed, NoProc = true
+            };
+            if (!TreeBlastQueue.Enqueue(in r)) return false;
+            PhoenixBlasts++;
+            return true;
         }
 
         /// <summary>The player position for Element Nova / Doomsday Bell (the driver sets it every frame).</summary>
@@ -188,6 +221,21 @@ namespace DD.Prototype.Rounds
                 {
                     TreeStatusSystem.AddVenomStacks(body, TreeSystemsTuning.ToxicRailStacks);   // GD sy_toxic_rail
                     applied |= TreeElement.Venom;
+                }
+            }
+
+            if (s.AvatarRadius > 0f && Now < s_avatarUntil && Now >= s_avatarNextPulse - 1e-4f)
+            {
+                // B6 Elemental Avatar: in the form every hit is a small nova (throttled: AvatarPulseSeconds)
+                var r = new TreeBlastRequest
+                {
+                    Kind = TreeProcKind.ElementNova, Point = point, Radius = s.AvatarRadius,
+                    Damage = s.AvatarShare * s.WeaponPower * TreeStatusSystem.ElementScale(in s), Element = s.Elements, ApplyElementStates = true
+                };
+                if (TreeBlastQueue.Enqueue(in r))
+                {
+                    AvatarPulses++;
+                    s_avatarNextPulse = Now + TreeSystemsTuning.AvatarPulseSeconds;
                 }
             }
 
@@ -273,7 +321,8 @@ namespace DD.Prototype.Rounds
         public static bool Needed(in TreeStats s) =>
             s.Elements != TreeElement.None || s.Core != TreeChaosCore.None || s.ChainChance > 0f || s.ExplosiveRadius > 0f
             || s.NovaCooldown > 0f || s.BellCooldown > 0f || s.CritRingRadius > 0f || (s.Synergies & TreeSynergy.Barrage) != 0
-            || s.BulwarkRadius > 0f || s.UndyingPushRadius > 0f;
+            || s.BulwarkRadius > 0f || s.UndyingPushRadius > 0f
+            || s.AvatarCooldown > 0f || s.HorizonRadius > 0f || s.PhoenixRadius > 0f;   // B6 awakening alternatives
 
         /// <summary>Chance that a death of generation <paramref name="deathDepth"/> blasts: ChainChance × falloff^depth (Thunder Cascade ×0.7).</summary>
         public static float ChainChanceAt(in TreeStats s, int deathDepth)
@@ -315,6 +364,18 @@ namespace DD.Prototype.Rounds
             if (facts.Crit && (s.Synergies & TreeSynergy.CriticalMeltdown) != 0) weight *= TreeSystemsTuning.MeltdownCritCount;
             s_nukeCounter += weight;
             if (s_nukeCounter + 1e-4f >= NukeHitsNeeded(in s, facts.PullsPerSecond)) s_nukeArmed = true;
+        }
+
+        /// <summary>B6 Elemental Avatar: every AvatarCooldown the player takes the element form for AvatarSeconds.</summary>
+        private static void TickAvatar(float now)
+        {
+            ref readonly TreeStats s = ref TreeRuntime.Current;
+            if (s.AvatarCooldown <= 0f || s.AvatarSeconds <= 0f || now < s_avatarReadyAt) return;
+            s_avatarUntil = now + s.AvatarSeconds;
+            s_avatarReadyAt = now + Mathf.Max(s.AvatarSeconds, s.AvatarCooldown);
+            s_avatarNextPulse = now;
+            AvatarForms++;
+            Raise(TreeProcKind.ElementNova, s_hasAnchor ? s_anchor : Vector3.zero, s.AvatarRadius, 0f, s.Elements, TreeBranch.Element, TreeSynergy.None, null, 0, s.AvatarSeconds);
         }
 
         private static void TickAnchorPulses(float now)

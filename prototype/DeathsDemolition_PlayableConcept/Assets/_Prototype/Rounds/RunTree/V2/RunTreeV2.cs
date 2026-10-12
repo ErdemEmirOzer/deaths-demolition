@@ -589,8 +589,12 @@ namespace DD.Prototype.Rounds
             "sv_bulwark", "sv_cap", "mg_reload3",
             // B2b (S-02): Rail Line's pierce stagger (S-03 ApplyTreeStagger), Bouncing Storm's bounce seek, Seeker Swarm's homing shots;
             // and S-04's B3 systems already wired on main: Chain Reaction (TreeZombieBinding → OnBodyDied), Element Nova and Doomsday
-            // Bell (the driver's player anchor every frame). Only the Awakening alternative capstones (aw_alt_*) stay pending.
-            "sh_rail", "sh_storm", "sh_cap", "kx_chain", "el_cap", "kx_cap"
+            // Bell (the driver's player anchor every frame).
+            "sh_rail", "sh_storm", "sh_cap", "kx_chain", "el_cap", "kx_cap",
+            // WP-104 B6 (S-04): the seven Awakening alternative capstones - Ring of Ruin (PlanVolley), Ammo Fountain (OnKill +
+            // AutoReloadTick + ShotDamageScale), Blink Fire (OnKill / dodge + RateScale), Elemental Avatar (runner + OnWeaponHit),
+            // Event Horizon (TreeGravityWells.TickHorizon), Phoenix (IncomingDamage + PhoenixBlast), Golden Rain (Tick / OnGoldSpent).
+            "aw_alt_sh", "aw_alt_mg", "aw_alt_sp", "aw_alt_el", "aw_alt_kx", "aw_alt_sv", "aw_alt_ec"
         };
 
         /// <summary>Dev presets / F1 / tests: every node sells (the effect may still be a no-op until its hook lands).</summary>

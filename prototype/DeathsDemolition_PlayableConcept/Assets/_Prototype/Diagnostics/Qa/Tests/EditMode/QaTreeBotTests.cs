@@ -63,8 +63,9 @@ namespace DD.Prototype.Qa.Tests.EditMode
             shop2.TreeV2.Begin(2, TreeMode.Normal, wallet2, weapon, TreeAwakening.None);
             shop2.TreeV2.Open(1);
             QaTreeBot.BuyRound(shop2, 1, 26, null);
-            Assert.IsFalse(shop2.TreeV2.Owns("sh_heavy"), "not live yet: never bought");
-            Assert.IsTrue(shop2.TreeV2.Owns("ec_gold1"), "live since B1: the fill buys it");
+            // WP-104 B6: every catalog node is live, so without TreatAllAsLive the bot follows the same line.
+            Assert.IsTrue(shop2.TreeV2.Owns("sh_heavy"), "live (B2): the line start is bought");
+            Assert.IsTrue(shop2.TreeV2.Owns("sp_rate1"), "live (B2): the second on the line too");
         }
 
         [Test]

@@ -411,6 +411,44 @@ namespace DD.Prototype.Rounds
                     s.UndyingPushRadius = n.Arg("radius", 0f);
                     break;
 
+                // ---------------------------------------------------------------- awakening alternatives (B6)
+                case "aw_alt_sh":
+                    s.RingEvery = (int)n.Arg("every", 0f);
+                    s.RingShots = (int)n.Arg("ring", 0f);
+                    s.RingShare = n.Arg("share", 0f);
+                    break;
+                case "aw_alt_mg":
+                    s.FountainChance = n.Arg("chance", 0f);
+                    s.FountainDamage = n.Arg("dmg", 1f);
+                    s.FountainSeconds = n.Arg("seconds", 0f);
+                    break;
+                case "aw_alt_sp":
+                    s.BlinkRpm = n.Arg("rpm", 1f);
+                    s.BlinkSeconds = n.Arg("seconds", 0f);
+                    break;
+                case "aw_alt_el":
+                    s.AvatarSeconds = n.Arg("seconds", 0f);
+                    s.AvatarCooldown = n.Arg("cooldown", 0f);
+                    s.AvatarRadius = n.Arg("radius", 0f);
+                    s.AvatarShare = n.Arg("share", 0f);
+                    break;
+                case "aw_alt_kx":
+                    s.HorizonRadius = n.Arg("radius", 0f);
+                    s.HorizonShare = n.Arg("share", 0f);
+                    s.HorizonOrbit = n.Arg("orbit", 3f);
+                    break;
+                case "aw_alt_sv":
+                    s.PhoenixRadius = n.Arg("radius", 0f);
+                    s.PhoenixHealthShare = n.Arg("hp", 0f);
+                    s.PhoenixShare = n.Arg("share", 0f);
+                    s.PhoenixSeconds = n.Arg("seconds", 0f);
+                    break;
+                case "aw_alt_ec":
+                    s.RainGoldStep = (int)n.Arg("per", 0f);
+                    s.RainDamage = n.Arg("dmg", 1f);
+                    s.RainSeconds = n.Arg("seconds", 0f);
+                    break;
+
                 // ---------------------------------------------------------------- Economy
                 case "ec_gold1":
                 case "ec_gold2":

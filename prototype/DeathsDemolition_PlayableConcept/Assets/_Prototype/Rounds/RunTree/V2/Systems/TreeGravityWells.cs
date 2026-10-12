@@ -40,6 +40,15 @@ namespace DD.Prototype.Rounds
         private static readonly float[] s_lastSeen = new float[TreeGuardrails.StatusSlots];
         private static float s_readyAt;
         private static int s_nextId;
+        // B6 Event Horizon: one small persistent well orbiting the player (outside the slots and the active cap)
+        private static bool s_horizonUp;
+        private static float s_horizonAngle, s_horizonNextPull, s_horizonNextDamage;
+        private static Vector3 s_horizonCenter;
+
+        /// <summary>WP-104 B6 Event Horizon: the orbiting well is up and where it is (S-07 follows it every frame).</summary>
+        public static bool HorizonActive => s_horizonUp;
+        public static Vector3 HorizonCenter => s_horizonCenter;
+        public static int HorizonPulls { get; private set; }
 
         public static int ActiveCount
         {
@@ -221,6 +230,66 @@ namespace DD.Prototype.Rounds
             TreeBlastQueue.Enqueue(in ice);
         }
 
+        /// <summary>
+        /// B6 Event Horizon (awakening, Chaos V): a well of HorizonRadius orbits the player at HorizonOrbit, pulls at
+        /// HorizonPullShare × the hole's pull speed (10 Hz, frame budget) and deals HorizonShare × SG per second (0.5 s ticks).
+        /// It never collapses; it goes down without an anchor (no player) or without the node.
+        /// </summary>
+        internal static void TickHorizon(float deltaTime, float now, Vector3 anchor, bool hasAnchor)
+        {
+            ref readonly TreeStats s = ref TreeRuntime.Current;
+            if (s.HorizonRadius <= 0f || !hasAnchor)
+            {
+                s_horizonUp = false;
+                return;
+            }
+
+            if (!s_horizonUp)
+            {
+                s_horizonUp = true;
+                s_horizonNextPull = now;
+                s_horizonNextDamage = now + TreeSystemsTuning.HoleDamageTickSeconds;
+                TreeSystemsRunner.Raise(TreeProcKind.BlackHoleOpen, anchor, s.HorizonRadius, 0f, TreeElement.None, TreeBranch.Chaos, TreeSynergy.None, null, 0, 0f);
+            }
+
+            s_horizonAngle = Mathf.Repeat(s_horizonAngle + deltaTime * TreeSystemsTuning.HorizonAngularSpeed, Mathf.PI * 2f);
+            float orbit = Mathf.Max(0f, s.HorizonOrbit);
+            s_horizonCenter = anchor + new Vector3(Mathf.Cos(s_horizonAngle) * orbit, 0f, Mathf.Sin(s_horizonAngle) * orbit);
+            if (now < s_horizonNextPull - Eps || !TreeTargetQuery.TryUse()) return;
+            s_horizonNextPull = now + 1f / TreeSystemsTuning.HolePullHz;
+
+            using (TreeMarkers.Gravity.Auto())
+            {
+                bool damageDue = now >= s_horizonNextDamage - Eps;
+                if (damageDue) s_horizonNextDamage += TreeSystemsTuning.HoleDamageTickSeconds;
+                float damage = s.HorizonShare * s.WeaponPower * TreeSystemsTuning.HoleDamageTickSeconds;
+                float speed = PullSpeed(in s) * TreeSystemsTuning.HorizonPullShare;
+                int n = TreeStatusSystem.Query(s_horizonCenter, s.HorizonRadius, s_targets);
+                bool owned = damageDue ? TreeDamageContext.BeginTransaction(0) : false;
+                TreeStatusSystem.BeginBatch();
+                try
+                {
+                    for (int k = 0; k < n; k++)
+                    {
+                        ITreeStatusReceiver body = s_targets[k];
+                        if (body == null || !body.IsAlive) continue;
+                        body.ApplyPull(s_horizonCenter, speed, TreeSystemsTuning.HolePullHoldSeconds);
+                        HorizonPulls++;
+                        if (damageDue && damage > 0f && body.IsAlive)
+                        {
+                            TreeDamageContext.Status(body, damage, TreeElement.None, 0, TreeDamageKind.Hole, TreeProcKind.BlackHoleOpen, s_horizonCenter);
+                        }
+                    }
+                }
+                finally
+                {
+                    TreeStatusSystem.EndBatch();
+                    TreeDamageContext.EndTransaction(owned);
+                    for (int k = 0; k < n; k++) s_targets[k] = null;
+                }
+            }
+        }
+
         /// <summary>HolePullSpeed from the build (B1b), the tuning value when the catalog gives none.</summary>
         public static float PullSpeed(in TreeStats s) => s.HolePullSpeed > 0f ? s.HolePullSpeed : TreeSystemsTuning.HolePullSpeedFallback;
 
@@ -237,6 +306,12 @@ namespace DD.Prototype.Rounds
 
             s_readyAt = 0f;
             s_nextId = 0;
+            s_horizonUp = false;
+            s_horizonAngle = 0f;
+            s_horizonNextPull = 0f;
+            s_horizonNextDamage = 0f;
+            s_horizonCenter = Vector3.zero;
+            HorizonPulls = 0;
             Opened = 0;
             Collapsed = 0;
             Refused = 0;
