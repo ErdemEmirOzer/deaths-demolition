@@ -742,6 +742,9 @@ namespace DD.Prototype.Audio
         /// <summary>R4 · AP-011 v024 fx_aura_up · TreeEvents.AuraChanged (seviye artışı)</summary>
         TreeAuraUp = 1063,
 
+        /// <summary>WP-101 (R4) · AP-011 v025 · ProjectileEvents.Impact of sr_1: the sharp layer over its Heavy impact (world or body)</summary>
+        ImpactSniperCrack = 1064,
+
         /// <summary>WP-097 K1: label only — a slapback copy of the dry Fire clip (the clip is passed explicitly, no catalog row);
         /// keeps the Reflect pool's instance count and the telemetry apart from Fire.</summary>
         WeaponSlap = 990

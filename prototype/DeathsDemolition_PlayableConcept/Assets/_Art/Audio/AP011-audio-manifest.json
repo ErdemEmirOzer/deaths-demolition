@@ -1,5 +1,5 @@
 {
- "version": "ap011-v024",
+ "version": "ap011-v025",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -3254,6 +3254,30 @@
    "provenance": "seed_audio job 4b9599cd (2.2 cr) · impact_paper"
   },
   {
+   "sound": "ImpactSniperCrack",
+   "event": "ProjectileEvents.Impact sr_1 layer (over its Heavy impact)",
+   "files": [
+    "ImpactSniperCrack_01.wav",
+    "ImpactSniperCrack_02.wav",
+    "ImpactSniperCrack_03.wav"
+   ],
+   "loop": false,
+   "lufs": -24.42,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -67.9,
+   "dcDb": -102.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v025)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "K/asset-production/AP-011/v025/final/ v025 (WP-101 user note 1, S-08 12.10): the sr_1 layer over its Heavy impact - band-limited N-wave snap + Sonniss PMSFX brick front + 80 Hz punch (-12 dB) + gravel spray, -24 LUFS-I peak-bound (sound gate K/wp-097/evidence/v025-gate-1210); PM_SB_SOURCE_16 Impact brick rock dirt gravel single hit.wav; PM_SB_SOURCE_61 Impact brick rock dirt gravel single hit.wav"
+  },
+  {
    "sound": "ImpactStone",
    "event": "SurfaceImpactStone",
    "files": [
@@ -3281,13 +3305,14 @@
    "files": [
     "ImpactV3DefaultHeavy_01.wav",
     "ImpactV3DefaultHeavy_02.wav",
-    "ImpactV3DefaultHeavy_03.wav"
+    "ImpactV3DefaultHeavy_03.wav",
+    "ImpactV3DefaultHeavy_04.wav"
    ],
    "loop": false,
    "lufs": -18.41,
-   "truePeakDb": -1.5,
+   "truePeakDb": -1.47,
    "noiseFloorDb": -120.0,
-   "dcDb": -183.4,
+   "dcDb": -83.6,
    "clipped": 0,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -3297,7 +3322,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Default × heavy calibre: v005 ImpactDefault takes"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Default × heavy calibre: v005 ImpactDefault takes · v025 (WP-101): +1 real Sonniss takes through the v018 calibre transform, levelled to the set (PM_SB_SOURCE_61 Impact brick rock dirt gravel single hit.wav)"
   },
   {
    "sound": "ImpactV3DefaultLight",
@@ -3353,11 +3378,12 @@
    "files": [
     "ImpactV3DirtHeavy_01.wav",
     "ImpactV3DirtHeavy_02.wav",
-    "ImpactV3DirtHeavy_03.wav"
+    "ImpactV3DirtHeavy_03.wav",
+    "ImpactV3DirtHeavy_04.wav"
    ],
    "loop": false,
    "lufs": -19.62,
-   "truePeakDb": -1.5,
+   "truePeakDb": -1.49,
    "noiseFloorDb": -120.0,
    "dcDb": -97.3,
    "clipped": 0,
@@ -3369,7 +3395,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Dirt × heavy calibre: impact_dirt + footstep_dirt front; gravel"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Dirt × heavy calibre: impact_dirt + footstep_dirt front; gravel · v025 (WP-101): +1 real Sonniss takes through the v018 calibre transform, levelled to the set (Casing 50BMG Dirt.wav; PM_SB_SOURCE_16 Impact brick rock dirt gravel single hit.wav)"
   },
   {
    "sound": "ImpactV3DirtLight",
@@ -3377,13 +3403,14 @@
    "files": [
     "ImpactV3DirtLight_01.wav",
     "ImpactV3DirtLight_02.wav",
-    "ImpactV3DirtLight_03.wav"
+    "ImpactV3DirtLight_03.wav",
+    "ImpactV3DirtLight_04.wav"
    ],
    "loop": false,
    "lufs": -24.17,
    "truePeakDb": -1.5,
    "noiseFloorDb": -120.0,
-   "dcDb": -113.4,
+   "dcDb": -100.7,
    "clipped": 0,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -3393,7 +3420,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Dirt × light calibre: impact_dirt + footstep_dirt front; gravel"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Dirt × light calibre: impact_dirt + footstep_dirt front; gravel · v025 (WP-101): +1 real Sonniss takes through the v018 calibre transform, levelled to the set (Casing 50BMG Dirt.wav; PM_SB_SOURCE_61 Impact brick rock dirt gravel single hit.wav)"
   },
   {
    "sound": "ImpactV3DirtMedium",
@@ -3785,7 +3812,8 @@
    "files": [
     "ImpactV3WoodHeavy_01.wav",
     "ImpactV3WoodHeavy_02.wav",
-    "ImpactV3WoodHeavy_03.wav"
+    "ImpactV3WoodHeavy_03.wav",
+    "ImpactV3WoodHeavy_04.wav"
    ],
    "loop": false,
    "lufs": -18.0,
@@ -3801,7 +3829,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Wood × heavy calibre: impact_wood + footstep_wood front; splinter tick"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Wood × heavy calibre: impact_wood + footstep_wood front; splinter tick · v025 (WP-101): +1 real Sonniss takes through the v018 calibre transform, levelled to the set (Bullet_Drop_Wood_04.wav; bullet_shell_bounce_wood2_05.wav)"
   },
   {
    "sound": "ImpactV3WoodLight",

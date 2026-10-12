@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v024+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
-  _sourceHash: 882097840ce9914626c611d4ecfc02dc55ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
+  _manifestVersion: ap011-v025+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
+  _sourceHash: 38e430466f04290a9e49bd33e046356255ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
   _entries:
   - Sound: 10
     Clips:
@@ -4204,14 +4204,17 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4d276cd35a94241198385e3cc0c1f599, type: 3}
     - {fileID: 8300000, guid: 7d876274da14e4a348d055b375c93439, type: 3}
     - {fileID: 8300000, guid: cae6ffd32280d48d990ebd89dedda7b6, type: 3}
+    - {fileID: 8300000, guid: f17936dc5a6560edd014976f42d52937, type: 3}
     Loop: 0
     Lufs: -18.41
-    TruePeakDb: -1.5
+    TruePeakDb: -1.47
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Default \xD7 heavy
-      calibre: v005 ImpactDefault takes"
+      calibre: v005 ImpactDefault takes \xB7 v025 (WP-101): +1 real Sonniss takes
+      through the v018 calibre transform, levelled to the set (PM_SB_SOURCE_61 Impact
+      brick rock dirt gravel single hit.wav)"
     NoiseFloorDb: -120
-    DcDb: -183.4
+    DcDb: -83.6
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
@@ -4300,12 +4303,15 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 39ee70df05b2f4506966799648fcb875, type: 3}
     - {fileID: 8300000, guid: 312e3a51562054018a1a48dc668e1ed0, type: 3}
     - {fileID: 8300000, guid: ccf814dd6714447af9cd224097493766, type: 3}
+    - {fileID: 8300000, guid: 36013071f1bbe096706034f2c59b4e1e, type: 3}
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Wood \xD7 heavy calibre:
-      impact_wood + footstep_wood front; splinter tick"
+      impact_wood + footstep_wood front; splinter tick \xB7 v025 (WP-101): +1 real
+      Sonniss takes through the v018 calibre transform, levelled to the set (Bullet_Drop_Wood_04.wav;
+      bullet_shell_bounce_wood2_05.wav)"
     NoiseFloorDb: -120
     DcDb: -94.6
     Clipped: 0
@@ -4460,14 +4466,17 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 56f2d8e5a0f0042af9cfcd8551464be2, type: 3}
     - {fileID: 8300000, guid: 9dcd3766301d8446483c4712c65dc39c, type: 3}
     - {fileID: 8300000, guid: 6ddad79bfa1134814966c841d0807fb7, type: 3}
+    - {fileID: 8300000, guid: c5e28f491330fc8f311db7be59f74f7c, type: 3}
     Loop: 0
     Lufs: -24.17
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Dirt \xD7 light calibre:
-      impact_dirt + footstep_dirt front; gravel"
+      impact_dirt + footstep_dirt front; gravel \xB7 v025 (WP-101): +1 real Sonniss
+      takes through the v018 calibre transform, levelled to the set (Casing 50BMG
+      Dirt.wav; PM_SB_SOURCE_61 Impact brick rock dirt gravel single hit.wav)"
     NoiseFloorDb: -120
-    DcDb: -113.4
+    DcDb: -100.7
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
@@ -4492,12 +4501,15 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0599e3de6679842818aad545f745b50e, type: 3}
     - {fileID: 8300000, guid: acf060a55a61a4923bc48ce5cc685221, type: 3}
     - {fileID: 8300000, guid: d59b4ea6027004412bb52a1683a3ee1e, type: 3}
+    - {fileID: 8300000, guid: f08ee4c0fad8cadf3766f2ad873d655a, type: 3}
     Loop: 0
     Lufs: -19.62
-    TruePeakDb: -1.5
+    TruePeakDb: -1.49
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Dirt \xD7 heavy calibre:
-      impact_dirt + footstep_dirt front; gravel"
+      impact_dirt + footstep_dirt front; gravel \xB7 v025 (WP-101): +1 real Sonniss
+      takes through the v018 calibre transform, levelled to the set (Casing 50BMG
+      Dirt.wav; PM_SB_SOURCE_16 Impact brick rock dirt gravel single hit.wav)"
     NoiseFloorDb: -120
     DcDb: -97.3
     Clipped: 0
@@ -8790,3 +8802,22 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: single take
+  - Sound: 1064
+    Clips:
+    - {fileID: 8300000, guid: 9f5d50e80e8415f7d4c66c6d095151e5, type: 3}
+    - {fileID: 8300000, guid: 23b31f713a9ee9e6c4e7c8e7f9cbea06, type: 3}
+    - {fileID: 8300000, guid: 23a1c1a995fe37e1d5e54bcdd8c3fdc8, type: 3}
+    Loop: 0
+    Lufs: -24.42
+    TruePeakDb: -1.5
+    Provenance: 'K/asset-production/AP-011/v025/final/ v025 (WP-101 user note 1,
+      S-08 12.10): the sr_1 layer over its Heavy impact - band-limited N-wave snap
+      + Sonniss PMSFX brick front + 80 Hz punch (-12 dB) + gravel spray, -24 LUFS-I
+      peak-bound (sound gate K/wp-097/evidence/v025-gate-1210); PM_SB_SOURCE_16 Impact
+      brick rock dirt gravel single hit.wav; PM_SB_SOURCE_61 Impact brick rock dirt
+      gravel single hit.wav'
+    NoiseFloorDb: -67.9
+    DcDb: -102.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v025)
