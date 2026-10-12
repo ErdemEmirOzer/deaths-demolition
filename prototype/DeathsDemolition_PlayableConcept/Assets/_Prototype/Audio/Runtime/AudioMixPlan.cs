@@ -623,6 +623,10 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.HudUltraDown: return Interface(sound, 0.70f, 60f, 0f, 1, 0.6f);
                 // ---- WP-102 (R4) · AP-011 v024 mode_* (IDS.md 1010 / 1011): menu stingers on a controllable UI voice (StartUiVoice
                 // reads this gain; a pick that moves on fades them in 150 ms). Menu only, never in a run: no duck.
+                // ---- WP-104 B4 (R4) · the tree screen's own voices through UiEvents: the same placement as TreeAudio's (Tree)
+                case AudioSoundId.TreeOpen:
+                case AudioSoundId.TreeReroll:
+                    return Tree(sound);
                 case AudioSoundId.ModeSelectHard: return Interface(sound, 0.80f, 70f, 0f, 1, 0.3f);
                 case AudioSoundId.ModeSelectDemolition: return Interface(sound, 0.85f, 72f, 0f, 1, 0.3f);
                 default: return Interface(sound, 0.5f, 50f, 0f, 2, 0.05f);

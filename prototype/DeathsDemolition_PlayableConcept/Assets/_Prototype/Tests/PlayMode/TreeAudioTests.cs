@@ -352,6 +352,16 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(aura + 2, t.PlayedOf(AudioSoundId.TreeAuraUp), "0 → 2 yükseliş");
             t.ResetRun();
             Assert.AreEqual(0, t.AuraLevel, "yeni koşu auraya 0'dan başlar");
+
+            // S-09's tree screen (UpgradeTreeV2): its open and its strip reroll speak through UiEvents (the router), not TreeAudio.
+            int calan = _d.PlayedCount;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.TreeOpened, "test");
+            Assert.AreEqual(calan + 1, _d.PlayedCount, "ağaç ekranı açılışı ses üretmedi");
+            Assert.AreEqual(AudioSoundId.TreeOpen, _d.LastPlayed);
+            yield return new WaitForSecondsRealtime(0.1f);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.TreeRerolled, "TreeStrip");
+            Assert.AreEqual(calan + 2, _d.PlayedCount, "öneri şeridi reroll'u ses üretmedi");
+            Assert.AreEqual(AudioSoundId.TreeReroll, _d.LastPlayed);
         }
 
         [Category("WP021")]

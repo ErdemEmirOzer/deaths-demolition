@@ -680,6 +680,8 @@ namespace DD.Prototype.Audio
                 case DD.Prototype.UI.UiEvent.HudThreatRearAttack: return AudioSoundId.HudThreatRear;
                 case DD.Prototype.UI.UiEvent.HudThreatStrongVersion: return AudioSoundId.HudThreatStrong;
                 case DD.Prototype.UI.UiEvent.UpgradeRerolled: return AudioSoundId.UiReroll;
+                case DD.Prototype.UI.UiEvent.TreeOpened: return AudioSoundId.TreeOpen;       // WP-104 B4 (R4): S-09's tree screen
+                case DD.Prototype.UI.UiEvent.TreeRerolled: return AudioSoundId.TreeReroll;   // its recommendation strip
                 case DD.Prototype.UI.UiEvent.UpgradeOfferLocked: return AudioSoundId.UiLock;
                 case DD.Prototype.UI.UiEvent.LevelUp: return AudioSoundId.UiLevelUp;
                 case DD.Prototype.UI.UiEvent.UnlockRevealed: return AudioSoundId.UiUnlock;

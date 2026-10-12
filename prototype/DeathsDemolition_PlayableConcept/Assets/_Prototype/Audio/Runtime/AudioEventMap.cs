@@ -338,8 +338,6 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Run, "TreeEvents.NodePurchased", AudioSoundId.TreeStamp, U, false, "the tree screen's stamp (fixed gain, no LufsOf trim)"),
             B(AudioEventSource.Run, "TreeEvents.SynergyUnlocked", AudioSoundId.TreeSynergy, U, false, "0.12 s after the stamp of the node that unlocked it"),
             B(AudioEventSource.Run, "TreeEvents.AuraChanged (level up)", AudioSoundId.TreeAuraUp, W, false, "SFX-Player, 2D; only when the level (0–3) rises; a run start resets it"),
-            B(AudioEventSource.Run, "S-09 tree screen open (no event yet)", AudioSoundId.TreeOpen, U, false, "waits for S-09's open event (RAPOR: UiEvent.TreeOpened proposal)", true),
-            B(AudioEventSource.Run, "S-09 recommendation strip reroll (no event yet)", AudioSoundId.TreeReroll, U, false, "waits for S-09's reroll event (RAPOR: UiEvent.TreeRerolled proposal)", true),
             B(AudioEventSource.Combat, "TreeEvents.Proc · ShieldUp", AudioSoundId.TreeShieldUp, W, true, "SFX-Player, near (0.2); up or refilled to full (S-04 B1)"),
             B(AudioEventSource.Combat, "TreeEvents.Proc · ShieldHit", AudioSoundId.TreeShieldHit, W, true, "SFX-Player; absorbed without breaking; ≤ 5/s, ≤ 2 alive"),
             B(AudioEventSource.Combat, "TreeEvents.Proc · Ricochet", AudioSoundId.TreeRicochet, I, true, "SFX-World at the bounce point (S-02 fire path); ≤ 6/s, ≤ 2 alive"),
@@ -402,6 +400,9 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "UiEvent.CounterRolling", AudioSoundId.UiCounterRoll, U, false, "soroban roll, controllable UI voice, stops at CounterSettled or 0.6 s (v015)"),
             B(AudioEventSource.Ui, "UiEvent.CounterSettled", AudioSoundId.UiCounterSettled, U, false, "go-stone tok as the counter lands; ends the roll (v015)"),
             B(AudioEventSource.Ui, "UiEvent.RerollHoldStarted", AudioSoundId.UiHoldRub, U, false, "U5 hold: brush rub for 600 ms on the UI voice; Confirm completes, Back (early release) fades it in 20 ms (v015)"),
+            // ---- WP-104 B4 (R4) · S-09 tree screen (UpgradeTreeV2, main d4ce7add) → AP-011 v024 tree_open / tree_reroll (IDS.md 1020 / 1023)
+            B(AudioEventSource.Ui, "UiEvent.TreeOpened", AudioSoundId.TreeOpen, U, false, "the tree screen opens: a paper scroll unrolled with a soft roller knock (AudioMixPlan.Tree placement, 0.70)"),
+            B(AudioEventSource.Ui, "UiEvent.TreeRerolled", AudioSoundId.TreeReroll, U, false, "the recommendation strip rerolls (not UpgradeRerolled, the shop's): paper slips flicked on wood (0.60)"),
             // ---- WP-102 (R4) · mode select (S-03 DifficultyService.SelectedChanged → AudioEventRouter, AP-011 v024 mode_*; IDS.md 1010 / 1011)
             B(AudioEventSource.Run, "DifficultyService.SelectedChanged → Hard", AudioSoundId.ModeSelectHard, U, false, "2 s stinger on a controllable UI voice; a pick that moves on fades it in 150 ms"),
             B(AudioEventSource.Run, "DifficultyService.SelectedChanged → Demolition", AudioSoundId.ModeSelectDemolition, U, false, "4.8 s stinger on a controllable UI voice; a pick that moves on fades it in 150 ms"),
