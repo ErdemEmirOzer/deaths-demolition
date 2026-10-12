@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using DD.Prototype.Core.Build;
 using UnityEditor;
+using UnityEditor.Build.Player;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -38,6 +39,43 @@ namespace DD.Prototype.Core.EditorTools
 
         /// <summary>Scripting define that compiles PilotPerfProbe into a non-development player.</summary>
         public const string PerfProbeDefine = "DD_PERF_PROBE";
+
+        /// <summary>
+        /// WP-099 R4 (C-00 12.10): compiles only the PLAYER scripts of a mode — no scenes, no content — so a fast gate
+        /// (tools/compile-check.sh --player) catches what the Editor compile never can: code a release or release-probe
+        /// player lacks (`#if DEVELOPMENT_BUILD || UNITY_EDITOR` is always true in the Editor). Two such files broke every
+        /// release build of main on 12.10 (QaCrowdWalkScenario, QaTreeBot).
+        ///   Unity -batchmode -nographics -projectPath … -executeMethod DD.Prototype.Core.EditorTools.DdBuild.CompilePlayerScripts
+        ///         -ddMode dev|release|release-probe [-ddOut /abs/dir] [-ddTarget mac|win64]
+        /// The compiler's own "error CS" lines go to the log; the exit code is 0 when the player assemblies were produced,
+        /// 2 when they were not, and the log carries one "[DdBuild] player scripts" line either way.
+        /// </summary>
+        public static void CompilePlayerScripts()
+        {
+            string mode = Arg(ModeFlag) ?? "release";
+            string output = Arg(OutFlag) ?? Path.Combine(Path.GetTempPath(), "dd-player-scripts-" + mode);
+            bool win = string.Equals(Arg(TargetFlag), "win64", StringComparison.OrdinalIgnoreCase);
+            if (mode != "dev" && mode != "release" && mode != ReleaseProbeMode)
+            {
+                Debug.LogError("[DdBuild] player scripts: unknown -ddMode " + mode + " (dev|release|release-probe)");
+                EditorApplication.Exit(64);
+                return;
+            }
+
+            Directory.CreateDirectory(output);
+            var settings = new ScriptCompilationSettings
+            {
+                target = win ? BuildTarget.StandaloneWindows64 : BuildTarget.StandaloneOSX,
+                group = BuildTargetGroup.Standalone,
+                options = mode == "dev" ? ScriptCompilationOptions.DevelopmentBuild : ScriptCompilationOptions.None,
+                extraScriptingDefines = mode == ReleaseProbeMode ? new[] { PerfProbeDefine } : null,
+            };
+            ScriptCompilationResult result = PlayerBuildInterface.CompilePlayerScripts(settings, output);
+            int assemblies = result.assemblies != null ? result.assemblies.Count : 0;
+            Debug.Log("[DdBuild] player scripts mode=" + mode + " target=" + settings.target + " assemblies=" + assemblies +
+                      " out=" + output + (assemblies > 0 ? " — compiled" : " — FAILED (see the error CS lines above)"));
+            EditorApplication.Exit(assemblies > 0 ? 0 : 2);
+        }
 
         public static void Build()
         {
