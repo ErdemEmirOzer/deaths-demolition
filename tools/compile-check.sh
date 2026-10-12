@@ -1,5 +1,5 @@
 #!/bin/zsh
-# WP-043C · tools/compile-check.sh [ref] [--ci-dir DIR] [--out DIR]
+# WP-043C · tools/compile-check.sh [ref] [--ci-dir DIR] [--out DIR] [--player dev|release|release-probe]
 #           tools/compile-check.sh --lease-status [--ci-dir DIR]
 #
 # Fast "does it compile" gate for the end of a multi-session integration batch (C-00 25.09: two commits that
@@ -22,17 +22,20 @@
 #   · 75 busy · 124 stalled/timed out · 64 usage · 130/143/129 INT/TERM/HUP
 set -u
 source "${0:A:h}/dd-env.sh"
-REF=""; CI_DIR="$DD_KPROJ/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0
-CC_USAGE="usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR] | compile-check.sh --lease-status [--ci-dir DIR]"
+REF=""; CI_DIR="$DD_KPROJ/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0; PLAYER=""
+CC_USAGE="usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR] [--player dev|release|release-probe] | compile-check.sh --lease-status [--ci-dir DIR]"
 while [ $# -gt 0 ]; do case "$1" in
   --ci-dir) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; CI_DIR="$2"; shift ;;
   --out) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; OUT="$2"; shift ;;
+  # WP-099 R4 (C-00 12.10): also compile the PLAYER scripts of a mode (DdBuild.CompilePlayerScripts) — the Editor always
+  # defines UNITY_EDITOR, so only a player compile sees code a release / release-probe player lacks
+  --player) [ $# -ge 2 ] && [[ "$2" == (dev|release|release-probe) ]] || { echo "$CC_USAGE" >&2; exit 64; }; PLAYER="$2"; shift ;;
   --lease-status) LEASE_STATUS=1 ;;
   -*) echo "$CC_USAGE" >&2; exit 64 ;;
   *) REF="$1" ;; esac; shift; done
 # M-05: read-only lease diagnosis — before any trap, slot, git or lease; nothing is written.
 if [ "$LEASE_STATUS" -eq 1 ]; then
-  [ -z "$REF" ] && [ -z "$OUT" ] || { echo "$CC_USAGE" >&2; exit 64; }
+  [ -z "$REF" ] && [ -z "$OUT" ] && [ -z "$PLAYER" ] || { echo "$CC_USAGE" >&2; exit 64; }
   dd_ci_lease_status "$CI_DIR"; exit $?
 fi
 # Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
@@ -81,7 +84,8 @@ DD_SLOT_TAG="compile-check-$$"; CI_SLOT_HELD=1
 dd_slot_acquire || exit $?
 ci_disk_ready || exit $?
 LOG="$OUT/compile.log"; T0=$(date +%s)
-dd_unity_watched "$LOG" 30 "$DD_UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$PROJ" -logFile "$LOG"
+PLAYER_ARGS=(); [ -n "$PLAYER" ] && PLAYER_ARGS=(-executeMethod DD.Prototype.Core.EditorTools.DdBuild.CompilePlayerScripts -ddMode "$PLAYER" -ddOut "$OUT/player-scripts-$PLAYER")
+dd_unity_watched "$LOG" 30 "$DD_UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$PROJ" -logFile "$LOG" "${PLAYER_ARGS[@]}"
 X=$?
 ERRS=$(grep -o 'Assets/[^(]*([0-9,]*): error CS[0-9]*: [^\r]*' "$LOG" 2>/dev/null | sort -u)
 N=$(printf '%s' "$ERRS" | grep -c . ); N=${N:-0}
@@ -93,5 +97,11 @@ if grep -q "Multiple Unity instances cannot open the same project" "$LOG" 2>/dev
 TRACE=$(grep -c "CompileScripts:\|Asset Pipeline Refresh" "$LOG" 2>/dev/null); TRACE=${TRACE:-0}
 if [ "$N" -eq 0 ] && { [ "$X" -ne 0 ] || [ "$TRACE" -eq 0 ]; }; then
   echo "RESULT: ${SHA:0:12} NOT checked — unity exit $X, compile trace lines $TRACE, no CS errors: the editor did not compile — $LOG"; exit 3; fi
-if [ "$N" -gt 0 ]; then printf '%s\n' "$ERRS" | head -8 | tee -a "$DD_TIMELINE"; echo "RESULT: ${SHA:0:12} does NOT compile ($N errors) — $LOG"; exit 2; fi
-echo "RESULT: ${SHA:0:12} compiles (errorsCS 0) — $LOG"; exit 0
+if [ "$N" -gt 0 ]; then printf '%s\n' "$ERRS" | head -8 | tee -a "$DD_TIMELINE"; echo "RESULT: ${SHA:0:12} does NOT compile${PLAYER:+ (editor + player $PLAYER)} ($N errors) — $LOG"; exit 2; fi
+if [ -n "$PLAYER" ]; then   # the player compile must have run and said so — a ref without the method is not a green
+  PL=$(grep -o "\[DdBuild\] player scripts mode=$PLAYER .*" "$LOG" 2>/dev/null | tr -d '\r' | tail -1)
+  [ -n "$PL" ] || { echo "RESULT: ${SHA:0:12} player $PLAYER NOT checked — no \"[DdBuild] player scripts\" line (a ref before DdBuild.CompilePlayerScripts?) — $LOG"; exit 3; }
+  [[ "$PL" == *"— compiled"* ]] || { echo "RESULT: ${SHA:0:12} player $PLAYER does NOT compile ($PL) — $LOG"; exit 2; }
+  dd_log "compile-check ${SHA:0:12}: $PL"
+fi
+echo "RESULT: ${SHA:0:12} compiles${PLAYER:+ (editor + player $PLAYER)} (errorsCS 0) — $LOG"; exit 0
