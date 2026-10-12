@@ -975,6 +975,27 @@ namespace DD.Prototype.Audio
             return Impact(sound, 0.62f, 20f, 4);
         }
 
+        /// <summary>
+        /// WP-101 (R4, user note 1 "ultra realistic bullets"): the sniper rifle's hit gets its own sharp layer over the Heavy impact it
+        /// shares with the shotguns and LMG2 - a supersonic-style snap, a brick front, a short punch, a gravel spray (AP-011 v025,
+        /// -24 LUFS: its sound gate kept the punch low so the Heavy's low band is not lifted). sr_1 only; one layer per shot (a pierce
+        /// through three bodies is one crack).
+        /// </summary>
+        public static bool SniperImpactLayer(DD.Prototype.Core.Config.ClassicWeaponId weapon)
+        {
+            return weapon == DD.Prototype.Core.Config.ClassicWeaponId.Sr1;
+        }
+
+        /// <summary>The sniper layer's level over the impact (dB, on its -24 LUFS file at gain 1.0); on a body it sits 3 dB under the world hit.</summary>
+        public const float SniperLayerWorldDb = 0f, SniperLayerBodyDb = -3f;
+
+        public static AudioPlacement SniperImpact()
+        {
+            AudioPlacement p = Impact(AudioSoundId.ImpactSniperCrack, 1.0f, 30f, 2);
+            p.PitchJitter = 0.04f;
+            return p;
+        }
+
         /// <summary>WP-072 B2: a player casing landing - world, near, cheap, never piles past three.</summary>
         public static AudioPlacement PlayerCasing(AudioSoundId sound)
         {

@@ -11,6 +11,8 @@ namespace DD.Prototype.Audio
     /// SurfaceImpact cue HitscanEngine raises for the same hit (one call earlier) is held for the frame and
     /// dropped when this voice replaced it; a legacy-only impact still plays at LateUpdate. Flesh / armour stay
     /// on the damage path; rockets, orbs and gel on the explosion / Special paths.
+    /// WP-101 (R4): the sniper rifle's hit adds <see cref="AudioSoundId.ImpactSniperCrack"/> over it - on the world and on a body,
+    /// once per shot (<see cref="AudioMixPlan.SniperImpactLayer"/>).
     /// </summary>
     public sealed class ImpactAudio
     {
@@ -35,6 +37,8 @@ namespace DD.Prototype.Audio
         private Vector3 _lastPoint;
         private float _lastTime = -1f;
         private float _lastRicochet = -1f;
+        private int _lastSniperTransaction = -1;
+        private float _lastSniperTime = -1f;
 
         public ImpactAudio(AudioClipLibrary library, WeaponFireAudio.PlayFunc play)
         {
@@ -49,6 +53,9 @@ namespace DD.Prototype.Audio
         public int Replaced { get; private set; }
 
         public AudioSoundId LastSound { get; private set; }
+
+        /// <summary>WP-101: sniper impact layers played (test / F1).</summary>
+        public int SniperLayers { get; private set; }
 
         /// <summary>True once the v018 set is in the catalog; until then legacy cues are never held.</summary>
         public bool Active => _library.IsProduced(AudioSoundId.ImpactV3StoneMedium);
@@ -125,6 +132,11 @@ namespace DD.Prototype.Audio
         {
             // R1-B A3: the legacy hold keys on the whole v3 set (Active); a partial catalog must not play both on one hit.
             if (!Active) return;
+            if (info.Kind == ProjectileKind.Bullet && AudioMixPlan.SniperImpactLayer(info.WeaponId))
+            {
+                PlaySniperLayer(info);
+            }
+
             if (info.Flesh || info.Armor || info.Kind == ProjectileKind.Rocket || info.Kind == ProjectileKind.Orb || info.Kind == ProjectileKind.Gel)
             {
                 return;
@@ -173,6 +185,21 @@ namespace DD.Prototype.Audio
                 _lastRicochet = now;
                 AudioPlacement r = AudioMixPlan.ProjectileImpact(AudioSoundId.Ricochet);
                 _play(r, info.Position, Mathf.Pow(10f, -8f / 20f), 15);
+            }
+        }
+
+        /// <summary>WP-101: the sr_1 crack over its impact - the first hit of a shot only (a pierce through bodies, then the wall, is one crack).</summary>
+        private void PlaySniperLayer(in ProjectileImpactInfo info)
+        {
+            float now = Time.unscaledTime;
+            if (info.TransactionId == _lastSniperTransaction && now - _lastSniperTime < 0.25f) return;
+            if (!_library.IsProduced(AudioSoundId.ImpactSniperCrack)) return;
+            _lastSniperTransaction = info.TransactionId;
+            _lastSniperTime = now;
+            float db = info.Flesh || info.Armor ? AudioMixPlan.SniperLayerBodyDb : AudioMixPlan.SniperLayerWorldDb;
+            if (_play(AudioMixPlan.SniperImpact(), info.Position, Mathf.Pow(10f, db / 20f), 30))
+            {
+                SniperLayers++;
             }
         }
     }

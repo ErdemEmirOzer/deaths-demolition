@@ -1287,6 +1287,52 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b3.impact played=" + _d.Impacts.Played + " replaced=" + _d.Impacts.Replaced + " last=" + _d.Impacts.LastSound);
         }
 
+        /// <summary>WP-101 (R4): sr_1's Heavy hit adds its own sharp layer (AP-011 v025); LMG2, the same calibre, does not.</summary>
+        [Category("WP021")]
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator DarbeV3_KeskinNisanci_KendiKatmani_AyniKalibredeDigeriYok()
+        {
+            if (!_d.Impacts.Active || !_d.Library.IsProduced(AudioSoundId.ImpactSniperCrack))
+            {
+                Assert.Fail("v018 darbe / v025 keskin nişancı kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            int katman = _d.Impacts.SniperLayers, calan = _d.Impacts.Played;
+            yield return AtesYere(DD.Prototype.Core.Config.ClassicWeaponId.Sr1, new Vector3(4f, 0f, 3f));
+            Assert.AreEqual(calan + 1, _d.Impacts.Played, "sr_1 zemine: Heavy darbe sesi");
+            StringAssert.EndsWith("Heavy", _d.Impacts.LastSound.ToString());
+            Assert.AreEqual(katman + 1, _d.Impacts.SniperLayers, "sr_1 isabeti keskin katmanı çalmadı");
+
+            yield return new WaitForSeconds(0.3f);
+            katman = _d.Impacts.SniperLayers; calan = _d.Impacts.Played;
+            yield return AtesYere(DD.Prototype.Core.Config.ClassicWeaponId.Lmg2, new Vector3(-4f, 0f, 3f));
+            Assert.AreEqual(calan + 1, _d.Impacts.Played, "LMG2 zemine: Heavy darbe sesi");
+            Assert.AreEqual(katman, _d.Impacts.SniperLayers, "aynı kalibrede LMG2 keskin nişancı katmanını çalmaz");
+            Debug.Log("[DD-TEST] wp101.impact sniper=" + _d.Impacts.SniperLayers + " played=" + _d.Impacts.Played);
+        }
+
+        /// <summary>One Heavy bullet straight down onto the ground near the rig, from the given weapon; waits for its impact and LateUpdate.</summary>
+        private IEnumerator AtesYere(DD.Prototype.Core.Config.ClassicWeaponId silah, Vector3 offset)
+        {
+            Vector3 yer = _s.Rig.transform.position + offset;
+            var shot = new DD.Prototype.Weapons.ShotRequest
+            {
+                Origin = yer + Vector3.up * 3f, Direction = Vector3.down, Damage = 1f, Range = 10f,
+                ImpactForce = DD.Prototype.Damage.DamageForce.RifleBullet, Source = DD.Prototype.Damage.DamageSourceKind.Bullet,
+                Power = DD.Prototype.Feedback.WeaponPower.Heavy, PierceDamageFalloff = 1f
+            };
+            var launch = new DD.Prototype.Weapons.ProjectileLaunch
+            {
+                WeaponId = silah, Kind = DD.Prototype.Core.Weapons.ProjectileKind.Bullet,
+                Caliber = DD.Prototype.Core.Weapons.WeaponCaliber.Heavy, Speed = 60f, Gravity = 0f, MaxRange = 10f, MaxLifetime = 2f,
+                FalloffStart = 10f, FalloffEnd = 10f, FalloffMinShare = 1f, PenetrationDamageKeep = 1f
+            };
+            DD.Prototype.Weapons.ProjectileSystem.Spawn(shot, launch);
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.ProjectileSystem.LiveCount == 0, 3f, "mermi zemine ulaşmadı");
+            yield return null;
+        }
+
         [Category("WP021")]
         [UnityTest]
         [Timeout(60000)]
