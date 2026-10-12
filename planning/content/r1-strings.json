@@ -5264,8 +5264,8 @@
     "tr": "UYANIŞ +{value} Kül"
   },
   "meta.ash_refund": {
-    "en": "+{value} Ash refunded. Every weapon now opens in every run, so the PATH's WEAPONS page is gone. Spend the Ash on the AWAKENING page.",
-    "tr": "+{value} Kül iade edildi. Artık her silah her koşuda açık, bu yüzden YOL'daki SİLAHLAR sayfası kaldırıldı. Kül'ü UYANIŞ sayfasında harcayabilirsin."
+    "en": "+{value} Ash refunded. The PATH changed: nodes you had bought are gone, and their Ash is back. Spend it on the AWAKENING page.",
+    "tr": "+{value} Kül iade edildi. YOL değişti: satın aldığın bazı düğümler kalktı ve Kül'ü geri geldi. Kül'ü UYANIŞ sayfasında harcayabilirsin."
   },
   "tree.v2.screen.hearth": {
     "en": "STOKE THE HEARTH · {value} GOLD",
