@@ -32,16 +32,33 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Sarjor_E1_E2Boylari_KademeyeGore()
         {
+            // the shipped tree's own values (S-04 B5a: mg_ext ×1.5, mg_double ×1.6, mg_drum ×2 to ×4, multiplied by the resolver)
+            TreeNodeDefV2 ext = TreeCatalogV2.Find("mg_ext"), dbl = TreeCatalogV2.Find("mg_double"), drum = TreeCatalogV2.Find("mg_drum");
+            Assert.IsNotNull(ext, "run-tree-v2'de mg_ext yok");
+            Assert.IsNotNull(dbl, "run-tree-v2'de mg_double yok");
+            Assert.IsNotNull(drum, "run-tree-v2'de mg_drum yok");
+            float e = ext.Arg("mag", 0f), d = dbl.Arg("mag", 0f), r = drum.Arg("mag", 0f), cap = drum.Arg("magMax", 6f);
+            Assert.AreEqual(e, WeaponAttachRules.ExtOnlyScale, 1e-4f, "E2 eşiği mg_ext'in kendi değerinden okunur");
+            Assert.Greater(d, 1f + 0.02f, "mg_double şarjörü büyütmüyorsa E2 kuralı yeniden düşünülmeli (S-04 dengesi)");
+            Assert.Greater(r, 1f + 0.02f, "mg_drum şarjörü büyütmüyorsa E2-L kuralı yeniden düşünülmeli (S-04 dengesi)");
+
             TreeStats s = Stats();
-            s.MagazineScale = 1.5f;
+            s.SetBranchTier(TreeBranch.Magazine, 1);
+            s.MagazineScale = e;
             Assert.AreEqual(1, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_ext → E1");
-            s.MagazineScale = 3f;
-            for (int tier = 2; tier <= 5; tier++)
-            {
-                s.SetBranchTier(TreeBranch.Magazine, tier);
-                int expect = 1 + System.Math.Min(System.Math.Max(tier - 1, 1), 3);   // II S (2) · III M (3) · IV+ L (4)
-                Assert.AreEqual(expect, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_double kademe " + tier);
-            }
+            s.SetBranchTier(TreeBranch.Magazine, 2);
+            Assert.AreEqual(1, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_ext + kademe II reload (mg_reload2) → hâlâ E1");
+            s.MagazineScale = d;
+            Assert.AreEqual(2, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_double tek başına → E2-S");
+            s.MagazineScale = e * d;
+            Assert.AreEqual(2, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_ext + mg_double → E2-S");
+            s.SetBranchTier(TreeBranch.Magazine, 3);
+            Assert.AreEqual(3, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "kademe III → E2-M");
+            s.SetBranchTier(TreeBranch.Magazine, 4);
+            s.MagazineScale = System.Math.Min(e * d * r, cap);
+            Assert.AreEqual(4, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "mg_drum (kademe IV) → E2-L");
+            s.SetBranchTier(TreeBranch.Magazine, 5);
+            Assert.AreEqual(4, WeaponAttachRules.Resolve(in s, ClassicWeaponId.AssaultRifle, TreeElement.None).Mag, "kademe V → E2-L tavanı");
         }
 
         [Test]
@@ -132,6 +149,7 @@ namespace DD.Prototype.Tests.EditMode
             s.SetBranchTier(TreeBranch.Chaos, 5);
             s.Elements = TreeElement.Shock | TreeElement.Venom;
             s.DominantElement = TreeElement.Venom;
+            WeaponAttachRules.Resolve(in s, ClassicWeaponId.Lmg2, WeaponAttachRules.DominantElement(in s));   // the catalog loads once, outside the measurement
             Assert.That((TestDelegate)(() => { s_sink = new byte[64]; }), UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: ölçüm ayırmayı görüyor");
             Assert.That((TestDelegate)(() =>
             {

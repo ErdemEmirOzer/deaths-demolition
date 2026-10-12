@@ -24,8 +24,8 @@ namespace DD.Prototype.Weapons.Attachments
     /// <summary>
     /// WP-104 B4 (S-06, C-00 12.10 · B4-PLAN-12.10 §1, AD-VISUAL §1.4 / §2, C-00 Q5) · tree stats → attachments, in one place.
     /// Pure and allocation-free; called on tree / equip / camera events only.
-    /// - Mag: rl_1 + full auto → E6 (AP-040 launcher policy; nothing else on the launcher); MagazineScale ≥ 3 (mg_double) → E2,
-    ///   size by the Magazine tier (II S / III M / IV+ L); ≥ 1.5 (mg_ext) → E1.
+    /// - Mag: rl_1 + full auto → E6 (AP-040 launcher policy; nothing else on the launcher); a MagazineScale past mg_ext's own bonus
+    ///   (so mg_double or mg_drum is owned) → E2, size by the Magazine tier (II S / III M / IV+ L); any other bonus (mg_ext) → E1.
     /// - Twin (E3): TwinBarrel, the size by the weapon (GD; C-00 Q5) — never on sg_2 (already over-under, Q3).
     /// - Ring (E5): from tier IV (AD; C-00 Q5) of Shot / Speed / Chaos, full auto off the launcher, or the endless kills;
     ///   Chaos IV+ picks the chaos ring.
@@ -35,6 +35,24 @@ namespace DD.Prototype.Weapons.Attachments
     {
         public const int RingFromTier = 4;
 
+        /// <summary>mg_ext's magazine bonus when the catalog has none (run-tree-v2 at B5a: mg_ext ×1.5, mg_double ×1.6, mg_drum ×2 to ×4).</summary>
+        public const float DefaultExtScale = 1.5f;
+
+        private const float ScaleEpsilon = 0.01f;
+
+        /// <summary>
+        /// mg_ext's own MagazineScale, read from the shipped tree (S-04 rebalances it: B5a moved mg_double ×2 → ×1.6, which a fixed
+        /// ×3 threshold missed). The resolver multiplies the magazine nodes, so a scale past this one carries mg_double or mg_drum.
+        /// </summary>
+        public static float ExtOnlyScale
+        {
+            get
+            {
+                TreeNodeDefV2 n = TreeCatalogV2.Find("mg_ext");
+                return n != null ? n.Arg("mag", DefaultExtScale) : DefaultExtScale;
+            }
+        }
+
         public static WeaponAttachSet Resolve(in TreeStats s, ClassicWeaponId id, TreeElement dominant)
         {
             var a = new WeaponAttachSet();
@@ -42,8 +60,8 @@ namespace DD.Prototype.Weapons.Attachments
             int mag = s.BranchTier(TreeBranch.Magazine), speed = s.BranchTier(TreeBranch.Speed);
             int shot = s.BranchTier(TreeBranch.Shot), chaos = s.BranchTier(TreeBranch.Chaos);
             if (rocket) a.Mag = (byte)(s.FullAuto ? 5 : 0);
-            else if (s.MagazineScale >= 2.99f) a.Mag = (byte)(1 + Mathf.Clamp(mag - 1, 1, 3));
-            else if (s.MagazineScale >= 1.49f) a.Mag = 1;
+            else if (s.MagazineScale > ExtOnlyScale + ScaleEpsilon) a.Mag = (byte)(1 + Mathf.Clamp(mag - 1, 1, 3));
+            else if (s.MagazineScale > 1f + ScaleEpsilon) a.Mag = 1;
             if (s.TwinBarrel && id != ClassicWeaponId.Sg2) a.Twin = TwinSize(id);
             if ((s.FullAuto && !rocket) || speed >= RingFromTier || shot >= RingFromTier || chaos >= RingFromTier || s.EndlessKills > 0)
             {
