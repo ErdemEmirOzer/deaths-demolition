@@ -68,6 +68,47 @@ namespace DD.Prototype.Qa.Tests.EditMode
             Assert.IsTrue(shop2.TreeV2.Owns("sp_rate1"), "live (B2): the second on the line too");
         }
 
+        /// <summary>C-00 12.10: saving for one line node more than SaveRoundsBeforeFill round ends buys one fill node a round; the
+        /// saved-for node is still bought first once affordable.</summary>
+        [Test]
+        public void Saving_PastTwoRoundEnds_BuysOneFill_ThenTheSavedNode()
+        {
+            QaTreeBot.Reset("Shot");
+            TreeLiveV2.TreatAllAsLive = true;
+            try
+            {
+                var shop = new RoundUpgradeShop();
+                var wallet = new GoldWallet();
+                wallet.InitializeForRun(3);
+                wallet.Credit(99, GoldSource.EnemyPickup, wallet.NextTransactionId());   // < sh_double 160, < Hearth 2 × 50
+                var weapon = new TreeWeaponProfile { Id = ClassicWeaponId.AssaultRifle, Key = "ar_1", FireMode = WeaponFireMode.Auto, BaseRpm = 600f, BaseDamage = 12f, Pellets = 1, Magazine = 30 };
+                shop.TreeV2.Begin(3, TreeMode.Normal, wallet, weapon, TreeAwakening.None);
+                shop.TreeV2.GrantFree("sh_heavy");
+                shop.TreeV2.GrantFree("sp_rate1");
+                shop.TreeV2.Open(3);   // tier II open: the line waits for sh_double
+
+                int owned = shop.TreeV2.NodesOwned;
+                for (int r = 1; r <= QaTreeBot.SaveRoundsBeforeFill; r++)
+                {
+                    QaTreeBot.BuyRound(shop, r, 26, null);
+                    Assert.AreEqual(owned, shop.TreeV2.NodesOwned, "round end " + r + ": still only saving");
+                }
+
+                QaTreeBot.BuyRound(shop, 3, 26, null);
+                Assert.AreEqual(owned + 1, shop.TreeV2.NodesOwned, "past two round ends: one fill node");
+                Assert.IsFalse(shop.TreeV2.Owns("sh_double"));
+
+                wallet.Credit(300, GoldSource.EnemyPickup, wallet.NextTransactionId());
+                QaTreeBot.BuyRound(shop, 4, 26, null);
+                Assert.IsTrue(shop.TreeV2.Owns("sh_double"), "the saved-for node first once affordable");
+            }
+            finally
+            {
+                TreeLiveV2.TreatAllAsLive = false;
+                QaTreeBot.Reset(null);
+            }
+        }
+
         [Test]
         public void Inactive_WithoutTheFlag()
         {

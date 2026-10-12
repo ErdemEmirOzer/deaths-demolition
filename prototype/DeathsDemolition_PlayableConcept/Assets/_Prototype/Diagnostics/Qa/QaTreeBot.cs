@@ -15,6 +15,7 @@ namespace DD.Prototype.Qa
     /// builds); the archetype lists are the B5 simulator's (K/wp-104/b5/tree_model_v2.py priority_list), so the in-game series
     /// checks the model. Each round end: follow the archetype line while the next node is buyable, save for an unaffordable one,
     /// skip what the round gate or the forks close; when the line is done, fill by (tier, cost); Hearth is the late sink.
+    /// Saving for one node past <see cref="SaveRoundsBeforeFill"/> round ends also buys fill (C-00 12.10).
     /// Only live nodes are bought (TreeLiveV2) — the bot never sells itself an effect no system reads. Writes tree-bot.json.
     /// </summary>
     public static class QaTreeBot
@@ -31,6 +32,10 @@ namespace DD.Prototype.Qa
         private static List<string> s_line;
         private static readonly StringBuilder s_rounds = new StringBuilder(2048);
         private static int s_bought, s_spent, s_hearth;
+        private static int s_saveIdx = -1, s_saveRounds;   // the line node the bot saves for, and for how many round ends
+
+        /// <summary>C-00 12.10: after this many round ends saving for the same line node the bot also buys fill (a player would).</summary>
+        public const int SaveRoundsBeforeFill = 2;
 
         /// <summary>
         /// The archetype from the command line. Without the flag: "Shot" when the shipped config runs the feature tree
@@ -47,11 +52,27 @@ namespace DD.Prototype.Qa
             RunTreeV2 tree = shop.TreeV2;
             if (s_line == null) s_line = BuildLine(Arch, seed);
 
-            int boughtNow = 0;
+            // C-00 12.10 (Element series: R15 10 nodes, 662 gold idle): saving for one line node past SaveRoundsBeforeFill round
+            // ends lets the bot fill by (tier, cost) as well; the saved-for node is still bought first once affordable.
+            NextFromLine(tree, out bool savingNow, out int waitFor);
+            if (savingNow && waitFor == s_saveIdx) s_saveRounds++;
+            else
+            {
+                s_saveIdx = savingNow ? waitFor : -1;
+                s_saveRounds = savingNow ? 1 : 0;
+            }
+
+            bool fillWhileSaving = s_saveRounds > SaveRoundsBeforeFill;
+            int boughtNow = 0, fillsNow = 0;
             for (int guard = 0; guard < 64; guard++)
             {
-                int pick = NextFromLine(tree, out bool save);
+                int pick = NextFromLine(tree, out bool save, out _);
                 if (pick < 0 && !save) pick = CheapestFill(tree);
+                else if (pick < 0 && fillWhileSaving && fillsNow < 1)
+                {
+                    pick = CheapestFill(tree);   // one fill a round while saving: the saved-for node still gets there
+                    if (pick >= 0) fillsNow++;
+                }
                 if (pick < 0) break;
                 int price = tree.PriceOf(pick);
                 if (!tree.TryBuy(pick)) break;
@@ -104,14 +125,17 @@ namespace DD.Prototype.Qa
             s_line = null;
             s_rounds.Clear();
             s_bought = s_spent = s_hearth = 0;
+            s_saveIdx = -1;
+            s_saveRounds = 0;
         }
 
         // ------------------------------------------------------------------ policy
 
-        /// <summary>The first node of the line still to buy: Available → its index; Unaffordable → −1 with save (wait for it).</summary>
-        private static int NextFromLine(RunTreeV2 tree, out bool save)
+        /// <summary>The first node of the line still to buy: Available → its index; Unaffordable → −1 with save (wait for it, <paramref name="waitFor"/>).</summary>
+        private static int NextFromLine(RunTreeV2 tree, out bool save, out int waitFor)
         {
             save = false;
+            waitFor = -1;
             for (int i = 0; i < s_line.Count; i++)
             {
                 int idx = TreeCatalogV2.IndexOf(s_line[i]);
@@ -122,6 +146,7 @@ namespace DD.Prototype.Qa
                         return idx;
                     case TreeNodeState.Unaffordable:
                         save = true;
+                        waitFor = idx;
                         return -1;
                     default:
                         continue;   // owned, fogged, prerequisite, closed, awakening-locked or not live yet: next on the line
