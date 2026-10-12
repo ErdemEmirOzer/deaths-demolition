@@ -30,6 +30,7 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int AlphaCapId = Shader.PropertyToID("_AlphaCap");
         private static readonly int TintId = Shader.PropertyToID("_Tint");
         private static readonly int EmissiveStrengthId = Shader.PropertyToID("_EmissiveStrength");
+        private static readonly int TintRightId = Shader.PropertyToID("_TintRight");   // WP-104 B4: the ensō's right half
 
         private Transform _quad;
         private MeshRenderer _renderer;
@@ -187,6 +188,14 @@ namespace DD.Prototype.Feedback.Vfx
             Vector3 sc = _quad.localScale;
             sc.x = Mathf.Abs(sc.x) * (mirror ? -1f : 1f);
             _quad.localScale = sc;
+        }
+
+        /// <summary>WP-104 B4: the right half's tint of an R/G-mask sheet (AP-041 X8 ensō, <c>_RgMask</c> materials; sRGB like the tint).</summary>
+        public void SetTintRight(Color tint)
+        {
+            if (_renderer == null) return;
+            _block.SetColor(TintRightId, tint);
+            _renderer.SetPropertyBlock(_block);
         }
 
         /// <summary>Re-cap the alpha of a live card (barrel heat strip: cap = heat 0..1).</summary>

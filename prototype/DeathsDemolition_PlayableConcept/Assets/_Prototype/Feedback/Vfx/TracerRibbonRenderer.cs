@@ -19,7 +19,7 @@ namespace DD.Prototype.Feedback.Vfx
     /// this renderer is ready. Tiers: Performance drops glow and glint and halves the HDR.
     /// </summary>
     [DefaultExecutionOrder(950)]
-    public sealed class TracerRibbonRenderer : MonoBehaviour
+    public sealed partial class TracerRibbonRenderer : MonoBehaviour   // WP-104 B4: + TracerRibbonRenderer.Tree.cs (the run tree's look)
     {
         private static readonly Unity.Profiling.ProfilerMarker s_marker = new Unity.Profiling.ProfilerMarker("WP073.TracerRibbons");
 
@@ -49,8 +49,9 @@ namespace DD.Prototype.Feedback.Vfx
         /// </list>
         /// Every round rides its projectile to the impact (or the range end), then its tail runs into the stopped head over
         /// <see cref="TdTailOutSeconds"/>. ReduceFlashes (GameFeelSettings.FlashScale) dims the core's HDR (× 0.6 at the floor) and the
-        /// halo's α (× FlashScale); bodies and pellets keep their look (form, not flash). Same pooled 48 records, three instanced draws
-        /// (tracer cores + pellet bars · vapour · halos + bodies), 0 B.
+        /// halo's HDR (× FlashScale, ≥ 0.4 — WP-104 B4-1 AD-B4 M3: never its α, a steady trail is no flash); bodies and pellets keep
+        /// their look (form, not flash). Same pooled 48 records, three instanced draws (tracer cores + pellet bars · vapour · halos +
+        /// bodies), 0 B.
         /// </summary>
         public const float TdTailOutSeconds = .06f, TdMaxFlightSeconds = 1.5f, TdExposureSeconds = 1f / 60f, TdTailMin = 1.5f, TdTailMax = 5.5f,
             TdSniperTailMax = 10f, TdSniperExposureSeconds = 1f / 40f, TdCoreFalloff = 1.6f, TdCoreRampShare = .25f, TdHaloScale = 4f, TdHaloAlpha = .6f, TdHaloFalloff = 1.2f, TdHaloEdgeShare = 1f, TdHaloHdr = 2.2f,
@@ -110,6 +111,8 @@ namespace DD.Prototype.Feedback.Vfx
             public bool Alive, Sniper, Stopped, Pellet, Tracer;
             public int Id;
             public float Age, Speed, Target, StopAge, Core, Halo, CoreMinPx;
+            public int Look, Merged; public float Size, CapPx, Base; public bool Extra;   // WP-104 B4: look, S-02 size, ceiling, WP-101 width, volley
+            public float HaloPx, TrailScale, HaloHdr;   // WP-104 B4-1 (AD-B4 §1): the tier's halo step (px at 1080p), trail factor, V's halo HDR
             public Vector3 Origin, Head, Direction;
         }
         // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
@@ -122,12 +125,14 @@ namespace DD.Prototype.Feedback.Vfx
             r.Core = tracer ? TdCoreWidth(profile.Class) : TdBodyWidth;
             r.Halo = tracer ? r.Core * TdHaloScale : 0f;
             r.CoreMinPx = !tracer ? TdBodyMinPx : r.Sniper || profile.Class == VfxWeaponClass.Lmg ? TdHeavyCoreMinPx : TdCoreMinPx;
+            StyleTd(ref r, tracer);   // WP-104 B4: the run's tier ladder, element and size (neutral, size 1: as above)
         }
         /// <summary>The streak behind the head (m): a tracer's one-exposure blur, a body's short one, a pellet's bar.</summary>
         private static float TdTrail(in TdRound r)
         {
             if (r.Pellet && !r.Tracer) return PelletBarLength;
-            return r.Tracer ? (r.Sniper ? Mathf.Clamp(r.Speed * TdSniperExposureSeconds, TdTailMin, TdSniperTailMax) : Mathf.Clamp(r.Speed * TdExposureSeconds, TdTailMin, TdTailMax))
+            // WP-104 B4-1 (AD-B4 §1): a tracer's one-exposure trail × its Shot tier (1.0 … 1.45, ≤ 10 m); WP-101's own at 1
+            return r.Tracer ? TracerStyle.ScaledTrail(r.Sniper ? Mathf.Clamp(r.Speed * TdSniperExposureSeconds, TdTailMin, TdSniperTailMax) : Mathf.Clamp(r.Speed * TdExposureSeconds, TdTailMin, TdTailMax), r.TrailScale)
                 : Mathf.Clamp(r.Speed * TdBodyExposureSeconds, TdBodyMin, TdBodyMax);
         }
         private readonly TdRound[] _tdRounds = new TdRound[TdCapacity];
@@ -142,6 +147,7 @@ namespace DD.Prototype.Feedback.Vfx
         {
             if (CameraModeService.Current != CameraMode.TopDown || info.Kind == ProjectileKind.Rocket
                 || info.Kind == ProjectileKind.Orb || info.Kind == ProjectileKind.Gel) return false;
+            if (info.VolleyIndex > 0 && !AdmitTdVolley(in info)) return false;   // WP-104 B4: S-02's extra volleys hold ≤ 32 of the 48, past it they merge
             for (int i = 0; i < TdCapacity; i++)
             {
                 if (_tdRounds[i].Alive) continue;
@@ -149,13 +155,15 @@ namespace DD.Prototype.Feedback.Vfx
                 bool pellet = info.Kind == ProjectileKind.Pellet;
                 _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId,
                     Origin = info.Position, Head = info.Position, Direction = info.Direction.normalized,
-                    Speed = info.Speed, Target = float.PositiveInfinity, Pellet = pellet };
-                TdLook(ref _tdRounds[i], profile, IsTdTracer(profile, info.ProjectileId, pellet, info.PelletIndex));
+                    Speed = info.Speed, Target = float.PositiveInfinity, Pellet = pellet, Size = info.SizeScale, Extra = info.VolleyIndex > 0 };   // WP-104 B4: S-02 size / volley
+                TdLook(ref _tdRounds[i], profile, TdTracerOf(profile, in info, pellet, i));   // WP-104 B4: the rhythm over main rounds (no extras = the id itself)
+                TdMarkedAtBirth(i, in info);   // WP-104 B4 (AD K3): a marked round is violet from its first frame, even if it hits at once
                 LiveTdTracers++;
                 if (_tdRounds[i].Tracer) LiveTdTracerRounds++;
                 if (_tdRounds[i].Sniper) LiveTdSmoke++;
                 return true;
             }
+            TdRefused(in info);   // WP-104 B4: a refused main round is no merge target
             return false;
         }
         public void StopTdProjectile(int id, Vector3 position, bool cleared = false)
@@ -185,6 +193,7 @@ namespace DD.Prototype.Feedback.Vfx
                     r.Direction = p.Direction;
                     // DEC-112 Third Eye: the burst's marked round is always a full tracer
                     if (!r.Tracer && !r.Pellet && IsThirdEyeRound(p.TreeFlags)) TdLook(ref r, VfxWeaponProfiles.For(p.WeaponId), true);
+                    TdMarked(ref r, in p);   // WP-104 B4 (AD K3): the chaos core's marked round (RunTreeHooks.TreeRoundMarkedChaos)
                     break;
                 }
             }
@@ -192,7 +201,7 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < TdCapacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i]; if (!r.Alive) continue;
-                r.Age += delta;
+                r.Age += TdAgeDelta(in r, delta);   // WP-104 B4: a real round keeps the game clock under the tree preview (= delta outside it)
                 if (r.Id < 0 && !r.Stopped)
                 {
                     float distance = Mathf.Min(r.Target, r.Age * r.Speed);
@@ -208,6 +217,7 @@ namespace DD.Prototype.Feedback.Vfx
         private void ClearTd()
         {
             for (int i = 0; i < TdCapacity; i++) _tdRounds[i] = default;
+            ClearTdTree();   // WP-104 B4: the volley rhythm / merge state goes with the records
             LiveTdTracers = LiveTdSmoke = LiveTdTracerRounds = 0;
         }
         // layer 0: tracer cores + body streaks + pellet bars (additive, the streak material) · 1: sniper vapour · 2: tracer heat halo
@@ -233,34 +243,42 @@ namespace DD.Prototype.Feedback.Vfx
                 }
                 float length = (r.Head-tail).magnitude; if (length < .01f) continue;
                 Color head, back;
-                float width, alpha, minPx = 0f;
+                float width, alpha, minPx = 0f, cover = 0f;
                 if (layer == 1) { head = back = new Color(.48f, .50f, .52f); width = .12f; alpha = .16f * (1f - r.Age / .4f); }
                 // × TdHaloHdr: the sun-lit stone is HDR > 1 before the tonemap - an LDR premultiplied veil only darkened it (sonra-r4)
-                else if (layer == 2 && r.Tracer) { head = TdHaloColor * TdHaloHdr; back = TdHaloTail * TdHaloHdr; width = r.Halo; alpha = TdHaloAlpha * flash; }
+                else if (layer == 2 && r.Tracer)
+                {
+                    // WP-104 B4: element / marked halo · B4-1 (AD-B4 M3 / S1 / M5): FlashScale dims its HDR (V's boost first), never its
+                    // α; an element / marked halo covers the ground it veils (_TailColor.a)
+                    float hdr = TdHaloHdr * TracerStyle.HaloHdr(r.HaloHdr, flash);
+                    head = TracerStyle.Halo(r.Look, TdHaloColor) * hdr; back = TracerStyle.Halo(r.Look, TdHaloTail) * hdr; width = r.Halo;
+                    alpha = TdHaloAlpha * TracerStyle.HaloFlash(r.Look, flash); cover = TracerStyle.HaloCover(r.Look);
+                }
                 else if (layer == 2)
                 {
-                    head = back = TdBodyColor; width = r.Core; alpha = TdBodyAlpha; minPx = r.CoreMinPx;
+                    head = back = TracerStyle.Body(r.Look, TdBodyColor); width = r.Core; alpha = TdBodyAlpha; minPx = r.CoreMinPx;   // WP-104 B4: K1
                 }
                 else if (plainPellet)
                 {
-                    head = back = TdPelletColor; width = TdPelletWidth; alpha = TdPelletAlpha; minPx = TdBodyMinPx;
+                    head = back = TracerStyle.Pellet(r.Look, TdPelletColor); width = TdPelletWidth; alpha = TdPelletAlpha; minPx = TdBodyMinPx;   // WP-104 B4: K1
                 }
                 else
                 {
                     float hdr = Mathf.Lerp(.35f, 1f, flash);   // AD r1 M7: Reduce Flashes (0.4) → × 0.61 HDR
-                    head = TdCoreHead * hdr; back = TdCoreTail * hdr; width = r.Core; alpha = 1f; minPx = r.CoreMinPx;
+                    head = TracerStyle.CoreHead(r.Look, TdCoreHead) * hdr; back = TracerStyle.CoreTail(r.Look, TdCoreTail) * hdr; width = r.Core; alpha = 1f; minPx = r.CoreMinPx;   // WP-104 B4: K1 / K3
                 }
                 // span: the vapour (layer 1, tail = the muzzle) keeps the shader's 0.4 m fade-in off the muzzle; a streak's tail is
                 // mid-air, so its span starts 1 m out (review: from 0 the fade ate 0.4 m of a 0.5–1.6 m body / pellet bar)
                 float tailD = layer == 1 ? 0f : 1f;
                 Write(n, 0, r.Head, tail, width, layer == 0 && r.Tracer ? TdTracerBead : 0f, tailD + length, tailD, 0f, 0f, head, back, false, false);
                 // Metre widths with the TD pixel floor (x; 0 = the material's 2 px); no head dot.
-                _extra[n] = new Vector4(minPx, 0f, 0f, 0f);
-                if (layer == 2 && r.Tracer) _span[n].z = -TdHaloEdgeShare;   // the halo's amber rim (DD_VfxRibbon _EdgeTint)
-                _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : 0f;
+                _extra[n] = new Vector4(minPx, TdStep(layer, in r), TdCap(layer, in r), TdBase(layer, in r));   // WP-104 B4: z < 0 = max px at 1080p (AD §2 / A5), w < 0 = its floor (−m: the WP-101 width); B4-1: y < 0 = a halo's tier step (+px at 1080p); 0 = WP-101
+                if (layer == 2 && r.Tracer && r.Look == TracerStyle.NeutralLook) _span[n].z = -TdHaloEdgeShare;   // the halo's amber rim (DD_VfxRibbon _EdgeTint) - WP-104 B4: the neutral look's (an element halo is its own glow, K1)
+                _headColor[n].w = alpha; _tailColor[n].w = layer == 1 ? alpha * .25f : cover;   // WP-104 B4-1: a halo's coverage gain (0 = WP-101)
                 n++;
             }
             if (n == 0) return 0;
+            if (layer == 2) SyncTdEdgeTint(flash);   // WP-104 B4-1 (AD-B4 M3): the neutral halo's amber rim dims with its HDR
             _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
             _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
             _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
@@ -407,6 +425,7 @@ namespace DD.Prototype.Feedback.Vfx
                 // exponential instead of the ribbons' k 3.2 / 40 % ramp (that read as a short dot with a wisp)
                 _tdCoreMaterial = new Material(_material) { name = "DD_VfxRibbon TD streak (runtime)", hideFlags = HideFlags.DontSave };
                 SetTail(_tdCoreMaterial, TdCoreFalloff, TdCoreRampShare);
+                BuildTdInk();   // WP-104 B4 (AD K3): the marked round's sumi core, Transparent+11
             }
 
             _block = new MaterialPropertyBlock();
@@ -440,6 +459,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (_material != null) Destroy(_material);
             if (_tdGlowMaterial != null) Destroy(_tdGlowMaterial);
             if (_tdCoreMaterial != null) Destroy(_tdCoreMaterial);
+            if (_tdInkMaterial != null) Destroy(_tdInkMaterial);   // WP-104 B4
             if (_quad != null) Destroy(_quad);
         }
 
@@ -626,13 +646,14 @@ namespace DD.Prototype.Feedback.Vfx
         {
             using var marker = s_marker.Auto();   // WP-073 §5: per-tier ms, read by ProfilerRecorder (S-10 / tier-ms.md)
             if (_material != null) ProjectileDriver.DrawInterimTrails = false;
-            float dt = Time.deltaTime;
+            float dt = VfxClock.Delta;   // WP-104 B4: the presentation clock (unscaled while the tree preview runs)
             if (CameraModeService.Current == CameraMode.TopDown)
             {
                 TickTd(dt);
                 _live = LiveTdTracers; _firstPerson = false; _performance = VfxTier.Current == VfxTierLevel.Performance;
                 DrawnCore = _material != null ? DrawTd(0) : 0;
                 DrawnGlow = _material != null ? DrawTd(1) + DrawTd(2) : 0;   // sniper vapour + the tracers' heat halo (none on Performance)
+                if (_material != null) DrawTdInk();   // WP-104 B4 (AD K3): the marked rounds' sumi cores, one queue step later
                 DrawnGlint = 0;
                 return;
             }

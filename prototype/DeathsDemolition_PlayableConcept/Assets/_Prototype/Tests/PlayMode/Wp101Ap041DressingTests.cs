@@ -263,6 +263,10 @@ namespace DD.Prototype.Tests.PlayMode
             Transform socket = Socket();
             VfxDressing.ProfileOverrideForTests = VfxWeaponProfiles.Ar1;
             yield return new WaitForSeconds(VfxDressing.Ap041SmokeInterval + 0.05f);
+            // The previous test's TearDown destroyed its socket with live muzzle cards on it: they sit dead at the head of the
+            // shared 48-card pool while its 40 impact cards (0.30-0.50 s) still live after this 0.25 s wait - a full pool whose
+            // RecycleOldest Get returned null. Purge and top up first (the scene-change path), so the count reads this test only.
+            vfx.Refill();
             int cards = vfx.Ap041SmokeCards;
             int puffs = MuzzleSystem.Instance != null ? MuzzleSystem.Instance.SmokeAlive : 0;
             vfx.PlayMuzzle(socket, 1f);

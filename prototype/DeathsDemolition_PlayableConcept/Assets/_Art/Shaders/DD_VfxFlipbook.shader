@@ -29,6 +29,8 @@ Shader "DD/VFX Flipbook"
         [HideInInspector] _Cull("Cull", Float) = 0
         [HideInInspector] _ZTest("ZTest", Float) = 4
         [HideInInspector] _Premultiplied("Premultiplied (WP-101)", Float) = 0
+        [HideInInspector] _RgMask("R/G half-coverage mask (WP-104 B4)", Float) = 0
+        _TintRight("Tint, right half (WP-104 B4)", Color) = (1,1,1,1)
     }
 
     SubShader
@@ -64,6 +66,7 @@ Shader "DD/VFX Flipbook"
             CBUFFER_START(UnityPerMaterial)
                 float4 _Sheet_ST;
                 float4 _Tint;
+                float4 _TintRight;   // WP-104 B4: next to the other float4s (no packing gap)
                 float _EmissiveStrength;
                 float _Cols;
                 float _Rows;
@@ -77,6 +80,7 @@ Shader "DD/VFX Flipbook"
                 float _Cull;
                 float _ZTest;
                 float _Premultiplied;
+                float _RgMask;   // WP-104 B4
             CBUFFER_END
 
             struct Attributes
@@ -138,6 +142,15 @@ Shader "DD/VFX Flipbook"
             {
                 half4 s = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, input.uv);
                 float4 tint = _Tint * (float4)input.color;
+                if (_RgMask > 0.5)
+                {
+                    // WP-104 B4 (AP-041 X8 ensō: LINEAR R / G half coverage, B 0): colour = tint × R + tint right × G, a = R + G -
+                    // a premultiplied sample from here on; the fades and the cap below scale it once, both tints are spent here
+                    float3 halves = tint.rgb * (float)s.r + _TintRight.rgb * (float)s.g;
+                    s = half4((half3)halves, (half)saturate((float)s.r + (float)s.g));
+                    tint.rgb = float3(1.0, 1.0, 1.0);
+                }
+
                 float fade = tint.a * _Alpha;
                 float aRaw = s.a * fade;
                 float a = min(aRaw, _AlphaCap);

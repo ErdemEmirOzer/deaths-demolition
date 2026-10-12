@@ -164,6 +164,7 @@ namespace DD.Prototype.Feedback.Vfx
             renderer.lightProbeUsage = LightProbeUsage.Off;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
             renderer.maxParticleSize = 0.5f;
+            VfxClock.TrackParticles(_smoke);   // WP-104 B4
             _smoke.Play();
         }
 
@@ -212,7 +213,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             _shot++;
-            float now = Time.time;
+            float now = VfxClock.Now;   // WP-104 B4: light fades on the presentation clock
             VfxTierLevel tier = VfxTier.Current;
             bool reduceFlashes = GameFeelSettings.FlashScale < 0.99f;
 
@@ -298,7 +299,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds, bool exclusive = false, bool shadows = false)
         {
-            float now = Time.time;
+            float now = VfxClock.Now;   // WP-104 B4
             int slot = -1;
             if (exclusive)
             {
@@ -352,7 +353,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool TrackLight(int key, Vector3 point, Color colour, float intensity, float range)
         {
-            float now = Time.time;
+            float now = VfxClock.Now;   // WP-104 B4
             int slot = -1;
             for (int i = 0; i < _lights.Length; i++)
             {
@@ -416,7 +417,7 @@ namespace DD.Prototype.Feedback.Vfx
         private void LateUpdate()
         {
             using var marker = s_marker.Auto();   // WP-073 §5: per-tier ms, read by ProfilerRecorder (S-10 / tier-ms.md)
-            float now = Time.time;
+            float now = VfxClock.Now;   // WP-104 B4
             bool reduceFlashes = GameFeelSettings.FlashScale < 0.99f;
             // WP-095 §3: top-down sustained fire flickers 0.75–1.0 (less strobe); first / third person keep 0.6–1.0
             float floor = TopDownFlickerFloor();

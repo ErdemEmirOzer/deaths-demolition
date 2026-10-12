@@ -150,6 +150,8 @@ namespace DD.Art.Pipeline.EditorTools
 
             // WP-101 (R4, AP-041): the premultiplied photographic set from its trimmed manifest (no-op when it is not imported).
             ArtAp041VfxIntake.AppendRows(rows, seen, catalog, flipbook);
+            // WP-104 B4 (S-07): the run tree's AP-041 v001 + v002 sheets (no-op when not imported).
+            ArtAp041TreeIntake.AppendRows(rows, seen, catalog, flipbook);
             rows.Add(SynthesizeDropletRow(rows, catalog, flipbook));
 
             catalog.Entries.Clear();

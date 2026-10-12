@@ -1,0 +1,2030 @@
+{
+  "schema_version": 1,
+  "package": "AP-041",
+  "version": "v002",
+  "date": "2026-10-11",
+  "consumer": "WP-104 B4-1 (R4) S-07 - ArtAp041TreeIntake (DD.Art.Pipeline.EditorTools)",
+  "source_manifest": "asset-production/AP-041/exports/v002/AP041-manifest-v002.json",
+  "source_manifest_sha256": "51d6509c9049c3a93dc7a2f334c68d0cfb44f24789dc27db36bab554a3cb8b40",
+  "encoding": {
+    "color": "sRGB-encoded linear premultiplied RGB; linear coverage alpha",
+    "data": "linear signed RG UNORM displacement, not Unity Normal",
+    "grid": "row-major top-left; stable origin_uv; 8px transparent cell borders",
+    "mask": "linear R/G half coverage; B0; A=R+G; not PM color nor signed displacement. RGB shader=linearTintLeft*R+linearTintRight*G."
+  },
+  "scope": "WP-104 B4-1: B1-B17 proc / aura / survival sheets, the T3-T5 sumi layers and the X8 ensō mask. B9 wedges + seeker paths, B12 element overlays / sockets, B18 koban, textured ribbons (element tracers, X8 marked ribbon) and the B6 distortion are B4-2.",
+  "items": [
+    {
+      "file": "H_B1_ignition_srgb_pm.png",
+      "unity_id": "fb_ap041t_b1_ignition",
+      "row": "B1Ignition",
+      "source_id": "H_B1_ignition_srgb_pm",
+      "source_path": "exports/v002/upgrades/H_B1_ignition_srgb_pm.png",
+      "sha256": "01b10dbf83a35e55f454efd2f8f6c0c5b4a25c8bf990a9b671bd3b11b181f073",
+      "bytes": 3152870,
+      "kind": "flipbook",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.6,
+        1.6
+      ],
+      "origin_uv": [
+        0.5014043130165289,
+        0.48610214359504134
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#E0702A",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B1_ground_scorch_srgb_pm.png",
+      "unity_id": "decal_ap041t_b1_ground_scorch",
+      "row": "B1GroundScorch",
+      "source_id": "G_B1_ground_scorch",
+      "source_path": "exports/v001/upgrades/G_B1_ground_scorch_srgb_pm.png",
+      "sha256": "ccb5bea036fd710a6bcb3c3e787ce892942bc732f653b5084de2f4616edd1190",
+      "bytes": 229475,
+      "kind": "decal",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.4,
+        2.4
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_decal_scorch_var01_srgb_pm.png",
+      "unity_id": "decal_ap041t_scorch_01",
+      "row": "BlastScorch1",
+      "source_id": "H_decal_scorch_var01_srgb_pm",
+      "source_path": "exports/v001/decals/H_decal_scorch_var01_srgb_pm.png",
+      "sha256": "6f5dd6afa75d3f8d68785612c5ff93e651c3879bcf09b6a163208444ded0a4f5",
+      "bytes": 1111492,
+      "kind": "decal",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.2,
+        1.2
+      ],
+      "origin_uv": [
+        0.4621934918879056,
+        0.4204634494837758
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_decal_scorch_var02_srgb_pm.png",
+      "unity_id": "decal_ap041t_scorch_02",
+      "row": "BlastScorch2",
+      "source_id": "H_decal_scorch_var02_srgb_pm",
+      "source_path": "exports/v001/decals/H_decal_scorch_var02_srgb_pm.png",
+      "sha256": "0ab22810921cf887e97cb54d85e4c0e7385a3c492bf90cd3baba6808b84d471b",
+      "bytes": 854404,
+      "kind": "decal",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.2,
+        1.2
+      ],
+      "origin_uv": [
+        0.4777267501876877,
+        0.40725295608108103
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_decal_scorch_var03_srgb_pm.png",
+      "unity_id": "decal_ap041t_scorch_03",
+      "row": "BlastScorch3",
+      "source_id": "H_decal_scorch_var03_srgb_pm",
+      "source_path": "exports/v001/decals/H_decal_scorch_var03_srgb_pm.png",
+      "sha256": "d29bc1d5e17ea48f968851f9df24e95dc4915cad7a4479052a2f750c59fd7f2e",
+      "bytes": 967345,
+      "kind": "decal",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.2,
+        1.2
+      ],
+      "origin_uv": [
+        0.5053883272058823,
+        0.4192555147058823
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_decal_scorch_var04_srgb_pm.png",
+      "unity_id": "decal_ap041t_scorch_04",
+      "row": "BlastScorch4",
+      "source_id": "H_decal_scorch_var04_srgb_pm",
+      "source_path": "exports/v001/decals/H_decal_scorch_var04_srgb_pm.png",
+      "sha256": "f8038e34763a38781d10244e8af0832a8d67da1e55b5475614f2b13eebb78ed0",
+      "bytes": 884568,
+      "kind": "decal",
+      "family": "B1",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.2,
+        1.2
+      ],
+      "origin_uv": [
+        0.5237996295592705,
+        0.42102607332826747
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B2_ice_impact_srgb_pm.png",
+      "unity_id": "fb_ap041t_b2_ice_impact",
+      "row": "B2IceImpact",
+      "source_id": "H_B2_ice_impact_srgb_pm",
+      "source_path": "exports/v002/upgrades/H_B2_ice_impact_srgb_pm.png",
+      "sha256": "e0ad1713ac39c263c1e3abab3d988c0c72b884e3ff1a25f5eb24141b48698b4a",
+      "bytes": 3373960,
+      "kind": "flipbook",
+      "family": "B2",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.8,
+        1.8
+      ],
+      "origin_uv": [
+        0.508270263671875,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#3E9AAE",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B2_crystal_shards_srgb_pm.png",
+      "unity_id": "fb_ap041t_b2_shards",
+      "row": "B2Shards",
+      "source_id": "G_B2_crystal_shards",
+      "source_path": "exports/v002/upgrades/G_B2_crystal_shards_srgb_pm.png",
+      "sha256": "cb79eff069b3212182836ef9d5ed1700d8ae14387dc30e6803a205180ae30504",
+      "bytes": 121326,
+      "kind": "flipbook",
+      "family": "B2",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 32,
+      "duration_s": 0.5,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.6,
+        2.6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#3E9AAE",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B2_crystal_coating_srgb_pm.png",
+      "unity_id": "fb_ap041t_b2_coating",
+      "row": "B2Coating",
+      "source_id": "G_B2_crystal_coating",
+      "source_path": "exports/v002/upgrades/G_B2_crystal_coating_srgb_pm.png",
+      "sha256": "b27299c89f3519537775538caed5ab770e1fb3153b52674d74359ff5f50d6782",
+      "bytes": 764725,
+      "kind": "flipbook",
+      "family": "B2",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.4,
+        2.4
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#3E9AAE",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B3_electric_impact_srgb_pm.png",
+      "unity_id": "fb_ap041t_b3_impact",
+      "row": "B3Impact",
+      "source_id": "H_B3_electric_impact_srgb_pm",
+      "source_path": "exports/v002/upgrades/H_B3_electric_impact_srgb_pm.png",
+      "sha256": "548a4f4b7f589ccd975c2c6a271794646afcb8e6f30af8bae27bb5c10b3df3b9",
+      "bytes": 3399050,
+      "kind": "flipbook",
+      "family": "B3",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 40.0,
+      "duration_s": 0.4,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.8,
+        1.8
+      ],
+      "origin_uv": [
+        0.5112211385350318,
+        0.5010201035031847
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#5B7FD1",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B3_electric_flash_srgb_pm.png",
+      "unity_id": "fb_ap041t_b3_flash",
+      "row": "B3Flash",
+      "source_id": "G_B3_electric_flash",
+      "source_path": "exports/v002/upgrades/G_B3_electric_flash_srgb_pm.png",
+      "sha256": "29dcb298898d049733f28b90b9702c22142dd9aa2c6fc3bf7d1ce26f4be21d40",
+      "bytes": 187076,
+      "kind": "flipbook",
+      "family": "B3",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 60,
+      "duration_s": 0.26666666666666666,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2,
+        2
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#5B7FD1",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B3_spark_ring_srgb_pm.png",
+      "unity_id": "fb_ap041t_b3_spark_ring",
+      "row": "B3SparkRing",
+      "source_id": "G_B3_spark_ring",
+      "source_path": "exports/v002/upgrades/G_B3_spark_ring_srgb_pm.png",
+      "sha256": "7a4e7fdded93241371620b223c358f002d702e59b65b9f8f5714ef28df0d212c",
+      "bytes": 207877,
+      "kind": "flipbook",
+      "family": "B3",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 40,
+      "duration_s": 0.4,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.8,
+        2.8
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#5B7FD1",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B4_poison_cloud_srgb_pm.png",
+      "unity_id": "fb_ap041t_b4_cloud",
+      "row": "B4Cloud",
+      "source_id": "H_B4_poison_cloud_srgb_pm",
+      "source_path": "exports/v002/upgrades/H_B4_poison_cloud_srgb_pm.png",
+      "sha256": "3c26cf0d5c2787a65889fe7ec4d32a7add18e8d0e07895b506a1f58a35fbdf75",
+      "bytes": 3210285,
+      "kind": "flipbook",
+      "family": "B4",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 6.666666666666667,
+      "duration_s": 2.4,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.4,
+        2.4
+      ],
+      "origin_uv": [
+        0.50811767578125,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#6E9A2E",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B5_explosive_srgb_pm.png",
+      "unity_id": "fb_ap041t_b5_explosive",
+      "row": "B5Explosive",
+      "source_id": "H_B5_explosive_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B5_explosive_srgb_pm.png",
+      "sha256": "7fbbd374bd3abe24aee5e1635d9fc3b40a489d4b35292c218c64bce61f7a4d68",
+      "bytes": 2887791,
+      "kind": "flipbook",
+      "family": "B5",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2,
+        2
+      ],
+      "origin_uv": [
+        0.5255025875796179,
+        0.48274532245222934
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B5_circular_shock_srgb_pm.png",
+      "unity_id": "fb_ap041t_b5_shock",
+      "row": "B5Shock",
+      "source_id": "G_B5_circular_shock",
+      "source_path": "exports/v001/upgrades/G_B5_circular_shock_srgb_pm.png",
+      "sha256": "fd894101b50cbf17662dc83b346b50a1703dade23ab043d521673e0a73afcfd3",
+      "bytes": 208810,
+      "kind": "flipbook",
+      "family": "B5",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 40,
+      "duration_s": 0.4,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        4,
+        4
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B6_singularity_srgb_pm.png",
+      "unity_id": "fb_ap041t_b6_singularity",
+      "row": "B6Singularity",
+      "source_id": "H_B6_singularity_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B6_singularity_srgb_pm.png",
+      "sha256": "cda80d51813b6bd16da6b1219285c8262a4c574a2628f52c78f0444674b744f5",
+      "bytes": 3614135,
+      "kind": "flipbook",
+      "family": "B6",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 10.0,
+      "duration_s": 1.6,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        4,
+        4
+      ],
+      "origin_uv": [
+        0.5087185889175257,
+        0.5049532860824743
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B6_attraction_rings_srgb_pm.png",
+      "unity_id": "fb_ap041t_b6_rings",
+      "row": "B6Rings",
+      "source_id": "G_B6_attraction_rings",
+      "source_path": "exports/v001/upgrades/G_B6_attraction_rings_srgb_pm.png",
+      "sha256": "bd0d036986938e09f58a73fe4d8dff81d9de24403ffbeb8e38d481c562f051b0",
+      "bytes": 700196,
+      "kind": "flipbook",
+      "family": "B6",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        5,
+        5
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B7_nuclear_srgb_pm.png",
+      "unity_id": "fb_ap041t_b7_nuclear",
+      "row": "B7Nuclear",
+      "source_id": "H_B7_nuclear_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B7_nuclear_srgb_pm.png",
+      "sha256": "bf27dd71f0e5bdde2e39f7f84b9877c43fa4635aaed567e39b6fe67f9126e057",
+      "bytes": 3103149,
+      "kind": "flipbook",
+      "family": "B7",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        8,
+        8
+      ],
+      "frames_used": 64,
+      "fps": 20.0,
+      "duration_s": 3.2,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        12,
+        12
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 2048,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B7_nuclear_shock_srgb_pm.png",
+      "unity_id": "fb_ap041t_b7_shock",
+      "row": "B7Shock",
+      "source_id": "G_B7_nuclear_shock",
+      "source_path": "exports/v001/upgrades/G_B7_nuclear_shock_srgb_pm.png",
+      "sha256": "b8622941cc8719b0330f9ce3fdc3041f0406aff5eb2bbd6fdf7d547d6d0a7a92",
+      "bytes": 1324959,
+      "kind": "flipbook",
+      "family": "B7",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        8,
+        8
+      ],
+      "frames_used": 64,
+      "fps": 40,
+      "duration_s": 1.6,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        16,
+        16
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 2048,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B7_heat_glint_srgb_pm.png",
+      "unity_id": "fb_ap041t_b7_heat_glint",
+      "row": "B7HeatGlint",
+      "source_id": "G_B7_heat_glint",
+      "source_path": "exports/v001/upgrades/G_B7_heat_glint_srgb_pm.png",
+      "sha256": "b78c769a9e4646b478298d49724ee564ca8558bf0386a02b2cd5b80355ef76d6",
+      "bytes": 107877,
+      "kind": "flipbook",
+      "family": "B7",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 48,
+      "duration_s": 0.3333333333333333,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        10,
+        10
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B8_chain_blast_var01_srgb_pm.png",
+      "unity_id": "fb_ap041t_b8_chain_01",
+      "row": "B8Chain1",
+      "source_id": "H_B8_chain_blast_var01_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B8_chain_blast_var01_srgb_pm.png",
+      "sha256": "03e5cdf7ebd2fa96c019bc116fdaa0389a6248de4c815111997cd6cf77f3c8b2",
+      "bytes": 3501108,
+      "kind": "flipbook",
+      "family": "B8",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.8,
+        1.8
+      ],
+      "origin_uv": [
+        0.48793802301255224,
+        0.4599650235355649
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B8_chain_blast_var02_srgb_pm.png",
+      "unity_id": "fb_ap041t_b8_chain_02",
+      "row": "B8Chain2",
+      "source_id": "H_B8_chain_blast_var02_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B8_chain_blast_var02_srgb_pm.png",
+      "sha256": "aa3b7d0cb224f1a09b2f9d49a69f90db043366f77c6346c5b5db96cca542fe43",
+      "bytes": 3030415,
+      "kind": "flipbook",
+      "family": "B8",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.8,
+        1.8
+      ],
+      "origin_uv": [
+        0.48793802301255224,
+        0.4599650235355649
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "H_B8_chain_blast_var03_srgb_pm.png",
+      "unity_id": "fb_ap041t_b8_chain_03",
+      "row": "B8Chain3",
+      "source_id": "H_B8_chain_blast_var03_srgb_pm",
+      "source_path": "exports/v001/upgrades/H_B8_chain_blast_var03_srgb_pm.png",
+      "sha256": "d625e2851e33089f0852152870617968db734be0e248aef85dc9445e22d3d5f6",
+      "bytes": 2978909,
+      "kind": "flipbook",
+      "family": "B8",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 25.0,
+      "duration_s": 0.64,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.8,
+        1.8
+      ],
+      "origin_uv": [
+        0.48793802301255224,
+        0.4599650235355649
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B10_mini_rocket_flame_srgb_pm.png",
+      "unity_id": "fb_ap041t_b10_mini_flame",
+      "row": "B10MiniFlame",
+      "source_id": "G_B10_mini_rocket_flame",
+      "source_path": "exports/v001/upgrades/G_B10_mini_rocket_flame_srgb_pm.png",
+      "sha256": "04270827e6a0ebf5554118864efba518d305bd705d0b9023713ea8caa34f635a",
+      "bytes": 102064,
+      "kind": "flipbook",
+      "family": "B10",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 64,
+      "duration_s": 0.25,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.6,
+        0.65
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_ground_ring_tier1_blue_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_ring_1",
+      "row": "B11Ring1",
+      "source_id": "G_B11_ground_ring_tier1_blue",
+      "source_path": "exports/v002/upgrades/G_B11_ground_ring_tier1_blue_srgb_pm.png",
+      "sha256": "37fe8edcfbbe43913eceb3ea7f0d23b79877347c9a98f6fcb30c37ff8b304a1d",
+      "bytes": 250865,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.5098498139612495,
+        2.5098498139612495
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "tint_hex": "#5C8DFF",
+      "tint_required": true,
+      "alpha_cap": 0.45,
+      "outer_radius_m": 1.0,
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_ground_ring_tier2_gold_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_ring_2",
+      "row": "B11Ring2",
+      "source_id": "G_B11_ground_ring_tier2_gold",
+      "source_path": "exports/v002/upgrades/G_B11_ground_ring_tier2_gold_srgb_pm.png",
+      "sha256": "a7d8ef30873ffd51b677ef47ba1fccbc64d35f6fabcdd48a98e8a5eafd7873a5",
+      "bytes": 285005,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        3.25901831936158,
+        3.25901831936158
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "tint_hex": "#FFE8B8",
+      "tint_required": true,
+      "alpha_cap": 0.55,
+      "outer_radius_m": 1.3,
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_ground_ring_tier3_crimson_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_ring_3",
+      "row": "B11Ring3",
+      "source_id": "G_B11_ground_ring_tier3_crimson",
+      "source_path": "exports/v002/upgrades/G_B11_ground_ring_tier3_crimson_srgb_pm.png",
+      "sha256": "af6a5a2722389e9abbe43beea3ad425c8fc4f3e6e7568bff75a92e43f52e87e2",
+      "bytes": 282022,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        4.0184856838307805,
+        4.0184856838307805
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "tint_hex": "#E8302A",
+      "tint_required": true,
+      "alpha_cap": 0.6,
+      "outer_radius_m": 1.6,
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_rising_sparks_tier1_blue_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_sparks_1",
+      "row": "B11Sparks1",
+      "source_id": "G_B11_rising_sparks_tier1_blue",
+      "source_path": "exports/v002/upgrades/G_B11_rising_sparks_tier1_blue_srgb_pm.png",
+      "sha256": "bc97607d304c2bd8fe686fba0577aa5fbc123bc6db923b2c168c0c630007dc09",
+      "bytes": 48390,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.6,
+        2.6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#5C8DFF",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_rising_sparks_tier2_gold_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_sparks_2",
+      "row": "B11Sparks2",
+      "source_id": "G_B11_rising_sparks_tier2_gold",
+      "source_path": "exports/v002/upgrades/G_B11_rising_sparks_tier2_gold_srgb_pm.png",
+      "sha256": "156f8ea64b35203ce3dcd0ce53c50e1b016a7001e6e74c251b5a0fd0c4c524f1",
+      "bytes": 70397,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.6,
+        2.6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#FFE8B8",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_rising_sparks_tier3_crimson_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_sparks_3",
+      "row": "B11Sparks3",
+      "source_id": "G_B11_rising_sparks_tier3_crimson",
+      "source_path": "exports/v002/upgrades/G_B11_rising_sparks_tier3_crimson_srgb_pm.png",
+      "sha256": "7da97019359ab530ba8c2acd26498467820a399f774100247e311369339f1037",
+      "bytes": 83685,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.6,
+        2.6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#E8302A",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B11_sumi_smoke_tier3_srgb_pm.png",
+      "unity_id": "fb_ap041t_b11_smoke_3",
+      "row": "B11Smoke3",
+      "source_id": "G_B11_sumi_smoke_tier3",
+      "source_path": "exports/v002/upgrades/G_B11_sumi_smoke_tier3_srgb_pm.png",
+      "sha256": "4ab62a2b7cf2a3962561b28c73f0832f07916b1d1a6b00be3179196ec2322ed7",
+      "bytes": 175273,
+      "kind": "flipbook",
+      "family": "B11",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 16,
+      "duration_s": 1.0,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        3.2,
+        3.2
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#12100F",
+      "alpha_cap": 0.25,
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B12_muzzle_white_hot_speed_srgb_pm.png",
+      "unity_id": "fb_ap041t_b12_white_hot",
+      "row": "B12WhiteHot",
+      "source_id": "G_B12_muzzle_white_hot_speed",
+      "source_path": "exports/v002/upgrades/G_B12_muzzle_white_hot_speed_srgb_pm.png",
+      "sha256": "9b484d33f7af3961fcebc553e3985ab1fe80adfa4f6f61ff7557635571e76538",
+      "bytes": 410433,
+      "kind": "flipbook",
+      "family": "B12",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 24,
+      "duration_s": 0.6666666666666666,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        1.2,
+        1.2
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#FFF4E0",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B13_critical_strike_srgb_pm.png",
+      "unity_id": "fb_ap041t_b13_crit",
+      "row": "B13Crit",
+      "source_id": "G_B13_critical_strike",
+      "source_path": "exports/v002/upgrades/G_B13_critical_strike_srgb_pm.png",
+      "sha256": "943f412835d3551f5b41e15a7dc75846ba33b7c3df1d8a4af247b7e2d241792c",
+      "bytes": 95490,
+      "kind": "flipbook",
+      "family": "B13",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 50,
+      "duration_s": 0.32,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.7,
+        2.7
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#5E3A8C",
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B13_levelup_radial_burst_srgb_pm.png",
+      "unity_id": "fb_ap041t_b13_levelup",
+      "row": "B13LevelUp",
+      "source_id": "G_B13_levelup_radial_burst",
+      "source_path": "exports/v002/upgrades/G_B13_levelup_radial_burst_srgb_pm.png",
+      "sha256": "47634de88512c2dc62b1232cd719e9af624792a6dac6f2891b62200ff69e9e29",
+      "bytes": 331277,
+      "kind": "flipbook",
+      "family": "B13",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        1024
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 28,
+      "duration_s": 0.5714285714285714,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        4.2,
+        4.2
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "palette_base_hex": "#FFF4E0",
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B14_shield_dome_edge_srgb_pm.png",
+      "unity_id": "fb_ap041t_b14_dome",
+      "row": "B14Dome",
+      "source_id": "G_B14_shield_dome_edge",
+      "source_path": "exports/v002/upgrades/G_B14_shield_dome_edge_srgb_pm.png",
+      "sha256": "8a0f61d5b0e6a895a5424571893752240edabb0dca889b1a5b605d06de73f2df",
+      "bytes": 90231,
+      "kind": "sprite",
+      "family": "B14",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        512,
+        512
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.8,
+        2.8
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "radius_m": 1.1,
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B14_shield_hit_wave_srgb_pm.png",
+      "unity_id": "fb_ap041t_b14_hit",
+      "row": "B14Hit",
+      "source_id": "G_B14_shield_hit_wave",
+      "source_path": "exports/v002/upgrades/G_B14_shield_hit_wave_srgb_pm.png",
+      "sha256": "c00b64d56adb02e349cb45975e8bfa63396592f2e062f7d4578faacdd3fd9a99",
+      "bytes": 216368,
+      "kind": "flipbook",
+      "family": "B14",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.8,
+        2.8
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B14_shield_break_srgb_pm.png",
+      "unity_id": "fb_ap041t_b14_break",
+      "row": "B14Break",
+      "source_id": "G_B14_shield_break",
+      "source_path": "exports/v002/upgrades/G_B14_shield_break_srgb_pm.png",
+      "sha256": "751b318b4623ed23539b9152a19c53b9b5bc2665b66c4702721d5e1fbc37b735",
+      "bytes": 393460,
+      "kind": "flipbook",
+      "family": "B14",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        2.8,
+        2.8
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B15_life_drain_thread_srgb_pm.png",
+      "unity_id": "fb_ap041t_b15_thread",
+      "row": "B15Thread",
+      "source_id": "G_B15_life_drain_thread",
+      "source_path": "exports/v002/upgrades/G_B15_life_drain_thread_srgb_pm.png",
+      "sha256": "36e6e5a11467d4021cfef0310bb53c4e9c391f3e51b1cf4083e878245db33861",
+      "bytes": 31270,
+      "kind": "ribbon",
+      "family": "B15",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        1024,
+        256
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        3.0,
+        0.6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Repeat",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B16_dodge_ghost_srgb_pm.png",
+      "unity_id": "fb_ap041t_b16_ghost",
+      "row": "B16Ghost",
+      "source_id": "G_B16_dodge_ghost",
+      "source_path": "exports/v002/upgrades/G_B16_dodge_ghost_srgb_pm.png",
+      "sha256": "eb198f0b63499443e26b220da6abf80a679356d8c4f8394e15f4b8536370313c",
+      "bytes": 63279,
+      "kind": "sprite",
+      "family": "B16",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        512,
+        512
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames_used": 1,
+      "fps": 0,
+      "duration_s": 0,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.65,
+        0.95
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 0,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 256,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B16_dodge_ink_shadow_srgb_pm.png",
+      "unity_id": "fb_ap041t_b16_shadow",
+      "row": "B16Shadow",
+      "source_id": "G_B16_dodge_ink_shadow",
+      "source_path": "exports/v002/upgrades/G_B16_dodge_ink_shadow_srgb_pm.png",
+      "sha256": "7732f2b42b5161d96f15a908778b385ad880df0bacc8f110dc01110fa67136f5",
+      "bytes": 527256,
+      "kind": "flipbook",
+      "family": "B16",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 32,
+      "duration_s": 0.5,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        0.9,
+        1.3
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_B17_healing_ground_pulse_srgb_pm.png",
+      "unity_id": "fb_ap041t_b17_pulse",
+      "row": "B17Pulse",
+      "source_id": "G_B17_healing_ground_pulse",
+      "source_path": "exports/v002/upgrades/G_B17_healing_ground_pulse_srgb_pm.png",
+      "sha256": "f92b4a241e1968bb2fc537adcfeb110f7090a3178cefa36a3a7542d7274e8b2a",
+      "bytes": 733540,
+      "kind": "flipbook",
+      "family": "B17",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        3.1,
+        3.1
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "radius_m": 1.3,
+      "ship_max_size": 512,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_T3_ink_shock_srgb_pm.png",
+      "unity_id": "fb_ap041t_t3_ink_shock",
+      "row": "T3InkShock",
+      "source_id": "G_T3_ink_shock",
+      "source_path": "exports/v002/upgrades/G_T3_ink_shock_srgb_pm.png",
+      "sha256": "994c9954056f6e8ca837287db7409569446ee4836a383a425736c051e5a8e40a",
+      "bytes": 972477,
+      "kind": "flipbook",
+      "family": "TIER3",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        6,
+        6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_T4_enso_attraction_srgb_pm.png",
+      "unity_id": "fb_ap041t_t4_enso",
+      "row": "T4Enso",
+      "source_id": "G_T4_enso_attraction",
+      "source_path": "exports/v002/upgrades/G_T4_enso_attraction_srgb_pm.png",
+      "sha256": "9bcca1ad0a81fa709a74ad538613d229f5872ce8898f414976e0669a3e30ff2f",
+      "bytes": 1932275,
+      "kind": "flipbook",
+      "family": "TIER4",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 10,
+      "duration_s": 1.6,
+      "loop": true,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        5.26191434585513,
+        5.26191434585513
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_T5_ink_spatter_srgb_pm.png",
+      "unity_id": "fb_ap041t_t5_spatter",
+      "row": "T5Spatter",
+      "source_id": "G_T5_ink_spatter",
+      "source_path": "exports/v002/upgrades/G_T5_ink_spatter_srgb_pm.png",
+      "sha256": "0681687dbcb1638bbbae0e9728dd83fe86b64ba5fed1f1db5adf9d80a84f151c",
+      "bytes": 779314,
+      "kind": "flipbook",
+      "family": "TIER5",
+      "premultiplied": true,
+      "premultiply_space": "linear",
+      "color_space": "sRGB",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "One OneMinusSrcAlpha",
+      "world_size_m": [
+        6,
+        6
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "ship_max_size": 1024,
+      "mipmaps": true,
+      "srgb": true,
+      "alpha_is_transparency": false
+    },
+    {
+      "file": "G_X8_synergy_enso_mask_linear.png",
+      "unity_id": "fb_ap041t_x8_enso",
+      "row": "X8Enso",
+      "source_id": "G_X8_synergy_enso_mask",
+      "source_path": "exports/v002/upgrades/G_X8_synergy_enso_mask_linear.png",
+      "sha256": "d4da48ca06779ac5c7e68053e1f2a322339b39bbcbdb9f496ff61d048f571799",
+      "bytes": 954293,
+      "kind": "mask_flipbook",
+      "family": "SYNERGY",
+      "premultiplied": false,
+      "premultiply_space": "none",
+      "color_space": "linear",
+      "size_px": [
+        2048,
+        2048
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames_used": 16,
+      "fps": 20,
+      "duration_s": 0.8,
+      "loop": false,
+      "blend": "custom R/G tint -> One OneMinusSrcAlpha",
+      "world_size_m": [
+        5.282822085154195,
+        5.282822085154195
+      ],
+      "origin_uv": [
+        0.5,
+        0.5
+      ],
+      "safe_border_px": 8,
+      "wrap": [
+        "Clamp",
+        "Clamp"
+      ],
+      "data_encoding": "enso_half_coverage_rg",
+      "channel_decode": "out.rgb = linearTintLeft * R + linearTintRight * G; out.a = saturate(R+G). No sRGB decode; coverage already premultiplies tint.",
+      "ship_max_size": 1024,
+      "mipmaps": false,
+      "srgb": false,
+      "alpha_is_transparency": false
+    }
+  ]
+}

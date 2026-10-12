@@ -4672,6 +4672,1446 @@ MonoBehaviour:
     HdrIntensity: 1
     BlendNote: One OneMinusSrcAlpha
     Premultiplied: 1
+  - Id: fb_ap041t_b1_ignition
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/H_B1_ignition_srgb_pm.png
+    Sha256: 01b10dbf83a35e55f454efd2f8f6c0c5b4a25c8bf990a9b671bd3b11b181f073
+    Texture: {fileID: 2800000, guid: 78542eb7d85e1d58c8563218bb8f189f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e95d88eb36fd04e309853808cc0d267e, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 1.6
+    OriginUv: {x: 0.5014043, y: 0.48610213}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B1_ignition_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041t_b1_ground_scorch
+    Family: 2
+    Kind: 1
+    SourceFile: AP041/tree/G_B1_ground_scorch_srgb_pm.png
+    Sha256: ccb5bea036fd710a6bcb3c3e787ce892942bc732f653b5084de2f4616edd1190
+    Texture: {fileID: 2800000, guid: 9124133273b022468f252fe085f63466, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 20fbd8d941cf54ccf97abc8320598eff, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B1_ground_scorch_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041t_scorch_01
+    Family: 2
+    Kind: 1
+    SourceFile: AP041/tree/H_decal_scorch_var01_srgb_pm.png
+    Sha256: 6f5dd6afa75d3f8d68785612c5ff93e651c3879bcf09b6a163208444ded0a4f5
+    Texture: {fileID: 2800000, guid: 218fd290f50ed15b593238068bdefc2e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 89f88abe70cae421d8ced4371348347c, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.4621935, y: 0.42046344}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_decal_scorch_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041t_scorch_02
+    Family: 2
+    Kind: 1
+    SourceFile: AP041/tree/H_decal_scorch_var02_srgb_pm.png
+    Sha256: 0ab22810921cf887e97cb54d85e4c0e7385a3c492bf90cd3baba6808b84d471b
+    Texture: {fileID: 2800000, guid: f9e4706f620f22cf08ea44fd77d7c74f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d4d7b1777bf8c464cac7619e99e15b87, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.47772676, y: 0.40725297}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_decal_scorch_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041t_scorch_03
+    Family: 2
+    Kind: 1
+    SourceFile: AP041/tree/H_decal_scorch_var03_srgb_pm.png
+    Sha256: d29bc1d5e17ea48f968851f9df24e95dc4915cad7a4479052a2f750c59fd7f2e
+    Texture: {fileID: 2800000, guid: b38945260f9d128e7088dbcf460e5037, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5432ed9ff77fe43b7a43ff90f7de4bc3, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5053883, y: 0.41925552}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_decal_scorch_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: decal_ap041t_scorch_04
+    Family: 2
+    Kind: 1
+    SourceFile: AP041/tree/H_decal_scorch_var04_srgb_pm.png
+    Sha256: f8038e34763a38781d10244e8af0832a8d67da1e55b5475614f2b13eebb78ed0
+    Texture: {fileID: 2800000, guid: ff177a0c76204dab46b8a25021840af3, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 2173267d7a65845b5b048d25fa1d2f3e, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.52379966, y: 0.42102608}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_decal_scorch_var04_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b2_ice_impact
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/H_B2_ice_impact_srgb_pm.png
+    Sha256: e0ad1713ac39c263c1e3abab3d988c0c72b884e3ff1a25f5eb24141b48698b4a
+    Texture: {fileID: 2800000, guid: e8d93aa1a347f45e3e23843395d88513, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 49741089bae3046ddb54681beb34073b, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 1.8
+    OriginUv: {x: 0.50827026, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B2_ice_impact_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b2_shards
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/G_B2_crystal_shards_srgb_pm.png
+    Sha256: cb79eff069b3212182836ef9d5ed1700d8ae14387dc30e6803a205180ae30504
+    Texture: {fileID: 2800000, guid: 0ede8c5b92c0e154259b94efabe82e07, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: fd332ecacfc1248f89adf71eef2c9b71, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 32
+    DurationSeconds: 0.5
+    Loop: 0
+    WorldSizeMetres: 2.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B2_crystal_shards_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b2_coating
+    Family: 11
+    Kind: 0
+    SourceFile: AP041/tree/G_B2_crystal_coating_srgb_pm.png
+    Sha256: b27299c89f3519537775538caed5ab770e1fb3153b52674d74359ff5f50d6782
+    Texture: {fileID: 2800000, guid: 9aa11eb91794043a2f79bc43f995c694, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 678b96989212a4469af9d4bd239c1b33, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B2_crystal_coating_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b3_impact
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/H_B3_electric_impact_srgb_pm.png
+    Sha256: 548a4f4b7f589ccd975c2c6a271794646afcb8e6f30af8bae27bb5c10b3df3b9
+    Texture: {fileID: 2800000, guid: 1d3649b9d31537341c29956fdd15811f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 2e20b6d53cb4a4107858eadda36f15bc, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 40
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 1.8
+    OriginUv: {x: 0.5112211, y: 0.5010201}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B3_electric_impact_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b3_flash
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/G_B3_electric_flash_srgb_pm.png
+    Sha256: 29dcb298898d049733f28b90b9702c22142dd9aa2c6fc3bf7d1ce26f4be21d40
+    Texture: {fileID: 2800000, guid: 92459cdb4ec8e5bb8ce1c548cd4f5f83, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5c517e28f4fe34f49aaa8a459763d71d, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 60
+    DurationSeconds: 0.26666668
+    Loop: 0
+    WorldSizeMetres: 2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B3_electric_flash_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b3_spark_ring
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/G_B3_spark_ring_srgb_pm.png
+    Sha256: 7a4e7fdded93241371620b223c358f002d702e59b65b9f8f5714ef28df0d212c
+    Texture: {fileID: 2800000, guid: 579938f65e99eaa7efc3a0be8eaf5096, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: a7ae66af8312940c1982758208abab7a, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 40
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B3_spark_ring_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b4_cloud
+    Family: 10
+    Kind: 0
+    SourceFile: AP041/tree/H_B4_poison_cloud_srgb_pm.png
+    Sha256: 3c26cf0d5c2787a65889fe7ec4d32a7add18e8d0e07895b506a1f58a35fbdf75
+    Texture: {fileID: 2800000, guid: 463bb0f1a96cbe488bef2eac6ebd8aff, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 42858ac2cde404106afb80b77d8e159d, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 6.6666665
+    DurationSeconds: 2.4
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5081177, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B4_poison_cloud_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b5_explosive
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B5_explosive_srgb_pm.png
+    Sha256: 7fbbd374bd3abe24aee5e1635d9fc3b40a489d4b35292c218c64bce61f7a4d68
+    Texture: {fileID: 2800000, guid: 582f9e073f740d9ea0a1c2af04901a8a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 6865a7e8aa43c44b0857c5ee50233e02, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 2
+    OriginUv: {x: 0.52550256, y: 0.48274532}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B5_explosive_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b5_shock
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/G_B5_circular_shock_srgb_pm.png
+    Sha256: fd894101b50cbf17662dc83b346b50a1703dade23ab043d521673e0a73afcfd3
+    Texture: {fileID: 2800000, guid: f1b55c33064186e96b874bd834281d0b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 39c36f2aa2f59421889d61ad3e16b2ff, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 40
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B5_circular_shock_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b6_singularity
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B6_singularity_srgb_pm.png
+    Sha256: cda80d51813b6bd16da6b1219285c8262a4c574a2628f52c78f0444674b744f5
+    Texture: {fileID: 2800000, guid: c374873b11c8c73ccacd3da08a1d3677, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: bfd120e4c0ba345388dcc1f6db586423, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 10
+    DurationSeconds: 1.6
+    Loop: 0
+    WorldSizeMetres: 4
+    OriginUv: {x: 0.5087186, y: 0.50495327}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B6_singularity_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b6_rings
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/G_B6_attraction_rings_srgb_pm.png
+    Sha256: bd0d036986938e09f58a73fe4d8dff81d9de24403ffbeb8e38d481c562f051b0
+    Texture: {fileID: 2800000, guid: f84a020d04cb96a60de0f6f1388062cc, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 0782b2205b16c40d097a774941530d08, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 5
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B6_attraction_rings_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b7_nuclear
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B7_nuclear_srgb_pm.png
+    Sha256: bf27dd71f0e5bdde2e39f7f84b9877c43fa4635aaed567e39b6fe67f9126e057
+    Texture: {fileID: 2800000, guid: 41a5c588df8966b34606511d7950c434, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 54d48994bf88b4bb5a47cd605658fc60, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 64
+    Fps: 20
+    DurationSeconds: 3.2
+    Loop: 0
+    WorldSizeMetres: 12
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B7_nuclear_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 12
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b7_shock
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/G_B7_nuclear_shock_srgb_pm.png
+    Sha256: b8622941cc8719b0330f9ce3fdc3041f0406aff5eb2bbd6fdf7d547d6d0a7a92
+    Texture: {fileID: 2800000, guid: f835b8a179a21b64871e5cc7afe5055e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 94ba3135de5d94ac6a7c5982f6d05889, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 64
+    Fps: 40
+    DurationSeconds: 1.6
+    Loop: 0
+    WorldSizeMetres: 16
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B7_nuclear_shock_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 16
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b7_heat_glint
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/G_B7_heat_glint_srgb_pm.png
+    Sha256: b78c769a9e4646b478298d49724ee564ca8558bf0386a02b2cd5b80355ef76d6
+    Texture: {fileID: 2800000, guid: 109850c192dcb8f8ccc146135b8eecb9, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 43c5db94b76eb4cc8a6a6490f2761ec3, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 48
+    DurationSeconds: 0.33333334
+    Loop: 0
+    WorldSizeMetres: 10
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B7_heat_glint_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 10
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b8_chain_01
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B8_chain_blast_var01_srgb_pm.png
+    Sha256: 03e5cdf7ebd2fa96c019bc116fdaa0389a6248de4c815111997cd6cf77f3c8b2
+    Texture: {fileID: 2800000, guid: 3a517e323bbc0e8fca01b52e3782a31d, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 6d2aef665a4984699b85721290f701c7, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 1.8
+    OriginUv: {x: 0.48793802, y: 0.45996502}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B8_chain_blast_var01_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b8_chain_02
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B8_chain_blast_var02_srgb_pm.png
+    Sha256: aa3b7d0cb224f1a09b2f9d49a69f90db043366f77c6346c5b5db96cca542fe43
+    Texture: {fileID: 2800000, guid: 7534f858663275ee23203799ef402881, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 88dab12c9817d4671b9d5c9d8b6b1325, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 1.8
+    OriginUv: {x: 0.48793802, y: 0.45996502}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B8_chain_blast_var02_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b8_chain_03
+    Family: 2
+    Kind: 0
+    SourceFile: AP041/tree/H_B8_chain_blast_var03_srgb_pm.png
+    Sha256: d625e2851e33089f0852152870617968db734be0e248aef85dc9445e22d3d5f6
+    Texture: {fileID: 2800000, guid: a66ffd83bdeca85e2879b65df7e1827e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 30af27d34051c459d9fda04981151be0, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 25
+    DurationSeconds: 0.64
+    Loop: 0
+    WorldSizeMetres: 1.8
+    OriginUv: {x: 0.48793802, y: 0.45996502}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): H_B8_chain_blast_var03_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b10_mini_flame
+    Family: 9
+    Kind: 0
+    SourceFile: AP041/tree/G_B10_mini_rocket_flame_srgb_pm.png
+    Sha256: 04270827e6a0ebf5554118864efba518d305bd705d0b9023713ea8caa34f635a
+    Texture: {fileID: 2800000, guid: 8850fe253757c8993e9c92e5bde2221f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8263848c8092640c0a91c1c7b5c04964, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 64
+    DurationSeconds: 0.25
+    Loop: 0
+    WorldSizeMetres: 1.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B10_mini_rocket_flame_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.65
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_ring_1
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_ground_ring_tier1_blue_srgb_pm.png
+    Sha256: 37fe8edcfbbe43913eceb3ea7f0d23b79877347c9a98f6fcb30c37ff8b304a1d
+    Texture: {fileID: 2800000, guid: d02eb5d9bf501e0943fcc4c5460d964d, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 53892205edb3f4a1e84f3561914cec87, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 2.5098498
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_ground_ring_tier1_blue_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.5098498
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_ring_2
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_ground_ring_tier2_gold_srgb_pm.png
+    Sha256: a7d8ef30873ffd51b677ef47ba1fccbc64d35f6fabcdd48a98e8a5eafd7873a5
+    Texture: {fileID: 2800000, guid: 1843df9977392ff7cb7035e0da23be02, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: c1ab34ef82a4c465084a30601b89500c, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 3.2590184
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_ground_ring_tier2_gold_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 3.2590184
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_ring_3
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_ground_ring_tier3_crimson_srgb_pm.png
+    Sha256: af6a5a2722389e9abbe43beea3ad425c8fc4f3e6e7568bff75a92e43f52e87e2
+    Texture: {fileID: 2800000, guid: d02b1dcb13b3f162ac61a213f117577b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8a7bf9e309c374d1da117c37d40e411f, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 4.0184855
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_ground_ring_tier3_crimson_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 4.0184855
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_sparks_1
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_rising_sparks_tier1_blue_srgb_pm.png
+    Sha256: bc97607d304c2bd8fe686fba0577aa5fbc123bc6db923b2c168c0c630007dc09
+    Texture: {fileID: 2800000, guid: f703b54f4532653575118599fca50537, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 448e862f882284d32b090f5b1a40c98f, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 2.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_rising_sparks_tier1_blue_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_sparks_2
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_rising_sparks_tier2_gold_srgb_pm.png
+    Sha256: 156f8ea64b35203ce3dcd0ce53c50e1b016a7001e6e74c251b5a0fd0c4c524f1
+    Texture: {fileID: 2800000, guid: 1a13f3c6c252635ea9d8f05054cf2939, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: ce1533a9dbdf84827878f2c3a9e7be41, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 2.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_rising_sparks_tier2_gold_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_sparks_3
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_rising_sparks_tier3_crimson_srgb_pm.png
+    Sha256: 7da97019359ab530ba8c2acd26498467820a399f774100247e311369339f1037
+    Texture: {fileID: 2800000, guid: 95f047139f6e520a5d281f1c94f86c5e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 795e46223a52949c4978cc1756535646, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 2.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_rising_sparks_tier3_crimson_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b11_smoke_3
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B11_sumi_smoke_tier3_srgb_pm.png
+    Sha256: 4ab62a2b7cf2a3962561b28c73f0832f07916b1d1a6b00be3179196ec2322ed7
+    Texture: {fileID: 2800000, guid: db38741746ebba006fb44e1b2bcc08f0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 73917c5fb8a074419baa690afb6fd5d2, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 16
+    DurationSeconds: 1
+    Loop: 1
+    WorldSizeMetres: 3.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B11_sumi_smoke_tier3_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 3.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b12_white_hot
+    Family: 9
+    Kind: 0
+    SourceFile: AP041/tree/G_B12_muzzle_white_hot_speed_srgb_pm.png
+    Sha256: 9b484d33f7af3961fcebc553e3985ab1fe80adfa4f6f61ff7557635571e76538
+    Texture: {fileID: 2800000, guid: 505fb2adcdce0f2e097abab6c0ae7173, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: a4cc0ef282b944fe593ed46e58b2b635, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6666667
+    Loop: 1
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B12_muzzle_white_hot_speed_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b13_crit
+    Family: 0
+    Kind: 0
+    SourceFile: AP041/tree/G_B13_critical_strike_srgb_pm.png
+    Sha256: 943f412835d3551f5b41e15a7dc75846ba33b7c3df1d8a4af247b7e2d241792c
+    Texture: {fileID: 2800000, guid: 7c644e28f84d5e607765404883074358, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: fa25e64d2ad7b4198b2cf330c96fb7c8, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 50
+    DurationSeconds: 0.32
+    Loop: 0
+    WorldSizeMetres: 2.7
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B13_critical_strike_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.7
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b13_levelup
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B13_levelup_radial_burst_srgb_pm.png
+    Sha256: 47634de88512c2dc62b1232cd719e9af624792a6dac6f2891b62200ff69e9e29
+    Texture: {fileID: 2800000, guid: 4eade03840b6b85d117e5f2bbe4daf83, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b1f5aaeae6a3241299d0dfc180ef3d24, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 28
+    DurationSeconds: 0.5714286
+    Loop: 0
+    WorldSizeMetres: 4.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B13_levelup_radial_burst_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 4.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b14_dome
+    Family: 12
+    Kind: 2
+    SourceFile: AP041/tree/G_B14_shield_dome_edge_srgb_pm.png
+    Sha256: 8a0f61d5b0e6a895a5424571893752240edabb0dca889b1a5b605d06de73f2df
+    Texture: {fileID: 2800000, guid: b8032094cbc140ce7a41529c1998bebe, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 2a8fa2b2c50e247a0af7a50d31e028ae, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B14_shield_dome_edge_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b14_hit
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B14_shield_hit_wave_srgb_pm.png
+    Sha256: c00b64d56adb02e349cb45975e8bfa63396592f2e062f7d4578faacdd3fd9a99
+    Texture: {fileID: 2800000, guid: 96095eb7ab530d657be312c3fa3109bd, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b37042535214f4602a916c257df83bf3, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B14_shield_hit_wave_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b14_break
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B14_shield_break_srgb_pm.png
+    Sha256: 751b318b4623ed23539b9152a19c53b9b5bc2665b66c4702721d5e1fbc37b735
+    Texture: {fileID: 2800000, guid: bd413faed5860ab08a87f912661a10fe, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e21206aa221a6480598d252e98df99ad, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B14_shield_break_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b15_thread
+    Family: 12
+    Kind: 2
+    SourceFile: AP041/tree/G_B15_life_drain_thread_srgb_pm.png
+    Sha256: 36e6e5a11467d4021cfef0310bb53c4e9c391f3e51b1cf4083e878245db33861
+    Texture: {fileID: 2800000, guid: c45f8b9b26736b883d9e10bfa651584e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: aedecec0ab965491f9e9e6b7273858ba, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 3
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B15_life_drain_thread_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b16_ghost
+    Family: 12
+    Kind: 2
+    SourceFile: AP041/tree/G_B16_dodge_ghost_srgb_pm.png
+    Sha256: eb198f0b63499443e26b220da6abf80a679356d8c4f8394e15f4b8536370313c
+    Texture: {fileID: 2800000, guid: a584f37e66039758afc952d02f3e3b97, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 20e0988f0875843899a1a90a4ff0a27d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.65
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B16_dodge_ghost_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.95
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b16_shadow
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B16_dodge_ink_shadow_srgb_pm.png
+    Sha256: 7732f2b42b5161d96f15a908778b385ad880df0bacc8f110dc01110fa67136f5
+    Texture: {fileID: 2800000, guid: c384d76f9cef45005fb7c09a7fec63f5, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5e9f8bddad924439487348735c3565e5, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 32
+    DurationSeconds: 0.5
+    Loop: 0
+    WorldSizeMetres: 0.9
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B16_dodge_ink_shadow_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.3
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_b17_pulse
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_B17_healing_ground_pulse_srgb_pm.png
+    Sha256: f92b4a241e1968bb2fc537adcfeb110f7090a3178cefa36a3a7542d7274e8b2a
+    Texture: {fileID: 2800000, guid: 329581140dbe9bed9df85b431210ef4e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: a6eea16368b8049549c67a56323b285a, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 3.1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_B17_healing_ground_pulse_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 3.1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_t3_ink_shock
+    Family: 10
+    Kind: 0
+    SourceFile: AP041/tree/G_T3_ink_shock_srgb_pm.png
+    Sha256: 994c9954056f6e8ca837287db7409569446ee4836a383a425736c051e5a8e40a
+    Texture: {fileID: 2800000, guid: a390a809110e4fff73d9260306cbbb8d, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9d374a700f24648e4a2aa86ef389818b, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_T3_ink_shock_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_t4_enso
+    Family: 10
+    Kind: 0
+    SourceFile: AP041/tree/G_T4_enso_attraction_srgb_pm.png
+    Sha256: 9bcca1ad0a81fa709a74ad538613d229f5872ce8898f414976e0669a3e30ff2f
+    Texture: {fileID: 2800000, guid: 5c2577dcf5980d80621e6be1b722d034, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d29e0b5fcdf564d9cb8232a175ec0ed8, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 10
+    DurationSeconds: 1.6
+    Loop: 1
+    WorldSizeMetres: 5.2619143
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_T4_enso_attraction_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 5.2619143
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_t5_spatter
+    Family: 10
+    Kind: 0
+    SourceFile: AP041/tree/G_T5_ink_spatter_srgb_pm.png
+    Sha256: 0681687dbcb1638bbbae0e9728dd83fe86b64ba5fed1f1db5adf9d80a84f151c
+    Texture: {fileID: 2800000, guid: 54a4b37c86c36518bde935cadcb4823b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 1a711366b503247a0bb3314945fc745d, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_T5_ink_spatter_srgb_pm.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: One OneMinusSrcAlpha
+    Premultiplied: 1
+  - Id: fb_ap041t_x8_enso
+    Family: 12
+    Kind: 0
+    SourceFile: AP041/tree/G_X8_synergy_enso_mask_linear.png
+    Sha256: d4da48ca06779ac5c7e68053e1f2a322339b39bbcbdb9f496ff61d048f571799
+    Texture: {fileID: 2800000, guid: b115d9bd69efca911521ee56dc8988d7, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 929e1ffe76864497590b8c8abc25c71f, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 5.282822
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'AP-041 run tree (WP-104 B4): G_X8_synergy_enso_mask_linear.png'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP041-vfx-manifest-tree-v002.json
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 5.282822
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: custom R/G tint -> One OneMinusSrcAlpha
+    Premultiplied: 1
   - Id: blood_droplet
     Family: 8
     Kind: 2

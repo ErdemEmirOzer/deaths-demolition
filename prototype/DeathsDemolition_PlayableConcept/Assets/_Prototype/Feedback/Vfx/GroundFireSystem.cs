@@ -26,8 +26,12 @@ namespace DD.Prototype.Feedback.Vfx
     /// Extinguished: out in 0.6 s with an ember burst and a puff. Ash Cloud and Hibana on the same rocket ignite two zones at the
     /// same point: they share one visual zone (the larger radius, the later end).
     ///
+    /// WP-104 B4-1 (AD-B4 M8): a run-tree zone (<see cref="OnTreeIgnited"/>: S-04's FireGround proc through TreeVfxBinder) also lays
+    /// the ember underdraw — its char disc once more in #E0702A at α ≤ 0.30 × the zone's intensity, alpha-blended between the char
+    /// and the glow — so light stone reads the burning ground as fire, not grey smoke. RunTreeGroundFire's own zones draw as before.
+    ///
     /// Budget (DEC-100 Cinematic VFX ≤ 5.5 ms): five world-space ParticleSystems (flames / embers / carpet / char / shimmer, one
-    /// draw each), caps per tier below, no per-frame allocation.
+    /// draw each) and the tree zones' underdraw (one draw while a tree zone burns), caps per tier below, no per-frame allocation.
     /// </summary>
     public sealed class GroundFireSystem : MonoBehaviour
     {
@@ -59,6 +63,8 @@ namespace DD.Prototype.Feedback.Vfx
         public static float ShimmerEvery => VfxTier.Pick(0f, 0.12f, 0.08f);                  // s per zone; Performance none
         private static readonly Color LightColour = new Color(1f, 0.627f, 0.314f, 1f);        // #FFA050 (AD SHOULD 3)
         private static readonly Color SmokeColour = new Color(0.227f, 0.212f, 0.196f, 0.25f); // #3A3632 α 0.25
+        /// <summary>WP-104 B4-1: the tree zones' ember underdraw sorts between the char (fudge 40) and the glow (20), 5 mm over the char.</summary>
+        public const float TreeUnderSortingFudge = 30f, TreeUnderLift = 0.02f;
 
         private struct Zone
         {
@@ -67,6 +73,9 @@ namespace DD.Prototype.Feedback.Vfx
             public Vector3 Centre;
             public float Radius, Born, EndsAt, EndedAt, Seed;
             public float FlameAcc, EmberAcc, NextGlow, NextSmoke, NextShimmer;
+            /// <summary>WP-104 B4-1: a run-tree zone (the ember underdraw) and its char disc's size and turn (the underdraw's shape).</summary>
+            public bool Tree;
+            public float CharSize, CharTurn;
         }
 
         private static GroundFireSystem s_instance;
@@ -76,8 +85,10 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Transform[] _haze = new Transform[3];
         private readonly MeshRenderer[] _hazeRenderers = new MeshRenderer[3];
         private MaterialPropertyBlock _hazeBlock;
-        private ParticleSystem _flames, _embers, _glow, _char, _shimmer;
-        private Material _flameMat, _emberMat, _glowMat, _charMat, _shimmerMat, _hazeMat;
+        private ParticleSystem _flames, _embers, _glow, _char, _shimmer, _treeUnder;
+        private Material _flameMat, _emberMat, _glowMat, _charMat, _shimmerMat, _hazeMat, _treeUnderMat;
+        private ParticleSystem.Particle[] _treeUnderParticles;
+        private int _treeUnderDrawn;
         private Texture2D _dot, _soft, _noise, _charTex;
         private VfxTierLevel _tier;
         private bool _tierApplied;
@@ -98,6 +109,9 @@ namespace DD.Prototype.Feedback.Vfx
         public int CharLive => _char != null ? _char.particleCount : 0;
         public int ShimmerLive => _shimmer != null ? _shimmer.particleCount : 0;
         public ParticleSystem SystemOf(int layer) => layer == 0 ? _flames : layer == 1 ? _embers : layer == 2 ? _glow : _char;
+        /// <summary>WP-104 B4-1 (AD-B4 M8): the tree zones' ember underdraws drawn this frame (one particle per burning tree zone).</summary>
+        public int TreeUnderLive => _treeUnder != null ? _treeUnder.particleCount : 0;
+        public ParticleSystem TreeUnderSystem => _treeUnder;
         public Camera CameraOverride { get; set; }
 
         public static GroundFireSystem Ensure()
@@ -139,6 +153,7 @@ namespace DD.Prototype.Feedback.Vfx
             DestroyIfSet(_glowMat);
             DestroyIfSet(_charMat);
             DestroyIfSet(_shimmerMat);
+            DestroyIfSet(_treeUnderMat);
             DestroyIfSet(_noise);
             DestroyIfSet(_charTex);
             DestroyIfSet(_hazeMat);
@@ -180,6 +195,8 @@ namespace DD.Prototype.Feedback.Vfx
             if (_glow != null) _glow.Clear();
             if (_char != null) _char.Clear();
             if (_shimmer != null) _shimmer.Clear();
+            if (_treeUnder != null) _treeUnder.Clear();
+            _treeUnderDrawn = 0;
             for (int i = 0; i < _haze.Length; i++) if (_haze[i] != null) _haze[i].gameObject.SetActive(false);
             LiveZones = 0;
         }
@@ -187,7 +204,13 @@ namespace DD.Prototype.Feedback.Vfx
         // ------------------------------------------------------------------ events
 
         /// <summary>RunTreeGroundFire.Ignited (public: tests drive it without the other listeners — audio).</summary>
-        public void OnIgnited(GroundFireInfo info)
+        public void OnIgnited(GroundFireInfo info) => Ignite(in info, false);
+
+        /// <summary>WP-104 B4-1: S-04's FireGround proc (TreeVfxBinder) — the same zone plus the AD-B4 M8 ember underdraw. A tree zone
+        /// that merges into a live one gives that zone the underdraw (its char's shape).</summary>
+        public void OnTreeIgnited(GroundFireInfo info) => Ignite(in info, true);
+
+        private void Ignite(in GroundFireInfo info, bool tree)
         {
             float now = Time.time;
             Vector3 centre = Ground(info.Center);
@@ -203,6 +226,7 @@ namespace DD.Prototype.Feedback.Vfx
                 z.IdB = info.Id;
                 z.Radius = Mathf.Max(z.Radius, info.Radius);
                 z.EndsAt = Mathf.Max(z.EndsAt, ends);
+                z.Tree |= tree;
                 ZonesMerged++;
                 return;
             }
@@ -223,14 +247,18 @@ namespace DD.Prototype.Feedback.Vfx
             _zones[slot] = new Zone
             {
                 Alive = true, IdA = info.Id, Centre = centre, Radius = Mathf.Max(0.5f, info.Radius), Born = now, EndsAt = ends,
-                Seed = Next01() * 100f, NextGlow = now, NextSmoke = now + 0.15f
+                Seed = Next01() * 100f, NextGlow = now, NextSmoke = now + 0.15f, Tree = tree
             };
             ZonesStarted++;
-            // The char: a dark soot disc that outlives the fire by 3 s (the burnt ground is what top-down reads after).
+            // The char: a dark soot disc that outlives the fire by 3 s (the burnt ground is what top-down reads after). Its size and
+            // turn are kept: a tree zone's ember underdraw draws the same disc (WP-104 B4-1).
+            float charSize = Mathf.Max(0.5f, info.Radius) * 0.87f * 2f, charTurn = Next01() * 360f;
+            _zones[slot].CharSize = charSize;
+            _zones[slot].CharTurn = charTurn;
             var charParams = new ParticleSystem.EmitParams
             {
-                position = centre + Vector3.up * 0.015f, velocity = Vector3.zero, startSize = Mathf.Max(0.5f, info.Radius) * 0.87f * 2f,
-                startLifetime = info.Seconds + CharHoldSeconds + CharFadeSeconds, startColor = CharColour, rotation = Next01() * 360f
+                position = centre + Vector3.up * 0.015f, velocity = Vector3.zero, startSize = charSize,
+                startLifetime = info.Seconds + CharHoldSeconds + CharFadeSeconds, startColor = CharColour, rotation = charTurn
             };
             _char.Emit(charParams, 1);
         }
@@ -310,8 +338,41 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             LiveZones = live;
+            DrawTreeUnder(now);
             LightNearest(camPos, now);
             HazeNearest(cam, camPos, now);
+        }
+
+        /// <summary>
+        /// WP-104 B4-1 (AD-B4 M8): one still particle per burning tree zone, set by hand every frame (0 B) — its char disc (size and
+        /// turn) in #E0702A at α <see cref="TreeVfxLadder.FireUnderAlpha"/> × the zone's intensity, so it ramps in, dies and goes out
+        /// with the flames and never outlives them (the char does, by 3 s).
+        /// </summary>
+        private void DrawTreeUnder(float now)
+        {
+            if (_treeUnder == null) return;
+            int n = 0;
+            for (int i = 0; i < MaxZones; i++)
+            {
+                ref Zone z = ref _zones[i];
+                if (!z.Alive || !z.Tree) continue;
+                float k = Intensity(z, now);
+                if (k <= 0f) continue;
+                Color c = TreeVfxLadder.FireUnderTint;
+                c.a = TreeVfxLadder.FireUnderAlpha * k;
+                ref ParticleSystem.Particle p = ref _treeUnderParticles[n++];
+                p.position = z.Centre + Vector3.up * TreeUnderLift;
+                p.velocity = Vector3.zero;
+                p.startSize = z.CharSize;
+                p.rotation = z.CharTurn;
+                p.startColor = c;
+                p.startLifetime = 1f;
+                p.remainingLifetime = 1f;
+            }
+
+            if (n == 0 && _treeUnderDrawn == 0) return;
+            _treeUnder.SetParticles(_treeUnderParticles, n);
+            _treeUnderDrawn = n;
         }
 
         /// <summary>0..1: ignition ramp × the dying tail × the going-out fade.</summary>
@@ -531,6 +592,7 @@ namespace DD.Prototype.Feedback.Vfx
             SetCap(_glow, GlowCap);
             SetCap(_char, CharCap);
             SetCap(_shimmer, ShimmerCap);
+            SetCap(_treeUnder, MaxZones);
         }
 
         private static void SetCap(ParticleSystem ps, int cap)
@@ -625,6 +687,18 @@ namespace DD.Prototype.Feedback.Vfx
             ParticleSystem.ColorOverLifetimeModule cc = _char.colorOverLifetime;
             cc.enabled = true;
             cc.color = new ParticleSystem.MinMaxGradient(charAlpha);
+
+            // WP-104 B4-1 (AD-B4 M8): the tree zones' ember underdraw — the char's disc, alpha-blended #E0702A, over the char and under
+            // the additive glow. No emission: DrawTreeUnder sets one particle per tree zone every frame, so the system loops (it must
+            // keep simulating and drawing them) and its colour is the particle's own (no colour over lifetime).
+            _treeUnderMat = Particle("DD_GroundFireTreeUnder (runtime)", _charTex, Color.white, false);
+            _treeUnder = NewSystem("GroundFireTreeUnder", _treeUnderMat, ParticleSystemRenderMode.HorizontalBillboard, 0f);
+            _treeUnder.GetComponent<ParticleSystemRenderer>().sortingFudge = TreeUnderSortingFudge;
+            _treeUnder.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ParticleSystem.MainModule um = _treeUnder.main;
+            um.loop = true;
+            _treeUnder.Play();
+            _treeUnderParticles = new ParticleSystem.Particle[MaxZones];
 
             _shimmer = NewSystem("GroundFireShimmer", _shimmerMat, ParticleSystemRenderMode.Billboard, 0f);
             ParticleSystem.TextureSheetAnimationModule ss = _shimmer.textureSheetAnimation;

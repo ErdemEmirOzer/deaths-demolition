@@ -118,6 +118,8 @@ namespace DD.Prototype.Feedback.Vfx
         private int _next;
         public int Presentations { get; private set; }
         public int FullPresentations { get; private set; }
+        /// <summary>WP-104 B4: run-tree blasts left to their TreeEvents.Proc (ExplosionSource.Tree, S-02 B2): no card, no light here.</summary>
+        public int TreePresentations { get; private set; }
         public int LightPresentations { get; private set; }
         public int FlashCards { get; private set; }
         public int Scorches { get; private set; }
@@ -176,6 +178,15 @@ namespace DD.Prototype.Feedback.Vfx
         public bool Play(Vector3 at, float radius, int mask, ExplosionSource source)
         {
             if (_owner == null || !_owner.IsReady || mask == 0) return false;
+            // WP-104 B4 (S-04 12.10 §3, S-02 B2): a run-tree blast is ONE TreeEvents.Proc dressed by TreeVfxBinder (B5 / B7 / B8 + shock
+            // ring + sumi + scorch); when its damage goes through S-02's Explode with ExplosionSource.Tree this draws nothing (true: the
+            // director's BurstEffect fallback stays off too). The sound is S-08's (the same source rule).
+            if (source == ExplosionSource.Tree)
+            {
+                TreePresentations++;
+                return true;
+            }
+
             bool rocket = source == ExplosionSource.Rocket;
             bool brushOwned = FeelBrushVfxSystem.OwnsTdLayers;
             // Reserve once before debris and the following FeelEvents ring/light are presented. M-62: a rocket is never the one
@@ -186,7 +197,7 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].Full) full++;
             ref Blast b = ref _blasts[_next];
             _next = (_next + 1) % _blasts.Length;
-            b = new Blast { Active = true, Rocket = rocket, BrushOwned = brushOwned, Full = rocket && full < FullCapacity, At = at, Start = Time.time, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
+            b = new Blast { Active = true, Rocket = rocket, BrushOwned = brushOwned, Full = rocket && full < FullCapacity, At = at, Start = VfxClock.Now, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
             b.Guard = GuardAt(at, ColumnGuardRadius * b.Scale);   // M-60 §4.1: fireball card + column + steam at α × 0.5 over the player
             if (b.Guard < 1f) GuardedColumns++;
             int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
@@ -237,7 +248,7 @@ namespace DD.Prototype.Feedback.Vfx
             return true;
         }
 
-        private void Update(){Tick(Time.time);TickSmear(Time.time);}
+        private void Update(){float now=VfxClock.Now;Tick(now);TickSmear(now);}   // WP-104 B4: the presentation clock
         public void Tick(float now)
         {
             for(int i=0;i<_blasts.Length;i++)
@@ -420,7 +431,7 @@ namespace DD.Prototype.Feedback.Vfx
             t.localPosition = new Vector3(0f, 0f, depth);
             t.localRotation = Quaternion.identity;
             t.localScale = new Vector3(height * cam.aspect, height, 1f);
-            _smearStart = Time.time;
+            _smearStart = VfxClock.Now;   // WP-104 B4
             SetSmearAlpha(EdgeSmearAlpha);
             _smear.enabled = true;
             return true;

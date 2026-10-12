@@ -5,6 +5,8 @@
 // optional distance fade (pellet bars die out after 6 m) and the first-person near-camera ramp (α 0→1 over the first
 // 0.4 m from the muzzle, HDR × 0.15 inside 1.5 m of the eye → × 1 at 3 m, core ≤ 6 px), a segment shorter than 4 px on screen
 // (seen end-on) or a head-dot instance drawn as a soft round dot. Additive, HDR (bloom does the glow's core).
+// WP-104 B4-1 (AD-B4): a TD tracer halo widens by its tier's px step (_Extra.y < 0, px at 1080p over its metre width) and an
+// element halo covers the ground outside its core (_TailColor.a: the premultiplied α grows, the added colour does not).
 // All-float CBUFFER (Metal); per-instance data through UNITY_INSTANCING_BUFFER (MaterialPropertyBlock arrays).
 Shader "DD/VFX Ribbon"
 {
@@ -54,9 +56,9 @@ Shader "DD/VFX Ribbon"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Head)      // xyz head (world), w width (m)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Tail)      // xyz tail (world), w head bead (0..1 of the length)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _HeadColor) // rgb HDR (linear), a alpha
-                UNITY_DEFINE_INSTANCED_PROP(float4, _TailColor) // rgb HDR (linear), a unused
+                UNITY_DEFINE_INSTANCED_PROP(float4, _TailColor) // rgb HDR (linear), a a premultiplied halo's coverage gain outside its core (WP-104 B4-1; 0 = none, additive layers ignore it)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Span)      // x tail / y head distance from the muzzle (m), z fade distance (0 = none; < 0 = edge-tint share, WP-101), w fade-in start (m)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Extra)     // x min width px, y dot size px (dot mode / end-on), z first-person flag, w 1 = head dot
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Extra)     // x min width px, y dot size px (dot mode / end-on) or a TD halo's tier step (−y px at 1080p, WP-104 B4-1), z first-person flag (> 0.5) or a TD ceiling (−z px at 1080p, WP-104 B4), w 1 = head dot or the ceiling's floor (−w m, WP-104 B4)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct Attributes
@@ -97,10 +99,14 @@ Shader "DD/VFX Ribbon"
                 side = sideLen > 1e-4 ? side / sideLen : float3(0, 1, 0);
 
                 // K2: one screen pixel at this depth ≈ 2·d / (P11 · screen height) in world units (perspective).
-                float pixelWorld = 2.0 * camDist / (UNITY_MATRIX_P._m11 * _ScreenParams.y);
+                float pixelWorld = 2.0 * camDist / (abs(UNITY_MATRIX_P._m11) * _ScreenParams.y);   // abs: a flipped render-texture projection (Metal / URP intermediate) has _m11 < 0 - every px floor / ceiling went negative (WP-104 B4 capture)
                 float minPx = extra.x > 0.0 ? extra.x : _MinPx;
                 float width = max(head.w, minPx * pixelWorld);
+                // WP-104 B4-1 (AD-B4 §1): a TD tracer halo's tier step, −y px at 1080p (resolution-proportional) over its metre width
+                float stepPx = max(-extra.y, 0.0) * (_ScreenParams.y / 1080.0);
+                width += stepPx * pixelWorld;
                 if (extra.z > 0.5) width = min(width, max(6.0, minPx) * pixelWorld);   // FP: a core never wider than 6 px (AD B1 MUST 6)
+                else if (extra.z < -0.5) width = min(width, max(-extra.z * pixelWorld * (_ScreenParams.y / 1080.0), -min(extra.w, 0.0)));   // WP-104 B4: a styled TD round's ceiling, -z px at 1080p (AD §2 / A5), never under its WP-101 width (-w m)
 
                 // The segment's projected length in pixels: a bar seen end-on (velocity ≈ view axis) has no readable axis —
                 // it collapses to its head bead, a round dot, instead of standing up as a stick (AD B1 MUST 1). A head dot
@@ -114,8 +120,10 @@ Shader "DD/VFX Ribbon"
                 if (dotMode)
                 {
                     float headDist = max(length(GetCameraPositionWS() - head.xyz), 1e-3);
-                    float headPixel = 2.0 * headDist / (UNITY_MATRIX_P._m11 * _ScreenParams.y);
-                    float size = max(max(head.w * 2.0, 0.06), extra.y * headPixel);
+                    float headPixel = 2.0 * headDist / (abs(UNITY_MATRIX_P._m11) * _ScreenParams.y);
+                    float dotW = head.w + stepPx * headPixel;   // WP-104 B4-1: an end-on halo keeps its tier step
+                    if (extra.z < -0.5) dotW = min(dotW, max(-extra.z * headPixel * (_ScreenParams.y / 1080.0), -min(extra.w, 0.0)));   // WP-104 B4: the ceiling holds for an end-on dot too
+                    float size = max(max(dotW * 2.0, 0.06), extra.y * headPixel);
                     float3 camRight = UNITY_MATRIX_V[0].xyz;
                     float3 camUp = UNITY_MATRIX_V[1].xyz;
                     p = head.xyz + (camRight * (v.uv.x * 2.0 - 1.0) + camUp * v.uv.y) * (0.5 * size);
@@ -158,6 +166,9 @@ Shader "DD/VFX Ribbon"
                 }
 
                 float alpha = headColor.a * a * across;
+                // WP-104 B4-1 (AD-B4 M5): an element halo hides more of the ground it veils outside its core (any halo's core lies in
+                // |v| ≤ 0.25) - the colour it adds stays rgb × α, only the premultiplied α grows (_TailColor.a; 0 = WP-101)
+                float cover = i.dot < 0.5 ? 1.0 + max(tailColor.a, 0.0) * smoothstep(0.15, 0.35, abs(i.uv.y)) : 1.0;
                 if (span.z < 0.0 && i.dot < 0.5)
                 {
                     // WP-101 (AD M3): the halo's outer half warms to _EdgeTint (an amber rim reads on the light stone)
@@ -175,7 +186,7 @@ Shader "DD/VFX Ribbon"
                     rgb *= lerp(0.15, 1.0, saturate((eye - 1.5) / 1.5));                // FP: no blinding bar at the eye
                 }
 
-                return float4(rgb * alpha, alpha);   // premultiplied; the target's alpha is kept (Zero One)
+                return float4(rgb * alpha, min(alpha * cover, 1.0));   // premultiplied; the target's alpha is kept (Zero One)
             }
             ENDHLSL
         }

@@ -672,7 +672,9 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdHaloAlpha).Within(1e-5f));
                 GameFeelSettings.FlashScale = .4f;
                 Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-                Assert.That(TracerBuffer(tracer, "_headColor")[0].w, Is.EqualTo(TracerRibbonRenderer.TdHaloAlpha * .4f).Within(1e-5f), "ReduceFlashes dims the halo");
+                Vector4 rf = TracerBuffer(tracer, "_headColor")[0];
+                Assert.That(rf.w, Is.EqualTo(TracerRibbonRenderer.TdHaloAlpha).Within(1e-5f), "WP-104 B4-1 (AD-B4 M3): ReduceFlashes keeps the halo's α - a steady trail is no flash");
+                Assert.That(rf.x, Is.EqualTo(TracerRibbonRenderer.TdHaloColor.r * TracerRibbonRenderer.TdHaloHdr * .4f).Within(1e-4f), "... and dims its HDR × FlashScale");
             }
             finally { GameFeelSettings.FlashScale = flash; }
             tracer.TickTd(1f);   // it arrived at 30 m (≈ 0.12 s) and its tail ran in

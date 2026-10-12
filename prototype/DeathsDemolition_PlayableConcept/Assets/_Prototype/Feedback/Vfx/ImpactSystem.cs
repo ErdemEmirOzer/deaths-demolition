@@ -273,7 +273,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         private bool TakeSlot()
         {
-            float now = Time.time;
+            float now = VfxClock.Now;   // WP-104 B4: the slot window runs in the tree preview too
             int cap = Mathf.Min(ConcurrentCap, _recent.Length);
             int live = 0;
             for (int i = 0; i < _recent.Length; i++)
@@ -491,6 +491,7 @@ namespace DD.Prototype.Feedback.Vfx
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
             renderer.maxParticleSize = 0.2f;
             renderer.sortMode = ParticleSystemSortMode.None;
+            VfxClock.TrackParticles(ps);   // WP-104 B4: unscaled while the tree preview runs
             ps.Play();
             return ps;
         }

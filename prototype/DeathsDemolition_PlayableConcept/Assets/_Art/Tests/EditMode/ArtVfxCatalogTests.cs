@@ -49,7 +49,9 @@ namespace DD.Art.Tests.EditMode
             // WP-019b: 108 v003 manifest rows + the synthesized blood_droplet row; WP-047E: + 4 AP010C rows; WP-047H: + fb_armor_break (v004).
             // WP-101 (R4, AP-041): + the 33 AP-041 v001 rows when the set is imported (their own gate: Wp101Ap041CatalogTests).
             int ap041 = ArtAp041VfxIntake.Active ? ArtAp041VfxIntake.Table.Length : 0;
-            Assert.AreEqual(109 + ap041, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet) + AP-041 " + ap041 + " satır.");
+            // WP-104 B4: + the 45 AP-041 run-tree rows when imported (their own gate: Wp104B4IntakeTests).
+            int tree = ArtAp041TreeIntake.Active ? ArtAp041TreeIntake.Table.Length : 0;
+            Assert.AreEqual(109 + ap041 + tree, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet) + AP-041 " + ap041 + " + ağaç " + tree + " satır.");
 
             var hatalar = new List<string>();
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -58,6 +60,7 @@ namespace DD.Art.Tests.EditMode
                 if (!ids.Add(e.Id)) hatalar.Add(e.Id + ": çift id");
                 if (e.ManifestFile == "synthesized") { if (e.Id != VfxIds.BloodDroplet) hatalar.Add(e.Id + ": beklenmeyen sentez satırı"); continue; }
                 if (e.ManifestFile == ArtAp041VfxIntake.ManifestName) continue;   // WP-101: checked against the AP-041 manifest (Wp101Ap041CatalogTests)
+                if (e.ManifestFile == ArtAp041TreeIntake.ManifestName) continue;   // WP-104 B4: checked against the tree manifest (Wp104B4IntakeTests)
                 if (!manifest.TryGetValue(e.Id, out Dictionary<string, object> a)) { hatalar.Add(e.Id + ": manifestte yok"); continue; }
                 // Schema v003: grid may be null (1×1), world_size_m a number / [w, h] / string, capsule_cover_s replaces readability_limit_s.
                 List<object> grid = a.TryGetValue("grid", out object gr) && gr != null ? ArtJson.AsList(gr, "grid") : null;

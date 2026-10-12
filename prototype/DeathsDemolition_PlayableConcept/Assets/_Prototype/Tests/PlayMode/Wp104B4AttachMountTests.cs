@@ -14,6 +14,7 @@ using DD.Prototype.Weapons.Attachments;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Vfx = DD.Prototype.Feedback.Vfx;
 
 namespace DD.Prototype.Tests.PlayMode
 {
@@ -25,7 +26,10 @@ namespace DD.Prototype.Tests.PlayMode
     ///   2. a weapon switch drops the old add-ons and mounts the new weapon's (smg_2's side magazine: the E-mag points +X);
     ///   3. rl_1 full auto: the E6 belt box, the reload's Box visual, unit scale on its socket;
     ///   4. TopDown only (C-00 Q1): third person hides the add-ons and gives part_mag back; neutral stats mount nothing;
-    ///   5. a measurement (never red but for missing setup): the hands' distance to every weapon's E2-L / E6.
+    ///   5. a measurement (never red but for missing setup): the hands' distance to every weapon's E2-L / E6;
+    ///   7. the E4 / E5 glow (AD-B4 M9): slot 1 renders a block's emission (URP Lit, _EMISSION, map, own submesh), the block reaches
+    ///      the draw (FlashScale 0 → 1 lifts the slot's own pixels), and the E4 window shows from the game's TD rig — straight down it
+    ///      does not (AD-B4 §2/13's frame), which is logged.
     /// Tree stats come from TreeRuntime.SetTestStats. Every test is ignored while DD_WeaponAttach is not built (the builder waits for
     /// S-02's shared AP-040 materials).
     /// </summary>
@@ -446,6 +450,305 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         private static string P1(float v) => v.ToString("F1", CultureInfo.InvariantCulture);
+
+        // ------------------------------------------------------------------ 7 · add-on glow (AD-B4 M9; §2/13 "binding fault")
+
+        private const int IsimaKatmani = 30;    // an unnamed user layer: the glow camera sees the add-ons only
+        private const int IsimaPx = 480;        // square raw render (no post, MSAA off)
+        private const float M9HamEsik = .15f;   // AD-B4 M9: raw mean luminance over the add-on's glow pixels, FlashScale 0 → 1
+        private const float RigE4MinPx = 4f;    // the E4 fire window from the game's TD rig at 1080p (AP-040 v001 ≈ 15 px)
+
+        /// <summary>
+        /// AD-B4 §2/13 read "peakLumOn = peakLumOff" in frames 27–29 as a binding fault (MPB slot, _EMISSION, property name). This
+        /// pins each link where it lives, on S-06's mount and TreeAttachGlow, without the run scene:
+        ///   1. every glow prefab (E4 fire / ice / venom, E5 speed / chaos): each renderer's slot 1 is M_AP040_Glow — URP Lit,
+        ///      _EMISSION on, an emission map, its own submesh (<see cref="Vfx.TreeAttachGlow.GlowSlotRenders"/>);
+        ///   2. the block reaches the draw: from the axis that shows most of the slot (raw, no post, the sun off so a lit white inlay
+        ///      cannot clip first), FlashScale 0 → 1 at tier V lifts the slot's own pixels (found by an unlit black / white material
+        ///      swap) by ≥ 0.15 mean luminance, E4 and E5;
+        ///   3. the LateUpdate poll repaints on a FlashScale change with no event (the AD capture's two-frame wait is enough);
+        ///   4. where the slot shows at the game's 1080p TD scale: the E4 fire window from the TD rig (DD_FeelConfig height / back /
+        ///      yaw, aim up-screen) ≥ 4 px. Straight down — the AD frames' camera — is logged: 0 px on AP-040 v001, the window faces
+        ///      the sides; that, not the binding, is why frames 27–29 did not move.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator EkIsimasi_YuvaCizer_BlokCizimeUlasir_TdRigindenGorunur()
+        {
+            KutuphaneGerekli();
+            WeaponAttachLibrary.Row row = _lib.Find(ClassicWeaponId.AssaultRifle);
+            Assert.IsTrue(row != null, "ar_1 satırı (DD_WeaponAttach)");
+
+            // 1 · the slot contract on every glow prefab (V03 electric has no glow slot in AP-040 v001: TreeAttachGlow counts it slotless)
+            int sozlesme = 0;
+            foreach (GameObject p in IsimaPrefablari())
+            {
+                Assert.IsTrue(p != null, "DD_WeaponAttach: E4 / E5 yuvası boş");
+                foreach (Renderer r in p.GetComponentsInChildren<Renderer>(true))
+                {
+                    Assert.IsTrue(Vfx.TreeAttachGlow.GlowSlotRenders(r), p.name + "/" + r.name + ": yuva 1 ışımayı çizemez — " + YuvaYazi(r));
+                    sozlesme++;
+                }
+            }
+
+            Assert.Greater(sozlesme, 0, "ışıma yuvalı renderer yok");
+
+            float oncekiFlash = Vfx.GameFeelSettings.FlashScale;
+            bool oncekiSis = RenderSettings.fog;
+            RenderSettings.fog = false;
+#if UNITY_EDITOR
+            bool oncekiAsync = UnityEditor.ShaderUtil.allowAsyncCompilation;
+            UnityEditor.ShaderUtil.allowAsyncCompilation = false;   // never measure the cyan placeholder of a variant in flight
+#endif
+            var sahip = new List<UnityEngine.Object>();
+            Camera cam = null;
+            RenderTexture rt = null;
+            try
+            {
+                var kok = new GameObject("WP104 M9 ışıma kökü") { layer = IsimaKatmani };
+                sahip.Add(kok);
+                kok.transform.SetPositionAndRotation(new Vector3(0f, 400f, 0f), Quaternion.identity);   // barrel +Z: aim up-screen on the rig
+                Light gunes = new GameObject("WP104 M9 güneş").AddComponent<Light>();
+                sahip.Add(gunes.gameObject);
+                gunes.type = LightType.Directional;
+                gunes.transform.rotation = Quaternion.Euler(50f, 160f, 0f);   // the AD capture's sun (V6 sky)
+                gunes.color = new Color(1f, .886f, .776f);
+                gunes.intensity = 2f;
+                gunes.shadows = LightShadows.None;
+                var isimaGo = new GameObject("WP104 M9 TreeAttachGlow");
+                sahip.Add(isimaGo);
+                Vfx.TreeAttachGlow glow = isimaGo.AddComponent<Vfx.TreeAttachGlow>();
+
+                WeaponAttachMount m = WeaponAttachMount.Ensure(kok.transform, row);
+                Assert.IsTrue(m != null, "ar_1 montajı (çıplak kök)");
+                var setV = new WeaponAttachSet { Side = TreeElement.Fire, SideTier = 5, Ring = 1, RingTier = 5 };
+                m.Apply(in setV, _lib);   // S-06 raises WeaponAttachEvents.Changed → the ladder
+                Assert.AreSame(m, glow.Mount, "TreeAttachGlow S-06'nın Changed olayını almadı");
+                Assert.Greater(glow.GlowRenderers, 0, "E4 ateş + E5: boyanan ışıma yuvası yok");
+                Assert.AreEqual(0, glow.EmissionOffRenderers, "boyanan yuvanın malzemesinde _EMISSION kapalı — blok etkisiz kalır");
+                Renderer e4 = Lod0(m.SideAttachment), e5 = Lod0(m.RingAttachment);
+                Assert.IsTrue(e4 != null && e5 != null, "E4 / E5 LOD0 renderer'ı yok");
+
+                // 3 · the poll: a setting raises no event
+                int boya = glow.Applies;
+                Vfx.GameFeelSettings.FlashScale = .4f;
+                yield return null;
+                Assert.Greater(glow.Applies, boya, "FlashScale değişince LateUpdate yoklaması yeniden boyamadı");
+                Assert.AreEqual(Vfx.TreeVfxLadder.AddOnEmission(Vfx.TreeVfxLadder.AddOnGlow.Side, 5, .4f, true).r, glow.SideEmission.r, 1e-5f, "E4 V × FlashScale 0,4");
+
+                rt = new RenderTexture(IsimaPx, IsimaPx, 24, RenderTextureFormat.ARGBHalf) { name = "WP104 M9 ışıma" };   // HDR: E5's silver sits at 0.98 under the ambient alone - an 8-bit target clipped the glow away (b4-r3)
+                var oku = new Texture2D(IsimaPx, IsimaPx, TextureFormat.RGBAHalf, false);
+                sahip.Add(oku);
+                cam = new GameObject("WP104 M9 kamera").AddComponent<Camera>();
+                sahip.Add(cam.gameObject);
+                cam.enabled = false;
+                cam.orthographic = true;
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                cam.cullingMask = 1 << IsimaKatmani;
+                cam.allowMSAA = false;
+                cam.allowHDR = true;
+                cam.nearClipPlane = .05f;
+                cam.farClipPlane = 10f;
+                cam.targetTexture = rt;
+                Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
+                Assert.IsTrue(unlit != null, "Universal Render Pipeline/Unlit");
+                Material siyah = Duz(unlit, Color.black), beyaz = Duz(unlit, Color.white);
+                sahip.Add(siyah);
+                sahip.Add(beyaz);
+
+                CameraFeel td = FeelRuntime.Current.Camera;
+                Vector3 rig = Quaternion.Euler(0f, td.yawDegrees, 0f) * new Vector3(0f, td.heightMeters, -td.backDistanceMeters);
+                float ppmOyun = 1080f / (2f * rig.magnitude * Mathf.Tan(td.fieldOfViewDegrees * .5f * Mathf.Deg2Rad));
+                var eksen = new[] { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
+                string[] eksenAd = { "+X", "-X", "+Y", "-Y", "+Z", "-Z" };
+                var satir = new StringBuilder();
+                foreach ((string ad, Renderer hedef) in new[] { ("E4 ateş", e4), ("E5 hız", e5) })
+                {
+                    Gizle(m, hedef);
+                    Cek(cam, rt, oku);   // warm-up: the variant compiled, the first frame of the RT
+                    // the binding proof without the sun: a white speed inlay lit at 2.0 already clips the LDR raw frame, which would
+                    // hide a working block; the rig / top readings below keep the AD capture's sun
+                    gunes.enabled = false;
+                    IsimaOlcumu en = default;
+                    string enAd = "-";
+                    for (int k = 0; k < eksen.Length; k++)
+                    {
+                        IsimaOlcumu o = IsimaOlc(cam, rt, oku, hedef, kok.transform.TransformDirection(eksen[k]), siyah, beyaz, glow);
+                        if (o.Px > en.Px)
+                        {
+                            en = o;
+                            enAd = eksenAd[k];
+                        }
+                    }
+
+                    gunes.enabled = true;
+                    IsimaOlcumu ust = IsimaOlc(cam, rt, oku, hedef, Vector3.up, siyah, beyaz, glow);
+                    IsimaOlcumu rigV = IsimaOlc(cam, rt, oku, hedef, rig, siyah, beyaz, glow);
+
+                    // 2 · the block reaches the draw (tier V, the axis showing most of the slot)
+                    Assert.GreaterOrEqual(en.Px, 50, ad + ": ışıma yuvası hiçbir eksenden görünmüyor (" + en.Px + " px)");
+                    Assert.GreaterOrEqual(en.Delta, M9HamEsik, ad + " V, " + enAd + " ekseni: FlashScale 0 → 1 yuva pikselleri ort. luminans " +
+                        F(en.LumOff) + " → " + F(en.LumOn) + " — blok çizime ulaşmıyor (yuva / _EMISSION / _EmissionColor)");
+                    float rigPx = rigV.Px1080(ppmOyun), ustPx = ust.Px1080(ppmOyun);
+                    satir.Append(' ').Append(ad.Replace(' ', '_')).Append(": best=").Append(enAd).Append(" px=").Append(en.Px).Append(" dLumV=").Append(F(en.Delta))
+                        .Append(" rigPx1080=").Append(P1(rigPx)).Append(" rigDLumV=").Append(F(rigV.Delta)).Append(" topPx1080=").Append(P1(ustPx))
+                        .Append(" topDLumV=").Append(F(ust.Delta)).Append(';');
+
+                    // 4 · the E4 window faces the game's camera
+                    if (hedef == e4)
+                    {
+                        Assert.GreaterOrEqual(rigPx, RigE4MinPx, "E4 ateş penceresi TD rig açısından " + P1(rigPx) + " px (1080p) — yuva oyun kamerasına bakmıyor");
+                    }
+                }
+
+                // M9 at the AD frames' set (E4 III 1.4 · E5 V 2.0), from the rig: a measurement for the AD capture, never red here
+                var setIII = new WeaponAttachSet { Side = TreeElement.Fire, SideTier = 3, Ring = 1, RingTier = 5 };
+                m.Apply(in setIII, _lib);
+                Gizle(m, e4);
+                IsimaOlcumu iii = IsimaOlc(cam, rt, oku, e4, rig, siyah, beyaz, glow);
+                Debug.Log("[DD-TEST] wp104b4.glow.m9 rig=(" + F(rig.x) + ", " + F(rig.y) + ", " + F(rig.z) + ") ppm1080=" + F(ppmOyun) + satir +
+                          " E4_III_rig: px1080=" + P1(iii.Px1080(ppmOyun)) + " lumOff=" + F(iii.LumOff) + " lumOn=" + F(iii.LumOn) + " dLum=" + F(iii.Delta) +
+                          " (M9 raw >= " + F(M9HamEsik) + ")" + " emissionE4=" + F(glow.SideEmission.r) + " emissionE5=" + F(glow.RingEmission.r));
+            }
+            finally
+            {
+                Vfx.GameFeelSettings.FlashScale = oncekiFlash;
+                RenderSettings.fog = oncekiSis;
+#if UNITY_EDITOR
+                UnityEditor.ShaderUtil.allowAsyncCompilation = oncekiAsync;
+#endif
+                if (cam != null) cam.targetTexture = null;
+                if (rt != null)
+                {
+                    rt.Release();
+                    UnityEngine.Object.Destroy(rt);
+                }
+
+                for (int i = sahip.Count - 1; i >= 0; i--)
+                {
+                    if (sahip[i] != null) UnityEngine.Object.Destroy(sahip[i]);
+                }
+            }
+        }
+
+        private struct IsimaOlcumu
+        {
+            public int Px;                  // the glow slot's visible pixels (the unlit swap)
+            public float LumOff, LumOn;     // their mean raw luminance at FlashScale 0 / 1
+            public float Ppm;               // render scale (px per metre)
+            public float Delta => LumOn - LumOff;
+
+            /// <summary>The slot's pixels at the game's 1080p TD scale.</summary>
+            public float Px1080(float ppmOyun) => Ppm > 0f ? Px * (ppmOyun / Ppm) * (ppmOyun / Ppm) : 0f;
+        }
+
+        /// <summary>E4 fire / ice / venom and both E5 rings — the AP-040 v001 prefabs with an M_AP040_Glow slot.</summary>
+        private IEnumerable<GameObject> IsimaPrefablari()
+        {
+            foreach (TreeElement e in new[] { TreeElement.Fire, TreeElement.Ice, TreeElement.Venom }) yield return Yuva(_lib.e4, WeaponAttachRules.ElementIndex(e));
+            for (int i = 0; i < WeaponAttachLibrary.RingVariants; i++) yield return Yuva(_lib.e5, i);
+        }
+
+        private static string YuvaYazi(Renderer r)
+        {
+            Material[] mats = r.sharedMaterials;
+            Material g = mats.Length > Vfx.TreeAttachGlow.GlowSlot ? mats[Vfx.TreeAttachGlow.GlowSlot] : null;
+            MeshFilter f = r.GetComponent<MeshFilter>();
+            return "slots " + mats.Length + ", slot1 " + (g != null ? g.name + " / " + (g.shader != null ? g.shader.name : "-") + " / _EMISSION " +
+                   g.IsKeywordEnabled(Vfx.TreeAttachGlow.EmissionKeyword) + " / map " + (g.HasProperty("_EmissionMap") && g.GetTexture("_EmissionMap") != null) : "yok") +
+                   ", submesh " + (f != null && f.sharedMesh != null ? f.sharedMesh.subMeshCount : 0);
+        }
+
+        private static Renderer Lod0(GameObject ek)
+        {
+            if (ek == null) return null;
+            foreach (Renderer r in ek.GetComponentsInChildren<Renderer>(true))
+            {
+                if (AuthoredWeaponModel.LodIndexOf(r.name) <= 0) return r;
+            }
+
+            return null;
+        }
+
+        /// <summary>Only <paramref name="hedef"/> draws: the other add-ons and every LOD1+ (a bare root has no LODGroup) off.</summary>
+        private static void Gizle(WeaponAttachMount m, Renderer hedef)
+        {
+            foreach (GameObject ek in Ekler(m))
+            {
+                foreach (Renderer r in ek.GetComponentsInChildren<Renderer>(true)) r.forceRenderingOff = r != hedef;
+            }
+        }
+
+        private static Material Duz(Shader unlit, Color c)
+        {
+            var mat = new Material(unlit) { name = "WP104 M9 " + c };
+            mat.SetColor("_BaseColor", c);
+            return mat;
+        }
+
+        /// <summary>
+        /// The slot's pixels seen from <paramref name="yon"/> (towards the camera, orthographic): an unlit white slot 1 against an
+        /// unlit black one finds them (slot 0 black occludes as it draws); then FlashScale 0 and 1 through TreeAttachGlow, raw.
+        /// </summary>
+        private static IsimaOlcumu IsimaOlc(Camera cam, RenderTexture rt, Texture2D oku, Renderer hedef, Vector3 yon, Material siyah, Material beyaz,
+                                            Vfx.TreeAttachGlow glow)
+        {
+            yon = yon.normalized;
+            Bounds b = hedef.bounds;
+            cam.orthographicSize = Mathf.Max(.02f, b.extents.magnitude * 1.1f);
+            cam.transform.SetPositionAndRotation(b.center + yon * 3f, Quaternion.LookRotation(-yon, Mathf.Abs(yon.y) > .99f ? Vector3.forward : Vector3.up));
+            Material[] asil = hedef.sharedMaterials;
+            Color[] beyazli, siyahli;
+            try
+            {
+                hedef.sharedMaterials = new[] { siyah, beyaz };
+                beyazli = Cek(cam, rt, oku);
+                hedef.sharedMaterials = new[] { siyah, siyah };
+                siyahli = Cek(cam, rt, oku);
+            }
+            finally
+            {
+                hedef.sharedMaterials = asil;
+            }
+
+            Vfx.GameFeelSettings.FlashScale = 0f;
+            glow.Paint();
+            Color[] kapali = Cek(cam, rt, oku);
+            Vfx.GameFeelSettings.FlashScale = 1f;
+            glow.Paint();
+            Color[] acik = Cek(cam, rt, oku);
+            var o = new IsimaOlcumu { Ppm = IsimaPx / (2f * cam.orthographicSize) };
+            double sOff = 0, sOn = 0;
+            for (int i = 0; i < acik.Length; i++)
+            {
+                if (Lum(beyazli[i]) - Lum(siyahli[i]) < .5f) continue;
+                o.Px++;
+                sOff += Lum(kapali[i]);
+                sOn += Lum(acik[i]);
+            }
+
+            if (o.Px > 0)
+            {
+                o.LumOff = (float)(sOff / o.Px);
+                o.LumOn = (float)(sOn / o.Px);
+            }
+
+            return o;
+        }
+
+        private static Color[] Cek(Camera cam, RenderTexture rt, Texture2D oku)
+        {
+            cam.Render();
+            RenderTexture onceki = RenderTexture.active;
+            RenderTexture.active = rt;
+            oku.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            oku.Apply(false);
+            RenderTexture.active = onceki;
+            return oku.GetPixels();   // linear, unclamped
+        }
+
+        private static float Lum(Color c) => .2126f * c.r + .7152f * c.g + .0722f * c.b;
 
         // ------------------------------------------------------------------ setup
 

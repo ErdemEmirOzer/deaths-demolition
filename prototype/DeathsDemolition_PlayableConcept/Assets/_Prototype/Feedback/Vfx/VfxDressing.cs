@@ -220,6 +220,7 @@ namespace DD.Prototype.Feedback.Vfx
             _binder.Subscribe();
             RocketVisualSystem.Ensure();
             ExplosionDirector.Ensure(this);
+            TreeVfxBinder.Ensure(this);   // WP-104 B4 (S-07): the run tree's procs, aura, add-on glow
 
             if (!_wave2Subscribed)
             {

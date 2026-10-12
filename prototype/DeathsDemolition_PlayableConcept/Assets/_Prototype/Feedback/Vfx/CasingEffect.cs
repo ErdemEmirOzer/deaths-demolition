@@ -106,7 +106,7 @@ namespace DD.Prototype.Feedback.Vfx
         protected override void Tick(float t)
         {
             if (_rested) return;
-            float dt = Time.deltaTime;
+            float dt = VfxClock.DeltaFor(PreviewClock);   // WP-104 B4: the casing falls on its own presentation clock
             _velocity.y -= Gravity * dt;
             Vector3 p = transform.position + _velocity * dt;
             if (p.y <= _floorY + 0.006f)

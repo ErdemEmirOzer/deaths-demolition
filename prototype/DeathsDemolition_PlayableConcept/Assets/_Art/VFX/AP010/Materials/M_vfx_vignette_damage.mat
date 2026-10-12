@@ -46,6 +46,7 @@ Material:
     - _EmissiveStrength: 1.5
     - _Frame: 0
     - _Premultiplied: 0
+    - _RgMask: 0
     - _Rows: 1
     - _ScrollV: 0
     - _SrcBlend: 5
@@ -53,4 +54,5 @@ Material:
     - _ZTest: 4
     m_Colors:
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _TintRight: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

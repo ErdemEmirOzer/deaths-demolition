@@ -408,7 +408,7 @@ namespace DD.Prototype.Feedback.Vfx
             var emission=ps.emission;emission.enabled=false;var shape=ps.shape;shape.enabled=false;
             var colour=ps.colorOverLifetime;colour.enabled=true;var g=new Gradient();g.SetKeys(new[]{new GradientColorKey(Color.white,0f),new GradientColorKey(Color.white,1f)},new[]{new GradientAlphaKey(1f,0f),new GradientAlphaKey(0f,1f)});colour.color=g;
             if(grow){var size=ps.sizeOverLifetime;size.enabled=true;size.size=new ParticleSystem.MinMaxCurve(1f,AnimationCurve.Linear(0f,.5f,1f,1f));}
-            var renderer=go.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.maxParticleSize=.2f;ps.Play();return ps;
+            var renderer=go.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.maxParticleSize=.2f;VfxClock.TrackParticles(ps);ps.Play();return ps;   // WP-104 B4: ExplosionDirector / rocket particles run in the tree preview
         }
         internal static void Emit(ParticleSystem ps,Vector3 at,Vector3 velocity,float size,float life,Color tint)
         {var e=new ParticleSystem.EmitParams {position=at,velocity=velocity,startSize=size,startLifetime=life,startColor=tint,applyShapeToPosition=false};ps.Emit(e,1);}

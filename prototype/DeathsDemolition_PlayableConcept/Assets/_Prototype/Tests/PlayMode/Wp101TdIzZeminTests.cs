@@ -18,8 +18,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// light-stone grey (sRGB 0.75) and a wet-slate grey (0.20) half; an AR tracer and an AR body streak on each half (synthetic
     /// rounds through the TD record path, the real DrawTd layers). Measured against the same frame without the TD layers: the streak's
     /// width across (any channel ≥ 0.10), the body's mean luminance step off the ground, the tracer's saturated-warm share (S ≥ 0.45,
-    /// hue 8–50°) and, with Reduce Flashes on, the core's peak (lower) and the body (unchanged). Writes zemin.json + the two frames
-    /// to DD_TD_ZEMIN_DIR when set.
+    /// hue 8–50°) and, with Reduce Flashes on, the core's peak (lower), the halo's HDR (lower) and α (kept: WP-104 B4-1 AD-B4 M3) and
+    /// the body (unchanged). Writes zemin.json + the two frames to DD_TD_ZEMIN_DIR when set.
     /// </summary>
     [TestFixture]
     public sealed class Wp101TdIzZeminTests
@@ -100,6 +100,15 @@ namespace DD.Prototype.Tests.PlayMode
             return Mathf.Max(head[0].x, Mathf.Max(head[0].y, head[0].z));
         }
 
+        // the first tracer halo the last DrawTd(2) wrote (pass A: the light-stone AR's): its HDR head colour and α
+        private static Vector4 HaloColour(TracerRibbonRenderer r)
+        {
+            MethodInfo draw = typeof(TracerRibbonRenderer).GetMethod("DrawTd", BindingFlags.Instance | BindingFlags.NonPublic);
+            draw.Invoke(r, new object[] { 2 });
+            var head = (Vector4[])typeof(TracerRibbonRenderer).GetField("_headColor", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(r);
+            return head[0];
+        }
+
         private static Vector2 Px(Camera cam, Vector3 w) { Vector3 v = cam.WorldToViewportPoint(w); return new Vector2(v.x * W, v.y * H); }
 
         private struct Cut { public int Width; public float LumStep; public float Warm; public float Peak; }
@@ -175,9 +184,11 @@ namespace DD.Prototype.Tests.PlayMode
             Cut sniperLight = Across(cam, lit, dark, -4.5f, 3f), sniperSlate = Across(cam, lit, dark, 4.5f, 3f);
             Cut sg2Light = Across(cam, lit, dark, -2.2f, -5f), sg2Slate = Across(cam, lit, dark, 3.8f, -5f);
             float corePeak = CoreHdr(r);
+            Vector4 haloOn = HaloColour(r);
             GameFeelSettings.FlashScale = .4f;
             Color32[] litRf = Render(cam, r, true);
             float corePeakRf = CoreHdr(r);
+            Vector4 haloRf = HaloColour(r);
             Cut tracerSlateRf = Across(cam, litRf, dark, 4.5f, -2f);
             GameFeelSettings.FlashScale = 1f;
             // pass B: the SMG body streaks alone (a new frame - the queued pass A draws are gone)
@@ -237,6 +248,10 @@ namespace DD.Prototype.Tests.PlayMode
             // M7: Reduce Flashes lowers the tracer's peak, keeps the body
             // (the tonemap saturates the pixel peak - the core's HDR is read from the layer it draws with)
             Assert.Less(corePeakRf, corePeak * .7f, "M7 çekirdek HDR'ı bastırılır");
+            // WP-104 B4-1 (AD-B4 M3): a steady trail is no flash - Reduce Flashes dims the halo's HDR and keeps its α (× 0.4 cost the
+            // streak its form); one code path for the WP-101 neutral tracer and the tree's
+            Assert.AreEqual(haloOn.w, haloRf.w, 1e-6f, "M3 hale α'sı Reduce Flashes'ta korunur");
+            Assert.Less(Mathf.Max(haloRf.x, Mathf.Max(haloRf.y, haloRf.z)), Mathf.Max(haloOn.x, Mathf.Max(haloOn.y, haloOn.z)) * .7f, "M3 hale HDR'ı kısılır");
             for (int i = 0; i < 4; i++) Assert.AreEqual(bodyOn[i], bodyRf[i], "M7 gövde ve saçma korunur");
             Assert.GreaterOrEqual(pelletLight.Width, 3, "saçma çubuğu açık taşta (r11: koyu çubuk 0 px - artık R3'ün sıcak beyaz parıltısı)");
             Assert.GreaterOrEqual(pelletSlate.Width, 3, "saçma çubuğu ıslak arduvazda");

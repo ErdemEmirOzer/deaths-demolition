@@ -48,9 +48,17 @@ namespace DD.Art.Pipeline.EditorTools
             return IsAp041Asset(assetPath) && System.IO.Path.GetFileNameWithoutExtension(assetPath).EndsWith("_srgb_pm", StringComparison.Ordinal);
         }
 
+        /// <summary>WP-104 B4 · an AP-041 data mask (<c>*_linear.png</c>, the X8 ensō's R/G coverage): sRGB off, no mips, no dilation.</summary>
+        public static bool IsLinearMaskTexture(string assetPath)
+        {
+            return IsAp041Asset(assetPath) && System.IO.Path.GetFileNameWithoutExtension(assetPath).EndsWith("_linear", StringComparison.Ordinal);
+        }
+
         /// <summary>WP-101 · AP-041 ship size from the file name (see <see cref="Ap041Root"/>).</summary>
         public static int Ap041MaxSizeOf(string fileName)
         {
+            int tree = ArtAp041TreeIntake.ShipSizeOf(fileName);   // WP-104 B4: the tree rows carry their own ship size
+            if (tree > 0) return tree;
             return fileName.StartsWith("H_impact_", StringComparison.Ordinal) ? 1024 : 512;
         }
 
@@ -217,6 +225,7 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-047E · AP-014C `barrel_heat_distort_tile`: RGB tangent normal + A mask, read by DD/VFX HeatHaze as linear data,
             // wrap Repeat (scrolled along V). Not the NormalMap type — BC5 would drop the mask.
             bool dataTile = importer.assetPath.IndexOf("_distort_tile", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool linearMask = IsLinearMaskTexture(importer.assetPath);   // WP-104 B4
             int maxSize = MaxSizeOf(importer.assetPath);
             TextureImporterFormat format = normal ? ArtImportContract.StandaloneNormalFormat : ArtImportContract.StandaloneColorFormat;
 
@@ -226,8 +235,8 @@ namespace DD.Art.Pipeline.EditorTools
                 changed |= Set(importer.spriteImportMode, SpriteImportMode.Single, v => importer.spriteImportMode = v);
             }
 
-            changed |= Set(importer.sRGBTexture, !normal && !dataTile, v => importer.sRGBTexture = v);
-            changed |= Set(importer.mipmapEnabled, !sprite, v => importer.mipmapEnabled = v);
+            changed |= Set(importer.sRGBTexture, !normal && !dataTile && !linearMask, v => importer.sRGBTexture = v);
+            changed |= Set(importer.mipmapEnabled, !sprite && !linearMask, v => importer.mipmapEnabled = v);
             changed |= Set(importer.streamingMipmaps, false, v => importer.streamingMipmaps = v);
             changed |= Set(importer.maxTextureSize, maxSize, v => importer.maxTextureSize = v);
             changed |= Set(importer.textureCompression, ArtImportContract.TextureCompression, v => importer.textureCompression = v);
@@ -236,7 +245,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp, v => importer.wrapMode = v);
             changed |= Set(importer.anisoLevel, 1, v => importer.anisoLevel = v);
             // WP-101: a premultiplied AP-041 sheet keeps its rgb under a = 0 at zero - no transparency dilation.
-            changed |= Set(importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath), v => importer.alphaIsTransparency = v);
+            changed |= Set(importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath) && !linearMask, v => importer.alphaIsTransparency = v);
             changed |= Set(importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput, v => importer.alphaSource = v);
             changed |= Set(importer.mipMapsPreserveCoverage, false, v => importer.mipMapsPreserveCoverage = v);
 
@@ -268,15 +277,16 @@ namespace DD.Art.Pipeline.EditorTools
 
             bool normal = role == VfxTextureRole.Normal;
             bool dataTile = importer.assetPath.IndexOf("_distort_tile", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool linearMask = IsLinearMaskTexture(importer.assetPath);   // WP-104 B4
             bool sprite = role == VfxTextureRole.HudSprite;
             int maxSize = MaxSizeOf(importer.assetPath);
             Check(v, "textureType", importer.textureType, normal ? TextureImporterType.NormalMap : sprite ? TextureImporterType.Sprite : TextureImporterType.Default);
-            Check(v, "sRGBTexture", importer.sRGBTexture, !normal && !dataTile);
-            Check(v, "mipmapEnabled", importer.mipmapEnabled, !sprite);
+            Check(v, "sRGBTexture", importer.sRGBTexture, !normal && !dataTile && !linearMask);
+            Check(v, "mipmapEnabled", importer.mipmapEnabled, !sprite && !linearMask);
             Check(v, "streamingMipmaps", importer.streamingMipmaps, false);
             Check(v, "maxTextureSize", importer.maxTextureSize, maxSize);
             Check(v, "wrapMode", importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp);
-            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath));   // WP-101: PM off
+            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, !normal && !IsPremultipliedTexture(importer.assetPath) && !linearMask);   // WP-101: PM off · WP-104 B4: mask off
             Check(v, "alphaSource", importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput);
             TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);
             if (!st.overridden) v.Add("Standalone: not overridden");

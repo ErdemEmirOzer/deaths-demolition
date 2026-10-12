@@ -23,6 +23,8 @@ namespace DD.Prototype.Feedback
         /// <summary>Seconds before the instance returns itself to the pool.</summary>
         protected float Lifetime { get; set; } = 0.6f;
         private int _localTimeGroupId;
+        /// <summary>WP-104 B4: spawned while the tree preview ran — ages on VfxClock's unscaled clock (a world effect keeps the scaled one).</summary>
+        protected bool PreviewClock { get; private set; }
         public int LocalTimeGroupId => _localTimeGroupId;
 
         /// <summary>0..1 progress through the lifetime.</summary>
@@ -32,6 +34,7 @@ namespace DD.Prototype.Feedback
         {
             Age = 0f;
             _localTimeGroupId = HitStopService.CaptureSpawnGroup();
+            PreviewClock = DD.Prototype.Feedback.Vfx.VfxClock.PreviewActive;   // WP-104 B4
         }
 
         /// <summary>
@@ -50,7 +53,7 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Age += HitStopService.VisualDelta(_localTimeGroupId, Time.deltaTime, Time.unscaledDeltaTime);
+            Age += HitStopService.VisualDelta(_localTimeGroupId, DD.Prototype.Feedback.Vfx.VfxClock.DeltaFor(PreviewClock), Time.unscaledDeltaTime);   // WP-104 B4
 
             Tick(Progress);
 

@@ -593,6 +593,11 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtAp041VfxIntake.TextureFiles()) if (beklenen.Add(f)) ap041++;
             if (ArtAp041VfxIntake.Active) Assert.AreEqual(ArtAp041VfxIntake.ExpectedTextures, ap041, "AP-041 v001: 15 TD namlu + duman + 5 isabet + 12 delik = 33");
 
+            // WP-104 B4 (S-07): the run tree's AP-041 v001 + v002 sheets (B1–B17, T3–T5, X8 ensō mask).
+            int tree = 0;
+            foreach (string f in ArtAp041TreeIntake.TextureFiles()) if (beklenen.Add(f)) tree++;
+            if (ArtAp041TreeIntake.Active) Assert.AreEqual(ArtAp041TreeIntake.Table.Length, tree, "AP-041 ağaç: 45 sayfa");
+
             // WP-084 · AP-025 O1 atlas (intake manifest present, ORM staged): the body Packed / Mask and their derived MetallicSmoothness /
             // DetailMask are retired (tools/art/ap025-intake.json "retire"); one ORM + the 9-slice mask array sheet take their place.
             if (ArtAp025Intake.HasO1Atlas)
