@@ -1711,14 +1711,6 @@
     "en": "+40 gold in round 1 (Normal and Hard only).",
     "tr": "1. roundda +40 altın (yalnız Normal ve Zor)."
   },
-  "tree.meta.awakening.second_thoughts.name": {
-    "en": "Second Thoughts",
-    "tr": "İkinci Düşünce"
-  },
-  "tree.meta.awakening.second_thoughts.desc": {
-    "en": "Once per run, take back one tree node for a full refund.",
-    "tr": "Koşuda bir kez, bir ağaç düğümünü tam iadeyle geri al."
-  },
   "tips.001": {
     "en": "Change the camera from the Pause menu: top-down, third-person or first-person.",
     "tr": "Kamerayı Duraklat menüsünden değiştir: tepeden, üçüncü şahıs ya da birinci şahıs."

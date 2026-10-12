@@ -449,21 +449,39 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// WP-112 (C-00 12.10): Second Thoughts (aw_rethink) left the release. The page lays out the eleven that stay on 4 × 3 in
+        /// rows of 4 · 3 · 4: every row's columns run 0.. without a hole, the row of three is centred (half a cell in), and the
+        /// seven alternatives fill rows 0-1.
+        /// </summary>
         [Test]
-        public void Uyanis_OnIkiDugum_IzgaradaTekYer_AdYoksaTire()
+        public void Uyanis_OnBirDugum_BosluksuzSimetrik_AdYoksaTire()
         {
             var model = new AwakeningPageModel();
             model.ResetToLayout();
-            Assert.AreEqual(11, model.Entries.Count, "seven alternative capstones, two forks, two aids (WP-112: aw_rethink retired)");
+            Assert.AreEqual(11, model.Entries.Count, "seven alternative capstones, two forks, two aids");
+            Assert.AreEqual(-1, System.Array.IndexOf(AwakeningPageModel.LayoutIds, "aw_rethink"), "Second Thoughts is not on the page");
             Assert.IsTrue(model.Pending, "before B1: the page reads pending");
             var places = new HashSet<int>();
+            var perRow = new int[AwakeningPageModel.Rows];
             foreach (AwakeningEntry e in model.Entries)
             {
                 Assert.Less(e.Row, AwakeningPageModel.Rows);
                 Assert.Less(e.Column, AwakeningPageModel.Columns);
                 Assert.IsTrue(places.Add(e.Row * 10 + e.Column), e.Id + " shares a grid place");
+                perRow[e.Row]++;
                 Assert.AreEqual(TreeV2Text.Missing, AwakeningPageModel.Name(e), e.Id + ": no words → an em dash, never the id");
                 Assert.AreEqual(TreeV2Text.Missing, AwakeningPageModel.StateLine(e, 0));
+            }
+
+            CollectionAssert.AreEqual(new[] { 4, 3, 4 }, perRow, "rows of 4 · 3 · 4");
+            for (int i = 0; i < model.Entries.Count; i++)
+            {
+                AwakeningEntry e = model.Entries[i];
+                Assert.Less(e.Column, perRow[e.Row], e.Id + ": the row's columns run 0.. with no hole");
+                float expected = e.Column + (AwakeningPageModel.Columns - perRow[e.Row]) * 0.5f;
+                Assert.AreEqual(expected, model.VisualColumn(i), 1e-4f, e.Id + ": its row is centred");
+                Assert.AreEqual(i < 7, AwakeningPageModel.AlternativeOf(e.Id) != null, e.Id + ": alternatives first (rows 0-1), then forks and aids");
             }
 
             int alternatives = 0;

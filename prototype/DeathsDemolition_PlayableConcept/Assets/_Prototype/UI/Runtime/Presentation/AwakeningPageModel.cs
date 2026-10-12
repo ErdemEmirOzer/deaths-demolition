@@ -17,7 +17,7 @@ namespace DD.Prototype.UI
         Unlocked = 4
     }
 
-    /// <summary>One Awakening node on the page: its catalog id, words stem, place on the 6 × 3 grid, Ash price and state.</summary>
+    /// <summary>One Awakening node on the page: its catalog id, words stem, place on the page's 4 × 3 grid, Ash price and state.</summary>
     public struct AwakeningEntry
     {
         public string Id;
@@ -42,34 +42,38 @@ namespace DD.Prototype.UI
     }
 
     /// <summary>
-    /// WP-104 (S-09) · the page's model: the twelve Awakening nodes in GD-TREE §3's order on the PATH page grid (6 × 3, the
-    /// B1a catalog's rows / columns), the Ash balance, and whether UNLOCK is live. Built on open and after a command, never per
-    /// frame. The fixed list below is only the page's LAYOUT (which node sits where, so the read-only page before B1 still shows
-    /// the twelve AP-042 icons); price, state and words always come from the source.
+    /// WP-104 (S-09) · the page's model: the eleven Awakening nodes in GD-TREE §3's order, the Ash balance, and whether UNLOCK
+    /// is live. Built on open and after a command, never per frame. The fixed list below is the page's LAYOUT (which node sits
+    /// where, so the read-only page before B1 still shows the AP-042 icons); price, state and words always come from the source.
+    /// WP-112 (C-00 12.10): Second Thoughts (aw_rethink) left the release - no system read it - and the page is laid out for the
+    /// eleven that stay: a 4 × 3 grid, rows of 4 · 3 · 4 with the row of three centred (<see cref="VisualColumn"/>), no empty
+    /// cell. The seven alternative capstones fill the first two rows, the two fork widenings and the two aids the third. The
+    /// catalog's 6-column places (B1a meta-tree.json) are no longer read for these: they left gaps under the branch columns.
     /// </summary>
     public sealed class AwakeningPageModel
     {
-        /// <summary>The AP-042 Awakening ids in grid order: seven alternative capstones, two fork widenings, three aids.</summary>
+        /// <summary>The AP-042 Awakening ids in grid order: seven alternative capstones (rows 0-1), two fork widenings and two
+        /// aids (row 2).</summary>
         public static readonly string[] LayoutIds =
         {
-            "aw_alt_sh", "aw_alt_mg", "aw_alt_sp", "aw_alt_el", "aw_alt_kx", "aw_alt_sv",
-            "aw_alt_ec", "aw_third", "aw_twincore",
-            "aw_codex", "aw_headstart"   // WP-112 (C-00 12.10): aw_rethink retired for R4; S-09 re-arranges the 11 cells
+            "aw_alt_sh", "aw_alt_mg", "aw_alt_sp", "aw_alt_el",
+            "aw_alt_kx", "aw_alt_sv", "aw_alt_ec",
+            "aw_third", "aw_twincore", "aw_codex", "aw_headstart"
         };
 
-        private static readonly int[] s_row = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
-        private static readonly int[] s_column = { 0, 1, 2, 3, 4, 5, 0, 3, 4, 0, 1 };
+        private static readonly int[] s_row = { 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2 };
+        private static readonly int[] s_column = { 0, 1, 2, 3, 0, 1, 2, 0, 1, 2, 3 };
 
-        public const int Columns = 6;
+        public const int Columns = 4;
         public const int Rows = 3;
 
-        public readonly List<AwakeningEntry> Entries = new List<AwakeningEntry>(12);
+        public readonly List<AwakeningEntry> Entries = new List<AwakeningEntry>(11);
         public int AshBalance;
         public bool CanUnlock;
         /// <summary>True when the catalog carried none of the nodes (the build before B1): the page shows its pending line.</summary>
         public bool Pending;
 
-        /// <summary>Resets to the layout's twelve nodes, all <see cref="AwakeningEntryState.Pending"/>.</summary>
+        /// <summary>Resets to the layout's eleven nodes, all <see cref="AwakeningEntryState.Pending"/>.</summary>
         public void ResetToLayout()
         {
             Entries.Clear();
@@ -79,6 +83,30 @@ namespace DD.Prototype.UI
             }
 
             Pending = true;
+        }
+
+        /// <summary>
+        /// WP-112 · entry <paramref name="index"/>'s column as drawn: a row with fewer nodes than <see cref="Columns"/> is centred
+        /// (the row of three stands half a cell in), so the page has no empty cell and reads symmetric. Layout and pad navigation
+        /// both use it.
+        /// </summary>
+        public float VisualColumn(int index)
+        {
+            if (index < 0 || index >= Entries.Count)
+            {
+                return 0f;
+            }
+
+            int row = Entries[index].Row, inRow = 0;
+            for (int k = 0; k < Entries.Count && k < LayoutIds.Length; k++)   // the page draws one tile per layout node
+            {
+                if (Entries[k].Row == row)
+                {
+                    inRow++;
+                }
+            }
+
+            return Entries[index].Column + Mathf.Max(0, Columns - inRow) * 0.5f;
         }
 
         public int IndexOf(string id)
@@ -230,11 +258,11 @@ namespace DD.Prototype.UI
                 }
 
                 int at = into.IndexOf(n.Id);
+                // WP-112: a layout node keeps the page's place (the catalog's 6-column row / column left gaps); a node the
+                // layout does not know keeps the catalog's.
                 AwakeningEntry e = at >= 0 ? into.Entries[at] : new AwakeningEntry { Id = n.Id, Row = n.Row, Column = n.Column };
                 e.StringKey = n.StringKey;
                 e.Cost = n.AshCost;
-                e.Row = n.Row;
-                e.Column = n.Column;
                 e.State = profile == null ? AwakeningEntryState.Locked : Map(MetaPathRules.Status(profile, i, out _, out _, out _));
                 if (at >= 0)
                 {

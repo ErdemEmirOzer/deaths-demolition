@@ -9,11 +9,11 @@ namespace DD.Prototype.UI
 {
     /// <summary>
     /// WP-104 (S-09) · the Awakening ("Uyanış") page (KARAR-WP104-11.10 decision 2; GD-TREE §3): Ash opens variety on the run
-    /// tree, never power - seven alternative capstones, two fork widenings, three aids, on the 6 × 3 grid of the meta page with
-    /// the AP-042 Awakening icons. A brush window (UiBrushKit: Window scrim, one column wash, the C5 title with the PATH glyph,
+    /// tree, never power - seven alternative capstones, two fork widenings, two aids (WP-112: Second Thoughts left the release),
+    /// on a 4 × 3 grid of rows 4 · 3 · 4 (the row of three centred) with the AP-042 Awakening icons. A brush window (UiBrushKit: Window scrim, one column wash, the C5 title with the PATH glyph,
     /// C11 actions, the C10 Back): grid on the left, the focused node's words, price and UNLOCK on the right.
     /// DATA AND COMMAND: <see cref="IAwakeningSource"/> - the game's is <see cref="ProfileAwakeningSource"/>: S-04's B1a meta
-    /// catalog (the Awakening page, 12 nodes) and the profile; UNLOCK is S-04's <c>ProfileService.TryBuyMetaNode</c> behind a
+    /// catalog (the Awakening page, 11 nodes) and the profile; UNLOCK is S-04's <c>ProfileService.TryBuyMetaNode</c> behind a
     /// 500 ms hold (S-04 confirmed 12.10; <see cref="UiAwakeningRoute.PurchaseEnabled"/>). A build whose catalog has no Awakening
     /// node (before B1a) shows the pending line - "Not in this build yet. Your Ash is kept." - and no UNLOCK. A node the string
     /// pack does not name is drawn with its icon and an em dash, never its id.
@@ -352,7 +352,7 @@ namespace DD.Prototype.UI
             {
                 AwakeningEntry e = _model.Entries[i];
                 Cell c = _cells[i];
-                Set((RectTransform)c.Button.transform, e.Column * (cellW + CellGap), e.Row * (cellH + CellGap), cellW, cellH);
+                Set((RectTransform)c.Button.transform, _model.VisualColumn(i) * (cellW + CellGap), e.Row * (cellH + CellGap), cellW, cellH);
                 Set(c.Icon.rectTransform, (cellW - icon) * 0.5f, 4f, icon, icon);
                 Set(c.Name.rectTransform, 2f, icon + 8f, cellW - 4f, nameH);
                 Set(c.State.rectTransform, 2f, icon + 8f + nameH, cellW - 4f, stateH);
@@ -546,14 +546,13 @@ namespace DD.Prototype.UI
             int count = Mathf.Min(_model.Entries.Count, _cells.Length);
             for (int i = 0; i < count; i++)
             {
-                AwakeningEntry e = _model.Entries[i];
                 UnityEngine.UI.Navigation nav = _cells[i].Button.navigation;
                 nav.mode = UnityEngine.UI.Navigation.Mode.Explicit;
-                nav.selectOnLeft = Nearest(e.Row, e.Column, 0, -1, count);
-                Selectable right = Nearest(e.Row, e.Column, 0, 1, count);
+                nav.selectOnLeft = Nearest(i, 0, -1, count);
+                Selectable right = Nearest(i, 0, 1, count);
                 nav.selectOnRight = right != null ? right : (_unlock.gameObject.activeSelf && _unlock.IsInteractable() ? _unlock : null);
-                nav.selectOnUp = Nearest(e.Row, e.Column, -1, 0, count);
-                Selectable down = Nearest(e.Row, e.Column, 1, 0, count);
+                nav.selectOnUp = Nearest(i, -1, 0, count);
+                Selectable down = Nearest(i, 1, 0, count);
                 nav.selectOnDown = down != null ? down : _back.Button;
                 _cells[i].Button.navigation = nav;
             }
@@ -566,15 +565,21 @@ namespace DD.Prototype.UI
             _back.Button.navigation = backNav;
         }
 
-        /// <summary>The nearest live cell from (row, column) stepping (dRow, dColumn): same row / column first, then the closest.</summary>
-        private Selectable Nearest(int row, int column, int dRow, int dColumn, int count)
+        /// <summary>
+        /// The nearest live cell from cell <paramref name="from"/> stepping (dRow, dColumn): same row / column first, then the
+        /// closest. Columns are the drawn ones (WP-112: the centred row of three sits half a cell in).
+        /// </summary>
+        private Selectable Nearest(int from, int dRow, int dColumn, int count)
         {
             int best = -1;
             float bestScore = float.MaxValue;
+            int row = _model.Entries[from].Row;
+            float column = _model.VisualColumn(from);
             for (int j = 0; j < count; j++)
             {
                 AwakeningEntry o = _model.Entries[j];
-                int dr = o.Row - row, dc = o.Column - column;
+                int dr = o.Row - row;
+                float dc = _model.VisualColumn(j) - column;
                 if (dRow != 0 && Math.Sign(dr) != dRow) continue;
                 if (dColumn != 0 && (dr != 0 || Math.Sign(dc) != dColumn)) continue;
                 float score = dRow != 0 ? Mathf.Abs(dr) * 10f + Mathf.Abs(dc) : Mathf.Abs(dc);
