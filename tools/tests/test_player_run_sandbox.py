@@ -17,9 +17,12 @@ class PlayerRunSandboxTests(unittest.TestCase):
         for name in ("player-run.sh", "dd-env.sh"):
             shutil.copy2(TOOLS / name, tools / name)
         self.script = tools / "player-run.sh"
-        self.app = root / "DeathsDemolition.app"; macos = self.app / "Contents" / "MacOS"; macos.mkdir(parents=True)
+        # C-00 12.10: a neutral executable name, passed directly (a .app would be expanded to the real product name, and a
+        # process named like the Player is a foreign Player to every guard on the machine)
+        macos = root / "Fixture.app" / "Contents" / "MacOS"; macos.mkdir(parents=True)
         self.argv = root / "argv.json"
-        player = macos / PRODUCT
+        player = macos / "DDFixturePlayer"
+        self.app = player
         player.write_text("#!/usr/bin/env python3\nimport json, sys\njson.dump(sys.argv[1:], open(%r, 'w'))\n" % str(self.argv))
         player.chmod(0o755)
         fake = root / "fakebin"; fake.mkdir()

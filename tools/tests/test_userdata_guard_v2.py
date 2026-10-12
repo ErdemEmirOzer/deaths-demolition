@@ -116,6 +116,11 @@ def argv0(pid):
     if libc.sysctl(mib, 3, buf, ctypes.byref(size), None, ctypes.c_size_t(0)) != 0: return None
     rest = buf.raw[4:size.value]; i = rest.index(b"\0"); rest = rest[i:].lstrip(b"\0")
     return rest.split(b"\0")[0].decode("utf-8", "replace") or None
+# C-00 12.10 (S-04's bot window went FOREIGN_WRITER over this file's fixtures): a fixture Player is started as
+# …/Contents/MacOS/DDFixturePlayer, which no real guard on the machine matches; only this shim shows it to the guard under
+# test as the Player.
+def fixture(value):
+    return value.replace("Contents/MacOS/DDFixturePlayer", "Contents/MacOS/Deaths Demolition - Playable Concept")
 def field(info, name):
     if name == "pid": return str(info["pid"])
     if name == "ppid": return str(info["ppid"])
@@ -150,7 +155,7 @@ for pid in pids or []:
     # isolation (05.10): a REAL Player of another session on this machine is not part of the fixture — the sampler would
     # log it as a foreign writer (FOREIGN_WRITER flakes); fixture Players live under SHIM_TMP and stay visible
     if every and real_player.search(cmd) and os.environ.get("SHIM_TMP", "\0") not in cmd: continue
-    print(" ".join(field(info, f) for f in names)); rc = 0
+    print(" ".join(fixture(field(info, f)) for f in names)); rc = 0
 sys.exit(rc)
 '''
 # mv: pass-through; <tmp>/mv-fail-before → the rename onto …/before.txt fails (a commit that breaks halfway)
@@ -180,6 +185,17 @@ def load_plist(p):
 def write_exec(p, text):
     p = Path(p); p.parent.mkdir(parents=True, exist_ok=True); p.write_text(text); p.chmod(0o755)
 
+
+# C-00 12.10: the executable name of every fixture Player this file starts — never the real pattern (other sessions'
+# guards on the same machine would count it as a foreign Player); the ps shim shows it to the guard under test as one.
+FIXTURE_PLAYER_EXE = "Contents/MacOS/DDFixturePlayer"
+REAL_PLAYER_RE = r"Contents/MacOS/(Deaths Demolition|DeathsDemolition)"
+
+
+def real_players_under(tmp):
+    """the REAL machine view (/usr/bin/pgrep, not the shim) of Player-pattern processes whose command line names tmp."""
+    r = subprocess.run(["/usr/bin/pgrep", "-fl", REAL_PLAYER_RE], capture_output=True, text=True)
+    return [l for l in r.stdout.splitlines() if str(tmp) in l]
 
 class GuardFixture(unittest.TestCase):
     def setUp(self):
@@ -339,11 +355,12 @@ class SnapshotTests(GuardFixture):
         """C-00 12.10: pgrep -f also finds a process that only MENTIONS the Player path in its arguments (a shasum over a build
         folder); its executable (argv[0]) is absolute and not the Player, so the snapshot is not refused for it. A process
         whose argv[0] IS the Player path still refuses (30)."""
-        fake = "%s/Build.app/Contents/MacOS/Deaths Demolition - Playable Concept" % self.tmp
+        fake = "%s/Build.app/%s" % (self.tmp, FIXTURE_PLAYER_EXE)
         mentioner = subprocess.Popen(["/bin/sh", "-c", "sleep 30; :", fake])
         player = subprocess.Popen(["/bin/sh", "-c", 'exec -a "%s" sleep 30' % fake])
         self.addCleanup(lambda: [q.kill() or q.wait() for q in (mentioner, player)])
         time.sleep(0.3)
+        self.assertEqual([], real_players_under(self.tmp), "the machine's own guards never see a fixture Player (C-00 12.10)")
         (self.tmp / "pgrep-player").write_text("%d /bin/sh -c sleep 30; : %s\n" % (mentioner.pid, fake))
         rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "player")
         self.assertEqual(0, rc, out + err)
@@ -1314,7 +1331,7 @@ class ClassCodeTests(RestoreBase):
     def test_Ornekleyici_AtaKabukPlayerDeseniTasir_YabanciSayilmaz_Cikis0(self):
         """the grandparent shell's command line carries the Player pattern (as a pgrep in the same command would): before
         WP-099 the sampler logged it owned=0 and the restore exited 30 FOREIGN_WRITER."""
-        rc, out, outer = self.window_through(': "%s/Fake.app/Contents/MacOS/Deaths Demolition";' % self.tmp)
+        rc, out, outer = self.window_through(': "%s/Fake.app/%s";' % (self.tmp, FIXTURE_PLAYER_EXE))
         self.assertEqual(0, rc, out)
         rows = [l.split("\t") for l in (self.dir / "players-lineage.tsv").read_text().splitlines()] \
             if (self.dir / "players-lineage.tsv").exists() else []
@@ -1324,11 +1341,12 @@ class ClassCodeTests(RestoreBase):
 
     def test_Ornekleyici_GercekYabanciPlayer_YineCikis30(self):
         """positive control: a real process outside the owner's tree (double fork → reparented) still counts as foreign."""
-        fake = "%s/Fake.app/Contents/MacOS/Deaths Demolition" % self.tmp
+        fake = "%s/Fake.app/%s" % (self.tmp, FIXTURE_PLAYER_EXE)
         subprocess.run(["/bin/sh", "-c", '(exec -a "%s" sleep 40 &)' % fake], check=True)
         self.addCleanup(lambda: [os.kill(int(p), signal.SIGTERM) for p in subprocess.run(   # our own fixture only (unique tmp)
             ["pgrep", "-f", fake], capture_output=True, text=True).stdout.split()])
         time.sleep(0.5)
+        self.assertEqual([], real_players_under(self.tmp), "the machine's own guards never see a fixture Player (C-00 12.10)")
         rc, out, _ = self.window_through("true;")
         self.assertEqual(30, rc, out)
         self.assertIn("FOREIGN_WRITER", out)
@@ -1337,7 +1355,7 @@ class ClassCodeTests(RestoreBase):
         """C-00 12.10: a process outside the window whose ARGUMENTS carry the Player path (a `shasum -a 256 … ./build/
         DeathsDemolition.app/Contents/MacOS/Deaths Demolition …`) but whose executable is not the Player — it neither refuses
         the snapshot nor counts as a foreign writer (an S-04 bot restore went FOREIGN_WRITER over 8 shasums)."""
-        fake = "%s/Build.app/Contents/MacOS/Deaths Demolition - Playable Concept" % self.tmp
+        fake = "%s/Build.app/%s" % (self.tmp, FIXTURE_PLAYER_EXE)
         subprocess.run(["/bin/sh", "-c", '(/bin/sh -c "sleep 40; :" "%s" &)' % fake], check=True)   # double fork: reparented
         self.addCleanup(lambda: [os.kill(int(p), signal.SIGTERM) for p in subprocess.run(   # our own fixture only (unique tmp)
             ["pgrep", "-f", fake], capture_output=True, text=True).stdout.split()])
