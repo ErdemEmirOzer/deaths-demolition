@@ -64,7 +64,12 @@ namespace DD.Prototype.Weapons.Attachments
                 return;
             }
 
-            if (_mount == null || _mount.transform != root) _mount = WeaponAttachMount.Ensure(root, row);
+            if (_mount == null || _mount.transform != root)
+            {
+                _mount = WeaponAttachMount.Ensure(root, row);
+                if (_mount != null && _mount.GetComponent<WeaponAttachB12>() == null) _mount.gameObject.AddComponent<WeaponAttachB12>();   // B12: motes, twin flash, element edge (S-07 owns the glow)
+            }
+
             if (_mount == null) return;
             ref readonly TreeStats s = ref TreeRuntime.Current;
             _mount.Apply(WeaponAttachRules.Resolve(in s, row.id, WeaponAttachRules.DominantElement(in s)), lib);

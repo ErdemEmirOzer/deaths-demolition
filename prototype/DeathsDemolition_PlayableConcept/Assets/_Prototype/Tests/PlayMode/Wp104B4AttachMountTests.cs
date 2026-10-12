@@ -8,6 +8,7 @@ using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
+using DD.Prototype.Feedback.Vfx;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
 using DD.Prototype.Weapons.Attachments;
@@ -750,6 +751,86 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static float Lum(Color c) => .2126f * c.r + .7152f * c.g + .0722f * c.b;
 
+        // ------------------------------------------------------------------ 8 · B12 motes, twin flash, element edge (S-06)
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator B12_Zerrecik_IkizAlev_ElementKenari()
+        {
+            // WP-104 B4-2 B12 (C-00 12.10 (a); S-07 keeps the glow ladder): the presenter's mount carries WeaponAttachB12; element motes run
+            // at E4's SOCKET_ElementVFX from III, every classic shot of a twin barrel also flashes E3 and draws the element's edge ring at
+            // the flash origin (E5's PowerMuzzle), Reduce Flashes halves the motes and keeps the brightness under bloom without an event.
+            KutuphaneGerekli();
+            float flash0 = GameFeelSettings.FlashScale;
+            yield return Kur();
+            try
+            {
+                yield return Hazirla(ClassicWeaponId.AssaultRifle, Istatistik(3f, 3, true, 4, TreeElement.Fire, false, elementKademe: 3));
+                WeaponAttachMount m = Montaj(ClassicWeaponId.AssaultRifle);
+                WeaponAttachB12 b = m.GetComponent<WeaponAttachB12>();
+                Assert.IsTrue(b != null, "montajda WeaponAttachB12 yok (presenter eklemeli)");
+                Assert.IsTrue(m.PowerMuzzle != null && m.SecondaryMuzzle != null && m.ElementVfx != null, "E5 / E3 / E4 soketleri eksik — " + SetYazi(m.Set));
+
+                Assert.AreEqual(4f, b.MoteRate, "ateş III: saniyede 4 zerrecik");
+                Assert.AreEqual(WeaponAttachB12.IntensityFor(3, 1f), b.Intensity, 1e-5f, "III parlaklığı (M9 1,4)");
+                ParticleSystem zerre = m.ElementVfx.GetComponentInChildren<ParticleSystem>(true);
+                Assert.IsTrue(zerre != null && zerre.isPlaying, "E4 SOCKET_ElementVFX'te zerrecik sistemi çalışmıyor");
+                Assert.AreEqual(WeaponAttachB12.FireGlow, zerre.main.startColor.color, "zerrecik ateş rengi");
+
+                // a burst of fire: the twin flash and the edge ride every shot
+                int f0 = b.SecondaryFlashes, k0 = b.EdgeBursts, atis0 = _s.Controller.ShotSerial;
+                _s.Girdi.AtesBasti = true;
+                _s.Girdi.AtesBasili = true;
+                for (int i = 0; i < 24; i++)
+                {
+                    yield return null;
+                    _s.Girdi.AtesBasti = false;
+                }
+
+                _s.Girdi.AtesBasili = false;
+                int atis = _s.Controller.ShotSerial - atis0, ikiz = b.SecondaryFlashes - f0, kenar = b.EdgeBursts - k0;
+                Assert.Greater(atis, 0, "ateş edilmedi");
+                Assert.AreEqual(atis, ikiz, "ikiz namlu her atışta kendi alevini vermeli (atış " + atis + ", ikiz alev " + ikiz + ")");
+                Assert.AreEqual(atis, kenar, "element kenarı her atışta (atış " + atis + ", kenar " + kenar + ")");
+                // the origin, not a distance: the rig has moved on (kick, aim) since the last shot of the burst
+                Assert.AreSame(m.PowerMuzzle, b.LastEdgeOrigin, "kenar halkası E5'in PowerMuzzle'ında çizilmeli (" +
+                               (b.LastEdgeOrigin != null ? b.LastEdgeOrigin.name : "yok") + ")");
+
+                // Reduce Flashes: no event, the next frame re-shapes
+                GameFeelSettings.FlashScale = 0.4f;
+                yield return SpecialWeaponSahne.Kareler(2);
+                Assert.AreEqual(2f, b.MoteRate, "Reduce Flashes: zerrecik yarısı");
+                Assert.Less(b.Intensity, 1.25f, "Reduce Flashes: bloom altında");
+                GameFeelSettings.FlashScale = flash0;
+                yield return SpecialWeaponSahne.Kareler(2);
+
+                // no element: no motes, no edge, the twin flash stays
+                TreeStats saf = Istatistik(3f, 3, true, 4, TreeElement.None, false);
+                TreeRuntime.SetTestStats(in saf);
+                TreeEvents.RaiseStatsChanged();
+                yield return SpecialWeaponSahne.Kareler(2);
+                Assert.AreEqual(0f, b.MoteRate, "element yok: zerrecik yok");
+                int k1 = b.EdgeBursts, f1 = b.SecondaryFlashes, atis1 = _s.Controller.ShotSerial;
+                _s.Girdi.AtesBasti = true;
+                _s.Girdi.AtesBasili = true;
+                for (int i = 0; i < 12; i++)
+                {
+                    yield return null;
+                    _s.Girdi.AtesBasti = false;
+                }
+
+                _s.Girdi.AtesBasili = false;
+                Assert.AreEqual(k1, b.EdgeBursts, "element yokken kenar çizilmemeli");
+                Assert.AreEqual(_s.Controller.ShotSerial - atis1, b.SecondaryFlashes - f1, "ikiz alev elementten bağımsız");
+                Debug.Log("[DD-TEST] wp104b4.b12 shots=" + atis + " twinFlashes=" + ikiz + " edges=" + kenar + " edgeOrigin=" + b.LastEdgeOrigin.name +
+                          " motes=" + F(WeaponAttachB12.MoteRateFor(3, 1f)) + " intensity=" + F(WeaponAttachB12.IntensityFor(3, 1f)));
+            }
+            finally
+            {
+                GameFeelSettings.FlashScale = flash0;
+            }
+        }
+
         // ------------------------------------------------------------------ setup
 
         private void KutuphaneGerekli()
@@ -806,9 +887,11 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static TreeStats E5Istatistik() => Istatistik(3f, 3, true, 4, TreeElement.Fire, false);
 
-        private static TreeStats Istatistik(float sarjorOlcek, int sarjorKademe, bool ikiz, int hizKademe, TreeElement element, bool tamOtomatik)
+        private static TreeStats Istatistik(float sarjorOlcek, int sarjorKademe, bool ikiz, int hizKademe, TreeElement element, bool tamOtomatik,
+                                            int elementKademe = 0)
         {
             TreeStats s = TreeStats.Neutral;
+            s.SetBranchTier(TreeBranch.Element, elementKademe);
             s.MagazineScale = sarjorOlcek;
             s.SetBranchTier(TreeBranch.Magazine, sarjorKademe);
             s.TwinBarrel = ikiz;
