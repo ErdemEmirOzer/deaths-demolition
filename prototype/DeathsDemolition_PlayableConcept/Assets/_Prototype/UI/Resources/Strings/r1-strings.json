@@ -1652,8 +1652,8 @@
     "tr": "Element Avatarı"
   },
   "tree.meta.awakening.alt_element.desc": {
-    "en": "Element V alternative: a 10 s elemental form in which every hit is a nova.",
-    "tr": "Element V alternatifi: 10 sn element formu; her isabet bir nova olur."
+    "en": "Element V alternative: every 25 s, a 10 s elemental form in which every hit is a nova.",
+    "tr": "Element V alternatifi: her 25 sn'de bir 10 sn element formu; her isabet bir nova olur."
   },
   "tree.meta.awakening.alt_chaos.name": {
     "en": "Event Horizon",
@@ -4992,8 +4992,8 @@
     "tr": "Element Avatarı"
   },
   "tree.v2.aw_alt_el.desc": {
-    "en": "Take elemental form for {seconds} s: every hit sets off an element nova.",
-    "tr": "{seconds} sn element formuna girersin: her isabet bir element novası patlatır."
+    "en": "Every {cooldown} s, take elemental form for {seconds} s: every hit sets off an element nova.",
+    "tr": "Her {cooldown} sn'de bir, {seconds} sn element formuna girersin: her isabet bir element novası patlatır."
   },
   "tree.v2.kx_crit.name": {
     "en": "Lucky Strike",
