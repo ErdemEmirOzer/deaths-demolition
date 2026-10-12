@@ -94,6 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
             var path = new NavMeshPath();
             var json = new StringBuilder("{\n  \"world\": \"V6\",\n  \"playerStart\": [" + F(startHit.position.x) + ", " + F(startHit.position.z) + "],\n  \"stations\": [\n");
             float rocketPath = -1f, longestOther = 0f;
+            var blocked = new StringBuilder();
             for (int i = 0; i < director.Stations.Count; i++)
             {
                 WallBuyStation s = director.Stations[i];
@@ -109,14 +110,16 @@ namespace DD.Prototype.Tests.PlayMode
                 if (s.Weapon == ClassicWeaponId.Rl1) rocketPath = length; else longestOther = Mathf.Max(longestOther, length);
                 Assert.IsNotNull(s.Model, s.Id + " silah modeli yok");
                 // WP-107B (AD 12.10 MUST 1/2): open sky over the station and its standing point, no body overlap, standing room.
-                Assert.IsTrue(WallBuyDirector.IsClear(s), s.Id + " açıkta değil (çatı / çakışma / durma yeri)");
-                Assert.GreaterOrEqual(s.SettledMetres, 0f, s.Id + " temiz nokta bulunamadı");
+                // (collected, asserted after the placement file is written: a failing station still leaves its measurement)
+                string why = WallBuyDirector.BlockReason(s);
+                if (why != null || s.SettledMetres < 0f) blocked.Append(s.Id).Append(": ").Append(why ?? "no clean point").Append("; ");
                 float moved = new Vector2(p.x - row.x, p.z - row.z).magnitude;
                 json.Append("    {\"id\": \"").Append(s.Id).Append("\", \"weapon\": \"").Append(s.WeaponKey).Append("\", \"price\": ").Append(catalog.PriceOf(s.Weapon))
                     .Append(", \"x\": ").Append(F(p.x)).Append(", \"y\": ").Append(F(p.y)).Append(", \"z\": ").Append(F(p.z))
                     .Append(", \"snapMetres\": ").Append(F(moved)).Append(", \"settledMetres\": ").Append(F(s.SettledMetres)).Append(", \"walkMetres\": ").Append(F(length))
                     .Append(", \"body\": ").Append(s.Body != null ? "true" : "false").Append(", \"decal\": ").Append(s.Decal != null ? "true" : "false")
-                    .Append(", \"lantern\": ").Append(s.Lantern != null ? "true" : "false").Append(i + 1 < director.Stations.Count ? "},\n" : "}\n");
+                    .Append(", \"lantern\": ").Append(s.Lantern != null ? "true" : "false").Append(", \"blocked\": ").Append(why != null ? "\"" + why.Replace("\"", "'") + "\"" : "null")
+                    .Append(i + 1 < director.Stations.Count ? "},\n" : "}\n");
             }
 
             json.Append("  ]\n}\n");
@@ -125,6 +128,7 @@ namespace DD.Prototype.Tests.PlayMode
             Directory.CreateDirectory(dir);
             File.WriteAllText(Path.Combine(dir, "wallbuy-placement.json"), json.ToString());
             Debug.Log("[DD-TEST] wp107.wallbuy placement dir=" + dir + " rocketWalk=" + F(rocketPath) + " longestOther=" + F(longestOther));
+            Assert.AreEqual(0, blocked.Length, "açıkta olmayan istasyon (çatı / örtü / çakışma / durma yeri): " + blocked);
             Assert.Greater(rocketPath, longestOther, "kullanıcı: roketatara ulaşmak zor - en uzun yürüyüş onun");
         }
 

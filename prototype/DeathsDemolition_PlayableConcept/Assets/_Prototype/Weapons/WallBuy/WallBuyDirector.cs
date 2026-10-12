@@ -206,7 +206,7 @@ namespace DD.Prototype.Weapons
             return true;
         }
 
-        public const float SettleSearchMetres = 6f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
+        public const float SettleSearchMetres = 12f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
 
         /// <summary>
         /// WP-107B (AD 12.10 MUST 1): the top-down camera sits south of and above the player (north is screen up), so a tall roof
@@ -241,19 +241,22 @@ namespace DD.Prototype.Weapons
 
             t.position = origin;
             Physics.SyncTransforms();
-            Debug.LogWarning("[WallBuyDirector] no clean point within " + SettleSearchMetres + " m of " + station.Id);
+            Debug.LogWarning("[WallBuyDirector] no clean point within " + SettleSearchMetres + " m of " + station.Id + " - at its catalog point: " + BlockReason(station));
             return -1f;
         }
 
         /// <summary>Open sky over the station and its standing point, no body overlap, NavMesh in front (see <see cref="Settle"/>).</summary>
-        public static bool IsClear(WallBuyStation station)
+        public static bool IsClear(WallBuyStation station) => BlockReason(station) == null;
+
+        /// <summary>Why a station is not in the open (null = it is): the first failing check and what failed it (tests, logs).</summary>
+        public static string BlockReason(WallBuyStation station)
         {
             BoxCollider box = station.GetComponent<BoxCollider>();
-            if (box == null) return true;
+            if (box == null) return null;
             Transform t = station.transform;
             Vector3 half = box.size * 0.5f;
             Vector3 stand = StandPoint(station);
-            if (!NavMesh.SamplePosition(stand, out NavMeshHit _, 0.6f, NavMesh.AllAreas)) return false;
+            if (!NavMesh.SamplePosition(stand, out NavMeshHit _, 0.6f, NavMesh.AllAreas)) return "no NavMesh at the standing point";
             for (int c = 0; c < 5; c++)
             {
                 Vector3 from = c < 4
@@ -261,10 +264,13 @@ namespace DD.Prototype.Weapons
                     : stand + Vector3.up * 2f;
                 // Solid colliders of every layer, plus the roofs' CameraOccluder layer even if a roof is a trigger (not the
                 // region / acoustic volumes, which are triggers on other layers).
-                if (Physics.Raycast(from, Vector3.up, RoofCheckMetres, ~0, QueryTriggerInteraction.Ignore)
-                    || Physics.Raycast(from, Vector3.up, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide)) return false;
-                if (c < 4 && Physics.Raycast(from, CameraLine, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide)) return false;
-                if (c < 4 && OverheadBlocks(from)) return false;
+                if (Physics.Raycast(from, Vector3.up, out RaycastHit hit, RoofCheckMetres, ~0, QueryTriggerInteraction.Ignore)
+                    || Physics.Raycast(from, Vector3.up, out hit, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide))
+                    return "collider above: " + hit.collider.name;
+                if (c < 4 && Physics.Raycast(from, CameraLine, out hit, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide))
+                    return "occluder on the camera line: " + hit.collider.name;
+                int over = c < 4 ? OverheadBlocks(from) : -1;
+                if (over >= 0) return "renderer above: " + s_overheadNames[over];
             }
 
             // The body, lifted off the ground and shrunk a little: any other static collider inside it is a clip.
@@ -275,19 +281,20 @@ namespace DD.Prototype.Weapons
             {
                 Collider h = hits[i];
                 if (h == box || h.attachedRigidbody != null || h.transform.IsChildOf(t)) continue;
-                return false;
+                return "collider inside the body: " + h.name;
             }
 
             Collider[] standHits = Physics.OverlapCapsule(stand + Vector3.up * (StandRadius + 0.15f), stand + Vector3.up * 1.6f, StandRadius, ~0, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < standHits.Length; i++)
             {
-                if (standHits[i].attachedRigidbody == null && !standHits[i].transform.IsChildOf(t)) return false;
+                if (standHits[i].attachedRigidbody == null && !standHits[i].transform.IsChildOf(t)) return "collider at the standing point: " + standHits[i].name;
             }
 
-            return true;
+            return null;
         }
 
         private static readonly List<Bounds> s_overhead = new List<Bounds>(512);
+        private static readonly List<string> s_overheadNames = new List<string>(512);
         private static int s_overheadScene = -1;
 
         /// <summary>
@@ -299,6 +306,7 @@ namespace DD.Prototype.Weapons
         public static void CollectOverhead()
         {
             s_overhead.Clear();
+            s_overheadNames.Clear();
             s_overheadScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
             MeshRenderer[] all = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
@@ -310,6 +318,7 @@ namespace DD.Prototype.Weapons
                 if (r.GetComponentInParent<WallBuyStation>() != null || r.GetComponentInParent<Rigidbody>() != null
                     || r.GetComponentInParent<CharacterController>() != null || r.GetComponentInParent<NavMeshAgent>() != null) continue;
                 s_overhead.Add(b);
+                s_overheadNames.Add(r.name);
             }
         }
 
@@ -318,7 +327,7 @@ namespace DD.Prototype.Weapons
         /// <see cref="RoofCheckMetres"/>; a corner already inside bounds counts only when they rise 1.5 m over it (a canopy, not a
         /// fence or wall the station stands beside).
         /// </summary>
-        private static bool OverheadBlocks(Vector3 from)
+        private static int OverheadBlocks(Vector3 from)
         {
             if (s_overheadScene != UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle) CollectOverhead();
             var up = new Ray(from, Vector3.up);
@@ -329,14 +338,14 @@ namespace DD.Prototype.Weapons
                 if (b.max.y <= from.y || b.SqrDistance(from) > RoofCheckMetres * RoofCheckMetres) continue;
                 if (b.Contains(from))
                 {
-                    if (b.max.y > from.y + 1.5f) return true;
+                    if (b.max.y > from.y + 1.5f) return i;
                     continue;
                 }
 
-                if ((b.IntersectRay(up, out float d) && d <= RoofCheckMetres) || (b.IntersectRay(cam, out d) && d <= RoofCheckMetres)) return true;
+                if ((b.IntersectRay(up, out float d) && d <= RoofCheckMetres) || (b.IntersectRay(cam, out d) && d <= RoofCheckMetres)) return i;
             }
 
-            return false;
+            return -1;
         }
 
         /// <summary>Where the player stands to use the station: in front of its face.</summary>
