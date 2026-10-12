@@ -108,10 +108,15 @@ namespace DD.Prototype.Tests.PlayMode
                 for (int c = 1; c < path.corners.Length; c++) length += Vector3.Distance(path.corners[c - 1], path.corners[c]);
                 if (s.Weapon == ClassicWeaponId.Rl1) rocketPath = length; else longestOther = Mathf.Max(longestOther, length);
                 Assert.IsNotNull(s.Model, s.Id + " silah modeli yok");
+                // WP-107B (AD 12.10 MUST 1/2): open sky over the station and its standing point, no body overlap, standing room.
+                Assert.IsTrue(WallBuyDirector.IsClear(s), s.Id + " açıkta değil (çatı / çakışma / durma yeri)");
+                Assert.GreaterOrEqual(s.SettledMetres, 0f, s.Id + " temiz nokta bulunamadı");
                 float moved = new Vector2(p.x - row.x, p.z - row.z).magnitude;
                 json.Append("    {\"id\": \"").Append(s.Id).Append("\", \"weapon\": \"").Append(s.WeaponKey).Append("\", \"price\": ").Append(catalog.PriceOf(s.Weapon))
                     .Append(", \"x\": ").Append(F(p.x)).Append(", \"y\": ").Append(F(p.y)).Append(", \"z\": ").Append(F(p.z))
-                    .Append(", \"snapMetres\": ").Append(F(moved)).Append(", \"walkMetres\": ").Append(F(length)).Append(i + 1 < director.Stations.Count ? "},\n" : "}\n");
+                    .Append(", \"snapMetres\": ").Append(F(moved)).Append(", \"settledMetres\": ").Append(F(s.SettledMetres)).Append(", \"walkMetres\": ").Append(F(length))
+                    .Append(", \"body\": ").Append(s.Body != null ? "true" : "false").Append(", \"decal\": ").Append(s.Decal != null ? "true" : "false")
+                    .Append(", \"lantern\": ").Append(s.Lantern != null ? "true" : "false").Append(i + 1 < director.Stations.Count ? "},\n" : "}\n");
             }
 
             json.Append("  ]\n}\n");
@@ -236,6 +241,54 @@ namespace DD.Prototype.Tests.PlayMode
                 WallBuyEvents.Resolved -= listen;
                 WeaponRegistry.SelectedWeapon = selected;
             }
+        }
+
+        /// <summary>
+        /// WP-107B (AD 12.10 MUST 4/5): the HUD prompt in its five states - buy, refill, not enough gold, ammo full, a Special in
+        /// hand. Every refusal shows an icon (≥ 20 px); the content sits PadX in from both chip edges (the AP-042 brackets end
+        /// BracketInner in), so both inner gaps are ≥ 8 px and equal.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator HudIstemi_BesDurum_RedlerdeIkon_IcBosluklarSimetrik()
+        {
+            yield return LoadRun();
+            HudWallBuyPrompt hud = UnityEngine.Object.FindObjectOfType<HudWallBuyPrompt>();
+            Assert.IsNotNull(hud);
+            _rig.Teleport(new Vector3(0f, 0.1f, -3f), Quaternion.identity);
+            yield return Frames(3);
+            WallBuyDirector director = WallBuyDirector.Instance;
+            director.enabled = false;   // its per-frame "no station in reach" would overwrite the prompts published here (Instance clears in OnDisable)
+            var states = new (WallBuyAction action, WallBuyBlock block, ClassicWeaponId weapon, string key, int cost)[]
+            {
+                (WallBuyAction.Buy, WallBuyBlock.None, ClassicWeaponId.Lmg2, "lmg_2", 800),
+                (WallBuyAction.Refill, WallBuyBlock.None, ClassicWeaponId.AssaultRifle, "ar_1", 125),
+                (WallBuyAction.Buy, WallBuyBlock.NotEnoughGold, ClassicWeaponId.Rl1, "rl_1", 2500),
+                (WallBuyAction.Refill, WallBuyBlock.AmmoFull, ClassicWeaponId.AssaultRifle, "ar_1", 125),
+                (WallBuyAction.Buy, WallBuyBlock.SpecialActive, ClassicWeaponId.Sr1, "sr_1", 650),
+            };
+            var log = new StringBuilder();
+            foreach (var st in states)
+            {
+                WallBuyEvents.PublishPrompt(new WallBuyPrompt("WB_Test_" + st.block, st.weapon, st.key, new WallBuyQuote(st.action, st.cost, st.block), Vector3.zero));
+                yield return Frames(2);
+                Assert.IsTrue(hud.Shown, st.block + " gösterilmedi");
+                if (st.block != WallBuyBlock.None)
+                {
+                    Assert.IsNotNull(hud.IconShown, st.block + ": ret ikonsuz");
+                    Assert.GreaterOrEqual(HudWallBuyPrompt.IconSize, 20f);
+                }
+
+                float left = hud.ContentLeft - HudWallBuyPrompt.BracketInner, right = hud.ChipWidth - hud.ContentRight - HudWallBuyPrompt.BracketInner;
+                log.Append(st.block).Append(' ').Append(st.action).Append(": gaps ").Append(F(left)).Append(" / ").Append(F(right)).Append(" chip ").Append(F(hud.ChipWidth)).Append(" '").Append(hud.Text).Append("'\n");
+                Assert.GreaterOrEqual(left, 8f, st.block + " sol iç boşluk");
+                Assert.GreaterOrEqual(right, 8f, st.block + " sağ iç boşluk");
+                Assert.LessOrEqual(Mathf.Abs(left - right), 3f, st.block + " iç boşluklar simetrik değil");
+            }
+
+            Debug.Log("[DD-TEST] wp107b.hud.states\n" + log);
+            WallBuyEvents.PublishPrompt(default);
+            director.enabled = true;
         }
 
         private static string F(float v) => v.ToString("0.##", CultureInfo.InvariantCulture);

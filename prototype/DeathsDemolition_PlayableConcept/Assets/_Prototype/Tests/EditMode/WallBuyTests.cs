@@ -112,6 +112,26 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Test]
+        public void HudIstemi_HerRedIkonlu_SatinAlmaEtiketteKoban()
+        {
+            // WP-107B (AD 12.10 MUST 4): a refusal is never colour alone.
+            foreach (WallBuyAction action in new[] { WallBuyAction.Buy, WallBuyAction.Refill })
+            {
+                Assert.IsNotNull(DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.NotEnoughGold, action), "yetersiz altın " + action);
+                Assert.IsNotNull(DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.SpecialActive, action), "Special " + action);
+                Assert.IsNotNull(DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.AmmoFull, action), "dolu cephane " + action);
+                Assert.IsNull(DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.Unavailable, action), "donmuş koşuda istem yok");
+            }
+
+            Assert.AreEqual(DD.Prototype.UI.HudWallBuyPrompt.IconAmmo, DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.None, WallBuyAction.Refill));
+            Assert.IsNull(DD.Prototype.UI.HudWallBuyPrompt.IconFileFor(WallBuyBlock.None, WallBuyAction.Buy), "satın almada koban fiyat etiketinde");
+            foreach (string file in new[] { DD.Prototype.UI.HudWallBuyPrompt.IconAmmo, DD.Prototype.UI.HudWallBuyPrompt.IconRefused })
+            {
+                Assert.IsNotNull(Resources.Load<Sprite>(DD.Prototype.UI.HudArt.Folder + file), file + " Resources'ta");
+            }
+        }
+
         // ------------------------------------------------------------------ shipped catalog
 
         private static List<ClassicWeaponId> SoldWeapons()

@@ -187,6 +187,7 @@ namespace DD.Prototype.Weapons
             _root.SetParent(transform, false);
 
             WallBuyStationLibrary art = WallBuyStationLibrary.Current;   // WP-107B: the AP-040 bodies (placeholder racks without it)
+            CollectOverhead();   // before the stations exist: their own renderers are never in the list
             IReadOnlyList<WallBuyCatalog.StationRow> rows = _catalog.Stations;
             for (int i = 0; i < rows.Count; i++)
             {
@@ -198,10 +199,150 @@ namespace DD.Prototype.Weapons
                 var station = go.AddComponent<WallBuyStation>();
                 WeaponDefinition def = Arsenal.Get(weapon);
                 station.Init(row.id, weapon, def != null ? def.weaponId : row.weapon, def != null && def.IsWallBuyOnly, art, _wood, _plank, _sign, _lacquer);
+                station.SettledMetres = Settle(station);
                 _stations.Add(station);
             }
 
             return true;
+        }
+
+        public const float SettleSearchMetres = 6f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
+
+        /// <summary>
+        /// WP-107B (AD 12.10 MUST 1): the top-down camera sits south of and above the player (north is screen up), so a tall roof
+        /// just south of a station hides it although nothing is over it: the station's top must also see along this direction
+        /// (≈ 60° up, toward -Z) without a CameraOccluder in the way.
+        /// </summary>
+        public static readonly Vector3 CameraLine = new Vector3(0f, 0.866f, -0.5f);
+
+        /// <summary>
+        /// WP-107B (AD 12.10 MUST 1/2): a station stands in the open - nothing above it (no roof, eave or beam collider within
+        /// <see cref="RoofCheckMetres"/> over its top corners and its standing point), its body overlaps no other collider, and its
+        /// front has NavMesh standing room. Where the catalog point fails, the nearest clean point within
+        /// <see cref="SettleSearchMetres"/> (rings of <see cref="SettleStepMetres"/>, eight bearings, deterministic) is taken.
+        /// Returns the metres moved (0 = the catalog point was clean; negative = no clean point found, the catalog point kept).
+        /// </summary>
+        private static float Settle(WallBuyStation station)
+        {
+            Transform t = station.transform;
+            Vector3 origin = t.position;
+            if (IsClear(station)) return 0f;
+            for (float r = SettleStepMetres; r <= SettleSearchMetres + 0.001f; r += SettleStepMetres)
+            {
+                for (int k = 0; k < 8; k++)
+                {
+                    float a = k * Mathf.PI * 0.25f;
+                    Vector3 candidate = Snap(origin + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r, 1f);
+                    t.position = candidate;
+                    Physics.SyncTransforms();
+                    if (IsClear(station)) return (candidate - origin).magnitude;
+                }
+            }
+
+            t.position = origin;
+            Physics.SyncTransforms();
+            Debug.LogWarning("[WallBuyDirector] no clean point within " + SettleSearchMetres + " m of " + station.Id);
+            return -1f;
+        }
+
+        /// <summary>Open sky over the station and its standing point, no body overlap, NavMesh in front (see <see cref="Settle"/>).</summary>
+        public static bool IsClear(WallBuyStation station)
+        {
+            BoxCollider box = station.GetComponent<BoxCollider>();
+            if (box == null) return true;
+            Transform t = station.transform;
+            Vector3 half = box.size * 0.5f;
+            Vector3 stand = StandPoint(station);
+            if (!NavMesh.SamplePosition(stand, out NavMeshHit _, 0.6f, NavMesh.AllAreas)) return false;
+            for (int c = 0; c < 5; c++)
+            {
+                Vector3 from = c < 4
+                    ? t.TransformPoint(box.center + new Vector3((c & 1) == 0 ? -half.x : half.x, half.y + 0.05f, (c & 2) == 0 ? -half.z : half.z))
+                    : stand + Vector3.up * 2f;
+                // Solid colliders of every layer, plus the roofs' CameraOccluder layer even if a roof is a trigger (not the
+                // region / acoustic volumes, which are triggers on other layers).
+                if (Physics.Raycast(from, Vector3.up, RoofCheckMetres, ~0, QueryTriggerInteraction.Ignore)
+                    || Physics.Raycast(from, Vector3.up, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide)) return false;
+                if (c < 4 && Physics.Raycast(from, CameraLine, RoofCheckMetres, 1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder, QueryTriggerInteraction.Collide)) return false;
+                if (c < 4 && OverheadBlocks(from)) return false;
+            }
+
+            // The body, lifted off the ground and shrunk a little: any other static collider inside it is a clip.
+            Vector3 centre = t.TransformPoint(box.center + Vector3.up * 0.1f);
+            Vector3 inner = new Vector3(Mathf.Max(0.05f, half.x - 0.04f), Mathf.Max(0.05f, half.y - 0.12f), Mathf.Max(0.05f, half.z - 0.04f));
+            Collider[] hits = Physics.OverlapBox(centre, inner, t.rotation, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider h = hits[i];
+                if (h == box || h.attachedRigidbody != null || h.transform.IsChildOf(t)) continue;
+                return false;
+            }
+
+            Collider[] standHits = Physics.OverlapCapsule(stand + Vector3.up * (StandRadius + 0.15f), stand + Vector3.up * 1.6f, StandRadius, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < standHits.Length; i++)
+            {
+                if (standHits[i].attachedRigidbody == null && !standHits[i].transform.IsChildOf(t)) return false;
+            }
+
+            return true;
+        }
+
+        private static readonly List<Bounds> s_overhead = new List<Bounds>(512);
+        private static int s_overheadScene = -1;
+
+        /// <summary>
+        /// b107h: the sakura canopies (S-05's placed trees) have no collider, so no ray saw the one over WB_SakuraNorth and the
+        /// station stood fully hidden under it. The renderers that rise above a station's top count too: every enabled mesh
+        /// renderer at least 1.5 m tall, not a moving body (player, zombies, pickups), not the stations themselves, not a
+        /// sky / ground plane (over 60 m across). Collected once per scene; their bounds are conservative.
+        /// </summary>
+        public static void CollectOverhead()
+        {
+            s_overhead.Clear();
+            s_overheadScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
+            MeshRenderer[] all = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+            for (int i = 0; i < all.Length; i++)
+            {
+                MeshRenderer r = all[i];
+                if (!r.enabled || !r.gameObject.activeInHierarchy || r.gameObject.layer == 5) continue;
+                Bounds b = r.bounds;
+                if (b.max.y < 1.5f || b.extents.x > 30f || b.extents.z > 30f) continue;
+                if (r.GetComponentInParent<WallBuyStation>() != null || r.GetComponentInParent<Rigidbody>() != null
+                    || r.GetComponentInParent<CharacterController>() != null || r.GetComponentInParent<NavMeshAgent>() != null) continue;
+                s_overhead.Add(b);
+            }
+        }
+
+        /// <summary>
+        /// A renderer between a station's top corner and the sky or the camera: the up / camera-line ray enters its bounds within
+        /// <see cref="RoofCheckMetres"/>; a corner already inside bounds counts only when they rise 1.5 m over it (a canopy, not a
+        /// fence or wall the station stands beside).
+        /// </summary>
+        private static bool OverheadBlocks(Vector3 from)
+        {
+            if (s_overheadScene != UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle) CollectOverhead();
+            var up = new Ray(from, Vector3.up);
+            var cam = new Ray(from, CameraLine);
+            for (int i = 0; i < s_overhead.Count; i++)
+            {
+                Bounds b = s_overhead[i];
+                if (b.max.y <= from.y || b.SqrDistance(from) > RoofCheckMetres * RoofCheckMetres) continue;
+                if (b.Contains(from))
+                {
+                    if (b.max.y > from.y + 1.5f) return true;
+                    continue;
+                }
+
+                if ((b.IntersectRay(up, out float d) && d <= RoofCheckMetres) || (b.IntersectRay(cam, out d) && d <= RoofCheckMetres)) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>Where the player stands to use the station: in front of its face.</summary>
+        public static Vector3 StandPoint(WallBuyStation station)
+        {
+            return station.transform.position + station.transform.forward * (station.FrontDepth + 0.9f);
         }
 
         /// <summary>The nearest NavMesh point within <paramref name="radius"/> (a station the player can always walk to); the point itself without a NavMesh.</summary>

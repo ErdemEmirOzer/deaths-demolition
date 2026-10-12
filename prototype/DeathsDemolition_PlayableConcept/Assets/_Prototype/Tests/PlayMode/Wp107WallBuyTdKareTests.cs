@@ -34,6 +34,40 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private const int W = 1920, H = 1080;
 
+        private static string F0(float v) => v.ToString("0", CultureInfo.InvariantCulture);
+
+        /// <summary>The screen-space box (camera pixels, y up) of every renderer under <paramref name="go"/>.</summary>
+        private static Rect ScreenBox(Camera cam, GameObject go)
+        {
+            if (go == null) return Rect.zero;
+            Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) return Rect.zero;
+            float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+            foreach (Renderer r in rs)
+            {
+                Bounds b = r.bounds;
+                for (int c = 0; c < 8; c++)
+                {
+                    Vector3 p = cam.WorldToScreenPoint(b.center + Vector3.Scale(b.extents, new Vector3((c & 1) == 0 ? -1 : 1, (c & 2) == 0 ? -1 : 1, (c & 4) == 0 ? -1 : 1)));
+                    x0 = Mathf.Min(x0, p.x); x1 = Mathf.Max(x1, p.x); y0 = Mathf.Min(y0, p.y); y1 = Mathf.Max(y1, p.y);
+                }
+            }
+
+            return Rect.MinMaxRect(x0, y0, x1, y1);
+        }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            if (root.name == childName) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform t = FindChild(root.GetChild(i), childName);
+                if (t != null) return t;
+            }
+
+            return null;
+        }
+
         [UnityTest]
         [Explicit("R4 görsel kanıt: yalnız hedefli koşulur")]
         [Timeout(300000)]
@@ -120,13 +154,48 @@ namespace DD.Prototype.Tests.PlayMode
 
                 // ---- (2) every station close up with its prompt (stills only)
                 int n = 3;
+                var measure = new StringBuilder("{\n  \"stations\": [\n");
                 foreach (WallBuyStation s in director.Stations)
                 {
                     rig.Teleport(s.transform.position + s.transform.forward * (s.FrontDepth + 0.9f), Quaternion.LookRotation(-s.transform.forward));
                     for (int i = 0; i < 12; i++) yield return null;
-                    Grab(n.ToString("00", CultureInfo.InvariantCulture) + "-" + s.Id, false);
+                    string still = n.ToString("00", CultureInfo.InvariantCulture) + "-" + s.Id;
+                    Grab(still, false);
+                    // WP-107B (AD 12.10 MUST 3): the same frame without the weapon - the pixel tool masks the gun (A − B) and reads the
+                    // panel around it; the gun's screen box and which way its muzzle and its decal's muzzle point (screen x sign).
+                    if (s.Model != null)
+                    {
+                        s.Model.SetActive(false);
+                        Grab(still + "-nogun", false);
+                        // and without the station at all (body, decal, lantern): the tool's panel mask is the body's own pixels
+                        if (s.Body != null) s.Body.SetActive(false);
+                        if (s.Decal != null) s.Decal.gameObject.SetActive(false);
+                        if (s.Lantern != null) s.Lantern.enabled = false;
+                        Grab(still + "-nobody", false);
+                        if (s.Body != null) s.Body.SetActive(true);
+                        if (s.Decal != null) s.Decal.gameObject.SetActive(true);
+                        if (s.Lantern != null) s.Lantern.enabled = true;
+                        s.Model.SetActive(true);
+                    }
+
+                    RenderTexture keep = cam.targetTexture;
+                    cam.targetTexture = target;   // screen points in the capture's own pixels
+                    Rect box = ScreenBox(cam, s.Model);
+                    Transform muzzle = s.Model != null ? FindChild(s.Model.transform, "Muzzle") : null;
+                    float gunDir = muzzle != null ? Mathf.Sign(cam.WorldToScreenPoint(muzzle.position).x - cam.WorldToScreenPoint(s.Model.transform.position).x) : 0f;
+                    float decalDir = s.Decal != null ? Mathf.Sign(cam.WorldToScreenPoint(s.Decal.transform.TransformPoint(new Vector3(-0.5f, 0f, 0f))).x
+                                                                 - cam.WorldToScreenPoint(s.Decal.transform.position).x) : 0f;   // the AP-040 decals' muzzles sit at u = 0
+                    cam.targetTexture = keep;
+                    measure.Append("    {\"id\": \"").Append(s.Id).Append("\", \"weapon\": \"").Append(s.WeaponKey).Append("\", \"still\": \"").Append(still)
+                        .Append("\", \"premium\": ").Append(s.Weapon == ClassicWeaponId.Rl1 ? "true" : "false")
+                        .Append(", \"gunBox\": [").Append(F0(box.xMin)).Append(", ").Append(F0(H - box.yMax)).Append(", ").Append(F0(box.xMax)).Append(", ").Append(F0(H - box.yMin)).Append("]")
+                        .Append(", \"gunMuzzleScreenX\": ").Append(F0(gunDir)).Append(", \"decalMuzzleScreenX\": ").Append(F0(decalDir))
+                        .Append(", \"lantern\": ").Append(s.Lantern != null ? "true" : "false").Append(", \"settledMetres\": ").Append(s.SettledMetres.ToString("0.##", CultureInfo.InvariantCulture)).Append("},\n");
                     n++;
                 }
+
+                measure.Append("    {}\n  ]\n}\n");
+                File.WriteAllText(Path.Combine(dir, "wallbuy-measure.json"), measure.ToString());
 
                 // ---- (3) the video: walk to Shippu's rack, buy, shoot, refill
                 WallBuyStation smg = director.Stations.First(s => s.Weapon != controller.Classic.Id && s.Weapon != ClassicWeaponId.Rl1);

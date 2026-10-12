@@ -28,6 +28,13 @@ namespace DD.Prototype.UI
             SealDiscount = "ap042_wallbuy_seal_discount";
         private const float FrameSourceHeight = 192f, TagSourceHeight = 160f, TagCoinSlice = 144f;
 
+        /// <summary>
+        /// AD 12.10 MUST 5: the content's inset from the frame's left and right edges. The AP-042 frame's corner brackets end
+        /// 49 source px (≈ 12 px drawn at RowHeight 48) inside each edge and its dark fill starts at 96 (24 px): 28 px each side
+        /// keeps the words on the fill with ≈ 16 px clear of each bracket, the same on both sides.
+        /// </summary>
+        public const float PadX = 28f, BracketInner = 12f;
+
         private RectTransform _rect;
         private CanvasGroup _group;
         private Image _back, _tag, _icon, _seal;
@@ -45,6 +52,35 @@ namespace DD.Prototype.UI
 
         /// <summary>The AP-042 frame is drawn (false: the kit chip fallback).</summary>
         public bool UsesAp042 => _framePurchase != null;
+
+        /// <summary>Test readout (AD MUST 5): the content's left / right edge in the chip, px from its left edge, and the chip width.</summary>
+        public float ContentLeft { get; private set; }
+        public float ContentRight { get; private set; }
+        public float ChipWidth => _rect != null ? _rect.sizeDelta.x : 0f;
+
+        /// <summary>Test readout (AD MUST 4): the icon drawn now (null when none).</summary>
+        public Sprite IconShown => _icon != null && _icon.enabled ? _icon.sprite : null;
+
+        /// <summary>
+        /// AD 12.10 MUST 4: the icon of each state - every refusal carries one beside its words (never colour alone): not enough
+        /// gold / a Special in hand = the crossed coin, ammo full = the ammo icon; a refill offer = the ammo icon; a buy offer has
+        /// the coin on its price tag (no extra icon).
+        /// </summary>
+        public static string IconFileFor(WallBuyBlock block, WallBuyAction action)
+        {
+            switch (block)
+            {
+                case WallBuyBlock.NotEnoughGold:
+                case WallBuyBlock.SpecialActive:
+                    return IconRefused;
+                case WallBuyBlock.AmmoFull:
+                    return IconAmmo;
+                case WallBuyBlock.Unavailable:
+                    return null;
+                default:
+                    return action == WallBuyAction.Refill ? IconAmmo : null;
+            }
+        }
 
         public static HudWallBuyPrompt Create(RectTransform screen)
         {
@@ -186,7 +222,8 @@ namespace DD.Prototype.UI
             Text = (_name.text + " " + _price.text + " " + _note.text).Trim();
 
             if (_framePurchase != null) _back.sprite = refused && _frameRefused != null ? _frameRefused : _framePurchase;
-            Sprite icon = prompt.Block == WallBuyBlock.NotEnoughGold ? _iconRefused : prompt.Action == WallBuyAction.Refill && priced ? _iconAmmo : null;
+            string iconFile = IconFileFor(prompt.Block, prompt.Action);
+            Sprite icon = iconFile == IconRefused ? _iconRefused : iconFile == IconAmmo ? _iconAmmo : null;
             _icon.sprite = icon;
             _icon.enabled = icon != null;
             _glyph.gameObject.SetActive(priced);
@@ -204,26 +241,37 @@ namespace DD.Prototype.UI
         /// <summary>Lay the pieces left to right at their measured widths and size the chip to them (state changes only).</summary>
         private void Layout(bool priced)
         {
-            float gap = (int)UiSpace.S, x = gap * 1.5f;
-            if (_glyph.gameObject.activeSelf) x = Place((RectTransform)_glyph.transform, x, GlyphSize) + gap;
-            if (_icon.enabled) x = Place(_icon.rectTransform, x, IconSize) + gap * 0.5f;
-            if (_name.text.Length > 0) x = Place(_name.rectTransform, x, Mathf.Ceil(_name.GetPreferredValues(_name.text).x)) + gap;
+            float gap = (int)UiSpace.S;
+            float right = PadX, x = PadX;
+            ContentLeft = PadX;
+            if (_glyph.gameObject.activeSelf) { right = Place((RectTransform)_glyph.transform, x, GlyphSize); x = right + gap; }
+            if (_icon.enabled) { right = Place(_icon.rectTransform, x, IconSize); x = right + gap * 0.5f; }
+            if (_name.text.Length > 0) { right = Place(_name.rectTransform, x, Mathf.Ceil(_name.GetPreferredValues(_name.text).x)); x = right + gap; }
             if (priced)
             {
                 float digits = Mathf.Ceil(_price.GetPreferredValues(_price.text).x);
                 float coin = _tagSprite != null ? TagCoinSlice / (TagSourceHeight / TagHeight) : (_koban != null ? IconSize : 0f);
-                float tagWidth = coin + digits + gap * 1.5f;
                 RectTransform pr = _price.rectTransform;
-                pr.anchoredPosition = new Vector2(coin, 0f);
                 pr.sizeDelta = new Vector2(digits + gap, RowHeight);
-                x = Place(_tag.rectTransform, x, _tagSprite != null ? tagWidth : coin);
-                if (_tagSprite == null) pr.anchoredPosition = new Vector2(coin + gap * 0.5f, 0f);   // digits beside the koban
-                x = (_tagSprite == null ? x + digits + gap : x) + gap * 0.5f;
-                if (_seal.enabled) x = Place(_seal.rectTransform, x, SealSize) + gap * 0.5f;
+                if (_tagSprite != null)
+                {
+                    pr.anchoredPosition = new Vector2(coin, 0f);
+                    right = Place(_tag.rectTransform, x, coin + digits + gap * 1.5f);
+                }
+                else
+                {
+                    pr.anchoredPosition = new Vector2(coin + gap * 0.5f, 0f);   // digits beside the koban
+                    Place(_tag.rectTransform, x, coin);
+                    right = x + coin + gap * 0.5f + digits;
+                }
+
+                x = right + gap * 0.5f;
+                if (_seal.enabled) { right = Place(_seal.rectTransform, x, SealSize); x = right + gap * 0.5f; }
             }
 
-            if (_note.enabled) x = Place(_note.rectTransform, x, Mathf.Ceil(_note.GetPreferredValues(_note.text).x)) + gap;
-            _rect.sizeDelta = new Vector2(x + gap * 0.5f, RowHeight);
+            if (_note.enabled) right = Place(_note.rectTransform, x, Mathf.Ceil(_note.GetPreferredValues(_note.text).x));
+            ContentRight = right;
+            _rect.sizeDelta = new Vector2(right + PadX, RowHeight);   // the right pad mirrors the left one
         }
 
         private static float Place(RectTransform r, float x, float width)
