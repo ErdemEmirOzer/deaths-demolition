@@ -586,7 +586,11 @@ namespace DD.Prototype.Rounds
             "sh_explosive", "kx_crit2", "kx_nuke", "kx_hole", "kx_mass",
             // S-04 guard waves (TreeHooks → TreeSystemsRunner.GuardWave → S-03 ApplyStun / ApplyPull) and Quick Hands III
             // (reload ×0.45 through ReloadTimeScale; the game has no reload movement penalty, so ReloadMoveFree adds nothing).
-            "sv_bulwark", "sv_cap", "mg_reload3"
+            "sv_bulwark", "sv_cap", "mg_reload3",
+            // B2b (S-02): Rail Line's pierce stagger (S-03 ApplyTreeStagger), Bouncing Storm's bounce seek, Seeker Swarm's homing shots;
+            // and S-04's B3 systems already wired on main: Chain Reaction (TreeZombieBinding → OnBodyDied), Element Nova and Doomsday
+            // Bell (the driver's player anchor every frame). Only the Awakening alternative capstones (aw_alt_*) stay pending.
+            "sh_rail", "sh_storm", "sh_cap", "kx_chain", "el_cap", "kx_cap"
         };
 
         /// <summary>Dev presets / F1 / tests: every node sells (the effect may still be a no-op until its hook lands).</summary>

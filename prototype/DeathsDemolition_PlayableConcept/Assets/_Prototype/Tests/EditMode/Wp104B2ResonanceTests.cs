@@ -11,7 +11,7 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-104 B2 · Special rezonansı okuma noktaları (KARAR-WP104 §6, S-04 b3d2ed5f gövdeleri): nötr ağaçta Raiju zinciri veri
     /// kadar gövdeye sıçrar ve süre sınırı veri kadardır; Storm Chain sahibinde (+2 sıçrama, süre ×1,3) zincir iki gövde daha
     /// tutar (tampona kırpılır), alımda başlayan süre sınırı ×1,3 olur; Namekuji etkilenmez.
-    /// Namekuji'nin jel dondurması (ApplySlipOutcome → ApplyIce) bir ZombieEnemy ister: PlayMode kapsamında.
+    /// Hedef arama sorgu tavanı (B2b) da burada. Namekuji'nin jel dondurması (ApplySlipOutcome → ApplyIce) bir ZombieEnemy ister: PlayMode kapsamında.
     /// </summary>
     [TestFixture]
     public sealed class Wp104B2ResonanceTests
@@ -60,6 +60,20 @@ namespace DD.Prototype.Tests.EditMode
 
             TreeRuntime.SetTestStats(TreeStats.Neutral);
             Assert.AreEqual(baseCap * 1.3f, storm.Duration, 1e-3f, "read once per pickup: a later tree change leaves the running cap");
+        }
+
+        /// <summary>WP-104 B2b (C-00 12.10 korkuluğu): ağacın hedef arama sorguları kare başına TreeGuardrails.ProjectileQueriesPerFrame'i aşmaz.</summary>
+        [Test]
+        public void HedefArama_KareBasinaSorguTavani120()
+        {
+            int denied = ProjectileSystem.SeekQueriesDenied, taken = 0;
+            for (int i = 0; i < TreeGuardrails.ProjectileQueriesPerFrame + 40; i++)
+            {
+                if (ProjectileSystem.TryTakeSeekQuery()) taken++;
+            }
+
+            Assert.LessOrEqual(taken, TreeGuardrails.ProjectileQueriesPerFrame, "one frame: at most the guardrail");
+            Assert.Greater(ProjectileSystem.SeekQueriesDenied, denied, "past the guardrail a search is refused (the shot flies straight)");
         }
     }
 }

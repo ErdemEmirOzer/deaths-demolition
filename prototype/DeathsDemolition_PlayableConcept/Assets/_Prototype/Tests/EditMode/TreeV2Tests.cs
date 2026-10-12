@@ -136,9 +136,19 @@ namespace DD.Prototype.Tests.EditMode
             _tree.Open(5);
             Assert.IsTrue(_tree.TryBuy(Idx("sh_heavy")), "B2 wires Heavy Rounds");
             Assert.IsTrue(_tree.TryBuy(Idx("sh_pierce")), "B2 wires Piercing Rounds");
-            Assert.AreEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("sh_rail")), "no receiver reads PierceStaggerSeconds yet");
-            Assert.IsFalse(_tree.TryBuy(Idx("sh_rail")));
+            Assert.IsTrue(_tree.TryBuy(Idx("sh_rail")), "B2b wires Rail Line (the pierce stagger)");
+            Assert.IsTrue(_tree.TryBuy(Idx("kx_chain")), "B2b lists S-04's Chain Reaction (B3, wired on main)");
             Assert.AreEqual(TreeNodeState.Available, _tree.StateOf(Idx("ec_gold1")), "B1 wires Coin Sense");
+
+            // An Awakening alternative capstone stays pending until S-04 wires its effect (S-04 updates this when it does).
+            var aw = TreeAwakening.None;
+            aw.AltCapstones = 1 << (int)TreeBranch.Shot;
+            _tree = new RunTreeV2();
+            Begin(awakening: aw);
+            foreach (string id in new[] { "sh_heavy", "sh_double", "sh_triple", "sh_fan" }) _tree.GrantFree(id);
+            _tree.Open(14);
+            Assert.AreEqual(TreeNodeState.EffectPending, _tree.StateOf(Idx("aw_alt_sh")), "no hook reads the Shot alternative capstone yet");
+            Assert.IsFalse(_tree.TryBuy(Idx("aw_alt_sh")));
         }
 
         [Test]

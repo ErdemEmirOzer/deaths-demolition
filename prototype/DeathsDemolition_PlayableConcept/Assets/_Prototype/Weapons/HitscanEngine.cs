@@ -474,6 +474,7 @@ namespace DD.Prototype.Weapons
 
                     p.TargetsLeft--;
                     bool stop = p.TargetsLeft <= 0;
+                    if (!stop && !rocket && !r.Killed) PierceStagger(in target, direction);   // WP-104 B2b sh_rail: the round went through it
                     ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.Generation, p.Slot, p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
                         r.WasArmored ? SurfaceKind.Armor : SurfaceKind.Flesh, speed, true, r.WasArmored, r.Killed, stop, p.TransactionId));
 
@@ -650,13 +651,21 @@ namespace DD.Prototype.Weapons
         {
             float damage = request.Damage * Mathf.Clamp(request.RicochetDamageScale, 0.05f, 1f);
             Vector3 current = from;
+            Vector3 heading = request.Direction.sqrMagnitude > 1e-8f ? request.Direction.normalized : Vector3.forward;
+            float seek = DD.Prototype.Rounds.TreeHooks.SeekDegrees;   // WP-104 B2b sh_storm 15° / Pinball 20° / sh_cap 25°
 
             for (int bounce = 0; bounce < request.RicochetBounces; bounce++)
             {
-                if (!TryFindNearestUntouched(current, DD.Prototype.Rounds.RunTreeHooks.RicochetRadius(request.RicochetRadius), out DamageTarget next, out Vector3 point))
+                float radius = DD.Prototype.Rounds.RunTreeHooks.RicochetRadius(request.RicochetRadius);
+                // WP-104 B2b: with the tree's seek a bounce that finds nobody near looks on, up to SeekReach × the radius, inside the
+                // cone around the way it was going.
+                if (!TryFindNearestUntouched(current, radius, out DamageTarget next, out Vector3 point)
+                    && (seek <= 0f || !ProjectileSystem.TryTakeSeekQuery() || !TryFindNearestUntouched(current, radius * SeekReach, heading, seek, out next, out point)))
                 {
                     return;
                 }
+
+                if (seek > 0f) SeekBounces++;
 
                 s_touched.Add(next.Id);
 
@@ -672,6 +681,7 @@ namespace DD.Prototype.Weapons
 
                 HitFeedbackDirector.Instance.ReportLink(current, point, true);
 
+                heading = direction;
                 current = point;
                 damage *= Mathf.Clamp(request.RicochetDamageScale, 0.1f, 1f);
             }
@@ -1036,8 +1046,36 @@ namespace DD.Prototype.Weapons
             return result;
         }
 
+        /// <summary>
+        /// WP-104 B2b sh_rail Rail Line: a body a round passes through staggers <see cref="DD.Prototype.Rounds.TreeHooks.PierceStaggerSeconds"/>
+        /// along the round's way - S-03's tree stagger (the real stagger, half on the Ultra, the swing cut, 1.5 s per-body lock so a
+        /// fast piercing weapon cannot chain-hold one body; no damage, no stagger-keyed bonus). Neutral tree: 0, nothing happens.
+        /// </summary>
+        private static void PierceStagger(in DamageTarget target, Vector3 direction)
+        {
+            float seconds = DD.Prototype.Rounds.TreeHooks.PierceStaggerSeconds;
+            if (seconds > 0f && target.Receiver is DD.Prototype.Enemies.ZombieEnemy body && body.ApplyTreeStagger(seconds, direction)) PierceStaggers++;
+        }
+
+        /// <summary>Tests / probes: rail staggers applied.</summary>
+        public static int PierceStaggers { get; private set; }
+
+        /// <summary>WP-104 B2b: how much farther than its radius a seeking bounce looks (inside the seek cone only).</summary>
+        public const float SeekReach = 2f;
+
+        /// <summary>Tests / probes: bounces made while the tree's seek was on.</summary>
+        public static int SeekBounces { get; private set; }
+
         private static bool TryFindNearestUntouched(
             Vector3 from, float radius, out DamageTarget target, out Vector3 point)
+        {
+            return TryFindNearestUntouched(from, radius, Vector3.zero, 0f, out target, out point);
+        }
+
+        /// <summary>The nearest untouched body within <paramref name="radius"/>; with <paramref name="coneDegrees"/> &gt; 0 only one within that
+        /// angle of <paramref name="coneAxis"/> (WP-104 B2b seek).</summary>
+        private static bool TryFindNearestUntouched(
+            Vector3 from, float radius, Vector3 coneAxis, float coneDegrees, out DamageTarget target, out Vector3 point)
         {
             target = default;
             point = Vector3.zero;
@@ -1067,6 +1105,7 @@ namespace DD.Prototype.Weapons
 
                 Vector3 candidatePoint = candidate.Root.position + Vector3.up * (candidate.Height * 0.55f);
                 float sqr = (candidatePoint - from).sqrMagnitude;
+                if (coneDegrees > 0f && Vector3.Angle(coneAxis, candidatePoint - from) > coneDegrees) continue;
 
                 if (sqr >= bestSqr)
                 {
@@ -1122,6 +1161,8 @@ namespace DD.Prototype.Weapons
             s_maskResolved = false;
             s_enemyQueryMask = 0;
             s_shockEventAt = float.NegativeInfinity;
+            SeekBounces = 0;
+            PierceStaggers = 0;
         }
     }
 }

@@ -3,6 +3,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
 using DD.Prototype.Rounds;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -162,6 +163,12 @@ namespace DD.Prototype.Weapons
         public int TreeOrdinal;
         /// <summary>cap.sg_2: the barrel pair (left + right) this round belongs to.</summary>
         public int TreeVolley;
+
+        // WP-104 B2b sh_cap Seeker Swarm: the body an extra volley shot homes on (locked at spawn inside the seek cone) and its life
+        // (a pooled body spawned again is another zombie); null = flies straight.
+        public DD.Prototype.Enemies.ZombieEnemy SeekBody;
+        public int SeekLife;
+        public float SeekHeight;
 
         /// <summary>WP-104 B3: bodies this round has hit directly (chain / ricochet bodies not counted) — the tree's Pierced fact and
         /// Explosive Rounds' 1st / 4th / 8th body rule read it (HitscanEngine).</summary>
@@ -361,6 +368,7 @@ namespace DD.Prototype.Weapons
             p.BlastTier = launch.BlastTier;
             RunTreeHooks.OnProjectileSpawned(ref p);   // WP-077 K10b: cap.ar_1 / cap.sr_1 / cap.ar_2 / cap.sg_2 round tags
             p.TreeFlags |= shot.TreeFlags;   // WP-104 B2: the weapon's own tags (TreeRoundMarkedChaos, S-07 trail)
+            if (shot.VolleyIndex > 0 && p.Kind != ProjectileKind.Rocket) LockSeek(ref p, direction, TreeHooks.ExtraShotSeekDegrees);   // WP-104 B2b sh_cap
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;
@@ -503,6 +511,7 @@ namespace DD.Prototype.Weapons
             ref ProjectileState p = ref s_live[index];
 
             Vector3 from = p.Position;
+            if (p.SeekBody != null) Steer(ref p, dt);   // WP-104 B2b sh_cap: before the step, so the swept segment is the turned one
             Vector3 v0 = p.Velocity;
             Vector3 v1 = v0;
             if (p.Kind == ProjectileKind.Rocket)
@@ -549,6 +558,104 @@ namespace DD.Prototype.Weapons
             }
 
             return true;
+        }
+
+        // ------------------------------------------------------------------ WP-104 B2b · homing (sh_cap Seeker Swarm)
+
+        /// <summary>How far an extra shot looks for its body (metres; the weapon's range caps it).</summary>
+        public const float SeekRangeMetres = 20f;
+
+        /// <summary>How fast a homing shot turns (degrees a second): at bullet speed over 10-20 m it bends 20-40°, a visible curve.</summary>
+        public const float SeekTurnDegreesPerSecond = 720f;
+
+        private static readonly Collider[] s_seekBuffer = new Collider[128];
+        private static readonly ProfilerMarker s_seekMarker = new ProfilerMarker("WP104.Tree.Seek");
+
+        /// <summary>Tests / probes: shots that locked a body, and steering steps.</summary>
+        public static int SeekLocks { get; private set; }
+        public static int SeekSteps { get; private set; }
+
+        /// <summary>
+        /// The living zombie nearest the shot's line within <paramref name="degrees"/> of <paramref name="direction"/> and
+        /// <see cref="SeekRangeMetres"/> (the smallest angle wins, the nearer on a tie); none = the shot flies straight. 0 = off.
+        /// </summary>
+        private static void LockSeek(ref ProjectileState p, Vector3 direction, float degrees)
+        {
+            if (degrees <= 0f || !TryTakeSeekQuery()) return;
+            using (s_seekMarker.Auto())
+            {
+                float range = Mathf.Min(SeekRangeMetres, p.MaxRange > 0f ? p.MaxRange : SeekRangeMetres);
+                int count = Physics.OverlapSphereNonAlloc(p.Position, range, s_seekBuffer, HitscanEngine.EnemyQueryMask, QueryTriggerInteraction.Collide);
+                float bestAngle = degrees + 1e-3f, bestSqr = float.MaxValue;
+                for (int i = 0; i < count; i++)
+                {
+                    if (!DamageTargetResolver.TryResolve(s_seekBuffer[i], out DamageTarget t)) continue;
+                    if (!(t.Receiver is DD.Prototype.Enemies.ZombieEnemy body) || !body.IsAlive) continue;
+                    float height = t.Height * 0.55f;
+                    Vector3 to = t.Root.position + Vector3.up * height - p.Position;
+                    float sqr = to.sqrMagnitude;
+                    if (sqr < 0.04f) continue;
+                    float angle = Vector3.Angle(direction, to);
+                    if (angle > bestAngle || (Mathf.Approximately(angle, bestAngle) && sqr >= bestSqr)) continue;
+                    bestAngle = angle;
+                    bestSqr = sqr;
+                    p.SeekBody = body;
+                    p.SeekLife = body.LifeId;
+                    p.SeekHeight = height;
+                }
+
+                for (int i = 0; i < count; i++) s_seekBuffer[i] = null;
+                if (p.SeekBody != null) SeekLocks++;
+            }
+        }
+
+        private static int s_seekFrame = -1, s_seekQueries;
+
+        /// <summary>Tests / probes: seek searches refused by the per-frame budget (the shot flies straight, the bounce ends).</summary>
+        public static int SeekQueriesDenied { get; private set; }
+
+        /// <summary>
+        /// C-00 12.10 guardrail: the tree's seek searches (an extra shot's lock, a seeking bounce's wider look) share
+        /// <see cref="TreeGuardrails.ProjectileQueriesPerFrame"/> physics queries a frame; past it they do not search.
+        /// </summary>
+        public static bool TryTakeSeekQuery()
+        {
+            int frame = Time.frameCount;
+            if (frame != s_seekFrame)
+            {
+                s_seekFrame = frame;
+                s_seekQueries = 0;
+            }
+
+            if (s_seekQueries >= TreeGuardrails.ProjectileQueriesPerFrame)
+            {
+                SeekQueriesDenied++;
+                return false;
+            }
+
+            s_seekQueries++;
+            return true;
+        }
+
+        /// <summary>Turn toward the locked body at <see cref="SeekTurnDegreesPerSecond"/>, speed kept; a dead / recycled body lets go.</summary>
+        private static void Steer(ref ProjectileState p, float dt)
+        {
+            using (s_seekMarker.Auto())
+            {
+                DD.Prototype.Enemies.ZombieEnemy body = p.SeekBody;
+                if (body == null || !body.IsAlive || body.LifeId != p.SeekLife)
+                {
+                    p.SeekBody = null;
+                    return;
+                }
+
+                Vector3 to = body.transform.position + Vector3.up * p.SeekHeight - p.Position;
+                float speed = p.Velocity.magnitude;
+                if (to.sqrMagnitude < 1e-4f || speed < 1e-3f) return;
+                Vector3 turned = Vector3.RotateTowards(p.Velocity / speed, to.normalized, SeekTurnDegreesPerSecond * Mathf.Deg2Rad * dt, 0f);
+                p.Velocity = turned * speed;
+                SeekSteps++;
+            }
         }
 
         // ------------------------------------------------------------------ pool bookkeeping
@@ -659,6 +766,11 @@ namespace DD.Prototype.Weapons
             s_runOverflow = 0;
             s_runSpawned = 0;
             s_peakLive = 0;
+            SeekLocks = 0;
+            SeekSteps = 0;
+            SeekQueriesDenied = 0;
+            s_seekFrame = -1;
+            s_seekQueries = 0;
             s_pendingCount = 0;
             s_pendingClear = false;
             s_stepping = false;
