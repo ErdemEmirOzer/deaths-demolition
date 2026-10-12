@@ -55,8 +55,9 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>The one home of the AP-040 shared atlas and its materials (S-02 owns it, C-00 decision) — never copied here.</summary>
         public const string SharedMaterialFolder = "Assets/_Prototype/Art/AP040/Shared";
-        public const string SharedMaterialPath = SharedMaterialFolder + "/M_AP040_Shared.mat";
-        public const string GlowMaterialPath = SharedMaterialFolder + "/M_AP040_Glow.mat";
+        /// <summary>S-02's WP-107B layout (cbf0196d): Shared/Materials/ beside Shared/Textures/ (the four 2048 atlas maps).</summary>
+        public const string SharedMaterialPath = SharedMaterialFolder + "/Materials/M_AP040_Shared.mat";
+        public const string GlowMaterialPath = SharedMaterialFolder + "/Materials/M_AP040_Glow.mat";
 
         public const string SocketMag = "SOCKET_Mag";
         public const string SocketMuzzle = "SOCKET_Muzzle";
