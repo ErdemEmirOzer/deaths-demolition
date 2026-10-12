@@ -170,6 +170,7 @@ namespace DD.Prototype.Audio
             DamageEvents.EnemyDied += OnEnemyDied;             // bookkeeping only since WP-048 (the death vocal is the death_<tier> beat)
             EnemyCombatEvents.Raised += OnCombatBeat;          // WP-048: WP-040 beat surface (ADR-040-1)
             Props.BreakableProp.Broke += OnPropBroke;
+            DD.Prototype.Difficulty.DifficultyService.SelectedChanged += OnModeSelected;   // WP-102 (R4): the menu / Prepare Run pick
             CharacterAnimationEvents.Any += OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised += OnUiEvent;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-058 (WP-056 ADR-056-1)
@@ -195,6 +196,8 @@ namespace DD.Prototype.Audio
 
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             CharacterAnimationEvents.Any += OnAnimationEvent;
+            DD.Prototype.Difficulty.DifficultyService.SelectedChanged -= OnModeSelected;   // its ResetStatics clears it (SubsystemRegistration)
+            DD.Prototype.Difficulty.DifficultyService.SelectedChanged += OnModeSelected;
             EnemyCombatEvents.Raised -= OnCombatBeat;
             EnemyCombatEvents.Raised += OnCombatBeat;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
@@ -222,6 +225,7 @@ namespace DD.Prototype.Audio
             DamageEvents.EnemyDied -= OnEnemyDied;
             EnemyCombatEvents.Raised -= OnCombatBeat;
             Props.BreakableProp.Broke -= OnPropBroke;
+            DD.Prototype.Difficulty.DifficultyService.SelectedChanged -= OnModeSelected;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised -= OnUiEvent;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
@@ -610,6 +614,52 @@ namespace DD.Prototype.Audio
         private static bool IsLast(string detail)
         {
             return !string.IsNullOrEmpty(detail) && detail.EndsWith("last", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // ------------------------------------------------------------------ WP-102 (R4) · mode select (AP-011 v024 mode_*)
+
+        /// <summary>A mode stinger's longest life on its UI voice (mode_demolition is 4.8 s); the fade when the pick moves on.</summary>
+        public const float ModeVoiceMaxSeconds = 5.5f, ModeVoiceFadeSeconds = 0.15f;
+
+        /// <summary>Mode picks this router handled, counted before any gate: one per change proves one subscription (tests).</summary>
+        public int ModeSelectEvents { get; private set; }
+
+        /// <summary>Mode stingers started. Test readout.</summary>
+        public int ModeSelectVoices { get; private set; }
+
+        /// <summary>The mode's own stinger: Hard / Demolition; Normal has none (its confirm is the existing UiConfirm path).</summary>
+        public static AudioSoundId ModeSelectSoundFor(DD.Prototype.Difficulty.DifficultyMode mode)
+        {
+            switch (mode)
+            {
+                case DD.Prototype.Difficulty.DifficultyMode.Hard: return AudioSoundId.ModeSelectHard;
+                case DD.Prototype.Difficulty.DifficultyMode.Demolition: return AudioSoundId.ModeSelectDemolition;
+                default: return AudioSoundId.None;
+            }
+        }
+
+        /// <summary>
+        /// <c>DifficultyService.SelectedChanged</c> (S-03, raised on a change only): the picked mode's stinger on a controllable UI voice,
+        /// so a pick that moves on (Hard → Demolition → Normal) fades the ringing one in 150 ms instead of stacking a 2 s and a 4.8 s
+        /// stinger. Normal plays nothing new - it only fades a ringing stinger out.
+        /// </summary>
+        private void OnModeSelected(DD.Prototype.Difficulty.DifficultyMode mode)
+        {
+            ModeSelectEvents++;
+            AudioSoundId sound = ModeSelectSoundFor(mode);
+            if (sound != AudioSoundId.ModeSelectHard) _uiVoiceStop?.Invoke(AudioSoundId.ModeSelectHard, ModeVoiceFadeSeconds);
+            if (sound != AudioSoundId.ModeSelectDemolition) _uiVoiceStop?.Invoke(AudioSoundId.ModeSelectDemolition, ModeVoiceFadeSeconds);
+            if (sound == AudioSoundId.None || _uiVoiceStart == null)
+            {
+                return;
+            }
+
+            if (_uiVoiceStart(sound, false, ModeVoiceMaxSeconds))
+            {
+                ModeSelectVoices++;
+                UiVoiceCount++;
+                UiCount++;
+            }
         }
 
         /// <summary>UiEvent → sound for the bound rows; None for the reserved ones. Mirrors the map (the EditMode test keeps the two equal).</summary>

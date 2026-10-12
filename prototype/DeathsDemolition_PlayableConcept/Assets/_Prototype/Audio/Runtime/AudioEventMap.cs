@@ -401,6 +401,10 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "UiEvent.CounterRolling", AudioSoundId.UiCounterRoll, U, false, "soroban roll, controllable UI voice, stops at CounterSettled or 0.6 s (v015)"),
             B(AudioEventSource.Ui, "UiEvent.CounterSettled", AudioSoundId.UiCounterSettled, U, false, "go-stone tok as the counter lands; ends the roll (v015)"),
             B(AudioEventSource.Ui, "UiEvent.RerollHoldStarted", AudioSoundId.UiHoldRub, U, false, "U5 hold: brush rub for 600 ms on the UI voice; Confirm completes, Back (early release) fades it in 20 ms (v015)"),
+            // ---- WP-102 (R4) · mode select (S-03 DifficultyService.SelectedChanged → AudioEventRouter, AP-011 v024 mode_*; IDS.md 1010 / 1011)
+            B(AudioEventSource.Run, "DifficultyService.SelectedChanged → Hard", AudioSoundId.ModeSelectHard, U, false, "2 s stinger on a controllable UI voice; a pick that moves on fades it in 150 ms"),
+            B(AudioEventSource.Run, "DifficultyService.SelectedChanged → Demolition", AudioSoundId.ModeSelectDemolition, U, false, "4.8 s stinger on a controllable UI voice; a pick that moves on fades it in 150 ms"),
+            B(AudioEventSource.Run, "DifficultyService.SelectedChanged → Normal", AudioSoundId.None, U, false, "no stinger: the pick's confirm is the existing UiConfirm path; a ringing Hard / Demolition stinger fades out", true),
             B(AudioEventSource.Run, "Director.PauseOpened", AudioSoundId.UiPauseOpen, U, false, "WP-068: pause = the curtain-close short variant on the Pause snapshot (director, RunFlowClock pause hold)"),
             B(AudioEventSource.Run, "Director.PauseClosed", AudioSoundId.UiPauseClose, U, false, "WP-068: resume = the curtain-open short variant"),
             B(AudioEventSource.Run, "Director.DeathInk", AudioSoundId.UiInkBleed, U, false, "WP-068: ink texture 0.6 s after death under StingerDeath, until the Results curtain (−26 LUFS)")
