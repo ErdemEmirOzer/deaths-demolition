@@ -549,7 +549,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             yield return new WaitForSecondsRealtime(UiPresets.StampContactSeconds + UiTreeScreenV2.StampHold + 0.14f + 0.15f);
-            Assert.IsTrue(!stamp.enabled || stamp.color.a <= 0.01f, "M2: the stamp lifted after its contact (alpha " + stamp.color.a + ")");
+            float alpha = stamp.canvasRenderer.GetAlpha();   // UiMotion.TintAlpha fades the renderer
+            Assert.IsTrue(!stamp.enabled || alpha <= 0.01f, "M2: the stamp lifted after its contact (alpha " + alpha + ")");
             Assert.AreEqual(buy, _panel.DetailTarget);
             Assert.IsFalse(_panel.PricePlateRect.gameObject.activeSelf, "M1: the node just bought shows no empty plate");
             _panel.Refresh();

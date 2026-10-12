@@ -919,7 +919,9 @@ namespace DD.Prototype.UI
                 float width = Mathf.Max(48f, Mathf.Ceil(_fogLabel.GetPreferredValues(_fogLabel.text).x) + (int)UiSpace.L);
                 float left = Mathf.Max(_layout.TierX(1), Mathf.Min(x + 4f, _layout.FogRight - 4f - width));
                 width = Mathf.Min(width, _layout.FogRight - 4f - left);
-                Set(_fogPlate.rectTransform, left, TreeV2Layout.HeaderHeight - TreeV2Layout.TierBand, width, TreeV2Layout.TierBand);
+                // The plate holds one Label line (TextScale 1.25 outgrows the 28 px band): its foot on the band's, the top rises.
+                float height = UiFactory.LineHeight(UiType.Label) + (int)UiSpace.S;
+                Set(_fogPlate.rectTransform, left, TreeV2Layout.HeaderHeight - height, width, height);
                 float right = left + width;
                 for (int t = 0; t < _tierLabels.Length; t++)
                 {
@@ -1564,6 +1566,7 @@ namespace DD.Prototype.UI
             }
 
             v.StampSeal.enabled = true;
+            v.StampSeal.canvasRenderer.SetAlpha(1f);   // the lift below fades the renderer, not Graphic.color
             UiPresets.StampIn(v.StampSeal.rectTransform, 0f, GetInstanceID());
             // AD M2 (12.10): the stamp stayed over the icon until the screen closed, and a node bought in an earlier round had none
             // - one state, two looks. It lifts within 200 ms of its contact (held StampHold, then Fast); the next refresh puts it
