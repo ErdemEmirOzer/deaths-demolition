@@ -42,6 +42,11 @@ namespace DD.Art.Pipeline.EditorTools
         public const float ArriveTolerance = 0.1f;
         public static readonly Vector3 Spawn = new Vector3(0f, 0f, -3f);
 
+        /// <summary>WP-103B: the cells the last <see cref="Scan"/> reached — <see cref="LastN"/> × <see cref="LastN"/>, cell <see cref="Cell"/>,
+        /// index (ix + LastN / 2) + (iz + LastN / 2) × LastN for the grid point (ix × Cell, iz × Cell).</summary>
+        public static bool[] LastReached { get; private set; }
+        public static int LastN { get; private set; }
+
         public enum Kind { Visible, LowStep, Oversize, Invisible, StepFail, Ledge, Slope, Boundary, Water }
 
         [Serializable]
@@ -287,6 +292,8 @@ namespace DD.Art.Pipeline.EditorTools
                 }
             }
 
+            LastReached = reachedCell;
+            LastN = n;
             report.reachableM2 = 0f;
             foreach (bool r in reachedCell) if (r) report.reachableM2 += Cell * Cell;
             report.seenNothingStuck = report.invisible + report.oversize + report.stepFail;

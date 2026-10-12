@@ -278,12 +278,14 @@ namespace DD.Art.Pipeline.EditorTools
 
             // NavMesh v5: ring volumes, bake at body climb, ring + rims + fall guard, island links (WP-038M/N/P/R rules).
             WorldBoundaryBuilder.BuildRingNavVolumes(root.transform, HalfExtent);
+            int groveMask = GroveNavMask(root.transform);   // WP-103B: the grove's NavMesh only where the hero can walk
             Physics.SyncTransforms();
             int triangles = Bake(root.transform);
             WorldBoundaryBuilder.Build(root.transform, basins, HalfExtent, InPondStripExclusion);
             Physics.SyncTransforms();
             Vector3 seed = NavMesh.SamplePosition(placement.playerStart, out NavMeshHit sh, 3f, NavMesh.AllAreas) ? sh.position : placement.playerStart;
             int links = NavMeshIslandLinker.LinkIslands(root.transform, seed);
+            links += GroveIslandLinks(root.transform, seed);   // WP-103B: the grove patches the hero walks into through a bent gap
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             // WP-092 A · after the NavMesh and the colliders are final: the never-top-down-visible visuals → World_FPTPOnly (stays open for the bake)
@@ -292,7 +294,7 @@ namespace DD.Art.Pipeline.EditorTools
             WriteJson(rooms);
             AssetDatabase.SaveAssets();
             string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + ", " + split + baked;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles (grove mask " + groveMask + " volumes), " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + ", " + split + baked;
         }
 
         // ---------------------------------------------------------------- pieces
@@ -983,6 +985,12 @@ namespace DD.Art.Pipeline.EditorTools
             surface.ignoreNavMeshObstacle = true;
             Physics.SyncTransforms();
             PlacementImporter.BuildAtBodyClimb(surface);
+            return SaveNavMesh(surface);
+        }
+
+        /// <summary>The surface's freshly built data into <see cref="NavMeshPath"/> (the asset kept, its contents replaced); the triangle count.</summary>
+        private static int SaveNavMesh(NavMeshSurface surface)
+        {
             NavMeshData data = surface.navMeshData;
             var existing = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavMeshPath);
             if (existing != null)
@@ -1001,6 +1009,211 @@ namespace DD.Art.Pipeline.EditorTools
             surface.RemoveData();
             surface.AddData();
             return NavMesh.CalculateTriangulation().indices.Length / 3;
+        }
+
+        // ---------------------------------------------------------------- WP-103B · the grove's NavMesh = the hero's floor
+
+        public const string GroveNavMaskName = "GroveNavMask";
+
+        /// <summary>The west bamboo grove's band (x, z): its clumps' kit boxes close pockets the hero cannot enter.</summary>
+        public static readonly Rect GroveNavBand = Rect.MinMaxRect(-53.5f, -31f, -37f, 31f);
+
+        /// <summary>
+        /// WP-103B (C-00 12.10; S-03 "a crowd stuck in the grove"): WP-103 opened the grove between its clumps, and the NavMesh (agent r
+        /// 0.5, 0.1 m voxels) also runs through the ~1 m gaps between clump boxes into pockets the hero's own controller (r 0.45 + skin, the
+        /// <see cref="WorldWalkScan"/> walk from the spawn) never reaches — the route bot stalled at a clump face walking to (−50, −10),
+        /// and a zombie that paths there jams where a bullet meets the clump box. Within <see cref="GroveNavBand"/>, every 0.5 m cell the
+        /// walk scan does not reach takes a Not Walkable modifier volume (row runs merged into rectangles), so the baked grove NavMesh
+        /// is the hero's floor. The world, its colliders, the light and the vegetation are untouched. Returns the volume count.
+        /// </summary>
+        public static int GroveNavMask(Transform root)
+        {
+            Transform old = root.Find(GroveNavMaskName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            Physics.SyncTransforms();
+            WorldWalkScan.Scan(WorldWalkScan.DefaultRadius, null);
+            bool[] reached = WorldWalkScan.LastReached;
+            int n = WorldWalkScan.LastN, half = n / 2;
+            float cell = WorldWalkScan.Cell;
+            // the modifier's own layer must be in the bake mask (NavMeshSurface.CollectSources skips it otherwise)
+            var group = new GameObject(GroveNavMaskName) { layer = PrototypeLayers.Environment };
+            group.transform.SetParent(root, false);
+            int notWalkable = NavMesh.GetAreaFromName("Not Walkable");
+            int ix0 = Mathf.CeilToInt(GroveNavBand.xMin / cell), ix1 = Mathf.FloorToInt(GroveNavBand.xMax / cell);
+            int iz0 = Mathf.CeilToInt(GroveNavBand.yMin / cell), iz1 = Mathf.FloorToInt(GroveNavBand.yMax / cell);
+            // row runs of unreached cells; a run that repeats exactly on the next row extends its open rectangle
+            var open = new Dictionary<(int a, int b), int>();   // run → its first row
+            int volumes = 0;
+            for (int iz = iz0; iz <= iz1 + 1; iz++)
+            {
+                var next = new Dictionary<(int a, int b), int>();
+                if (iz <= iz1)
+                {
+                    int start = int.MinValue;
+                    for (int ix = ix0; ix <= ix1 + 1; ix++)
+                    {
+                        bool off = ix <= ix1 && !reached[(ix + half) + (iz + half) * n];
+                        if (off && start == int.MinValue) start = ix;
+                        if (off || start == int.MinValue) continue;
+                        var run = (start, ix - 1);
+                        next[run] = open.TryGetValue(run, out int first) ? first : iz;
+                        start = int.MinValue;
+                    }
+                }
+
+                foreach (KeyValuePair<(int a, int b), int> kv in open)
+                {
+                    if (next.ContainsKey(kv.Key)) continue;
+                    var go = new GameObject("Off_" + volumes.ToString("000", CultureInfo.InvariantCulture)) { layer = PrototypeLayers.Environment };
+                    go.transform.SetParent(group.transform, false);
+                    var v = go.AddComponent<NavMeshModifierVolume>();
+                    float x0 = (kv.Key.a - 0.5f) * cell, x1 = (kv.Key.b + 0.5f) * cell, z0 = (kv.Value - 0.5f) * cell, z1 = (iz - 1 + 0.5f) * cell;
+                    v.center = new Vector3((x0 + x1) * 0.5f, 1.5f, (z0 + z1) * 0.5f);
+                    v.size = new Vector3(x1 - x0, 4f, z1 - z0);   // the floor and the clump boxes' tops (2.5 m)
+                    v.area = notWalkable;
+                    volumes++;
+                }
+
+                open = next;
+            }
+
+            return volumes;
+        }
+
+        public const string GroveLinksName = "Grove Island Links (WP-103B)";
+
+        /// <summary>
+        /// WP-103B: with the pockets masked, a grove patch the hero walks into through a gap the agent (r 0.5) cannot pass stays a
+        /// NavMesh island — no zombie follows the hero there. <see cref="NavMeshIslandLinker"/> sweeps straight lines (≤ 2 m) and walks
+        /// a body out in 16 directions; a bent passage defeats both. Here the walk scan's own reached cells are the passage: from each
+        /// island (reached cells on the NavMesh with no complete path from <paramref name="seed"/>) a breadth-first walk over reached
+        /// cells finds the nearest cell on the main NavMesh, and a bidirectional NavMeshLink joins the island cell the walk left from to
+        /// it. Within <see cref="GroveNavBand"/>; needs <see cref="WorldWalkScan.LastReached"/> from the scan the mask used and the
+        /// baked NavMesh loaded. Returns the link count.
+        /// </summary>
+        public static int GroveIslandLinks(Transform root, Vector3 seed)
+        {
+            Transform old = root.Find(GroveLinksName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            bool[] reached = WorldWalkScan.LastReached;
+            int n = WorldWalkScan.LastN, half = n / 2;
+            float cell = WorldWalkScan.Cell;
+            int ix0 = Mathf.CeilToInt(GroveNavBand.xMin / cell), ix1 = Mathf.FloorToInt(GroveNavBand.xMax / cell);
+            int iz0 = Mathf.CeilToInt(GroveNavBand.yMin / cell), iz1 = Mathf.FloorToInt(GroveNavBand.yMax / cell);
+            int w = ix1 - ix0 + 1, h = iz1 - iz0 + 1;
+            // 0 off the NavMesh (or not reached), 1 main (complete path from the seed), 2 island
+            var state = new byte[w * h];
+            var at = new Vector3[w * h];
+            var path = new NavMeshPath();
+            for (int z = 0; z < h; z++)
+            for (int x = 0; x < w; x++)
+            {
+                int ix = ix0 + x, iz = iz0 + z;
+                if (!reached[(ix + half) + (iz + half) * n]) continue;
+                var p = new Vector3(ix * cell, 0f, iz * cell);
+                if (!NavMesh.SamplePosition(p, out NavMeshHit hit, 0.3f, NavMesh.AllAreas)) continue;
+                at[x + z * w] = hit.position;
+                state[x + z * w] = NavMesh.CalculatePath(seed, hit.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete ? (byte)1 : (byte)2;
+            }
+
+            var group = new GameObject(GroveLinksName);
+            group.transform.SetParent(root, false);
+            var done = new bool[w * h];
+            int links = 0;
+            var queue = new Queue<int>();
+            var from = new int[w * h];
+            for (int s = 0; s < w * h; s++)
+            {
+                if (state[s] != 2 || done[s]) continue;
+                // the island (4-connected island cells) and a walk over reached cells from all of it at once
+                var island = new List<int>();
+                queue.Clear();
+                queue.Enqueue(s);
+                done[s] = true;
+                while (queue.Count > 0)
+                {
+                    int c = queue.Dequeue();
+                    island.Add(c);
+                    foreach (int d in Neighbours(c, w, h))
+                    {
+                        if (state[d] != 2 || done[d]) continue;
+                        done[d] = true;
+                        queue.Enqueue(d);
+                    }
+                }
+
+                for (int i = 0; i < from.Length; i++) from[i] = -2;
+                queue.Clear();
+                foreach (int c in island) { from[c] = -1; queue.Enqueue(c); }
+                int hitMain = -1;
+                while (queue.Count > 0 && hitMain < 0)
+                {
+                    int c = queue.Dequeue();
+                    foreach (int d in Neighbours(c, w, h))
+                    {
+                        if (from[d] != -2) continue;
+                        int dx = ix0 + d % w, dz = iz0 + d / w;
+                        if (!reached[(dx + half) + (dz + half) * n]) continue;
+                        from[d] = c;
+                        if (state[d] == 1) { hitMain = d; break; }
+                        queue.Enqueue(d);
+                    }
+                }
+
+                if (hitMain < 0) continue;
+                // back along the walk to the island cell it left from (the last cell of state 2)
+                int leave = hitMain;
+                while (from[leave] >= 0 && state[leave] != 2) leave = from[leave];
+                var go = new GameObject("Link_" + links.ToString("00", CultureInfo.InvariantCulture) + "_" + at[leave].x.ToString("F1", CultureInfo.InvariantCulture) + "_" + at[leave].z.ToString("F1", CultureInfo.InvariantCulture));
+                go.transform.SetParent(group.transform, false);
+                var link = go.AddComponent<NavMeshLink>();
+                link.agentTypeID = 0;
+                link.startPoint = go.transform.InverseTransformPoint(at[leave]);
+                link.endPoint = go.transform.InverseTransformPoint(at[hitMain]);
+                link.width = 0f;
+                link.bidirectional = true;
+                link.area = 0;
+                link.costModifier = -1;
+                links++;
+            }
+
+            return links;
+        }
+
+        private static IEnumerable<int> Neighbours(int c, int w, int h)
+        {
+            int x = c % w, z = c / w;
+            if (x > 0) yield return c - 1;
+            if (x < w - 1) yield return c + 1;
+            if (z > 0) yield return c - w;
+            if (z < h - 1) yield return c + w;
+        }
+
+        /// <summary>
+        /// WP-103B batch: the grove mask and the NavMesh again on the saved World_V6_Greybox — the bake at body climb into the same asset,
+        /// the island links again (<see cref="NavMeshIslandLinker"/> replaces its own). The scene's other objects, the FPTP split, the light
+        /// bake and the vegetation stay as they are.
+        /// </summary>
+        public static void RebakeNavMeshCli()
+        {
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            GameObject rootGo = GameObject.Find(Ap005WorldBootstrap.RootName);
+            if (rootGo == null) throw new InvalidOperationException("[GreyboxV6] world root missing in " + ScenePath);
+            Transform root = rootGo.transform;
+            NavMeshSurface surface = root.GetComponentInChildren<NavMeshSurface>(true);
+            if (surface == null) throw new InvalidOperationException("[GreyboxV6] no NavMeshSurface in " + ScenePath);
+            int volumes = GroveNavMask(root);
+            Physics.SyncTransforms();
+            PlacementImporter.BuildAtBodyClimb(surface);
+            int triangles = SaveNavMesh(surface);
+            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(PlacementPath);
+            Vector3 start = placement != null ? placement.playerStart : WorldWalkScan.Spawn;
+            Vector3 seed = NavMesh.SamplePosition(start, out NavMeshHit sh, 3f, NavMesh.AllAreas) ? sh.position : start;
+            int links = NavMeshIslandLinker.LinkIslands(root, seed);
+            int groveLinks = GroveIslandLinks(root, seed);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[GreyboxV6] NavMesh rebake: grove mask " + volumes + " volumes, " + triangles + " triangles, " + links + " island links, " + groveLinks + " grove links -> " + ScenePath);
         }
 
         private static WorldPlacementAsset WritePlacement(WorldPlacementAsset ap)
