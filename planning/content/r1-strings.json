@@ -4760,8 +4760,8 @@
     "tr": "Hızlı El III"
   },
   "tree.v2.mg_reload3.desc": {
-    "en": "Reload time −{reload}% in total. Reloading no longer slows you down.",
-    "tr": "Dolum süresi toplam −%{reload}. Dolum sırasında yavaşlamazsın."
+    "en": "Reload time −{reload}% in total.",
+    "tr": "Dolum süresi toplam −%{reload}."
   },
   "tree.v2.mg_autoload.name": {
     "en": "Auto-Loader",
