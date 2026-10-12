@@ -2044,8 +2044,8 @@
     "tr": "SEVİYE {level}"
   },
   "selection.not_in_build": {
-    "en": "Not in this build.",
-    "tr": "Bu sürümde yok."
+    "en": "Coming soon.",
+    "tr": "Yakında."
   },
   "tree.flag.offer": {
     "en": "OFFER",
@@ -2064,8 +2064,8 @@
     "tr": "Bu koşuda bir Özel silah aldığında açılır."
   },
   "tree.lock.pending": {
-    "en": "Not in this build yet.",
-    "tr": "Bu sürümde henüz yok."
+    "en": "Coming soon.",
+    "tr": "Yakında."
   },
   "tree.picks_used": {
     "en": "This round's picks are used.",
@@ -2312,8 +2312,8 @@
     "tr": "KAZANILDI"
   },
   "ach.empty.body": {
-    "en": "This build does not define any achievements. When it does, they will unlock automatically at the end of a run and appear here.",
-    "tr": "Bu sürüm hiç başarım tanımlamıyor. Tanımladığında, koşu sonunda otomatik açılıp burada görünecekler."
+    "en": "No achievements are available yet. When they are, they unlock by themselves at the end of a run and appear here.",
+    "tr": "Henüz başarım yok. Geldiklerinde koşu sonunda kendiliğinden açılıp burada görünecekler."
   },
   "ach.empty.title": {
     "en": "No achievements yet",
@@ -2332,8 +2332,8 @@
     "tr": "SONRAKİ"
   },
   "ach.none_defined": {
-    "en": "No achievements are defined in this build yet.",
-    "tr": "Bu sürümde henüz tanımlı başarım yok."
+    "en": "No achievements are available yet.",
+    "tr": "Henüz başarım yok."
   },
   "ach.page": {
     "en": "Page {value} of {total}",
@@ -2564,8 +2564,8 @@
     "tr": "Deaths Demolition {value} açamadı. {reason} Profilin değişmedi."
   },
   "loading.error.missing": {
-    "en": "The scene is missing from this build.",
-    "tr": "Sahne bu sürümde yok."
+    "en": "This area could not be loaded.",
+    "tr": "Bu alan yüklenemedi."
   },
   "loading.error.retry": {
     "en": "TRY AGAIN",
@@ -2714,10 +2714,6 @@
   "menu.build_prefix": {
     "en": "Build · ",
     "tr": "Sürüm · "
-  },
-  "menu.eyebrow": {
-    "en": "PLAYABLE CONCEPT · PROTOTYPE",
-    "tr": "OYNANABİLİR KONSEPT · PROTOTİP"
   },
   "menu.play": {
     "en": "PLAY",
@@ -3272,8 +3268,8 @@
     "tr": "SONRAKİ ROUND"
   },
   "shop.no_table.body": {
-    "en": "PrototypeConfig is not loaded, so there is no upgrade table to draw cards from. The run continues normally.",
-    "tr": "PrototypeConfig yüklü değil, bu yüzden kart çekilecek bir geliştirme tablosu yok. Koşu normal devam eder."
+    "en": "The upgrade table could not be loaded, so there are no cards to draw. The run continues normally.",
+    "tr": "Geliştirme tablosu yüklenemedi, bu yüzden çekilecek kart yok. Koşu normal devam eder."
   },
   "shop.no_table.title": {
     "en": "No upgrade table is loaded",
@@ -4596,8 +4592,8 @@
     "tr": "UYANIŞ'TA AÇILIR"
   },
   "tree.v2.state.EffectPending": {
-    "en": "NOT IN THIS BUILD",
-    "tr": "BU SÜRÜMDE YOK"
+    "en": "COMING SOON",
+    "tr": "YAKINDA"
   },
   "tree.v2.branch.Shot": {
     "en": "SHOT",
@@ -5356,8 +5352,8 @@
     "tr": "Koşuda ya bunu ya da {node} düğümünü alabilirsin."
   },
   "awakening.pending": {
-    "en": "Not in this build yet. Your Ash is kept.",
-    "tr": "Bu sürümde henüz yok. Kül'ün korunuyor."
+    "en": "Coming soon. Your Ash is kept.",
+    "tr": "Yakında. Kül'ün korunuyor."
   },
   "awakening.empty": {
     "en": "Ash is earned at the end of each run.",

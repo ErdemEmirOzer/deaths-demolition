@@ -82,7 +82,7 @@ namespace DD.Prototype.Core.DebugTools
             }
 
             Instance = this;
-            _visible = _startVisible;
+            _visible = _startVisible && UnityEngine.Debug.isDebugBuild;
         }
 
         private void OnDestroy()
@@ -95,8 +95,10 @@ namespace DD.Prototype.Core.DebugTools
 
         private void Update()
         {
+            // WP-112 (C-00 12.10, presentable release): the F1 / pad panel ("PROTOTYPE DEBUG") opens in development builds and
+            // the Editor only; a release build never draws it.
             PrototypeConfig config = PrototypeConfig.Active;
-            if (config != null && !config.System.DebugPanelEnabled)
+            if (!UnityEngine.Debug.isDebugBuild || (config != null && !config.System.DebugPanelEnabled))
             {
                 _visible = false;
                 return;

@@ -703,7 +703,9 @@ namespace DD.Prototype.UI
             _blotFx.Hold();
 
             float top = RingLift - BootSealSize * 0.5f - (int)UiSpace.XL;
-            _kicker = UiFactory.Label("Kicker", _bootLayer, UiStrings.Get("menu.eyebrow", "PLAYABLE CONCEPT · PROTOTYPE"), UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            // WP-112 (C-00 12.10, presentable release): the kicker said "PLAYABLE CONCEPT · PROTOTYPE" over the wordmark. The
+            // boot card is the seal and DEATHS DEMOLITION alone; the line keeps its place (and its fade) so nothing else moves.
+            _kicker = UiFactory.Label("Kicker", _bootLayer, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
             PlaceText(_kicker, top, UiFactory.LineHeight(UiType.Label));
             top -= UiFactory.LineHeight(UiType.Label) + (int)UiSpace.S;
 
