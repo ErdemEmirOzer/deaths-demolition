@@ -31,8 +31,11 @@ namespace DD.Prototype.Qa
         private static readonly StringBuilder s_rounds = new StringBuilder(2048);
         private static int s_bought, s_spent, s_hearth;
 
-        /// <summary>The archetype from the command line, null when the flag is absent (the bot then buys v1 cards as before).</summary>
-        public static string Arch => s_arch ?? (s_arch = QaArgs.Arg(ArchFlag) ?? string.Empty);
+        /// <summary>
+        /// The archetype from the command line. Without the flag: "Shot" when the shipped config runs the feature tree
+        /// (WP-104 opening: a bot plays the tree like a player), else empty — the bot buys v1 cards as before.
+        /// </summary>
+        public static string Arch => s_arch ?? (s_arch = QaArgs.Arg(ArchFlag) ?? (RoundUpgradeShop.TreeV2Active(DD.Prototype.Core.Config.PrototypeConfig.Active) ? "Shot" : string.Empty));
 
         public static bool Active => !string.IsNullOrEmpty(Arch);
 

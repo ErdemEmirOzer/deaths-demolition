@@ -55,5 +55,29 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(471, expected, "R1–R5 Normal altını (devCumulativeGold)");
             Assert.GreaterOrEqual(GoldService.Instance.Wallet.Balance, expected, "cüzdan R6 öncesi altını taşır");
         }
+
+        /// <summary>WP-104 opening: the SHIPPED config runs the feature tree; the v1 node effects are off (no double count).</summary>
+        [UnityTest]
+        public IEnumerator ShippedConfig_RunsTheFeatureTree_V1EffectsOff()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            RunFlowClock.ClearHolds();
+            RunDirector previous = RunDirector.Instance;
+            SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
+            yield return null;
+            float t0 = Time.realtimeSinceStartup;
+            while ((RunDirector.Instance == null || RunDirector.Instance == previous || RunDirector.Instance.Phase != RunPhase.Fighting)
+                   && Time.realtimeSinceStartup - t0 < Timeout)
+            {
+                yield return null;
+            }
+
+            RunDirector run = RunDirector.Instance;
+            Assert.IsNotNull(run);
+            Assert.IsTrue(DD.Prototype.Core.Config.PrototypeConfig.Active.Economy.RunTreeV2, "sevk config'i: RunTreeV2 açık");
+            Assert.IsTrue(run.Shop.TreeV2.IsBuilt, "koşu V2 ağacını kurdu");
+            Assert.AreSame(RunTreeEffectValues.None, RunTreeEffects.Active, "v1 düğüm etkileri kapalı");
+            Assert.IsFalse(RunTreeEffects.Owned(RunTreeEffects.LinkArcConductor));
+        }
     }
 }

@@ -38,6 +38,7 @@ namespace DD.Prototype.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            RoundUpgradeShop.TreeV2TestOverride = false;   // WP-104: these slices pin the v1 card shop (retired with the S-09 V2 screen)
             _settingsPath = Path.Combine(Path.GetTempPath(), "dd-rt9-ui-" + Guid.NewGuid().ToString("N") + ".json");
             UiSettings.SetPathOverride(_settingsPath);
             UiSettings.EnsureLoaded();
@@ -71,6 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
         [TearDown]
         public void TearDown()
         {
+            RoundUpgradeShop.TreeV2TestOverride = null;
             if (_shop != null) { _shop.OfferChanged -= Refresh; _shop.Close(); }
             if (_eventSystem != null) _eventSystem.SetSelectedGameObject(_previousFocus != null && _previousFocus.activeInHierarchy ? _previousFocus : null);
             for (int i = _owned.Count - 1; i >= 0; i--) if (_owned[i] != null) Object.DestroyImmediate(_owned[i]);

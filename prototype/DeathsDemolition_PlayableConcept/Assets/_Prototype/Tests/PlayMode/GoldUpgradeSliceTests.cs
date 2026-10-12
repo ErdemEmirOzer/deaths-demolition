@@ -52,6 +52,7 @@ namespace DD.Prototype.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            RoundUpgradeShop.TreeV2TestOverride = false;   // WP-104: these slices pin the v1 card shop (retired with the S-09 V2 screen)
             _ekonomiHatalari.Clear();
             Application.logMessageReceived += HataTopla;
         }
@@ -154,6 +155,7 @@ namespace DD.Prototype.Tests.PlayMode
         [TearDown]
         public void TearDown()
         {
+            RoundUpgradeShop.TreeV2TestOverride = null;
             Application.logMessageReceived -= HataTopla;
             Dec071KlonunuGeriAl();
             Time.captureDeltaTime = 0f;

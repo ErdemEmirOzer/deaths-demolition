@@ -243,6 +243,7 @@ namespace DD.Prototype.Rounds
         public static bool Owned(string effectId)
         {
             RunDirector director = RunDirector.Instance;
+            if (director != null && director.Shop != null && director.Shop.TreeV2.IsBuilt) return false;   // WP-104: the feature tree replaces the v1 node effects
             return director != null && director.Shop != null && director.Shop.Tree.OwnsEffect(effectId);
         }
 
@@ -255,6 +256,7 @@ namespace DD.Prototype.Rounds
             get
             {
                 RunDirector director = RunDirector.Instance;
+                if (director != null && director.Shop != null && director.Shop.TreeV2.IsBuilt) return RunTreeEffectValues.None;   // WP-104: V2 owns the run's effects (no v1 double count, Hearth included)
                 return director != null && director.Shop != null && director.Shop.Tree.IsBuilt ? director.Shop.Tree.Values : RunTreeEffectValues.None;
             }
         }

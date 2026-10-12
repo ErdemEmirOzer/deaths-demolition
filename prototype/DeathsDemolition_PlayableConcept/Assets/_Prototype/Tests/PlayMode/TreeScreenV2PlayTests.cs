@@ -511,6 +511,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Gecis_SaglayiciYokkenEskiPanel_VarkenYeniEkran_DevamRounduKapatir()
         {
             LogAssert.ignoreFailingMessages = true;
+            RoundUpgradeShop.TreeV2TestOverride = false;   // WP-104 opening: the shipped config runs the tree; this test pins "B1 absent"
             yield return LifecycleTestKit.BootTanMainMenuye();
             PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
             PrototypeUiFlow.GoToSelection();

@@ -64,6 +64,7 @@ namespace DD.Prototype.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            RoundUpgradeShop.TreeV2TestOverride = false;   // WP-104: these slices pin the v1 card shop (retired with the S-09 V2 screen)
             RoundUpgradeShop.NodeCardsTestDefault = false;   // WP-077 K10: these slices test the classic card row
             _hatalar.Clear();
             RunFlowClock.ClearHolds();
@@ -93,6 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
         [TearDown]
         public void TearDown()
         {
+            RoundUpgradeShop.TreeV2TestOverride = null;
             RoundUpgradeShop.NodeCardsTestDefault = null;
             Application.logMessageReceived -= HataTopla;
             Dec071KlonunuGeriAl();
