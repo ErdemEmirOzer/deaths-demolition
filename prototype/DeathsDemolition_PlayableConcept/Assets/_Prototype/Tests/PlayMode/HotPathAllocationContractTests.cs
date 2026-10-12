@@ -31,6 +31,9 @@ namespace DD.Prototype.Tests.PlayMode
     {
         /// <summary>Allocations the test harness itself may add to a measured frame (coroutine step, recorder). Idle frames read 6.</summary>
         private const int HarnessAllocationSlack = 12;
+
+        /// <summary>The Special's steady active frame is the least of this many frames in a row (a one-off burst cannot fail it).</summary>
+        private const int SteadyFrames = 5;
         private const int RecorderSampleFrames = 6;
 
         private SpecialWeaponSahne _s;
@@ -213,9 +216,19 @@ namespace DD.Prototype.Tests.PlayMode
                 long afterPickup = count.LastValue;
                 Assert.IsTrue(_s.Controller.SpecialWeaponActive, "Special aktif olmadı.");
 
-                // Active steady frame.
-                yield return null;
-                long activeFrame = count.LastValue, activeBytes = bytes.LastValue;
+                // Active steady frame: the least of SteadyFrames frames in a row (C-00 12.10, S-02 bisect K/wp-104/b2/evidence/
+                // BISECT-SpecialAlmaVeBitim.txt). A real per-frame allocation shows in every one of them and still fails; a one-off
+                // burst after the pickup (it landed in one frame or another run to run) shows only in its own frame, logged below.
+                long activeFrame = long.MaxValue, activeBytes = 0, burstFrame = 0, burstBytes = 0;
+                var steady = new System.Text.StringBuilder();
+                for (int f = 0; f < SteadyFrames; f++)
+                {
+                    yield return null;
+                    long c = count.LastValue, b = bytes.LastValue;
+                    steady.Append(f == 0 ? "" : ",").Append(c);
+                    if (c < activeFrame) { activeFrame = c; activeBytes = b; }
+                    if (c > burstFrame) { burstFrame = c; burstBytes = b; }
+                }
 
                 // Fast-forward to the end (final seconds + end frames inside).
                 float adim = 0.05f;
@@ -234,7 +247,8 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
 
                 Debug.Log("[DD-TEST] wp037.special idle=" + idle + " pickupFrame=" + pickupFrame + "/" + pickupBytes + "B afterPickup=" + afterPickup +
-                          " activeFrame=" + activeFrame + "/" + activeBytes + "B maxFrameWhileActive=" + maxDuringActive + " endFrame=" + endFrame + "/" + endBytes + "B");
+                          " activeFrame=" + activeFrame + "/" + activeBytes + "B maxFrameWhileActive=" + maxDuringActive + " endFrame=" + endFrame + "/" + endBytes + "B" +
+                          " steady[" + steady + "] burst=" + burstFrame + "/" + burstBytes + "B");
 
                 // Contract on the Weapons side: a steady active frame (weapon in hand, no shots) adds nothing over idle.
                 Assert.LessOrEqual(activeFrame, idle + HarnessAllocationSlack, "Aktif Special sabit karesi ayırma yapıyor: " + activeFrame + " (idle " + idle + ").");
