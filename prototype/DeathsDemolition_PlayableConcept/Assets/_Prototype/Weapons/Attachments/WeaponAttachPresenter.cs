@@ -85,13 +85,20 @@ namespace DD.Prototype.Weapons.Attachments
             var rig = s_classicRigField != null ? s_classicRigField.GetValue(c) as WeaponVisualRig : null;
             Transform body = rig != null ? rig.Body : null;
             if (body == null) return null;
-            for (int i = 0; i < body.childCount; i++)
+            // WeaponVisualRig.SetModel destroys the old model with a deferred Destroy and appends the new one, and WeaponEquipped is
+            // raised in that frame: the live model is the one holding the rig's muzzle (SetModel moves it there), else the last
+            // authored child — never the first, which on a weapon change is the dying one
+            Transform muzzle = rig.Muzzle;
+            Transform last = null;
+            for (int i = body.childCount - 1; i >= 0; i--)
             {
                 Transform child = body.GetChild(i);
-                if (child.GetComponent<LODGroup>() != null) return child;   // the authored model; the muzzle marker has none
+                if (child.GetComponent<LODGroup>() == null) continue;   // the authored model; the muzzle marker has none
+                if (muzzle != null && muzzle.IsChildOf(child)) return child;
+                if (last == null) last = child;
             }
 
-            return null;
+            return last;
         }
     }
 }

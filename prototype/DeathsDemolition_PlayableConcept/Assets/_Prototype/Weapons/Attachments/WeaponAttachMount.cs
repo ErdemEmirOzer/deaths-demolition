@@ -54,15 +54,26 @@ namespace DD.Prototype.Weapons.Attachments
             WeaponAttachMount m = root.GetComponent<WeaponAttachMount>();
             if (m != null && m.Row != null && m.Row.id == row.id) return m;
             if (m == null) m = root.gameObject.AddComponent<WeaponAttachMount>();
+            else m.Clear();   // another row on this model: the old add-ons, the hidden part and the grown LODs go first
             m.Row = row;
             Transform part = row.magOnPart ? WeaponSocketContract.Find(root, WeaponMagazineVisual.PartName) : null;
-            if (part != null) m._part = part.GetComponentsInChildren<Renderer>(true);   // before any add-on: the original magazine only
+            m._part = part != null ? PartRenderers(part) : Array.Empty<Renderer>();
             m._mag = Socket(part != null ? part : root, MagSocketName, row.mag, root);
             m._muzzle = Socket(root, MuzzleSocketName, row.muzzle, root);
             m._side = Socket(root, SideSocketName, row.side, root);
             LODGroup g = root.GetComponent<LODGroup>();
             if (g != null) m._baseLods = g.GetLODs();
             return m;
+        }
+
+        /// <summary>The original magazine's renderers — never an add-on under SOCKET_Mag (a cleared one dies only at the frame end).</summary>
+        private static Renderer[] PartRenderers(Transform part)
+        {
+            Transform socket = WeaponSocketContract.Find(part, MagSocketName);
+            s_tmp.Clear();
+            part.GetComponentsInChildren(true, s_tmp);
+            if (socket != null) s_tmp.RemoveAll(r => r.transform.IsChildOf(socket));
+            return s_tmp.ToArray();
         }
 
         private static Transform Socket(Transform parent, string name, in AttachPose p, Transform root)
@@ -77,6 +88,27 @@ namespace DD.Prototype.Weapons.Attachments
             // the table is in the model root's frame, whatever the parent (part_mag is offset inside the model)
             t.SetPositionAndRotation(root.TransformPoint(p.position), root.rotation * p.rotation);
             return t;
+        }
+
+        /// <summary>Back to the bare model: no add-ons, part_mag drawn, the model's own LODs; the next Apply mounts from scratch.</summary>
+        private void Clear()
+        {
+            Kill(_magGo);
+            Kill(_twinGo);
+            Kill(_ringGo);
+            Kill(_sideGo);
+            Kill(_bridgeGo);
+            _magGo = _twinGo = _ringGo = _sideGo = _bridgeGo = null;
+            SecondaryMuzzle = PowerMuzzle = ElementVfx = null;
+            for (int i = 0; i < _part.Length; i++)
+            {
+                if (_part[i] != null) _part[i].forceRenderingOff = false;
+            }
+
+            LODGroup g = GetComponent<LODGroup>();
+            if (g != null && _baseLods != null) g.SetLODs(_baseLods);
+            _applied = false;
+            _set = default;
         }
 
         /// <summary>Mount the attachments of <paramref name="set"/> (an unchanged set returns at once, allocation-free).</summary>
