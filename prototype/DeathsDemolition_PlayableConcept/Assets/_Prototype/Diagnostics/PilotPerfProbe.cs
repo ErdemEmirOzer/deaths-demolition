@@ -584,6 +584,8 @@ namespace DD.Prototype.Diagnostics
             public int round;                    // RunDirector.Round as the window opened (S-10: -ddStartRound 15 proved in the record)
             public int treeEvents;               // WP-104 TreeEvents.ProcCount inside the window (tree moments; 0 = no tree effect ran)
             public int treeShapedShots;          // WP-104 TreeEvents.ShapedShots inside the window (trigger pulls the tree changed)
+            public string treePreset;            // S-04 12.10: the -ddTreePreset the game recognised (null: none / unknown name)
+            public int treeNodes;                // S-04 12.10: RunTreeV2.NodesOwned as the window opened (-1: the V2 tree is not built)
 
             // ---- 04 window: load integrity
             public int activeMin;
@@ -1150,6 +1152,10 @@ namespace DD.Prototype.Diagnostics
                 ZeroWindowCounters();   // WP-111 R4: shots / blasts of exactly this window
                 TreeEvents.ResetCounters();   // WP-104 B1b (S-10 12.10): tree moments / shaped shots of exactly this window
                 int windowRound = RunDirector.Instance != null ? RunDirector.Instance.Round : 0;   // S-10: the round the window measures
+                // S-04 12.10: proof the preset applied in this build — its name as the game read it and the nodes the run owns now
+                string windowTreePreset = TreePresetsV2.TryFromCommandLine(out TreePresetsV2.Preset windowPreset) ? windowPreset.Name : null;
+                RoundUpgradeShop windowShop = RunDirector.Instance != null ? RunDirector.Instance.Shop : null;
+                int windowTreeNodes = windowShop != null && windowShop.TreeV2.IsBuilt ? windowShop.TreeV2.NodesOwned : -1;
                 t0 = Time.realtimeSinceStartup;
                 while (true)
                 {
@@ -1240,7 +1246,8 @@ namespace DD.Prototype.Diagnostics
                 {
                     // the S-10 kit's needle (R4 treemax cell) starts the line; the round and the tree counts follow it
                     Debug.Log("[PilotPerfProbe] autofire weapon=" + weaponKey + " shots=" + windowShots + " round=" + windowRound +
-                              " treeEvents=" + windowTreeEvents + " treeShapedShots=" + windowTreeShaped);
+                              " treeEvents=" + windowTreeEvents + " treeShapedShots=" + windowTreeShaped +
+                              " treePreset=" + (windowTreePreset ?? "none") + " treeNodes=" + windowTreeNodes);
                 }
 
                 if (profilerLog)
@@ -1327,6 +1334,8 @@ namespace DD.Prototype.Diagnostics
                 s4.round = windowRound;
                 s4.treeEvents = windowTreeEvents;
                 s4.treeShapedShots = windowTreeShaped;
+                s4.treePreset = windowTreePreset;
+                s4.treeNodes = windowTreeNodes;
                 // Integrity, not speed: enough frames to be a distribution, and the load the
                 // window was meant to measure actually present for (nearly) all of it.
                 s4.pass = frames >= s4.frameCountRequired && s4.loadIntegrityFraction >= LoadIntegrityRequired;
