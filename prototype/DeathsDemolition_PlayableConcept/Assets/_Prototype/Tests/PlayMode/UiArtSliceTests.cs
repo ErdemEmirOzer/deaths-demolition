@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using DD.Prototype.Achievements;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.PlayerSystem;
+using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
 using DD.Prototype.UI;
 using NUnit.Framework;
@@ -874,6 +876,8 @@ namespace DD.Prototype.Tests.PlayMode
             menu.ShowPane(UiContext.Achievements);
             yield return null;
             Assert.IsTrue(MetinVar(menu, "Page 1 of"), "27 başarım → sayfalı");
+            bool firstInProgress = MetinVar(menu, UiStrings.Get("ach.in_progress", "IN PROGRESS"));
+            bool firstNotStarted = MetinVar(menu, UiStrings.Get("ach.not_started", "NOT STARTED"));
             UiInput.Focus(Buton(menu, "Tab.Achievements"));
             yield return SeciliBekle("Tab.Achievements");
             Hareket(MoveDirection.Right);
@@ -883,7 +887,31 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsTrue(MetinVar(menu, "Page 2 of"), "NEXT ikinci sayfayı açar");
             yield return SeciliBekle("Pager.Next");
-            Assert.IsTrue(MetinVar(menu, "IN PROGRESS"), "kazanılmamış girdi ilerleme çipi + çubuğu taşır");
+
+            // C-00 12.10: which page holds an entry under way is the catalog's and the profile's (B1a's six mode achievements
+            // moved page 2; WP-105 V-18: no progress = NOT STARTED). The word expected is the model's - IN PROGRESS when an
+            // unearned entry has progress, NOT STARTED otherwise - and NEXT walks on until a page shows it.
+            IAchievementProgressSource source = ProfileService.AchievementProgressSource;
+            AchievementsViewModel model = source != null
+                ? AchievementsViewModel.From(source)
+                : AchievementsViewModel.From(ProfileService.Current, ProfileService.AllAchievements);
+            bool underWay = false;
+            foreach (UiAchievementLine line in model.Lines)
+            {
+                underWay |= !line.Earned && line.Current > 0;
+            }
+
+            string state = underWay ? UiStrings.Get("ach.in_progress", "IN PROGRESS") : UiStrings.Get("ach.not_started", "NOT STARTED");
+            bool shown = (underWay ? firstInProgress : firstNotStarted) || MetinVar(menu, state);
+            for (int turn = 0; !shown && turn < model.Lines.Count && Secili != null && Secili.name == "Pager.Next"; turn++)
+            {
+                Onayla();
+                yield return null;
+                yield return null;
+                shown = MetinVar(menu, state);
+            }
+
+            Assert.IsTrue(shown, "kazanılmamış girdi durum sözcüğünü taşır: " + state);
             Assert.IsNotNull(menu.GetComponentInChildren<UiBar>(true), "ilerleme çubuğu (kazanılmamış girdi)");
         }
 
