@@ -1746,6 +1746,9 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.IsFalse(s.Special);
                     Assert.AreEqual(ClassicWeaponId.AssaultRifle, s.Classic);
                     Assert.AreEqual(1, s.Pellets);
+                    // WP-104 B4-2 (S-07 / S-06 B12): the shot carries where the flash left the weapon and its forward
+                    Assert.Greater(s.MuzzleForward.sqrMagnitude, 0.5f, "atış olayı namlu yönünü taşımalı");
+                    Assert.Less(Vector3.Distance(s.MuzzlePosition, _rig.transform.position), 2.5f, "atış olayının namlu noktası oyuncunun elinde olmalı");
                 }
 
                 Assert.Greater(vurus.Count, 0);

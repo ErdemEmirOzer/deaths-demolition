@@ -169,6 +169,8 @@ namespace DD.Prototype.Weapons
         public DD.Prototype.Enemies.ZombieEnemy SeekBody;
         public int SeekLife;
         public float SeekHeight;
+        /// <summary>WP-104 B4-2 (S-07 B9): the round locked a body at spawn - its path is kept for the bending trail (TryGetPath), to the end.</summary>
+        public bool SeekTrail;
 
         /// <summary>WP-104 B3: bodies this round has hit directly (chain / ricochet bodies not counted) — the tree's Pierced fact and
         /// Explosive Rounds' 1st / 4th / 8th body rule read it (HitscanEngine).</summary>
@@ -368,6 +370,7 @@ namespace DD.Prototype.Weapons
             p.BlastTier = launch.BlastTier;
             RunTreeHooks.OnProjectileSpawned(ref p);   // WP-077 K10b: cap.ar_1 / cap.sr_1 / cap.ar_2 / cap.sg_2 round tags
             p.TreeFlags |= shot.TreeFlags;   // WP-104 B2: the weapon's own tags (TreeRoundMarkedChaos, S-07 trail)
+            s_pathCount[index] = 0;   // WP-104 B4-2: a reused slot starts without the previous round's path
             if (shot.VolleyIndex > 0 && p.Kind != ProjectileKind.Rocket) LockSeek(ref p, direction, TreeHooks.ExtraShotSeekDegrees);   // WP-104 B2b sh_cap
 
             s_order[s_liveCount++] = index;
@@ -548,6 +551,12 @@ namespace DD.Prototype.Weapons
                 }
             }
 
+            if (p.SeekTrail && p.Age >= s_pathNext[index])   // WP-104 B4-2: the bending trail's path, every PathStepSeconds of flight
+            {
+                PathPush(index, p.Position);
+                s_pathNext[index] = p.Age + PathStepSeconds;
+            }
+
             if (rangeEnds || p.Age >= p.MaxLifetime)
             {
                 p.Alive = false;
@@ -605,7 +614,14 @@ namespace DD.Prototype.Weapons
                 }
 
                 for (int i = 0; i < count; i++) s_seekBuffer[i] = null;
-                if (p.SeekBody != null) SeekLocks++;
+                if (p.SeekBody != null)
+                {
+                    SeekLocks++;
+                    p.SeekTrail = true;
+                    s_pathCount[p.Slot] = 0;
+                    PathPush(p.Slot, p.Position);
+                    s_pathNext[p.Slot] = PathStepSeconds;
+                }
             }
         }
 
@@ -635,6 +651,49 @@ namespace DD.Prototype.Weapons
 
             s_seekQueries++;
             return true;
+        }
+
+        // ------------------------------------------------------------------ WP-104 B4-2 · the seeker's path (S-07 B9 bending trail)
+
+        /// <summary>Points kept per seeking round (a ring: the newest replace the oldest) and the flight time between two of them.</summary>
+        public const int PathPoints = 12;
+        public const float PathStepSeconds = 0.05f;
+
+        private static readonly Vector3[] s_path = new Vector3[Capacity * PathPoints];
+        private static readonly int[] s_pathCount = new int[Capacity];
+        private static readonly int[] s_pathHead = new int[Capacity];
+        private static readonly float[] s_pathNext = new float[Capacity];
+
+        private static void PathPush(int slot, Vector3 point)
+        {
+            s_path[slot * PathPoints + s_pathHead[slot]] = point;
+            s_pathHead[slot] = (s_pathHead[slot] + 1) % PathPoints;
+            if (s_pathCount[slot] < PathPoints) s_pathCount[slot]++;
+        }
+
+        /// <summary>
+        /// WP-104 B4-2 (S-07 B9): the path of a live seeking round <paramref name="projectileId"/> (its <see cref="ProjectileState.Generation"/>,
+        /// the key of every ProjectileEvents payload) - the kept points oldest first, then its position now - into <paramref name="into"/>.
+        /// Returns the points written: 0 for an unknown / ended round or one that never locked a body. No allocation.
+        /// </summary>
+        public static int TryGetPath(int projectileId, Vector3[] into)
+        {
+            if (into == null || into.Length == 0 || projectileId <= 0) return 0;
+            for (int i = 0; i < s_liveCount; i++)
+            {
+                int slot = s_order[i];
+                ref ProjectileState p = ref s_live[slot];
+                if (!p.Alive || p.Generation != projectileId) continue;
+                if (!p.SeekTrail) return 0;
+                int n = Mathf.Min(s_pathCount[slot], into.Length - 1);
+                int start = (s_pathHead[slot] - s_pathCount[slot] + PathPoints) % PathPoints;
+                int skip = s_pathCount[slot] - n;   // a short buffer keeps the newest
+                for (int k = 0; k < n; k++) into[k] = s_path[slot * PathPoints + (start + skip + k) % PathPoints];
+                into[n] = p.Position;
+                return n + 1;
+            }
+
+            return 0;
         }
 
         /// <summary>Turn toward the locked body at <see cref="SeekTurnDegreesPerSecond"/>, speed kept; a dead / recycled body lets go.</summary>
@@ -769,6 +828,7 @@ namespace DD.Prototype.Weapons
             SeekLocks = 0;
             SeekSteps = 0;
             SeekQueriesDenied = 0;
+            for (int i = 0; i < Capacity; i++) { s_pathCount[i] = 0; s_pathHead[i] = 0; s_pathNext[i] = 0f; }
             s_seekFrame = -1;
             s_seekQueries = 0;
             s_pendingCount = 0;

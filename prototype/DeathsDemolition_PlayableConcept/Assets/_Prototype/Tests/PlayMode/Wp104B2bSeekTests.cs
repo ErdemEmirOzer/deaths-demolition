@@ -136,9 +136,34 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(hp, z.Health, 1e-4f, "ana atış (VolleyIndex 0) hedef aramaz: 2,5 m yandan geçer");
 
             int kilit = ProjectileSystem.SeekLocks;
-            yield return Ates(Atis(from, ileri, 1));
+            // WP-104 B4-2 (S-07 B9): while it flies, the seeker's path is kept and bends toward the body
+            int nesil = 0, enCok = 0;
+            var yol = new Vector3[ProjectileSystem.PathPoints + 1];
+            Vector3 ilk = Vector3.zero, son = Vector3.zero;
+            System.Action<ProjectileSpawnInfo> dogdu = i => { if (i.VolleyIndex > 0) nesil = i.ProjectileId; };
+            ProjectileEvents.Spawned += dogdu;
+            try
+            {
+                ProjectileSystem.Spawn(Atis(from, ileri, 1), Firlat());
+                float t0 = Time.realtimeSinceStartup;
+                while (ProjectileSystem.LiveCount > 0 && Time.realtimeSinceStartup - t0 < 3f)
+                {
+                    int n = ProjectileSystem.TryGetPath(nesil, yol);
+                    if (n > enCok) { enCok = n; ilk = yol[0]; son = yol[n - 1]; }
+                    yield return null;
+                }
+            }
+            finally
+            {
+                ProjectileEvents.Spawned -= dogdu;
+            }
+
+            yield return null;
             Assert.AreEqual(kilit + 1, ProjectileSystem.SeekLocks, "ek atış koni içindeki gövdeye kilitlenir");
             Assert.Less(z.Health, hp, "ek atış dönüp gövdeyi vurur");
+            Assert.GreaterOrEqual(enCok, 3, "kıvrılan iz için yol: en az iki kayıtlı nokta + şimdiki konum");
+            Assert.Greater((son - ilk).x, 0.3f, "yol gövdeye (+x) doğru kıvrılır");
+            Assert.AreEqual(0, ProjectileSystem.TryGetPath(nesil, yol), "biten merminin yolu yok");
 
             TreeRuntime.SetTestStats(TreeStats.Neutral);
             hp = z.Health;

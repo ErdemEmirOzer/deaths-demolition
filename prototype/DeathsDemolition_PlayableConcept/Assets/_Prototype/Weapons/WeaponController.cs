@@ -793,12 +793,12 @@ namespace DD.Prototype.Weapons
             // WP-072: the cue names the weapon (WP-069 WeaponDefinition.AudioId; A/B/C → AR1/SMG1/SG1 without a definition).
             AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, _classic.Definition?.AudioId ?? WeaponAudioIdentity.ForClassic(_classic.Id), origin, powerScale, 50);
 
-            DD.Prototype.Rounds.TreeHooks.OnShotFired(Time.time);   // WP-104 B2 Overclock's own clock: a pause > 1.0 s resets the build-up (before the next interval is set)
+            DD.Prototype.Rounds.TreeHooks.OnShotFired(Time.time, tracerOrigin);   // WP-104 B2 Overclock's own clock (a pause > 1.0 s resets the build-up); B4-2: the flash point for S-07's OverclockPeak
             _classic.ConsumeShot();
 
             // WP-095 (R3): the feel layers' one shot event — one per trigger pull, after the round is spent (AmmoLeft = what the HUD shows next)
             FeelEvents.RaiseShot(new FeelShot(false, _equippedId, default, feelId, origin, aim, pellets, presentationGroupId, ShotSerial,
-                powerScale, _classic.Ammo, _classic.MagazineSize));
+                powerScale, _classic.Ammo, _classic.MagazineSize, tracerOrigin, flash.forward));   // B4-2: the flash point and its forward (S-06 B12)
 
             // WP-069 B2: game recoil. Look modes kick the camera (the rig drains and recovers it);
             // top-down keeps it on the shot as horizontal drift (ClassicWeaponRuntime.RecoilYawDegrees).
@@ -1084,7 +1084,7 @@ namespace DD.Prototype.Weapons
 
             _special.ConsumeShot();
             FeelEvents.RaiseShot(new FeelShot(true, default, id, WeaponFeelIds.From(id), origin, aim, 1, 0, 0, 1f, _special.Ammo,
-                _special.MagazineSize));   // WP-095: the feel layers' one shot event
+                _special.MagazineSize, Muzzle.position, Muzzle.forward));   // WP-095: the feel layers' one shot event; B4-2: the muzzle
         }
 
         private void HandleSpecialEnded()

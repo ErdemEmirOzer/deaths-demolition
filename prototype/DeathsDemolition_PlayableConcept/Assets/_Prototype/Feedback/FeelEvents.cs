@@ -36,11 +36,12 @@ namespace DD.Prototype.Feedback
     public readonly struct FeelShot
     {
         public FeelShot(bool special, ClassicWeaponId classic, SpecialWeaponId specialId, WeaponFeelId feel, Vector3 origin,
-            Vector3 direction, int pellets, int groupId, int shotSerial, float powerScale, int ammoLeft, int magazineSize)
+            Vector3 direction, int pellets, int groupId, int shotSerial, float powerScale, int ammoLeft, int magazineSize,
+            Vector3 muzzlePosition = default, Vector3 muzzleForward = default)
         {
             Special = special; Classic = classic; SpecialId = specialId; Feel = feel; Origin = origin; Direction = direction;
             Pellets = pellets; GroupId = groupId; ShotSerial = shotSerial; PowerScale = powerScale; AmmoLeft = ammoLeft;
-            MagazineSize = magazineSize;
+            MagazineSize = magazineSize; MuzzlePosition = muzzlePosition; MuzzleForward = muzzleForward;
         }
 
         public readonly bool Special;
@@ -58,6 +59,13 @@ namespace DD.Prototype.Feedback
         public readonly float PowerScale;
         public readonly int AmmoLeft;
         public readonly int MagazineSize;
+
+        /// <summary>
+        /// WP-104 B4-2 (S-07 / S-06 B12): where the flash left the weapon - the muzzle socket in world space, the mounted power
+        /// ring's when there is one (WeaponAttachments.FlashOrigin), and its forward. Zero when the shot has no visual muzzle.
+        /// </summary>
+        public readonly Vector3 MuzzlePosition;
+        public readonly Vector3 MuzzleForward;
         public bool LastRound => AmmoLeft <= 0;
     }
 
