@@ -39,10 +39,10 @@ namespace DD.Prototype.Audio
     ///                   per-sound LOD gate: the same sound once per frame, a retrigger interval, a per-second rate and a
     ///                   concurrent ceiling (<see cref="AudioMixPlan.TreeLod"/>). Mini Nuke ≤ 1 per 3 s and Doomsday ≤ 1 alive
     ///                   both duck briefly through the placement (the director's sidechain).
-    ///   FireGround /    a zone (≤ <see cref="TreeGuardrails.AreaZones"/>) living for the stats' FireGroundSeconds /
-    ///   VenomCloud      VenomCloudSeconds (or a default). Only the <see cref="AudioMixPlan.TreeFieldVoices"/> zones nearest
+    ///   FireGround /    a zone (≤ <see cref="TreeGuardrails.AreaZones"/>) living for the event's <c>Seconds</c> (B1), else the
+    ///   VenomCloud      stats' FireGroundSeconds / VenomCloudSeconds, else a default. Only the <see cref="AudioMixPlan.TreeFieldVoices"/> zones nearest
     ///                   the listener are heard, on looping sources this class owns.
-    ///   BlackHoleOpen / one looping source: open → HoleSeconds (2.5 s default) → BlackHoleCollapse plays the collapse and cuts
+    ///   BlackHoleOpen / one looping source: open → the event's Seconds, else HoleSeconds (2.5 s default) → BlackHoleCollapse plays the collapse and cuts
     ///   Collapse        the loop. Without a collapse event the loop fades out by itself after its life.
     ///   NodePurchased / the tree screen's stamp and synergy (interface); AuraChanged plays only when the level goes up.
     ///   SynergyUnlocked / AuraChanged
@@ -364,6 +364,10 @@ namespace DD.Prototype.Audio
                 case TreeProcKind.Leech: return AudioSoundId.TreeLifesteal;
                 case TreeProcKind.UndyingOath: return AudioSoundId.TreeUndying;
                 case TreeProcKind.EndlessWindowOpen: return AudioSoundId.TreeEndlessOn;
+                case TreeProcKind.ShieldUp: return AudioSoundId.TreeShieldUp;          // B1 (main): up or refilled to full, at the player
+                case TreeProcKind.ShieldHit: return AudioSoundId.TreeShieldHit;        // absorbed without breaking
+                case TreeProcKind.Ricochet: return AudioSoundId.TreeRicochet;          // one bounce, at the bounce point
+                case TreeProcKind.BarrageRocket: return AudioSoundId.TreeMiniRocket;   // a Barrage (rl_1 + Full-Auto) rocket launched
                 // ExplosiveRound / ChainBlast / ClusterSplit: the blast's own Explosion / BombletPop cue speaks (IDS.md);
                 // EndlessWindowClose / OverclockPeak / SynergyFirstTrigger: silent by design (HUD / VFX beats).
                 default: return AudioSoundId.None;
@@ -660,7 +664,7 @@ namespace DD.Prototype.Audio
         private void OpenZone(in TreeProcInfo info)
         {
             float now = Time.time;
-            float life = ZoneSeconds(info.Kind);
+            float life = ZoneSeconds(info);
             float merge = Mathf.Max(AudioMixPlan.TreeZoneMergeMeters, info.Radius * 0.5f);
             int free = -1;
             int soonest = -1;
@@ -701,11 +705,16 @@ namespace DD.Prototype.Audio
             ZonesOpened++;
         }
 
-        private static float ZoneSeconds(TreeProcKind kind)
+        private static float ZoneSeconds(in TreeProcInfo info)
         {
             ref readonly TreeStats stats = ref TreeRuntime.Current;
-            bool fire = kind == TreeProcKind.FireGround;
-            float seconds = fire ? stats.FireGroundSeconds : stats.VenomCloudSeconds;
+            bool fire = info.Kind == TreeProcKind.FireGround;
+            float seconds = info.Seconds;   // B1: the zone's own length when the raiser knows it
+            if (seconds <= 0f)
+            {
+                seconds = fire ? stats.FireGroundSeconds : stats.VenomCloudSeconds;
+            }
+
             if (seconds <= 0f)
             {
                 seconds = fire ? AudioMixPlan.TreeFireGroundSeconds : AudioMixPlan.TreeVenomCloudSeconds;
@@ -877,7 +886,7 @@ namespace DD.Prototype.Audio
 
         private void OpenHole(in TreeProcInfo info)
         {
-            float seconds = TreeRuntime.Current.HoleSeconds;
+            float seconds = info.Seconds > 0f ? info.Seconds : TreeRuntime.Current.HoleSeconds;   // B1: the hole's own length first
             if (seconds <= 0f)
             {
                 seconds = AudioMixPlan.TreeBlackHoleSeconds;

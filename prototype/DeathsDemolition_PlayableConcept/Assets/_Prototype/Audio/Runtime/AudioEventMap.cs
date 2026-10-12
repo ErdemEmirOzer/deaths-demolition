@@ -339,10 +339,10 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Run, "TreeEvents.AuraChanged (level up)", AudioSoundId.TreeAuraUp, W, false, "SFX-Player, 2D; only when the level (0–3) rises; a run start resets it"),
             B(AudioEventSource.Run, "S-09 tree screen open (no event yet)", AudioSoundId.TreeOpen, U, false, "waits for S-09's open event (RAPOR: UiEvent.TreeOpened proposal)", true),
             B(AudioEventSource.Run, "S-09 recommendation strip reroll (no event yet)", AudioSoundId.TreeReroll, U, false, "waits for S-09's reroll event (RAPOR: UiEvent.TreeRerolled proposal)", true),
-            B(AudioEventSource.Combat, "S-04 shield up (no event yet)", AudioSoundId.TreeShieldUp, W, true, "waits for S-04 (RAPOR: TreeProcKind.ShieldUp proposal); placement + LOD ready", true),
-            B(AudioEventSource.Combat, "S-04 shield hit (no event yet)", AudioSoundId.TreeShieldHit, W, true, "waits for S-04 (RAPOR: TreeProcKind.ShieldHit proposal); ≤ 5/s, ≤ 2 alive ready", true),
-            B(AudioEventSource.Combat, "S-02 ricochet bounce (no event yet)", AudioSoundId.TreeRicochet, I, true, "waits for S-02 (RAPOR: TreeProcKind.Ricochet proposal); ≤ 6/s, ≤ 2 alive ready", true),
-            B(AudioEventSource.Combat, "S-02 Barrage rl_1 mini rocket (no event yet)", AudioSoundId.TreeMiniRocket, I, true, "waits for S-02's PowerOverride fire path (RAPOR proposal); ≤ 8/s, ≤ 3 alive ready", true),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ShieldUp", AudioSoundId.TreeShieldUp, W, true, "SFX-Player, near (0.2); up or refilled to full (S-04 B1)"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · ShieldHit", AudioSoundId.TreeShieldHit, W, true, "SFX-Player; absorbed without breaking; ≤ 5/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · Ricochet", AudioSoundId.TreeRicochet, I, true, "SFX-World at the bounce point (S-02 fire path); ≤ 6/s, ≤ 2 alive"),
+            B(AudioEventSource.Combat, "TreeEvents.Proc · BarrageRocket", AudioSoundId.TreeMiniRocket, I, true, "SFX-World at the launch: a Barrage (rl_1 + Full-Auto) rocket (S-02 fire path); ≤ 8/s, ≤ 3 alive"),
 
             // ---- WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI) — one row per UiEvent member;
             // reserved = the same frame already plays the sound through another row (single owner, no double).

@@ -201,6 +201,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(sure + 1, t.HoleTimeouts, "çökme gelmezse ömür sonunda kapanır");
             Assert.IsFalse(t.BlackHoleSounding);
             Assert.AreEqual(cokme, t.PlayedOf(AudioSoundId.TreeBlackHoleCollapse), "duyulmayan çökme çalınmaz");
+
+            // B1 TreeProcInfo.Seconds: the event's own length wins over the stats (5 s here) for a zone and for the hole.
+            KisaOmur(5f);
+            sure = t.HoleTimeouts;
+            TreeProcInfo kisaAtes = Proc(TreeProcKind.FireGround, Konum(3f, 0f));
+            kisaAtes.Seconds = 0.3f;
+            TreeProcInfo kisaDelik = Proc(TreeProcKind.BlackHoleOpen, Konum(4f, 4f));
+            kisaDelik.Seconds = 0.3f;
+            TreeEvents.RaiseProc(kisaAtes);
+            TreeEvents.RaiseProc(kisaDelik);
+            yield return null;
+            Assert.AreEqual(1, t.ZoneCount);
+            Assert.IsTrue(t.BlackHoleActive);
+            yield return new WaitForSecondsRealtime(0.3f + AudioMixPlan.TreeHoleGrace + AudioMixPlan.TreeLoopFadeOut + 0.3f);
+            Assert.AreEqual(0, t.ZoneCount, "olayın Seconds'ı (0,3 s) istatistiğin 5 s'sini ezer");
+            Assert.AreEqual(sure + 1, t.HoleTimeouts, "kara delik olayın Seconds'ında kapanır");
             Debug.Log("[DD-TEST] wp104.audio loops " + t.Describe());
         }
 
