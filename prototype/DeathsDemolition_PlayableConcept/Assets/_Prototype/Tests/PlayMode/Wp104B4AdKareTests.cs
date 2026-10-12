@@ -44,6 +44,10 @@ namespace DD.Prototype.Tests.PlayMode
     /// straight twin laid by F's SetTdPathForTests, and (optional) a real round turning toward a body at the 25° cone edge whose path
     /// S-02 keeps (TryGetPath) and F's TickTd reads — every new API by reflection ("missing" without it); 27–29 again for M9post with
     /// F's socket glint cards (hidden while the glow-slot mask and M9's raw binding frame render).</item>
+    /// <item>B4-3 (12.10): 37 · 38 S-04's Event Horizon (B6 alternative) — its well orbiting a hero stand-in at two moments of the orbit, 37
+    /// on the whole light stone, 38 on the whole wet slate (the orbit runs on between them: two places on the circle), through the real
+    /// systems the EditMode way (GD-TREE aw_alt_kx stats, TreeSystemsRunner.SetAnchor + Tick once a frame on the 60 Hz game clock, the
+    /// DDOL driver parked) and the binder's LateUpdate; each frame then takes the anchor away and times the set out ("ad" B43-E1).</item>
     /// </list>
     /// Every "alone on black" render (the ground off: the tracer core layer, the halos) is taken beside a bare ground-off render of the
     /// same Unity frame with nothing of the capture queued: coreLeakPx / haloLeakPx count what that bare render holds (0 = the measure saw
@@ -99,15 +103,22 @@ namespace DD.Prototype.Tests.PlayMode
         private static readonly SortedDictionary<int, int> s_coreLeak = new SortedDictionary<int, int>(), s_haloLeak = new SortedDictionary<int, int>();
         private static readonly SortedDictionary<int, float> s_veil = new SortedDictionary<int, float>();
         private static readonly List<SeekM> s_seeks = new List<SeekM>();
+        private static readonly List<HorizonM> s_horizons = new List<HorizonM>();
         private static string s_header, s_blindKey, s_seekMissing, s_realMissing, s_seekNote, s_cardJson;
         private static readonly Color32 Black32 = new Color32(0, 0, 0, 255);
         /// <summary>B4-2 B9 (GD-TREE sh_cap Seeker Swarm): extra shots lock a body inside ExtraShotSeekDegrees 25° up to ProjectileSystem's
         /// SeekRangeMetres 20 m. The capture's body sits at both edges — the nearest an AR round can still reach: 2 · v / ω · sin 25° ≈
         /// 17.5 m at 260 m/s and 720°/s.</summary>
         private const float SeekConeDegrees = 25f, SeekBodyMetres = 20f, SeekBandMetres = 1f;
-        private const string GroupMust = "MUST", GroupShould = "SHOULD", GroupB42 = "B4-2";
+        private const string GroupMust = "MUST", GroupShould = "SHOULD", GroupB42 = "B4-2", GroupB43 = "B4-3";
         /// <summary>The B4-2 summary line (C-00 12.10): S2, S3, S4, M8 at FireUnderAlpha .225, M9post (F's socket card), B9.</summary>
         private static readonly string[] B42Ids = { "S2", "S3", "S4", "M8", "M9post", "B9" };
+        /// <summary>The B4-3 summary line (C-00 12.10): E1, the Event Horizon set on its orbiting well.</summary>
+        private static readonly string[] B43Ids = { "B43-E1" };
+        /// <summary>B4-3 (37 / 38): GD-TREE aw_alt_kx (run-tree-v2.json: radius 2 m, share 0.4, orbit 3 m) and the two moments after the well
+        /// comes up (0.6 s: ≈ 43° on the orbit; 1.8 s after it came up again: ≈ 172° — the angle runs on from where it stopped).</summary>
+        private const float HorizonRadiusM = 2f, HorizonShare = .4f, HorizonOrbitM = 3f;
+        private static readonly float[] HorizonMoments = { .6f, 1.8f };
         private const string AdKabulA1 = "C-00 12.10: M5 A1 AD kabul - ölçülmeye devam (kademe I, ıslak arduvaz)";
         private const string AdKabulA4 = "C-00 12.10: M6 A4 AD kabul - ölçülmeye devam (iki zemin)";
 
@@ -194,6 +205,19 @@ namespace DD.Prototype.Tests.PlayMode
             public float DrawnBendFaintM, DrawnLengthFaintM;
         }
 
+        /// <summary>B4-3: one Event Horizon frame (37 / 38) — what B43-E1 reads. Offsets are world xz from HorizonCenter (the cards) and the
+        /// changed pixels' centroid against HorizonCenter's pixel at the ground's px/m (the drawn centre); FadeS = game seconds from the tick
+        /// that took the anchor away until both cards were back in the pool (NaN: not within 2 s).</summary>
+        private sealed class HorizonM
+        {
+            public int Frame, Ticks, ChangedPx, DrawnPx, AfterPx, PeakCards, PeakHoles, Procs, Sets;
+            public string Ground;
+            public bool Up, Down;
+            public float Moment, TActual, AngleDeg, OrbitM, CoreOffsetM = float.NaN, RingOffsetM = float.NaN, DrawnOffsetM = float.NaN, CoreLiftM = float.NaN;
+            public float CoreCardM = float.NaN, RingCardM = float.NaN, FadeS = float.NaN;
+            public Vector3 Centre;
+        }
+
         /// <summary>One round of a tracer frame (one lane on one ground): what the AD thresholds read.</summary>
         private sealed class RoundM
         {
@@ -263,6 +287,11 @@ namespace DD.Prototype.Tests.PlayMode
         private VfxTierLevel? _previousTier;
         private Camera _previousFeedbackCamera, _previousFireCamera;
         private bool _previousFog, _previousReducedMotion, _previousAsync;
+        // B4-3: the DDOL TreeSystemsDriver frames 37–38 parked (and whether it was there before them: one their own ticks made is
+        // destroyed at the tear-down), TreeSystemsRunner.BeforeTick while it is off, whether the tree systems need a reset
+        private TreeSystemsDriver _parkedDriver;
+        private bool _parkedDriverWasThere, _usedHorizon;
+        private Action _savedBeforeTick;
 
         [OneTimeSetUp]
         public void Once()
@@ -276,6 +305,7 @@ namespace DD.Prototype.Tests.PlayMode
             s_haloLeak.Clear();
             s_veil.Clear();
             s_seeks.Clear();
+            s_horizons.Clear();
             s_header = null;
             s_blindKey = null;
             s_seekMissing = null;
@@ -329,6 +359,21 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator TearDown()
         {
             WriteOutputs();
+            if (_usedHorizon)
+            {
+                TreeSystemsRunner.Reset();   // B4-3: the Horizon down, the systems' statics clean for the next fixture
+                TreeSystemsRunner.BeforeTick = _savedBeforeTick;
+                _savedBeforeTick = null;
+                _usedHorizon = false;
+            }
+
+            if (_parkedDriver != null)
+            {
+                if (_parkedDriverWasThere) _parkedDriver.enabled = true;
+                else Object.Destroy(_parkedDriver.gameObject);   // made by this capture's own ticks: the world as it was found
+            }
+
+            _parkedDriver = null;
             TreeVfxPreview.End();
             VfxClock.ResetForTests();
             TreeRuntime.ClearTestStats();
@@ -754,6 +799,201 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(sidePx, 0, "E4 ışıma penceresi TD rig açısından görünmüyor (glowMaskPx 0)");
             Assert.Greater(glowChanged, 0, "ışıma kareyi değiştirmedi (ekler TD'de çizilmiyor olabilir: visibleRenderers)");
             AssertWritten();
+        }
+
+        // ------------------------------------------------------------------ 37–38 B4-3 Event Horizon (need the AP-041 tree rows)
+
+        /// <summary>
+        /// B4-3 (S-04 7606e452, B6 Event Horizon): the orbiting well's set at two moments of its orbit, one on each whole ground — 37 light
+        /// stone <see cref="HorizonMoments"/>[0] after the well came up, 38 wet slate [1] after it came up again (the angle runs on: two places
+        /// on the circle). S-04's frame is the parked driver's step done here once a frame (TreeSystemsRunner.Tick on the 60 Hz game clock),
+        /// the binder's LateUpdate places the set after it; every capture is taken with no Tick since that LateUpdate, so the cards stand
+        /// where HorizonCenter is. Then the anchor goes (S-04: no player → the well is down) and the set is timed out (B43-E1).
+        /// </summary>
+        [UnityTest, Order(4), Explicit(HedefliKosu), Timeout(180000)]
+        public IEnumerator Kare37_38_OlayUfku_YorungedeIkiAn_IkiZemin()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            TreeVfxBinder binder = Binder();
+            TakeTreeSystems();
+            TreeSystemsRunner.Reset();   // the orbit from angle 0
+            TreeStats s = TreeStats.Neutral;
+            s.WeaponPower = 100f;
+            s.SetBranchTier(TreeBranch.Chaos, 5);
+            s.HorizonRadius = HorizonRadiusM;
+            s.HorizonShare = HorizonShare;
+            s.HorizonOrbit = HorizonOrbitM;
+            TreeRuntime.SetTestStats(s);
+            Transform hero = StandIn("WP104-AD olay ufku kahraman", O, HeroGrey);
+            s_horizons.Clear();
+            yield return null;
+            Physics.SyncTransforms();
+            yield return HorizonFrame(binder, hero, 37, Floor.Light, HorizonMoments[0]);
+            yield return HorizonFrame(binder, hero, 38, Floor.Slate, HorizonMoments[1]);
+            TreeSystemsRunner.Reset();
+            TreeRuntime.ClearTestStats();
+            SetFloor(Floor.Split);
+            AssertWritten();
+        }
+
+        /// <summary>
+        /// One Event Horizon frame: the well down for the dark frame, up on the hero (SetAnchor), ticked once a frame until
+        /// <paramref name="moment"/> game seconds have passed, captured (the cards against HorizonCenter, the drawn centre), then down again
+        /// (ClearAnchor) and the frames counted until both cards are back in the pool.
+        /// </summary>
+        private IEnumerator HorizonFrame(TreeVfxBinder binder, Transform hero, int n, Floor floor, float moment)
+        {
+            SetFloor(floor);
+            ReleaseDecals();
+            TreeSystemsRunner.ClearAnchor();
+            HorizonTick();   // the well down for the dark frame
+            binder.Clear();
+            binder.ResetCountersForTests();
+            yield return null;
+            yield return null;
+            Color32[] dark = Grab(false, true);
+            float veil = GroundVeil(dark);
+            s_veil[n] = veil;
+
+            var m = new HorizonM { Frame = n, Ground = floor == Floor.Light ? KeyStone : KeySlate, Moment = moment };
+            TreeSystemsRunner.SetAnchor(hero.position);
+            float t0 = VfxClock.Now;
+            while (VfxClock.Now - t0 < moment - 1e-4f && m.Ticks < 600)
+            {
+                HorizonTick();   // S-04's frame (the parked driver's step)
+                m.Ticks++;
+                yield return null;   // the binder's LateUpdate placed the set after it
+                m.PeakCards = Mathf.Max(m.PeakCards, Mathf.Max(binder.LiveHorizons, binder.LiveHorizonRings));
+                m.PeakHoles = Mathf.Max(m.PeakHoles, binder.LiveHoles);
+            }
+
+            m.TActual = VfxClock.Now - t0;
+            m.Up = TreeGravityWells.HorizonActive;
+            Vector3 centre = m.Centre = TreeGravityWells.HorizonCenter;   // no Tick since that LateUpdate
+            FlipbookEffect core = binder.HorizonCore, ring = binder.HorizonRing;
+            Color32[] lit = Grab(false, true);
+            Color32[] look = _lookPost ? Grab(true, true) : lit;
+            float ppm = PxPerMetre(0f);
+            Stats all = Region(lit, dark, 0, W - 1, 0, H - 1);
+            Vector2 cpx = Px(centre), drawn = ChangedCentroid(lit, dark, out m.DrawnPx);
+            Radial rad = RadialOf(lit, dark, look, cpx, 0, W - 1);
+            m.ChangedPx = all.Changed;
+            m.AngleDeg = Mathf.Repeat(Mathf.Atan2(centre.z - hero.position.z, centre.x - hero.position.x) * Mathf.Rad2Deg, 360f);
+            m.OrbitM = XzDistance(centre, hero.position);
+            m.Procs = binder.HorizonProcs;
+            m.Sets = binder.HorizonSets;
+            if (core != null)
+            {
+                m.CoreOffsetM = XzDistance(core.transform.position, centre);
+                m.CoreLiftM = core.transform.position.y - centre.y;
+                m.CoreCardM = core.transform.GetChild(0).localScale.x;
+            }
+
+            if (ring != null)
+            {
+                m.RingOffsetM = XzDistance(ring.transform.position, centre);
+                m.RingCardM = ring.transform.GetChild(0).localScale.x;
+            }
+
+            if (m.DrawnPx > 0) m.DrawnOffsetM = (drawn - cpx).magnitude / ppm;
+            int coreFrame = core != null ? core.CurrentFrame : -1;
+            float coreAlpha = core != null ? core.AlphaCap : float.NaN, ringAlpha = ring != null ? ring.AlphaCap : float.NaN;
+
+            // down: the anchor goes (S-04: no player → HorizonActive false, no moment) — both cards back in the pool within 0.3 s
+            TreeSystemsRunner.ClearAnchor();
+            HorizonTick();
+            m.Down = !TreeGravityWells.HorizonActive;
+            float off = VfxClock.Now;
+            for (int f = 0; f < 120 && float.IsNaN(m.FadeS); f++)
+            {
+                yield return null;
+                if (binder.LiveHorizons == 0 && binder.LiveHorizonRings == 0) m.FadeS = VfxClock.Now - off;
+            }
+
+            m.AfterPx = Region(Grab(false, true), dark, 0, W - 1, 0, H - 1).Changed;
+            s_horizons.RemoveAll(h => h.Frame == n);
+            s_horizons.Add(m);
+            AddHalf(n, "eventHorizon", m.Ground, 0, moment, all, ppm, rad, float.NaN);
+
+            string nn = n.ToString("00", CultureInfo.InvariantCulture);
+            string groundSlug = floor == Floor.Light ? "acik-tas" : "islak-arduvaz", groundName = floor == Floor.Light ? "ACIK TAS" : "ISLAK ARDUVAZ";
+            string file = nn + "-olay-ufku-yorunge-" + groundSlug + "-t" + Mathf.RoundToInt(moment * 1000f).ToString("0000", CultureInfo.InvariantCulture) + ".png";
+            string label = nn + " B4-3 OLAY UFKU R" + F(HorizonRadiusM) + " YORUNGE " + F(HorizonOrbitM) + " M, " + Mathf.RoundToInt(m.AngleDeg).ToString(CultureInfo.InvariantCulture)
+                           + " DERECE T+" + moment.ToString("0.00", CultureInfo.InvariantCulture) + "S / " + groundName;
+            string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "eventHorizon"), P("ground", FloorName()), P("groundVeilLevels", veil),
+                P("tTargetS", moment), P("tActualS", m.TActual), P("ticks", m.Ticks), P("clock", "game time, captureDeltaTime 1/60; TreeSystemsRunner.Tick once a frame (the driver parked)"),
+                P("horizonActive", m.Up), P("radiusM", HorizonRadiusM), P("orbitM", m.OrbitM), P("angleDeg", m.AngleDeg), PR("heroXZ", XZ(hero.position)), PR("centreXZ", XZ(centre)),
+                PR("coreXZ", core != null ? XZ(core.transform.position) : "null"), PR("ringXZ", ring != null ? XZ(ring.transform.position) : "null"),
+                P("coreOffsetM", m.CoreOffsetM), P("ringOffsetM", m.RingOffsetM), P("coreLiftM", m.CoreLiftM), P("coreCardM", m.CoreCardM), P("ringCardM", m.RingCardM),
+                P("coreFrame", coreFrame), P("coreAlphaCap", coreAlpha), P("ringAlphaCap", ringAlpha),
+                PR("centrePx", "[" + F(cpx.x) + ", " + F(cpx.y) + "]"), PR("drawnCentrePx", "[" + F(drawn.x) + ", " + F(drawn.y) + "]"), P("drawnPx", m.DrawnPx),
+                P("drawnOffsetM", m.DrawnOffsetM), P("peakLiveCards", m.PeakCards), P("peakLiveHoles", m.PeakHoles), P("horizonProcs", m.Procs), P("horizonSets", m.Sets),
+                P("downAfterTick", m.Down), P("fadeS", m.FadeS), P("afterFadeChangedPx", m.AfterPx), P("nonEmpty", all.Changed > 200),
+                PR("binder", BinderJson(binder)), PR(m.Ground, HalfJson(all, ppm, rad, float.NaN)));
+            AddFrame(n, file, label, look, lit, W, H, Roi(O, 16f), json, FloorMarks());
+            Debug.Log("[DD-TEST] wp104b4.ad " + file + " up=" + m.Up + " angle=" + F(m.AngleDeg) + " coreOff=" + F(m.CoreOffsetM) + " ringOff=" + F(m.RingOffsetM)
+                      + " drawnOff=" + F(m.DrawnOffsetM) + " fade=" + F(m.FadeS) + " changed=" + all.Changed);
+            Assert.IsTrue(m.Up, "kare " + n + ": Olay Ufku açılmadı (HorizonActive)");
+            Assert.AreEqual(HorizonOrbitM, m.OrbitM, .05f, "kare " + n + ": kuyu kahramanın etrafında dönmüyor (merkez " + XZ(centre)
+                                                           + " O'dan) — başka bir TreeSystemsDriver anchor'ı değiştirdi (b43-r1)");
+            Assert.IsNotNull(core, "kare " + n + ": Olay Ufku seti yok (TreeVfxBinder.HorizonCore)");
+            Assert.Greater(all.Changed, 200, "olay ufku " + groundName + ": görsel yok (boş kare)");
+        }
+
+        /// <summary>B4-3: the frame's changed pixels (raw lit vs dark, a channel moved ≥ 0.10 — Region's rule) and their centroid (px).</summary>
+        private static Vector2 ChangedCentroid(Color32[] lit, Color32[] dark, out int n)
+        {
+            double sx = 0, sy = 0;
+            n = 0;
+            for (int y = 0; y < H; y++)
+            {
+                int row = y * W;
+                for (int x = 0; x < W; x++)
+                {
+                    if (MaxAbs(lit[row + x], dark[row + x]) < Moved) continue;
+                    n++;
+                    sx += x + .5;
+                    sy += y + .5;
+                }
+            }
+
+            return n > 0 ? new Vector2((float)(sx / n), (float)(sy / n)) : new Vector2(float.NaN, float.NaN);
+        }
+
+        private static float XzDistance(Vector3 a, Vector3 b) => new Vector2(a.x - b.x, a.z - b.z).magnitude;
+
+        /// <summary>
+        /// B4-3: 37–38 are S-04's driver. b43-r1 (12.10): an earlier fixture's Run scene was still loaded (header.world: Run, 2 scenes). The
+        /// first TreeSystemsRunner.Tick ran BeforeTick (TreeZombieBinding.Sync), which bound that scene's live zombies, and
+        /// TreeStatusSystem.Register made a TreeSystemsDriver (EnsureExists) after the start-of-test park. From the next frame its Update
+        /// re-anchored the well on that scene's player (EnemyTargeting.Player, near the world origin) and ticked it once more a frame: frame
+        /// 37's well orbited ≈ 7.9 km from the rig (centre −5599.9 / 5600.0 from O, 135°, the cards 0.0625 m = one extra tick behind,
+        /// changed 0 px, never down). Now BeforeTick is off (the EditMode way, TreeSystemsTests: no production body binding), every driver
+        /// is parked at the start and after each tick (before its first Update), and the tear-down gives the world back.
+        /// </summary>
+        private void TakeTreeSystems()
+        {
+            _usedHorizon = true;
+            _savedBeforeTick = TreeSystemsRunner.BeforeTick;
+            TreeSystemsRunner.BeforeTick = null;
+            ParkTreeDriver(true);
+        }
+
+        private void ParkTreeDriver(bool atStart)
+        {
+            TreeSystemsDriver driver = Object.FindObjectOfType<TreeSystemsDriver>();
+            if (driver == null || !driver.enabled) return;
+            driver.enabled = false;
+            if (_parkedDriver != null) return;
+            _parkedDriver = driver;
+            _parkedDriverWasThere = atStart;
+        }
+
+        /// <summary>B4-3: one S-04 frame — TreeSystemsRunner.Tick on the game clock, then any driver it made parked before its first Update.</summary>
+        private void HorizonTick()
+        {
+            TreeSystemsRunner.Tick(Time.deltaTime > 0f ? Time.deltaTime : 1f / 60f, Time.time);
+            ParkTreeDriver(false);
         }
 
         /// <summary>
@@ -2577,7 +2817,7 @@ namespace DD.Prototype.Tests.PlayMode
                     P("volumetricLightActive", WorldFlag("DD.Art.VolumetricLight", "Active")), P("screenAtmosphereWorldActive", WorldFlag("DD.Art.ScreenAtmosphereFeature", "WorldActive")),
                     P("note", "the state at the first SetUp: a loaded world (e.g. the Run scene an earlier fixture left) with volumetricLightActive True is the b4-r3 condition; "
                               + "haloLeakPx / coreLeakPx / groundVeilLevels show whether it still reached the frames"))),
-                P("vfxTier", VfxTier.Current.ToString()), P("captureDeltaTime", "1/60 (game time) until the preview frames 21-26, then 0 (real time)"),
+                P("vfxTier", VfxTier.Current.ToString()), P("captureDeltaTime", "1/60 (game time) until the preview frames 21-26, then 0 (real time); 37-38 1/60"),
                 P("fog", false), P("reducedMotion", false),
                 PR("tracerStyle", Constants(typeof(TracerStyle), null)), PR("tracerTd", Constants(typeof(TracerRibbonRenderer), "Td")),
                 PR("ladder", Constants(typeof(TreeVfxLadder), null)),
@@ -2611,7 +2851,13 @@ namespace DD.Prototype.Tests.PlayMode
                     P("maskLumDeltaRaw", "27-28: mean raw luminance over glowMaskPx, FlashScale 1 minus 0 (m9Raw: >= 0.15); m9Post: glowSpotPx >= screenAreaPx; maskLumHdr the same in the ARGBHalf twin"),
                     P("slotEmission", "add-on: _EmissionColor.r in slot 1's MaterialPropertyBlock of its first M_AP040_Glow renderer (the binding's record)"),
                     P("view27to29", "td-rig: the game's TD rig angle (DD_FeelConfig height / back / yaw) at heightM distance - straight down shows no E4 glow slot"),
-                    P("deltaE", "CIE76 on sRGB -> linear -> XYZ (D65) -> L*a*b* (AD-VISUAL §6 A1 / A4)"))));
+                    P("deltaE", "CIE76 on sRGB -> linear -> XYZ (D65) -> L*a*b* (AD-VISUAL §6 A1 / A4)"),
+                    P("eventHorizon", "37-38 (B4-3): S-04's Event Horizon well (TreeGravityWells, GD-TREE aw_alt_kx stats) on a hero stand-in at the frame centre, ticked once a frame "
+                                      + "(TreeSystemsRunner.Tick, game time 1/60, the DDOL driver parked); coreOffsetM / ringOffsetM = the binder's set cards (HorizonCore / HorizonRing) "
+                                      + "from HorizonCenter in world xz; drawnOffsetM = the changed pixels' centroid (lit vs the well-down dark, a channel moved >= 0.10) from "
+                                      + "HorizonCenter's pixel / ground px/m; fadeS = game seconds from the tick that took the anchor away until both cards were back in the pool; "
+                                      + "afterFadeChangedPx = changed pixels left on the frame then; peakLiveCards / peakLiveHoles = the most Horizon cards of one kind / event "
+                                      + "holes alive on any frame while it was up"))));
         }
 
         /// <summary>The public numeric constants / static fields of <paramref name="t"/> (whatever the ladder owners define today).</summary>
@@ -2947,12 +3193,13 @@ namespace DD.Prototype.Tests.PlayMode
                 PR("checks", Arr(Checks)));
         }
 
-        private static string AdJson(out string mustLine, out string shouldLine, out string b42Line)
+        private static string AdJson(out string mustLine, out string shouldLine, out string b42Line, out string b43Line)
         {
-            var crits = new List<Crit> { M1(), M2(), M3(), M4(), M5(), M6(), M7(), M8(), M9(), M10(), S1(), S2(), S3(), S4(), M9Post(), B9() };
+            var crits = new List<Crit> { M1(), M2(), M3(), M4(), M5(), M6(), M7(), M8(), M9(), M10(), S1(), S2(), S3(), S4(), M9Post(), B9(), B43E1() };
             var must = new StringBuilder("AD-B4 MUST:");
             var should = new StringBuilder("AD-B4 SHOULD:");
             var b42 = new StringBuilder("B4-2:");
+            var b43 = new StringBuilder("B4-3:");
             int pass = 0, accepted = 0, fail = 0, open = 0;
             var items = new List<string>();
             foreach (Crit c in crits)
@@ -2976,11 +3223,19 @@ namespace DD.Prototype.Tests.PlayMode
                 b42.Append(' ').Append(id).Append(' ').Append(c != null ? c.Word : "?").Append(" |");
             }
 
+            foreach (string id in B43Ids)
+            {
+                Crit c = crits.Find(x => x.Id == id);
+                b43.Append(' ').Append(id).Append(' ').Append(c != null ? c.Word : "?").Append(" |");
+            }
+
             mustLine = must.ToString().TrimEnd('|', ' ');
             shouldLine = should.ToString().TrimEnd('|', ' ');
             b42Line = b42.ToString().TrimEnd('|', ' ');
-            return Obj(P("source", "K/wp-104/b4-s07/evidence/AD-B4.md §3 MUST / §4 SHOULD (12.10) + B4-2 (C-00 12.10): every threshold evaluated on this run's frames; PASS / FAIL is never asserted"),
+            b43Line = b43.ToString().TrimEnd('|', ' ');
+            return Obj(P("source", "K/wp-104/b4-s07/evidence/AD-B4.md §3 MUST / §4 SHOULD (12.10) + B4-2 / B4-3 (C-00 12.10): every threshold evaluated on this run's frames; PASS / FAIL is never asserted"),
                 P("mustSummary", mustLine), P("shouldSummary", shouldLine), P("b42Summary", b42Line), PR("b42", Strs(new List<string>(B42Ids))),
+                P("b43Summary", b43Line), PR("b43", Strs(new List<string>(B43Ids))),
                 P("mustPass", pass), P("mustAdKabul", accepted), P("mustFail", fail), P("mustOpen", open),
                 P("adKabul", "C-00 12.10: M5 A1 (ΔE ≥ 25, kademe I) and M6 A4 (ΔE ≥ 30, halka r farkı) accepted by the AD — measured on, a miss reads 'AD kabul', "
                              + "the criterion 'AD KABUL' when nothing else fails"),
@@ -3645,6 +3900,54 @@ namespace DD.Prototype.Tests.PlayMode
             return c;
         }
 
+        /// <summary>
+        /// B43-E1 (B4-3, C-00 12.10): the Event Horizon set rides S-04's orbiting well and goes out with it — on frames 37 / 38 (two moments
+        /// of the orbit: light stone, wet slate) both cards' centres within 0.3 m of HorizonCenter (world xz) and the drawn centre (the frame's
+        /// changed pixels) too; once HorizonActive is false both cards back in the pool within 0.3 s and nothing left on the frame; one set,
+        /// never an event hole at the player; the two moments two places on the orbit.
+        /// </summary>
+        private static Crit B43E1()
+        {
+            var c = new Crit("B43-E1", GroupB43, "Olay Ufku: kart merkezi HorizonCenter'a ≤ 0,3 m (iki an), HorizonActive false → ≤ 0,3 s'de söner",
+                "B4-3 (C-00 12.10; S-04 7606e452 TreeGravityWells.HorizonActive / HorizonCenter, GD-TREE aw_alt_kx r " + F(HorizonRadiusM) + " m, yörünge " + F(HorizonOrbitM)
+                + " m) · kare 37 (açık taş, yörüngenin 1. anı), 38 (ıslak arduvaz, 2. an): TreeVfxBinder.LateUpdate seti; kapanış = SetAnchor kalkar (oyuncu yok)");
+            HorizonM[] at = new HorizonM[2];
+            for (int g = 0; g < 2; g++)
+            {
+                int f = 37 + g;
+                HorizonM h = at[g] = s_horizons.Find(x => x.Frame == f);
+                if (h == null)
+                {
+                    c.Missing.Add("kare " + f);
+                    continue;
+                }
+
+                string tag = "kare " + f + " " + GroundTag(g);
+                c.Add(tag + " · HorizonActive (çekimde)", h.Up ? 1f : 0f, "1", h.Up);
+                c.Add(tag + " · kuyu kahramanın yörüngesinde (HorizonCenter − kahraman, xz)", h.OrbitM, F(HorizonOrbitM) + " ±0.05 m",
+                    Mathf.Abs(h.OrbitM - HorizonOrbitM) <= .05f);   // b43-r1: another driver's anchor sent it ≈ 7.9 km away
+                c.Add(tag + " · tekillik kartı merkezi − HorizonCenter (xz)", h.CoreOffsetM, "≤ 0.3 m", h.CoreOffsetM <= .3f);
+                c.Add(tag + " · halka kartı merkezi − HorizonCenter (xz)", h.RingOffsetM, "≤ 0.3 m", h.RingOffsetM <= .3f);
+                c.Add(tag + " · çizilen merkez (değişen piksellerin ağırlık merkezi, " + h.DrawnPx + " px) − HorizonCenter", h.DrawnOffsetM, "≤ 0.3 m", h.DrawnOffsetM <= .3f);
+                c.Add(tag + " · HorizonActive false → iki kart havuzda", h.FadeS, "≤ 0.3 s", h.FadeS <= .3f + 1e-4f);
+                c.Add(tag + " · söndükten sonra karede kalan değişen piksel", h.AfterPx, "≤ 200 (boş kare)", h.AfterPx <= 200);
+                c.Add(tag + " · tek set (canlı tekillik / halka kartı, en çok)", h.PeakCards, "≤ 1", h.PeakCards <= 1);
+                c.Add(tag + " · oyuncuda olay deliği (B6 Hole, en çok)", h.PeakHoles, "0", h.PeakHoles == 0);
+                c.Notes.Add(tag + ": açı " + F(h.AngleDeg) + "°, yörünge " + F(h.OrbitM) + " m, t " + F(h.TActual) + " s (" + h.Ticks + " tik), değişen " + h.ChangedPx
+                            + " px; kart çekirdek " + F(h.CoreCardM) + " m (" + F(h.CoreLiftM) + " m yukarıda), halka " + F(h.RingCardM) + " m; açılış anı " + h.Procs + ", set " + h.Sets);
+            }
+
+            if (at[0] != null && at[1] != null)
+            {
+                float apart = XzDistance(at[0].Centre, at[1].Centre);
+                c.Add("iki an yörüngede iki ayrı yer (merkezler arası, açı " + F(at[0].AngleDeg) + "° / " + F(at[1].AngleDeg) + "°)", apart, "≥ 1 m", apart >= 1f);
+            }
+
+            c.Notes.Add("Çizilen merkez düz aşağı kamerada ölçülür: çekirdek kartı 1 m yukarıda (olay deliğinin isabet yüksekliği), yörüngede kamera ekseninden 3 m uzakta "
+                        + "≈ 0.16 m paralaks taşır; kart merkezleri dünya xz'de ölçülür.");
+            return c;
+        }
+
         // ------------------------------------------------------------------ output: PNG, b4ad.json, contact.png
 
         private void AddFrame(int n, string file, string label, Color32[] img, Color32[] raw, int w, int h, RectInt tile, string json, List<Mark> marks)
@@ -3681,22 +3984,23 @@ namespace DD.Prototype.Tests.PlayMode
         private void WriteOutputs()
         {
             if (string.IsNullOrEmpty(_dir) || s_frames.Count == 0) return;
-            string ad = AdJson(out string mustLine, out string shouldLine, out string b42Line);
+            string ad = AdJson(out string mustLine, out string shouldLine, out string b42Line, out string b43Line);
             var sb = new StringBuilder();
             sb.Append("{\n  \"header\": ").Append(s_header ?? "{}").Append(",\n  \"ad\": ").Append(ad).Append(",\n  \"frames\": [\n");
             int k = 0;
             foreach (Frame f in s_frames.Values) sb.Append(k++ == 0 ? "    " : ",\n    ").Append(f.Json);
             sb.Append("\n  ]\n}\n");
             File.WriteAllText(Path.Combine(_dir, "b4ad.json"), sb.ToString());
-            Debug.Log("[DD-TEST] wp104b4.ad " + mustLine + " || " + shouldLine + " || " + b42Line);
+            Debug.Log("[DD-TEST] wp104b4.ad " + mustLine + " || " + shouldLine + " || " + b42Line + " || " + b43Line);
 
-            const int band = 3 * LabelH + 10;   // the MUST / SHOULD / B4-2 summary above the tiles
+            const int band = 4 * LabelH + 10;   // the MUST / SHOULD / B4-2 / B4-3 summary above the tiles
             int rows = (s_frames.Count + Columns - 1) / Columns, cellH = TH + LabelH, sw = Columns * TW, sh = rows * cellH + band;
             var sheet = new Color32[sw * sh];
             for (int i = 0; i < sheet.Length; i++) sheet[i] = new Color32(18, 18, 20, 255);
             Text(sheet, sw, sh, 8, sh - 6, mustLine, 2, Ink, false, sw - 16);
             Text(sheet, sw, sh, 8, sh - 6 - LabelH, shouldLine, 2, Ink, false, sw - 16);
             Text(sheet, sw, sh, 8, sh - 6 - 2 * LabelH, b42Line, 2, Ink, false, sw - 16);
+            Text(sheet, sw, sh, 8, sh - 6 - 3 * LabelH, b43Line, 2, Ink, false, sw - 16);
             k = 0;
             foreach (Frame f in s_frames.Values)
             {

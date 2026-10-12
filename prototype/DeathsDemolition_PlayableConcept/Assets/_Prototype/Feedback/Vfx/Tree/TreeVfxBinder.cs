@@ -21,6 +21,8 @@ namespace DD.Prototype.Feedback.Vfx
         public static readonly ProfilerMarker Ink = new ProfilerMarker("WP104.Vfx.Ink");
         /// <summary>B4-2: the one-time procedural textures (the T3 washi edge, the aura III inner line), built at configure.</summary>
         public static readonly ProfilerMarker Procedural = new ProfilerMarker("WP104.Vfx.Procedural");
+        /// <summary>B4-3: the Event Horizon set following S-04's orbiting well (TreeVfxBinder.LateUpdate).</summary>
+        public static readonly ProfilerMarker Horizon = new ProfilerMarker("WP104.Vfx.Horizon");
     }
 
     /// <summary>
@@ -94,6 +96,14 @@ namespace DD.Prototype.Feedback.Vfx
     /// <list type="bullet">
     /// <item>A9 — B5 + B8 ≤ 8, B6 ≤ 1, B7 ≤ 1, tree scorches ≤ 12 (the oldest fades), sumi ≤ 3; over a cap the visual MERGES (a live blast
     /// re-pops × 1.1) — power is the gameplay's, never dropped there; a visual that has nowhere to merge is skipped (K9 order).</item>
+    /// <item>B4-3 — S-04's Event Horizon (B6 alternative, Chaos V; 7606e452) is one small well that never collapses and orbits the player:
+    /// its open moment (BlackHoleOpen at the player, Seconds 0 — <see cref="IsHorizonOpen"/>) draws no event hole; its own set (the B6
+    /// singularity + rings at TreeStats.HorizonRadius) rides TreeGravityWells.HorizonCenter every LateUpdate and fades out within
+    /// <see cref="HorizonFadeSeconds"/> once HorizonActive is false; up again, still one set. Decision (A9): B6 ≤ 1 counts the event hole;
+    /// the Horizon's set is its own ≤ 1 beside it. GD-TREE puts aw_alt_kx under kx_mass, which most builds reach through kx_hole (4.5 s
+    /// cooldown, 2.5 s hole): sharing one slot would either hide Black Hole Rounds for the rest of the run or blink the Horizon off for
+    /// 2.5 s of every 4.5 s while its pull goes on. On screen: one event B6 + one Horizon set at most (the Horizon's r 2 m against the
+    /// hole's 3 m, no ensō, no element rim).</item>
     /// <item>K6 — explosive round + chain blast on one hit (≤ <see cref="SameHitRadius"/> m and ≤ <see cref="SameHitSeconds"/> s apart —
     /// S-04's queue presents the death's chain blast at least a frame later): B8 only. Barrage (AD §4.2) — the third explosive or
     /// cluster-part blast within 3 m / 0.25 s folds into one × 1.1.</item>
@@ -104,8 +114,9 @@ namespace DD.Prototype.Feedback.Vfx
     /// (≤ 3 / s, WCAG 2.3.1) in every mode. Reduced Motion: a static ensō for 0.6 s, one static dodge silhouette.</item>
     /// </list>
     /// Hot path 0 B: rows resolved once per configure, own pool (<see cref="PoolCapacity"/>, prewarmed, RecycleOldest), fixed slot
-    /// tables, a 32-entry delay queue (dodge ghosts, the per-frame spawn budget <see cref="MaxSpawnsPerFrame"/>). Marker
-    /// <c>WP104.Vfx.Binder</c>. <c>-ddTreeVfxOff</c> (development / Editor) keeps it disarmed for the ABBA perf run.
+    /// tables, a 32-entry delay queue (dodge ghosts, the per-frame spawn budget <see cref="MaxSpawnsPerFrame"/>). Markers
+    /// <c>WP104.Vfx.Binder</c> and <c>WP104.Vfx.Horizon</c> (B4-3, the orbit follow). <c>-ddTreeVfxOff</c> (development / Editor) keeps it
+    /// disarmed for the ABBA perf run (no Horizon set either).
     /// </summary>
     [DefaultExecutionOrder(960)]
     public sealed class TreeVfxBinder : MonoBehaviour
@@ -145,6 +156,20 @@ namespace DD.Prototype.Feedback.Vfx
         public const float WashiBelowMetres = .005f, CloudUnderBelowMetres = .01f;
         /// <summary>The sumi layer's α cap and fade-out share (every T3 / T4 / T5 card) and the venom cloud's (its underdraw shares both).</summary>
         public const float InkAlpha = .8f, InkFadeOut = .4f, CloudAlpha = .6f, CloudFadeOut = .35f;
+        /// <summary>B6: the singularity card's share of the hole's diameter 2 r and the attraction rings' α cap (event hole and Event Horizon).</summary>
+        public const float HoleCoreShare = .67f, HoleRingAlpha = .8f;
+        /// <summary>
+        /// B4-3 · the Event Horizon set: the core card <see cref="HorizonCoreLift"/> above the orbiting centre (an event hole's hit point is a
+        /// body hit, ≈ 1 m: the core floats over its rings as there, and a 2.7 m camera-facing card stays clear of the floor under the TD
+        /// rig), the rings on the ground under it; both live <see cref="HorizonHoldSeconds"/> (a card whose life ran out is placed again the
+        /// same frame), grow in from <see cref="HorizonGrowFrom"/> over <see cref="HorizonGrowSeconds"/> when the well comes up and fade out
+        /// over <see cref="HorizonFadeSeconds"/> (≤ 0.3 s, B43-E1) when it goes down.
+        /// </summary>
+        public const float HorizonCoreLift = 1f, HorizonHoldSeconds = 3600f, HorizonGrowFrom = .35f, HorizonGrowSeconds = .3f, HorizonFadeSeconds = .25f;
+        public const float HorizonCoreAlpha = 1f;
+        /// <summary>B4-3: the singularity's held cell — AP-041 H_B6 frames 3–7 carry the peak core (0.5 m #101319 at α 0.85, the validated
+        /// light-stone step); a well that never collapses stays on it (the rings under it keep their 24 fps loop).</summary>
+        public const int HorizonCoreFrame = 5;
         // AD-B4 S3: washi cream, its α the coverage scale (the rim texture peaks at 1; the cap holds the same α)
         private static readonly Color s_washiTint = new Color(TreeVfxLadder.InkWashiTint.r, TreeVfxLadder.InkWashiTint.g, TreeVfxLadder.InkWashiTint.b,
             TreeVfxLadder.InkWashiAlpha);
@@ -152,13 +177,14 @@ namespace DD.Prototype.Feedback.Vfx
         private enum Fam
         {
             Blast = 0, Nuke, NukeShock, Glint, Hole, HoleRing, HoleEnso, Endless, Sumi, Crit, ElementHit, Coating, Cloud, Thread, Ghost,
-            Ceremony, Misc, ShieldHit, Under, Washi, CloudUnder, Count
+            Ceremony, Misc, ShieldHit, Under, Washi, CloudUnder, Horizon, HorizonRing, Count
         }
 
         // A9 / K9 caps per family (sum stays under the High pool of 48 in any realistic frame); Under: the threads' jade underdraws;
-        // Washi / CloudUnder (B4-2 S3 / S4): one per T3 ink ring / venom cloud, the same caps as theirs
+        // Washi / CloudUnder (B4-2 S3 / S4): one per T3 ink ring / venom cloud, the same caps as theirs; Horizon / HorizonRing (B4-3):
+        // the Event Horizon's one set, beside the event hole's B6 (see the class notes)
         private static readonly int[] s_caps = { 8, 1, 1, 1, 1, 1, 1, 1, 3, 4, 6, 6, TreeGuardrails.VenomCloudsActive, 4, 4, 2, 6, 1, 4, 3,
-            TreeGuardrails.VenomCloudsActive };
+            TreeGuardrails.VenomCloudsActive, 1, 1 };
 
         private const int RecentAny = 0, RecentExplosive = 1, RecentChain = 2;
         private const int CeremonyHeal = 0, CeremonyLevelUp = 1, CeremonyUndying = 2, CeremonySynergy = 3;
@@ -223,6 +249,13 @@ namespace DD.Prototype.Feedback.Vfx
         private int _lastTiers;
         private bool _pendingHeal;
         private FlipbookEffect _endlessFx;
+        // B4-3: the Event Horizon set (LateUpdate keeps it on TreeGravityWells.HorizonCenter) on its own runtime rows (EnsureHorizonRows);
+        // the fade's start (−1 = not fading); the well's state at the last LateUpdate (its rising edge grows the set in; a set placed
+        // again while the well stays up does not)
+        private FlipbookEffect _horizonCore, _horizonRing;
+        private VfxCatalogEntry _horizonCoreRow, _horizonRingRow;
+        private float _horizonFadeFrom = -1f;
+        private bool _horizonWasUp;
 
         public static TreeVfxBinder Instance => s_instance;
 
@@ -260,11 +293,25 @@ namespace DD.Prototype.Feedback.Vfx
         public Color VenomUnderTint => _venomUnderTint;
         /// <summary>Endless Window is open (S-06 reads it for the E2 mask's ≤ 1 Hz indigo pulse).</summary>
         public static bool EndlessWindowActive { get; private set; }
+        /// <summary>B4-3: Event Horizon open moments told apart (<see cref="IsHorizonOpen"/>): no event hole drawn for them.</summary>
+        public int HorizonProcs { get; private set; }
+        /// <summary>B4-3: times the Horizon set (or a missing card of it) was placed — the well came up, or its card was gone while it stayed up.</summary>
+        public int HorizonSets { get; private set; }
 
         public int PlayedByKind(TreeProcKind kind) => (int)kind >= 0 && (int)kind < _byKind.Length ? _byKind[(int)kind] : 0;
         public int LiveBlasts => Live(Fam.Blast);
         public int LiveNukes => Live(Fam.Nuke);
         public int LiveHoles => Live(Fam.Hole);
+        /// <summary>B4-3: the Event Horizon's singularity / rings cards alive (≤ 1 each).</summary>
+        public int LiveHorizons => Live(Fam.Horizon);
+        public int LiveHorizonRings => Live(Fam.HorizonRing);
+        /// <summary>B4-3: the live Horizon set's cards (null when there is none) and whether it is fading out.</summary>
+        public FlipbookEffect HorizonCore => Own(_horizonCore, _horizonCoreRow) ? _horizonCore : null;
+        public FlipbookEffect HorizonRing => Own(_horizonRing, _horizonRingRow) ? _horizonRing : null;
+        public bool HorizonFading => _horizonFadeFrom >= 0f;
+        /// <summary>B4-3: the Horizon's runtime rows (the B6 singularity / rings entries copied; null until those rows are in the catalog).</summary>
+        public VfxCatalogEntry HorizonCoreRow => _horizonCoreRow;
+        public VfxCatalogEntry HorizonRingRow => _horizonRingRow;
         public int LiveCrits => Live(Fam.Crit);
         public int LiveSumi => Live(Fam.Sumi);
         public int LiveClouds => Live(Fam.Cloud);
@@ -323,6 +370,7 @@ namespace DD.Prototype.Feedback.Vfx
             RowsResolved = resolved;
             RowsReady = resolved == (int)TreeVfxRow.Count;
             EnsureWashi();
+            EnsureHorizonRows();
             _venomUnderTint = TreeVfxLadder.HdrTint(TreeVfxLadder.VenomUnderTint, TreeVfxLadder.VenomUnderGain, TreeVfxLadder.VenomUnderCoverage);
             if (_pool == null)
             {
@@ -417,6 +465,43 @@ namespace DD.Prototype.Feedback.Vfx
             };
         }
 
+        /// <summary>
+        /// B4-3: the Event Horizon's own rows — the B6 singularity / rings entries copied (the same material, texture and sheet data: no new
+        /// asset). The pool's RecycleOldest takes the oldest live card first, which is a persistent Horizon card: if the event hole's own B6
+        /// spawn got that instance, a row check alone would take the event hole's card for the Horizon's and drag it onto the orbit. Kept
+        /// across configures (a copy is made again only when its B6 row changed; a set on the old copy goes back to the pool first).
+        /// </summary>
+        private void EnsureHorizonRows()
+        {
+            VfxCatalogEntry core = HorizonRow(_rows[(int)TreeVfxRow.B6Singularity], _horizonCoreRow, "rt_ap041t_b6_horizon_singularity");
+            VfxCatalogEntry ring = HorizonRow(_rows[(int)TreeVfxRow.B6Rings], _horizonRingRow, "rt_ap041t_b6_horizon_rings");
+            if (core != _horizonCoreRow || ring != _horizonRingRow)
+            {
+                DespawnFamily(Fam.Horizon);
+                DespawnFamily(Fam.HorizonRing);
+                _horizonCore = _horizonRing = null;
+            }
+
+            _horizonCoreRow = core;
+            _horizonRingRow = ring;
+        }
+
+        private static VfxCatalogEntry HorizonRow(VfxCatalogEntry b6, VfxCatalogEntry have, string id)
+        {
+            if (b6 == null) return null;
+            if (have != null && have.Material == b6.Material && have.Texture == b6.Texture && have.FramesUsed == b6.FramesUsed) return have;
+            return new VfxCatalogEntry
+            {
+                Id = id, Family = b6.Family, Kind = b6.Kind, Texture = b6.Texture, Material = b6.Material, Columns = b6.Columns, Rows = b6.Rows,
+                FramesUsed = b6.FramesUsed, Fps = b6.Fps, DurationSeconds = b6.DurationSeconds, Loop = b6.Loop, WorldSizeMetres = b6.WorldSizeMetres,
+                WorldHeightMetres = b6.WorldHeightMetres, OriginUv = b6.OriginUv, Premultiplied = b6.Premultiplied, Additive = b6.Additive,
+                DefaultTint = b6.DefaultTint, HdrIntensity = b6.HdrIntensity
+            };
+        }
+
+        /// <summary>B4-3: <paramref name="fx"/> is still the Horizon's card on <paramref name="row"/> (one of its own rows).</summary>
+        private static bool Own(FlipbookEffect fx, VfxCatalogEntry row) => row != null && fx != null && fx.IsSpawned && ReferenceEquals(fx.Row, row);
+
         /// <summary>Tests: re-subscribe after a fixture cleared the static buses.</summary>
         public void Rearm()
         {
@@ -487,7 +572,9 @@ namespace DD.Prototype.Feedback.Vfx
             if (!_configured) return false;
             BeginFrame();
             int frame = Time.frameCount;
-            if (_spawnsThisFrame >= MaxSpawnsPerFrame && Deferrable(info.Kind))
+            // B4-3: the Event Horizon's open is never deferred — it draws nothing here, and a late dispatch after the well went down
+            // would be taken for an event hole at the player
+            if (_spawnsThisFrame >= MaxSpawnsPerFrame && Deferrable(info.Kind) && !(info.Kind == TreeProcKind.BlackHoleOpen && IsHorizonOpen(info.Seconds)))
             {
                 return Defer(info.Kind, info.Point, info.Radius, info.Element, info.Tier, info.Depth, info.Synergy, info.Seconds, 0f, frame);
             }
@@ -695,6 +782,14 @@ namespace DD.Prototype.Feedback.Vfx
 
         private bool HoleOpen(Vector3 p, float radius, int tier, TreeElement element, float seconds)
         {
+            // B4-3: S-04's Event Horizon raises its open at the player with Seconds 0 — no event hole there: its set is LateUpdate's,
+            // on the orbit (FollowHorizon)
+            if (IsHorizonOpen(seconds))
+            {
+                HorizonProcs++;
+                return true;
+            }
+
             if (Live(Fam.Hole) > 0)
             {
                 Merged++;   // TreeGuardrails.BlackHolesActive = 1
@@ -704,9 +799,9 @@ namespace DD.Prototype.Feedback.Vfx
             float hold = seconds > 0f ? seconds : TreeRuntime.Current.HoleSeconds > 0f ? TreeRuntime.Current.HoleSeconds : 2.5f;
             Vector3 g = Ground(p);
             Spawn(TreeVfxRow.B6Singularity, Fam.Hole, p, Quaternion.identity, FlipbookEffect.Facing.Camera,
-                RadiusSize(TreeVfxRow.B6Singularity, radius, tier, .67f), Color.white, 1f, .2f, hold);
+                RadiusSize(TreeVfxRow.B6Singularity, radius, tier, HoleCoreShare), Color.white, 1f, .2f, hold);
             Spawn(TreeVfxRow.B6Rings, Fam.HoleRing, g + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed,
-                RadiusSize(TreeVfxRow.B6Rings, radius, tier, 1f), Color.white, .8f, .2f, hold);
+                RadiusSize(TreeVfxRow.B6Rings, radius, tier, 1f), Color.white, HoleRingAlpha, .2f, hold);
             // IV: the ensō attraction ring over the physical singularity (centre kept clear by the sheet)
             if (TreeVfxLadder.SumiFor(tier, true) == TreeVfxLadder.Sumi.Enso)
             {
@@ -717,6 +812,16 @@ namespace DD.Prototype.Feedback.Vfx
             if (element != TreeElement.None) SecondaryHit(TreeVfxLadder.PickElement(element, TracerStyle.DominantElement), p, tier);   // K2 stand-in
             return true;
         }
+
+        /// <summary>
+        /// B4-3: a BlackHoleOpen moment is the Event Horizon's own (S-04 7606e452, TreeGravityWells.TickHorizon) when it carries no length
+        /// while the orbiting well is up. Both halves are S-04's code, not a guess: TickHorizon sets HorizonActive before it raises (TreeEvents
+        /// is synchronous) and raises Seconds 0 (a well that never collapses has no length), while TreeGravityWells.Open refuses HoleSeconds
+        /// ≤ 0 and raises Seconds = HoleSeconds — so an event hole is never taken for the Horizon, even while the Horizon is up. Point (the
+        /// player) and Radius (it may equal HoleRadius) tell nothing apart. The diorama's moments are never the world's well (TreeVfxPreview:
+        /// the world's ticks stand still); a Seconds-0 moment with no Horizon up (the diorama, a test) keeps the event-hole fallback.
+        /// </summary>
+        private static bool IsHorizonOpen(float seconds) => seconds <= 0f && TreeGravityWells.HorizonActive && !TreeVfxPreview.Active;
 
         private bool HoleCollapse(Vector3 p, float radius, int tier, TreeElement element, TreeSynergy synergy)
         {
@@ -1486,6 +1591,124 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        // ------------------------------------------------------------------ B4-3 Event Horizon (S-04 B6 alternative)
+
+        /// <summary>
+        /// B4-3 · S-04's Event Horizon: one small persistent well orbiting the player. TreeGravityWells moves it in TreeSystemsDriver's
+        /// Update (order 61) and raises nothing when it moves or goes down, so its set is kept here, after every Update (S-04's tick
+        /// lands the same frame whatever its order): the B6 singularity <see cref="HorizonCoreLift"/> above HorizonCenter, the rings on the
+        /// ground under it (2 r: the pull area). Down (no player, the node gone, a run reset): the set fades out over
+        /// <see cref="HorizonFadeSeconds"/>; up again while it fades: the same set comes back (one set). Idle (no well, no set): three reads.
+        /// </summary>
+        private void LateUpdate()
+        {
+            bool up = TreeGravityWells.HorizonActive;
+            if (DevOff || (!up && !_horizonWasUp && _horizonCore == null && _horizonRing == null)) return;   // -ddTreeVfxOff: no set either
+            using (TreeVfxMarkers.Horizon.Auto()) FollowHorizon(up);
+        }
+
+        private void FollowHorizon(bool up)
+        {
+            bool rising = up && !_horizonWasUp;
+            _horizonWasUp = up;
+            if (!_configured) return;
+            if (!Own(_horizonCore, _horizonCoreRow)) _horizonCore = null;   // Clear, the pool's RecycleOldest, its life ran out
+            if (!Own(_horizonRing, _horizonRingRow)) _horizonRing = null;
+            if (!up)
+            {
+                FadeHorizon();
+                return;
+            }
+
+            if (_horizonFadeFrom >= 0f)
+            {
+                // up again while it fades: the same set comes back (A9: one Horizon set)
+                _horizonFadeFrom = -1f;
+                if (_horizonCore != null) _horizonCore.SetAlphaCap(HorizonCoreAlpha);
+                if (_horizonRing != null) _horizonRing.SetAlphaCap(HoleRingAlpha);
+            }
+
+            Vector3 c = TreeGravityWells.HorizonCenter;
+            Vector3 g = Ground(c);
+            if (_horizonCore == null || _horizonRing == null) SpawnHorizon(c, g, rising && _horizonCore == null && _horizonRing == null);
+            if (_horizonCore != null) _horizonCore.transform.position = c + Vector3.up * HorizonCoreLift;
+            if (_horizonRing != null) _horizonRing.transform.position = g + Vector3.up * FeetLift;
+        }
+
+        /// <summary>B4-3: the well is down — its set fades over <see cref="HorizonFadeSeconds"/> (presentation clock), then goes back to the pool.</summary>
+        private void FadeHorizon()
+        {
+            if (_horizonCore == null && _horizonRing == null)
+            {
+                _horizonFadeFrom = -1f;
+                return;
+            }
+
+            float now = VfxClock.Now;
+            if (_horizonFadeFrom < 0f) _horizonFadeFrom = now;
+            float k = 1f - (now - _horizonFadeFrom) / HorizonFadeSeconds;
+            if (k <= 1e-3f)
+            {
+                if (_horizonCore != null) _horizonCore.Despawn();
+                if (_horizonRing != null) _horizonRing.Despawn();
+                _horizonCore = _horizonRing = null;
+                _horizonFadeFrom = -1f;
+                return;
+            }
+
+            if (_horizonCore != null) _horizonCore.SetAlphaCap(HorizonCoreAlpha * k);
+            if (_horizonRing != null) _horizonRing.SetAlphaCap(HoleRingAlpha * k);
+        }
+
+        /// <summary>
+        /// B4-3: the Horizon cards that are not there — the event hole's sheets at the well's own radius (TreeStats.HorizonRadius, the radius
+        /// S-04's pull queries; GD-TREE aw_alt_kx 2 m: a 2.7 m core card over a 4 m ring), held <see cref="HorizonHoldSeconds"/>, the core on
+        /// its peak cell (<see cref="HorizonCoreFrame"/>). <paramref name="open"/> (the well just came up, nothing left of an old set): both
+        /// grow in. Not in the catalog: nothing (and nothing counted every frame).
+        /// </summary>
+        private void SpawnHorizon(Vector3 c, Vector3 g, bool open)
+        {
+            ref readonly TreeStats s = ref TreeRuntime.Current;
+            float radius = s.HorizonRadius;
+            int tier = TreeVfxLadder.BranchTier(in s, TreeBranch.Chaos);
+            VfxCatalogEntry coreRow = _horizonCoreRow, ringRow = _horizonRingRow;   // the B6 sheets on the Horizon's own rows
+            bool placed = false;
+            if (_horizonCore == null && coreRow != null)
+            {
+                float size = RadiusSize(TreeVfxRow.B6Singularity, radius, tier, HoleCoreShare);
+                _horizonCore = Place(coreRow, Fam.Horizon, c + Vector3.up * HorizonCoreLift, Quaternion.identity, FlipbookEffect.Facing.Camera, size,
+                    Color.white, HorizonCoreAlpha, 0f, HorizonHoldSeconds);
+                if (_horizonCore != null)
+                {
+                    _horizonCore.HoldFrame(HorizonCoreFrame);   // a well that never collapses: the peak core, still
+                    if (open) GrowIn(_horizonCore, size);
+                    placed = true;
+                }
+            }
+
+            if (_horizonRing == null && ringRow != null)
+            {
+                float size = RadiusSize(TreeVfxRow.B6Rings, radius, tier, 1f);
+                _horizonRing = Place(ringRow, Fam.HorizonRing, g + Vector3.up * FeetLift, Flat, FlipbookEffect.Facing.Fixed, size, Color.white,
+                    HoleRingAlpha, 0f, HorizonHoldSeconds);
+                if (_horizonRing != null)
+                {
+                    if (open) GrowIn(_horizonRing, size);
+                    placed = true;
+                }
+            }
+
+            if (placed) HorizonSets++;
+        }
+
+        /// <summary>B4-3: grow a card placed this LateUpdate from <see cref="HorizonGrowFrom"/> of its size — SetGrow scales from the card's
+        /// next tick, so the card starts small now (its first rendered frame is never the full size).</summary>
+        private static void GrowIn(FlipbookEffect fx, float size)
+        {
+            fx.SetGrow(size * HorizonGrowFrom, HorizonGrowSeconds);
+            fx.SetStretch(HorizonGrowFrom, HorizonGrowFrom);
+        }
+
         /// <summary>Scene change / preview end / tests: every tree effect back to the pool, queues emptied.</summary>
         public void Clear()
         {
@@ -1498,6 +1721,9 @@ namespace DD.Prototype.Feedback.Vfx
                 _scorchRows[i] = null;
             }
             _endlessFx = null;
+            // B4-3: the Horizon set went with its families; a well still up gets it back at the next LateUpdate (no grow: it never went down)
+            _horizonCore = _horizonRing = null;
+            _horizonFadeFrom = -1f;
             _ceremonyUntil = -1f;
             _ceremonyPriority = -1;
             EndlessWindowActive = false;
@@ -1508,6 +1734,7 @@ namespace DD.Prototype.Feedback.Vfx
         {
             ProcsSeen = Played = Merged = Replaced = Dropped = Deferred = Missing = CeremoniesPlayed = CeremoniesDropped = 0;
             FireZonesFed = LeechUnresolved = 0;
+            HorizonProcs = HorizonSets = 0;
             Array.Clear(_byKind, 0, _byKind.Length);
             _synergyShown = TreeSynergy.None;
             LastSpawned = null;

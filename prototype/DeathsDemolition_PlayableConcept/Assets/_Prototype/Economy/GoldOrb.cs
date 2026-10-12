@@ -146,6 +146,7 @@ namespace DD.Prototype.Economy
             transform.position = _hopFrom;
 
             _baseScale = _tuning.ScaleForAmount(_packet.Amount);
+            _baseScale *= DD.Prototype.Feedback.Vfx.TreeGoldOrbCue.Arm(this, ref _koban, _baseScale, _tuning.Color, transactionId);   // WP-104 B4-3 koban: tree GoldScale > 1 → ×1.25 + glint, else ×1
 
             EnsureVisual();
             ApplyColor(_tuning.Color);
@@ -190,6 +191,8 @@ namespace DD.Prototype.Economy
 
         protected override void OnDespawned()
         {
+            if (_koban != null) _koban.Off();   // WP-104 B4-3: the koban glint leaves with the life
+
             if (_ap010 != null)
             {
                 _ap010.SetPulling(false, Vector3.zero);
@@ -607,6 +610,7 @@ namespace DD.Prototype.Economy
         }
 
         private DD.Prototype.Feedback.Vfx.GoldPackVisual _ap010;
+        private DD.Prototype.Feedback.Vfx.TreeGoldOrbCue _koban;   // WP-104 B4-3 (S-07): null until the body's first koban life
 
         private void BuildLight()
         {

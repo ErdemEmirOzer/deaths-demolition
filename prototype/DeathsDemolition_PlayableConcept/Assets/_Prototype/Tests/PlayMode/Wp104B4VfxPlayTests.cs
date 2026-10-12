@@ -41,6 +41,10 @@ namespace DD.Prototype.Tests.PlayMode
     /// <item>S-06's add-on glow: a real WeaponAttachMount (ar_1, DD_WeaponAttach) — E4 fire III and E5 V take 0.6 / 1.5 on their
     /// M_AP040_Glow slot through a MaterialPropertyBlock, × FlashScale, black while hidden, the electric capsule counted slotless,
     /// the per-frame poll 0 B (ignored while DD_WeaponAttach is not built).</item>
+    /// <item>B4-3: S-04's Event Horizon (B6 alternative, TreeGravityWells.HorizonActive / HorizonCenter) through the real systems the
+    /// EditMode way (test stats + SetAnchor + TreeSystemsRunner.Tick, the DDOL driver parked, 60 Hz game time): its open moment at the
+    /// player draws no event hole, the B6 set rides the orbit every frame at the small well's size, a Black Hole Round's event hole stands
+    /// beside it (A9 decision) and its collapse leaves it; down → gone within 0.3 s; up again while it fades → the same set; 0 B.</item>
     /// </list>
     /// TD only; synthetic positions far from any scene (O); the tracer fixture is the WP-093 pattern (own instance, the global one parked).
     /// </summary>
@@ -55,7 +59,12 @@ namespace DD.Prototype.Tests.PlayMode
         private TracerRibbonRenderer _tracer, _previousTracer;
         private bool _previousTracerEnabled, _previousInterimTrails, _hasTracerFixture;
         private CameraMode _previousMode;
-        private float _previousFlash, _previousTimeScale;
+        private float _previousFlash, _previousTimeScale, _previousCaptureDelta;
+        // B4-3: the DDOL TreeSystemsDriver a Horizon test parked (and whether it was there before it: one the test's own ticks made is
+        // destroyed at the tear-down), TreeSystemsRunner.BeforeTick while it is off, whether the tree systems need a reset
+        private TreeSystemsDriver _parkedDriver;
+        private bool _parkedDriverWasThere, _usedHorizon;
+        private Action _savedBeforeTick;
 
         [SetUp]
         public void SetUp()
@@ -64,6 +73,7 @@ namespace DD.Prototype.Tests.PlayMode
             _previousMode = CameraModeService.Current;
             _previousFlash = GameFeelSettings.FlashScale;
             _previousTimeScale = Time.timeScale;
+            _previousCaptureDelta = Time.captureDeltaTime;
             SetModeState(CameraMode.TopDown);
             GameFeelSettings.FlashScale = 1f;
             VfxClock.ResetForTests();
@@ -73,6 +83,22 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            if (_usedHorizon)
+            {
+                TreeSystemsRunner.Reset();   // B4-3: the Horizon down, the systems' statics clean for the next fixture
+                TreeSystemsRunner.BeforeTick = _savedBeforeTick;
+                _savedBeforeTick = null;
+                _usedHorizon = false;
+            }
+
+            if (_parkedDriver != null)
+            {
+                if (_parkedDriverWasThere) _parkedDriver.enabled = true;
+                else Object.Destroy(_parkedDriver.gameObject);   // made by the test's own ticks: the world as it was found
+            }
+
+            _parkedDriver = null;
+            Time.captureDeltaTime = _previousCaptureDelta;
             TreeVfxPreview.End();
             VfxClock.ResetForTests();
             TreeRuntime.ClearTestStats();
@@ -668,6 +694,177 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(InkWashiSheet.RimAlpha(15, InkWashiSheet.Outer10(15)), Is.LessThan(.05f), "mürekkep sönünce kenar da söner");
         }
 
+        // ------------------------------------------------------------------ B4-3: S-04's Event Horizon (B6 alternative)
+
+        /// <summary>
+        /// B4-3 · S-04 7606e452: Event Horizon's well orbits the player and raises BlackHoleOpen at the player with Seconds 0 once. Through
+        /// the real systems: no event hole at the player (the old 2.5 s fallback), the B6 set on HorizonCenter every frame (the core
+        /// <see cref="TreeVfxBinder.HorizonCoreLift"/> up, the rings on the ground) at the small well's size (TreeStats.HorizonRadius 2 m
+        /// with the event hole's shares), held on its peak cell; a Black Hole Round's event hole beside it in its own slot (A9 decision) and
+        /// its collapse leaving the set; a duplicate open moment no second set; the follow, the re-placing after a Clear and the moment 0 B.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Proc_OlayUfku_SetYorungeyiIzler_OyuncudaDelikYok_OlayDeligiYaninda_0B()
+        {
+            TreeVfxBinder binder = Binder();
+            Vector3 hero = O + new Vector3(-40f, 0f, -40f);
+            StartHorizon();
+            yield return null;
+
+            TreeSystemsRunner.SetAnchor(hero);
+            HorizonTick();   // up: S-04 raises the open moment at the player, Seconds 0
+            Assert.That(TreeGravityWells.HorizonActive, Is.True);
+            Assert.That(binder.PlayedByKind(TreeProcKind.BlackHoleOpen), Is.EqualTo(1), "S-04: tek açılış anı");
+            Assert.That(binder.HorizonProcs, Is.EqualTo(1), "Seconds 0 + HorizonActive: Olay Ufku açılışı ayırt edildi");
+            Assert.That(binder.LiveHoles, Is.Zero, "oyuncunun durduğu yerde sabit kara delik yok (eski 2,5 s yedek)");
+            yield return null;   // the LateUpdate after the tick placed the set on the orbit
+            FlipbookEffect core = binder.HorizonCore, ring = binder.HorizonRing;
+            Assert.That(core, Is.Not.Null, "B6 tekillik kartı");
+            Assert.That(ring, Is.Not.Null, "B6 çekim halkaları");
+            Assert.That(core.Row, Is.SameAs(binder.HorizonCoreRow), "Olay Ufku'nun kendi satırı");
+            Assert.That(ring.Row, Is.SameAs(binder.HorizonRingRow));
+            Assert.That(core.Row, Is.Not.SameAs(binder.Row(TreeVfxRow.B6Singularity)), "olay deliği aynı havuz örneğini alırsa Olay Ufku sanılmaz");
+            Assert.That(core.Row.Material, Is.SameAs(binder.Row(TreeVfxRow.B6Singularity).Material), "aynı B6 tekillik sayfası (yeni varlık yok)");
+            Assert.That(ring.Row.Material, Is.SameAs(binder.Row(TreeVfxRow.B6Rings).Material), "aynı B6 halka sayfası");
+            Assert.That(binder.LiveHorizons, Is.EqualTo(1));
+            Assert.That(binder.LiveHorizonRings, Is.EqualTo(1));
+
+            Vector3 start = TreeGravityWells.HorizonCenter;
+            float coreOff = 0f, ringOff = 0f, liftErr = 0f;
+            for (int f = 0; f < 40; f++)
+            {
+                HorizonTick();
+                yield return null;   // the binder's LateUpdate after the tick moved the set
+                Vector3 c = TreeGravityWells.HorizonCenter;
+                coreOff = Mathf.Max(coreOff, Xz(core.transform.position - c));
+                ringOff = Mathf.Max(ringOff, Xz(ring.transform.position - c));
+                liftErr = Mathf.Max(liftErr, Mathf.Abs(core.transform.position.y - c.y - TreeVfxBinder.HorizonCoreLift));
+            }
+
+            Assert.That(Xz(TreeGravityWells.HorizonCenter - start), Is.GreaterThan(1f), "kuyu yörüngede ilerledi (1,25 rad/s × 3 m)");
+            Assert.That(Xz(TreeGravityWells.HorizonCenter - hero), Is.EqualTo(3f).Within(1e-3f), "yörünge 3 m");
+            Assert.That(coreOff, Is.LessThan(1e-3f), "tekillik her kare HorizonCenter'da");
+            Assert.That(ringOff, Is.LessThan(1e-3f), "halkalar her kare HorizonCenter'da");
+            Assert.That(liftErr, Is.LessThan(1e-3f), "çekirdek 1 m yukarıda (olay deliğinin isabet yüksekliği)");
+            Assert.That(binder.HorizonSets, Is.EqualTo(1), "tek set");
+            Assert.That(binder.LiveHoles, Is.Zero);
+
+            // the small well's size (grown in by now): TreeStats.HorizonRadius 2 m, the event hole's shares — core 2r × .67, rings 2r
+            float ws = binder.Row(TreeVfxRow.B6Singularity).WorldSizeMetres, wr = binder.Row(TreeVfxRow.B6Rings).WorldSizeMetres;
+            float coreCard = Mathf.Clamp(2f * 2f * TreeVfxBinder.HoleCoreShare, ws * .5f, ws * 3f);
+            Assert.That(core.transform.GetChild(0).localScale.x, Is.EqualTo(coreCard).Within(1e-3f), "çekirdek kartı küçük kuyunun boyu (2,7 m)");
+            Assert.That(ring.transform.GetChild(0).localScale.x, Is.EqualTo(Mathf.Clamp(2f * 2f, wr * .5f, wr * 3f)).Within(1e-3f), "halka = çekim alanı 2r (4 m)");
+            Assert.That(core.CurrentFrame, Is.EqualTo(TreeVfxBinder.HorizonCoreFrame), "çökmeyen kuyu: tepe çekirdek karesinde durur");
+            Assert.That(core.LifeSeconds, Is.EqualTo(TreeVfxBinder.HorizonHoldSeconds).Within(1e-2f), "kalıcı kart");
+            Assert.That(ring.AlphaCap, Is.EqualTo(TreeVfxBinder.HoleRingAlpha).Within(1e-5f), "olay deliğinin halka α'sı");
+
+            // a Black Hole Round while it orbits (aw_alt_kx sits under kx_mass, most builds come through kx_hole): its own slot (A9, B4-3)
+            TreeProcInfo hole = Info(TreeProcKind.BlackHoleOpen, hero + new Vector3(8f, 1f, 0f), 3f, 5);
+            hole.Seconds = 2.5f;   // S-04 Open: Seconds = HoleSeconds > 0
+            Assert.That(binder.Play(in hole), Is.True);
+            Assert.That(binder.LiveHoles, Is.EqualTo(1), "olay deliği çizilir (Seconds > 0: Olay Ufku sanılmaz)");
+            Assert.That(binder.HorizonProcs, Is.EqualTo(1));
+            binder.Play(in hole);
+            Assert.That(binder.LiveHoles, Is.EqualTo(1), "A9: olay B6 ≤ 1");
+            Assert.That(binder.HorizonCore, Is.SameAs(core), "Olay Ufku seti yerinde");
+            binder.Play(Info(TreeProcKind.BlackHoleCollapse, hole.Point, 3f, 5));
+            Assert.That(binder.LiveHoles, Is.Zero, "çöküş olay deliğini kapatır");
+            Assert.That(binder.HorizonCore, Is.SameAs(core), "çöküş Olay Ufku setine dokunmaz");
+            Assert.That(binder.HorizonRing, Is.SameAs(ring));
+
+            // a duplicate open moment while it is up: counted, no event hole, no second set
+            TreeProcInfo again = Info(TreeProcKind.BlackHoleOpen, hero, 2f, 5);   // Seconds 0
+            binder.Play(in again);
+            Assert.That(binder.HorizonProcs, Is.EqualTo(2));
+            Assert.That(binder.LiveHoles, Is.Zero);
+            HorizonTick();
+            yield return null;
+            Assert.That(binder.LiveHorizons, Is.EqualTo(1), "tek set");
+            Assert.That(binder.HorizonSets, Is.EqualTo(1));
+
+            // 0 B: the follow (the LateUpdate itself), the set placed again after a Clear (the preview's end), the open moment
+            var late = (Action)Delegate.CreateDelegate(typeof(Action), binder, typeof(TreeVfxBinder).GetMethod("LateUpdate", Private));
+            late();
+            Assert.That(() => { for (int i = 0; i < 50; i++) late(); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "yörünge takibi ayırmasız");
+            binder.Clear();
+            Assert.That(() => { late(); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "setin yeniden yerleşimi ayırmasız");
+            Assert.That(binder.LiveHorizons, Is.EqualTo(1), "Clear sonrası kuyu hâlâ açık: set geri gelir");
+            Assert.That(binder.HorizonSets, Is.EqualTo(2));
+            Assert.That(binder.HorizonCore.transform.GetChild(0).localScale.x, Is.EqualTo(coreCard).Within(1e-3f), "kuyu hiç kapanmadı: büyüme yok, tam boy");
+            Assert.That(() => { binder.Play(in again); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "açılış anı ayırmasız");
+        }
+
+        /// <summary>B4-3 (B43-E1): HorizonActive false → the set fades and both cards are back in the pool within 0.3 s; up again while it
+        /// fades → the same set at full α (one set); up again after it went → one new set, grown in from 35 %.</summary>
+        [UnityTest]
+        public IEnumerator Proc_OlayUfku_Kapaninca03snIcindeSoner_YenidenAcilincaTekSet()
+        {
+            TreeVfxBinder binder = Binder();
+            Vector3 hero = O + new Vector3(40f, 0f, -40f);
+            StartHorizon();
+            yield return null;
+            TreeSystemsRunner.SetAnchor(hero);
+            for (int f = 0; f < 30; f++)
+            {
+                HorizonTick();
+                yield return null;
+            }
+
+            FlipbookEffect core = binder.HorizonCore, ring = binder.HorizonRing;
+            Assert.That(core != null && ring != null, Is.True, "set açık");
+            Assert.That(core.AlphaCap, Is.EqualTo(TreeVfxBinder.HorizonCoreAlpha).Within(1e-5f));
+            float full = core.transform.GetChild(0).localScale.x;
+
+            // down (no player: S-04 drops the anchor, the well goes without a moment): the set fades
+            TreeSystemsRunner.ClearAnchor();
+            HorizonTick();
+            Assert.That(TreeGravityWells.HorizonActive, Is.False);
+            yield return null;
+            yield return null;
+            Assert.That(binder.HorizonFading, Is.True, "söner (fade)");
+            Assert.That(core.AlphaCap, Is.LessThan(TreeVfxBinder.HorizonCoreAlpha), "çekirdek α iner");
+            Assert.That(ring.AlphaCap, Is.LessThan(TreeVfxBinder.HoleRingAlpha), "halka α iner");
+
+            // up again while it fades: the same set back at full α — one set, no second one
+            TreeSystemsRunner.SetAnchor(hero);
+            HorizonTick();
+            yield return null;
+            Assert.That(binder.HorizonProcs, Is.EqualTo(2), "ikinci açılış anı");
+            Assert.That(binder.HorizonCore, Is.SameAs(core), "aynı set geri gelir");
+            Assert.That(binder.HorizonRing, Is.SameAs(ring));
+            Assert.That(binder.HorizonFading, Is.False);
+            Assert.That(core.AlphaCap, Is.EqualTo(TreeVfxBinder.HorizonCoreAlpha).Within(1e-5f));
+            Assert.That(ring.AlphaCap, Is.EqualTo(TreeVfxBinder.HoleRingAlpha).Within(1e-5f));
+            Assert.That(binder.LiveHorizons, Is.EqualTo(1));
+            Assert.That(binder.HorizonSets, Is.EqualTo(1), "yeni set açılmadı");
+
+            // down: both cards back in the pool within 0.3 s (B43-E1; 60 Hz game time, the presentation clock)
+            TreeSystemsRunner.ClearAnchor();
+            HorizonTick();
+            float off = VfxClock.Now, gone = float.NaN;
+            for (int f = 0; f < 60 && float.IsNaN(gone); f++)
+            {
+                yield return null;
+                if (binder.LiveHorizons == 0 && binder.LiveHorizonRings == 0) gone = VfxClock.Now - off;
+            }
+
+            Assert.That(gone, Is.LessThanOrEqualTo(.3f + 1e-4f), "HorizonActive false → ≤ 0,3 s içinde söner (B43-E1)");
+            Assert.That(binder.HorizonCore, Is.Null);
+            Assert.That(binder.HorizonFading, Is.False);
+            Assert.That(binder.LiveHoles, Is.Zero, "hiçbir an olay deliği çizmedi");
+
+            // up again after it went: one new set, grown in
+            TreeSystemsRunner.SetAnchor(hero);
+            HorizonTick();
+            yield return null;
+            Assert.That(binder.LiveHorizons, Is.EqualTo(1));
+            Assert.That(binder.LiveHorizonRings, Is.EqualTo(1));
+            Assert.That(binder.HorizonSets, Is.EqualTo(2), "yeni set");
+            Assert.That(binder.HorizonCore.transform.GetChild(0).localScale.x, Is.LessThan(full * .9f), "açılışta küçükten büyür");
+            Debug.Log("[DD-TEST] wp104b43.horizon gone=" + gone.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " procs=" + binder.HorizonProcs
+                      + " sets=" + binder.HorizonSets);
+        }
+
         [UnityTest]
         public IEnumerator Aura_Seviye2_HalkaSatiriRenkBoy_KalkandaKivilcimYarim()
         {
@@ -805,12 +1002,16 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(binder.FireZonesFed, Is.EqualTo(1));
 
             // AD-B4 M8: the tree zone's ember underdraw — its char disc in #E0702A, α ≤ 0.30, between the char and the glow
-            // the ignition frame's LateUpdate sees intensity 0 (no particle); the next one sets it, and the coroutine resumes after
-            // the frame's Update — two frames
-            yield return null;
-            yield return null;
-            Assert.That(flames.TreeUnderLive, Is.EqualTo(1), "M8: ağaç zonunda kor alt çizimi");
+            // the ignition frame's LateUpdate sees intensity 0 (no particle); the next ones ramp it in - on 1-3 ms batch frames the
+            // ramp can still read 0 after two frames (b43-r2), so wait until the underdraw is lit (≤ 10 frames)
             var particles = new ParticleSystem.Particle[4];
+            for (int f = 0; f < 10; f++)
+            {
+                yield return null;
+                if (flames.TreeUnderLive == 1 && flames.TreeUnderSystem.GetParticles(particles) == 1 && particles[0].startColor.a > 0) break;
+            }
+
+            Assert.That(flames.TreeUnderLive, Is.EqualTo(1), "M8: ağaç zonunda kor alt çizimi");
             Assert.That(flames.TreeUnderSystem.GetParticles(particles), Is.EqualTo(1));
             Color32 ember = particles[0].startColor;
             Color32 want = TreeVfxLadder.FireUnderTint;
@@ -1062,6 +1263,50 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static TreeProcInfo Info(TreeProcKind kind, Vector3 point, float radius, int tier) =>
             new TreeProcInfo { Kind = kind, Point = point, Radius = radius, Tier = tier, Weapon = ClassicWeaponId.AssaultRifle };
+
+        /// <summary>
+        /// B4-3: the Event Horizon the EditMode way (TreeSystemsTests): GD-TREE aw_alt_kx's resolved stats (radius 2 m, share 0.4, orbit
+        /// 3 m, Chaos V), the systems reset (angle 0), 60 Hz game time, the test as S-04's driver. BeforeTick is off — no production body
+        /// binding: with a Run scene an earlier fixture left loaded, TreeZombieBinding.Sync binds its zombies and TreeStatusSystem.Register
+        /// makes a TreeSystemsDriver, whose Update re-anchors the well on that scene's player (AD frame 37, b43-r1: ≈ 7.9 km away). Every
+        /// driver is parked here and after each tick (before its first Update); the tear-down gives the world back.
+        /// </summary>
+        private void StartHorizon()
+        {
+            _usedHorizon = true;
+            _savedBeforeTick = TreeSystemsRunner.BeforeTick;
+            TreeSystemsRunner.BeforeTick = null;
+            ParkTreeDriver(true);
+            Time.captureDeltaTime = 1f / 60f;
+            TreeSystemsRunner.Reset();
+            TreeStats s = TreeStats.Neutral;
+            s.WeaponPower = 100f;
+            s.SetBranchTier(TreeBranch.Chaos, 5);
+            s.HorizonRadius = 2f;
+            s.HorizonShare = .4f;
+            s.HorizonOrbit = 3f;
+            TreeRuntime.SetTestStats(s);
+        }
+
+        /// <summary>B4-3: S-04's frame — the parked driver's step (TreeSystemsRunner.Tick on the game clock), once per test frame, then any
+        /// driver it made parked before its first Update; the binder's LateUpdate runs after it.</summary>
+        private void HorizonTick()
+        {
+            TreeSystemsRunner.Tick(Time.deltaTime > 0f ? Time.deltaTime : 1f / 60f, Time.time);
+            ParkTreeDriver(false);
+        }
+
+        private void ParkTreeDriver(bool atStart)
+        {
+            TreeSystemsDriver driver = Object.FindObjectOfType<TreeSystemsDriver>();
+            if (driver == null || !driver.enabled) return;
+            driver.enabled = false;
+            if (_parkedDriver != null) return;
+            _parkedDriver = driver;
+            _parkedDriverWasThere = atStart;
+        }
+
+        private static float Xz(Vector3 d) => new Vector2(d.x, d.z).magnitude;
 
         private TracerRibbonRenderer AttachTdTracer()
         {
