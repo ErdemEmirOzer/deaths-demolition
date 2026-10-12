@@ -25,8 +25,8 @@ namespace DD.Prototype.UI.EditorTools
     ///   3. Three URP Lit materials on the shared atlas (MaskMap: R metallic, G occlusion, A smoothness): M_AP040_PR_Shared,
     ///      M_AP040_PR_GlowWarm (key lantern, 2800 K) and M_AP040_PR_GlowCool (fill lantern, 6500 K); the FBX material slots
     ///      M_AP040_Shared / M_AP040_Glow are remapped onto them per model.
-    ///   4. PR_Stage: the rotatable pedestal at the origin, the backdrop at z −1.3, the lanterns at (∓1.05, 0, −0.4) - the
-    ///      json's placements - unpacked; the *_COL proxies, the LOD1 / LOD2 meshes and every LODGroup removed (a close-up
+    ///   4. PR_Stage: <see cref="PrepareRunStage.Set"/> - the json's Blender placements through the stage's one conversion
+    ///      ([−x, z, −y], AD S1: the warm key lantern V01 at x +1.05, the cool fill V02 at x −1.05, the backdrop at z −1.3) - unpacked; the *_COL proxies, the LOD1 / LOD2 meshes and every LODGroup removed (a close-up
     ///      shows LOD0); every object on <see cref="PrepareRunStage.StageLayer"/>; SOCKET_Weapon checked under SOCKET_Turntable
     ///      at 0.94 m. Saved to <see cref="PrefabPath"/>.
     /// Throws on any failure (the batch run exits non-zero); logs one summary line on success.
@@ -62,7 +62,7 @@ namespace DD.Prototype.UI.EditorTools
         public const string SourceGlowSlot = "M_AP040_Glow";
 
         /// <summary>The lanterns' paper glow: linear HDR multiplier on the temperature colour (the look review tunes it).</summary>
-        public const float GlowIntensity = 2.0f;
+        public const float GlowIntensity = 1.4f;   // AD-REVIEW-WP106 M2 (12.10): the lantern faces never outshine the weapon (P90 ≤ 215)
 
         /// <summary>SOCKET_Weapon's height over the pedestal's base (preview/AP040_PrepareRun_v001.json), with its tolerance.</summary>
         public const float WeaponSocketHeight = 0.94f;
@@ -328,10 +328,12 @@ namespace DD.Prototype.UI.EditorTools
             try
             {
                 int removed = 0;
-                removed += Place(root.transform, PedestalModel, "PR_Pedestal", Vector3.zero);
-                removed += Place(root.transform, BackdropModel, "PR_Backdrop", new Vector3(0f, 0f, -1.3f));
-                removed += Place(root.transform, KeyLanternModel, "PR_KeyLantern", new Vector3(-1.05f, 0f, -0.4f));
-                removed += Place(root.transform, FillLanternModel, "PR_FillLantern", new Vector3(1.05f, 0f, -0.4f));
+                // AD S1: the json's Blender placements through the stage's one conversion (PrepareRunStage.BlenderToUnity, [−x, z, −y]).
+                for (int i = 0; i < PrepareRunStage.Set.Length; i++)
+                {
+                    PrepareRunStage.SetPiece piece = PrepareRunStage.Set[i];
+                    removed += Place(root.transform, piece.Model, piece.Name, piece.Position);
+                }
 
                 Transform turntable = FindDeep(root.transform, PrepareRunStage.TurntableSocket);
                 Transform socket = FindDeep(root.transform, PrepareRunStage.WeaponSocket);

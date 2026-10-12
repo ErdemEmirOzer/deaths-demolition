@@ -1,20 +1,24 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.UI;
+using DD.Prototype.UI.EditorTools;
+using DD.Prototype.Weapons;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// R4 WP-106 P1 · Prepare Run's weapon stage, the rules that need no frame: the target's size, the 45 mm lens, the AP-040
-    /// camera orbit read back from its first pose, the clamps, the zoom and wheel steps, the one-scale fit and the seat, the
-    /// muzzle's rest heading, the id table, the json's lights, the pad's view controls through UiInput (a stub source), the
-    /// imported set when it is there, and the stage file's hand-made motion count (T6's patterns).
+    /// R4 WP-106 P1 · Prepare Run's weapon stage, the rules that need no frame: the target's size, the 80 mm lens, AD M1's
+    /// orbit and its shares of the well, the clamps, the zoom and wheel steps, the one-scale fit, the seats on the post caps
+    /// (checked against the imported AP-021 meshes), the muzzle's rest heading along the posts, the id table, the json's lights
+    /// and AD M2's panel wash, S1's mirror ([−x, z, −y]), the pad's view controls through UiInput (a stub source), the imported
+    /// set when it is there, and the stage file's hand-made motion count (T6's patterns).
     /// </summary>
     [TestFixture]
     [Category("WP106")]
@@ -36,28 +40,37 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Lens45mm_SensorAuto_YatayCerceveGenisligeOturur()
+        public void Lens80mm_SensorAuto_YatayCerceveGenisligeOturur()
         {
-            float landscape = PrepareRunStage.VerticalFov(45f, 36f, 16f / 9f);
-            Assert.AreEqual(25.36f, landscape, 0.05f, "16:9: 36 mm yatay → dikey 25.4°");
-            float square = PrepareRunStage.VerticalFov(45f, 36f, 1f);
-            Assert.AreEqual(43.60f, square, 0.05f, "kare: 36 mm dikey");
-            Assert.AreEqual(square, PrepareRunStage.VerticalFov(45f, 36f, 0.5f), 1e-4f, "dikey çerçeve: sensör uzun kenara (dikeye) oturur");
+            Assert.AreEqual(80f, PrepareRunStage.LensMm, "AD M1: 80 mm");
+            float well = PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, WellAspect);
+            Assert.AreEqual(20.3f, well, 0.05f, "615 × 490 kuyu: 36 mm yatay → dikey 20.3°");
+            Assert.AreEqual(25.36f, HorizontalFov(WellAspect), 0.05f, "yatay 25.4°");
+            float square = PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, 1f);
+            Assert.AreEqual(25.36f, square, 0.05f, "kare: 36 mm dikey");
+            Assert.AreEqual(square, PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, 0.5f), 1e-4f, "dikey çerçeve: sensör uzun kenara (dikeye) oturur");
         }
 
         // ------------------------------------------------------------------ the orbit
 
         [Test]
-        public void IlkPoz_JsonKameraOrbitiniGeriVerir()
+        public void IlkPoz_AdM1Kamerasi_AynaliAzimut()
         {
-            Assert.AreEqual(5.713799f, PrepareRunStage.InitialDistance, Eps, "camera_orbit.distance_m");
-            Assert.AreEqual(14.70f, PrepareRunStage.InitialPitch, 0.01f);
-            Assert.AreEqual(28.65f, PrepareRunStage.InitialAzimuth, 0.01f);
-            Assert.That(PrepareRunStage.InitialPitch, NUnit.Framework.Is.InRange(PrepareRunStage.PitchMin, PrepareRunStage.PitchMax), "ilk poz json'un sınırları içinde");
+            Assert.AreEqual(4.4f, PrepareRunStage.InitialDistance, Eps, "AD M1: 4.4 m");
+            Assert.AreEqual(10f, PrepareRunStage.InitialPitch, Eps, "AD M1: 10°");
+            Assert.AreEqual(-28.6f, PrepareRunStage.InitialAzimuth, Eps, "AP-040'ın 28.6°'si aynalı (S1)");
+            Assert.Less((PrepareRunStage.OrbitTarget - new Vector3(0f, 0.94f, 0f)).magnitude, Eps, "hedef: kapaklara oturan silahların merkezi");
+            Assert.Less((PrepareRunStage.InitialCamera - new Vector3(-2.07f, 1.70f, 3.80f)).magnitude, 0.01f, "AD M1 kamerası, alçak hedefte: " + PrepareRunStage.InitialCamera);
+            Assert.That(PrepareRunStage.InitialPitch, NUnit.Framework.Is.InRange(PrepareRunStage.PitchMin, PrepareRunStage.PitchMax));
             Assert.That(PrepareRunStage.InitialDistance, NUnit.Framework.Is.InRange(PrepareRunStage.DistanceMin, PrepareRunStage.DistanceMax));
+            Assert.AreEqual(30f, PrepareRunStage.PitchMax, "AD M1: eğim tavanı 30°");
+            Assert.AreEqual(3.0f, PrepareRunStage.DistanceMin, Eps);
+            Assert.AreEqual(5.6f, PrepareRunStage.DistanceMax, Eps);
 
-            Vector3 eye = PrepareRunStage.OrbitTarget + PrepareRunStage.OrbitOffset(PrepareRunStage.InitialAzimuth, PrepareRunStage.InitialPitch, PrepareRunStage.InitialDistance);
-            Assert.Less((eye - PrepareRunStage.InitialCamera).magnitude, Eps, "yörünge ilk kamerayı (2.65, 2.45, 4.70) geri verir: " + eye);
+            Vector3 offset = PrepareRunStage.InitialCamera - PrepareRunStage.OrbitTarget;
+            Assert.AreEqual(PrepareRunStage.InitialAzimuth, PrepareRunStage.AzimuthOf(offset), 0.01f, "yörünge geri döner");
+            Assert.AreEqual(PrepareRunStage.InitialPitch, PrepareRunStage.PitchOf(offset), 0.01f);
+            Assert.AreEqual(PrepareRunStage.InitialDistance, offset.magnitude, Eps);
         }
 
         [Test]
@@ -78,10 +91,9 @@ namespace DD.Prototype.Tests.EditMode
         {
             float d = PrepareRunStage.InitialDistance;
             Assert.AreEqual(d / PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(d, 1f), Eps, "+1 adım yakınlaşır");
-            // The initial 5.71 m is within one step of the 6.1 m end (5.71 × 1.12 = 6.40 clamps): step out from the middle.
-            float mid = (PrepareRunStage.DistanceMin + PrepareRunStage.DistanceMax) * 0.5f;
-            Assert.AreEqual(mid * PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(mid, -1f), Eps, "−1 adım uzaklaşır");
-            Assert.AreEqual(PrepareRunStage.DistanceMax, PrepareRunStage.ZoomedDistance(d, -1f), Eps, "sınırın bir adım içinden: uzak uçta durur");
+            Assert.AreEqual(d * PrepareRunStage.ZoomStep, PrepareRunStage.ZoomedDistance(d, -1f), Eps, "−1 adım uzaklaşır (4.4 × 1.12 = 4.93 < 5.6)");
+            float near = PrepareRunStage.DistanceMin * 1.05f;
+            Assert.AreEqual(PrepareRunStage.DistanceMin, PrepareRunStage.ZoomedDistance(near, 1f), Eps, "sınırın bir adım içinden: yakın uçta durur");
             Assert.AreEqual(PrepareRunStage.DistanceMin, PrepareRunStage.ZoomedDistance(d, 100f), Eps);
             Assert.AreEqual(PrepareRunStage.DistanceMax, PrepareRunStage.ZoomedDistance(d, -100f), Eps);
 
@@ -106,45 +118,75 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Oturtma_AyakSoketteIzDonmeEkseninde()
+        public void Oturtma_YedekDuzKapakDuzleminde_KoltukTablosuOlcekBekcisi()
         {
             var bounds = new Bounds(new Vector3(0.01f, 0.05f, 0.3f), new Vector3(0.1f, 0.3f, 1.2f));
             Vector3 seat = PrepareRunStage.SeatOffset(bounds, 0.5f);
             Assert.AreEqual(-0.005f, seat.x, 1e-5f);
-            Assert.AreEqual(0.05f, seat.y, 1e-5f, "alt sınır (−0.1 × 0.5) sokete oturur");
             Assert.AreEqual(-0.15f, seat.z, 1e-5f);
             Vector3 foot = bounds.min * 0.5f + seat;
-            Assert.AreEqual(0f, foot.y, 1e-5f);
-            Vector3 centre = bounds.center * 0.5f + seat;
-            Assert.AreEqual(0f, centre.x, 1e-5f);
-            Assert.AreEqual(0f, centre.z, 1e-5f);
+            Assert.AreEqual(PrepareRunStage.CapBelowSocket, foot.y, 1e-5f, "yedek: en alt nokta kapakların düzleminde (soketin 4.6 cm altı)");
+            Assert.AreEqual(-0.046f, PrepareRunStage.CapBelowSocket, 1e-4f);
+
+            Assert.IsTrue(PrepareRunStage.TrySeat("ar_1", 0.7917f, out PrepareRunStage.Seat ar), "ar_1 koltuğu");
+            Assert.IsFalse(PrepareRunStage.TrySeat("ar_1", 0.80f, out PrepareRunStage.Seat stale), "ölçek tutmazsa (yeniden dışa aktarım) koltuk yok");
+            Assert.AreEqual("ar_1", stale.Key, "eski koltuk uyarı için döner");
+            Assert.IsFalse(PrepareRunStage.TrySeat("blockout", 1f, out PrepareRunStage.Seat none));
+            Assert.IsNull(none.Key);
+
+            var model = new Bounds(new Vector3(0f, 0.01f, 0.2f), new Vector3(0.07f, 0.2f, 1.2f));
+            Vector3 position = PrepareRunStage.SeatPosition(model, ar.Scale, ar);
+            Vector3 centre = position + PrepareRunStage.SeatRotation(ar) * (model.center * ar.Scale);
+            Assert.Less((centre - new Vector3(0f, ar.Lift, ar.Slide)).magnitude, 1e-5f, "LOD0 merkezi (0, lift, slide)");
+
+            // AD M1 acceptance: each weapon's centre in the 40-60 % band from the top of the well (±10 % of the frame's height at rest).
+            float frameHeight = 2f * PrepareRunStage.InitialDistance * Mathf.Tan(PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, WellAspect) * 0.5f * Mathf.Deg2Rad);
+            var keys = new HashSet<string>();
+            foreach (PrepareRunStage.Seat s in PrepareRunStage.Seats)
+            {
+                float height = PrepareRunStage.WeaponSocketHeight + s.Lift;
+                Assert.LessOrEqual(Mathf.Abs(height - PrepareRunStage.OrbitTarget.y) / frameHeight, 0.10f, s.Key + ": merkez " + height.ToString("F3") + " m dikey bandın dışında");
+                Assert.IsTrue(keys.Add(s.Key), s.Key + " bir kez");
+                Assert.IsTrue(WeaponIdMigration.TryGetRuntimeId(s.Key, out _), s.Key + " klasik silah");
+                // S-09 12.10: rl_1 slides 0.1325 m (6.7 %) to lie on both caps - seated over centred; the rest stay within ±6 %.
+                Assert.LessOrEqual(Mathf.Abs(s.Slide), s.Key == "rl_1" ? 0.14f : 0.12f, s.Key + ": kuyunun ±%6'sı (rl_1 %7)");
+                Assert.LessOrEqual(Mathf.Abs(s.Tilt), 10f, s.Key + ": eğim ≤ 10°");
+            }
+
+            Assert.AreEqual(10, keys.Count, "on klasik");
         }
 
         [Test]
-        public void SinifUzunluklari_SiraliVeEnYakinKareyeSigar()
+        public void SinifUzunluklari_AdM1Paylari_DinlenmeEnYakinEnUzak()
         {
             Assert.Less(PrepareRunStage.DisplayLength(WeaponClass.Smg), PrepareRunStage.DisplayLength(WeaponClass.Shotgun));
             Assert.Less(PrepareRunStage.DisplayLength(WeaponClass.Shotgun), PrepareRunStage.DisplayLength(WeaponClass.AssaultRifle));
             Assert.Less(PrepareRunStage.DisplayLength(WeaponClass.AssaultRifle), PrepareRunStage.DisplayLength(WeaponClass.Lmg));
             Assert.LessOrEqual(PrepareRunStage.DisplayLength(WeaponClass.Lmg), PrepareRunStage.DisplayLength(WeaponClass.Sniper));
 
-            // The nearest zoom in a square view: the frame is 2·d·tan(fov/2) wide; the longest weapon keeps a margin either side.
-            float width = 2f * PrepareRunStage.DistanceMin * Mathf.Tan(PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, 1f) * 0.5f * Mathf.Deg2Rad);
+            // AD M1 (L·f / (36·d), the sensor across the well): AR ≥ 45 %, SMG ≥ 38 % at rest; no class over 85 % at the nearest zoom.
+            Assert.AreEqual(0.48f, Share(WeaponClass.AssaultRifle, PrepareRunStage.InitialDistance), 0.01f, "AR dinlenmede %48");
+            Assert.AreEqual(0.40f, Share(WeaponClass.Smg, PrepareRunStage.InitialDistance), 0.01f, "SMG %40");
+            Assert.AreEqual(0.56f, Share(WeaponClass.Sniper, PrepareRunStage.InitialDistance), 0.01f, "SR %56");
+            Assert.GreaterOrEqual(Share(WeaponClass.AssaultRifle, PrepareRunStage.InitialDistance), 0.45f);
+            Assert.GreaterOrEqual(Share(WeaponClass.Smg, PrepareRunStage.InitialDistance), 0.38f);
+            Assert.AreEqual(0.38f, Share(WeaponClass.AssaultRifle, PrepareRunStage.DistanceMax), 0.01f, "AR en uzakta %38");
             foreach (WeaponClass c in Enum.GetValues(typeof(WeaponClass)))
             {
-                Assert.Less(PrepareRunStage.DisplayLength(c), 0.5f * width, c + ": en yakın yakınlaşmada kare görüntünün yarısından kısa");
+                Assert.LessOrEqual(Share(c, PrepareRunStage.DistanceMin), 0.85f, c + ": en yakın yakınlaşmada %85'i geçmez");
             }
         }
 
         [Test]
-        public void Namlu_IlkBakistaEkranSolunda_GorusDikgen()
+        public void Namlu_DayanakHattinda_IlkBakistaEkranSolunda_GorusDikgen()
         {
-            Vector3 eye = PrepareRunStage.OrbitTarget + PrepareRunStage.OrbitOffset(PrepareRunStage.InitialAzimuth, PrepareRunStage.InitialPitch, PrepareRunStage.InitialDistance);
-            Vector3 forward = PrepareRunStage.OrbitTarget - eye;
+            Assert.Less((Quaternion.Euler(0f, PrepareRunStage.MountYaw, 0f) * Vector3.forward - Vector3.right).magnitude, 1e-4f, "namlu tablanın +X'inde: iki dayanağın hattı");
+
+            Vector3 forward = PrepareRunStage.OrbitTarget - PrepareRunStage.InitialCamera;
             forward.y = 0f;
             forward.Normalize();
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
-            Vector3 barrel = Quaternion.Euler(0f, PrepareRunStage.MountYaw, 0f) * Vector3.forward;
+            Vector3 barrel = Quaternion.Euler(0f, PrepareRunStage.TurntableRestYaw, 0f) * (Quaternion.Euler(0f, PrepareRunStage.MountYaw, 0f) * Vector3.forward);
             Assert.Less(Vector3.Dot(barrel, right), -0.999f, "namlu ekranın soluna (AP-036 yan görünüşleri)");
             Assert.AreEqual(0f, Vector3.Dot(barrel, forward), 1e-3f, "namlu ilk bakışa dik: tam yan profil");
         }
@@ -172,28 +214,62 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ the light
 
         [Test]
-        public void Isiklar_JsonDonusumuyleAyni_Siddet()
+        public void Isiklar_JsonDonusumuyleAyni_PanelYikamaSilahaDusmez_Siddet()
         {
-            // preview/AP040_PrepareRun_v001.json lights[]: position_blender_m / aim_blender_m / energy_w / temperature_K.
-            Vector3[] blenderPositions = { new Vector3(-1.05f, 0.205f, 1.47f), new Vector3(1.05f, 0.205f, 1.77f), new Vector3(0f, 0.85f, 2.65f) };
-            Vector3[] blenderAims = { new Vector3(0f, 0f, 0.94f), new Vector3(0f, 0f, 1.05f), new Vector3(0f, 0f, 0.85f) };
-            float[] watts = { 105f, 62f, 80f };
-            float[] kelvin = { 2800f, 6500f, 3400f };
-            Assert.AreEqual(3, PrepareRunStage.Lights.Length);
-            for (int i = 0; i < 3; i++)
+            // preview/AP040_PrepareRun_v001.json lights[] → Unity through [−x, z, −y] (S1): the key light by the warm lantern at x +1.05.
+            Vector3[] unityPositions = { new Vector3(1.05f, 1.47f, -0.205f), new Vector3(-1.05f, 1.77f, -0.205f), new Vector3(0f, 2.65f, -0.85f), new Vector3(0f, 2.6f, -0.5f) };
+            Vector3[] unityAims = { new Vector3(0f, 0.94f, 0f), new Vector3(0f, 1.05f, 0f), new Vector3(0f, 0.85f, 0f), new Vector3(0f, 1.1f, -1.3f) };
+            float[] kelvin = { 2800f, 6500f, 3400f, 3000f };
+            Assert.AreEqual(4, PrepareRunStage.Lights.Length);
+            for (int i = 0; i < 4; i++)
             {
                 PrepareRunStage.StageLight l = PrepareRunStage.Lights[i];
-                Assert.Less((PrepareRunStage.BlenderToUnity(blenderPositions[i]) - l.Position).magnitude, 1e-4f, l.Name + " konumu [x, z, −y]");
-                Assert.Less((PrepareRunStage.BlenderToUnity(blenderAims[i]) - l.Aim).magnitude, 1e-4f, l.Name + " hedefi");
-                Assert.AreEqual(watts[i], l.Watts, 1e-4f);
+                Assert.Less((unityPositions[i] - l.Position).magnitude, 1e-4f, l.Name + " konumu");
+                Assert.Less((unityAims[i] - l.Aim).magnitude, 1e-4f, l.Name + " hedefi");
                 Assert.AreEqual(kelvin[i], l.Kelvin, 1e-4f);
-                Assert.That(PrepareRunStage.SpotAngle((l.Aim - l.Position).magnitude), NUnit.Framework.Is.InRange(30f, 120f));
+                Assert.That(l.Angle, NUnit.Framework.Is.InRange(30f, 120f));
             }
 
-            Assert.AreEqual(105f / (Mathf.PI * Mathf.PI), PrepareRunStage.SpotIntensity(105f), 1e-4f, "P / π² (alan ışığı → URP spot)");
+            Assert.AreEqual(1.3f, PrepareRunStage.StageExposure, Eps, "AD M2: pozlama 1.3");
+            Assert.AreEqual(1.6f, PrepareRunStage.SpotCoverRadius, Eps, "AD M2: koni 1.6 m");
+            Assert.AreEqual(105f / (Mathf.PI * Mathf.PI) * 1.3f, PrepareRunStage.Lights[0].Intensity, 1e-4f, "P / π² × pozlama");
+            Assert.AreEqual(107f, PrepareRunStage.Lights[0].Angle, 1f, "anahtar koni ~107°");
+
+            PrepareRunStage.StageLight wash = PrepareRunStage.Lights[3];
+            Assert.AreEqual("PR_PanelWash", wash.Name);
+            Assert.AreEqual(72f, wash.Angle, Eps, "AD M2: 72°");
+            Assert.AreEqual(28f * 1.3f, wash.Intensity, 1e-3f, "28 (pozlama 1'de) × 1.3");
+            Assert.IsFalse(wash.Shadows);
+            Vector3 axis = (wash.Aim - wash.Position).normalized;
+            float offAxis = Vector3.Angle(axis, new Vector3(0f, 1.05f, 0f) - wash.Position);
+            Assert.Greater(offAxis, wash.Angle * 0.5f + 5f, "silah (0, 1.05, 0) panel yıkamasının konisi dışında: " + offAxis.ToString("F1") + "°");
+            Assert.Less(Vector3.Angle(axis, new Vector3(0f, 1.1f, -1.3f) - wash.Position), 1f, "panelin ortasına bakar");
+
             Assert.IsTrue(PrepareRunStage.Lights[0].Shadows, "yalnız anahtar ışık gölge düşürür");
             Assert.IsFalse(PrepareRunStage.Lights[1].Shadows);
             Assert.IsFalse(PrepareRunStage.Lights[2].Shadows);
+            Assert.AreEqual(1.4f, PrepareRunStageBuilder.GlowIntensity, Eps, "AD M2: fener parıltısı 1.4");
+        }
+
+        [Test]
+        public void Ayna_TekDonusum_SicakFenerSolda_SogukSagda()
+        {
+            Assert.AreEqual(new Vector3(-1f, 3f, -2f), PrepareRunStage.BlenderToUnity(new Vector3(1f, 2f, 3f)), "[−x, z, −y]: Unity'nin FBX içe aktarımı");
+            Assert.AreEqual(4, PrepareRunStage.Set.Length);
+            Assert.AreEqual(new Vector3(0f, 0f, -1.3f), PrepareRunStage.Set[1].Position, "panel z −1.3");
+            Assert.AreEqual(1.05f, PrepareRunStage.Set[2].Position.x, Eps, "sıcak anahtar fener V01 x +1.05");
+            Assert.AreEqual(-1.05f, PrepareRunStage.Set[3].Position.x, Eps, "soğuk dolgu fener V02 x −1.05");
+            Assert.AreEqual(PrepareRunStageBuilder.KeyLanternModel, PrepareRunStage.Set[2].Model);
+            Assert.AreEqual(PrepareRunStageBuilder.FillLanternModel, PrepareRunStage.Set[3].Model);
+            Assert.AreEqual(PrepareRunStageBuilder.PedestalModel, PrepareRunStage.Set[0].Model);
+            Assert.AreEqual(PrepareRunStageBuilder.BackdropModel, PrepareRunStage.Set[1].Model);
+
+            // From the first pose (AP-040 v001 PNG): the warm lantern on the left, the cool one on the right.
+            Vector3 forward = PrepareRunStage.OrbitTarget - PrepareRunStage.InitialCamera;
+            forward.y = 0f;
+            Vector3 right = Vector3.Cross(Vector3.up, forward.normalized);
+            Assert.Less(Vector3.Dot(PrepareRunStage.Set[2].Position - PrepareRunStage.InitialCamera, right), 0f, "sıcak fener solda");
+            Assert.Greater(Vector3.Dot(PrepareRunStage.Set[3].Position - PrepareRunStage.InitialCamera, right), 0f, "soğuk fener sağda");
         }
 
         // ------------------------------------------------------------------ the pad's view controls (UiInput)
@@ -253,7 +329,7 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ the imported set
 
         [Test]
-        public void Sahne_IceAktarildiysa_SoketlerTemizlikKatman()
+        public void Sahne_IceAktarildiysa_SoketlerTemizlikKatmanYerlesim()
         {
             var prefab = Resources.Load<GameObject>(PrepareRunStage.StageResource);
             if (prefab == null)
@@ -266,8 +342,16 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(turntable, "SOCKET_Turntable");
             Assert.IsNotNull(socket, "SOCKET_Weapon");
             Assert.IsTrue(socket.IsChildOf(turntable), "silah soketi rotorla döner");
-            Assert.AreEqual(0.94f, prefab.transform.InverseTransformPoint(socket.position).y, 0.005f, "SOCKET_Weapon 0.94 m");
+            Assert.AreEqual(PrepareRunStage.WeaponSocketHeight, prefab.transform.InverseTransformPoint(socket.position).y, 0.005f, "SOCKET_Weapon 0.94 m");
             Assert.AreEqual(0.70f, prefab.transform.InverseTransformPoint(turntable.position).y, 0.005f, "SOCKET_Turntable 0.70 m");
+
+            // AD S1: the builder places the set through the stage's one conversion (the stage re-places an older prefab too).
+            foreach (PrepareRunStage.SetPiece piece in PrepareRunStage.Set)
+            {
+                Transform t = prefab.transform.Find(piece.Name);
+                Assert.IsNotNull(t, piece.Name);
+                Assert.Less((t.localPosition - piece.Position).magnitude, 1e-4f, piece.Name + " " + t.localPosition + " ≠ " + piece.Position + " (builder yeniden koşulmalı)");
+            }
 
             Assert.IsEmpty(prefab.GetComponentsInChildren<LODGroup>(true), "yakın plan: LODGroup yok");
             Assert.IsEmpty(prefab.GetComponentsInChildren<Collider>(true), "çarpışma yok");
@@ -287,10 +371,79 @@ namespace DD.Prototype.Tests.EditMode
                     Assert.IsNotNull(m, r.name + " malzemesi");
                     StringAssert.StartsWith("M_AP040_PR_", m.name, r.name + " sahnenin URP Lit malzemesi");
                     Assert.IsNotNull(m.GetTexture("_BaseMap"), m.name + " BaseColor atlası");
+                    if (m.name == PrepareRunStageBuilder.GlowWarmMaterial)
+                    {
+                        Color expected = Mathf.CorrelatedColorTemperatureToRGB(2800f) * PrepareRunStageBuilder.GlowIntensity;
+                        Assert.AreEqual(expected.maxColorComponent, m.GetColor("_EmissionColor").maxColorComponent, 0.01f, "AD M2 parıltısı 1.4 (builder yeniden koşulmalı)");
+                    }
                 }
             }
 
             Assert.GreaterOrEqual(renderers, 5, "LOD0: kaide tabanı + tablası, panel, iki fener");
+        }
+
+        // ------------------------------------------------------------------ AD M1 · the seats against the imported meshes
+
+        /// <summary>
+        /// Each library model as the stage builds it (fit + <see cref="PrepareRunStage.Seats"/>), its LOD0 triangles in the weapon
+        /// mount, clipped to the two cap footprints: the lower underside lies on the caps (± 2 mm), the other within the seat's gap
+        /// (+ 2 mm; ≤ 3 mm for a two-cap seat), the lowest point ≥ 0.71 m (over the disc) - the offline measure checked against
+        /// Unity's own import (axes, scale, mirror).
+        /// </summary>
+        [Test]
+        public void Koltuklar_IceAktarilmisMeshlerle_KapaklaraOturur()
+        {
+            var lib = Resources.Load<ClassicWeaponVisualLibrary>(ClassicWeaponVisualLibrary.ResourcePath);
+            Assert.IsNotNull(lib, "DD_ClassicWeapons");
+            int checkedModels = 0;
+            foreach (ClassicWeaponVisualLibrary.Entry entry in lib.entries)
+            {
+                if (entry == null || !entry.HasModel) continue;
+                GameObject go = ClassicWeaponVisualLibrary.Instantiate(entry, lib.material, null);
+                try
+                {
+                    Transform root = go.transform;
+                    Bounds bounds = AuthoredWeaponModel.LocalLod0Bounds(root);
+                    WeaponDefinition def = Arsenal.Get(entry.id);
+                    float scale = PrepareRunStage.FitScale(bounds.size, PrepareRunStage.DisplayLength(def != null ? def.weaponClass : WeaponClass.AssaultRifle), PrepareRunStage.MaxWeaponHeight);
+                    Assert.IsTrue(PrepareRunStage.TrySeat(entry.rosterKey, scale, out PrepareRunStage.Seat seat),
+                        entry.rosterKey + ": koltuk yok ya da ölçek " + scale.ToString("F4") + " ≠ " + seat.Scale.ToString("F4") + " (model değişti: seat.py yeniden)");
+
+                    Matrix4x4 toMount = Matrix4x4.TRS(PrepareRunStage.SeatPosition(bounds, scale, seat), PrepareRunStage.SeatRotation(seat), Vector3.one * scale) * root.worldToLocalMatrix;
+                    var tris = new List<Vector3>(60000);
+                    float lowest = float.MaxValue;
+                    foreach (MeshFilter f in go.GetComponentsInChildren<MeshFilter>(true))
+                    {
+                        if (f.sharedMesh == null || AuthoredWeaponModel.LodIndexOf(f.name) != 0) continue;
+                        Matrix4x4 m = toMount * f.transform.localToWorldMatrix;
+                        Vector3[] v = f.sharedMesh.vertices;
+                        int[] idx = f.sharedMesh.triangles;
+                        for (int i = 0; i < idx.Length; i++)
+                        {
+                            Vector3 q = m.MultiplyPoint3x4(v[idx[i]]);
+                            tris.Add(q);
+                            lowest = Mathf.Min(lowest, q.y);
+                        }
+                    }
+
+                    float rear = Underside(tris, -PrepareRunStage.PostOffset);
+                    float front = Underside(tris, PrepareRunStage.PostOffset);
+                    Assert.IsFalse(float.IsInfinity(rear) || float.IsInfinity(front), entry.rosterKey + ": bir kapağın üstünde silah yok");
+                    float low = Mathf.Min(rear, front), gap = Mathf.Abs(rear - front);
+                    Assert.AreEqual(PrepareRunStage.CapBelowSocket, low, 0.002f, entry.rosterKey + ": alt yüz kapakta (arka " + rear.ToString("F4") + ", ön " + front.ToString("F4") + ")");
+                    Assert.LessOrEqual(gap, Mathf.Max(seat.Gap, 0.001f) + 0.002f, entry.rosterKey + ": öbür kapağa boşluk " + gap.ToString("F4") + " m");
+                    if (seat.Gap < 0.001f) Assert.LessOrEqual(gap, 0.003f, entry.rosterKey + ": iki kapak");
+                    Assert.GreaterOrEqual(PrepareRunStage.WeaponSocketHeight + lowest, 0.71f - 0.001f, entry.rosterKey + ": en alt nokta disk üstünde");
+                    TestContext.WriteLine(entry.rosterKey + " seat gap " + gap.ToString("F4") + " lowest " + (PrepareRunStage.WeaponSocketHeight + lowest).ToString("F3"));
+                    checkedModels++;
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+            }
+
+            Assert.AreEqual(10, checkedModels, "on klasik model");
         }
 
         // ------------------------------------------------------------------ T6 (hand-made motion) count
@@ -310,6 +463,66 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         // ------------------------------------------------------------------ helpers
+
+        /// <summary>The preview well at 1080p (AD M1: 615 × 490 px).</summary>
+        private const float WellAspect = 615f / 490f;
+
+        private static float HorizontalFov(float aspect)
+        {
+            float v = PrepareRunStage.VerticalFov(PrepareRunStage.LensMm, PrepareRunStage.SensorMm, aspect) * 0.5f * Mathf.Deg2Rad;
+            return 2f * Mathf.Atan(Mathf.Tan(v) * aspect) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>A class's share of the well's width at <paramref name="distance"/> (its display length over the frame's width there).</summary>
+        private static float Share(WeaponClass c, float distance)
+        {
+            float width = 2f * distance * Mathf.Tan(HorizontalFov(WellAspect) * 0.5f * Mathf.Deg2Rad);
+            return PrepareRunStage.DisplayLength(c) / width;
+        }
+
+        /// <summary>The lowest y of the triangles (mount space, 3 points each) inside a cap's footprint centred at z = <paramref name="post"/>.</summary>
+        private static float Underside(List<Vector3> tris, float post)
+        {
+            float z0 = post - PrepareRunStage.PostCapLength * 0.5f, z1 = post + PrepareRunStage.PostCapLength * 0.5f;
+            float x0 = -PrepareRunStage.PostCapDepth * 0.5f, x1 = PrepareRunStage.PostCapDepth * 0.5f;
+            float best = float.PositiveInfinity;
+            var poly = new List<Vector3>(8);
+            var next = new List<Vector3>(8);
+            for (int i = 0; i + 2 < tris.Count; i += 3)
+            {
+                Vector3 a = tris[i], b = tris[i + 1], c = tris[i + 2];
+                if (Mathf.Max(a.z, Mathf.Max(b.z, c.z)) < z0 || Mathf.Min(a.z, Mathf.Min(b.z, c.z)) > z1) continue;
+                if (Mathf.Max(a.x, Mathf.Max(b.x, c.x)) < x0 || Mathf.Min(a.x, Mathf.Min(b.x, c.x)) > x1) continue;
+                poly.Clear();
+                poly.Add(a);
+                poly.Add(b);
+                poly.Add(c);
+                Clip(poly, next, 2, z0, true);
+                Clip(poly, next, 2, z1, false);
+                Clip(poly, next, 0, x0, true);
+                Clip(poly, next, 0, x1, false);
+                for (int k = 0; k < poly.Count; k++) best = Mathf.Min(best, poly[k].y);
+            }
+
+            return best;
+        }
+
+        /// <summary>Sutherland-Hodgman against one axis plane (keep ≥ or ≤ <paramref name="value"/>), in place.</summary>
+        private static void Clip(List<Vector3> poly, List<Vector3> scratch, int axis, float value, bool keepGreater)
+        {
+            scratch.Clear();
+            for (int i = 0; i < poly.Count; i++)
+            {
+                Vector3 a = poly[i], b = poly[(i + 1) % poly.Count];
+                bool inA = keepGreater ? a[axis] >= value : a[axis] <= value;
+                bool inB = keepGreater ? b[axis] >= value : b[axis] <= value;
+                if (inA) scratch.Add(a);
+                if (inA != inB) scratch.Add(Vector3.Lerp(a, b, (value - a[axis]) / (b[axis] - a[axis])));
+            }
+
+            poly.Clear();
+            poly.AddRange(scratch);
+        }
 
         private static Transform Find(Transform root, string name)
         {

@@ -17,7 +17,9 @@ namespace DD.Prototype.Tests.PlayMode
     /// <summary>
     /// R4 WP-106 P1 · Prepare Run's weapon stage in a live URP frame (an overlay canvas, a 640 × 360 host):
     ///   1. Create → a target the host's size on the view; two weapons → a render each; the models are cached per id; idle frames draw nothing.
-    ///   2. The weapon stands on SOCKET_Weapon (foot on the socket, centred on the rotor axis) at its class display length, LOD0, on the stage layer.
+    ///   2. The weapon lies on the post caps (AD M1): its seat's tilt and place, along the posts' line, the lowest point over the
+    ///      disc, the class display length, on the stage layer; the turntable rests turned to the first view; the ground is
+    ///      SurfaceInset (AD M2) and the set is placed through the mirror fix (S1).
     ///   3. Orbit / Zoom keep to the json's limits; several changes in one frame are one render however many frames follow;
     ///      the camera is never enabled (fix, PM run w106-tests 12.10: an enabled camera was drawn on every editor tick until the
     ///      next LateUpdate - one change ~20 renders); ResetView.
@@ -112,7 +114,7 @@ namespace DD.Prototype.Tests.PlayMode
         // ------------------------------------------------------------------ 2 · the seat and the fit
 
         [UnityTest]
-        public IEnumerator Silah_SoketeOturur_EkseneOrtali_SinifUzunlugunda_Lod0_SahneKatmaninda()
+        public IEnumerator Silah_DayanaklaraOturur_KoltukTablosu_SinifUzunlugunda_SahneKatmaninda()
         {
             PrepareRunStage stage = NewStage(out _);
             stage.AutoTurn = false;
@@ -121,34 +123,13 @@ namespace DD.Prototype.Tests.PlayMode
 
             GameObject model = stage.CurrentModel;
             Transform socket = stage.WeaponSocketTransform;
+            Transform mount = model != null ? model.transform.parent : null;
             Assert.IsNotNull(model);
             Assert.IsNotNull(socket);
-
-            bool any = false;
-            var world = new Bounds();
-            foreach (Renderer r in model.GetComponentsInChildren<Renderer>(true))
-            {
-                Assert.AreEqual(PrepareRunStage.StageLayer, r.gameObject.layer, r.name + " sahne katmanında");
-                if (AuthoredWeaponModel.LodIndexOf(r.name) > 0)
-                {
-                    continue;
-                }
-
-                if (!any)
-                {
-                    world = r.bounds;
-                    any = true;
-                }
-                else
-                {
-                    world.Encapsulate(r.bounds);
-                }
-            }
-
-            Assert.IsTrue(any, "LOD0 çizici yok");
-            Assert.AreEqual(socket.position.y, world.min.y, 0.01f, "silahın ayağı SOCKET_Weapon'da");
-            Assert.AreEqual(socket.position.x, world.center.x, 0.01f, "iz döner tablanın ekseninde");
-            Assert.AreEqual(socket.position.z, world.center.z, 0.01f);
+            Assert.IsTrue(model.transform.IsChildOf(socket), "silah soketle (rotorla) döner");
+            Transform root = stage.StageCamera.transform.parent;
+            Assert.AreEqual(PrepareRunStage.WeaponSocketHeight, root.InverseTransformPoint(socket.position).y, 0.005f, "SOCKET_Weapon 0.94 m");
+            Assert.AreEqual(UiTokens.Get(UiColor.SurfaceInset), stage.StageCamera.backgroundColor, "AD M2: zemin SurfaceInset");
 
             Bounds local = AuthoredWeaponModel.LocalLod0Bounds(model.transform);
             float scale = model.transform.localScale.x;
@@ -156,12 +137,42 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(scale, model.transform.localScale.z, 1e-5f);
             WeaponDefinition definition = Arsenal.Get(ClassicWeaponId.AssaultRifle);
             float length = PrepareRunStage.DisplayLength(definition != null ? definition.weaponClass : WeaponClass.AssaultRifle);
-            float shownLength = Mathf.Max(local.size.x, local.size.z) * scale;
-            float shownHeight = local.size.y * scale;
-            Assert.IsTrue(Mathf.Abs(shownLength - length) < 0.005f || Mathf.Abs(shownHeight - PrepareRunStage.MaxWeaponHeight) < 0.005f,
-                "sınıf uzunluğu " + length + " m ya da boy tavanı: " + shownLength.ToString("F3") + " × " + shownHeight.ToString("F3"));
-            Assert.LessOrEqual(shownHeight, PrepareRunStage.MaxWeaponHeight + 0.005f);
-            Assert.IsTrue(model.transform.IsChildOf(socket), "silah soketle (rotorla) döner");
+            Assert.AreEqual(length, Mathf.Max(local.size.x, local.size.z) * scale, 0.005f, "sınıf uzunluğu");
+
+            Assert.IsTrue(PrepareRunStage.TrySeat("ar_1", scale, out PrepareRunStage.Seat seat), "ar_1 koltuğu bu ölçekte (" + scale.ToString("F4") + ")");
+            Assert.Less(Quaternion.Angle(PrepareRunStage.SeatRotation(seat), model.transform.localRotation), 0.01f, "koltuğun eğimi");
+            Assert.Less((PrepareRunStage.SeatPosition(local, scale, seat) - model.transform.localPosition).magnitude, 1e-4f, "koltuğun yeri");
+
+            // The barrel along the posts' line and, at rest, square to the first view with the muzzle on the screen's left.
+            Vector3 barrel = root.InverseTransformDirection(mount.forward);
+            Vector3 expected = Quaternion.Euler(0f, PrepareRunStage.TurntableRestYaw, 0f) * Vector3.right;
+            Assert.Less(Vector3.Angle(barrel, expected), 0.5f, "namlu dayanak hattında, tabla dinlenme dönüşünde: " + barrel);
+
+            float lowest = float.MaxValue;
+            foreach (Renderer r in model.GetComponentsInChildren<Renderer>(true))
+            {
+                Assert.AreEqual(PrepareRunStage.StageLayer, r.gameObject.layer, r.name + " sahne katmanında");
+                if (AuthoredWeaponModel.LodIndexOf(r.name) == 0)
+                {
+                    lowest = Mathf.Min(lowest, root.InverseTransformPoint(r.bounds.min).y);
+                }
+            }
+
+            Assert.Less(lowest, float.MaxValue, "LOD0 çizici yok");
+            Assert.GreaterOrEqual(lowest, PrepareRunStage.RotorDiscTop, "silahın en alt noktası diskin üstünde (AD: ≥ 0.71 m; AABB ölçümü)");
+            Assert.LessOrEqual(lowest, PrepareRunStage.PostCapTop, "silah kapaklardan aşağı iner (havada değil)");
+
+            if (stage.HasSet)
+            {
+                Transform set = root.Find("PR_Stage");
+                Assert.IsNotNull(set);
+                foreach (PrepareRunStage.SetPiece piece in PrepareRunStage.Set)
+                {
+                    Transform t = set.Find(piece.Name);
+                    Assert.IsNotNull(t, piece.Name);
+                    Assert.Less((t.localPosition - piece.Position).magnitude, 1e-4f, piece.Name + " S1 aynası");
+                }
+            }
         }
 
         // ------------------------------------------------------------------ 3 · orbit and zoom
