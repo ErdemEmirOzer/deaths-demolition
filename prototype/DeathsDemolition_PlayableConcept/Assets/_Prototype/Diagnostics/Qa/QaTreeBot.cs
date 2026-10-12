@@ -1,3 +1,4 @@
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -188,3 +189,4 @@ namespace DD.Prototype.Qa
         }
     }
 }
+#endif
