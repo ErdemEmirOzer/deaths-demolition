@@ -1547,11 +1547,16 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.Greater(kenar, 0, "ölçüm boş: ağaçtan eylemlere geçen düğüm yok");
+            // The tree's action chain skips dead buttons (UpgradeTreeV2.ActionChain): below the detail's last button is REROLL,
+            // or HEARTH, or CONTINUE - checked whether REROLL is live or not (gt N3a).
             Selectable sonDetay = hedef ?? al;
-            if (sonDetay != null && yenile != null)
+            Selectable altindaki = yenile ?? ocak ?? devam;
+            if (sonDetay != null)
             {
-                Assert.AreSame(yenile, sonDetay.navigation.selectOnDown, "detayın son düğmesinden aşağı = REROLL");
+                Assert.AreSame(altindaki, sonDetay.navigation.selectOnDown, "detayın son düğmesinden aşağı = REROLL, yoksa OCAK, yoksa DEVAM");
             }
+
+            bool rerollCanli = yenile != null;   // logged below: read before the close turns every button off
 
             if (yenile != null)
             {
@@ -1581,7 +1586,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
-            Debug.Log("[DD-TEST] wp098b.upgradeWindow=OK tree=v2 reroll=" + reroll.IsInteractable());
+            Debug.Log("[DD-TEST] wp098b.upgradeWindow=OK tree=v2 reroll=" + rerollCanli + " detail=" + (sonDetay != null));
         }
 
         private static Selectable Canli(UiButton button)
