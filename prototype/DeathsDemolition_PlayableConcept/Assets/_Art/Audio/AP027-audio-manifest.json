@@ -17,7 +17,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -44,7 +44,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr1Puddle",
@@ -60,7 +60,7 @@
    ],
    "loop": false,
    "lufs": -24.62,
-   "codexLufs": -24.15,
+   "stereoLufs": -24.15,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.62,
@@ -88,7 +88,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr1StoneSlate",
@@ -104,7 +104,7 @@
    ],
    "loop": false,
    "lufs": -24.48,
-   "codexLufs": -24.24,
+   "stereoLufs": -24.24,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.48,
@@ -134,7 +134,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; source recording) · SHA ce7037131ff7… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011; source recording) · SHA ce7037131ff7… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr1WetStone",
@@ -150,7 +150,7 @@
    ],
    "loop": false,
    "lufs": -24.88,
-   "codexLufs": -24.21,
+   "stereoLufs": -24.21,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.88,
@@ -179,7 +179,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr1Wood",
@@ -195,7 +195,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.28,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -224,7 +224,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC010; source recording) · SHA 28373334871d… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC008, SRC010; source recording) · SHA 28373334871d… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr2Dirt",
@@ -240,7 +240,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -267,7 +267,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr2Puddle",
@@ -283,7 +283,7 @@
    ],
    "loop": false,
    "lufs": -24.62,
-   "codexLufs": -24.15,
+   "stereoLufs": -24.15,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.62,
@@ -311,7 +311,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr2StoneSlate",
@@ -327,7 +327,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.05,
+   "stereoLufs": -24.05,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -355,7 +355,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr2WetStone",
@@ -371,7 +371,7 @@
    ],
    "loop": false,
    "lufs": -24.88,
-   "codexLufs": -24.21,
+   "stereoLufs": -24.21,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.88,
@@ -400,7 +400,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingAr2Wood",
@@ -416,7 +416,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -443,7 +443,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg1Dirt",
@@ -459,7 +459,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -486,7 +486,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg1Puddle",
@@ -502,7 +502,7 @@
    ],
    "loop": false,
    "lufs": -24.62,
-   "codexLufs": -24.15,
+   "stereoLufs": -24.15,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.62,
@@ -530,7 +530,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg1StoneSlate",
@@ -546,7 +546,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.05,
+   "stereoLufs": -24.05,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -574,7 +574,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg1WetStone",
@@ -590,7 +590,7 @@
    ],
    "loop": false,
    "lufs": -24.88,
-   "codexLufs": -24.21,
+   "stereoLufs": -24.21,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.88,
@@ -619,7 +619,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg1Wood",
@@ -635,7 +635,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -662,7 +662,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg2Dirt",
@@ -678,7 +678,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -705,7 +705,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg2Puddle",
@@ -721,7 +721,7 @@
    ],
    "loop": false,
    "lufs": -24.62,
-   "codexLufs": -24.15,
+   "stereoLufs": -24.15,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.62,
@@ -749,7 +749,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg2StoneSlate",
@@ -765,7 +765,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.05,
+   "stereoLufs": -24.05,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -793,7 +793,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg2WetStone",
@@ -809,7 +809,7 @@
    ],
    "loop": false,
    "lufs": -24.88,
-   "codexLufs": -24.21,
+   "stereoLufs": -24.21,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.88,
@@ -838,7 +838,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingLmg2Wood",
@@ -854,7 +854,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -881,7 +881,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg1Dirt",
@@ -897,7 +897,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.46,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -926,7 +926,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber) · SHA 717cc762e089… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber) · SHA 717cc762e089… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg1Puddle",
@@ -942,7 +942,7 @@
    ],
    "loop": false,
    "lufs": -24.56,
-   "codexLufs": -24.24,
+   "stereoLufs": -24.24,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.56,
@@ -970,7 +970,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA 282d4a8c6b05… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA 282d4a8c6b05… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg1StoneSlate",
@@ -986,7 +986,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -2.15,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1013,7 +1013,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009; source recording) · SHA c2376ffd686d… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009; source recording) · SHA c2376ffd686d… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg1WetStone",
@@ -1029,7 +1029,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.49,
+   "stereoLufs": -24.49,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1056,7 +1056,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA ae15eb9b85c1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA ae15eb9b85c1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg1Wood",
@@ -1072,7 +1072,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -4.37,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1099,7 +1099,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC009; source recording) · SHA 1883a65dd375… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC008, SRC009; source recording) · SHA 1883a65dd375… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg2Dirt",
@@ -1115,7 +1115,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.46,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1144,7 +1144,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber) · SHA 717cc762e089… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber) · SHA 717cc762e089… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg2Puddle",
@@ -1160,7 +1160,7 @@
    ],
    "loop": false,
    "lufs": -24.56,
-   "codexLufs": -24.24,
+   "stereoLufs": -24.24,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.56,
@@ -1188,7 +1188,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA 282d4a8c6b05… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA 282d4a8c6b05… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg2StoneSlate",
@@ -1204,7 +1204,7 @@
    ],
    "loop": false,
    "lufs": -24.22,
-   "codexLufs": -24.22,
+   "stereoLufs": -24.22,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.22,
@@ -1228,7 +1228,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009; proxy surface/caliber) · SHA 2634c33361b1… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009; proxy surface/caliber) · SHA 2634c33361b1… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg2WetStone",
@@ -1244,7 +1244,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.49,
+   "stereoLufs": -24.49,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1271,7 +1271,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA ae15eb9b85c1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy surface/caliber) · SHA ae15eb9b85c1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSg2Wood",
@@ -1287,7 +1287,7 @@
    ],
    "loop": false,
    "lufs": -24.8,
-   "codexLufs": -24.48,
+   "stereoLufs": -24.48,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.8,
@@ -1314,7 +1314,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC117; proxy surface/caliber) · SHA a157ad74c2d1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC009, SRC117; proxy surface/caliber) · SHA a157ad74c2d1… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg1Dirt",
@@ -1330,7 +1330,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1357,7 +1357,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg1Puddle",
@@ -1373,7 +1373,7 @@
    ],
    "loop": false,
    "lufs": -24.77,
-   "codexLufs": -24.34,
+   "stereoLufs": -24.34,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.77,
@@ -1401,7 +1401,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA bd059554861e… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA bd059554861e… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg1StoneSlate",
@@ -1417,7 +1417,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.17,
+   "stereoLufs": -24.17,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1443,7 +1443,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber) · SHA 12065cfb734e… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118; proxy surface/caliber) · SHA 12065cfb734e… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg1WetStone",
@@ -1459,7 +1459,7 @@
    ],
    "loop": false,
    "lufs": -24.37,
-   "codexLufs": -24.34,
+   "stereoLufs": -24.34,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.37,
@@ -1487,7 +1487,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA 09067bf724a7… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA 09067bf724a7… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg1Wood",
@@ -1503,7 +1503,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -1530,7 +1530,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg2Dirt",
@@ -1546,7 +1546,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.08,
+   "stereoLufs": -24.08,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1573,7 +1573,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber) · SHA 4359672ab7c6… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg2Puddle",
@@ -1589,7 +1589,7 @@
    ],
    "loop": false,
    "lufs": -24.77,
-   "codexLufs": -24.34,
+   "stereoLufs": -24.34,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.77,
@@ -1617,7 +1617,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA bd059554861e… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA bd059554861e… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg2StoneSlate",
@@ -1633,7 +1633,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.17,
+   "stereoLufs": -24.17,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1659,7 +1659,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber) · SHA 12065cfb734e… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118; proxy surface/caliber) · SHA 12065cfb734e… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg2WetStone",
@@ -1675,7 +1675,7 @@
    ],
    "loop": false,
    "lufs": -24.37,
-   "codexLufs": -24.34,
+   "stereoLufs": -24.34,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.37,
@@ -1703,7 +1703,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA 09067bf724a7… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy surface/caliber) · SHA 09067bf724a7… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSmg2Wood",
@@ -1719,7 +1719,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -1746,7 +1746,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSr1Dirt",
@@ -1762,7 +1762,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.87,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1791,7 +1791,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC120; proxy surface/caliber) · SHA 212c325273f0… · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC120; proxy surface/caliber) · SHA 212c325273f0… · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSr1Puddle",
@@ -1807,7 +1807,7 @@
    ],
    "loop": false,
    "lufs": -24.62,
-   "codexLufs": -24.15,
+   "stereoLufs": -24.15,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.62,
@@ -1835,7 +1835,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA 49af88b5820b… · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSr1StoneSlate",
@@ -1851,7 +1851,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.05,
+   "stereoLufs": -24.05,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -1879,7 +1879,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber) · SHA 3e28a7eaf17e… · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSr1WetStone",
@@ -1895,7 +1895,7 @@
    ],
    "loop": false,
    "lufs": -24.88,
-   "codexLufs": -24.21,
+   "stereoLufs": -24.21,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.88,
@@ -1924,7 +1924,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy surface/caliber) · SHA cad67e60d4b8… · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "CasingSr1Wood",
@@ -1940,7 +1940,7 @@
    ],
    "loop": false,
    "lufs": -24.41,
-   "codexLufs": -24.32,
+   "stereoLufs": -24.32,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.41,
@@ -1967,7 +1967,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber) · SHA 827c2e57dc72… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "LinkLmg1Dirt",
@@ -1983,7 +1983,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2010,7 +2010,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg1Puddle",
@@ -2026,7 +2026,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2053,7 +2053,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg1StoneSlate",
@@ -2069,7 +2069,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2096,7 +2096,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg1WetStone",
@@ -2112,7 +2112,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2139,7 +2139,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg1Wood",
@@ -2155,7 +2155,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2182,7 +2182,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg2Dirt",
@@ -2198,7 +2198,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2225,7 +2225,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg2Puddle",
@@ -2241,7 +2241,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2268,7 +2268,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg2StoneSlate",
@@ -2284,7 +2284,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2311,7 +2311,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg2WetStone",
@@ -2327,7 +2327,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2354,7 +2354,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "LinkLmg2Wood",
@@ -2370,7 +2370,7 @@
    ],
    "loop": false,
    "lufs": -30.0,
-   "codexLufs": -30.0,
+   "stereoLufs": -30.0,
    "truePeakDb": -8.92,
    "bitDepth": 24,
    "targetLufs": -30.0,
@@ -2397,7 +2397,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) · SHA 0195480bf725… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr1DistanceFar",
@@ -2413,7 +2413,7 @@
    ],
    "loop": false,
    "lufs": -22.99,
-   "codexLufs": -24.63,
+   "stereoLufs": -24.63,
    "truePeakDb": -1.51,
    "bitDepth": 24,
    "targetLufs": -22.99,
@@ -2452,7 +2452,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC116; source recording) · SHA e48bd80bae9c… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001, SRC116; source recording) · SHA e48bd80bae9c… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponAr1DistanceMid",
@@ -2468,7 +2468,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -5.36,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -2497,7 +2497,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source recording) · SHA 4724e3255ea5… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001, SRC002; source recording) · SHA 4724e3255ea5… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponAr1Fire",
@@ -2513,7 +2513,7 @@
    ],
    "loop": false,
    "lufs": -18.0,
-   "codexLufs": -18.07,
+   "stereoLufs": -18.07,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -2552,7 +2552,7 @@
     "Weapon_ar1_Fire_05.wav",
     "Weapon_ar1_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source recording) · SHA d76e743eb2e9… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001, SRC002; source recording) · SHA d76e743eb2e9… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
   },
   {
    "sound": "WeaponAr1Mechanical",
@@ -2568,7 +2568,7 @@
    ],
    "loop": false,
    "lufs": -48.76,
-   "codexLufs": -49.01,
+   "stereoLufs": -49.01,
    "truePeakDb": -24.93,
    "bitDepth": 24,
    "targetLufs": -48.76,
@@ -2595,7 +2595,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC002; source recording) · SHA 609701ab4801… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC002; source recording) · SHA 609701ab4801… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr1TailCorridor",
@@ -2611,7 +2611,7 @@
    ],
    "loop": false,
    "lufs": -23.62,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.81,
    "bitDepth": 24,
    "targetLufs": -23.62,
@@ -2644,7 +2644,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr1TailHall",
@@ -2660,7 +2660,7 @@
    ],
    "loop": false,
    "lufs": -24.69,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.42,
    "bitDepth": 24,
    "targetLufs": -24.69,
@@ -2693,7 +2693,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr1TailOpen",
@@ -2709,7 +2709,7 @@
    ],
    "loop": false,
    "lufs": -25.19,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.88,
    "bitDepth": 24,
    "targetLufs": -25.19,
@@ -2736,7 +2736,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording) · SHA 13defa439759… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001; source recording) · SHA 13defa439759… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr2DistanceFar",
@@ -2752,7 +2752,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -3.48,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -2778,7 +2778,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source recording) · SHA f1e235e8c46f… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC106, SRC107; source recording) · SHA f1e235e8c46f… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponAr2DistanceMid",
@@ -2794,7 +2794,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -1.37,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -2820,7 +2820,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source recording) · SHA 82946b933a05… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC106, SRC107; source recording) · SHA 82946b933a05… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponAr2Fire",
@@ -2836,7 +2836,7 @@
    ],
    "loop": false,
    "lufs": -19.28,
-   "codexLufs": -19.65,
+   "stereoLufs": -19.65,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -19.28,
@@ -2877,7 +2877,7 @@
     "Weapon_ar2_Fire_05.wav",
     "Weapon_ar2_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source recording) · SHA 021c8c4f226a… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_ar2_Fire_01.wav, Weapon_ar2_Fire_02.wav, Weapon_ar2_Fire_03.wav, Weapon_ar2_Fire_04.wav, Weapon_ar2_Fire_05.wav, Weapon_ar2_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC106, SRC107; source recording) · SHA 021c8c4f226a… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_ar2_Fire_01.wav, Weapon_ar2_Fire_02.wav, Weapon_ar2_Fire_03.wav, Weapon_ar2_Fire_04.wav, Weapon_ar2_Fire_05.wav, Weapon_ar2_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
   },
   {
    "sound": "WeaponAr2Mechanical",
@@ -2893,7 +2893,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -3.8,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -2920,7 +2920,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC107; source recording) · SHA 83e2c927dc0b… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC107; source recording) · SHA 83e2c927dc0b… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponAr2TailCorridor",
@@ -2936,7 +2936,7 @@
    ],
    "loop": false,
    "lufs": -23.62,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.81,
    "bitDepth": 24,
    "targetLufs": -23.62,
@@ -2969,7 +2969,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr2TailHall",
@@ -2985,7 +2985,7 @@
    ],
    "loop": false,
    "lufs": -24.69,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.42,
    "bitDepth": 24,
    "targetLufs": -24.69,
@@ -3018,7 +3018,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponAr2TailOpen",
@@ -3034,7 +3034,7 @@
    ],
    "loop": false,
    "lufs": -28.17,
-   "codexLufs": -21.93,
+   "stereoLufs": -21.93,
    "truePeakDb": -2.87,
    "bitDepth": 24,
    "targetLufs": -28.17,
@@ -3061,7 +3061,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC106; source recording) · SHA 26de4641dae6… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC106; source recording) · SHA 26de4641dae6… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg1DistanceFar",
@@ -3077,7 +3077,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.8,
+   "stereoLufs": -24.8,
    "truePeakDb": -3.17,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -3117,7 +3117,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC116; source recording) · SHA 4e6cb3f84370… · AP-027 v003-recut on 2 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC116; source recording) · SHA 4e6cb3f84370… · AP-027 v003-recut on 2 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · AP-027 v003b-recut on 4 file(s) · AP-027 v003c-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponLmg1DistanceMid",
@@ -3133,7 +3133,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -3.87,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -3163,7 +3163,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC109; source recording) · SHA 06107206c1ca… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001, SRC109; source recording) · SHA 06107206c1ca… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponLmg1Fire",
@@ -3179,7 +3179,7 @@
    ],
    "loop": false,
    "lufs": -18.58,
-   "codexLufs": -18.53,
+   "stereoLufs": -18.53,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -18.58,
@@ -3216,7 +3216,7 @@
     "Weapon_lmg1_Fire_03.wav",
     "Weapon_lmg1_Fire_04.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC109; source recording) · SHA 33f2a99f4071… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 4 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001, SRC109; source recording) · SHA 33f2a99f4071… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 4 file(s)"
   },
   {
    "sound": "WeaponLmg1Mechanical",
@@ -3232,7 +3232,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -3.1,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -3252,7 +3252,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC109; source recording) · SHA 6aa2ef8bb941…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC109; source recording) · SHA 6aa2ef8bb941…"
   },
   {
    "sound": "WeaponLmg1TailCorridor",
@@ -3268,7 +3268,7 @@
    ],
    "loop": false,
    "lufs": -23.63,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.65,
    "bitDepth": 24,
    "targetLufs": -23.63,
@@ -3301,7 +3301,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg1TailHall",
@@ -3317,7 +3317,7 @@
    ],
    "loop": false,
    "lufs": -24.7,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.59,
    "bitDepth": 24,
    "targetLufs": -24.7,
@@ -3350,7 +3350,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg1TailOpen",
@@ -3366,7 +3366,7 @@
    ],
    "loop": false,
    "lufs": -25.37,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -4.1,
    "bitDepth": 24,
    "targetLufs": -25.37,
@@ -3393,7 +3393,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording) · SHA d335d41be8bd… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC001; source recording) · SHA d335d41be8bd… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg2DistanceFar",
@@ -3409,7 +3409,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.28,
+   "stereoLufs": -24.28,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -3437,7 +3437,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source recording) · SHA a0772de1fa2b… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC108, SRC109; source recording) · SHA a0772de1fa2b… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponLmg2DistanceMid",
@@ -3453,7 +3453,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -3.85,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -3482,7 +3482,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source recording) · SHA 4b049f3190e3… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC108, SRC109; source recording) · SHA 4b049f3190e3… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponLmg2Fire",
@@ -3497,7 +3497,7 @@
    ],
    "loop": false,
    "lufs": -18.0,
-   "codexLufs": -18.2,
+   "stereoLufs": -18.2,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -3533,7 +3533,7 @@
     "Weapon_lmg2_Fire_04.wav",
     "Weapon_lmg2_Fire_05.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source recording) · SHA e8387d450706… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_lmg2_Fire_02.wav, Weapon_lmg2_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 2 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC108, SRC109; source recording) · SHA e8387d450706… · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · AP-027 v003b-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_lmg2_Fire_02.wav, Weapon_lmg2_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 2 file(s)"
   },
   {
    "sound": "WeaponLmg2Mechanical",
@@ -3549,7 +3549,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -3.1,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -3569,7 +3569,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC109; source recording) · SHA 6aa2ef8bb941…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC109; source recording) · SHA 6aa2ef8bb941…"
   },
   {
    "sound": "WeaponLmg2TailCorridor",
@@ -3585,7 +3585,7 @@
    ],
    "loop": false,
    "lufs": -23.63,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.65,
    "bitDepth": 24,
    "targetLufs": -23.63,
@@ -3618,7 +3618,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg2TailHall",
@@ -3634,7 +3634,7 @@
    ],
    "loop": false,
    "lufs": -24.7,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.59,
    "bitDepth": 24,
    "targetLufs": -24.7,
@@ -3667,7 +3667,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponLmg2TailOpen",
@@ -3681,7 +3681,7 @@
    ],
    "loop": false,
    "lufs": -24.44,
-   "codexLufs": -20.24,
+   "stereoLufs": -20.24,
    "truePeakDb": -2.63,
    "bitDepth": 24,
    "targetLufs": -24.44,
@@ -3706,7 +3706,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording) · SHA 82a9956d391c… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05 retired — open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC108; source recording) · SHA 82a9956d391c… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05 retired — open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280 G1"
   },
   {
    "sound": "WeaponRl1DistanceFar",
@@ -3722,7 +3722,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -5.6,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -3756,7 +3756,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source recording) · SHA 6ea5b5792ffb… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC107, SRC129; source recording) · SHA 6ea5b5792ffb… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponRl1DistanceMid",
@@ -3772,7 +3772,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -3.58,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -3806,7 +3806,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source recording) · SHA 7e062c42114c… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC107, SRC129; source recording) · SHA 7e062c42114c… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponRl1Fire",
@@ -3822,7 +3822,7 @@
    ],
    "loop": false,
    "lufs": -19.37,
-   "codexLufs": -19.55,
+   "stereoLufs": -19.55,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -19.37,
@@ -3870,7 +3870,7 @@
     "Weapon_rl1_Fire_05.wav",
     "Weapon_rl1_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source recording) · SHA c66fb9815b0d… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_rl1_Fire_01.wav, Weapon_rl1_Fire_02.wav, Weapon_rl1_Fire_03.wav, Weapon_rl1_Fire_04.wav, Weapon_rl1_Fire_05.wav, Weapon_rl1_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC107, SRC129; source recording) · SHA c66fb9815b0d… · AP-027 v003-recut on 6 file(s) · AP-027 v003-recut on 6 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_rl1_Fire_01.wav, Weapon_rl1_Fire_02.wav, Weapon_rl1_Fire_03.wav, Weapon_rl1_Fire_04.wav, Weapon_rl1_Fire_05.wav, Weapon_rl1_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
   },
   {
    "sound": "WeaponRl1Mechanical",
@@ -3886,7 +3886,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -3.8,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -3913,7 +3913,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC107; source recording) · SHA 83e2c927dc0b… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC107; source recording) · SHA 83e2c927dc0b… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponRl1TailCorridor",
@@ -3929,7 +3929,7 @@
    ],
    "loop": false,
    "lufs": -23.6,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.26,
    "bitDepth": 24,
    "targetLufs": -23.6,
@@ -3962,7 +3962,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponRl1TailHall",
@@ -3978,7 +3978,7 @@
    ],
    "loop": false,
    "lufs": -24.78,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.86,
    "bitDepth": 24,
    "targetLufs": -24.78,
@@ -4011,7 +4011,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponRl1TailOpen",
@@ -4027,7 +4027,7 @@
    ],
    "loop": false,
    "lufs": -28.18,
-   "codexLufs": -23.72,
+   "stereoLufs": -23.72,
    "truePeakDb": -2.03,
    "bitDepth": 24,
    "targetLufs": -28.18,
@@ -4054,7 +4054,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording) · SHA e2ec0cd27d2a… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) · SHA e2ec0cd27d2a… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg1DistanceFar",
@@ -4070,7 +4070,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.11,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -4102,7 +4102,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording) · SHA 78f55dc0b2f5… · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s) · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC004; source recording) · SHA 78f55dc0b2f5… · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s) · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg1DistanceMid",
@@ -4118,7 +4118,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -4.03,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -4146,7 +4146,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 2c835710bf76… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 2c835710bf76… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSg1Fire",
@@ -4162,7 +4162,7 @@
    ],
    "loop": false,
    "lufs": -19.09,
-   "codexLufs": -18.45,
+   "stereoLufs": -18.45,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -19.09,
@@ -4197,7 +4197,7 @@
     "Weapon_sg1_Fire_05.wav",
     "Weapon_sg1_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 5d01ff8627b3… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 5d01ff8627b3… · AP-027 v003-recut on 1 file(s) · AP-027 v003-recut on 1 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
   },
   {
    "sound": "WeaponSg1Mechanical",
@@ -4213,7 +4213,7 @@
    ],
    "loop": false,
    "lufs": -46.81,
-   "codexLufs": -52.77,
+   "stereoLufs": -52.77,
    "truePeakDb": -22.51,
    "bitDepth": 24,
    "targetLufs": -46.81,
@@ -4233,7 +4233,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 2180f4490453…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC013; source recording) · SHA 2180f4490453…"
   },
   {
    "sound": "WeaponSg1TailCorridor",
@@ -4249,7 +4249,7 @@
    ],
    "loop": false,
    "lufs": -23.64,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.85,
    "bitDepth": 24,
    "targetLufs": -23.64,
@@ -4282,7 +4282,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg1TailHall",
@@ -4298,7 +4298,7 @@
    ],
    "loop": false,
    "lufs": -24.69,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.77,
    "bitDepth": 24,
    "targetLufs": -24.69,
@@ -4331,7 +4331,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg1TailOpen",
@@ -4347,7 +4347,7 @@
    ],
    "loop": false,
    "lufs": -25.45,
-   "codexLufs": -20.04,
+   "stereoLufs": -20.04,
    "truePeakDb": -1.78,
    "bitDepth": 24,
    "targetLufs": -25.45,
@@ -4374,7 +4374,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006; source recording) · SHA 48a60fc533c3… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC006; source recording) · SHA 48a60fc533c3… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg2DistanceFar",
@@ -4390,7 +4390,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -4422,7 +4422,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording) · SHA 3a67e0e59a0c… · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s) · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC004; source recording) · SHA 3a67e0e59a0c… · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s) · AP-027 v003-recut on 5 file(s) · AP-027 v003e-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg2DistanceMid",
@@ -4438,7 +4438,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -3.09,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -4467,7 +4467,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006, SRC007, SRC013; source recording) · SHA a1ad9cfb6198… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC006, SRC007, SRC013; source recording) · SHA a1ad9cfb6198… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSg2Fire",
@@ -4483,7 +4483,7 @@
    ],
    "loop": false,
    "lufs": -18.67,
-   "codexLufs": -18.78,
+   "stereoLufs": -18.78,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -18.67,
@@ -4519,7 +4519,7 @@
     "Weapon_sg2_Fire_05.wav",
     "Weapon_sg2_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006, SRC007, SRC013; source recording) · SHA 578929cc37b2… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003, SRC006, SRC007, SRC013; source recording) · SHA 578929cc37b2… · AP-027 v003-recut on 2 file(s) · AP-027 v003-recut on 2 file(s) · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate) · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 6 file(s)"
   },
   {
    "sound": "WeaponSg2Mechanical",
@@ -4535,7 +4535,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -2.91,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -4559,7 +4559,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC007; source recording) · SHA f39bd95779e7… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC007; source recording) · SHA f39bd95779e7… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSg2TailCorridor",
@@ -4575,7 +4575,7 @@
    ],
    "loop": false,
    "lufs": -23.64,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.85,
    "bitDepth": 24,
    "targetLufs": -23.64,
@@ -4608,7 +4608,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg2TailHall",
@@ -4624,7 +4624,7 @@
    ],
    "loop": false,
    "lufs": -24.69,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.77,
    "bitDepth": 24,
    "targetLufs": -24.69,
@@ -4657,7 +4657,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSg2TailOpen",
@@ -4673,7 +4673,7 @@
    ],
    "loop": false,
    "lufs": -22.94,
-   "codexLufs": -20.04,
+   "stereoLufs": -20.04,
    "truePeakDb": -2.59,
    "bitDepth": 24,
    "targetLufs": -22.94,
@@ -4700,7 +4700,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC003; source recording) · SHA c0b6739c5870… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC003; source recording) · SHA c0b6739c5870… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg1DistanceFar",
@@ -4716,7 +4716,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.31,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -4746,7 +4746,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC128; source recording) · SHA 8b5d483bbc13… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC128; source recording) · SHA 8b5d483bbc13… · AP-027 v003-recut on 4 file(s) · AP-027 v003-recut on 4 file(s) · import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSmg1DistanceMid",
@@ -4762,7 +4762,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -2.95,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -4788,7 +4788,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127; source recording) · SHA 03703918ef57… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC101, SRC102, SRC127; source recording) · SHA 03703918ef57… · import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSmg1Fire",
@@ -4804,7 +4804,7 @@
    ],
    "loop": false,
    "lufs": -18.0,
-   "codexLufs": -18.07,
+   "stereoLufs": -18.07,
    "truePeakDb": -2.01,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -4841,7 +4841,7 @@
    "importPeakLimit": [
     "Weapon_smg1_Fire_06.wav"
    ],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127; source recording) · SHA 05b64bd6dd3c… · AP-027 v003-recut on 5 file(s) · AP-027 v003-recut on 5 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_smg1_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 1 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC101, SRC102, SRC127; source recording) · SHA 05b64bd6dd3c… · AP-027 v003-recut on 5 file(s) · AP-027 v003-recut on 5 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_smg1_Fire_06.wav · import true-peak shave ≤ -2.0 dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on 1 file(s)"
   },
   {
    "sound": "WeaponSmg1Mechanical",
@@ -4857,7 +4857,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -2.37,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -4877,7 +4877,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC102; source recording) · SHA 3c3941ab7672…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC102; source recording) · SHA 3c3941ab7672…"
   },
   {
    "sound": "WeaponSmg1TailCorridor",
@@ -4893,7 +4893,7 @@
    ],
    "loop": false,
    "lufs": -23.64,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.54,
    "bitDepth": 24,
    "targetLufs": -23.64,
@@ -4926,7 +4926,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg1TailHall",
@@ -4942,7 +4942,7 @@
    ],
    "loop": false,
    "lufs": -23.91,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.94,
    "bitDepth": 24,
    "targetLufs": -23.91,
@@ -4975,7 +4975,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg1TailOpen",
@@ -4991,7 +4991,7 @@
    ],
    "loop": false,
    "lufs": -28.19,
-   "codexLufs": -23.72,
+   "stereoLufs": -23.72,
    "truePeakDb": -2.06,
    "bitDepth": 24,
    "targetLufs": -28.19,
@@ -5018,7 +5018,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording) · SHA e2ec0cd27d2a… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) · SHA e2ec0cd27d2a… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg2DistanceFar",
@@ -5034,7 +5034,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -2.68,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -5061,7 +5061,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source recording) · SHA d316ff70b1e0… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC103, SRC105; source recording) · SHA d316ff70b1e0… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSmg2DistanceMid",
@@ -5077,7 +5077,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -4.53,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -5104,7 +5104,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source recording) · SHA b855296f9b47… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC103, SRC105; source recording) · SHA b855296f9b47… · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSmg2Fire",
@@ -5120,7 +5120,7 @@
    ],
    "loop": false,
    "lufs": -18.0,
-   "codexLufs": -18.0,
+   "stereoLufs": -18.0,
    "truePeakDb": -2.83,
    "bitDepth": 24,
    "targetLufs": -18.0,
@@ -5154,7 +5154,7 @@
     "Weapon_smg2_Fire_05.wav"
    ],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source recording) · SHA 09b4ed8e6ac6… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_smg2_Fire_01.wav, Weapon_smg2_Fire_05.wav"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC103, SRC105; source recording) · SHA 09b4ed8e6ac6… · AP-027 v003-recut on 3 file(s) · AP-027 v003-recut on 3 file(s) · import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate) · import 15 Hz high-pass + DC out on Weapon_smg2_Fire_01.wav, Weapon_smg2_Fire_05.wav"
   },
   {
    "sound": "WeaponSmg2Mechanical",
@@ -5170,7 +5170,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -4.57,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -5190,7 +5190,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC105; source recording) · SHA 7ed27e07ad92…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC105; source recording) · SHA 7ed27e07ad92…"
   },
   {
    "sound": "WeaponSmg2TailCorridor",
@@ -5206,7 +5206,7 @@
    ],
    "loop": false,
    "lufs": -23.64,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -3.54,
    "bitDepth": 24,
    "targetLufs": -23.64,
@@ -5239,7 +5239,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 225956d6b0bb… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg2TailHall",
@@ -5255,7 +5255,7 @@
    ],
    "loop": false,
    "lufs": -23.91,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.94,
    "bitDepth": 24,
    "targetLufs": -23.91,
@@ -5288,7 +5288,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 19d0ef390432… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSmg2TailOpen",
@@ -5303,7 +5303,7 @@
    ],
    "loop": false,
    "lufs": -24.94,
-   "codexLufs": -20.94,
+   "stereoLufs": -20.94,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -24.94,
@@ -5329,7 +5329,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording) · SHA 7c0ac57a62a4… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired — open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC103; source recording) · SHA 7c0ac57a62a4… · AP-027 v003g-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s) · S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired — open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
   },
   {
    "sound": "WeaponSr1DistanceFar",
@@ -5345,7 +5345,7 @@
    ],
    "loop": false,
    "lufs": -24.0,
-   "codexLufs": -24.0,
+   "stereoLufs": -24.0,
    "truePeakDb": -1.74,
    "bitDepth": 24,
    "targetLufs": -24.0,
@@ -5365,7 +5365,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source recording) · SHA 560a823c7b6e…"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC110, SRC111; source recording) · SHA 560a823c7b6e…"
   },
   {
    "sound": "WeaponSr1DistanceMid",
@@ -5381,7 +5381,7 @@
    ],
    "loop": false,
    "lufs": -22.0,
-   "codexLufs": -22.0,
+   "stereoLufs": -22.0,
    "truePeakDb": -2.04,
    "bitDepth": 24,
    "targetLufs": -22.0,
@@ -5403,7 +5403,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source recording) · SHA 0b6ec23e4b89… · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC110, SRC111; source recording) · SHA 0b6ec23e4b89… · import fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSr1Fire",
@@ -5419,7 +5419,7 @@
    ],
    "loop": false,
    "lufs": -18.91,
-   "codexLufs": -19.24,
+   "stereoLufs": -19.24,
    "truePeakDb": -1.06,
    "bitDepth": 24,
    "targetLufs": -18.91,
@@ -5443,7 +5443,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source recording) · SHA f964aaf5ba46… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC110, SRC111; source recording) · SHA f964aaf5ba46… · import fade 10 ms + 20 ms silence on 3 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSr1Mechanical",
@@ -5459,7 +5459,7 @@
    ],
    "loop": false,
    "lufs": -28.0,
-   "codexLufs": -28.0,
+   "stereoLufs": -28.0,
    "truePeakDb": -2.1,
    "bitDepth": 24,
    "targetLufs": -28.0,
@@ -5482,7 +5482,7 @@
    ],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC111; source recording) · SHA eddb03ca0edd… · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC111; source recording) · SHA eddb03ca0edd… · import fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
   },
   {
    "sound": "WeaponSr1TailCorridor",
@@ -5498,7 +5498,7 @@
    ],
    "loop": false,
    "lufs": -23.65,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.74,
    "bitDepth": 24,
    "targetLufs": -23.65,
@@ -5531,7 +5531,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) · SHA 48ba25c36440… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSr1TailHall",
@@ -5547,7 +5547,7 @@
    ],
    "loop": false,
    "lufs": -24.64,
-   "codexLufs": -20.0,
+   "stereoLufs": -20.0,
    "truePeakDb": -2.56,
    "bitDepth": 24,
    "targetLufs": -24.64,
@@ -5580,7 +5580,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) · SHA 5497f3dc2992… · AP-027 v003f-recut on 6 file(s) · AP-027 v003g-recut on 6 file(s)"
   },
   {
    "sound": "WeaponSr1TailOpen",
@@ -5596,7 +5596,7 @@
    ],
    "loop": false,
    "lufs": -27.75,
-   "codexLufs": -23.45,
+   "stereoLufs": -23.45,
    "truePeakDb": -1.98,
    "bitDepth": 24,
    "targetLufs": -27.75,
@@ -5623,7 +5623,7 @@
    "importFade": [],
    "importDcRemoved": [],
    "importPeakLimit": [],
-   "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording) · SHA 9bfd9f8376a2… · AP-027 v003g-recut on 6 file(s)"
+   "provenance": "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) · SHA 9bfd9f8376a2… · AP-027 v003g-recut on 6 file(s)"
   }
  ],
  "source_manifest": "K/asset-production/AP-027/manifest/AP027-manifest-v002.json (7b9dbd0024ad)"

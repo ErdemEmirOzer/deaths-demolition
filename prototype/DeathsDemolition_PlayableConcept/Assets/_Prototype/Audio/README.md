@@ -52,7 +52,7 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 1. One owner per event: a UI interaction, a beat or a clip event plays from exactly one row; add a `Reserved` row instead of a second binding.
 2. No gain outside `AudioMixPlan`; no snapshot value outside `AudioMixerBuilder.SnapshotVolumesDb`.
 3. Every new `AudioSoundId` gets a recipe fallback, a manifest entry (or a documented reservation), a matrix row and a test that the row exists.
-4. Credits: AP-011 renders only with the real unit cost verified first (Seed Audio 1.9–2.8 cr/render on the record); everything since v005 is derived offline at 0 cr — see `asset-production/AP-011/README.md` §credit request list for what a top-up should buy first.
+4. Credits: AP-011 renders only with the real unit cost verified first (1.9–2.8 cr/render on the record); everything since v005 is derived offline at 0 cr — see `asset-production/AP-011/README.md` §credit request list for what a top-up should buy first.
 
 ## 8 · UI v3 (WP-068 slice 11)
 

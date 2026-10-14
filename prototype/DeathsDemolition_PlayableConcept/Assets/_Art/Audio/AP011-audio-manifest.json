@@ -153,7 +153,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job d7d6ce58 (1.1 cr) · amb_common_after_rain"
+   "provenance": "external:job-d7d6ce58 (1.1 cr) · amb_common_after_rain"
   },
   {
    "sound": "AmbDrip",
@@ -176,7 +176,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "seed_audio job a763a10c (1.1 cr) · amb_drip"
+   "provenance": "external:job-a763a10c (1.1 cr) · amb_drip"
   },
   {
    "sound": "AmbDripSlate",
@@ -253,7 +253,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "seed_audio job b92e48a1 (3.5 cr) · amb_furin"
+   "provenance": "external:job-b92e48a1 (3.5 cr) · amb_furin"
   },
   {
    "sound": "AmbMetalRing",
@@ -321,7 +321,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job e8624013 (1.1 cr) · amb_region_center"
+   "provenance": "external:job-e8624013 (1.1 cr) · amb_region_center"
   },
   {
    "sound": "AmbRegionEast",
@@ -343,7 +343,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job a85a3b11 (1.1 cr) · amb_region_east"
+   "provenance": "external:job-a85a3b11 (1.1 cr) · amb_region_east"
   },
   {
    "sound": "AmbRegionNorth",
@@ -365,7 +365,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job b8043914 (1.1 cr) · amb_region_north"
+   "provenance": "external:job-b8043914 (1.1 cr) · amb_region_north"
   },
   {
    "sound": "AmbRegionSouth",
@@ -387,7 +387,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job 8811b02b (1.1 cr) · amb_region_south"
+   "provenance": "external:job-8811b02b (1.1 cr) · amb_region_south"
   },
   {
    "sound": "AmbRegionWest",
@@ -409,7 +409,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": false,
-   "provenance": "seed_audio job 122da4f7 (1.1 cr) · amb_region_west"
+   "provenance": "external:job-122da4f7 (1.1 cr) · amb_region_west"
   },
   {
    "sound": "AmbStoneSettle",
@@ -482,7 +482,7 @@
    "layers": "single take",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "seed_audio job fa37b900 (2.4 cr) · amb_wood_creak"
+   "provenance": "external:job-fa37b900 (2.4 cr) · amb_wood_creak"
   },
   {
    "sound": "ArmorBreak",
@@ -505,7 +505,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 07e86d13 (1.1 cr) · armor_break"
+   "provenance": "external:job-07e86d13 (1.1 cr) · armor_break"
   },
   {
    "sound": "ArmorBreakBody",
@@ -625,7 +625,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 913c647c (2.6 cr) · armor_impact_c2"
+   "provenance": "external:job-913c647c (2.6 cr) · armor_impact_c2"
   },
   {
    "sound": "ArmorPieceDrop",
@@ -648,7 +648,7 @@
    "layers": "body:armor_piece_drop.wav + impact_wood.wav@0.0s -9dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 3b7303a4 (1.1 cr) · armor_piece_drop"
+   "provenance": "external:job-3b7303a4 (1.1 cr) · armor_piece_drop"
   },
   {
    "sound": "AttackImpactBody",
@@ -672,7 +672,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job d053c855 (1.1 cr) · attack_impact_body"
+   "provenance": "external:job-d053c855 (1.1 cr) · attack_impact_body"
   },
   {
    "sound": "BombletPop",
@@ -768,7 +768,7 @@
    "layers": "body:break_ceramic.wav + impact_stone.wav@0.0s -6dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 7c68611a (1.1 cr) · break_ceramic"
+   "provenance": "external:job-7c68611a (1.1 cr) · break_ceramic"
   },
   {
    "sound": "BreakFence",
@@ -936,7 +936,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 empty steel links onto stone"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 empty steel links onto stone"
   },
   {
    "sound": "CasingPistolDirt",
@@ -960,7 +960,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Pistol casing onto dirt (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Pistol casing onto dirt (stone take, surface filter)"
   },
   {
    "sound": "CasingPistolStone",
@@ -984,7 +984,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Pistol casing onto stone (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Pistol casing onto stone (stone take, surface filter)"
   },
   {
    "sound": "CasingPistolWood",
@@ -1008,7 +1008,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Pistol casing onto wood (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Pistol casing onto wood (stone take, surface filter)"
   },
   {
    "sound": "CasingRifleDirt",
@@ -1032,7 +1032,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Rifle casing onto dirt (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Rifle casing onto dirt (stone take, surface filter)"
   },
   {
    "sound": "CasingRifleStone",
@@ -1056,7 +1056,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Rifle casing onto stone (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Rifle casing onto stone (stone take, surface filter)"
   },
   {
    "sound": "CasingRifleWood",
@@ -1080,7 +1080,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Rifle casing onto wood (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Rifle casing onto wood (stone take, surface filter)"
   },
   {
    "sound": "CasingShellDirt",
@@ -1104,7 +1104,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Shell casing onto dirt (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Shell casing onto dirt (stone take, surface filter)"
   },
   {
    "sound": "CasingShellStone",
@@ -1128,7 +1128,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Shell casing onto stone (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Shell casing onto stone (stone take, surface filter)"
   },
   {
    "sound": "CasingShellWood",
@@ -1152,7 +1152,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · Shell casing onto wood (stone take, surface filter)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · Shell casing onto wood (stone take, surface filter)"
   },
   {
    "sound": "ChainArc",
@@ -1177,7 +1177,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 460c7359 (2.3 cr) · chain_arc"
+   "provenance": "external:job-460c7359 (2.3 cr) · chain_arc"
   },
   {
    "sound": "CriticalHit",
@@ -1223,7 +1223,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job 579f4aa8 (1.1 cr) · dry_fire"
+   "provenance": "external:job-579f4aa8 (1.1 cr) · dry_fire"
   },
   {
    "sound": "EnemyDeath",
@@ -1270,7 +1270,7 @@
    "layers": "body:explosion.wav + explosion_tail.wav@0.04s -7dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job ab26434a (1.1 cr) · explosion"
+   "provenance": "external:job-ab26434a (1.1 cr) · explosion"
   },
   {
    "sound": "ExplosionFar",
@@ -1368,7 +1368,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 1cc434eb (2.6 cr) · flesh_hit"
+   "provenance": "external:job-1cc434eb (2.6 cr) · flesh_hit"
   },
   {
    "sound": "FoleyAr1Chamber",
@@ -1391,7 +1391,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 bolt-release slap"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 bolt-release slap"
   },
   {
    "sound": "FoleyAr1Charge",
@@ -1414,7 +1414,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 charging handle back + bolt slap (serpentine cock)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 charging handle back + bolt slap (serpentine cock)"
   },
   {
    "sound": "FoleyAr1MagIn",
@@ -1437,7 +1437,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 mag seat click"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 mag seat click"
   },
   {
    "sound": "FoleyAr1MagOut",
@@ -1460,7 +1460,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 mag release + drop in hand"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 mag release + drop in hand"
   },
   {
    "sound": "FoleyAr2Charge",
@@ -1483,7 +1483,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R2 lever back + carrier slam + receiver rattle"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R2 lever back + carrier slam + receiver rattle"
   },
   {
    "sound": "FoleyAr2MagIn",
@@ -1506,7 +1506,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R2 steel mag rocked in, hard clunk"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R2 steel mag rocked in, hard clunk"
   },
   {
    "sound": "FoleyAr2MagOut",
@@ -1529,7 +1529,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R2 steel mag rocked out + drop on wood"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R2 steel mag rocked out + drop on wood"
   },
   {
    "sound": "FoleyHeavyAds",
@@ -1552,7 +1552,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · cloth rub (pink HP 1500) 90 ms + stock-to-shoulder click −8 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · cloth rub (pink HP 1500) 90 ms + stock-to-shoulder click −8 dB"
   },
   {
    "sound": "FoleyHeavyDryFire",
@@ -1575,7 +1575,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
   },
   {
    "sound": "FoleyHeavyLowered",
@@ -1598,7 +1598,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponCLowered v007 -3 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponCLowered v007 -3 st"
   },
   {
    "sound": "FoleyHeavyRaised",
@@ -1621,7 +1621,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponCRaised v007 -3 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponCRaised v007 -3 st"
   },
   {
    "sound": "FoleyHeavySwitch",
@@ -1644,7 +1644,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponCSwitch v007 -3 st + R2 cover rattle −10 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponCSwitch v007 -3 st + R2 cover rattle −10 dB"
   },
   {
    "sound": "FoleyLightAds",
@@ -1667,7 +1667,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · cloth rub (pink HP 2400) 90 ms + stock-to-shoulder click −8 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · cloth rub (pink HP 2400) 90 ms + stock-to-shoulder click −8 dB"
   },
   {
    "sound": "FoleyLightDryFire",
@@ -1690,7 +1690,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
   },
   {
    "sound": "FoleyLightLowered",
@@ -1713,7 +1713,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponBLowered v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponBLowered v007 +0 st"
   },
   {
    "sound": "FoleyLightRaised",
@@ -1736,7 +1736,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponBRaised v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponBRaised v007 +0 st"
   },
   {
    "sound": "FoleyLightSwitch",
@@ -1759,7 +1759,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponBSwitch v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponBSwitch v007 +0 st"
   },
   {
    "sound": "FoleyLmg1BeltSeat",
@@ -1782,7 +1782,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 belt laid on the tray (link jingle)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 belt laid on the tray (link jingle)"
   },
   {
    "sound": "FoleyLmg1BoxClose",
@@ -1805,7 +1805,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 cover slammed, double clunk"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 cover slammed, double clunk"
   },
   {
    "sound": "FoleyLmg1BoxOpen",
@@ -1828,7 +1828,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 feed cover unlatch + swing open"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 feed cover unlatch + swing open"
   },
   {
    "sound": "FoleyLmg1Charge",
@@ -1851,7 +1851,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 charging handle racked"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 charging handle racked"
   },
   {
    "sound": "FoleyLmg2BeltSeat",
@@ -1874,7 +1874,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 −4 st (thick links)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 −4 st (thick links)"
   },
   {
    "sound": "FoleyLmg2BoxClose",
@@ -1897,7 +1897,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 −4 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 −4 st"
   },
   {
    "sound": "FoleyLmg2BoxOpen",
@@ -1920,7 +1920,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 −4 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 −4 st"
   },
   {
    "sound": "FoleyLmg2Charge",
@@ -1943,7 +1943,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R5 −4 st + R2 carrier slam −6 dB (two-hand ÇANK)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R5 −4 st + R2 carrier slam −6 dB (two-hand ÇANK)"
   },
   {
    "sound": "FoleyMediumAds",
@@ -1966,7 +1966,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · cloth rub (pink HP 2000) 90 ms + stock-to-shoulder click −8 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · cloth rub (pink HP 2000) 90 ms + stock-to-shoulder click −8 dB"
   },
   {
    "sound": "FoleyMediumDryFire",
@@ -1989,7 +1989,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · dry hammer / firing-pin strike"
   },
   {
    "sound": "FoleyMediumLowered",
@@ -2012,7 +2012,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponALowered v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponALowered v007 +0 st"
   },
   {
    "sound": "FoleyMediumRaised",
@@ -2035,7 +2035,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponARaised v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponARaised v007 +0 st"
   },
   {
    "sound": "FoleyMediumSwitch",
@@ -2058,7 +2058,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · WeaponASwitch v007 +0 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · WeaponASwitch v007 +0 st"
   },
   {
    "sound": "FoleyRl1RocketIn",
@@ -2081,7 +2081,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · tube slide (pink sweep 1.8 k → 500 Hz, 420 ms) + R1 seat click −8 dB at the end"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · tube slide (pink sweep 1.8 k → 500 Hz, 420 ms) + R1 seat click −8 dB at the end"
   },
   {
    "sound": "FoleyRl1RocketSeat",
@@ -2104,7 +2104,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 lock clack + R1 selector click −6 dB (fuse tensioned)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 lock clack + R1 selector click −6 dB (fuse tensioned)"
   },
   {
    "sound": "FoleySg1Chamber",
@@ -2127,7 +2127,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R3 pump forward clack"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R3 pump forward clack"
   },
   {
    "sound": "FoleySg1Eject",
@@ -2150,7 +2150,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R3 pump back shuck"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R3 pump back shuck"
   },
   {
    "sound": "FoleySg1ShellIn",
@@ -2174,7 +2174,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R3 plastic shell pushed into the gate"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R3 plastic shell pushed into the gate"
   },
   {
    "sound": "FoleySg2Chamber",
@@ -2197,7 +2197,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · break close: R4 lock clack −2 st + R2 strike −4 dB (wood tok)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · break close: R4 lock clack −2 st + R2 strike −4 dB (wood tok)"
   },
   {
    "sound": "FoleySg2Eject",
@@ -2220,7 +2220,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · break open: R2 cover clank +2 st + R3 shell drop −6 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · break open: R2 cover clank +2 st + R3 shell drop −6 dB"
   },
   {
    "sound": "FoleySg2ShellIn",
@@ -2243,7 +2243,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R3 shell +3 st into the chamber"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R3 shell +3 st into the chamber"
   },
   {
    "sound": "FoleySmg1Chamber",
@@ -2266,7 +2266,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · \"HK slap\": R1 handle back + slap +2 st, high shelf +3 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · \"HK slap\": R1 handle back + slap +2 st, high shelf +3 dB"
   },
   {
    "sound": "FoleySmg1MagIn",
@@ -2289,7 +2289,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 +2 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 +2 st"
   },
   {
    "sound": "FoleySmg1MagOut",
@@ -2312,7 +2312,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 +2 st"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 +2 st"
   },
   {
    "sound": "FoleySmg2Chamber",
@@ -2335,7 +2335,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R2 carrier slam +2 st, short"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R2 carrier slam +2 st, short"
   },
   {
    "sound": "FoleySmg2MagIn",
@@ -2358,7 +2358,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 −4 st + R2 clunk −10 dB"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 −4 st + R2 clunk −10 dB"
   },
   {
    "sound": "FoleySmg2MagOut",
@@ -2381,7 +2381,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R1 −4 st (side mag, oily)"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R1 −4 st (side mag, oily)"
   },
   {
    "sound": "FoleySr1BoltBack",
@@ -2404,7 +2404,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 bolt glide back + case flick ring"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 bolt glide back + case flick ring"
   },
   {
    "sound": "FoleySr1BoltDown",
@@ -2427,7 +2427,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 handle turned down, locking clack"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 handle turned down, locking clack"
   },
   {
    "sound": "FoleySr1BoltFwd",
@@ -2450,7 +2450,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 bolt pushed forward"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 bolt pushed forward"
   },
   {
    "sound": "FoleySr1BoltUp",
@@ -2473,7 +2473,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 bolt handle lifted, sharp click"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 bolt handle lifted, sharp click"
   },
   {
    "sound": "FoleySr1MagIn",
@@ -2496,7 +2496,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 magazine clicked back in"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 magazine clicked back in"
   },
   {
    "sound": "FoleySr1MagOut",
@@ -2519,7 +2519,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism renders (ledger 155–159) + v007 foley · R4 box magazine removed"
+   "provenance": "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism renders (private-ledger 155–159) + v007 foley · R4 box magazine removed"
   },
   {
    "sound": "FootstepDirt",
@@ -2544,7 +2544,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job ba2956e9 (1.1 cr) · footstep_dirt"
+   "provenance": "external:job-ba2956e9 (1.1 cr) · footstep_dirt"
   },
   {
    "sound": "FootstepFoliage",
@@ -2569,7 +2569,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job 32924bcc (1.1 cr) · footstep_foliage"
+   "provenance": "external:job-32924bcc (1.1 cr) · footstep_foliage"
   },
   {
    "sound": "FootstepGravel",
@@ -2642,7 +2642,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job d45c80e6 (1.1 cr) · footstep_stone"
+   "provenance": "external:job-d45c80e6 (1.1 cr) · footstep_stone"
   },
   {
    "sound": "FootstepWater",
@@ -2667,7 +2667,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job 4ed923f8 (1.1 cr) · footstep_water"
+   "provenance": "external:job-4ed923f8 (1.1 cr) · footstep_water"
   },
   {
    "sound": "FootstepWaterDeep",
@@ -2764,7 +2764,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job b4f1e853 (1.1 cr) · footstep_wood"
+   "provenance": "external:job-b4f1e853 (1.1 cr) · footstep_wood"
   },
   {
    "sound": "GoldMagnet",
@@ -2786,7 +2786,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job e83ace06 (1.1 cr) · gold_magnet"
+   "provenance": "external:job-e83ace06 (1.1 cr) · gold_magnet"
   },
   {
    "sound": "GoldPickup",
@@ -2810,7 +2810,7 @@
    "layers": "synth: inharmonic partials + click",
    "bus": "UI",
    "spatial": false,
-   "provenance": "procedural (numpy synth) — Seed Audio take rejected by sound-designer M3"
+   "provenance": "procedural (numpy synth)"
   },
   {
    "sound": "GoldSpawn",
@@ -2833,7 +2833,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": true,
-   "provenance": "seed_audio job eb31b2c9 (1.1 cr) · gold_spawn"
+   "provenance": "external:job-eb31b2c9 (1.1 cr) · gold_spawn"
   },
   {
    "sound": "HeavyEnemyDeath",
@@ -2881,7 +2881,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job 69be70d9 (1.1 cr) · heavy_fire_burst"
+   "provenance": "external:job-69be70d9 (1.1 cr) · heavy_fire_burst"
   },
   {
    "sound": "HeavyMotorLoop",
@@ -2903,7 +2903,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job e20bceaa (2.3 cr) · heavy_motor_loop"
+   "provenance": "external:job-e20bceaa (2.3 cr) · heavy_motor_loop"
   },
   {
    "sound": "HeavySpinDown",
@@ -2925,7 +2925,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job 4e686e92 (2.3 cr) · heavy_spin_down"
+   "provenance": "external:job-4e686e92 (2.3 cr) · heavy_spin_down"
   },
   {
    "sound": "HitMarker",
@@ -2952,7 +2952,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job e06977b2 (2.0 cr) · hit_marker"
+   "provenance": "external:job-e06977b2 (2.0 cr) · hit_marker"
   },
   {
    "sound": "HudEliteDown",
@@ -2975,7 +2975,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_bell_rin_suzu.wav@40ms -4dB -5st",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "HudLowHealth",
@@ -3043,7 +3043,7 @@
    "layers": "derived (v015, no credits): UiNewBest_01.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -6dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
   },
   {
    "sound": "HudThreatEncircled",
@@ -3135,7 +3135,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB -1st + ui_bell_rin_suzu.wav@40ms -4dB -5st + ui_bell_rin_suzu.wav@120ms -8dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "ImpactDefault",
@@ -3181,7 +3181,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 9297d35c (1.1 cr) · impact_dirt"
+   "provenance": "external:job-9297d35c (1.1 cr) · impact_dirt"
   },
   {
    "sound": "ImpactFoliage",
@@ -3227,7 +3227,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 21e47529 (1.1 cr) · impact_metal"
+   "provenance": "external:job-21e47529 (1.1 cr) · impact_metal"
   },
   {
    "sound": "ImpactPaper",
@@ -3251,7 +3251,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 4b9599cd (2.2 cr) · impact_paper"
+   "provenance": "external:job-4b9599cd (2.2 cr) · impact_paper"
   },
   {
    "sound": "ImpactSniperCrack",
@@ -3297,7 +3297,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 2bafd274 (1.1 cr) · impact_stone"
+   "provenance": "external:job-2bafd274 (1.1 cr) · impact_stone"
   },
   {
    "sound": "ImpactV3DefaultHeavy",
@@ -3565,7 +3565,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Metal × light calibre: impact_metal + armour tink front · v026 (WP-101): +1 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Metal × light calibre: impact_metal + armour tink front · v026 (WP-101): +1 external takes one event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
   },
   {
    "sound": "ImpactV3MetalMedium",
@@ -3687,7 +3687,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × heavy calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav; imp_stone_heavy_2.wav)"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × heavy calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 external takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav; imp_stone_heavy_2.wav)"
   },
   {
    "sound": "ImpactV3StoneLight",
@@ -3713,7 +3713,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × light calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav; imp_stone_light_4.wav)"
+   "provenance": "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001–v006 impact / footstep / armour takes + synthetic thump · Stone × light calibre: impact_stone + footstep_stone front / ceramic chips · v026 (WP-101): +2 external takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav; imp_stone_light_4.wav)"
   },
   {
    "sound": "ImpactV3StoneMedium",
@@ -3904,7 +3904,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 5b973c6e (1.1 cr) · impact_water"
+   "provenance": "external:job-5b973c6e (1.1 cr) · impact_water"
   },
   {
    "sound": "ImpactWood",
@@ -3926,7 +3926,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job c4782640 (1.1 cr) · impact_wood"
+   "provenance": "external:job-c4782640 (1.1 cr) · impact_wood"
   },
   {
    "sound": "KillMarker",
@@ -3974,7 +3974,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id mode_demolition · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · SHA 819111c1e9e7…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id mode_demolition · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · SHA 819111c1e9e7…"
   },
   {
    "sound": "ModeSelectHard",
@@ -3998,7 +3998,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id mode_hard · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA d3a6247438f3…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id mode_hard · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA d3a6247438f3…"
   },
   {
    "sound": "MusicAccent",
@@ -4020,7 +4020,7 @@
    "layers": "single take",
    "bus": "Music",
    "spatial": false,
-   "provenance": "seed_audio job 067bfdf3 (1.1 cr) · music_accent"
+   "provenance": "external:job-067bfdf3 (1.1 cr) · music_accent"
   },
   {
    "sound": "MusicBase",
@@ -4042,7 +4042,7 @@
    "layers": "single take",
    "bus": "Music",
    "spatial": false,
-   "provenance": "seed_audio job 7410c7d5 (1.1 cr) · music_base"
+   "provenance": "external:job-7410c7d5 (1.1 cr) · music_base"
   },
   {
    "sound": "MusicMenu",
@@ -4086,7 +4086,7 @@
    "layers": "single take",
    "bus": "Music",
    "spatial": false,
-   "provenance": "seed_audio job a0266933 (1.1 cr) · music_percussion"
+   "provenance": "external:job-a0266933 (1.1 cr) · music_percussion"
   },
   {
    "sound": "MusicResults",
@@ -4130,7 +4130,7 @@
    "layers": "single take",
    "bus": "Music",
    "spatial": false,
-   "provenance": "seed_audio job 074c5f9a (1.1 cr) · music_tension"
+   "provenance": "external:job-074c5f9a (1.1 cr) · music_tension"
   },
   {
    "sound": "PickupDone",
@@ -4200,7 +4200,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job caff083b (1.1 cr) · player_damage"
+   "provenance": "external:job-caff083b (1.1 cr) · player_damage"
   },
   {
    "sound": "PlayerDeath",
@@ -4222,7 +4222,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 4901dd21 (1.1 cr) · player_death"
+   "provenance": "external:job-4901dd21 (1.1 cr) · player_death"
   },
   {
    "sound": "ReloadEnd",
@@ -4245,7 +4245,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+   "provenance": "external:job-ea2473ba (1.1 cr) · reload"
   },
   {
    "sound": "ReloadInsert",
@@ -4267,7 +4267,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+   "provenance": "external:job-ea2473ba (1.1 cr) · reload"
   },
   {
    "sound": "ReloadStart",
@@ -4290,7 +4290,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+   "provenance": "external:job-ea2473ba (1.1 cr) · reload"
   },
   {
    "sound": "Ricochet",
@@ -4316,7 +4316,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 000281ac (2.8 cr) · ricochet_c2"
+   "provenance": "external:job-000281ac (2.8 cr) · ricochet_c2"
   },
   {
    "sound": "RifleFire",
@@ -4339,7 +4339,7 @@
    "layers": "body:rifle_fire.wav + rifle_mech.wav@0.0s -9dB + rifle_tail.wav@0.015s -18dB",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job 0708ccea (1.1 cr) · rifle_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+   "provenance": "external:job-0708ccea (1.1 cr) · rifle_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
   },
   {
    "sound": "RocketDud",
@@ -4406,7 +4406,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 81cef8d4 (1.1 cr) · round_complete"
+   "provenance": "external:job-81cef8d4 (1.1 cr) · round_complete"
   },
   {
    "sound": "RoundCountdownTick",
@@ -4428,7 +4428,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 0725d4de (1.1 cr) · countdown_tick"
+   "provenance": "external:job-0725d4de (1.1 cr) · countdown_tick"
   },
   {
    "sound": "RoundStart",
@@ -4450,7 +4450,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 66e178bf (1.1 cr) · round_start"
+   "provenance": "external:job-66e178bf (1.1 cr) · round_start"
   },
   {
    "sound": "ShotgunFire",
@@ -4473,7 +4473,7 @@
    "layers": "body:shotgun_fire.wav + rifle_mech.wav@0.0s -12dB + shotgun_tail.wav@0.025s -16dB",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job d6a9baae (1.1 cr) · shotgun_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+   "provenance": "external:job-d6a9baae (1.1 cr) · shotgun_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
   },
   {
    "sound": "SmgFire",
@@ -4499,7 +4499,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "seed_audio job d0d389ec (2.4 cr) · carbine_fire_c1 · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+   "provenance": "external:job-d0d389ec (2.4 cr) · carbine_fire_c1 · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
   },
   {
    "sound": "StingerDeath",
@@ -4612,7 +4612,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R4 lock clack + coil re-hum (R7 whine swell) −6 dB"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R4 lock clack + coil re-hum (R7 whine swell) −6 dB"
   },
   {
    "sound": "SwArcCellOut",
@@ -4635,7 +4635,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · glass/brass \"tın\" (rin bell +7 st, short) + contact spark (R7 snap −6 dB)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · glass/brass \"tın\" (rin bell +7 st, short) + contact spark (R7 snap −6 dB)"
   },
   {
    "sound": "SwArcChainJump",
@@ -4660,7 +4660,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 post-discharge sizzle snaps HP 300 (short \"çıt-ÇZT\")"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 post-discharge sizzle snaps HP 300 (short \"çıt-ÇZT\")"
   },
   {
    "sound": "SwArcCharge",
@@ -4683,7 +4683,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 coil whine just before the discharge (1.95–2.45 s) HP 90 + 110 Hz hum −10 dB + glass 2.4 k −16 dB, fade-in 60 ms"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 coil whine just before the discharge (1.95–2.45 s) HP 90 + 110 Hz hum −10 dB + glass 2.4 k −16 dB, fade-in 60 ms"
   },
   {
    "sound": "SwArcFire",
@@ -4708,7 +4708,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 discharge crack + glass \"vınn\" −10 dB + air release (pink HP 1 k) −14 dB"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 discharge crack + glass \"vınn\" −10 dB + air release (pink HP 1 k) −14 dB"
   },
   {
    "sound": "SwArcReady",
@@ -4730,7 +4730,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · coil fills (R7 1.4–2.3 s) + rin bell (brass, Specials only) at the top"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · coil fills (R7 1.4–2.3 s) + rin bell (brass, Specials only) at the top"
   },
   {
    "sound": "SwArcShockEnd",
@@ -4753,7 +4753,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 fading sizzle 8.0–8.7 \"sss\" + ash tick"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 fading sizzle 8.0–8.7 \"sss\" + ash tick"
   },
   {
    "sound": "SwArcShockLoop",
@@ -4775,7 +4775,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 crackling arc 4.3–5.1 s HP 250 (body crackle)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 crackle arc 4.3–5.1 s HP 250 (body crackle)"
   },
   {
    "sound": "SwArcSphereLoop",
@@ -4797,7 +4797,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R7 arc buzz 3.0–4.1 s HP 90 + 110 Hz hum −8 + trembling glass 2.4 k −12"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R7 arc buzz 3.0–4.1 s HP 90 + 110 Hz hum −8 + trembling glass 2.4 k −12"
   },
   {
    "sound": "SwBeaconLoop",
@@ -4819,7 +4819,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": true,
-   "provenance": "seed_audio job 92b0eb30 (2.5 cr) · sw_beacon_loop"
+   "provenance": "external:job-92b0eb30 (2.5 cr) · sw_beacon_loop"
   },
   {
    "sound": "SwExpired",
@@ -4843,7 +4843,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job c2abf02b (2.5 cr) · sw_expired"
+   "provenance": "external:job-c2abf02b (2.5 cr) · sw_expired"
   },
   {
    "sound": "SwFinalSeconds",
@@ -4865,7 +4865,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 64140f17 (1.1 cr) · sw_final_seconds"
+   "provenance": "external:job-64140f17 (1.1 cr) · sw_final_seconds"
   },
   {
    "sound": "SwGelCanisterIn",
@@ -4888,7 +4888,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · screw clicks (R4 safety ×2) + gel \"vıcık\" (R8 5.5 s) −8 dB"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · screw clicks (R4 safety ×2) + gel \"vıcık\" (R8 5.5 s) −8 dB"
   },
   {
    "sound": "SwGelCanisterOut",
@@ -4911,7 +4911,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · pressure \"pşşt\" + copper click (R1 selector)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · pressure \"pşşt\" + copper click (R1 selector)"
   },
   {
    "sound": "SwGelFire",
@@ -4936,7 +4936,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · copper chamber \"PŞŞT\" (pink hiss) + R8 pressurised squirt 0.4–1.0 s \"PLOP\""
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · copper chamber \"PŞŞT\" (pink hiss) + R8 pressurised squirt 0.4–1.0 s \"PLOP\""
   },
   {
    "sound": "SwGelFlightLoop",
@@ -4958,7 +4958,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R8 thick bubbling 1.4–2.3 s HP 150 (wet \"vıcık-flap\")"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R8 thick bubbling 1.4–2.3 s HP 150 (wet \"vıcık-flap\")"
   },
   {
    "sound": "SwGelHit",
@@ -4982,7 +4982,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R8 heavy wet splat 0.98–1.4 s + pops"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R8 heavy wet splat 0.98–1.4 s + pops"
   },
   {
    "sound": "SwGelHitFlesh",
@@ -5005,7 +5005,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · splat LP 1.5 k (muffled on a body)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · splat LP 1.5 k (muffled on a body)"
   },
   {
    "sound": "SwGelPuddleCreate",
@@ -5028,7 +5028,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · splat + spreading squelch (R8 0.98–1.9 s)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · splat + spreading squelch (R8 0.98–1.9 s)"
   },
   {
    "sound": "SwGelPuddleExpire",
@@ -5050,7 +5050,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · drying \"çıt-çıt\" (R8 pops 4.55–5.25 s LP 3 k) + air hiss −14 dB"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · drying \"çıt-çıt\" (R8 pops 4.55–5.25 s LP 3 k) + air hiss −14 dB"
   },
   {
    "sound": "SwGelPuddleLoop",
@@ -5072,7 +5072,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · R8 slow bubbling with small pops 2.35–4.35 s"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · R8 slow bubbling with small pops 2.35–4.35 s"
   },
   {
    "sound": "SwGelReady",
@@ -5094,7 +5094,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · chamber pressurises (rising hiss) + rin bell (brass) at the top"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · chamber pressurises (rising hiss) + rin bell (brass) at the top"
   },
   {
    "sound": "SwGelSlideEnemy",
@@ -5117,7 +5117,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · slide squelch \"vıjjj\" (R8 5.3–6.2 s) + body fall (attack_impact_body −4 dB at the end)"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · slide squelch \"vıjjj\" (R8 5.3–6.2 s) + body fall (attack_impact_body −4 dB at the end)"
   },
   {
    "sound": "SwGelSlidePlayer",
@@ -5140,7 +5140,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160–161, 5.6 cr) · slide squelch +2 st, short + cloth rub (pink HP 2 k) −10 dB"
+   "provenance": "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger 160–161, 5.6 cr) · slide squelch +2 st, short + cloth rub (pink HP 2 k) −10 dB"
   },
   {
    "sound": "SwGroundExpired",
@@ -5185,7 +5185,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 6203b0a6 (1.1 cr) · sw_pickup"
+   "provenance": "external:job-6203b0a6 (1.1 cr) · sw_pickup"
   },
   {
    "sound": "SwSpawnGong",
@@ -5207,7 +5207,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": true,
-   "provenance": "seed_audio job 76dc4186 (1.1 cr) · sw_spawn_gong"
+   "provenance": "external:job-76dc4186 (1.1 cr) · sw_spawn_gong"
   },
   {
    "sound": "TreeAuraUp",
@@ -5231,7 +5231,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_aura_up · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 3b0cbfaa3287…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_aura_up · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 3b0cbfaa3287…"
   },
   {
    "sound": "TreeBlackHoleCollapse",
@@ -5251,10 +5251,10 @@
    "ceilingDbtp": -1.5,
    "continuous": true,
    "endSilenceDb": -147.9,
-   "layers": "_01 single take (Firefly) · _02 synth",
+   "layers": "_01 single take (external) · _02 synth",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_blackhole_collapse · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · _02 synthesis (ap011_r4_synth.py seed 313928833) · licences LICENSES-R4.csv · edits: _02 last 0.4 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 20a168ef11f4…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_blackhole_collapse · external takes ×1 (_01; private-ledger:r4) · _02 synthesis (ap011_r4_synth.py seed 313928833) · licences LICENSES-R4.csv · edits: _02 last 0.4 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 20a168ef11f4…"
   },
   {
    "sound": "TreeBlackHoleLoop",
@@ -5276,7 +5276,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_blackhole_loop · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 9cad8b10779b…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_blackhole_loop · external takes ×1 (_01; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 9cad8b10779b…"
   },
   {
    "sound": "TreeCrit",
@@ -5300,7 +5300,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_crit · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _02 cut at 0.35 s + 150 ms fade; _03 HPF 150 Hz, cut at 0.4 s + 150 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 74cf1b7cb5ce…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_crit · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _02 cut at 0.35 s + 150 ms fade; _03 HPF 150 Hz, cut at 0.4 s + 150 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 74cf1b7cb5ce…"
   },
   {
    "sound": "TreeDodge",
@@ -5325,7 +5325,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_dodge · Adobe Firefly ×4 (_01 _02 _03 _04; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _04 cut at 0.27 s + 50 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 6c2350f7ac42…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_dodge · external takes ×4 (_01 _02 _03 _04; private-ledger:r4) · licences LICENSES-R4.csv · edits: _04 cut at 0.27 s + 50 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 6c2350f7ac42…"
   },
   {
    "sound": "TreeDoomsdayBell",
@@ -5346,10 +5346,10 @@
    "ceilingDbtp": -1.5,
    "continuous": false,
    "endSilenceDb": -146.0,
-   "layers": "_01 single take (Firefly) · _02 synth · _03 synth",
+   "layers": "_01 single take (external) · _02 synth · _03 synth",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_doomsday_bell · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · _02 synthesis (ap011_r4_synth.py seed 1233150013) · _03 synthesis (ap011_r4_synth.py seed 1601769446) · licences LICENSES-R4.csv · edits: _01 5 ms fade-in, last 1.5 s faded; _02 last 1.5 s faded; _03 last 1.5 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA d6efe827fc58…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_doomsday_bell · external takes ×1 (_01; private-ledger:r4) · _02 synthesis (ap011_r4_synth.py seed 1233150013) · _03 synthesis (ap011_r4_synth.py seed 1601769446) · licences LICENSES-R4.csv · edits: _01 5 ms fade-in, last 1.5 s faded; _02 last 1.5 s faded; _03 last 1.5 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA d6efe827fc58…"
   },
   {
    "sound": "TreeElementNova",
@@ -5369,10 +5369,10 @@
    "ceilingDbtp": -1.5,
    "continuous": true,
    "endSilenceDb": -240.0,
-   "layers": "_01 synth · _02 single take (Firefly)",
+   "layers": "_01 synth · _02 single take (external)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_cataclysm · Adobe Firefly ×1 (_02; firefly-ledger-r4.csv) · _01 synthesis (ap011_r4_synth.py seed 3689099958) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA a9625a8f32e6…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_cataclysm · external takes ×1 (_02; private-ledger:r4) · _01 synthesis (ap011_r4_synth.py seed 3689099958) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA a9625a8f32e6…"
   },
   {
    "sound": "TreeEndlessOn",
@@ -5396,7 +5396,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_endless_on · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _02 last 0.15 s faded; _03 last 0.15 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA a948601b18a2…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_endless_on · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _02 last 0.15 s faded; _03 last 0.15 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA a948601b18a2…"
   },
   {
    "sound": "TreeFireIgnite",
@@ -5420,7 +5420,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_fire_ignite · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 5ea5191c811f…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_fire_ignite · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 5ea5191c811f…"
   },
   {
    "sound": "TreeFireLoop",
@@ -5442,7 +5442,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_fire_loop · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 9dfed25f8585…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_fire_loop · external takes ×1 (_01; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 9dfed25f8585…"
   },
   {
    "sound": "TreeIceFreeze",
@@ -5466,7 +5466,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ice_freeze · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _03 4.1 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 9f4df1f0b36e…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ice_freeze · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _03 4.1 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 9f4df1f0b36e…"
   },
   {
    "sound": "TreeIceShatter",
@@ -5490,7 +5490,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ice_shatter · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 253549039253…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ice_shatter · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 253549039253…"
   },
   {
    "sound": "TreeLifesteal",
@@ -5511,10 +5511,10 @@
    "ceilingDbtp": -1.5,
    "continuous": true,
    "endSilenceDb": -123.1,
-   "layers": "_01 single take (Firefly) · _02 synth · _03 synth",
+   "layers": "_01 single take (external) · _02 synth · _03 synth",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_lifesteal · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · _02 synthesis (ap011_r4_synth.py seed 3197181757) · _03 synthesis (ap011_r4_synth.py seed 4204363375) · licences LICENSES-R4.csv · edits: _01 cut at 0.19 s + 20 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 082723f2175a…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_lifesteal · external takes ×1 (_01; private-ledger:r4) · _02 synthesis (ap011_r4_synth.py seed 3197181757) · _03 synthesis (ap011_r4_synth.py seed 4204363375) · licences LICENSES-R4.csv · edits: _01 cut at 0.19 s + 20 ms fade · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 082723f2175a…"
   },
   {
    "sound": "TreeMiniNuke",
@@ -5538,7 +5538,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_mininuke · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA a0cdd7b7a431…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_mininuke · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA a0cdd7b7a431…"
   },
   {
    "sound": "TreeMiniRocket",
@@ -5608,7 +5608,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_poison · Adobe Firefly ×1 (_01; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 7553923edc60…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_poison · external takes ×1 (_01; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, seamless loop · SHA 7553923edc60…"
   },
   {
    "sound": "TreeReroll",
@@ -5632,7 +5632,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_reroll · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _03 last 0.15 s faded · TP-limited (look-ahead ≤ 6 dB): _01 2.1 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA ae8c832df902…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_reroll · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _03 last 0.15 s faded · TP-limited (look-ahead ≤ 6 dB): _01 2.1 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA ae8c832df902…"
   },
   {
    "sound": "TreeRicochet",
@@ -5656,7 +5656,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ricochet · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 3.5 dB, _02 5.5 dB, _03 6 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA abc5ed22a389…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_ricochet · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 3.5 dB, _02 5.5 dB, _03 6 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA abc5ed22a389…"
   },
   {
    "sound": "TreeShieldBreak",
@@ -5680,7 +5680,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_break · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -2.5 dBTP, 8 ms silence · SHA 194fc5808cd9…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_break · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -2.5 dBTP, 8 ms silence · SHA 194fc5808cd9…"
   },
   {
    "sound": "TreeShieldHit",
@@ -5703,7 +5703,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_hit · Adobe Firefly ×2 (_01 _02; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _01 HPF 100 Hz, cut at 0.4 s + 150 ms fade; _02 HPF 100 Hz, cut at 0.35 s + 100 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 2.3 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 5fdf7e216172…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_hit · external takes ×2 (_01 _02; private-ledger:r4) · licences LICENSES-R4.csv · edits: _01 HPF 100 Hz, cut at 0.4 s + 150 ms fade; _02 HPF 100 Hz, cut at 0.35 s + 100 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 2.3 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 5fdf7e216172…"
   },
   {
    "sound": "TreeShieldUp",
@@ -5727,7 +5727,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_up · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _03 last 0.3 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 3024a43cdbf1…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_shield_up · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _03 last 0.3 s faded · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 3024a43cdbf1…"
   },
   {
    "sound": "TreeStamp",
@@ -5752,7 +5752,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_stamp · Adobe Firefly ×4 (_01 _02 _03 _04; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _02 cut at 0.185 s + 20 ms fade; _03 cut at 0.35 s + 30 ms fade; _04 cut at 0.3 s + 30 ms fade · TP-limited (look-ahead ≤ 6 dB): _01 6 dB, _02 2.3 dB, _03 5.2 dB, _04 6 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f245bbeedbd3…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_stamp · external takes ×4 (_01 _02 _03 _04; private-ledger:r4) · licences LICENSES-R4.csv · edits: _02 cut at 0.185 s + 20 ms fade; _03 cut at 0.35 s + 30 ms fade; _04 cut at 0.3 s + 30 ms fade · TP-limited (look-ahead ≤ 6 dB): _01 6 dB, _02 2.3 dB, _03 5.2 dB, _04 6 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f245bbeedbd3…"
   },
   {
    "sound": "TreeSynergy",
@@ -5776,7 +5776,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_synergy · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · SHA 90101861218b…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id tree_synergy · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · SHA 90101861218b…"
   },
   {
    "sound": "TreeThunder",
@@ -5800,7 +5800,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_thunder · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA e0d44a9d2031…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_thunder · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA e0d44a9d2031…"
   },
   {
    "sound": "TreeUndying",
@@ -5824,7 +5824,7 @@
    "layers": "single take",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_undying · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 7eda5c820b22…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id fx_undying · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · SHA 7eda5c820b22…"
   },
   {
    "sound": "UiAchievement",
@@ -5870,7 +5870,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB -2st",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiBootSeal",
@@ -5892,7 +5892,7 @@
    "layers": "derived (v015, no credits): AmbPondBed.wav@0ms -10dB + ui_paper_washi.wav@40ms -16dB + ui_stamp_hanko.wav@640ms 0dB + ui_bell_rin_suzu.wav@655ms -3dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_bell_rin_suzu.wav, raw/ui_paper_washi.wav, raw/ui_stamp_hanko.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_bell_rin_suzu.wav, raw/ui_paper_washi.wav, raw/ui_stamp_hanko.wav"
   },
   {
    "sound": "UiCardDealt",
@@ -5916,7 +5916,7 @@
    "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiCardFlipped",
@@ -5939,7 +5939,7 @@
    "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB +3st",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiConfirm",
@@ -5961,7 +5961,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@5ms -5dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiCounterRoll",
@@ -5983,7 +5983,7 @@
    "layers": "derived (v015, no credits): ui_counter_soroban.wav@0ms 0dB + ui_counter_soroban.wav@0ms -2dB +1st + ui_counter_soroban.wav@1700ms 0dB -1st + ui_counter_soroban.wav@2000ms -2dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav"
   },
   {
    "sound": "UiCounterSettled",
@@ -6006,7 +6006,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_counter_soroban.wav@5ms -6dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiCurtainClose",
@@ -6029,7 +6029,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@330ms -2dB -1st + ui_curtain_fusuma.wav@330ms -8dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiCurtainOpen",
@@ -6052,7 +6052,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms -8dB + ui_curtain_fusuma.wav@10ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
   },
   {
    "sound": "UiDenied",
@@ -6075,7 +6075,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job f4d6be7a (1.1 cr) · ui_denied"
+   "provenance": "external:job-f4d6be7a (1.1 cr) · ui_denied"
   },
   {
    "sound": "UiDialogOpen",
@@ -6120,7 +6120,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms -6dB + ui_paper_washi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiHover",
@@ -6144,7 +6144,7 @@
    "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiInkBleed",
@@ -6166,7 +6166,7 @@
    "layers": "derived (v015, no credits): AmbPondBed.wav@0ms 0dB + ui_paper_washi.wav@100ms -12dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiLevelUp",
@@ -6234,7 +6234,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiNewBest",
@@ -6257,7 +6257,7 @@
    "layers": "derived (v015, no credits): UiNewBest_01.wav@0ms 0dB + ui_bell_rin_suzu.wav@40ms -4dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
   },
   {
    "sound": "UiPaneOpen",
@@ -6280,7 +6280,7 @@
    "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@150ms -4dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiPauseClose",
@@ -6303,7 +6303,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms -10dB + ui_curtain_fusuma.wav@10ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
   },
   {
    "sound": "UiPauseOpen",
@@ -6326,7 +6326,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@140ms -3dB + ui_curtain_fusuma.wav@140ms -10dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiPressDown",
@@ -6349,7 +6349,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiReroll",
@@ -6419,7 +6419,7 @@
    "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB +2st + ui_tok_lacquer_go_hyoshigi.wav@5ms -6dB +2st + tone:1180,1870,2660@2.2@8ms -15dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav, tone:1180,1870,2660@2.2"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav, tone:1180,1870,2660@2.2"
   },
   {
    "sound": "UiSliderTick",
@@ -6465,7 +6465,7 @@
    "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -4dB + ui_bell_rin_suzu.wav@110ms -9dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
   },
   {
    "sound": "UiStampLanded",
@@ -6489,7 +6489,7 @@
    "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@2ms -10dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_stamp_hanko.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_stamp_hanko.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiStampRare",
@@ -6511,7 +6511,7 @@
    "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -4dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
   },
   {
    "sound": "UiToggle",
@@ -6557,7 +6557,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_curtain_fusuma.wav@0ms -6dB + ui_paper_washi.wav@50ms -5dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiTransitionOut",
@@ -6580,7 +6580,7 @@
    "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_paper_washi.wav@10ms -6dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders (private-ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiUnlock",
@@ -6625,7 +6625,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job cebddf68 (1.1 cr) · upgrade_purchase"
+   "provenance": "external:job-cebddf68 (1.1 cr) · upgrade_purchase"
   },
   {
    "sound": "WallBuyCoins",
@@ -6649,7 +6649,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_coins · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _01 cut at 0.84 s + 60 ms fade; _02 cut at 0.9 s + 80 ms fade; _03 cut at 0.7 s + 20 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 2.6 dB, _03 6 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 585e3fa702f1…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_coins · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _01 cut at 0.84 s + 60 ms fade; _02 cut at 0.9 s + 80 ms fade; _03 cut at 0.7 s + 20 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 2.6 dB, _03 6 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 585e3fa702f1…"
   },
   {
    "sound": "WallBuyDenied",
@@ -6673,7 +6673,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_denied · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · edits: _01 cut at 0.36 s + 30 ms fade; _02 cut at 0.22 s + 30 ms fade; _03 cut at 0.22 s + 30 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 3.9 dB, _03 3.1 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 3a2e6fb8ed88…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_denied · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · edits: _01 cut at 0.36 s + 30 ms fade; _02 cut at 0.22 s + 30 ms fade; _03 cut at 0.22 s + 30 ms fade · TP-limited (look-ahead ≤ 6 dB): _02 3.9 dB, _03 3.1 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA 3a2e6fb8ed88…"
   },
   {
    "sound": "WallBuyHeavy",
@@ -6694,10 +6694,10 @@
    "ceilingDbtp": -1.5,
    "continuous": true,
    "endSilenceDb": -240.0,
-   "layers": "_01 derived (Sonniss) · _02 single take (Firefly) · _03 single take (Firefly)",
+   "layers": "_01 derived (Sonniss) · _02 single take (external) · _03 single take (external)",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_heavy · Adobe Firefly ×2 (_02 _03; firefly-ledger-r4.csv) · _01 derived (ap011_r4_derive.py seed 1058806986) from Sonniss GameAudioGDC 'Pole Position - MG 42 machine gun' · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA aaddfdd60663…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_heavy · external takes ×2 (_02 _03; private-ledger:r4) · _01 derived (ap011_r4_derive.py seed 1058806986) from Sonniss GameAudioGDC 'Pole Position - MG 42 machine gun' · licences LICENSES-R4.csv · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA aaddfdd60663…"
   },
   {
    "sound": "WallBuyPrompt",
@@ -6720,7 +6720,7 @@
    "layers": "single take",
    "bus": "UI",
    "spatial": false,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_prompt · Adobe Firefly ×2 (_01 _02; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 2.6 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f82e0570934f…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_prompt · external takes ×2 (_01 _02; private-ledger:r4) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 2.6 dB · house chain -22 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f82e0570934f…"
   },
   {
    "sound": "WallBuyRack",
@@ -6744,7 +6744,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_rack · Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 1.5 dB, _02 5.3 dB, _03 5.2 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f37a1882ad44…"
+   "provenance": "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json 3eb3008247b6) · v024 id wb_rack · external takes ×3 (_01 _02 _03; private-ledger:r4) · licences LICENSES-R4.csv · TP-limited (look-ahead ≤ 6 dB): _01 1.5 dB, _02 5.3 dB, _03 5.2 dB · house chain -20 LUFS / -1.5 dBTP, 8 ms silence · noise floor not measurable (file 1 never rests under −60 dBFS in 100 ms: signal end to end) → continuous exemption · SHA f37a1882ad44…"
   },
   {
    "sound": "WeaponAChamber",
@@ -6930,7 +6930,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 dry pre-mix K1 R1 + K2 rifle +0 st + K3 R5 ring 3300 Hz + carrier 300/1550 Hz + sub 55 Hz; target 1720 Hz / 71 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 dry pre-mix K1 R1 + K2 rifle +0 st + K3 R5 ring 3300 Hz + carrier 300/1550 Hz + sub 55 Hz; target 1720 Hz / 71 ms"
   },
   {
    "sound": "WeaponAr1Loop",
@@ -6952,7 +6952,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 seamless 8-shot K2+K5 body loop at 600 RPM (ap011_autoloop, 4 bodies cycled); measured 599.8 RPM, seam ratio 2.82"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 seamless 8-shot K2+K5 body loop at 600 RPM (ap011_autoloop, 4 bodies cycled); measured 599.8 RPM, seam ratio 2.82"
   },
   {
    "sound": "WeaponAr1Transient",
@@ -6977,7 +6977,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 per-shot K1+K3 ≤ 70 ms, file boosted +3.6 dB onto the peak ceiling; runtime trim -3.6 dB restores the Fire pre-mix relation (plays on top of WeaponAr1Loop)"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · AR1 per-shot K1+K3 ≤ 70 ms, file boosted +3.6 dB onto the peak ceiling; runtime trim -3.6 dB restores the Fire pre-mix relation (plays on top of WeaponAr1Loop)"
   },
   {
    "sound": "WeaponAr2Fire",
@@ -7002,7 +7002,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · AR2 dry pre-mix K1 R2 + K2 rifle -3 st + K3 R2 ring 2000 Hz + carrier 270/820 Hz + sub 45 Hz; target 940 Hz / 200 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · AR2 dry pre-mix K1 R2 + K2 rifle -3 st + K3 R2 ring 2000 Hz + carrier 270/820 Hz + sub 45 Hz; target 940 Hz / 200 ms"
   },
   {
    "sound": "WeaponBChamber",
@@ -7349,7 +7349,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 dry pre-mix K1 R5 + K2 heavy +0 st + K3 R5 ring 3000 Hz + carrier 240/1250 Hz + sub 50 Hz; target 1480 Hz / 92 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 dry pre-mix K1 R5 + K2 heavy +0 st + K3 R5 ring 3000 Hz + carrier 240/1250 Hz + sub 50 Hz; target 1480 Hz / 92 ms"
   },
   {
    "sound": "WeaponLmg1Loop",
@@ -7371,7 +7371,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 seamless 8-shot K2+K5 body loop at 720 RPM (ap011_autoloop, 4 bodies cycled); measured 719.8 RPM, seam ratio 4.53"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 seamless 8-shot K2+K5 body loop at 720 RPM (ap011_autoloop, 4 bodies cycled); measured 719.8 RPM, seam ratio 4.53"
   },
   {
    "sound": "WeaponLmg1Transient",
@@ -7396,7 +7396,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 per-shot K1+K3 ≤ 70 ms, file boosted +4.4 dB onto the peak ceiling; runtime trim -4.4 dB restores the Fire pre-mix relation (plays on top of WeaponLmg1Loop)"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG1 per-shot K1+K3 ≤ 70 ms, file boosted +4.4 dB onto the peak ceiling; runtime trim -4.4 dB restores the Fire pre-mix relation (plays on top of WeaponLmg1Loop)"
   },
   {
    "sound": "WeaponLmg2Fire",
@@ -7421,7 +7421,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG2 dry pre-mix K1 R2 + K2 heavy -3 st + K3 metal ring 1400 Hz + carrier 210/600 Hz + sub 40 Hz; target 695 Hz / 259 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · LMG2 dry pre-mix K1 R2 + K2 heavy -3 st + K3 metal ring 1400 Hz + carrier 210/600 Hz + sub 40 Hz; target 695 Hz / 259 ms"
   },
   {
    "sound": "WeaponRl1Fire",
@@ -7446,7 +7446,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · RL1 dry pre-mix K1 R3 + K2 explosion +0 st + K3 R2 ring 900 Hz + carrier 200/450 Hz + sub 45 Hz; target 515 Hz / 565 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · RL1 dry pre-mix K1 R3 + K2 explosion +0 st + K3 R2 ring 900 Hz + carrier 200/450 Hz + sub 45 Hz; target 515 Hz / 565 ms"
   },
   {
    "sound": "WeaponSg1Fire",
@@ -7471,7 +7471,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SG1 dry pre-mix K1 R3 + K2 shotgun +0 st + K3 R2 ring 1500 Hz + carrier 220/520 Hz + sub 40 Hz; target 600 Hz / 336 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SG1 dry pre-mix K1 R3 + K2 shotgun +0 st + K3 R2 ring 1500 Hz + carrier 220/520 Hz + sub 40 Hz; target 600 Hz / 336 ms"
   },
   {
    "sound": "WeaponSg2Fire",
@@ -7496,7 +7496,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SG2 dry pre-mix K1 R3 + K2 shotgun +2 st + K3 R3 ring 2500 Hz + carrier 210/1150 Hz + sub 42 Hz; target 1270 Hz / 119 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SG2 dry pre-mix K1 R3 + K2 shotgun +2 st + K3 R3 ring 2500 Hz + carrier 210/1150 Hz + sub 42 Hz; target 1270 Hz / 119 ms"
   },
   {
    "sound": "WeaponSmg1Fire",
@@ -7521,7 +7521,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 dry pre-mix K1 R4 + K2 c2 +0 st + K3 R5 ring 3900 Hz + carrier 380/1800 Hz + sub 60 Hz; target 2000 Hz / 55 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 dry pre-mix K1 R4 + K2 c2 +0 st + K3 R5 ring 3900 Hz + carrier 380/1800 Hz + sub 60 Hz; target 2000 Hz / 55 ms"
   },
   {
    "sound": "WeaponSmg1Loop",
@@ -7543,7 +7543,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 seamless 8-shot K2+K5 body loop at 900 RPM (ap011_autoloop, 4 bodies cycled); measured 902.0 RPM, seam ratio 3.88"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 seamless 8-shot K2+K5 body loop at 900 RPM (ap011_autoloop, 4 bodies cycled); measured 902.0 RPM, seam ratio 3.88"
   },
   {
    "sound": "WeaponSmg1Transient",
@@ -7568,7 +7568,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 per-shot K1+K3 ≤ 70 ms, file boosted +9.4 dB onto the peak ceiling; runtime trim -9.4 dB restores the Fire pre-mix relation (plays on top of WeaponSmg1Loop)"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG1 per-shot K1+K3 ≤ 70 ms, file boosted +9.4 dB onto the peak ceiling; runtime trim -9.4 dB restores the Fire pre-mix relation (plays on top of WeaponSmg1Loop)"
   },
   {
    "sound": "WeaponSmg2Fire",
@@ -7593,7 +7593,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG2 dry pre-mix K1 R5 + K2 c1 -4 st + K3 R2 ring 1700 Hz + carrier 340/700 Hz + sub 48 Hz; target 810 Hz / 154 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SMG2 dry pre-mix K1 R5 + K2 c1 -4 st + K3 R2 ring 1700 Hz + carrier 340/700 Hz + sub 48 Hz; target 810 Hz / 154 ms"
   },
   {
    "sound": "WeaponSr1Fire",
@@ -7618,7 +7618,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · SR1 dry pre-mix K1 R4 + K2 rifle -3 st + K3 R4 ring 2800 Hz + carrier 190/1000 Hz + sub 38 Hz; target 1090 Hz / 436 ms"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · SR1 dry pre-mix K1 R4 + K2 rifle -3 st + K3 R4 ring 2800 Hz + carrier 190/1000 Hz + sub 38 Hz; target 1090 Hz / 436 ms"
   },
   {
    "sound": "WeaponTailArCorridor",
@@ -7641,7 +7641,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailArHall",
@@ -7664,7 +7664,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailArOpen",
@@ -7687,7 +7687,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Ar class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailLmgCorridor",
@@ -7710,7 +7710,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailLmgHall",
@@ -7733,7 +7733,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailLmgOpen",
@@ -7756,7 +7756,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Lmg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailRlCorridor",
@@ -7779,7 +7779,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailRlHall",
@@ -7802,7 +7802,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailRlOpen",
@@ -7825,7 +7825,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Rl class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSgCorridor",
@@ -7848,7 +7848,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSgHall",
@@ -7871,7 +7871,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSgOpen",
@@ -7894,7 +7894,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSmgCorridor",
@@ -7917,7 +7917,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSmgHall",
@@ -7940,7 +7940,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSmgOpen",
@@ -7963,7 +7963,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Smg class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSrCorridor",
@@ -7986,7 +7986,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -8 dB = STANDARDS §5 wet -10 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSrHall",
@@ -8009,7 +8009,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -6 dB = STANDARDS §5 wet -8 dB; 2 IR seeds"
   },
   {
    "sound": "WeaponTailSrOpen",
@@ -8032,7 +8032,7 @@
    "layers": "derived (v005)",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism renders (ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
+   "provenance": "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism renders (private-ledger 155–159, 21.0 cr) + v001–v006 bodies · wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sr class dry pre-mix; file −20 LUFS-I, runtime placement -12 dB = STANDARDS §5 wet -14 dB; 2 IR seeds"
   },
   {
    "sound": "ZombieAggroElite",
@@ -8056,7 +8056,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 3804e7de (3.4 cr) · zombie_elite_aggro"
+   "provenance": "external:job-3804e7de (3.4 cr) · zombie_elite_aggro"
   },
   {
    "sound": "ZombieAggroSpecial",
@@ -8081,7 +8081,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 56913a7c (3.0 cr) · zombie_special_aggro"
+   "provenance": "external:job-56913a7c (3.0 cr) · zombie_special_aggro"
   },
   {
    "sound": "ZombieAggroStandard",
@@ -8129,7 +8129,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 5a9b4bb7 (2.2 cr) · zombie_ultra_aggro"
+   "provenance": "external:job-5a9b4bb7 (2.2 cr) · zombie_ultra_aggro"
   },
   {
    "sound": "ZombieAttackElite",
@@ -8153,7 +8153,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 84c7d7ad (1.1 cr) · zombie_elite_attack_v2 · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-84c7d7ad (1.1 cr) · zombie_elite_attack_v2 · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieAttackSpecial",
@@ -8177,7 +8177,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job c7a8f84f (3.6 cr) · zombie_special_windup_attack"
+   "provenance": "external:job-c7a8f84f (3.6 cr) · zombie_special_windup_attack"
   },
   {
    "sound": "ZombieAttackStandard",
@@ -8200,7 +8200,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 5cf0fd0e (1.1 cr) · zombie_std_attack · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-5cf0fd0e (1.1 cr) · zombie_std_attack · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieAttackUltra",
@@ -8224,7 +8224,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 08094651 (1.1 cr) · zombie_ultra_attack · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-08094651 (1.1 cr) · zombie_ultra_attack · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieDeathElite",
@@ -8247,7 +8247,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 1d6aa31b (1.1 cr) · zombie_elite_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-1d6aa31b (1.1 cr) · zombie_elite_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieDeathSpecial",
@@ -8271,7 +8271,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 3529b820 (3.4 cr) · zombie_special_death"
+   "provenance": "external:job-3529b820 (3.4 cr) · zombie_special_death"
   },
   {
    "sound": "ZombieDeathStandard",
@@ -8295,7 +8295,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 09af45d1 (1.1 cr) · zombie_std_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-09af45d1 (1.1 cr) · zombie_std_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieDeathUltra",
@@ -8318,7 +8318,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 367300ab (1.1 cr) · zombie_ultra_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-367300ab (1.1 cr) · zombie_ultra_death · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieHitElite",
@@ -8342,7 +8342,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 964135d9 (1.1 cr) · zombie_elite_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-964135d9 (1.1 cr) · zombie_elite_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieHitSpecial",
@@ -8366,7 +8366,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 488ac407 (2.6 cr) · zombie_special_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-488ac407 (2.6 cr) · zombie_special_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieHitStandard",
@@ -8391,7 +8391,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 856d3ae9 (1.1 cr) · zombie_std_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-856d3ae9 (1.1 cr) · zombie_std_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieHitUltra",
@@ -8415,7 +8415,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 7bad0868 (1.1 cr) · zombie_ultra_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+   "provenance": "external:job-7bad0868 (1.1 cr) · zombie_ultra_hit · EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
   },
   {
    "sound": "ZombieIdle",
@@ -8440,7 +8440,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 543678fc (1.1 cr) · zombie_idle"
+   "provenance": "external:job-543678fc (1.1 cr) · zombie_idle"
   },
   {
    "sound": "ZombieIdleElite",
@@ -8536,7 +8536,7 @@
    "layers": "body:zombie_rise.wav + impact_dirt.wav@0.0s -8dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 390c312f (1.1 cr) · zombie_rise"
+   "provenance": "external:job-390c312f (1.1 cr) · zombie_rise"
   },
   {
    "sound": "ZombieStagger",
@@ -8560,7 +8560,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job eab23b6f (1.1 cr) · zombie_stagger"
+   "provenance": "external:job-eab23b6f (1.1 cr) · zombie_stagger"
   },
   {
    "sound": "ZombieStepHeavy",
@@ -8585,7 +8585,7 @@
    "layers": "body:zombie_step_heavy.wav + impact_dirt.wav@0.0s -14dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job ba702fcf (1.1 cr) · zombie_step_heavy"
+   "provenance": "external:job-ba702fcf (1.1 cr) · zombie_step_heavy"
   },
   {
    "sound": "ZombieStepLight",
@@ -8611,7 +8611,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 7cf6f8df (1.1 cr) · zombie_step_light"
+   "provenance": "external:job-7cf6f8df (1.1 cr) · zombie_step_light"
   },
   {
    "sound": "ZombieWindupElite",
@@ -8635,7 +8635,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 5ec941e7 (1.1 cr) · zombie_elite_windup_v2"
+   "provenance": "external:job-5ec941e7 (1.1 cr) · zombie_elite_windup_v2"
   },
   {
    "sound": "ZombieWindupSpecial",
@@ -8658,7 +8658,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job c7a8f84f (3.6 cr) · zombie_special_windup_attack"
+   "provenance": "external:job-c7a8f84f (3.6 cr) · zombie_special_windup_attack"
   },
   {
    "sound": "ZombieWindupStandard",
@@ -8682,7 +8682,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 3e15a675 (1.1 cr) · zombie_std_windup"
+   "provenance": "external:job-3e15a675 (1.1 cr) · zombie_std_windup"
   },
   {
    "sound": "ZombieWindupUltra",
@@ -8706,7 +8706,7 @@
    "layers": "single take",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "seed_audio job 23caf807 (1.1 cr) · zombie_ultra_windup"
+   "provenance": "external:job-23caf807 (1.1 cr) · zombie_ultra_windup"
   }
  ]
 }

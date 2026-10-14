@@ -136,7 +136,7 @@ class Ap029ImportTests(unittest.TestCase):
         self.assertEqual([], summary["warnings"])
         e = {x["sound"]: x for x in self.manifest()["entries"]}
         self.assertEqual({"WeaponAr1Fire", "WeaponTailArEcho", "SwArcFire", "SwArcSphereLoop", "SwArcCharge"}, set(e))
-        for k in ("sound", "event", "files", "loop", "lufs", "codexLufs", "truePeakDb", "bitDepth", "targetLufs", "ceilingDbtp",
+        for k in ("sound", "event", "files", "loop", "lufs", "stereoLufs", "truePeakDb", "bitDepth", "targetLufs", "ceilingDbtp",
                   "noiseFloorDb", "dcDb", "clipped", "endSilenceDb", "continuous", "layers", "bus", "spatial", "provenance", "part", "durationsS"):
             self.assertIn(k, e["WeaponAr1Fire"], k)
         self.assertTrue(e["WeaponAr1Fire"]["provenance"].startswith("AP-029 v001 fire"))

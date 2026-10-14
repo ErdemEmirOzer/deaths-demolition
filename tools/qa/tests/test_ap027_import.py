@@ -2,7 +2,7 @@
 
 A small package is built in a temp folder (manifest/AP027-manifest-v002.json, exports/v002/<w>/*.wav as 24-bit PCM, the
 v003-recut / v003b-recut / v003d-recut overlay folders with their MANIFEST.json and superseded_sha256 chain) and imported
-into a temp worktree root. Checked: the files and manifest entries it writes, truePeakDb / codexLufs / lufs measured on
+into a temp worktree root. Checked: the files and manifest entries it writes, truePeakDb / stereoLufs / lufs measured on
 the shipped files (against an independent BS.1770 written here, and an analytic inter-sample peak), the overlay chain and
 its SHA asserts, idempotence (second run: copied 0, manifest byte-identical), the import fade's length (body + 20 ms of
 digital silence) and its "stops while sounding" rule on its own, the fades log only when asked and nothing written outside
@@ -227,7 +227,7 @@ class Ap027ImportTests(unittest.TestCase):
         self.assertIn("bolt-return", entry(man, "WeaponAr1Mechanical")["noiseFloorException"])
         self.assertIn("Weapon_ar1_Fire_03.wav", fire["importFade"])   # stopped while sounding
         self.assertNotIn("Weapon_ar1_Fire_01.wav", fire["importFade"])
-        # a file that needs no import treatment ships as Codex delivered it
+        # a file that needs no import treatment ships as the AP-027 package delivered it
         self.assertEqual(sha256(self.ap / "exports/v002/ar1/Weapon_ar1_Fire_01.wav"), sha256(self.out / "Weapon_ar1_Fire_01.wav"))
         self.assertEqual((5, 8, 8), (summary["entries"], summary["files"], summary["copied"]))
 
@@ -239,18 +239,18 @@ class Ap027ImportTests(unittest.TestCase):
             shipped = [read_wav24(self.out / f) for f in e["files"]]
             tps = [20 * np.log10(np.abs(ss.resample(x, 4 * len(x), axis=0)).max()) for x in shipped]   # FFT 4x, not the tool's FIR
             self.assertAlmostEqual(max(tps), e["truePeakDb"], delta=0.05, msg=e["sound"])
-            self.assertAlmostEqual(np.mean([bs1770(x) for x in shipped]), e["codexLufs"], delta=0.011, msg=e["sound"])
+            self.assertAlmostEqual(np.mean([bs1770(x) for x in shipped]), e["stereoLufs"], delta=0.011, msg=e["sound"])
             self.assertAlmostEqual(bs1770(shipped[0].mean(axis=1)), e["lufs"], delta=0.011, msg=e["sound"])
             self.assertEqual(e["lufs"], e["targetLufs"])
             self.assertNotEqual(5.0, e["truePeakDb"])   # never the v002 estimate
-            self.assertNotEqual(-99.0, e["codexLufs"])
+            self.assertNotEqual(-99.0, e["stereoLufs"])
         fire = entry(man, "WeaponAr1Fire")
         # the inter-sample file wins: the true peak, ~3 dB over its sample peak (a sample-peak meter would read -6.0)
         self.assertAlmostEqual(TP_PEAK_DB, fire["truePeakDb"], delta=0.05)
         self.assertLess(20 * np.log10(np.abs(read_wav24(self.out / "Weapon_ar1_Fire_03.wav")).max()), TP_PEAK_DB - 2.9)
-        # stereo: Codex's channel sum is above the house mono mean for a decorrelated tail
+        # stereo: the delivery's channel sum is above the house mono mean for a decorrelated tail
         tail = entry(man, "WeaponAr1TailHall")
-        self.assertGreater(tail["codexLufs"] - tail["lufs"], 2.0)
+        self.assertGreater(tail["stereoLufs"] - tail["lufs"], 2.0)
 
     # (c) the overlay chain and its SHA asserts
     def test_the_overlay_chain_wins_and_is_named(self):
@@ -384,11 +384,11 @@ class Ap027ImportTests(unittest.TestCase):
     def test_the_fades_log_is_written_when_asked_and_merged(self):
         log = self.tmp / "evidence" / "fades.tsv"
         log.parent.mkdir()
-        log.write_text("file\tcodex_sha12\timported_sha12\nOther_01.wav\taaaaaaaaaaaa\tbbbbbbbbbbbb\n"
+        log.write_text("file\tsource_sha12\timported_sha12\nOther_01.wav\taaaaaaaaaaaa\tbbbbbbbbbbbb\n"
                        "Weapon_ar1_Fire_03.wav\told\told\n", encoding="utf-8")
         self.run_import(fades_log=log)
         rows = [l.split("\t") for l in log.read_text(encoding="utf-8").splitlines()]
-        self.assertEqual(["file", "codex_sha12", "imported_sha12"], rows[0])
+        self.assertEqual(["file", "source_sha12", "imported_sha12"], rows[0])   # WP-113 neutral column name
         self.assertIn(["Other_01.wav", "aaaaaaaaaaaa", "bbbbbbbbbbbb"], rows)
         fire3 = [r for r in rows if r[0] == "Weapon_ar1_Fire_03.wav"]
         self.assertEqual([["Weapon_ar1_Fire_03.wav", sha256(self.ap / "exports/v002/ar1/Weapon_ar1_Fire_03.wav")[:12],

@@ -2,7 +2,7 @@
 """WP-085 B5 · AP-027 v002 → Unity (C-00 05.10, G4 = direction C).
 
 ap027_import.py <worktree-root> <weapon …> [--ap027 DIR] [--fades-log TSV]      e.g. ar1 sg1 smg1
-Reads Codex's manifest (K/asset-production/AP-027/manifest/AP027-manifest-v002.json), picks the runtime layers of the
+Reads the AP-027 delivery manifest (K/asset-production/AP-027/manifest/AP027-manifest-v002.json), picks the runtime layers of the
 named weapons (AP027-B-integration.md): Fire, Mechanical, TailOpen / TailCorridor / TailHall, DistanceMid / DistanceFar,
 Casing_<w>_{StoneSlate, WetStone, Wood, Dirt, Puddle}, Link_<w>_{same}. Not imported: Body / Sub / MuzzleTransient
 (production stems), FireTP / FireFP (offline perspective candidates — the runtime lifts by perspective itself), Gravel
@@ -12,11 +12,12 @@ other weapons' entries are kept). Sound ids: Weapon_ar1_Fire → WeaponAr1Fire, 
 Link_lmg1_Dirt → LinkLmg1Dirt.
 
 Moved into the repository (C-00 06.10) from K/wp-085/tools/ap027_import.py (sha256 4746f3ff3bd7…) so the manifest's
-measured truePeakDb / codexLufs can be reproduced from main; the output is byte-identical to that script's. Two changes:
+measured truePeakDb / stereoLufs can be reproduced from main; the output is byte-identical to that script's (WP-113: the
+channel-sum field is named stereoLufs, the fades-log column source_sha12). Two changes:
   --ap027 DIR      the AP-027 package root; default tools/dd_paths.py KPROJ/asset-production/AP-027 (the one KADRO root,
                    was a Path.home() literal). The manifest's source_manifest keeps the K/ label: it names the package by
                    its place in KADRO and its sha256, never the machine path it was read from.
-  --fades-log TSV  the import-fade record (file, Codex sha12, imported sha12; rows of re-imported files replaced, others
+  --fades-log TSV  the import-fade record (file, source sha12, imported sha12; rows of re-imported files replaced, others
                    kept) is written only when asked — the script wrote K/wp-085/evidence/ap027-import-fades.tsv and created
                    <worktree-root>/../../evidence on every run; the tool now writes nothing outside <worktree-root>.
 Exit 0 imported (summary on stdout) · 1 SHA mismatch (AssertionError: v002 file, overlay base or overlay file; files
@@ -107,7 +108,7 @@ def end_gate_fails(x, r):
 
 def faded(x, r):
     """Import-time end fade (WP-085 B5, C-00 05.10): the v002 file stops while still sounding; a 10 ms raised-cosine fade
-    removes the click and 10 ms of silence closes it (the shortened body stays — Codex v003 re-cut asked for)."""
+    removes the click and 10 ms of silence closes it (the shortened body stays — the AP-027 v003 re-cut asked for)."""
     n = int(FADE_MS / 1000 * r); y = x.copy()
     y[-n:] *= (0.5 * (1 + np.cos(np.linspace(0, np.pi, n))))[:, None]
     return np.concatenate([y, np.zeros((int(PAD_MS / 1000 * r), x.shape[1]))])   # + 20 ms of digital silence: the end gate's window past the codec
@@ -177,8 +178,8 @@ def stamps(p):
 
 def house_lufs(p):
     """The house stamp (AP-011 manifests, Unity LoudnessMeter): BS.1770 K-weighting on the MONO MEAN, 400 ms / 100 ms blocks,
-    −70 absolute and −10 relative gates, a clip shorter than 400 ms zero-padded. Codex stamps stereo tails as a channel SUM
-    (≈ +6 dB for a decorrelated tail): kept apart as codexLufs."""
+    −70 absolute and −10 relative gates, a clip shorter than 400 ms zero-padded. The AP-027 delivery stamps stereo tails as a channel
+    SUM (≈ +6 dB for a decorrelated tail): kept apart as stereoLufs."""
     x, r = pcm(p)
     return house_lufs_x(x, r)
 
@@ -199,14 +200,14 @@ def house_lufs_x(x, r):
 
 
 def true_peak_db(p):
-    """BS.1770-4 true peak of the shipped file (S-08 06.10, replaces the v002 Codex estimate `true_peak_db_est`): 4×
+    """BS.1770-4 true peak of the shipped file (S-08 06.10, replaces the v002 delivery estimate `true_peak_db_est`): 4×
     oversampling per channel (scipy polyphase FIR), the largest |sample| in dBTP."""
     x, r = pcm(p)
     return float(20 * np.log10(np.abs(ss.resample_poly(x, 4, 1, axis=0)).max() + 1e-12))
 
 
 def stereo_lufs(p):
-    """BS.1770 integrated loudness of the shipped file as Codex stamps it (S-08 06.10, replaces the v002 `lufs_gated_est`):
+    """BS.1770 integrated loudness of the shipped file as the AP-027 delivery stamps it (S-08 06.10, replaces the v002 `lufs_gated_est`):
     K-weighting per channel, channel powers SUMMED (G = 1 for L and R), 400 ms / 100 ms blocks, −70 absolute and −10
     relative gates, a clip shorter than 400 ms zero-padded. A mono file is its one channel."""
     x, r = pcm(p)
@@ -317,7 +318,7 @@ def run(root, weapons, ap=AP, fades_log=None):
         auth = items[0].get("source_authenticity", {})
         new.append({
             "sound": sound_name(cat, w, layer), "weapon": w, "event": EVENT.get(layer, "WeaponMechanism.CasingEjected"),
-            "files": files, "loop": False, "lufs": round(hl[0], 2), "codexLufs": round(sum(lufs) / len(lufs), 2), "truePeakDb": round(max(tps), 2),
+            "files": files, "loop": False, "lufs": round(hl[0], 2), "stereoLufs": round(sum(lufs) / len(lufs), 2), "truePeakDb": round(max(tps), 2),
             "bitDepth": 24, "targetLufs": round(hl[0], 2), "ceilingDbtp": -1.0,
             "noiseFloorDb": round(st[0][0], 1), "noiseFloorWindowMs": 20,
             "noiseFloorException": NOISE_FLOOR_EXCEPTION.get(sound_name(cat, w, layer), ""), "dcDb": round(max(v[1] for v in st), 1), "clipped": sum(v[2] for v in st),
@@ -329,7 +330,7 @@ def run(root, weapons, ap=AP, fades_log=None):
             "importFade": [f for f, *_ in fades if f in files],
             "importDcRemoved": [f for f in dcs if f in files],
             "importPeakLimit": [f for f in peaks if f in files],
-            "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, " + ", ".join(sorted({i for it in items for i in it.get("source_license_ids", [])})) + "; "
+            "provenance": "AP-027 v002 (Sonniss GDC sources, " + ", ".join(sorted({i for it in items for i in it.get("source_license_ids", [])})) + "; "
                           + ("proxy surface/caliber" if auth.get("caliber_surface_proxy") else "source recording") + ") · SHA " + items[0]["sha256"][:12] + "…",
         })
 
@@ -351,7 +352,7 @@ def run(root, weapons, ap=AP, fades_log=None):
         json.dump(man, f, indent=1, ensure_ascii=False)
     if fades_log:   # only when asked (was a fixed K/wp-085/evidence path): the tool writes nothing outside <worktree-root> by itself
         fl = Path(fades_log); fl.parent.mkdir(parents=True, exist_ok=True)
-        old = fl.read_text(encoding="utf-8").splitlines() if fl.exists() else ["file\tcodex_sha12\timported_sha12"]
+        old = fl.read_text(encoding="utf-8").splitlines() if fl.exists() else ["file\tsource_sha12\timported_sha12"]
         names = {f for f, *_ in fades}
         fl.write_text("\n".join([old[0]] + [l for l in old[1:] if l.split("\t")[0] not in names] + ["\t".join(t) for t in fades]) + "\n", encoding="utf-8")
     return {"weapons": weapons, "overlay": {v: sum(1 for _, d in ov_used if d == v) for v in ("v003-recut", "v003b-recut", "v003c-recut", "v003d-recut", "v003e-recut", "v003f-recut", "v003g-recut")}, "faded": len(fades), "dc_removed": dcs, "peak_limited": peaks, "entries": len(new), "files": sum(len(e["files"]) for e in new), "copied": copied,
@@ -363,7 +364,7 @@ def main(argv=None):
     parser.add_argument("root", help="worktree root (holds prototype/DeathsDemolition_PlayableConcept)")
     parser.add_argument("weapons", nargs="+", help="weapon ids, e.g. ar1 sg1 smg1")
     parser.add_argument("--ap027", default=str(AP), help="AP-027 package root (default: dd_paths KPROJ/asset-production/AP-027)")
-    parser.add_argument("--fades-log", help="TSV of the import fades (file, codex_sha12, imported_sha12); not written when omitted")
+    parser.add_argument("--fades-log", help="TSV of the import fades (file, source_sha12, imported_sha12); not written when omitted")
     try:
         args = parser.parse_intermixed_args(argv)   # the options may stand between or after the weapons
     except SystemExit as e:

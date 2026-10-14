@@ -235,8 +235,10 @@ def build_package(final):
             files.append({"file": name, "sha256": sha256(final / name), "lufs": round(bs1770(back), 2), "tp_dbtp": round(true_peak(back), 2),
                           "seconds": round(len(back) / RATE, 3), "limiter_gr_db": 2.6 if (sound, k) == ("WallBuyCoins", 2) else 0.0,
                           "edits": [["cut", 0.84, 60]] if (sound, k) == ("WallBuyCoins", 1) else [],
-                          "origin": ORIGIN.get((sound, k), {"kind": "Adobe Firefly", "raw": "/x/R4/%s_%d.wav" % (sid, k)}),
-                          "mastered_from": "/x/v024/firefly/%s_%d.wav" % (sid, k)})
+                          # WP-113: an external single take's kind is the vendor's name in the delivery MANIFEST; any kind other than
+                          # synthesis / derived is one, and the Unity manifest names it only as external (private ledger r4)
+                          "origin": ORIGIN.get((sound, k), {"kind": "external-vendor", "raw": "/x/R4/%s_%d.wav" % (sid, k)}),
+                          "mastered_from": "/x/v024/external/%s_%d.wav" % (sid, k)})
             sums.append("%s  %s" % (files[-1]["sha256"], name))
         entries.append({"id": sid, "sound": sound, "bus": "Interface" if ui else "SFX", "target_lufs": target, "loop": loop,
                         "files": files, "gate_note": ""})
@@ -265,7 +267,7 @@ def build_worktree(root):
                        {"sound": "UiConfirm", "event": "UiEvent.Confirm", "files": ["UiConfirm_01.wav"], "loop": False, "lufs": -24.23,
                         "truePeakDb": -4.0, "noiseFloorDb": -95.9, "dcDb": -125.2, "clipped": 0, "bitDepth": 24, "targetLufs": -22.0,
                         "ceilingDbtp": -4.0, "continuous": False, "endSilenceDb": -160.5, "layers": "single take", "bus": "UI",
-                        "spatial": False, "provenance": "seed_audio · hyōshigi"}]}
+                        "spatial": False, "provenance": "external:job-0 · hyōshigi"}]}
     (root / MANIFEST).write_text(json.dumps(man, indent=1, ensure_ascii=False), encoding="utf-8")
     (root / ENUM).parent.mkdir(parents=True)
     (root / ENUM).write_text(ENUM_TEXT, encoding="utf-8")
@@ -446,7 +448,7 @@ class Ap011R4ImportTests(unittest.TestCase):
         self.assertEqual(35, len(names))
         old = {e["sound"]: e for e in man["entries"] if e["sound"] in ("AmbBambooDrip", "UiConfirm")}
         self.assertEqual(-24.23, old["UiConfirm"]["lufs"])
-        self.assertEqual("seed_audio · hyōshigi", old["UiConfirm"]["provenance"])
+        self.assertEqual("external:job-0 · hyōshigi", old["UiConfirm"]["provenance"])
         rows = {e["sound"]: e for e in man["entries"]}
         src = {e["sound"]: e for e in json.loads((self.src / "MANIFEST.json").read_text(encoding="utf-8"))["entries"]}
         for sound, _value, sid, ui, loop in CONTRACT:
@@ -473,10 +475,10 @@ class Ap011R4ImportTests(unittest.TestCase):
         self.assertGreater(rows["TreeLifesteal"]["noiseFloorDb"], -60.0)
         # provenance / layers from the origin, edits and limiter gain
         self.assertEqual("single take", rows["WallBuyCoins"]["layers"])
-        self.assertIn("Adobe Firefly ×3 (_01 _02 _03; firefly-ledger-r4.csv)", rows["WallBuyCoins"]["provenance"])
+        self.assertIn("external takes ×3 (_01 _02 _03; private-ledger:r4)", rows["WallBuyCoins"]["provenance"])   # WP-113 neutral schema
         self.assertIn("edits: _01 cut at 0.84 s + 60 ms fade", rows["WallBuyCoins"]["provenance"])
         self.assertIn("TP-limited (look-ahead ≤ 6 dB): _02 2.6 dB", rows["WallBuyCoins"]["provenance"])
-        self.assertEqual("_01 synth · _02 single take (Firefly)", rows["TreeElementNova"]["layers"])
+        self.assertEqual("_01 synth · _02 single take (external)", rows["TreeElementNova"]["layers"])   # WP-113 neutral schema
         self.assertIn("_01 synthesis (ap011_r4_synth.py seed 11)", rows["TreeElementNova"]["provenance"])
         self.assertEqual("derived: ap011_r4_derive.py (Sonniss source, seeded)", rows["TreeMiniRocket"]["layers"])
         self.assertIn("from Sonniss GameAudioGDC 'Pole Position - The Warfare 2 Library'", rows["TreeMiniRocket"]["provenance"])

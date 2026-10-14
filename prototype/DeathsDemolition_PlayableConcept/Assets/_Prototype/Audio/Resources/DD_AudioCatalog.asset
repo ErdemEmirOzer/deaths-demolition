@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
   _manifestVersion: ap011-v026+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1+ap029-v001+v002-unity-fire-foley-space-special
-  _sourceHash: 3831a4ab1ea1c0e368148110391cd3ac55ba27584713fd6903fc33ae746f6cac6c867dde95efc144078d10cf940165be
+  _sourceHash: f76f37ec4a44b12a4852ddfe998758e1191f9377f4a769283b6386e764a3c20737eb50c5742891459a202e38303ede05
   _entries:
   - Sound: 10
     Clips:
@@ -22,7 +22,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.16
     TruePeakDb: -2
-    Provenance: "seed_audio job 0708ccea (1.1 cr) \xB7 rifle_fire \xB7 EQ v011 (WP-060B,
+    Provenance: "external:job-0708ccea (1.1 cr) \xB7 rifle_fire \xB7 EQ v011 (WP-060B,
       0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -62.6
     DcDb: -189.6
@@ -40,7 +40,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.13
     TruePeakDb: -2
-    Provenance: "seed_audio job d0d389ec (2.4 cr) \xB7 carbine_fire_c1 \xB7 EQ v011
+    Provenance: "external:job-d0d389ec (2.4 cr) \xB7 carbine_fire_c1 \xB7 EQ v011
       (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -62.4
     DcDb: -156.3
@@ -54,8 +54,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -19.57
     TruePeakDb: -2
-    Provenance: "seed_audio job d6a9baae (1.1 cr) \xB7 shotgun_fire \xB7 EQ v011
-      (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+    Provenance: "external:job-d6a9baae (1.1 cr) \xB7 shotgun_fire \xB7 EQ v011 (WP-060B,
+      0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -66.4
     DcDb: -116.1
     Clipped: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.59
-    Provenance: "seed_audio job 69be70d9 (1.1 cr) \xB7 heavy_fire_burst"
+    Provenance: "external:job-69be70d9 (1.1 cr) \xB7 heavy_fire_burst"
     NoiseFloorDb: -50.2
     DcDb: -75.6
     Clipped: 0
@@ -83,7 +83,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28.69
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 579f4aa8 (1.1 cr) \xB7 dry_fire"
+    Provenance: "external:job-579f4aa8 (1.1 cr) \xB7 dry_fire"
     NoiseFloorDb: -64.4
     DcDb: -123.8
     Clipped: 0
@@ -96,7 +96,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.96
     TruePeakDb: -1.5
-    Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    Provenance: "external:job-ea2473ba (1.1 cr) \xB7 reload"
     NoiseFloorDb: -77.7
     DcDb: -129.3
     Clipped: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.38
     TruePeakDb: -1.5
-    Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    Provenance: "external:job-ea2473ba (1.1 cr) \xB7 reload"
     NoiseFloorDb: -77.7
     DcDb: -135.7
     Clipped: 0
@@ -121,7 +121,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.32
     TruePeakDb: -1.5
-    Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    Provenance: "external:job-ea2473ba (1.1 cr) \xB7 reload"
     NoiseFloorDb: -77.7
     DcDb: -124
     Clipped: 0
@@ -133,7 +133,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -18
     TruePeakDb: -4.31
-    Provenance: "seed_audio job e20bceaa (2.3 cr) \xB7 heavy_motor_loop"
+    Provenance: "external:job-e20bceaa (2.3 cr) \xB7 heavy_motor_loop"
     NoiseFloorDb: -88.8
     DcDb: -102.5
     Clipped: 0
@@ -145,7 +145,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.03
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 4e686e92 (2.3 cr) \xB7 heavy_spin_down"
+    Provenance: "external:job-4e686e92 (2.3 cr) \xB7 heavy_spin_down"
     NoiseFloorDb: -90.8
     DcDb: -124.5
     Clipped: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.11
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 2bafd274 (1.1 cr) \xB7 impact_stone"
+    Provenance: "external:job-2bafd274 (1.1 cr) \xB7 impact_stone"
     NoiseFloorDb: -81.8
     DcDb: -158.9
     Clipped: 0
@@ -185,7 +185,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.11
     TruePeakDb: -1.5
-    Provenance: "seed_audio job c4782640 (1.1 cr) \xB7 impact_wood"
+    Provenance: "external:job-c4782640 (1.1 cr) \xB7 impact_wood"
     NoiseFloorDb: -69
     DcDb: -91.8
     Clipped: 0
@@ -213,7 +213,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.63
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 5b973c6e (1.1 cr) \xB7 impact_water"
+    Provenance: "external:job-5b973c6e (1.1 cr) \xB7 impact_water"
     NoiseFloorDb: -80.9
     DcDb: -147.8
     Clipped: 0
@@ -225,7 +225,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.01
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 21e47529 (1.1 cr) \xB7 impact_metal"
+    Provenance: "external:job-21e47529 (1.1 cr) \xB7 impact_metal"
     NoiseFloorDb: -91.7
     DcDb: -163.2
     Clipped: 0
@@ -237,7 +237,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.24
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 9297d35c (1.1 cr) \xB7 impact_dirt"
+    Provenance: "external:job-9297d35c (1.1 cr) \xB7 impact_dirt"
     NoiseFloorDb: -97.3
     DcDb: -115.7
     Clipped: 0
@@ -251,7 +251,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.09
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 4b9599cd (2.2 cr) \xB7 impact_paper"
+    Provenance: "external:job-4b9599cd (2.2 cr) \xB7 impact_paper"
     NoiseFloorDb: -97.3
     DcDb: -118.8
     Clipped: 0
@@ -267,7 +267,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.94
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 1cc434eb (2.6 cr) \xB7 flesh_hit"
+    Provenance: "external:job-1cc434eb (2.6 cr) \xB7 flesh_hit"
     NoiseFloorDb: -80.9
     DcDb: -111.9
     Clipped: 0
@@ -297,7 +297,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.97
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 913c647c (2.6 cr) \xB7 armor_impact_c2"
+    Provenance: "external:job-913c647c (2.6 cr) \xB7 armor_impact_c2"
     NoiseFloorDb: -92.6
     DcDb: -123.7
     Clipped: 0
@@ -326,7 +326,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.3
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 07e86d13 (1.1 cr) \xB7 armor_break"
+    Provenance: "external:job-07e86d13 (1.1 cr) \xB7 armor_break"
     NoiseFloorDb: -76.8
     DcDb: -163.1
     Clipped: 0
@@ -377,7 +377,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.64
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 000281ac (2.8 cr) \xB7 ricochet_c2"
+    Provenance: "external:job-000281ac (2.8 cr) \xB7 ricochet_c2"
     NoiseFloorDb: -80.2
     DcDb: -139.5
     Clipped: 0
@@ -392,7 +392,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -27.81
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 460c7359 (2.3 cr) \xB7 chain_arc"
+    Provenance: "external:job-460c7359 (2.3 cr) \xB7 chain_arc"
     NoiseFloorDb: -73
     DcDb: -132.3
     Clipped: 0
@@ -405,7 +405,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.27
     TruePeakDb: -2
-    Provenance: "seed_audio job ab26434a (1.1 cr) \xB7 explosion"
+    Provenance: "external:job-ab26434a (1.1 cr) \xB7 explosion"
     NoiseFloorDb: -90.9
     DcDb: -141.8
     Clipped: 0
@@ -417,7 +417,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.74
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 76dc4186 (1.1 cr) \xB7 sw_spawn_gong"
+    Provenance: "external:job-76dc4186 (1.1 cr) \xB7 sw_spawn_gong"
     NoiseFloorDb: -68
     DcDb: -189.8
     Clipped: 0
@@ -429,7 +429,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -20
     TruePeakDb: -4.94
-    Provenance: "seed_audio job 92b0eb30 (2.5 cr) \xB7 sw_beacon_loop"
+    Provenance: "external:job-92b0eb30 (2.5 cr) \xB7 sw_beacon_loop"
     NoiseFloorDb: -70.6
     DcDb: -84
     Clipped: 0
@@ -441,7 +441,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.65
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 6203b0a6 (1.1 cr) \xB7 sw_pickup"
+    Provenance: "external:job-6203b0a6 (1.1 cr) \xB7 sw_pickup"
     NoiseFloorDb: -70.2
     DcDb: -129.2
     Clipped: 0
@@ -453,7 +453,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -19.79
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 64140f17 (1.1 cr) \xB7 sw_final_seconds"
+    Provenance: "external:job-64140f17 (1.1 cr) \xB7 sw_final_seconds"
     NoiseFloorDb: -66.4
     DcDb: -174.3
     Clipped: 0
@@ -467,7 +467,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.78
     TruePeakDb: -1.5
-    Provenance: "seed_audio job c2abf02b (2.5 cr) \xB7 sw_expired"
+    Provenance: "external:job-c2abf02b (2.5 cr) \xB7 sw_expired"
     NoiseFloorDb: -97
     DcDb: -135
     Clipped: 0
@@ -499,7 +499,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.82
     TruePeakDb: -1.5
-    Provenance: "seed_audio job e06977b2 (2.0 cr) \xB7 hit_marker"
+    Provenance: "external:job-e06977b2 (2.0 cr) \xB7 hit_marker"
     NoiseFloorDb: -91.6
     DcDb: -117.4
     Clipped: 0
@@ -529,7 +529,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.43
     TruePeakDb: -1.5
-    Provenance: "seed_audio job caff083b (1.1 cr) \xB7 player_damage"
+    Provenance: "external:job-caff083b (1.1 cr) \xB7 player_damage"
     NoiseFloorDb: -76.2
     DcDb: -130.4
     Clipped: 0
@@ -541,7 +541,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -5.56
-    Provenance: "seed_audio job 4901dd21 (1.1 cr) \xB7 player_death"
+    Provenance: "external:job-4901dd21 (1.1 cr) \xB7 player_death"
     NoiseFloorDb: -89.3
     DcDb: -161.1
     Clipped: 0
@@ -555,8 +555,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.21
     TruePeakDb: -1.5
-    Provenance: "procedural (numpy synth) \u2014 Seed Audio take rejected by sound-designer
-      M3"
+    Provenance: procedural (numpy synth)
     NoiseFloorDb: -120
     DcDb: -215.7
     Clipped: 0
@@ -568,7 +567,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.6
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 0725d4de (1.1 cr) \xB7 countdown_tick"
+    Provenance: "external:job-0725d4de (1.1 cr) \xB7 countdown_tick"
     NoiseFloorDb: -94.2
     DcDb: -134.5
     Clipped: 0
@@ -580,7 +579,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.99
-    Provenance: "seed_audio job 66e178bf (1.1 cr) \xB7 round_start"
+    Provenance: "external:job-66e178bf (1.1 cr) \xB7 round_start"
     NoiseFloorDb: -72.4
     DcDb: -158.6
     Clipped: 0
@@ -592,7 +591,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.88
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 81cef8d4 (1.1 cr) \xB7 round_complete"
+    Provenance: "external:job-81cef8d4 (1.1 cr) \xB7 round_complete"
     NoiseFloorDb: -84.4
     DcDb: -144
     Clipped: 0
@@ -604,8 +603,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -29.85
     TruePeakDb: -6
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -95.9
     DcDb: -139.1
     Clipped: 0
@@ -617,8 +616,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.23
     TruePeakDb: -4
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -95.9
     DcDb: -125.2
     Clipped: 0
@@ -632,8 +631,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.42
     TruePeakDb: -5
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -95.9
     DcDb: -116.2
     Clipped: 0
@@ -646,7 +645,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.91
     TruePeakDb: -1.5
-    Provenance: "seed_audio job f4d6be7a (1.1 cr) \xB7 ui_denied"
+    Provenance: "external:job-f4d6be7a (1.1 cr) \xB7 ui_denied"
     NoiseFloorDb: -96.8
     DcDb: -130.6
     Clipped: 0
@@ -658,7 +657,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -2.49
-    Provenance: "seed_audio job cebddf68 (1.1 cr) \xB7 upgrade_purchase"
+    Provenance: "external:job-cebddf68 (1.1 cr) \xB7 upgrade_purchase"
     NoiseFloorDb: -87
     DcDb: -152.3
     Clipped: 0
@@ -673,7 +672,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -2.96
-    Provenance: "seed_audio job fa37b900 (2.4 cr) \xB7 amb_wood_creak"
+    Provenance: "external:job-fa37b900 (2.4 cr) \xB7 amb_wood_creak"
     NoiseFloorDb: -75.9
     DcDb: -101.5
     Clipped: 0
@@ -736,7 +735,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -2.16
-    Provenance: "seed_audio job 3e15a675 (1.1 cr) \xB7 zombie_std_windup"
+    Provenance: "external:job-3e15a675 (1.1 cr) \xB7 zombie_std_windup"
     NoiseFloorDb: -68.9
     DcDb: -117
     Clipped: 0
@@ -749,8 +748,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -4.86
-    Provenance: "seed_audio job 5cf0fd0e (1.1 cr) \xB7 zombie_std_attack \xB7 EQ
-      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+    Provenance: "external:job-5cf0fd0e (1.1 cr) \xB7 zombie_std_attack \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -84.4
     DcDb: -176.9
     Clipped: 0
@@ -765,7 +764,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.96
-    Provenance: "seed_audio job 856d3ae9 (1.1 cr) \xB7 zombie_std_hit \xB7 EQ v011
+    Provenance: "external:job-856d3ae9 (1.1 cr) \xB7 zombie_std_hit \xB7 EQ v011
       (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -85.8
     DcDb: -132.6
@@ -780,7 +779,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 09af45d1 (1.1 cr) \xB7 zombie_std_death \xB7 EQ v011
+    Provenance: "external:job-09af45d1 (1.1 cr) \xB7 zombie_std_death \xB7 EQ v011
       (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -95
     DcDb: -156.8
@@ -795,7 +794,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -2.45
-    Provenance: "seed_audio job 5ec941e7 (1.1 cr) \xB7 zombie_elite_windup_v2"
+    Provenance: "external:job-5ec941e7 (1.1 cr) \xB7 zombie_elite_windup_v2"
     NoiseFloorDb: -72.3
     DcDb: -100.8
     Clipped: 0
@@ -809,7 +808,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -5.88
-    Provenance: "seed_audio job 84c7d7ad (1.1 cr) \xB7 zombie_elite_attack_v2 \xB7
+    Provenance: "external:job-84c7d7ad (1.1 cr) \xB7 zombie_elite_attack_v2 \xB7
       EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -75.2
     DcDb: -155.5
@@ -824,7 +823,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 964135d9 (1.1 cr) \xB7 zombie_elite_hit \xB7 EQ v011
+    Provenance: "external:job-964135d9 (1.1 cr) \xB7 zombie_elite_hit \xB7 EQ v011
       (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -76
     DcDb: -124
@@ -838,8 +837,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 1d6aa31b (1.1 cr) \xB7 zombie_elite_death \xB7 EQ
-      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+    Provenance: "external:job-1d6aa31b (1.1 cr) \xB7 zombie_elite_death \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -79.1
     DcDb: -158.4
     Clipped: 0
@@ -853,7 +852,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.58
-    Provenance: "seed_audio job 23caf807 (1.1 cr) \xB7 zombie_ultra_windup"
+    Provenance: "external:job-23caf807 (1.1 cr) \xB7 zombie_ultra_windup"
     NoiseFloorDb: -84.4
     DcDb: -102.8
     Clipped: 0
@@ -867,7 +866,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.58
-    Provenance: "seed_audio job 08094651 (1.1 cr) \xB7 zombie_ultra_attack \xB7 EQ
+    Provenance: "external:job-08094651 (1.1 cr) \xB7 zombie_ultra_attack \xB7 EQ
       v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -57.2
     DcDb: -111.6
@@ -882,7 +881,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.89
-    Provenance: "seed_audio job 7bad0868 (1.1 cr) \xB7 zombie_ultra_hit \xB7 EQ v011
+    Provenance: "external:job-7bad0868 (1.1 cr) \xB7 zombie_ultra_hit \xB7 EQ v011
       (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -70.5
     DcDb: -122.5
@@ -896,8 +895,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -5.08
-    Provenance: "seed_audio job 367300ab (1.1 cr) \xB7 zombie_ultra_death \xB7 EQ
-      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+    Provenance: "external:job-367300ab (1.1 cr) \xB7 zombie_ultra_death \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -70.4
     DcDb: -160.7
     Clipped: 0
@@ -910,7 +909,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.08
     TruePeakDb: -1.5
-    Provenance: "seed_audio job eb31b2c9 (1.1 cr) \xB7 gold_spawn"
+    Provenance: "external:job-eb31b2c9 (1.1 cr) \xB7 gold_spawn"
     NoiseFloorDb: -97.4
     DcDb: -129.7
     Clipped: 0
@@ -922,7 +921,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.61
     TruePeakDb: -1.5
-    Provenance: "seed_audio job e83ace06 (1.1 cr) \xB7 gold_magnet"
+    Provenance: "external:job-e83ace06 (1.1 cr) \xB7 gold_magnet"
     NoiseFloorDb: -86.8
     DcDb: -144.5
     Clipped: 0
@@ -934,7 +933,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -27.89
     TruePeakDb: -1.5
-    Provenance: "seed_audio job d7d6ce58 (1.1 cr) \xB7 amb_common_after_rain"
+    Provenance: "external:job-d7d6ce58 (1.1 cr) \xB7 amb_common_after_rain"
     NoiseFloorDb: -90.1
     DcDb: -108.7
     Clipped: 0
@@ -946,7 +945,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -24.8
     TruePeakDb: -1.5
-    Provenance: "seed_audio job e8624013 (1.1 cr) \xB7 amb_region_center"
+    Provenance: "external:job-e8624013 (1.1 cr) \xB7 amb_region_center"
     NoiseFloorDb: -83
     DcDb: -86.6
     Clipped: 0
@@ -958,7 +957,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -23.41
     TruePeakDb: -1.5
-    Provenance: "seed_audio job b8043914 (1.1 cr) \xB7 amb_region_north"
+    Provenance: "external:job-b8043914 (1.1 cr) \xB7 amb_region_north"
     NoiseFloorDb: -95.3
     DcDb: -103.2
     Clipped: 0
@@ -970,7 +969,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -23.27
     TruePeakDb: -1.5
-    Provenance: "seed_audio job a85a3b11 (1.1 cr) \xB7 amb_region_east"
+    Provenance: "external:job-a85a3b11 (1.1 cr) \xB7 amb_region_east"
     NoiseFloorDb: -88.2
     DcDb: -112.2
     Clipped: 0
@@ -982,7 +981,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -26.19
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 8811b02b (1.1 cr) \xB7 amb_region_south"
+    Provenance: "external:job-8811b02b (1.1 cr) \xB7 amb_region_south"
     NoiseFloorDb: -90.2
     DcDb: -101.7
     Clipped: 0
@@ -994,7 +993,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -25.51
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 122da4f7 (1.1 cr) \xB7 amb_region_west"
+    Provenance: "external:job-122da4f7 (1.1 cr) \xB7 amb_region_west"
     NoiseFloorDb: -83.8
     DcDb: -91.3
     Clipped: 0
@@ -1006,7 +1005,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -17.67
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 7410c7d5 (1.1 cr) \xB7 music_base"
+    Provenance: "external:job-7410c7d5 (1.1 cr) \xB7 music_base"
     NoiseFloorDb: -76.5
     DcDb: -240
     Clipped: 0
@@ -1018,7 +1017,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -19.3
     TruePeakDb: -1.5
-    Provenance: "seed_audio job a0266933 (1.1 cr) \xB7 music_percussion"
+    Provenance: "external:job-a0266933 (1.1 cr) \xB7 music_percussion"
     NoiseFloorDb: -47.5
     DcDb: -194
     Clipped: 0
@@ -1030,7 +1029,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -16
     TruePeakDb: -2.1
-    Provenance: "seed_audio job 074c5f9a (1.1 cr) \xB7 music_tension"
+    Provenance: "external:job-074c5f9a (1.1 cr) \xB7 music_tension"
     NoiseFloorDb: -85.5
     DcDb: -177
     Clipped: 0
@@ -1042,7 +1041,7 @@ MonoBehaviour:
     Loop: 1
     Lufs: -19.66
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 067bfdf3 (1.1 cr) \xB7 music_accent"
+    Provenance: "external:job-067bfdf3 (1.1 cr) \xB7 music_accent"
     NoiseFloorDb: -57
     DcDb: -240
     Clipped: 0
@@ -1057,7 +1056,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.54
     TruePeakDb: -1.5
-    Provenance: "seed_audio job d45c80e6 (1.1 cr) \xB7 footstep_stone"
+    Provenance: "external:job-d45c80e6 (1.1 cr) \xB7 footstep_stone"
     NoiseFloorDb: -95.8
     DcDb: -105.1
     Clipped: 0
@@ -1071,7 +1070,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.65
     TruePeakDb: -1.5
-    Provenance: "seed_audio job b4f1e853 (1.1 cr) \xB7 footstep_wood"
+    Provenance: "external:job-b4f1e853 (1.1 cr) \xB7 footstep_wood"
     NoiseFloorDb: -78.8
     DcDb: -112.7
     Clipped: 0
@@ -1086,7 +1085,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.7
     TruePeakDb: -1.5
-    Provenance: "seed_audio job ba2956e9 (1.1 cr) \xB7 footstep_dirt"
+    Provenance: "external:job-ba2956e9 (1.1 cr) \xB7 footstep_dirt"
     NoiseFloorDb: -97.4
     DcDb: -114.2
     Clipped: 0
@@ -1101,7 +1100,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.28
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 32924bcc (1.1 cr) \xB7 footstep_foliage"
+    Provenance: "external:job-32924bcc (1.1 cr) \xB7 footstep_foliage"
     NoiseFloorDb: -93
     DcDb: -105.4
     Clipped: 0
@@ -1116,7 +1115,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.32
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 4ed923f8 (1.1 cr) \xB7 footstep_water"
+    Provenance: "external:job-4ed923f8 (1.1 cr) \xB7 footstep_water"
     NoiseFloorDb: -91
     DcDb: -112.9
     Clipped: 0
@@ -1132,7 +1131,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.92
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 7cf6f8df (1.1 cr) \xB7 zombie_step_light"
+    Provenance: "external:job-7cf6f8df (1.1 cr) \xB7 zombie_step_light"
     NoiseFloorDb: -97
     DcDb: -110.9
     Clipped: 0
@@ -1147,7 +1146,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "seed_audio job ba702fcf (1.1 cr) \xB7 zombie_step_heavy"
+    Provenance: "external:job-ba702fcf (1.1 cr) \xB7 zombie_step_heavy"
     NoiseFloorDb: -93.4
     DcDb: -106.6
     Clipped: 0
@@ -1162,7 +1161,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -4.23
-    Provenance: "seed_audio job 543678fc (1.1 cr) \xB7 zombie_idle"
+    Provenance: "external:job-543678fc (1.1 cr) \xB7 zombie_idle"
     NoiseFloorDb: -94.8
     DcDb: -141.6
     Clipped: 0
@@ -1176,7 +1175,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.66
     TruePeakDb: -1.5
-    Provenance: "seed_audio job d053c855 (1.1 cr) \xB7 attack_impact_body"
+    Provenance: "external:job-d053c855 (1.1 cr) \xB7 attack_impact_body"
     NoiseFloorDb: -83.7
     DcDb: -139
     Clipped: 0
@@ -1190,7 +1189,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.65
     TruePeakDb: -1.5
-    Provenance: "seed_audio job eab23b6f (1.1 cr) \xB7 zombie_stagger"
+    Provenance: "external:job-eab23b6f (1.1 cr) \xB7 zombie_stagger"
     NoiseFloorDb: -94.2
     DcDb: -125.9
     Clipped: 0
@@ -1204,7 +1203,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.34
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 390c312f (1.1 cr) \xB7 zombie_rise"
+    Provenance: "external:job-390c312f (1.1 cr) \xB7 zombie_rise"
     NoiseFloorDb: -96.4
     DcDb: -134.3
     Clipped: 0
@@ -1217,7 +1216,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.71
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 3b7303a4 (1.1 cr) \xB7 armor_piece_drop"
+    Provenance: "external:job-3b7303a4 (1.1 cr) \xB7 armor_piece_drop"
     NoiseFloorDb: -86.5
     DcDb: -154.1
     Clipped: 0
@@ -1230,7 +1229,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.8
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 7c68611a (1.1 cr) \xB7 break_ceramic"
+    Provenance: "external:job-7c68611a (1.1 cr) \xB7 break_ceramic"
     NoiseFloorDb: -72.8
     DcDb: -150.4
     Clipped: 0
@@ -1243,7 +1242,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.5
     TruePeakDb: -1.5
-    Provenance: "seed_audio job a763a10c (1.1 cr) \xB7 amb_drip"
+    Provenance: "external:job-a763a10c (1.1 cr) \xB7 amb_drip"
     NoiseFloorDb: -97.2
     DcDb: -123.2
     Clipped: 0
@@ -1256,8 +1255,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -5.95
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -149.7
     Clipped: 0
@@ -1271,7 +1270,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -5.29
-    Provenance: "seed_audio job c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
+    Provenance: "external:job-c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
     NoiseFloorDb: -79.5
     DcDb: -134.3
     Clipped: 0
@@ -1285,7 +1284,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -4.17
-    Provenance: "seed_audio job c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
+    Provenance: "external:job-c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
     NoiseFloorDb: -79.5
     DcDb: -144
     Clipped: 0
@@ -1299,8 +1298,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -4.63
-    Provenance: "seed_audio job 488ac407 (2.6 cr) \xB7 zombie_special_hit \xB7 EQ
-      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
+    Provenance: "external:job-488ac407 (2.6 cr) \xB7 zombie_special_hit \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -69.7
     DcDb: -151.4
     Clipped: 0
@@ -1314,7 +1313,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -2.79
-    Provenance: "seed_audio job 3529b820 (3.4 cr) \xB7 zombie_special_death"
+    Provenance: "external:job-3529b820 (3.4 cr) \xB7 zombie_special_death"
     NoiseFloorDb: -92.5
     DcDb: -117.2
     Clipped: 0
@@ -1394,7 +1393,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 56913a7c (3.0 cr) \xB7 zombie_special_aggro"
+    Provenance: "external:job-56913a7c (3.0 cr) \xB7 zombie_special_aggro"
     NoiseFloorDb: -83.1
     DcDb: -147.1
     Clipped: 0
@@ -1408,7 +1407,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -3.59
-    Provenance: "seed_audio job 3804e7de (3.4 cr) \xB7 zombie_elite_aggro"
+    Provenance: "external:job-3804e7de (3.4 cr) \xB7 zombie_elite_aggro"
     NoiseFloorDb: -82.5
     DcDb: -133.2
     Clipped: 0
@@ -1422,7 +1421,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18.13
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 5a9b4bb7 (2.2 cr) \xB7 zombie_ultra_aggro"
+    Provenance: "external:job-5a9b4bb7 (2.2 cr) \xB7 zombie_ultra_aggro"
     NoiseFloorDb: -72.3
     DcDb: -97.2
     Clipped: 0
@@ -1436,8 +1435,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26
     TruePeakDb: -6.71
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -147.5
     Clipped: 0
@@ -1450,8 +1449,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21
     TruePeakDb: -6.92
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -71.9
     DcDb: -119.5
     Clipped: 0
@@ -1466,8 +1465,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.16
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav,
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav,
       tone:1180,1870,2660@2.2"
     NoiseFloorDb: -95.9
     DcDb: -117.4
@@ -1698,8 +1697,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -6.31
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav,
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav,
       raw/ui_bell_rin_suzu.wav"
     NoiseFloorDb: -84.4
     DcDb: -205.5
@@ -2426,7 +2425,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26
     TruePeakDb: -3
-    Provenance: "seed_audio job b92e48a1 (3.5 cr) \xB7 amb_furin"
+    Provenance: "external:job-b92e48a1 (3.5 cr) \xB7 amb_furin"
     NoiseFloorDb: -93.1
     DcDb: -150.3
     Clipped: 0
@@ -2439,8 +2438,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.74
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -95.9
     DcDb: -113.9
     Clipped: 0
@@ -2453,8 +2452,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.63
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -116.6
     Clipped: 0
@@ -2468,8 +2467,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -6.62
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -91.8
     DcDb: -152.2
     Clipped: 0
@@ -2483,8 +2482,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.08
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
     NoiseFloorDb: -91.8
     DcDb: -163.2
     Clipped: 0
@@ -2498,8 +2497,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -7.61
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -91.8
     DcDb: -147
     Clipped: 0
@@ -2513,8 +2512,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.94
     TruePeakDb: -4
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
     NoiseFloorDb: -91.8
     DcDb: -138.7
     Clipped: 0
@@ -2527,8 +2526,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.26
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_bell_rin_suzu.wav,
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_bell_rin_suzu.wav,
       raw/ui_paper_washi.wav, raw/ui_stamp_hanko.wav"
     NoiseFloorDb: -71.9
     DcDb: -205.7
@@ -2544,8 +2543,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21
     TruePeakDb: -6.83
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -149.4
     Clipped: 0
@@ -2558,8 +2557,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -7.38
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -140.6
     Clipped: 0
@@ -2573,8 +2572,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.02
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_stamp_hanko.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_stamp_hanko.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -82.2
     DcDb: -111.1
     Clipped: 0
@@ -2587,8 +2586,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.52
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
     NoiseFloorDb: -82.2
     DcDb: -194.5
     Clipped: 0
@@ -2601,8 +2600,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.41
     TruePeakDb: -3
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
     NoiseFloorDb: -82.2
     DcDb: -173.3
     Clipped: 0
@@ -2615,8 +2614,8 @@ MonoBehaviour:
     Loop: 1
     Lufs: -30.62
     TruePeakDb: -8
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_counter_soroban.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_counter_soroban.wav"
     NoiseFloorDb: -96
     DcDb: -217.1
     Clipped: 0
@@ -2631,8 +2630,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -27.15
     TruePeakDb: -5
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_counter_soroban.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_counter_soroban.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -95.9
     DcDb: -140.1
     Clipped: 0
@@ -2645,8 +2644,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -18.06
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -71.9
     DcDb: -176.9
     Clipped: 0
@@ -2659,8 +2658,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26
     TruePeakDb: -11.62
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_paper_washi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_paper_washi.wav"
     NoiseFloorDb: -71.9
     DcDb: -159.6
     Clipped: 0
@@ -2673,8 +2672,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26
     TruePeakDb: -9.07
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav,
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav,
       raw/ui_bell_rin_suzu.wav"
     NoiseFloorDb: -84.4
     DcDb: -153.7
@@ -2689,8 +2688,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -27.27
     TruePeakDb: -6
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -89.6
     DcDb: -215.1
     Clipped: 0
@@ -2704,8 +2703,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.44
     TruePeakDb: -6
-    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio
-      renders (ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+    Provenance: "derived offline (AP-011 v015, WP-068 s11, 0 cr) from external renders
+      (private-ledger 149\u2013154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
     NoiseFloorDb: -89.6
     DcDb: -200.6
     Clipped: 0
@@ -2739,10 +2738,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.63
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 per-shot
-      K1+K3 \u2264 70 ms, file boosted +3.6 dB onto the peak ceiling; runtime trim
-      -3.6 dB restores the Fire pre-mix relation (plays on top of WeaponAr1Loop)"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      AR1 per-shot K1+K3 \u2264 70 ms, file boosted +3.6 dB onto the peak ceiling;
+      runtime trim -3.6 dB restores the Fire pre-mix relation (plays on top of WeaponAr1Loop)"
     NoiseFloorDb: -120
     DcDb: -153.2
     Clipped: 0
@@ -2754,10 +2753,10 @@ MonoBehaviour:
     Loop: 1
     Lufs: -21.08
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 seamless
-      8-shot K2+K5 body loop at 600 RPM (ap011_autoloop, 4 bodies cycled); measured
-      599.8 RPM, seam ratio 2.82"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      AR1 seamless 8-shot K2+K5 body loop at 600 RPM (ap011_autoloop, 4 bodies cycled);
+      measured 599.8 RPM, seam ratio 2.82"
     NoiseFloorDb: -120
     DcDb: -187.7
     Clipped: 0
@@ -2808,10 +2807,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.27
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 per-shot
-      K1+K3 \u2264 70 ms, file boosted +9.4 dB onto the peak ceiling; runtime trim
-      -9.4 dB restores the Fire pre-mix relation (plays on top of WeaponSmg1Loop)"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      SMG1 per-shot K1+K3 \u2264 70 ms, file boosted +9.4 dB onto the peak ceiling;
+      runtime trim -9.4 dB restores the Fire pre-mix relation (plays on top of WeaponSmg1Loop)"
     NoiseFloorDb: -120
     DcDb: -156
     Clipped: 0
@@ -2823,10 +2822,10 @@ MonoBehaviour:
     Loop: 1
     Lufs: -18.15
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 seamless
-      8-shot K2+K5 body loop at 900 RPM (ap011_autoloop, 4 bodies cycled); measured
-      902.0 RPM, seam ratio 3.88"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      SMG1 seamless 8-shot K2+K5 body loop at 900 RPM (ap011_autoloop, 4 bodies cycled);
+      measured 902.0 RPM, seam ratio 3.88"
     NoiseFloorDb: -120
     DcDb: -204.9
     Clipped: 0
@@ -2913,10 +2912,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.23
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG1 per-shot
-      K1+K3 \u2264 70 ms, file boosted +4.4 dB onto the peak ceiling; runtime trim
-      -4.4 dB restores the Fire pre-mix relation (plays on top of WeaponLmg1Loop)"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      LMG1 per-shot K1+K3 \u2264 70 ms, file boosted +4.4 dB onto the peak ceiling;
+      runtime trim -4.4 dB restores the Fire pre-mix relation (plays on top of WeaponLmg1Loop)"
     NoiseFloorDb: -120
     DcDb: -139
     Clipped: 0
@@ -2928,10 +2927,10 @@ MonoBehaviour:
     Loop: 1
     Lufs: -18
     TruePeakDb: -2.57
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG1 seamless
-      8-shot K2+K5 body loop at 720 RPM (ap011_autoloop, 4 bodies cycled); measured
-      719.8 RPM, seam ratio 4.53"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      LMG1 seamless 8-shot K2+K5 body loop at 720 RPM (ap011_autoloop, 4 bodies cycled);
+      measured 719.8 RPM, seam ratio 4.53"
     NoiseFloorDb: -120
     DcDb: -195.7
     Clipped: 0
@@ -2997,10 +2996,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.46
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Ar class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Ar class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3013,11 +3013,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.86
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Ar class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Ar class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3030,10 +3030,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.68
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Ar class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Ar class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3046,10 +3047,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.72
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Smg class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Smg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3062,11 +3064,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Smg class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Smg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3079,11 +3081,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.59
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Smg class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Smg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3096,10 +3098,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.52
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Sg class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3112,11 +3115,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.42
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Sg class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3129,10 +3132,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.59
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Sg class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3145,10 +3149,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.73
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Lmg class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Lmg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3161,11 +3166,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.26
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Lmg class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Lmg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3178,11 +3183,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.53
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Lmg class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Lmg class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3195,10 +3200,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.83
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Sr class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Sr class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3211,11 +3217,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.86
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Sr class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Sr class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3228,10 +3234,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.69
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Sr class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Sr class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3244,10 +3251,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Open tail (ap011_space IR, RT60 0.8 s) of the Rl class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Open tail (ap011_space IR, RT60 0.8 s) of the Rl class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3260,11 +3268,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.84
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Corridor tail (ap011_space IR, RT60 1.25 s) of the Rl class dry pre-mix; file
-      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
-      seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Corridor tail (ap011_space IR, RT60 1.25 s) of the Rl class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3277,10 +3285,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -2.45
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
-      Hall tail (ap011_space IR, RT60 1.75 s) of the Rl class dry pre-mix; file \u221220
-      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7
+      wet-only Hall tail (ap011_space IR, RT60 1.75 s) of the Rl class dry pre-mix;
+      file \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB;
+      2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
     Clipped: 0
@@ -3293,8 +3302,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 mag release + drop in hand"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 mag release + drop
+      in hand"
     NoiseFloorDb: -120
     DcDb: -135.6
     Clipped: 0
@@ -3307,8 +3317,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.02
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 mag seat click"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 mag seat click"
     NoiseFloorDb: -120
     DcDb: -125.7
     Clipped: 0
@@ -3321,8 +3331,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.07
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 bolt-release slap"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 bolt-release slap"
     NoiseFloorDb: -120
     DcDb: -126.8
     Clipped: 0
@@ -3335,9 +3345,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.73
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 charging handle back + bolt
-      slap (serpentine cock)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 charging handle
+      back + bolt slap (serpentine cock)"
     NoiseFloorDb: -120
     DcDb: -141.4
     Clipped: 0
@@ -3350,9 +3360,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.82
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked out + drop
-      on wood"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked
+      out + drop on wood"
     NoiseFloorDb: -120
     DcDb: -121.1
     Clipped: 0
@@ -3365,9 +3375,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.22
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked in, hard
-      clunk"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked
+      in, hard clunk"
     NoiseFloorDb: -120
     DcDb: -148.8
     Clipped: 0
@@ -3380,9 +3390,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.87
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R2 lever back + carrier slam
-      + receiver rattle"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R2 lever back + carrier
+      slam + receiver rattle"
     NoiseFloorDb: -120
     DcDb: -136.9
     Clipped: 0
@@ -3395,8 +3405,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.67
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
     NoiseFloorDb: -120
     DcDb: -133.2
     Clipped: 0
@@ -3409,8 +3419,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.03
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
     NoiseFloorDb: -120
     DcDb: -124.1
     Clipped: 0
@@ -3423,9 +3433,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.66
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 \"HK slap\": R1 handle back
-      + slap +2 st, high shelf +3 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 \"HK slap\": R1 handle
+      back + slap +2 st, high shelf +3 dB"
     NoiseFloorDb: -120
     DcDb: -129.7
     Clipped: 0
@@ -3438,8 +3448,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.02
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st (side mag, oily)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st (side
+      mag, oily)"
     NoiseFloorDb: -120
     DcDb: -156.5
     Clipped: 0
@@ -3452,9 +3463,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.96
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st + R2 clunk \u221210
-      dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st + R2
+      clunk \u221210 dB"
     NoiseFloorDb: -120
     DcDb: -145.4
     Clipped: 0
@@ -3467,8 +3478,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.62
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R2 carrier slam +2 st, short"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R2 carrier slam +2
+      st, short"
     NoiseFloorDb: -120
     DcDb: -94.3
     Clipped: 0
@@ -3482,9 +3494,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R3 plastic shell pushed into
-      the gate"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R3 plastic shell pushed
+      into the gate"
     NoiseFloorDb: -120
     DcDb: -131.2
     Clipped: 0
@@ -3497,8 +3509,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.99
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R3 pump back shuck"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R3 pump back shuck"
     NoiseFloorDb: -120
     DcDb: -135.9
     Clipped: 0
@@ -3511,8 +3523,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.56
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R3 pump forward clack"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R3 pump forward clack"
     NoiseFloorDb: -120
     DcDb: -131.9
     Clipped: 0
@@ -3525,9 +3537,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.78
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 break open: R2 cover clank
-      +2 st + R3 shell drop \u22126 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 break open: R2 cover
+      clank +2 st + R3 shell drop \u22126 dB"
     NoiseFloorDb: -120
     DcDb: -150.1
     Clipped: 0
@@ -3540,8 +3552,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.37
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R3 shell +3 st into the chamber"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R3 shell +3 st into
+      the chamber"
     NoiseFloorDb: -120
     DcDb: -138.6
     Clipped: 0
@@ -3554,9 +3567,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.67
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 break close: R4 lock clack
-      \u22122 st + R2 strike \u22124 dB (wood tok)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 break close: R4 lock
+      clack \u22122 st + R2 strike \u22124 dB (wood tok)"
     NoiseFloorDb: -120
     DcDb: -142.7
     Clipped: 0
@@ -3569,9 +3582,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.09
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 feed cover unlatch + swing
-      open"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 feed cover unlatch
+      + swing open"
     NoiseFloorDb: -120
     DcDb: -136
     Clipped: 0
@@ -3584,9 +3597,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -4.58
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 belt laid on the tray (link
-      jingle)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 belt laid on the
+      tray (link jingle)"
     NoiseFloorDb: -120
     DcDb: -132.8
     Clipped: 0
@@ -3599,8 +3612,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.14
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 cover slammed, double clunk"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 cover slammed, double
+      clunk"
     NoiseFloorDb: -120
     DcDb: -138.4
     Clipped: 0
@@ -3613,8 +3627,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.07
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 charging handle racked"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 charging handle
+      racked"
     NoiseFloorDb: -120
     DcDb: -110.6
     Clipped: 0
@@ -3627,8 +3642,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.58
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
     NoiseFloorDb: -120
     DcDb: -129.7
     Clipped: 0
@@ -3641,8 +3656,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -4.89
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st (thick links)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st (thick
+      links)"
     NoiseFloorDb: -120
     DcDb: -132.6
     Clipped: 0
@@ -3655,8 +3671,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.01
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
     NoiseFloorDb: -120
     DcDb: -140.2
     Clipped: 0
@@ -3669,9 +3685,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -3.55
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st + R2 carrier
-      slam \u22126 dB (two-hand \xC7ANK)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st + R2
+      carrier slam \u22126 dB (two-hand \xC7ANK)"
     NoiseFloorDb: -120
     DcDb: -112
     Clipped: 0
@@ -3684,8 +3700,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.23
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 box magazine removed"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 box magazine removed"
     NoiseFloorDb: -120
     DcDb: -128.4
     Clipped: 0
@@ -3698,8 +3714,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.24
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 magazine clicked back in"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 magazine clicked
+      back in"
     NoiseFloorDb: -120
     DcDb: -135.5
     Clipped: 0
@@ -3712,9 +3729,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.12
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt handle lifted, sharp
-      click"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 bolt handle lifted,
+      sharp click"
     NoiseFloorDb: -120
     DcDb: -138.1
     Clipped: 0
@@ -3727,9 +3744,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.97
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt glide back + case flick
-      ring"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 bolt glide back
+      + case flick ring"
     NoiseFloorDb: -120
     DcDb: -137.9
     Clipped: 0
@@ -3742,8 +3759,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.8
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt pushed forward"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 bolt pushed forward"
     NoiseFloorDb: -120
     DcDb: -137.4
     Clipped: 0
@@ -3756,9 +3773,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.42
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 handle turned down, locking
-      clack"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 handle turned down,
+      locking clack"
     NoiseFloorDb: -120
     DcDb: -137.3
     Clipped: 0
@@ -3771,9 +3788,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -4.96
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 tube slide (pink sweep 1.8
-      k \u2192 500 Hz, 420 ms) + R1 seat click \u22128 dB at the end"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 tube slide (pink sweep
+      1.8 k \u2192 500 Hz, 420 ms) + R1 seat click \u22128 dB at the end"
     NoiseFloorDb: -120
     DcDb: -135.3
     Clipped: 0
@@ -3786,9 +3803,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.96
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R4 lock clack + R1 selector
-      click \u22126 dB (fuse tensioned)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R4 lock clack + R1
+      selector click \u22126 dB (fuse tensioned)"
     NoiseFloorDb: -120
     DcDb: -115.9
     Clipped: 0
@@ -3801,8 +3818,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.78
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBSwitch v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponBSwitch v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -160.7
     Clipped: 0
@@ -3815,8 +3833,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.69
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBRaised v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponBRaised v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -185.5
     Clipped: 0
@@ -3829,8 +3848,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -21.77
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBLowered v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponBLowered v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -179
     Clipped: 0
@@ -3843,9 +3863,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 2400) 90
-      ms + stock-to-shoulder click \u22128 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP
+      2400) 90 ms + stock-to-shoulder click \u22128 dB"
     NoiseFloorDb: -120
     DcDb: -116.2
     Clipped: 0
@@ -3858,8 +3878,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.03
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin
+      strike"
     NoiseFloorDb: -120
     DcDb: -132.3
     Clipped: 0
@@ -3872,8 +3893,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.27
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponASwitch v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponASwitch v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -166.2
     Clipped: 0
@@ -3886,8 +3908,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.64
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponARaised v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponARaised v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -202.4
     Clipped: 0
@@ -3900,8 +3923,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.91
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponALowered v007 +0 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponALowered v007
+      +0 st"
     NoiseFloorDb: -120
     DcDb: -193.2
     Clipped: 0
@@ -3914,9 +3938,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 2000) 90
-      ms + stock-to-shoulder click \u22128 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP
+      2000) 90 ms + stock-to-shoulder click \u22128 dB"
     NoiseFloorDb: -120
     DcDb: -115.9
     Clipped: 0
@@ -3929,8 +3953,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.37
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin
+      strike"
     NoiseFloorDb: -120
     DcDb: -110.8
     Clipped: 0
@@ -3943,9 +3968,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.86
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCSwitch v007 -3 st +
-      R2 cover rattle \u221210 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponCSwitch v007
+      -3 st + R2 cover rattle \u221210 dB"
     NoiseFloorDb: -120
     DcDb: -192.3
     Clipped: 0
@@ -3958,8 +3983,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.17
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCRaised v007 -3 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponCRaised v007
+      -3 st"
     NoiseFloorDb: -120
     DcDb: -196.9
     Clipped: 0
@@ -3972,8 +3998,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.05
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCLowered v007 -3 st"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 WeaponCLowered v007
+      -3 st"
     NoiseFloorDb: -120
     DcDb: -191.5
     Clipped: 0
@@ -3986,9 +4013,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 1500) 90
-      ms + stock-to-shoulder click \u22128 dB"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP
+      1500) 90 ms + stock-to-shoulder click \u22128 dB"
     NoiseFloorDb: -120
     DcDb: -99.9
     Clipped: 0
@@ -4001,8 +4028,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin
+      strike"
     NoiseFloorDb: -120
     DcDb: -114.9
     Clipped: 0
@@ -4016,9 +4044,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.26
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto stone (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto stone
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -141.8
     Clipped: 0
@@ -4032,9 +4060,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.26
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto wood (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto wood
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -157.3
     Clipped: 0
@@ -4048,9 +4076,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.94
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto dirt (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto dirt
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -185.1
     Clipped: 0
@@ -4064,9 +4092,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.21
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto stone (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto
+      stone (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -158.2
     Clipped: 0
@@ -4080,9 +4108,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.22
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto wood (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto
+      wood (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -162.9
     Clipped: 0
@@ -4096,9 +4124,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -26.25
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto dirt (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto
+      dirt (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -162.4
     Clipped: 0
@@ -4112,9 +4140,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.34
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto stone (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Shell casing onto stone
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -144.3
     Clipped: 0
@@ -4128,9 +4156,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -29.81
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto wood (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Shell casing onto wood
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -181.4
     Clipped: 0
@@ -4144,9 +4172,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -29.33
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto dirt (stone
-      take, surface filter)"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 Shell casing onto dirt
+      (stone take, surface filter)"
     NoiseFloorDb: -120
     DcDb: -212.6
     Clipped: 0
@@ -4160,8 +4188,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -1.87
-    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159) + v007 foley \xB7 R5 empty steel links onto stone"
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from external mechanism
+      renders (private-ledger 155\u2013159) + v007 foley \xB7 R5 empty steel links
+      onto stone"
     NoiseFloorDb: -120
     DcDb: -130.8
     Clipped: 0
@@ -4231,7 +4260,7 @@ MonoBehaviour:
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 light calibre:
       impact_stone + footstep_stone front / ceramic chips \xB7 v026 (WP-101): +2
-      Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav;
+      external takes one event each, levelled on the set's first 100 ms (imp_stone_light_1.wav;
       imp_stone_light_4.wav)"
     NoiseFloorDb: -120
     DcDb: -124.2
@@ -4267,7 +4296,7 @@ MonoBehaviour:
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 heavy calibre:
       impact_stone + footstep_stone front / ceramic chips \xB7 v026 (WP-101): +2
-      Adobe Firefly takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav;
+      external takes one event each, levelled on the set's first 100 ms (imp_stone_heavy_1.wav;
       imp_stone_heavy_2.wav)"
     NoiseFloorDb: -120
     DcDb: -112.2
@@ -4432,8 +4461,8 @@ MonoBehaviour:
     TruePeakDb: -1.5
     Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
       impact / footstep / armour takes + synthetic thump \xB7 Metal \xD7 light calibre:
-      impact_metal + armour tink front \xB7 v026 (WP-101): +1 Adobe Firefly takes
-      one event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
+      impact_metal + armour tink front \xB7 v026 (WP-101): +1 external takes one
+      event each, levelled on the set's first 100 ms (imp_metal_light_4.wav)"
     NoiseFloorDb: -120
     DcDb: -146.7
     Clipped: 0
@@ -4581,7 +4610,7 @@ MonoBehaviour:
     Lufs: -20.02
     TruePeakDb: -3.2
     Provenance: "AP-029 v001 special (v001-special, SHA 9c86a8f4873b\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -46.4
     DcDb: -80.7
     Clipped: 0
@@ -4597,7 +4626,7 @@ MonoBehaviour:
     Lufs: -18
     TruePeakDb: -1.25
     Provenance: "AP-029 v001 special (v001-special, SHA ffa01214a28b\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -111
     DcDb: -91.6
     Clipped: 0
@@ -4626,7 +4655,7 @@ MonoBehaviour:
     Lufs: -20.04
     TruePeakDb: -1.04
     Provenance: "AP-029 v001 special (v001-special, SHA e591af79cafd\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -240
     DcDb: -75.7
     Clipped: 0
@@ -4652,9 +4681,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -27.73
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 R7 fading sizzle 8.0\u20138.7 \"sss\" + ash tick"
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger
+      160\u2013161, 5.6 cr) \xB7 R7 fading sizzle 8.0\u20138.7 \"sss\" + ash tick"
     NoiseFloorDb: -120
     DcDb: -121.4
     Clipped: 0
@@ -4711,7 +4740,7 @@ MonoBehaviour:
     Lufs: -18
     TruePeakDb: -1.45
     Provenance: "AP-029 v001 special (v001-special, SHA d8ba434c1ca6\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -134.9
     DcDb: -90.1
     Clipped: 0
@@ -4739,7 +4768,7 @@ MonoBehaviour:
     Lufs: -22.54
     TruePeakDb: -1.14
     Provenance: "AP-029 v001 special (v001-special, SHA e29778615d50\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -240
     DcDb: -74.2
     Clipped: 0
@@ -4753,7 +4782,7 @@ MonoBehaviour:
     Lufs: -22.8
     TruePeakDb: -2.4
     Provenance: "AP-029 v001 special (v001-special, SHA 515d8aa68549\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -240
     DcDb: -103
     Clipped: 0
@@ -4767,7 +4796,7 @@ MonoBehaviour:
     Lufs: -24.32
     TruePeakDb: -1.2
     Provenance: "AP-029 v001 special (v001-special, SHA b1c687a2f2d1\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -151.4
     DcDb: -106.2
     Clipped: 0
@@ -4807,7 +4836,7 @@ MonoBehaviour:
     Lufs: -22.55
     TruePeakDb: -1.08
     Provenance: "AP-029 v001 special (v001-special, SHA af2493e4ed58\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -240
     DcDb: -96.3
     Clipped: 0
@@ -4821,7 +4850,7 @@ MonoBehaviour:
     Lufs: -22
     TruePeakDb: -1.22
     Provenance: "AP-029 v001 special (v001-special, SHA 96d948a5ac8f\u2026) \xB7
-      supersedes AP-011 v019 (Seed Audio R7/R8 t\xFCrevi)"
+      supersedes AP-011 v019 (external R7/R8 t\xFCrevi)"
     NoiseFloorDb: -240
     DcDb: -100.7
     Clipped: 0
@@ -4834,9 +4863,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20
     TruePeakDb: -1.67
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 pressure \"p\u015F\u015Ft\" + copper click (R1 selector)"
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger
+      160\u2013161, 5.6 cr) \xB7 pressure \"p\u015F\u015Ft\" + copper click (R1 selector)"
     NoiseFloorDb: -120
     DcDb: -118.7
     Clipped: 0
@@ -4849,10 +4878,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -20.2
     TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
-      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
-      5.6 cr) \xB7 screw clicks (R4 safety \xD72) + gel \"v\u0131c\u0131k\" (R8 5.5
-      s) \u22128 dB"
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from external
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (private-ledger
+      160\u2013161, 5.6 cr) \xB7 screw clicks (R4 safety \xD72) + gel \"v\u0131c\u0131k\"
+      (R8 5.5 s) \u22128 dB"
     NoiseFloorDb: -120
     DcDb: -88.5
     Clipped: 0
@@ -5091,9 +5120,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.19
     TruePeakDb: -3.88
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording)
-      \xB7 SHA 13defa439759\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC001; source recording) \xB7
+      SHA 13defa439759\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -91.5
     DcDb: -81.8
     Clipped: 0
@@ -5110,12 +5139,12 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.99
     TruePeakDb: -1.51
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC116; source
-      recording) \xB7 SHA e48bd80bae9c\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7
-      AP-027 v003-recut on 1 file(s) \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027
-      v003c-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC001, SRC116; source recording)
+      \xB7 SHA e48bd80bae9c\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027
+      v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7 AP-027 v003-recut
+      on 1 file(s) \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -63.9
     DcDb: -82.8
     Clipped: 0
@@ -5132,9 +5161,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.45
     TruePeakDb: -1.78
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006; source
-      recording) \xB7 SHA 48a60fc533c3\u2026 \xB7 AP-027 v003g-recut on 6 file(s)
-      \xB7 AP-027 v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC003, SRC006; source recording)
+      \xB7 SHA 48a60fc533c3\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
+      v003g-recut on 6 file(s)"
     NoiseFloorDb: -73.6
     DcDb: -80.9
     Clipped: 0
@@ -5151,10 +5180,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.11
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
-      \xB7 SHA 78f55dc0b2f5\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
-      v003e-recut on 6 file(s) \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC004; source recording) \xB7
+      SHA 78f55dc0b2f5\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut
+      on 6 file(s) \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut on
+      6 file(s)"
     NoiseFloorDb: -62
     DcDb: -110
     Clipped: 0
@@ -5171,9 +5200,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -48.76
     TruePeakDb: -24.93
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC002; source recording)
-      \xB7 SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC002; source recording) \xB7
+      SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -59
     DcDb: -144
     Clipped: 0
@@ -5190,10 +5219,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.62
     TruePeakDb: -2.81
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -72.5
     DcDb: -92.6
     Clipped: 0
@@ -5210,10 +5239,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.69
     TruePeakDb: -2.42
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -77.7
     DcDb: -90.6
     Clipped: 0
@@ -5230,10 +5259,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -5.36
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
-      recording) \xB7 SHA 4724e3255ea5\u2026 \xB7 AP-027 v003-recut on 3 file(s)
-      \xB7 AP-027 v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC001, SRC002; source recording)
+      \xB7 SHA 4724e3255ea5\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 AP-027
+      v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -46
     DcDb: -98.8
     Clipped: 0
@@ -5250,8 +5279,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -3.8
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107; source recording)
-      \xB7 SHA 83e2c927dc0b\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC107; source recording) \xB7
+      SHA 83e2c927dc0b\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -60
     DcDb: -80.4
@@ -5269,9 +5298,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28.17
     TruePeakDb: -2.87
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106; source recording)
-      \xB7 SHA 26de4641dae6\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC106; source recording) \xB7
+      SHA 26de4641dae6\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -89.8
     DcDb: -87.6
     Clipped: 0
@@ -5288,10 +5317,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.62
     TruePeakDb: -2.81
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -72.5
     DcDb: -92.6
     Clipped: 0
@@ -5308,10 +5337,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.69
     TruePeakDb: -2.42
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -77.7
     DcDb: -90.6
     Clipped: 0
@@ -5328,9 +5357,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -1.37
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source
-      recording) \xB7 SHA 82946b933a05\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC106, SRC107; source recording)
+      \xB7 SHA 82946b933a05\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -50.3
     DcDb: -104.6
     Clipped: 0
@@ -5347,9 +5376,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -3.48
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source
-      recording) \xB7 SHA f1e235e8c46f\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC106, SRC107; source recording)
+      \xB7 SHA f1e235e8c46f\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -52.1
     DcDb: -110.9
     Clipped: 0
@@ -5366,8 +5395,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -2.37
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC102; source recording)
-      \xB7 SHA 3c3941ab7672\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC102; source recording) \xB7
+      SHA 3c3941ab7672\u2026"
     NoiseFloorDb: -69.4
     DcDb: -114.5
     Clipped: 0
@@ -5384,9 +5413,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28.19
     TruePeakDb: -2.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
-      \xB7 SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) \xB7
+      SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -82.6
     DcDb: -91.6
     Clipped: 0
@@ -5403,10 +5432,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.64
     TruePeakDb: -3.54
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -76.8
     DcDb: -94.2
     Clipped: 0
@@ -5423,10 +5452,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.91
     TruePeakDb: -2.94
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -72.2
     DcDb: -91.2
     Clipped: 0
@@ -5443,9 +5472,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -2.95
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
-      source recording) \xB7 SHA 03703918ef57\u2026 \xB7 import fade 10 ms + 20 ms
-      silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC101, SRC102, SRC127; source
+      recording) \xB7 SHA 03703918ef57\u2026 \xB7 import fade 10 ms + 20 ms silence
+      on 5 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -46.7
     DcDb: -101.9
     Clipped: 0
@@ -5462,10 +5491,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.31
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC128; source recording)
-      \xB7 SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
-      v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC128; source recording) \xB7
+      SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027 v003-recut
+      on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within
+      40 dB of peak / end gate)"
     NoiseFloorDb: -83.6
     DcDb: -82.8
     Clipped: 0
@@ -5482,8 +5511,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -4.57
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC105; source recording)
-      \xB7 SHA 7ed27e07ad92\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC105; source recording) \xB7
+      SHA 7ed27e07ad92\u2026"
     NoiseFloorDb: -70.7
     DcDb: -93.7
     Clipped: 0
@@ -5499,10 +5528,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.94
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103; source recording)
-      \xB7 SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired
-      \u2014 open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC103; source recording) \xB7
+      SHA 7c0ac57a62a4\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_smg2_TailOpen_06 retired \u2014
+      open RT60 0.550 s < 0.56 s (S4 spec), FINAL c4093280 G1"
     NoiseFloorDb: -90
     DcDb: -89.6
     Clipped: 0
@@ -5519,10 +5548,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.64
     TruePeakDb: -3.54
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -76.8
     DcDb: -94.2
     Clipped: 0
@@ -5539,10 +5568,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.91
     TruePeakDb: -2.94
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -72.2
     DcDb: -91.2
     Clipped: 0
@@ -5559,9 +5588,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -4.53
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source
-      recording) \xB7 SHA b855296f9b47\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC103, SRC105; source recording)
+      \xB7 SHA b855296f9b47\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -64.4
     DcDb: -90.6
     Clipped: 0
@@ -5578,9 +5607,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -2.68
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC103, SRC105; source
-      recording) \xB7 SHA d316ff70b1e0\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC103, SRC105; source recording)
+      \xB7 SHA d316ff70b1e0\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -68.6
     DcDb: -95.8
     Clipped: 0
@@ -5597,8 +5626,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -46.81
     TruePeakDb: -22.51
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
-      recording) \xB7 SHA 2180f4490453\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC003, SRC013; source recording)
+      \xB7 SHA 2180f4490453\u2026"
     NoiseFloorDb: -101.9
     DcDb: -122.2
     Clipped: 0
@@ -5615,10 +5644,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.64
     TruePeakDb: -2.85
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -79
     DcDb: -93.7
     Clipped: 0
@@ -5635,10 +5664,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.69
     TruePeakDb: -2.77
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -78.6
     DcDb: -91.2
     Clipped: 0
@@ -5655,10 +5684,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -4.03
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
-      recording) \xB7 SHA 2c835710bf76\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC003, SRC013; source recording)
+      \xB7 SHA 2c835710bf76\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027
+      v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -106.7
     DcDb: -102.3
     Clipped: 0
@@ -5675,8 +5704,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -2.91
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC007; source recording)
-      \xB7 SHA f39bd95779e7\u2026 \xB7 import fade 10 ms + 20 ms silence on 3 file(s)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC007; source recording) \xB7
+      SHA f39bd95779e7\u2026 \xB7 import fade 10 ms + 20 ms silence on 3 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -60.8
     DcDb: -93.8
@@ -5694,9 +5723,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22.94
     TruePeakDb: -2.59
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003; source recording)
-      \xB7 SHA c0b6739c5870\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC003; source recording) \xB7
+      SHA c0b6739c5870\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -93.3
     DcDb: -90.6
     Clipped: 0
@@ -5713,10 +5742,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.64
     TruePeakDb: -2.85
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -79
     DcDb: -93.7
     Clipped: 0
@@ -5733,10 +5762,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.69
     TruePeakDb: -2.77
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -78.6
     DcDb: -91.2
     Clipped: 0
@@ -5753,10 +5782,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -3.09
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006, SRC007,
-      SRC013; source recording) \xB7 SHA a1ad9cfb6198\u2026 \xB7 AP-027 v003-recut
-      on 2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20
-      ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC003, SRC006, SRC007, SRC013;
+      source recording) \xB7 SHA a1ad9cfb6198\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 5 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -101.8
     DcDb: -94.5
     Clipped: 0
@@ -5773,10 +5802,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
-      \xB7 SHA 3a67e0e59a0c\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
-      v003e-recut on 6 file(s) \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC004; source recording) \xB7
+      SHA 3a67e0e59a0c\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut
+      on 6 file(s) \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut on
+      6 file(s)"
     NoiseFloorDb: -65.4
     DcDb: -112.7
     Clipped: 0
@@ -5793,8 +5822,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -3.1
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC109; source recording)
-      \xB7 SHA 6aa2ef8bb941\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC109; source recording) \xB7
+      SHA 6aa2ef8bb941\u2026"
     NoiseFloorDb: -68.7
     DcDb: -81.9
     Clipped: 0
@@ -5811,9 +5840,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -25.37
     TruePeakDb: -4.1
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording)
-      \xB7 SHA d335d41be8bd\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC001; source recording) \xB7
+      SHA d335d41be8bd\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -94.5
     DcDb: -89.8
     Clipped: 0
@@ -5830,10 +5859,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.63
     TruePeakDb: -3.65
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -94.3
     Clipped: 0
@@ -5850,10 +5879,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.7
     TruePeakDb: -2.59
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -79.4
     DcDb: -91.7
     Clipped: 0
@@ -5870,10 +5899,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -3.87
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC109; source
-      recording) \xB7 SHA 06107206c1ca\u2026 \xB7 AP-027 v003-recut on 4 file(s)
-      \xB7 AP-027 v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC001, SRC109; source recording)
+      \xB7 SHA 06107206c1ca\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
+      v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -43.3
     DcDb: -96.2
     Clipped: 0
@@ -5890,11 +5919,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -3.17
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC116; source recording)
-      \xB7 SHA 4e6cb3f84370\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
-      v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7 AP-027 v003-recut
-      on 2 file(s) \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on
-      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC116; source recording) \xB7
+      SHA 4e6cb3f84370\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027 v003b-recut
+      on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7 AP-027 v003-recut on
+      2 file(s) \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2
+      file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
       dB of peak / end gate)"
     NoiseFloorDb: -75.4
     DcDb: -82.8
@@ -5912,8 +5941,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -3.1
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC109; source recording)
-      \xB7 SHA 6aa2ef8bb941\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC109; source recording) \xB7
+      SHA 6aa2ef8bb941\u2026"
     NoiseFloorDb: -68.7
     DcDb: -81.9
     Clipped: 0
@@ -5928,11 +5957,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.44
     TruePeakDb: -2.63
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording)
-      \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 /
-      Weapon_lmg2_TailOpen_05 retired \u2014 open RT60 0.547 / 0.546 s < 0.56 s (S4
-      spec), FINAL c4093280 G1"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC108; source recording) \xB7
+      SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 S4 R3 (S-08 10.10): Weapon_lmg2_TailOpen_01 / Weapon_lmg2_TailOpen_05
+      retired \u2014 open RT60 0.547 / 0.546 s < 0.56 s (S4 spec), FINAL c4093280
+      G1"
     NoiseFloorDb: -88.5
     DcDb: -77
     Clipped: 0
@@ -5949,10 +5978,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.63
     TruePeakDb: -3.65
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -94.3
     Clipped: 0
@@ -5969,10 +5998,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.7
     TruePeakDb: -2.59
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -79.4
     DcDb: -91.7
     Clipped: 0
@@ -5989,11 +6018,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -3.85
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source
-      recording) \xB7 SHA 4b049f3190e3\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003b-recut on 1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7
-      AP-027 v003b-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 4
-      file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC108, SRC109; source recording)
+      \xB7 SHA 4b049f3190e3\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027
+      v003b-recut on 1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027 v003b-recut
+      on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within
+      40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -84.7
     Clipped: 0
@@ -6010,11 +6039,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source
-      recording) \xB7 SHA a0772de1fa2b\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003b-recut on 1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7
-      AP-027 v003b-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 3
-      file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC108, SRC109; source recording)
+      \xB7 SHA a0772de1fa2b\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027
+      v003b-recut on 1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027 v003b-recut
+      on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 3 file(s) (end within
+      40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -91.5
     Clipped: 0
@@ -6031,8 +6060,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -2.1
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC111; source recording)
-      \xB7 SHA eddb03ca0edd\u2026 \xB7 import fade 10 ms + 20 ms silence on 2 file(s)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC111; source recording) \xB7
+      SHA eddb03ca0edd\u2026 \xB7 import fade 10 ms + 20 ms silence on 2 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -61.6
     DcDb: -95.7
@@ -6050,8 +6079,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -27.75
     TruePeakDb: -1.98
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
-      \xB7 SHA 9bfd9f8376a2\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) \xB7
+      SHA 9bfd9f8376a2\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -85.1
     DcDb: -88.8
     Clipped: 0
@@ -6068,9 +6097,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.65
     TruePeakDb: -2.74
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -73.9
     DcDb: -94.2
     Clipped: 0
@@ -6087,9 +6116,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.64
     TruePeakDb: -2.56
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -75.5
     DcDb: -91.3
     Clipped: 0
@@ -6106,9 +6135,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -2.04
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source
-      recording) \xB7 SHA 0b6ec23e4b89\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 1 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC110, SRC111; source recording)
+      \xB7 SHA 0b6ec23e4b89\u2026 \xB7 import fade 10 ms + 20 ms silence on 1 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -67.9
     DcDb: -112.4
     Clipped: 0
@@ -6125,8 +6154,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.74
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC110, SRC111; source
-      recording) \xB7 SHA 560a823c7b6e\u2026"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC110, SRC111; source recording)
+      \xB7 SHA 560a823c7b6e\u2026"
     NoiseFloorDb: -71.5
     DcDb: -120.6
     Clipped: 0
@@ -6143,8 +6172,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28
     TruePeakDb: -3.8
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107; source recording)
-      \xB7 SHA 83e2c927dc0b\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC107; source recording) \xB7
+      SHA 83e2c927dc0b\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -60
     DcDb: -80.4
@@ -6162,9 +6191,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -28.18
     TruePeakDb: -2.03
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
-      \xB7 SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC101; source recording) \xB7
+      SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s)"
     NoiseFloorDb: -82.5
     DcDb: -91.6
     Clipped: 0
@@ -6181,10 +6210,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -23.6
     TruePeakDb: -3.26
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC114; source recording) \xB7
+      SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -70.6
     DcDb: -93.5
     Clipped: 0
@@ -6201,10 +6230,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.78
     TruePeakDb: -2.86
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
-      v003g-recut on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
-      on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC115; source recording) \xB7
+      SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut
+      on 6 file(s) \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027 v003g-recut on
+      6 file(s)"
     NoiseFloorDb: -72.5
     DcDb: -91.8
     Clipped: 0
@@ -6221,10 +6250,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -22
     TruePeakDb: -3.58
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
-      recording) \xB7 SHA 7e062c42114c\u2026 \xB7 AP-027 v003-recut on 6 file(s)
-      \xB7 AP-027 v003-recut on 6 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC107, SRC129; source recording)
+      \xB7 SHA 7e062c42114c\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
+      v003-recut on 6 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -40.9
     DcDb: -91.9
     Clipped: 0
@@ -6241,10 +6270,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -5.6
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
-      recording) \xB7 SHA 6ea5b5792ffb\u2026 \xB7 AP-027 v003-recut on 6 file(s)
-      \xB7 AP-027 v003-recut on 6 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC107, SRC129; source recording)
+      \xB7 SHA 6ea5b5792ffb\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
+      v003-recut on 6 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -42.9
     DcDb: -94
     Clipped: 0
@@ -6261,10 +6290,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.48
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; source recording)
-      \xB7 SHA ce7037131ff7\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
-      v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011; source recording) \xB7
+      SHA ce7037131ff7\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027 v003-recut
+      on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within
+      40 dB of peak / end gate)"
     NoiseFloorDb: -61.2
     DcDb: -72.2
     Clipped: 0
@@ -6281,10 +6310,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.88
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -6301,10 +6330,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.28
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC010; source
-      recording) \xB7 SHA 28373334871d\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC008, SRC010; source recording)
+      \xB7 SHA 28373334871d\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 AP-027
+      v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -39.4
     DcDb: -78
     Clipped: 0
@@ -6321,7 +6350,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -6340,10 +6369,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.62
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -6403,7 +6432,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber)
       \xB7 SHA 3e28a7eaf17e\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
       v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 2 file(s)
       (end within 40 dB of peak / end gate)"
@@ -6423,10 +6452,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.88
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -6443,7 +6472,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -6462,7 +6491,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -6481,10 +6510,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.62
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -6544,7 +6573,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118; proxy surface/caliber)
       \xB7 SHA 12065cfb734e\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 AP-027
       v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence on 1 file(s)
       (end within 40 dB of peak / end gate)"
@@ -6564,10 +6593,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.37
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 5 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.7
     Clipped: 0
@@ -6584,7 +6613,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -6603,7 +6632,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -6622,10 +6651,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.77
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.3
     Clipped: 0
@@ -6686,7 +6715,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118; proxy surface/caliber)
       \xB7 SHA 12065cfb734e\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 AP-027
       v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence on 1 file(s)
       (end within 40 dB of peak / end gate)"
@@ -6706,10 +6735,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.37
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 5 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.7
     Clipped: 0
@@ -6726,7 +6755,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -6745,7 +6774,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -6764,10 +6793,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.77
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC118, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.3
     Clipped: 0
@@ -6828,8 +6857,8 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -2.15
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009; source recording)
-      \xB7 SHA c2376ffd686d\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009; source recording) \xB7
+      SHA c2376ffd686d\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -53.5
     DcDb: -81.6
@@ -6847,9 +6876,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA ae15eb9b85c1\u2026 \xB7 import fade 10 ms +
-      20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA ae15eb9b85c1\u2026 \xB7 import fade 10 ms + 20 ms
+      silence on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -87.5
     Clipped: 0
@@ -6866,9 +6895,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -4.37
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC009; source
-      recording) \xB7 SHA 1883a65dd375\u2026 \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC008, SRC009; source recording)
+      \xB7 SHA 1883a65dd375\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -39.5
     DcDb: -82.6
     Clipped: 0
@@ -6885,7 +6914,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.46
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
       \xB7 SHA 717cc762e089\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
       v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
       (end within 40 dB of peak / end gate)"
@@ -6905,10 +6934,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.56
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.5
     Clipped: 0
@@ -6969,7 +6998,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.22
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009; proxy surface/caliber)
       \xB7 SHA 2634c33361b1\u2026 \xB7 import fade 10 ms + 20 ms silence on 3 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -62.6
@@ -6988,9 +7017,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA ae15eb9b85c1\u2026 \xB7 import fade 10 ms +
-      20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA ae15eb9b85c1\u2026 \xB7 import fade 10 ms + 20 ms
+      silence on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -87.5
     Clipped: 0
@@ -7007,7 +7036,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.8
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC117; proxy surface/caliber)
       \xB7 SHA a157ad74c2d1\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -60.8
@@ -7026,7 +7055,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.46
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
       \xB7 SHA 717cc762e089\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
       v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
       (end within 40 dB of peak / end gate)"
@@ -7046,10 +7075,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.56
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC009, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.5
     Clipped: 0
@@ -7110,7 +7139,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber)
       \xB7 SHA 3e28a7eaf17e\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
       v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 2 file(s)
       (end within 40 dB of peak / end gate)"
@@ -7130,10 +7159,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.88
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -7150,7 +7179,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -7169,7 +7198,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -7188,10 +7217,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.62
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -7251,7 +7280,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber)
       \xB7 SHA 3e28a7eaf17e\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
       v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 2 file(s)
       (end within 40 dB of peak / end gate)"
@@ -7271,10 +7300,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.88
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -7291,7 +7320,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -7310,7 +7339,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC119; proxy surface/caliber)
       \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -58.1
@@ -7329,10 +7358,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.62
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence
+      on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -7392,7 +7421,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011; proxy surface/caliber)
       \xB7 SHA 3e28a7eaf17e\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 import
       fade 10 ms + 20 ms silence on 2 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -63.6
@@ -7411,10 +7440,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.88
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
-      dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -7431,7 +7460,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.41
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC117; proxy surface/caliber)
       \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
       (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.9
@@ -7450,7 +7479,7 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24
     TruePeakDb: -1.87
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC120; proxy surface/caliber)
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC120; proxy surface/caliber)
       \xB7 SHA 212c325273f0\u2026 \xB7 AP-027 v003-recut on 1 file(s) \xB7 import
       fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -67.8
@@ -7469,10 +7498,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -24.62
     TruePeakDb: -1.06
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
-      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
-      dB of peak / end gate)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC011, SRC122, SRC123; proxy
+      surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on 2 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -7532,9 +7561,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7551,9 +7580,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7570,9 +7599,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7589,9 +7618,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7608,9 +7637,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7672,9 +7701,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7691,9 +7720,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7710,9 +7739,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7729,9 +7758,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -7748,9 +7777,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -30
     TruePeakDb: -8.92
-    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
-      \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+    Provenance: "AP-027 v002 (Sonniss GDC sources, SRC126; source recording) \xB7
+      SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027 v003-recut
+      on 6 file(s)"
     NoiseFloorDb: -81.6
     DcDb: -125.7
     Clipped: 0
@@ -8205,12 +8234,12 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id wb_coins \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at
-      0.84 s + 60 ms fade; _02 cut at 0.9 s + 80 ms fade; _03 cut at 0.7 s + 20 ms
-      fade \xB7 TP-limited (look-ahead \u2264 6 dB): _02 2.6 dB, _03 6 dB \xB7 house
-      chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file
-      1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      3eb3008247b6) \xB7 v024 id wb_coins \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at 0.84
+      s + 60 ms fade; _02 cut at 0.9 s + 80 ms fade; _03 cut at 0.7 s + 20 ms fade
+      \xB7 TP-limited (look-ahead \u2264 6 dB): _02 2.6 dB, _03 6 dB \xB7 house chain
+      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
+      never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
       exemption \xB7 SHA 585e3fa702f1\u2026"
     NoiseFloorDb: -45.2
     DcDb: -126.8
@@ -8226,11 +8255,12 @@ MonoBehaviour:
     Lufs: -20.94
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id wb_rack \xB7 Adobe Firefly \xD73 (_01 _02 _03; firefly-ledger-r4.csv)
-      \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead \u2264 6 dB): _01
-      1.5 dB, _02 5.3 dB, _03 5.2 dB \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms
-      silence \xB7 noise floor not measurable (file 1 never rests under \u221260
-      dBFS in 100 ms: signal end to end) \u2192 continuous exemption \xB7 SHA f37a1882ad44\u2026"
+      3eb3008247b6) \xB7 v024 id wb_rack \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
+      \u2264 6 dB): _01 1.5 dB, _02 5.3 dB, _03 5.2 dB \xB7 house chain -20 LUFS
+      / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA f37a1882ad44\u2026"
     NoiseFloorDb: -58.4
     DcDb: -146.2
     Clipped: 0
@@ -8245,13 +8275,13 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id wb_denied \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at
-      0.36 s + 30 ms fade; _02 cut at 0.22 s + 30 ms fade; _03 cut at 0.22 s + 30
-      ms fade \xB7 TP-limited (look-ahead \u2264 6 dB): _02 3.9 dB, _03 3.1 dB \xB7
-      house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable
-      (file 1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192
-      continuous exemption \xB7 SHA 3a2e6fb8ed88\u2026"
+      3eb3008247b6) \xB7 v024 id wb_denied \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at 0.36
+      s + 30 ms fade; _02 cut at 0.22 s + 30 ms fade; _03 cut at 0.22 s + 30 ms fade
+      \xB7 TP-limited (look-ahead \u2264 6 dB): _02 3.9 dB, _03 3.1 dB \xB7 house
+      chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file
+      1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
+      exemption \xB7 SHA 3a2e6fb8ed88\u2026"
     NoiseFloorDb: -39.7
     DcDb: -86.6
     Clipped: 0
@@ -8266,7 +8296,7 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.59
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id wb_heavy \xB7 Adobe Firefly \xD72 (_02 _03; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id wb_heavy \xB7 external takes \xD72 (_02 _03; private-ledger:r4)
       \xB7 _01 derived (ap011_r4_derive.py seed 1058806986) from Sonniss GameAudioGDC
       'Pole Position - MG 42 machine gun' \xB7 licences LICENSES-R4.csv \xB7 house
       chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file
@@ -8276,8 +8306,8 @@ MonoBehaviour:
     DcDb: -145.2
     Clipped: 0
     BitDepth: 24
-    Layers: "_01 derived (Sonniss) \xB7 _02 single take (Firefly) \xB7 _03 single
-      take (Firefly)"
+    Layers: "_01 derived (Sonniss) \xB7 _02 single take (external) \xB7 _03 single
+      take (external)"
   - Sound: 1004
     Clips:
     - {fileID: 8300000, guid: 55d414c0c6f0725923bccf0d2f8fb1a8, type: 3}
@@ -8286,7 +8316,7 @@ MonoBehaviour:
     Lufs: -22.41
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id wb_prompt \xB7 Adobe Firefly \xD72 (_01 _02; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id wb_prompt \xB7 external takes \xD72 (_01 _02; private-ledger:r4)
       \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead \u2264 6 dB): _01
       2.6 dB \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor
       not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal end
@@ -8305,8 +8335,8 @@ MonoBehaviour:
     Lufs: -22.6
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id mode_hard \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -22 LUFS
+      3eb3008247b6) \xB7 v024 id mode_hard \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -22 LUFS
       / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
       under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
       \xB7 SHA d3a6247438f3\u2026"
@@ -8324,9 +8354,9 @@ MonoBehaviour:
     Lufs: -22
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id mode_demolition \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
-      -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 819111c1e9e7\u2026"
+      3eb3008247b6) \xB7 v024 id mode_demolition \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -22
+      LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 819111c1e9e7\u2026"
     NoiseFloorDb: -63.6
     DcDb: -147.4
     Clipped: 0
@@ -8361,13 +8391,13 @@ MonoBehaviour:
     Lufs: -26.91
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id tree_stamp \xB7 Adobe Firefly \xD74 (_01 _02 _03
-      _04; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut
-      at 0.185 s + 20 ms fade; _03 cut at 0.35 s + 30 ms fade; _04 cut at 0.3 s +
-      30 ms fade \xB7 TP-limited (look-ahead \u2264 6 dB): _01 6 dB, _02 2.3 dB,
-      _03 5.2 dB, _04 6 dB \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7
-      noise floor not measurable (file 1 never rests under \u221260 dBFS in 100 ms:
-      signal end to end) \u2192 continuous exemption \xB7 SHA f245bbeedbd3\u2026"
+      3eb3008247b6) \xB7 v024 id tree_stamp \xB7 external takes \xD74 (_01 _02 _03
+      _04; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut at
+      0.185 s + 20 ms fade; _03 cut at 0.35 s + 30 ms fade; _04 cut at 0.3 s + 30
+      ms fade \xB7 TP-limited (look-ahead \u2264 6 dB): _01 6 dB, _02 2.3 dB, _03
+      5.2 dB, _04 6 dB \xB7 house chain -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise
+      floor not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal
+      end to end) \u2192 continuous exemption \xB7 SHA f245bbeedbd3\u2026"
     NoiseFloorDb: -52.9
     DcDb: -100.8
     Clipped: 0
@@ -8382,9 +8412,9 @@ MonoBehaviour:
     Lufs: -22
     TruePeakDb: -3.62
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id tree_synergy \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -22 LUFS
-      / -1.5 dBTP, 8 ms silence \xB7 SHA 90101861218b\u2026"
+      3eb3008247b6) \xB7 v024 id tree_synergy \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -22
+      LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 90101861218b\u2026"
     NoiseFloorDb: -63.2
     DcDb: -152.1
     Clipped: 0
@@ -8399,8 +8429,8 @@ MonoBehaviour:
     Lufs: -22.21
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id tree_reroll \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last 0.15
+      3eb3008247b6) \xB7 v024 id tree_reroll \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last 0.15
       s faded \xB7 TP-limited (look-ahead \u2264 6 dB): _01 2.1 dB \xB7 house chain
       -22 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
       never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
@@ -8419,11 +8449,11 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -3.17
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_fire_ignite \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
-      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
-      never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
-      exemption \xB7 SHA 5ea5191c811f\u2026"
+      3eb3008247b6) \xB7 v024 id fx_fire_ignite \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20
+      LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never
+      rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
+      \xB7 SHA 5ea5191c811f\u2026"
     NoiseFloorDb: -58.7
     DcDb: -148.2
     Clipped: 0
@@ -8436,7 +8466,7 @@ MonoBehaviour:
     Lufs: -22.09
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_fire_loop \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id fx_fire_loop \xB7 external takes \xD71 (_01; private-ledger:r4)
       \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS / -1.5 dBTP, seamless
       loop \xB7 SHA 9dfed25f8585\u2026"
     NoiseFloorDb: -25.5
@@ -8453,8 +8483,8 @@ MonoBehaviour:
     Lufs: -20.97
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_ice_freeze \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
+      3eb3008247b6) \xB7 v024 id fx_ice_freeze \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
       \u2264 6 dB): _03 4.1 dB \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence
       \xB7 noise floor not measurable (file 1 never rests under \u221260 dBFS in
       100 ms: signal end to end) \u2192 continuous exemption \xB7 SHA 9f4df1f0b36e\u2026"
@@ -8472,9 +8502,9 @@ MonoBehaviour:
     Lufs: -20.32
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_ice_shatter \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
-      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 253549039253\u2026"
+      3eb3008247b6) \xB7 v024 id fx_ice_shatter \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20
+      LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 253549039253\u2026"
     NoiseFloorDb: -64.6
     DcDb: -170.6
     Clipped: 0
@@ -8487,7 +8517,7 @@ MonoBehaviour:
     Lufs: -20.31
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_poison \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id fx_poison \xB7 external takes \xD71 (_01; private-ledger:r4)
       \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS / -1.5 dBTP, seamless
       loop \xB7 SHA 7553923edc60\u2026"
     NoiseFloorDb: -25.3
@@ -8504,8 +8534,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_thunder \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      3eb3008247b6) \xB7 v024 id fx_thunder \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
       / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
       under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
       \xB7 SHA e0d44a9d2031\u2026"
@@ -8522,7 +8552,7 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -3.18
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_cataclysm \xB7 Adobe Firefly \xD71 (_02; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id fx_cataclysm \xB7 external takes \xD71 (_02; private-ledger:r4)
       \xB7 _01 synthesis (ap011_r4_synth.py seed 3689099958) \xB7 licences LICENSES-R4.csv
       \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable
       (file 1 never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192
@@ -8531,7 +8561,7 @@ MonoBehaviour:
     DcDb: -127.8
     Clipped: 0
     BitDepth: 24
-    Layers: "_01 synth \xB7 _02 single take (Firefly)"
+    Layers: "_01 synth \xB7 _02 single take (external)"
   - Sound: 1040
     Clips:
     - {fileID: 8300000, guid: c254ef2793709afb2ba5f1d3a3463ef4, type: 3}
@@ -8541,10 +8571,10 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -2.31
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_crit \xB7 Adobe Firefly \xD73 (_01 _02 _03; firefly-ledger-r4.csv)
-      \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut at 0.35 s + 150 ms fade;
-      _03 HPF 150 Hz, cut at 0.4 s + 150 ms fade \xB7 house chain -20 LUFS / -1.5
-      dBTP, 8 ms silence \xB7 SHA 74cf1b7cb5ce\u2026"
+      3eb3008247b6) \xB7 v024 id fx_crit \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 cut at 0.35
+      s + 150 ms fade; _03 HPF 150 Hz, cut at 0.4 s + 150 ms fade \xB7 house chain
+      -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA 74cf1b7cb5ce\u2026"
     NoiseFloorDb: -63.9
     DcDb: -128.4
     Clipped: 0
@@ -8559,8 +8589,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.79
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_mininuke \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      3eb3008247b6) \xB7 v024 id fx_mininuke \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
       / -1.5 dBTP, 8 ms silence \xB7 SHA a0cdd7b7a431\u2026"
     NoiseFloorDb: -62.7
     DcDb: -144.7
@@ -8574,8 +8604,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -5.43
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_blackhole_loop \xB7 Adobe Firefly \xD71 (_01;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      3eb3008247b6) \xB7 v024 id fx_blackhole_loop \xB7 external takes \xD71 (_01;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
       / -1.5 dBTP, seamless loop \xB7 SHA 9cad8b10779b\u2026"
     NoiseFloorDb: -24.1
     DcDb: -135.7
@@ -8590,8 +8620,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -3.51
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_blackhole_collapse \xB7 Adobe Firefly \xD71 (_01;
-      firefly-ledger-r4.csv) \xB7 _02 synthesis (ap011_r4_synth.py seed 313928833)
+      3eb3008247b6) \xB7 v024 id fx_blackhole_collapse \xB7 external takes \xD71
+      (_01; private-ledger:r4) \xB7 _02 synthesis (ap011_r4_synth.py seed 313928833)
       \xB7 licences LICENSES-R4.csv \xB7 edits: _02 last 0.4 s faded \xB7 house chain
       -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1
       never rests under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous
@@ -8600,7 +8630,7 @@ MonoBehaviour:
     DcDb: -139.2
     Clipped: 0
     BitDepth: 24
-    Layers: "_01 single take (Firefly) \xB7 _02 synth"
+    Layers: "_01 single take (external) \xB7 _02 synth"
   - Sound: 1044
     Clips:
     - {fileID: 8300000, guid: c607543bd4bfb36cc421275db7acb3eb, type: 3}
@@ -8610,16 +8640,16 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -2.19
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_doomsday_bell \xB7 Adobe Firefly \xD71 (_01;
-      firefly-ledger-r4.csv) \xB7 _02 synthesis (ap011_r4_synth.py seed 1233150013)
-      \xB7 _03 synthesis (ap011_r4_synth.py seed 1601769446) \xB7 licences LICENSES-R4.csv
+      3eb3008247b6) \xB7 v024 id fx_doomsday_bell \xB7 external takes \xD71 (_01;
+      private-ledger:r4) \xB7 _02 synthesis (ap011_r4_synth.py seed 1233150013) \xB7
+      _03 synthesis (ap011_r4_synth.py seed 1601769446) \xB7 licences LICENSES-R4.csv
       \xB7 edits: _01 5 ms fade-in, last 1.5 s faded; _02 last 1.5 s faded; _03 last
       1.5 s faded \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 SHA d6efe827fc58\u2026"
     NoiseFloorDb: -87.2
     DcDb: -147.8
     Clipped: 0
     BitDepth: 24
-    Layers: "_01 single take (Firefly) \xB7 _02 synth \xB7 _03 synth"
+    Layers: "_01 single take (external) \xB7 _02 synth \xB7 _03 synth"
   - Sound: 1050
     Clips:
     - {fileID: 8300000, guid: 9f5ae4ab5a027e0d785d16d197dcbae2, type: 3}
@@ -8629,11 +8659,11 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -6.29
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_shield_up \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last 0.3
-      s faded \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise floor
-      not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal end
-      to end) \u2192 continuous exemption \xB7 SHA 3024a43cdbf1\u2026"
+      3eb3008247b6) \xB7 v024 id fx_shield_up \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _03 last
+      0.3 s faded \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise
+      floor not measurable (file 1 never rests under \u221260 dBFS in 100 ms: signal
+      end to end) \u2192 continuous exemption \xB7 SHA 3024a43cdbf1\u2026"
     NoiseFloorDb: -55.4
     DcDb: -146.3
     Clipped: 0
@@ -8647,11 +8677,11 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_shield_hit \xB7 Adobe Firefly \xD72 (_01 _02;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 HPF 100
-      Hz, cut at 0.4 s + 150 ms fade; _02 HPF 100 Hz, cut at 0.35 s + 100 ms fade
-      \xB7 TP-limited (look-ahead \u2264 6 dB): _02 2.3 dB \xB7 house chain -20 LUFS
-      / -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
+      3eb3008247b6) \xB7 v024 id fx_shield_hit \xB7 external takes \xD72 (_01 _02;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 HPF 100 Hz,
+      cut at 0.4 s + 150 ms fade; _02 HPF 100 Hz, cut at 0.35 s + 100 ms fade \xB7
+      TP-limited (look-ahead \u2264 6 dB): _02 2.3 dB \xB7 house chain -20 LUFS /
+      -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
       under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
       \xB7 SHA 5fdf7e216172\u2026"
     NoiseFloorDb: -35.5
@@ -8668,9 +8698,9 @@ MonoBehaviour:
     Lufs: -21.52
     TruePeakDb: -2.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_shield_break \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain
-      -20 LUFS / -2.5 dBTP, 8 ms silence \xB7 SHA 194fc5808cd9\u2026"
+      3eb3008247b6) \xB7 v024 id fx_shield_break \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20
+      LUFS / -2.5 dBTP, 8 ms silence \xB7 SHA 194fc5808cd9\u2026"
     NoiseFloorDb: -63.9
     DcDb: -145.6
     Clipped: 0
@@ -8685,7 +8715,7 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.92
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_lifesteal \xB7 Adobe Firefly \xD71 (_01; firefly-ledger-r4.csv)
+      3eb3008247b6) \xB7 v024 id fx_lifesteal \xB7 external takes \xD71 (_01; private-ledger:r4)
       \xB7 _02 synthesis (ap011_r4_synth.py seed 3197181757) \xB7 _03 synthesis (ap011_r4_synth.py
       seed 4204363375) \xB7 licences LICENSES-R4.csv \xB7 edits: _01 cut at 0.19
       s + 20 ms fade \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7 noise
@@ -8695,7 +8725,7 @@ MonoBehaviour:
     DcDb: -91.7
     Clipped: 0
     BitDepth: 24
-    Layers: "_01 single take (Firefly) \xB7 _02 synth \xB7 _03 synth"
+    Layers: "_01 single take (external) \xB7 _02 synth \xB7 _03 synth"
   - Sound: 1054
     Clips:
     - {fileID: 8300000, guid: 6f715602358202864c6855ad9d742143, type: 3}
@@ -8706,8 +8736,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_dodge \xB7 Adobe Firefly \xD74 (_01 _02 _03 _04;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _04 cut at
+      3eb3008247b6) \xB7 v024 id fx_dodge \xB7 external takes \xD74 (_01 _02 _03
+      _04; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _04 cut at
       0.27 s + 50 ms fade \xB7 house chain -20 LUFS / -1.5 dBTP, 8 ms silence \xB7
       SHA 6c2350f7ac42\u2026"
     NoiseFloorDb: -65.2
@@ -8724,8 +8754,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -3.17
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_undying \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      3eb3008247b6) \xB7 v024 id fx_undying \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
       / -1.5 dBTP, 8 ms silence \xB7 SHA 7eda5c820b22\u2026"
     NoiseFloorDb: -62.3
     DcDb: -149.3
@@ -8741,8 +8771,8 @@ MonoBehaviour:
     Lufs: -25.02
     TruePeakDb: -1.5
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_ricochet \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
+      3eb3008247b6) \xB7 v024 id fx_ricochet \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 TP-limited (look-ahead
       \u2264 6 dB): _01 3.5 dB, _02 5.5 dB, _03 6 dB \xB7 house chain -20 LUFS /
       -1.5 dBTP, 8 ms silence \xB7 noise floor not measurable (file 1 never rests
       under \u221260 dBFS in 100 ms: signal end to end) \u2192 continuous exemption
@@ -8761,8 +8791,8 @@ MonoBehaviour:
     Lufs: -20
     TruePeakDb: -2.06
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_endless_on \xB7 Adobe Firefly \xD73 (_01 _02
-      _03; firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 last
+      3eb3008247b6) \xB7 v024 id fx_endless_on \xB7 external takes \xD73 (_01 _02
+      _03; private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 edits: _02 last
       0.15 s faded; _03 last 0.15 s faded \xB7 house chain -20 LUFS / -1.5 dBTP,
       8 ms silence \xB7 SHA a948601b18a2\u2026"
     NoiseFloorDb: -64.7
@@ -8804,8 +8834,8 @@ MonoBehaviour:
     Lufs: -20.26
     TruePeakDb: -4.79
     Provenance: "AP-011 v024 (WP-097 R4, S-08 11.10; K/asset-production/AP-011/v024/final/MANIFEST.json
-      3eb3008247b6) \xB7 v024 id fx_aura_up \xB7 Adobe Firefly \xD73 (_01 _02 _03;
-      firefly-ledger-r4.csv) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
+      3eb3008247b6) \xB7 v024 id fx_aura_up \xB7 external takes \xD73 (_01 _02 _03;
+      private-ledger:r4) \xB7 licences LICENSES-R4.csv \xB7 house chain -20 LUFS
       / -1.5 dBTP, 8 ms silence \xB7 SHA 3b0cbfaa3287\u2026"
     NoiseFloorDb: -68.8
     DcDb: -153

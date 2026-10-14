@@ -100,7 +100,7 @@ namespace DD.Prototype.Audio
         public int BedRestarts { get; private set; }
 
         // ---- WP-065C · fūrin wind chimes (AP-017 Phase 2b, eaves): wind-driven, positional, nearest only
-        // Numbers: Fable design (asset-production/AP-011/v014/FURIN-DESIGN.md) — glass edo-fūrin, not iron nanbu.
+        // Numbers: design note (asset-production/AP-011/v014/FURIN-DESIGN.md) — glass edo-fūrin, not iron nanbu.
         /// <summary>Wind below this is still air: the chimes hang silent.</summary>
         public const float FurinWindThreshold = 0.15f;
         /// <summary>Seconds between tinkle clusters just above the threshold / in full wind (× 0.8–1.3 jitter, smoothstep on the wind).</summary>

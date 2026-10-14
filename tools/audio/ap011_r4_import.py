@@ -35,7 +35,7 @@ Writes, under <worktree-root>/prototype/DeathsDemolition_PlayableConcept/Assets,
        continuous    a loop, or file 1 never rests under -60 dBFS in a 100 ms window (its floor is not measurable: the
                      AP-011 continuous exemption, named in the row's provenance)
        bitDepth 24 · targetLufs = MANIFEST target_lufs · ceilingDbtp = MANIFEST ceiling_dbtp (house -1.5; TreeShieldBreak -2.5, codec margin) · bus / spatial / event from the R4 table ·
-       layers / provenance from the MANIFEST origin (Firefly / synthesis / derived), edits and limiter gain, v024.
+       layers / provenance from the MANIFEST origin (external take / synthesis / derived), edits and limiter gain, v024.
      The rows must pass the manifest half of the EditMode AP-011 gates (AudioSliceEditModeTests Katalog_ManifestLufsVeTepe /
      UstKalite: target band, ceiling, level vs target unless peak-bound, true peak, 24-bit, clipped 0, DC <= -60, floor
      <= -60 unless continuous, end <= -70 unless loop) — else the run stops.
@@ -246,10 +246,19 @@ def _edit(op):
     return " ".join(str(v) for v in op)
 
 
+# WP-113: the MANIFEST names in-house origins "synthesis" / "derived"; any other named kind is an external single take,
+# recorded in the private ledger (r4) and in LICENSES-R4.csv — the vendor name stays there, not in the Unity manifest.
+IN_HOUSE_KINDS = ("synthesis", "derived")
+
+
+def _external(kind):
+    return kind not in IN_HOUSE_KINDS and kind not in (None, "", "?")
+
+
 def _origin(o):
     kind = o.get("kind", "?")
-    if kind == "Adobe Firefly":
-        return "Adobe Firefly"
+    if _external(kind):
+        return "external take"
     if kind == "synthesis":
         return "synthesis (%s seed %s)" % (o.get("tool", "?"), o.get("seed", "?"))
     if kind == "derived":
@@ -259,23 +268,25 @@ def _origin(o):
 
 
 def layers_of(files):
-    short = {"Adobe Firefly": "single take (Firefly)", "synthesis": "synth", "derived": "derived (Sonniss)"}
+    short = {"synthesis": "synth", "derived": "derived (Sonniss)"}
     kinds = [f["origin"].get("kind", "?") for f in files]
+    kinds = ["external" if _external(k) else k for k in kinds]
     if len(set(kinds)) == 1:
         k = kinds[0]
-        return {"Adobe Firefly": "single take", "synthesis": "synth: ap011_r4_synth.py (seeded)",
+        return {"external": "single take", "synthesis": "synth: ap011_r4_synth.py (seeded)",
                 "derived": "derived: ap011_r4_derive.py (Sonniss source, seeded)"}.get(k, k)
-    return " · ".join("_%s %s" % (f["file"][-6:-4], short.get(k, k)) for f, k in zip(files, kinds))
+    return " · ".join("_%s %s" % (f["file"][-6:-4], "single take (external)" if k == "external" else short.get(k, k))
+                      for f, k in zip(files, kinds))
 
 
 def provenance(src_entry, man_sha12, target, continuous_floor):
     files = src_entry["files"]
     parts = ["AP-011 v024 (WP-097 R4, S-08 11.10; %sMANIFEST.json %s) · v024 id %s" % (SRC_LABEL, man_sha12, src_entry["id"])]
-    ff = [f["file"][-6:-4] for f in files if f["origin"].get("kind") == "Adobe Firefly"]
+    ff = [f["file"][-6:-4] for f in files if _external(f["origin"].get("kind"))]
     if ff:
-        parts.append("Adobe Firefly ×%d (_%s; firefly-ledger-r4.csv)" % (len(ff), " _".join(ff)))
+        parts.append("external takes ×%d (_%s; private-ledger:r4)" % (len(ff), " _".join(ff)))
     for f in files:
-        if f["origin"].get("kind") != "Adobe Firefly":
+        if not _external(f["origin"].get("kind")):
             parts.append("_%s %s" % (f["file"][-6:-4], _origin(f["origin"])))
     parts.append("licences LICENSES-R4.csv")
     edits = ["_%s %s" % (f["file"][-6:-4], ", ".join(_edit(op) for op in f.get("edits") or [])) for f in files if f.get("edits")]

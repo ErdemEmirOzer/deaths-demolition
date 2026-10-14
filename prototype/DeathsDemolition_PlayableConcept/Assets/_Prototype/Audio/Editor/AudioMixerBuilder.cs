@@ -30,7 +30,7 @@ namespace DD.Prototype.Audio.EditorTools
         {
             // WP-057 mix pass v2 (sound-designer proposal, calibrated by the PlayMode phase meter):
             // the score sits under the fight, comes forward in the break and the menu, UI trims 3-4 dB.
-            // WP-060 v2.2 (Fable listening round on the Player output capture): the fight read
+            // WP-060 v2.2 (listening round on the Player output capture): the fight read
             // −17.9 LUFS-I / −0.8 dBTP at the speakers, ~3 dB above the PlayMode meter, so the Run
             // snapshot comes down 1-2 dB per group (target ≈ −19.5 LUFS-I, TP ≈ −2.5) and the menu
             // ambience comes up 3 dB so results/menu are not a 10 dB hole under the fight.

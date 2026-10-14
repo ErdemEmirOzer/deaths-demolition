@@ -142,12 +142,12 @@ class Ap011V025ImportTests(unittest.TestCase):
     def test_a_later_package_tags_its_own_version_and_origin(self):
         man_path = self.src / "MANIFEST.json"
         man = json.loads(man_path.read_text())
-        man["version"], man["origin"] = "v026", "Adobe Firefly takes"
+        man["version"], man["origin"] = "v026", "external takes"   # WP-113: the origin text is the package's own
         man["files"] = [f for f in man["files"] if f["sound"] == STONE]
         man_path.write_text(json.dumps(man, indent=1))
         self.assertEqual(0, self.run_tool()[0])
         row = self.rows()[STONE]
-        self.assertIn(" · v026 (WP-101): +2 Adobe Firefly takes", row["provenance"])
+        self.assertIn(" · v026 (WP-101): +2 external takes", row["provenance"])
         self.assertEqual("ap011-v026", json.loads((self.root / base.MANIFEST).read_text())["version"])
 
     def test_a_dry_run_writes_nothing(self):

@@ -29,7 +29,7 @@ namespace DD.Prototype.Audio
         public const float BirdMin = 14f, BirdMax = 30f;
 
         /// <summary>
-        /// WP-072 B7 (C-00 30.09, 3-agent panel): the bird's own gain in every run phase — the old ×0.35 "fighting" factor keyed on
+        /// WP-072 B7 (C-00 30.09, review panel): the bird's own gain in every run phase — the old ×0.35 "fighting" factor keyed on
         /// RunPhase.Fighting, i.e. the whole round, and buried the birds 20–25 LU under the bed. Real combat is the duck's job.
         /// </summary>
         public const float BirdGainOpen = 0.6f, BirdRoofFactor = 0.4f, BirdDeferDuck = 0.5f, BirdDeferSeconds = 4f;

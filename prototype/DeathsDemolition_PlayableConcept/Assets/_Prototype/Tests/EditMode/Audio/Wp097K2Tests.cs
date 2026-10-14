@@ -36,7 +36,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             public string[] files;
             public bool loop;
             public float lufs;
-            public float codexLufs;
+            public float stereoLufs;   // WP-113: the manifest's channel-sum stamp
             public float truePeakDb;
             public float targetLufs;
             public float ceilingDbtp;
@@ -77,7 +77,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Ap029Manifest man = LoadAp029();
             var hatalar = new List<string>();
             int dosya = 0;
-            // A special weapon's row replaces a Seed Audio AP-011 row at its level (AP-029 special-v5.md gate: ± 0.5 LU of the row it
+            // A special weapon's row replaces an AP-011 row at its level (AP-029 special-v5.md gate: ± 0.5 LU of the row it
             // supersedes): the loops sit well under −26 by design (SwGelFlightLoop −28, SwGelPuddleLoop −28.2 in AP-011).
             var ap011 = new Dictionary<string, float>();
             if (File.Exists(AudioCatalogBuilder.ManifestPath))
@@ -97,7 +97,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 float minS, maxS;
                 if (tail)
                 {
-                    if (Mathf.Abs(e.codexLufs + 20f) > 1f) hatalar.Add($"{s}: codexLufs {e.codexLufs} ≠ −20 ± 1");
+                    if (Mathf.Abs(e.stereoLufs + 20f) > 1f) hatalar.Add($"{s}: stereoLufs {e.stereoLufs} ≠ −20 ± 1");
                     if (e.ceilingDbtp > -3f + 0.001f) hatalar.Add($"{s}: kuyruk tavanı {e.ceilingDbtp} > −3");
                     if (s.EndsWith("Room", StringComparison.Ordinal)) { minS = 0.5f; maxS = 1.5f; }
                     else { minS = 1.4f; maxS = 3.5f; }   // Echo 1.5–3 s / Release 2–3 s (+ silence pad)

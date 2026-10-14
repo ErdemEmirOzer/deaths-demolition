@@ -14,7 +14,7 @@ Each part needs its MANIFEST.json and SHA256SUMS; a part without a MANIFEST.json
 part may land later). Every file a manifest entry names must be in the part's SHA256SUMS with the same SHA-256 (and equal to the
 entry's perFile sha256 when given) — else AssertionError (exit 1); files already copied stay, the manifest is not written.
 Files are copied to Assets/_Art/Audio/AP029/<name>.wav and listed in Assets/_Art/Audio/AP029-audio-manifest.json in the AP-011
-schema (the fields ap027_import.py writes, measured on the shipped file with its functions: house lufs of file 1, codexLufs,
+schema (the fields ap027_import.py writes, measured on the shipped file with its functions: house lufs of file 1, stereoLufs,
 truePeakDb, noise floor / DC / clipped / end stamps, continuous) plus "part" and "durationsS". Entries of parts not imported in
 this run are kept (merge by part). Import-time processing follows ap027_import.py and runs only where a gate needs it:
 DC out (> −60 dBFS), end fade (stops within 40 dB of its peak, or the last 10 ms over −70 dBFS — a manifest "tailExempt" sound
@@ -111,7 +111,7 @@ def groups_of(part, man, sums):
 
 def measure(dst, x, r):
     """Stamps on what ships (ap027_import functions)."""
-    return {"house": a27.house_lufs(dst), "codex": a27.stereo_lufs(dst), "tp": a27.true_peak_db(dst), "st": a27.stamps(dst),
+    return {"house": a27.house_lufs(dst), "stereo": a27.stereo_lufs(dst), "tp": a27.true_peak_db(dst), "st": a27.stamps(dst),
             "silent": a27.has_silent_stretch(dst), "dur": len(x) / float(r), "ch": x.shape[1]}
 
 
@@ -259,7 +259,7 @@ def run(root, parts=PARTS, ap029=AP029, overlay=False):
             if peaks: prov += " · import true-peak shave ≤ " + str(a27.PEAK_CEILING_DB) + " dBTP on " + str(len(peaks)) + " file(s)"
             new.append({
                 "sound": sound, "part": part, "weapon": weapon or "", "event": event, "files": list(files), "loop": loop,
-                "lufs": round(hl[0], 2), "lufsMean": round(sum(hl) / len(hl), 2), "codexLufs": round(sum(m["codex"] for m in ms) / len(ms), 2),
+                "lufs": round(hl[0], 2), "lufsMean": round(sum(hl) / len(hl), 2), "stereoLufs": round(sum(m["stereo"] for m in ms) / len(ms), 2),
                 "truePeakDb": round(max(m["tp"] for m in ms), 2), "bitDepth": 24,
                 "targetLufs": round(target if target is not None else hl[0], 2), "ceilingDbtp": float(ceiling),
                 "noiseFloorDb": round(st[0][0], 1), "noiseFloorWindowMs": 20, "noiseFloorException": "",
