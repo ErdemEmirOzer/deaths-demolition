@@ -28,7 +28,7 @@ using BodyRegion = DD.Prototype.Damage.BodyRegion;
 namespace DD.Art.Tests.PlayMode
 {
     /// <summary>
-    /// WP-071 r2 (C-00 30.09): S-06's opt-in diagnostics (Codex 29.09, 5f40e9c6 / f94ccab3), moved out of AnimationTests — they only run
+    /// WP-071 r2 (C-00 30.09): S-06's opt-in diagnostics (29.09, 5f40e9c6 / f94ccab3), moved out of AnimationTests — they only run
     /// when explicitly selected (NUnit [Explicit]) with their command-line flags (-ddS06PalmProof …); CI never lists them.
     /// </summary>
     [TestFixture]

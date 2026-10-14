@@ -19,7 +19,7 @@ namespace DD.Prototype.Diagnostics
     /// Without the flag nothing is created (the default path is untouched). With no file the trace goes next to Player.log, never into
     /// the player's data folder. Top-down only (user 06.10): other camera modes write no rows.
     ///
-    /// WRITTEN EXCEPTION (C-00 07.10, like PrototypeCaptureAgent's H12 / Codex-audit M-55): diagnostics are normally dev-build only
+    /// WRITTEN EXCEPTION (C-00 07.10, like PrototypeCaptureAgent's H12 / audit M-55): diagnostics are normally dev-build only
     /// (<c>#if DEVELOPMENT_BUILD || UNITY_EDITOR</c>, and DD.Prototype.Qa compiles empty in release). This one deliberately lives in
     /// DD.Prototype.Runtime with no guard: the user plays the RELEASE build, and the trace is the instruction we hand them. Active only
     /// with <c>-ddMoveTrace</c>; without it Boot scans the command line and creates nothing. Do not add any other behaviour to it. Flag runs only; the rows are buffered and

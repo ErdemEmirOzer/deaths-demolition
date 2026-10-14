@@ -138,7 +138,7 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-068 R1-D (N20): the loading screen's key art - the rainy castle courtyard, the ronin, the horde at the gate;
-        /// on the way to the Results the ronin on the wall as the horde pours in (Higgsfield). Full and rich except under
+        /// on the way to the Results the ronin on the wall as the horde pours in. Full and rich except under
         /// the words: darkened there so the ring, the labels and the tip strip keep their contrast (LoadingKeyArtTests).
         /// Over the plates, under the ring, labels and tip strip.
         /// </summary>

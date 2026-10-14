@@ -996,13 +996,13 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-017 · A prefab whose largest mesh exceeds this many triangles is not static-batched (ADR-017-2 note).</summary>
         public const int StaticBatchTriangleLimit = 5000;
 
-        /// <summary>Material-name prefix of the Tripo prop families (AP-005B, AP-017 Phase 2): one unique material per family.</summary>
+        /// <summary>Material-name prefix of the prop families (AP-005B, AP-017 Phase 2): one unique material per family.</summary>
         public const string PropMaterialPrefix = "M_prop_";
 
         public static bool IsHeavyForStaticBatching(GameObject prefab)
         {
             if (prefab == null) return false;
-            // WP-038I: the Tripo prop families stay individual renderers as well — static batching copies every LOD's
+            // WP-038I: the prop families stay individual renderers as well — static batching copies every LOD's
             // (seam-split) vertices into the scene file: the twelve Phase 2 dressing props alone grew World_AP005's level
             // file by 5.5 MB in the release build, for a handful of merged draws the SRP Batcher already makes cheap.
             foreach (Renderer r in prefab.GetComponentsInChildren<Renderer>(true))

@@ -337,8 +337,8 @@ namespace DD.Art
             // WP-013: water v1 (DD/Water v1) on the same deep colour; AP-015 owns the full water.
             rows.Add(new Spec { Role = "pond_water", Kind = Kind.Flat, TextureRole = null, FlatLinearAlbedo = new Color(0.03695f, 0.05114f, 0.05925f, 1f), Smoothness = 0.95f, Shader = ShaderKind.Water });
 
-            // WP-017 · AP-005B prop families (Tripo H3.1, one PBR set each; Prop class 512). The
-            // Tripo ORM carries no AO (R = 1) and metallic is forced to 0 in production.
+            // WP-017 · AP-005B prop families (external PBR sets, one each; Prop class 512). The
+            // source ORM carries no AO (R = 1) and metallic is forced to 0 in production.
             foreach (string prop in new[] { "tsukubai", "handcart", "strawbales", "barrels", "mossrock", "shed" })
             {
                 var spec = new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop };
@@ -349,7 +349,7 @@ namespace DD.Art
                 rows.Add(spec);
             }
 
-            // WP-038I · AP-017 Phase 2 props (Tripo H3.1, 1K sets → Prop class 512): the same AP-005B path — ORM Packed → derived
+            // WP-038I · AP-017 Phase 2 props (external 1K sets → Prop class 512): the same AP-005B path — ORM Packed → derived
             // MetallicSmoothnessAO (occlusion in G), metallic forced to 0 in production, roughness floor 0.35.
             foreach (string prop in new[] { "ofuda_post", "drying_rack_cloth", "well_head_tsurube", "breakable_sake_jar" })
             {

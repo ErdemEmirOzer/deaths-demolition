@@ -58,7 +58,7 @@ namespace DD.Prototype.UI
         private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
         /// <summary>The four stat keys of this weapon's strip (the generic four for a weapon the pack has not written).</summary>
-        public static string[] StripOf(string weaponId)
+        public static string[] StripKeys(string weaponId)
         {
             string[] keys;
             return weaponId != null && Strips.TryGetValue(weaponId, out keys) ? keys : Fallback;
@@ -67,7 +67,7 @@ namespace DD.Prototype.UI
         /// <summary>Fill <paramref name="into"/> (length ≥ 4) with the weapon's four stats. Built when a card is shown, never per frame.</summary>
         public static void Fill(WeaponDefinition def, WeaponStat[] into)
         {
-            string[] keys = StripOf(def != null ? def.weaponId : null);
+            string[] keys = StripKeys(def != null ? def.weaponId : null);
             for (int i = 0; i < 4 && i < into.Length; i++)
             {
                 into[i] = Read(def, keys[i]);

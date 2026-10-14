@@ -96,7 +96,7 @@ namespace DD.Art.Tests.EditMode
                     walkable++;
                     Bounds cb = c.bounds;
                     foreach (NavMeshModifierVolume v in strips)
-                        Assert.IsFalse(StripOverlaps(v, cb), piece.name + "/" + c.name + " altında havuz şeridi: " + v.name);
+                        Assert.IsFalse(OverlapsStrip(v, cb), piece.name + "/" + c.name + " altında havuz şeridi: " + v.name);
                 }
             }
 
@@ -127,7 +127,7 @@ namespace DD.Art.Tests.EditMode
         }
 
         /// <summary>2D (XZ) separating-axis test of a NotWalkable strip (its yawed box) against a collider's world AABB.</summary>
-        private static bool StripOverlaps(NavMeshModifierVolume v, Bounds b)
+        private static bool OverlapsStrip(NavMeshModifierVolume v, Bounds b)
         {
             Vector3 c = v.transform.TransformPoint(v.center);
             float yaw = v.transform.eulerAngles.y * Mathf.Deg2Rad;

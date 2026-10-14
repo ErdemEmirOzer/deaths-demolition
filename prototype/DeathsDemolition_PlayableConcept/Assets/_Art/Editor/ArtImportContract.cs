@@ -398,14 +398,14 @@ namespace DD.Art.Pipeline.EditorTools
             { "weapons", TextureClass.Weapon },
             // WP-047E · AP-013C casings (separate 256 set; the weapons atlas is full — P-06 note): Weapon class.
             { "casings", TextureClass.Weapon },
-            // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
+            // WP-017 · AP-005B prop families (external PBR sets; the first Prop-class roles) and the generated roof course overlay.
             { "prop_tsukubai", TextureClass.Prop },
             { "prop_handcart", TextureClass.Prop },
             { "prop_strawbales", TextureClass.Prop },
             { "prop_barrels", TextureClass.Prop },
             { "prop_mossrock", TextureClass.Prop },
             { "prop_shed", TextureClass.Prop },
-            // WP-038I · AP-017 Phase 2 props (Higgsfield → Tripo H3.1, one 1K set each): Prop class 512, AP-005B path.
+            // WP-038I · AP-017 Phase 2 props (external sources, one 1K set each): Prop class 512, AP-005B path.
             { "prop_ofuda_post", TextureClass.Prop },
             { "prop_drying_rack_cloth", TextureClass.Prop },
             { "prop_well_head_tsurube", TextureClass.Prop },
@@ -536,7 +536,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
-        /// WP-038I · Prop / Breakable-class masks (the AP-005B and AP-017 Tripo props, 512² sets) ship at 256²: half the class size,
+        /// WP-038I · Prop / Breakable-class masks (the AP-005B and AP-017 props, 512² sets) ship at 256²: half the class size,
         /// the same ratio the 2048² classes keep with <see cref="DerivedMaskMaxSize"/>. A ≤ 2 m prop reads 1.3 cm per mask texel at
         /// 256 — nothing the gameplay rig resolves — and the ten prop roles stay 2.6 MB under the ADR-015-1 v5 world line.
         /// </summary>

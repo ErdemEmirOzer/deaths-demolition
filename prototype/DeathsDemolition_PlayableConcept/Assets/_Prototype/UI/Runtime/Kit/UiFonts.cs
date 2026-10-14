@@ -84,7 +84,7 @@ namespace DD.Prototype.UI
         public static TMP_FontAsset For(UiType type)
         {
             // DEC-109 (user 30.09, M-64 closed): Turkish headings draw in the Display face too - its DD-TR derivative has
-            // Ğ İ Ş, so the Codex 19cb757a switch to the Text SDF is gone. Lower case in a heading still falls back to Text,
+            // Ğ İ Ş, so the 19cb757a switch to the Text SDF is gone. Lower case in a heading still falls back to Text,
             // as it does in English.
             UiFontRole role = RoleOf(type);
             TMP_FontAsset font = Role(role);

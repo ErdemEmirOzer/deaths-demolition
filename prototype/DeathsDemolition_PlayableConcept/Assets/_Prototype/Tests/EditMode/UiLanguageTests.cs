@@ -133,7 +133,7 @@ namespace DD.Prototype.Tests.EditMode
         public void Display_TR_EN_AyniDisplayYuzu_TurkceBuyukHarflerAtlasta()
         {
             // DEC-109: the Display face's DD-TR derivative draws every Turkish capital, so TR headings keep the Display
-            // face (the Codex 19cb757a switch to the Text SDF is gone) and its metrics.
+            // face (the 19cb757a switch to the Text SDF is gone) and its metrics.
             TMP_FontAsset display = UiFonts.Role(UiFontRole.Display);
             foreach (UiType type in new[] { UiType.Display, UiType.Banner, UiType.H1, UiType.H2 })
             {

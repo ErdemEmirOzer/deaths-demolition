@@ -18,7 +18,7 @@ using UnityEngine.TestTools;
 namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
-    /// WP-088 (C-00 05.10, from the Codex AP-025 diagnosis) · every garment slot of a real spawn samples the atlas its mesh is
+    /// WP-088 (C-00 05.10, from the AP-025 diagnosis) · every garment slot of a real spawn samples the atlas its mesh is
     /// unwrapped for. Real bodies in the Run scene, every version (Standard / Special / Elite / Ultra) through the factory's
     /// normal spawn path. Each skinned slot renderer (every LOD × body/top/bottom/head/face (WP-084), every sub-mesh) is classified by the
     /// atlas of its material's base map (body atlas / cloth atlas / armour / tier parts) and compared with the atlas the AP-007

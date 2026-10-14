@@ -21,7 +21,7 @@ using UnityEngine.TestTools;
 namespace DD.Art.Tests.PlayMode
 {
     /// <summary>
-    /// WP-020 · Fidelity captures of world v3 (Higgsfield §5: Unity ↔ AP-005C render side by side): the four
+    /// WP-020 · Fidelity captures of world v3 (Unity ↔ AP-005C render side by side): the four
     /// AP-005C fidelity cameras of <c>AP005-render-log-v006.json</c> (Blender pos/target/lens → Unity, 36 mm
     /// horizontal fit) plus the west-corridor gameplay framing and the WP-038 water close-up, 1920×1080 with the gameplay grade, written to
     /// <c>DD_ART_CAPTURE_DIR/world-v3/</c>. Standalone world (own bootstrap), no crowd.

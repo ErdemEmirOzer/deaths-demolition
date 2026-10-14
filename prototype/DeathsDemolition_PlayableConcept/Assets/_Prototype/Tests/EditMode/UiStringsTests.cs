@@ -76,7 +76,7 @@ namespace DD.Prototype.Tests.EditMode
 
                 var stats = new WeaponStat[4];
                 WeaponStatReadout.Fill(def, stats);
-                CollectionAssert.AreEqual(WeaponStatReadout.StripOf(def.weaponId), new[] { stats[0].Key, stats[1].Key, stats[2].Key, stats[3].Key });
+                CollectionAssert.AreEqual(WeaponStatReadout.StripKeys(def.weaponId), new[] { stats[0].Key, stats[1].Key, stats[2].Key, stats[3].Key });
                 for (int i = 0; i < 4; i++)
                 {
                     Assert.AreNotEqual(stats[i].Key, stats[i].Label, def.weaponId + ": " + stats[i].Key + " has a pack label");

@@ -13,12 +13,12 @@ using Debug = UnityEngine.Debug;
 namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
-    /// WP-101 (R4, AP-041) · Codex's AP-041 v001 premultiplied photographic set → catalog rows + one material per row.
+    /// WP-101 (R4, AP-041) · the AP-041 v001 premultiplied photographic set → catalog rows + one material per row.
     ///
     ///   Assets/_Art/VFX/AP041/v001/{muzzle,impacts,decals}/H_*_srgb_pm.png   33 sheets, copied byte-for-byte by
-    ///                                                                      wp-101 apply_ap041.py (sha256 = Codex manifest)
+    ///                                                                      wp-101 apply_ap041.py (sha256 = delivery manifest)
     ///   Assets/_Art/VFX/AP041/v001/AP041-vfx-manifest-v001.json             the used rows of AP041-manifest-v001.json, trimmed
-    ///   Assets/_Art/VFX/AP041/v001/AP041-v001-LICENSES.csv                  one register row per sheet (Higgsfield ToU §4.4)
+    ///   Assets/_Art/VFX/AP041/v001/AP041-v001-LICENSES.csv                  one register row per sheet (private ledger reference)
     ///   Assets/_Art/VFX/AP041/v001/Materials/M_vfx_&lt;id&gt;.mat                DD/VFX Flipbook, _Premultiplied 1, Blend One OneMinusSrcAlpha
     ///
     /// Only what WP-101 plays is imported: 15 top-down muzzle flashes (5 classes × 3 variants; the side views stay out — FP / TP
@@ -286,7 +286,7 @@ namespace DD.Art.Pipeline.EditorTools
                       " MB, catalog " + catalog.Entries.Count + " rows, " + (total.ElapsedMilliseconds / 1000f).ToString("F1") + " s");
         }
 
-        /// <summary>Every sheet on disk, its sha256 equal to the manifest's (Codex's), a licence row per sheet.</summary>
+        /// <summary>Every sheet on disk, its sha256 equal to the delivery manifest's, a licence row per sheet.</summary>
         public static List<string> VerifySources()
         {
             var v = new List<string>();

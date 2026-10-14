@@ -5,7 +5,7 @@ namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>
     /// WP-073 B6 · The Special VFX's procedural art, built once in C# at start-up (direction §6 items 4 and 5 — no
-    /// Higgsfield credit, no imported PNG): the Lichtenberg burn atlas (3 variants, a dielectric-breakdown style branching
+    /// external source, no imported PNG): the Lichtenberg burn atlas (3 variants, a dielectric-breakdown style branching
     /// walk — dense trunk, thinning forks, soft scorch halo), the gel splat atlas (3 variants: R = coverage / height with a
     /// noisy rim and satellite droplets, G = the drying crack mask — Voronoi edges inside the splat, B = thickness noise),
     /// and three meshes: a 1-subdivision icosphere (42 vertices / 80 triangles — the orb core, the plasma shell, the gel

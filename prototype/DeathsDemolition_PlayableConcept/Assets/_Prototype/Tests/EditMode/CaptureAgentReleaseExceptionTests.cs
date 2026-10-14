@@ -6,7 +6,7 @@ using UnityEngine.TestTools.Constraints;   // Is.Not.AllocatingGCMemory() extens
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// H12 written exception (C-00 30.09, Codex-audit M-55): PrototypeCaptureAgent stays in release builds as the release
+    /// H12 written exception (C-00 30.09, audit M-55): PrototypeCaptureAgent stays in release builds as the release
     /// smoke's image-and-exit path, so without -ddCapture it must do nothing: no object, no allocation.
     /// </summary>
     public sealed class CaptureAgentReleaseExceptionTests

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DD.Prototype.Weapons
 {
     /// <summary>
-    /// WP-107B (R4): the wall buy station art - Codex AP-040 v001 (D1 freestanding board for every classic weapon, D3 shrine for
+    /// WP-107B (R4): the wall buy station art - AP-040 v001 (D1 freestanding board for every classic weapon, D3 shrine for
     /// the rocket launcher) and the ten weapon silhouette decals. Built by <c>ArtAp040WallBuyBuilder</c> (editor) at
     /// <c>Resources/WallBuy/DD_WallBuyStations</c>; <see cref="WallBuyStation"/> falls back to its placeholder rack when the
     /// library or a model is missing. Model contract (AP040-integration-v001.json): pivot at the base centre, front +Z,

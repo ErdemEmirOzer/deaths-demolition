@@ -8,7 +8,7 @@ namespace DD.Prototype.Core.Boot
     /// <summary>
     /// PROTOTYPE-ONLY: lets the built Player take a picture of itself.
     ///
-    /// H12 WRITTEN EXCEPTION (C-00 30.09, Codex-audit M-55): diagnostic/capture agents are normally dev-build only
+    /// H12 WRITTEN EXCEPTION (C-00 30.09, audit M-55): diagnostic/capture agents are normally dev-build only
     /// (<c>#if DEVELOPMENT_BUILD || UNITY_EDITOR</c>). This one deliberately stays in RELEASE builds: it is the only
     /// image-and-exit path of the flagless release smoke (tools/smoke.sh e1/e4 launch the release Player with
     /// <c>-ddCapture</c>; the agent writes the PNG and quits). It is active only with <c>-ddCapture</c>; without the

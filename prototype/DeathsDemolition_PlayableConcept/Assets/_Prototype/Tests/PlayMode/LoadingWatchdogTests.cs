@@ -97,7 +97,7 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// M-70 (Codex fix list): the load held for 12 s shows the stall notice; when progress comes back (the hold eased
+        /// M-70 (audit fix list): the load held for 12 s shows the stall notice; when progress comes back (the hold eased
         /// to a slow real climb, still loading) the notice goes and the watchdog re-arms - no error, the load completes.
         /// </summary>
         [UnityTest, Timeout(120000)]

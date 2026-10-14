@@ -12,7 +12,7 @@ namespace DD.Art.Tests.EditMode
     /// <summary>
     /// WP-104 B4 (S-07) · AP-041 run-tree intake gates: the table covers every TreeVfxRow once (PM colour sheets + the linear X8
     /// ensō mask), ship sizes reach ArtVfxContract (the mask linear, without mips), the budget line holds, the trimmed manifest
-    /// and the sources match Codex's (sha256, licence rows), the catalog rows are PM DD/VFX Flipbook materials and the ensō runs
+    /// and the sources match the delivery's (sha256, licence rows), the catalog rows are PM DD/VFX Flipbook materials and the ensō runs
     /// the <c>_RgMask</c> path, whose default (0) leaves every other material as it was. Import-dependent tests Ignore without the
     /// import (as Wp101Ap041CatalogTests); the contract tests run in every checkout.
     /// </summary>

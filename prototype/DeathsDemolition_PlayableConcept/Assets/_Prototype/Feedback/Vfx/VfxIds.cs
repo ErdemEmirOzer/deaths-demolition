@@ -84,7 +84,7 @@ namespace DD.Prototype.Feedback.Vfx
         public const string BarrelHeatDistortTile = "barrel_heat_distort_tile";
         public const string ChainArcSheet = "chain_arc_sheet";
 
-        // ---- WP-101 (R4, AP-041 v001): Codex's premultiplied photographic set (ArtAp041VfxIntake writes the rows from the
+        // ---- WP-101 (R4, AP-041 v001): the premultiplied photographic set (ArtAp041VfxIntake writes the rows from the
         // trimmed AP041-vfx-manifest-v001.json). Top-down muzzle flashes per class × three variants, the muzzle smoke, five
         // impact sheets and four bullet holes each for stone / wood / metal. Ap041Vfx maps classes and surfaces onto them.
         public const string Ap041MuzzlePrefix = "fb_ap041_muzzle_";

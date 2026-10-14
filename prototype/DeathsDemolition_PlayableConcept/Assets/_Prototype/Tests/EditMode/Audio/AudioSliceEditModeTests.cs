@@ -581,7 +581,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
             int olculen = 0;
             var girdi = new Dictionary<string, AudioCatalogBuilder.ManifestEntry>();
             foreach (AudioCatalogBuilder.ManifestEntry m in manifest.entries) girdi[m.sound] = m;
-            // WP-085 B5: AP-027 rows replace AP-011's; they follow Codex's per-layer standard (Fire −18, tails −20, casings −24,
+            // WP-085 B5: AP-027 rows replace AP-011's; they follow the delivery's per-layer standard (Fire −18, tails −20, casings −24,
             // links −30, Mechanical a stem) checked at delivery — here they keep the shipped-clip re-measurement and the peak gates.
             var v4 = new HashSet<string>();
             if (File.Exists(AudioCatalogBuilder.Ap027ManifestPath))
@@ -613,11 +613,11 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 float tavan = m.ceilingDbtp != 0f ? m.ceilingDbtp : manifest.standard.truePeakMax;
                 // WP-021C: the UI palette sits lower by design (hover / tick / pane -26…-23; chips -22…-20).
                 // Ambience scatter one-shots (v006: creak / ring / knock / settle) sit at −24 under the −20 beds;
-                // WP-065C: the fūrin tinkle sits 2 LU lower still (−26, Fable v014 design).
+                // WP-065C: the fūrin tinkle sits 2 LU lower still (−26, v014 design).
                 // WP-068 s11: UI v3 textures under the cues - the soroban roll (−28) and the hold rub (−30).
                 float altSinir = m.bus == "UI" ? -30.1f : m.bus == "Ambience" ? -26.1f : -22.1f;
                 if (!v4.Contains(m.sound) && (hedef < altSinir || hedef > -15.9f)) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-30 UI" : m.bus == "Ambience" ? "-16…-26 ambiyans" : "-16…-22")})");
-                // AP-027's own ceiling is −1 dBTP (Codex standard, checked per file at delivery); AP-011 rows keep the house −1.5.
+                // AP-027's own ceiling is −1 dBTP (its delivery standard, checked per file); AP-011 rows keep the house −1.5.
                 if (tavan > (v4.Contains(m.sound) ? -1f : manifest.standard.truePeakMax) + 0.01f) hatalar.Add($"{e.Sound}: tavan {tavan} dBTP > standart {manifest.standard.truePeakMax}");
                 // Standart: hedef ± tolerans; ya da tavana dayanmış ve hedefin ALTINDA (kısa transientler
                 // tavanda hedefe ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır).

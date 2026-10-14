@@ -267,7 +267,7 @@ namespace DD.Art.Tests.EditMode
                 {
                     for (int lod = 0; lod < 4; lod++)
                     {
-                        // T7 mino cape LOD0 is a Tripo mesh (2796 tris, README) — the top ceiling 2800 holds.
+                        // T7 mino cape LOD0 is the external source mesh (2796 tris, README) — the top ceiling 2800 holds.
                         CheckMesh(hatalar, m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod, v.lods[lod], moduleCeil[m.kind][lod]);
                         meshes++;
                     }

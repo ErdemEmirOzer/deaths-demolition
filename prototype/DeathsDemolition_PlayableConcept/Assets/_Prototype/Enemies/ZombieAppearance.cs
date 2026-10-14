@@ -506,7 +506,7 @@ namespace DD.Prototype.Enemies
             if (lib == null || !lib.IsReady || !IsSkinned) return;
             Material body = lib.BodyMaterial(tier);
             // WP-088: the tint goes on the body-atlas sub-meshes only. Overwriting every slot with it put the body atlas on cloth
-            // garments (Codex AP-025 diagnosis; measured 456/984 garment sub-meshes wrong) and dropped the cloth sub-mesh of
+            // garments (AP-025 diagnosis; measured 456/984 garment sub-meshes wrong) and dropped the cloth sub-mesh of
             // two-material garments.
             if (body != null) _skinned.ApplyMaterial(_library, (int)tier, body);
 

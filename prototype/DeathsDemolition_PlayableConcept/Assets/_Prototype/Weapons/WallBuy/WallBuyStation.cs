@@ -7,7 +7,7 @@ namespace DD.Prototype.Weapons
 {
     /// <summary>
     /// WP-107 (R4): one wall buy point.
-    /// - WP-107B: with the AP-040 library (<see cref="WallBuyStationLibrary"/>) it is the Codex station body - the freestanding
+    /// - WP-107B: with the AP-040 library (<see cref="WallBuyStationLibrary"/>) it is the AP-040 station body - the freestanding
     ///   board (D1 V02) or, for the rocket launcher, the shrine (D3) - with the weapon's own AP-013 / AP-021 model at
     ///   SOCKET_Weapon, centred on the panel (its silhouette decal at SOCKET_Decal is the fallback when the weapon has no model);
     ///   the box proxy (*_COL) becomes the collider and never renders; a small lantern light brightens the panel, never the weapon.

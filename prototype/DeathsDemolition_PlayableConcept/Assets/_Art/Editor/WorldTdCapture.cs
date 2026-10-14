@@ -294,7 +294,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// paved), the water flat white (cover, as before), fog / shaft cards hidden, black clear, no post, no fog, no MSAA, the
         /// vegetation preview and every other renderer as they are: a pixel is bare when it shows a ground id. The legacy measure
         /// (ground hidden, a pixel bare when its colour sums ≤ 6) is kept beside it: it also counted dark covered pixels — roof tile
-        /// channels, eaves and shaded interiors that the no-post render takes to 0 — as bare (Codex 08.10: 450 822 of 1 036 800
+        /// channels, eaves and shaded interiors that the no-post render takes to 0 — as bare (measured 08.10: 450 822 of 1 036 800
         /// diagnostic pixels at exactly 0, cause unproven).
         /// </summary>
         private static BareShare BareGroundShare(Camera cam, string diagnosticPrefix)

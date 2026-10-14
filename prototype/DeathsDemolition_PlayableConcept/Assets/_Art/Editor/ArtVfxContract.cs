@@ -27,7 +27,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ManifestPath = VfxRoot + "/AP010-vfx-manifest-v004.json";   // WP-047H: AP-010B v004 (explosion retint, pool lobes, fb_armor_break)
 
         /// <summary>
-        /// WP-101 (R4, AP-041) · Codex's premultiplied photographic set (<see cref="ArtAp041VfxIntake"/>): sRGB, mips on, CLAMP,
+        /// WP-101 (R4, AP-041) · the AP-041 premultiplied photographic set (<see cref="ArtAp041VfxIntake"/>): sRGB, mips on, CLAMP,
         /// BC7, never streamed like the AP-010 sheets — but Alpha Is Transparency OFF (the file's rgb is linear × coverage, and the
         /// importer's transparent-texel dilation would paint colour under a = 0: an additive halo on Blend One OneMinusSrcAlpha).
         /// Ship sizes: impact sheets 1024 (256² cells; FP / TP see them at eye level), TD muzzle flashes, the smoke and the holes

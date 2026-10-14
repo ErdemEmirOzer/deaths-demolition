@@ -9,8 +9,8 @@ namespace DD.Prototype.Feedback.Vfx
     /// <summary>
     /// WP-019b · The blood layer (directive §10, gore HIGH, no dismemberment). Owned by
     /// <see cref="VfxDressing"/>, called after the director's budget check like every other
-    /// AP-010 family. Numbers are the art-director brief (Fable, 2026-09-16,
-    /// <c>wp-019/evidence/blood-design-brief-fable.md</c>) and PROTOTYPE-ONLY.
+    /// AP-010 family. Numbers are the art-direction brief (2026-09-16,
+    /// WP-019 evidence) and PROTOTYPE-ONLY.
     ///
     /// Per flesh hit: one directional splash card (60 % shot direction + 40 % of its
     /// reflection about the hit normal, card rolled to that direction, 0.26 s), a droplet

@@ -33,7 +33,7 @@ namespace DD.Art.Pipeline.EditorTools
             "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G " +
             "(smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); " +
             "8-bit RGBA PNG, no resampling";
-        /// <summary>WP-020 · Prop roles carry the Tripo/Cycles AO of ORM v002 (AP-005C) in G so the prop materials can bind <c>_OcclusionMap</c>; the other library roles keep v1 (no AO in their packs).</summary>
+        /// <summary>WP-020 · Prop roles carry the source AO of ORM v002 (AP-005C) in G so the prop materials can bind <c>_OcclusionMap</c>; the other library roles keep v1 (no AO in their packs).</summary>
         public const string PropAlgorithm =
             "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, " +
             "out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling";

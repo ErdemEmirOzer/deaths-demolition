@@ -192,7 +192,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
         public const float KerbAlbedoLift = 1.2f;
         /// <summary>
-        /// WP-038 art-director round (Fable, KOŞULLU KABUL 85 %): P-05's 0.60 gravel tint left earth ≈ gravel at the
+        /// WP-038 art-direction round (KOŞULLU KABUL 85 %): P-05's 0.60 gravel tint left earth ≈ gravel at the
         /// gameplay distance → 0.72 (earth &lt; gravel ΔY ≥ 0.02 linear); the water sparkle cap 0.30 → 0.18 and the
         /// caustic sheet 0.18 → 0.08 so the south ponds stop being the brightest element of the frame under the
         /// overcast Look B (pond hot spot ≤ 2.5× the gravel, no readable Voronoi net at 19.9 m).

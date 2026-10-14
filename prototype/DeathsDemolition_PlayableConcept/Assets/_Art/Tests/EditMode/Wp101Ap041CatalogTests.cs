@@ -10,7 +10,7 @@ using UnityEngine.Rendering;
 namespace DD.Art.Tests.EditMode
 {
     /// <summary>
-    /// WP-101 (R4, AP-041) · AP-041 v001 kapıları: içe alma tablosu ↔ kırpılmış manifest (33 satır, sha256 Codex'inki, lisans
+    /// WP-101 (R4, AP-041) · AP-041 v001 kapıları: içe alma tablosu ↔ kırpılmış manifest (33 satır, sha256 teslim manifestininki, lisans
     /// satırı), katalog satırları manifestle birebir ve premultiplied, materyaller DD/VFX Flipbook PM yolu (One /
     /// OneMinusSrcAlpha, _Premultiplied 1), doku sözleşmesi (Alpha Is Transparency kapalı, sRGB, mip, Clamp, BC7, 1024 / 512)
     /// ve kendi bütçe satırı; AP-010 materyallerinde PM bayrağı 0 (bugünkü davranış birebir). İçe alma yoksa ilgili testler
@@ -114,7 +114,7 @@ namespace DD.Art.Tests.EditMode
                     hatalar.Add(t.File + ": TD namlu 6 kare / 0,05 s değil");
             }
 
-            hatalar.AddRange(ArtAp041VfxIntake.VerifySources());   // sha256 = Codex manifest; one licence row per sheet
+            hatalar.AddRange(ArtAp041VfxIntake.VerifySources());   // sha256 = delivery manifest; one licence row per sheet
             Assert.IsEmpty(hatalar, "AP-041 manifest / kaynak ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
         }
 

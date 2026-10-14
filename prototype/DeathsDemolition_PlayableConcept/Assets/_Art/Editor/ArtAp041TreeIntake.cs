@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
-    /// WP-104 B4-1 (S-07) · Codex's AP-041 v001 + v002 (EK1) run-tree sheets → catalog rows + one material per row, on the same path
+    /// WP-104 B4-1 (S-07) · AP-041 v001 + v002 (EK1) run-tree sheets → catalog rows + one material per row, on the same path
     /// as <see cref="ArtAp041VfxIntake"/> (WP-101):
     ///
     ///   Assets/_Art/VFX/AP041/tree/*_srgb_pm.png, G_X8_synergy_enso_mask_linear.png   45 sheets, copied byte-for-byte by
@@ -291,7 +291,7 @@ namespace DD.Art.Pipeline.EditorTools
                       " MB, catalog " + catalog.Entries.Count + " rows, " + (total.ElapsedMilliseconds / 1000f).ToString("F1") + " s");
         }
 
-        /// <summary>Every sheet on disk, its sha256 equal to the manifest's (Codex's), a licence row per sheet.</summary>
+        /// <summary>Every sheet on disk, its sha256 equal to the delivery manifest's, a licence row per sheet.</summary>
         public static List<string> VerifySources()
         {
             var v = new List<string>();

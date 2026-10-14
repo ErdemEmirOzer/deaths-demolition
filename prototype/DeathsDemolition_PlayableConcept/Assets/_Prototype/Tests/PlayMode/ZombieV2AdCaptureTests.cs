@@ -19,7 +19,7 @@ using UnityEngine.TestTools;
 namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
-    /// WP-084 (C-00 06.10, KADRO gate (b)) · the AD review frames of the AP-025 v002 zombies in the Run scene, through the game
+    /// WP-084 (C-00 06.10, review gate (b)) · the AD review frames of the AP-025 v002 zombies in the Run scene, through the game
     /// camera (same post-processing / exposure), frozen: (1) the crowd — 12 zombies, every version in every row, the gameplay
     /// pose; (2) top-down over the same crowd; (3) the three faces (Gaunt / Swollen / Riven) on one Standard look, close; (4) the
     /// skin / dirt / blood masks on one look — (0,0,0), (1,1,1), (2,2,2) and blood only (0,0,2); (5) the four versions of one look

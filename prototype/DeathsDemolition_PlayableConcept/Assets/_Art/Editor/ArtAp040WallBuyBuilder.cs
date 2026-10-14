@@ -13,7 +13,7 @@ using UnityEngine.Rendering;
 namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
-    /// WP-107B (R4) · the wall buy art into the game: Codex AP-040 v001 (the D1 boards V01 / V02, the D3 shrine, the shared
+    /// WP-107B (R4) · the wall buy art into the game: AP-040 v001 (the D1 boards V01 / V02, the D3 shrine, the shared
     /// prop atlas, the ten D2 weapon silhouette decals) and the AP-042 wall buy HUD sprites (v001 frames / price tag / icons,
     /// v002 discount seal, plus the 64 px icon layers derived in WP-107B).
     ///

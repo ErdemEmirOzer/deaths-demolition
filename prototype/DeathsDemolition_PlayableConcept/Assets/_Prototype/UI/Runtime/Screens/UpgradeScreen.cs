@@ -247,7 +247,7 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-068 R1-C (user request 25.09): the round-end screen stands on an ink-wash wallpaper - a faded black silhouette of
-        /// the ronin before the ruined keep, the horde on the horizon (Higgsfield gpt_image_2_5, luminance-clamped: see
+        /// the ronin before the ruined keep, the horde on the horizon (external render, luminance-clamped: see
         /// UpgradeWallpaperTests). 80 % of its width is shown, so the ronin stands in the gap between the tree and the
         /// detail card and the keep's roofs rise over the header. WP-098B: drawn by <see cref="BuildWallpaper"/> (no v2
         /// veils, petals or foot rule); the kit's Wallpaper scrim lies over it.

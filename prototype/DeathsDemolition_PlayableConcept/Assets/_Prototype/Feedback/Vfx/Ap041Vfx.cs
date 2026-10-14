@@ -1,6 +1,6 @@
 namespace DD.Prototype.Feedback.Vfx
 {
-    /// <summary>WP-101 (R4, AP-041) · the five top-down muzzle families of Codex's AP-041 v001 set (manifest family muzzle_&lt;name&gt;).</summary>
+    /// <summary>WP-101 (R4, AP-041) · the five top-down muzzle families of the AP-041 v001 set (manifest family muzzle_&lt;name&gt;).</summary>
     public enum Ap041MuzzleClass
     {
         None = -1,
