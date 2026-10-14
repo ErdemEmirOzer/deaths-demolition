@@ -1,4 +1,4 @@
-# CLOUD-REVIEW-R1-A — combat / camera / animation correctness review
+# CODE-REVIEW-R1-A — combat / camera / animation correctness review
 
 - Base: `origin/main` @ `f52647f`. It contains WP-069 B1 `0555653`, WP-070 B1–B7, WP-071 B1 `08fd46c` and WP-076 B1 `48a9073`.
 - Method: I only read the code. I did not run Unity, tests or LFS assets. Prefab and hitbox geometry comes from `ZombieBodyBuilder` constants and from comments in the code.

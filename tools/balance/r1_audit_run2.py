@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M4-R1 balance audit (cloud, read-only): Arsenal v3 (WP-069), Specials, Progression tree v2 (WP-077).
+"""M4-R1 balance audit (read-only): Arsenal v3 (WP-069), Specials, Progression tree v2 (WP-077).
 
 Stdlib only. Reads the live Unity YAML (PrototypeConfig.asset, WD_*.asset) with a tiny block-YAML
 parser, restates the design numbers of WP-069-ARSENAL-V3-DIRECTION.md / WP-077-...-DIRECTION.md as

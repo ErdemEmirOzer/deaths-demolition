@@ -1,6 +1,6 @@
-# Cloud balance audit R1: numeric check of the M4-R1 designs (WP-069 Arsenal v3 · Specials · WP-077 tree v2)
+# Balance audit R1: numeric check of the M4-R1 designs (WP-069 Arsenal v3 · Specials · WP-077 tree v2)
 
-Date 2026-09-24 · branch `cloud/balance-audit-r1` from `main` a7f2557 · findings only, no game code or data changed.
+Date 2026-09-24 · branch `review/balance-audit-r1` from `main` a7f2557 · findings only, no game code or data changed.
 Reproduce: `python3 tools/balance/r1_audit.py` (stdlib only; deterministic, `--seeds N` for more median-player runs). Every number below comes from that script's output.
 
 **Sources read:** `planning/work-packages/WP-069-ARSENAL-V3-DIRECTION.md` (§1 tables 3a/3b/3c, §5, §6, §7), `planning/work-packages/WP-077-PROGRESSION-TREE-V2-DIRECTION.md`, `Assets/_Prototype/Core/Resources/PrototypeConfig.asset` (enemies, rounds, economy, progression, Special, DEC-021 rows), `Weapons/Arsenal/Resources/Arsenal/WD_{ar_1,smg_1,sg_1}.asset`, `Damage/RegionalDamageBody.cs`, `Core/Config/RoundConfigSection.cs`, `Core/Weapons/WeaponDefinition.cs`, `Weapons/Projectiles/ProjectileSystem.cs`, `Weapons/SpecialWeaponDirector.cs`, `planning/00-PROJECT-PLAN.md` (DEC table), the WP-041 balance proposal.

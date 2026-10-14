@@ -1,7 +1,7 @@
 # Windows x64 portability audit: runtime C# and shipping config (DEC-089)
 
-- **Date:** 2026-09-24 · **Base:** `main` @ `cf34180` · **Branch:** `cloud/windows-audit`
-- **Method:** a static read of the runtime C#, shaders, ProjectSettings and `tools/`, done in a cloud clone. Unity cannot run there, LFS binaries are pointers only, and nothing was executed on Windows. Findings marked **(verify)** are strong expectations about how Unity/Mono behaves on Windows. The first real run should confirm them (§3).
+- **Date:** 2026-09-24 · **Base:** `main` @ `cf34180` · **Branch:** `review/windows-audit`
+- **Method:** a static read of the runtime C#, shaders, ProjectSettings and `tools/`, done in a separate clone. Unity cannot run there, LFS binaries are pointers only, and nothing was executed on Windows. Findings marked **(verify)** are strong expectations about how Unity/Mono behaves on Windows. The first real run should confirm them (§3).
 - **Scope:** the 444 runtime `.cs` files (excluding `Tests/` and `Editor/`), 16 custom shaders, `ProjectSettings/*.asset`, and `tools/*.sh`. Game code is unchanged. This file is the only change.
 - **Paths:** `A/` = `prototype/DeathsDemolition_PlayableConcept/Assets/`, `PS/` = `prototype/DeathsDemolition_PlayableConcept/ProjectSettings/`.
 

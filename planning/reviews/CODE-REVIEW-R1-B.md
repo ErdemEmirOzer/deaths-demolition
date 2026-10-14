@@ -1,6 +1,6 @@
-# Cloud review R1-B — correctness review of the post-R1-A main commits
+# Code review R1-B — correctness review of the post-R1-A main commits
 
-- **Range reviewed:** `a7f25570..a2971897` (origin/main as of 2026-09-24). The requested base tag `cloud-review-r1-a-int` does not exist on the remote, so the base is `a7f25570`, the R1-A review commit on main. Every commit after it was reviewed; 167 C# files changed.
+- **Range reviewed:** `a7f25570..a2971897` (origin/main as of 2026-09-24). The requested base tag `review-r1-a-int` does not exist on the remote, so the base is `a7f25570`, the R1-A review commit on main. Every commit after it was reviewed; 167 C# files changed.
 - **Method:** static reading only. Unity was not run, LFS binaries were not fetched, no game code was changed.
 - **Paths:** `P/` = `prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/`. Line numbers are at HEAD `a2971897`.
 - **Verdicts:** CONFIRMED = the code path was traced end to end. PLAUSIBLE = depends on a caller that doesn't exist yet, on tuning, or on a design reading.

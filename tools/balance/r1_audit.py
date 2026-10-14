@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cloud balance audit R1: independent recomputation of the M4-R1 designs.
+"""Balance audit R1: independent recomputation of the M4-R1 designs.
 
 Inputs are transcribed from the repo (no Unity needed, stdlib only):
   * planning/work-packages/WP-069-ARSENAL-V3-DIRECTION.md  (tables 3a/3b/3c, §5, §7)

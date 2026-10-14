@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-076 R1-B (cloud review, C-00 30.09): AI4 — the knockback covers exactly its distance at any frame rate (eased delta);
+    /// WP-076 R1-B (code review, C-00 30.09): AI4 — the knockback covers exactly its distance at any frame rate (eased delta);
     /// (i) — EnemyCombatEvents.Raised is cleared at SubsystemRegistration (a stale subscriber of the last Play session does not survive).
     /// </summary>
     [Category("WP076")]

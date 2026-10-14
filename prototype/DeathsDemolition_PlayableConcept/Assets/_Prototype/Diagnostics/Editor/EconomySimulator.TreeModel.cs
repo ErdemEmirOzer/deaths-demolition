@@ -24,7 +24,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
         /// Special pickup roll (the round's spawn chance). Every effect is treated as live (the design
         /// target, not today's wiring). Same options → same result.
         ///
-        /// Bots (the audit's restatement of §4.2, CLOUD-BALANCE-AUDIT-R1 #6):
+        /// Bots (the audit's restatement of §4.2, BALANCE-AUDIT-R1 #6):
         /// SpendMax — no pin, most expensive affordable card, full Hearth: the spend upper bound.
         /// Rush — pins the weapon capstone at the start, buys its path first, Hearth once the pin is done.
         /// Human — no pin, keeps a 30 % cushion, a random affordable card, ≤ 2 Hearth per round.

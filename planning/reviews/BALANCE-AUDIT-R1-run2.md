@@ -1,6 +1,6 @@
-# CLOUD-BALANCE-AUDIT-R1: numeric audit of M4-R1 Arsenal v3, Specials and Progression tree v2
+# BALANCE-AUDIT-R1: numeric audit of M4-R1 Arsenal v3, Specials and Progression tree v2
 
-- Base: `origin/main` @ `a7f2557`. Branch `cloud/balance-audit-r1`. This is a report only. No game code or data changed.
+- Base: `origin/main` @ `a7f2557`. Branch `review/balance-audit-r1`. This is a report only. No game code or data changed.
 - Method: I read the design docs, the live YAML data and the C# formulas. Every number below comes from `tools/balance/r1_audit.py` (Python 3, stdlib only, deterministic seed `20260924`). Run it with `python3 tools/balance/r1_audit.py [--json out.json]`. I did not run Unity or fetch LFS binaries.
 - Sources:
   - **DIR-069** = `planning/work-packages/WP-069-ARSENAL-V3-DIRECTION.md`
