@@ -97,7 +97,7 @@ namespace DD.Prototype.Tests.PlayMode
             cam.allowMSAA = false;
             cam.targetTexture = rt;
 
-            Shader shader = Shader.Find("DD/VFX Flipbook");
+            Shader shader = DD.Prototype.Rendering.PrototypeShaders.VfxFlipbook;
             Assert.IsNotNull(shader);
             // A PM texel: linear white × coverage 128/255, stored sRGB (188) — and a transparent one (0, 0, 0, 0).
             Texture2D half = Solid(new Color32(188, 188, 188, 128));

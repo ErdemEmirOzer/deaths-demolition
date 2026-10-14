@@ -552,7 +552,7 @@ namespace DD.Prototype.Tests.PlayMode
                 cam.nearClipPlane = .05f;
                 cam.farClipPlane = 10f;
                 cam.targetTexture = rt;
-                Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
+                Shader unlit = DD.Prototype.Rendering.PrototypeShaders.Unlit;
                 Assert.IsTrue(unlit != null, "Universal Render Pipeline/Unlit");
                 Material siyah = Duz(unlit, Color.black), beyaz = Duz(unlit, Color.white);
                 sahip.Add(siyah);

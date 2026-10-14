@@ -2599,7 +2599,7 @@ namespace DD.Prototype.Tests.PlayMode
         private void BuildRig()
         {
             _root = new GameObject("WP104 B4 AD capture root");
-            _unlit = Shader.Find("Universal Render Pipeline/Unlit");
+            _unlit = DD.Prototype.Rendering.PrototypeShaders.Unlit;
             Assert.IsNotNull(_unlit, "Universal Render Pipeline/Unlit");
             _lightMat = Unlit(new Color(LightGrey, LightGrey, LightGrey, 1f));
             _slateMat = Unlit(new Color(SlateGrey, SlateGrey, SlateGrey, 1f));

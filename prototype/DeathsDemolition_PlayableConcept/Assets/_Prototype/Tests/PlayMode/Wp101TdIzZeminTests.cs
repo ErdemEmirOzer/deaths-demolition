@@ -62,7 +62,7 @@ namespace DD.Prototype.Tests.PlayMode
             Object.Destroy(go.GetComponent<Collider>());
             go.transform.SetPositionAndRotation(O + new Vector3(x, 0f, 0f), Quaternion.Euler(90f, 0f, 0f));
             go.transform.localScale = new Vector3(20f, 20f, 1f);
-            var m = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            var m = new Material(DD.Prototype.Rendering.PrototypeShaders.Unlit);
             m.SetColor("_BaseColor", new Color(grey, grey, grey, 1f));
             go.GetComponent<MeshRenderer>().sharedMaterial = m;
             return go;

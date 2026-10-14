@@ -796,21 +796,30 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(MetinVar<UpgradeScreen>(run.Shop.Gold.ToString(), out _), "gold bakiyesi ekranda yazılı");
                 int goldR1 = run.Shop.Gold;
 
-                // Kartlarda ikon yuvası: WP-022'den itibaren her görünür kart AP-012 dal ikonunu
-                // çizer (Upgrade.<Branch>); monogram yalnız sanat yokken görünür.
-                int ikon = 0, monogram = 0;
-                foreach (Image img in upgrade.GetComponentsInChildren<Image>(false))
+                // Düğümlerde ikon yuvası. WP-104 (6d1c8080, KARAR-WP104-11.10 §11.1): round sonu kart satırı (AP-012 dal
+                // ikonu + monogram fallback) yerine özellik ağacı ekranı açılır (UiTreeScreenRoute → RunTreeV2). Aynı iddia
+                // ağaçta: her görünür düğüm kendi AP-042 ikonunu çizer; sanat yokken çizilen Disc fallback'i görünmez.
+                Assert.IsTrue(upgrade.TreeV2Active, "round sonu özellik ağacını gösterir (sevk config'i RunTreeV2)");
+                Assert.IsTrue(upgrade.TreeV2 != null && upgrade.TreeV2.IsOpen, "ağaç ekranı açık");
+                Assert.IsFalse(upgrade.Pane.IsOpen, "emekli kart penceresi ağacın altında kapalı");
+                TreeScreenSnapshot agacOzeti = upgrade.TreeV2.Snapshot;
+                Assert.IsNotNull(agacOzeti);
+                int ikon = 0, gorunur = 0, fallback = 0;
+                for (int i = 0; i < agacOzeti.Nodes.Length; i++)
                 {
-                    if (img.gameObject.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Upgrade.")) ikon++;
+                    UiButton dugum = upgrade.TreeV2.NodeButton(i);
+                    if (dugum == null || !dugum.gameObject.activeInHierarchy) continue;
+                    gorunur++;
+                    Transform yuva = dugum.transform.Find("Icon");
+                    Image img = yuva != null ? yuva.GetComponent<Image>() : null;
+                    string beklenen = TreeArt.NodeIdOf(agacOzeti.Nodes[i].IconKey, agacOzeti.Nodes[i].NodeId);
+                    if (img == null || img.sprite == null || img.sprite == UiSprites.Disc) fallback++;
+                    else if (img.sprite.name.StartsWith(beklenen, StringComparison.Ordinal)) ikon++;
                 }
 
-                foreach (TMP_Text t in upgrade.GetComponentsInChildren<TMP_Text>(false))
-                {
-                    if (t.gameObject.name == "Monogram" && !string.IsNullOrEmpty(t.text)) monogram++;
-                }
-
-                Assert.AreEqual(run.Shop.Cards.Count, ikon, "her kartta bir AP-012 dal ikonu");
-                Assert.AreEqual(0, monogram, "sanat varken monogram fallback görünmez");
+                Assert.Greater(gorunur, 0, "ölçüm boş: ağaçta görünür düğüm yok");
+                Assert.AreEqual(gorunur, ikon, "her görünür düğümde kendi AP-042 ikonu");
+                Assert.AreEqual(0, fallback, "sanat varken Disc fallback görünmez");
 
                 // Devam → round 2: HUD yenilenir, gold korunur.
                 run.CloseUpgradeScreen();
@@ -1428,11 +1437,14 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-098B · raund sonu fırça penceresi (KILAVUZ §3 "Raund sonu / yükseltme", G6): taşıyıcı kitin UiBrushPane'i -
-        /// Wallpaper perdesi kitin doğrusal α'sında, ağaç + detay sütununda iki C2 yıkama, metin zemini ≥ 0,945; başlık kitin
-        /// C5'i (Menu.Upgrade, tek başlık fırçası), v2 süsü (yaprak, örtü, ayak çizgisi) yok; Continue / Undo / Reroll adları
-        /// korunur; REROLL kitin C11'i ve isabeti ≥ 48; pad sırası düğümler → AL / İĞNELE → REROLL → DEVAM; kapanış kitin:
-        /// girdi anında kapanır, solma bitince pane ve tuval kapanır (≤ 0,35 s).
+        /// WP-098B · raund sonu penceresi (KILAVUZ §3 "Raund sonu / yükseltme", G6) — WP-104 sonrası özellik ağacı ekranında.
+        /// WP-104 (KARAR-WP104-11.10 §11.1 serbest ağaç; d4ce7add S-09 ağaç ekranı; 6d1c8080 sevk config'i RunTreeV2: 1): round
+        /// sonu UiTreeScreenRoute ile RunTreeV2'nin ekranını açar, WP-098B fırça penceresi (UiBrushPane) oyuncu yolunda açılmaz.
+        /// Aynı iddialar ağaçtaki karşılıklarıyla: pencere = ağaç ekranı açık, girdi açık, emekli pane kapalı; duvar kağıdı perdesi
+        /// = AP-042 parşömeni; iki C2 yıkama / metin zemini = parşömen üstündeki kağıt plakaları (TreeArt.PaperPlateAlpha; kontrast
+        /// çifti EditMode TreeScreenV2Tests'te); başlık tek ("UPGRADE TREE"), v2 süsü yok; gold yazılı; REROLL kitin C11'i ve
+        /// isabeti ≥ 48; pad sırası düğümler → AL / HEDEF → REROLL → OCAK → DEVAM (UiTreeScreenV2.LinkDetailNavigation);
+        /// kapanış: girdi anında kapanır, solma bitince ağaç ve tuval kapanır (≤ 0,35 s).
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -1445,86 +1457,111 @@ namespace DD.Prototype.Tests.PlayMode
             PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;
             UpgradeScreen upgrade = UnityEngine.Object.FindObjectOfType<UpgradeScreen>();
             Assert.IsNotNull(upgrade);
-            run.Shop.NodeCardsOverride = true;   // G6 is the tree's order (this fixture's default is the classic card row)
+            Assert.IsTrue(run.Shop.TreeV2.IsBuilt, "sevk config'i: koşu özellik ağacını kurdu (RunTreeV2)");
             GoldService.Instance.Wallet.DebugSet(5000);
 
             yield return RoundTamamla();
             Assert.AreEqual(UiContext.RoundUpgrade, UiNavigation.Layer);
-            yield return new WaitForSecondsRealtime(0.4f);   // the kit's open: C1 140 ms, washes / title brush 280 ms, content 60 + 220 ms
+            yield return new WaitForSecondsRealtime(0.7f);   // the tree's open: paper Fast 140 ms, rows Base 220 ms from 120 ms, 40 ms apart (≤ 600 ms)
             yield return null;
 
-            UiBrushPane pane = upgrade.Pane;
-            Assert.IsNotNull(pane, "taşıyıcı kitten (UiBrushKit.Pane)");
-            Assert.IsTrue(pane.IsOpen, "pencere açık");
-            Assert.AreEqual(UiBrushScrim.Wallpaper, pane.ScrimLevel, "KILAVUZ §3: Wallpaper perdesi");
-            Assert.AreEqual(UiBrushTokens.ScrimWallpaper, pane.Scrim.color.a * pane.Scrim.canvasRenderer.GetAlpha(), 0.01f,
-                "perde kitin doğrusal 0,71'inde (elle α yok)");
-            // C2 yıkamaları pane kökünün doğrudan çocuklarıdır (UiBrushPane.AddWash: "Wash", "Wash.1", Content'in önünde).
-            // Her UiButton da kendi hover katmanını "Wash" adıyla taşır (UiButton; düğümler, AL, İĞNELE, REROLL, DEVAM...):
-            // o bir C2 değil, bu yüzden sayım alt ağaçta değil kökün kendi çocuklarında yapılır.
-            int yikama = 0;
-            foreach (Transform cocuk in pane.Root)
+            // Pencere: round sonu ağacı, girdi açık; emekli fırça penceresi altında kapalı.
+            Assert.IsTrue(upgrade.TreeV2Active, "round sonu özellik ağacını gösterir");
+            UiTreeScreenV2 agac = upgrade.TreeV2;
+            Assert.IsNotNull(agac);
+            Assert.IsTrue(agac.IsOpen, "pencere açık");
+            Assert.AreSame(run.Shop.TreeV2, agac.Commands, "ekran koşunun kendi ağacına bağlı");
+            Assert.IsFalse(upgrade.Pane.IsOpen, "emekli fırça penceresi kapalı");
+            CanvasGroup grup = agac.Root.GetComponent<CanvasGroup>();
+            Assert.IsNotNull(grup);
+            Assert.IsTrue(grup.interactable, "girdi açık");
+
+            // Duvar kağıdı perdesi → AP-042 parşömeni.
+            RawImage parsomen = null;
+            foreach (RawImage r in agac.Root.GetComponentsInChildren<RawImage>(false))
             {
-                if (cocuk.gameObject.activeSelf && cocuk.name.StartsWith("Wash", StringComparison.Ordinal) && cocuk.GetComponent<Image>() != null)
-                {
-                    yikama++;
-                }
+                if (r.gameObject.name == "Parchment") { parsomen = r; break; }
             }
 
-            Assert.AreEqual(UiBrushTokens.MaxWash, yikama, "ağaç + detay sütunu: iki C2 yıkama");
-            Assert.IsNotNull(pane.Wash, "ilk C2 pane'in yıkaması (TextGroundAlpha onu okur)");
-            Assert.AreSame(pane.Root, pane.Wash.transform.parent, "C2 pane kökünde");
-            Assert.GreaterOrEqual(pane.TextGroundAlpha, UiBrushTokens.TextGroundMin, "metin zemini perde ⊕ yıkama ≥ 0,945");
-            Assert.IsTrue(pane.Content.GetComponent<CanvasGroup>().interactable, "girdi açık");
+            Assert.IsNotNull(parsomen, "AP-042 parşömeni ağacın zemininde");
+            Assert.IsNotNull(parsomen.texture, "parşömen dokusu yüklü");
+            Assert.AreSame(TreeArt.ParchmentTexture(), parsomen.texture);
 
-            int baslik = 0, diger = 0;
-            foreach (UiBrushMark iz in upgrade.GetComponentsInChildren<UiBrushMark>(false))
+            // İki C2 yıkama / metin zemini → kağıt plakaları: başlık bandı ve her dalın etiket plakası kitin plaka α'sında.
+            int plaka = 0;
+            foreach (Image img in agac.Root.GetComponentsInChildren<Image>(false))
             {
-                if (iz.Kind == UiBrushMarkKind.TitleStroke && iz.transform.IsChildOf(pane.Root)) baslik++;
-                else if (iz.Kind == UiBrushMarkKind.TitleStroke) diger++;
+                if (img.gameObject.name != "HeaderBand" && img.gameObject.name != "LabelPlate") continue;
+                plaka++;
+                Assert.AreEqual(TreeArt.PaperPlateAlpha, img.color.a, 0.001f, "metin zemini plakası " + img.gameObject.name);
             }
 
-            Assert.AreEqual(1, baslik, "tek başlık fırçası (Menu.Upgrade başlığı)");
-            Assert.AreEqual(0, diger);
+            Assert.AreEqual(1 + TreeV2Rows.Count, plaka, "başlık bandı + yedi dal etiketi plakası");
+
+            // Başlık tek, v2 süsü yok, gold yazılı.
+            int baslik = 0;
+            foreach (TMP_Text t in agac.Root.GetComponentsInChildren<TMP_Text>(false))
+            {
+                if (t.gameObject.name == "Title" && !string.IsNullOrEmpty(t.text)) baslik++;
+            }
+
+            Assert.AreEqual(1, baslik, "tek başlık (UPGRADE TREE)");
             foreach (Transform t in upgrade.GetComponentsInChildren<Transform>(true))
             {
                 Assert.IsFalse(t.name == "Petal" || t.name == "SkyVeil" || t.name == "GroundVeil" || t.name == "FootRule" || t.name == "HeaderOrnament",
                     "v2 süsü kalktı: " + t.name);
             }
 
-            Assert.IsTrue(MetinVar<UpgradeScreen>(run.Shop.Gold.ToString(), out _), "gold bakiyesi ekranda yazılı");
+            Assert.AreEqual(GoldService.Instance.Wallet.Balance, agac.Snapshot.Gold, "ağaç bakiyesi = cüzdan");
+            Assert.AreEqual(TreeV2Text.Gold(agac.Snapshot.Gold), agac.GoldText.text, "gold bakiyesi ekranda yazılı");
 
-            UiButton reroll = Buton<UpgradeScreen>("Reroll");
-            UiButton devam = Buton<UpgradeScreen>("Continue");
+            UiButton reroll = agac.RerollButton;
+            UiButton devam = agac.ContinueButton;
+            Assert.IsNotNull(reroll);
+            Assert.IsNotNull(devam);
             Assert.IsFalse(reroll.DrawsFocusRing, "REROLL kitin C11'i (odak = köşebent)");
             Assert.GreaterOrEqual(((RectTransform)reroll.transform).rect.height, UiTokens.TargetPreferred, "G6: REROLL isabeti ≥ 48");
 
-            // G6: düğümler → AL / İĞNELE → REROLL → DEVAM.
-            UiRunTreePanel agac = upgrade.GetComponentInChildren<UiRunTreePanel>(false);
-            Assert.IsNotNull(agac, "ağaç modu");
-            UiButton undo = Buton<UpgradeScreen>("Undo");
-            Selectable altBant = undo.gameObject.activeInHierarchy ? (Selectable)undo : devam;
-            Selectable cikis = reroll.IsInteractable() ? (Selectable)reroll : altBant;
-            Selectable sonDetay = Canli(agac.ReforgeButton) ?? Canli(agac.PinButton) ?? Canli(agac.BuyButton);
-            if (sonDetay != null)
+            // G6: düğümler → AL / HEDEF → REROLL → OCAK → DEVAM.
+            Selectable al = Canli(agac.BuyButton), hedef = Canli(agac.TargetButton), yenile = Canli(reroll), ocak = Canli(agac.HearthButton);
+            Selectable ilkEylem = al ?? hedef ?? yenile ?? ocak ?? devam;
+            var agacKontrolleri = new HashSet<Selectable>();
+            for (int i = 0; i < agac.Snapshot.Nodes.Length; i++)
             {
-                Assert.AreSame(cikis, sonDetay.navigation.selectOnDown, "detayın son düğmesinden aşağı = " + cikis.name);
+                if (agac.NodeButton(i) != null) agacKontrolleri.Add(agac.NodeButton(i));
             }
 
-            if (reroll.IsInteractable())
+            for (int k = 0; k < agac.Snapshot.Synergies.Length; k++)
             {
-                Selectable detay = Canli(agac.BuyButton) ?? Canli(agac.PinButton) ?? agac.FocusTarget();
-                Assert.AreSame(detay, reroll.navigation.selectOnUp, "REROLL'den yukarı = detay (AL, yoksa İĞNELE, yoksa düğüm)");
+                if (agac.SynergyButton(k) != null) agacKontrolleri.Add(agac.SynergyButton(k));
             }
 
-            if (reroll.IsInteractable())
+            int kenar = 0;
+            foreach (Selectable s in agacKontrolleri)
             {
-                Assert.AreSame(altBant, reroll.navigation.selectOnRight, "REROLL → UNDO / DEVAM");
+                if (!s.gameObject.activeInHierarchy) continue;
+                Selectable sag = s.navigation.selectOnRight;
+                if (sag != null && agacKontrolleri.Contains(sag)) continue;
+                kenar++;
+                Assert.AreSame(ilkEylem, sag, "ağacın sağ kenarından sağ = ilk canlı eylem (" + s.name + ")");
+            }
+
+            Assert.Greater(kenar, 0, "ölçüm boş: ağaçtan eylemlere geçen düğüm yok");
+            Selectable sonDetay = hedef ?? al;
+            if (sonDetay != null && yenile != null)
+            {
+                Assert.AreSame(yenile, sonDetay.navigation.selectOnDown, "detayın son düğmesinden aşağı = REROLL");
+            }
+
+            if (yenile != null)
+            {
+                if (sonDetay != null) Assert.AreSame(sonDetay, yenile.navigation.selectOnUp, "REROLL'den yukarı = detay (HEDEF, yoksa AL)");
+                Assert.AreSame(ocak ?? devam, yenile.navigation.selectOnDown, "REROLL → OCAK / DEVAM");
             }
 
             Assert.IsTrue(devam.IsInteractable());
 
-            // Kapanış: girdi anında kapanır, kitin solması ve cue'su pane'i, ardından tuvali kapatır.
+            // Kapanış: girdi anında kapanır, solma bitince ağaç ve ardından tuval kapanır.
             Canvas tuval = null;
             foreach (Canvas c in upgrade.GetComponentsInChildren<Canvas>(true))
             {
@@ -1535,15 +1572,16 @@ namespace DD.Prototype.Tests.PlayMode
             run.CloseUpgradeScreen();
             yield return null;
             Assert.AreEqual(UiContext.None, UiNavigation.Layer, "shop kapandı");
-            Assert.IsFalse(pane.IsOpen, "kapanışta girdi anında kapanır");
+            Assert.IsFalse(agac.IsOpen, "kapanışta girdi anında kapanır");
+            Assert.IsFalse(grup.interactable, "kapanışta girdi kapalı");
             yield return new WaitForSecondsRealtime(0.35f);
             yield return null;
-            Assert.IsFalse(pane.Root.gameObject.activeSelf, "solma bitince pane kapandı (kitin cue'su)");
-            Assert.IsFalse(tuval.gameObject.activeSelf, "pane kapanınca tuval de kapandı");
+            Assert.IsFalse(agac.Root.gameObject.activeSelf, "solma bitince ağaç kapandı");
+            Assert.IsFalse(tuval.gameObject.activeSelf, "ağaç kapanınca tuval de kapandı");
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
-            Debug.Log("[DD-TEST] wp098b.upgradeWindow=OK reroll=" + reroll.IsInteractable());
+            Debug.Log("[DD-TEST] wp098b.upgradeWindow=OK tree=v2 reroll=" + reroll.IsInteractable());
         }
 
         private static Selectable Canli(UiButton button)

@@ -254,6 +254,9 @@ namespace DD.Prototype.Tests.PlayMode
         /// R1-B W6 × RT7 (C-00 30.09, found moving the batch onto main 1542284d): the same-scene restart re-equips the weapon
         /// from THIS run's tree. smg_1's fork X (×1.5 magazine) owned in run 1 must not reach run 2's first magazine — the
         /// re-equip used to run before BeginRunTree and read the previous run's still-built tree.
+        /// WP-104 opening (6d1c8080, C-00 12.10): the shipped config runs the feature tree (RunTreeV2) and the v1 node effects are
+        /// off while it is built, so the v1 fork no longer grows the magazine. The magazine node of THIS run is now V2's
+        /// Extended Mag (mg_ext, ×1.5, TreeHooks.MagazineSize); the claim is unchanged: run 2's first magazine is the base one.
         /// </summary>
         [UnityTest]
         [Timeout(120000)]
@@ -261,6 +264,8 @@ namespace DD.Prototype.Tests.PlayMode
         {
             yield return RunSahnesiniHazirla();
             ClassicWeaponId onceki = WeaponRegistry.SelectedWeapon;
+            bool? oncekiV2 = RoundUpgradeShop.TreeV2TestOverride;
+            RoundUpgradeShop.TreeV2TestOverride = true;   // the shipped tree (config RunTreeV2: 1), pinned so a leaked override cannot change the path
             try
             {
                 Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AutoSmg), "smg_1 kuşanılmadı");
@@ -268,22 +273,30 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 WeaponController silah = WeaponRegistry.ActiveController;
                 int taban = silah.Classic.MagazineSize;
-                RunTreeState agac = RunDirector.Instance.Shop.Tree;
-                Assert.IsTrue(agac.MarkOwned(agac.Graph.IndexOf("fork_smg_1_x")), "fork_smg_1_x sahiplenilemedi");
+                RunTreeV2 agac = RunDirector.Instance.Shop.TreeV2;
+                Assert.IsTrue(agac.IsBuilt, "koşu V2 ağacını kurmadı");
+                TreeNodeDefV2 dugum = TreeCatalogV2.Find("mg_ext");
+                Assert.IsNotNull(dugum, "mg_ext katalogda yok");
+                float carpan = dugum.Arg("mag", 1f);
+                Assert.Greater(carpan, 1f, "mg_ext şarjörü büyütmüyor (katalog)");
+                Assert.IsTrue(agac.GrantFree("mg_ext"), "mg_ext sahiplenilemedi");
                 int buyuk = silah.Classic.MagazineSize;
-                Assert.AreEqual(Mathf.FloorToInt(taban * 1.5f), buyuk, "ölçüm boş: çatal şarjörü büyütmedi");
-                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AutoSmg));   // re-equip fills the fork's magazine
+                // TreeHooks.MagazineSize: × scale rounded up, at least +1 (smg_1 42 → 63).
+                Assert.AreEqual(Mathf.Max(taban + 1, Mathf.CeilToInt(taban * carpan)), buyuk, "ölçüm boş: mg_ext şarjörü büyütmedi");
+                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AutoSmg));   // re-equip fills the node's magazine
                 Assert.AreEqual(buyuk, silah.Classic.Ammo, "ölçüm boş: büyük şarjör dolmadı");
 
                 RunDirector.Instance.StartRun();
                 yield return null;
                 WeaponController yeni = WeaponRegistry.ActiveController;
-                Assert.AreEqual(taban, yeni.Classic.MagazineSize, "yeni koşunun ağacında çatal yok");
+                Assert.IsFalse(RunDirector.Instance.Shop.TreeV2.Owns("mg_ext"), "yeni koşunun ağacında mg_ext yok");
+                Assert.AreEqual(taban, yeni.Classic.MagazineSize, "yeni koşunun ağacında şarjör düğümü yok");
                 Assert.AreEqual(taban, yeni.Classic.Ammo, "yeni koşu önceki koşunun şarjör düğümünü taşımaz");
             }
             finally
             {
                 WeaponRegistry.SelectedWeapon = onceki;   // T1: the process-wide selection goes back
+                RoundUpgradeShop.TreeV2TestOverride = oncekiV2;
             }
         }
 
@@ -909,7 +922,7 @@ namespace DD.Prototype.Tests.PlayMode
                     if (z != null) zler.Add(z);
                 }
 
-                Material kirmizi = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                Material kirmizi = new Material(DD.Prototype.Rendering.PrototypeShaders.Unlit);   // ShaderLibraryTests: the shader library, not a string lookup (R4 FINAL a1 E2)
                 kirmizi.SetColor("_BaseColor", new Color(0.95f, 0.1f, 0.08f, 1f));
                 for (int i = 0; i < 18; i++)
                 {

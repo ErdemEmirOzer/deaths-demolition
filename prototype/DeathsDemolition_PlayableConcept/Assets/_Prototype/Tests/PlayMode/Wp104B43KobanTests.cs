@@ -594,7 +594,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private void BuildRig(Vector3 centre, Vector3 rigDir)
         {
-            Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
+            Shader unlit = DD.Prototype.Rendering.PrototypeShaders.Unlit;
             Assert.IsNotNull(unlit, "Universal Render Pipeline/Unlit");
             _lightMat = Unlit(unlit, new Color(LightGrey, LightGrey, LightGrey, 1f));
             _slateMat = Unlit(unlit, new Color(SlateGrey, SlateGrey, SlateGrey, 1f));
