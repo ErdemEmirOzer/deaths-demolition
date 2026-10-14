@@ -368,7 +368,7 @@ namespace DD.Prototype.UI
             }
 
             model.AchievementSummary = defined == 0
-                ? UiStrings.Get("ach.none_defined", "No achievements are defined in this build yet.")
+                ? UiStrings.Get("ach.none_defined", "No achievements are available yet.")
                 : UiStrings.Format("profile.ach_summary", "value", earned.ToString(), "total", defined.ToString(), "{value} of {total} achievements earned");
 
             string notice = lookup.PersistenceNotice;

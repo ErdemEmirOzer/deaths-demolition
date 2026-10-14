@@ -64,3 +64,5 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | CounterRolling | Sayaç rulosu başladı | `UiCounterRoll` (v015; ≤ 0,6 s) | CounterRoll | `UiCounter` (S-09) |
 | CounterSettled | Sayaç yerleşti | `UiCounterSettled` (v015) | Stamp Base | `UiCounter` (S-09) |
 | RerollHoldStarted | Hold-to-confirm başladı (U5) | `UiHoldRub` (v015; Confirm/Back biter) | HoldFill | `UpgradeScreen` / Controls (S-09) |
+| TreeOpened | Ağaç ekranı açıldı (raund sonu açılış başına bir kez; detay "UpgradeTreeV2"; WP-104 B4 R4) | `UiEvent.TreeOpened` → `TreeOpen` (AP-011 v024 tree_open, IDS 1020; AudioMixPlan.Tree 0,70) | Perde açılışı + odak düğümü | `UpgradeTreeV2.Open` (S-09) |
+| TreeRerolled | Öneri şeridi yeniden çekildi (başarılı TryReroll; detay "TreeStrip"; UpgradeRerolled değil, çift ses yok) | `UiEvent.TreeRerolled` → `TreeReroll` (AP-011 v024 tree_reroll, IDS 1023; 0,60) | Şerit kartları yenilenir | `UpgradeTreeV2.OnRerollPressed` (S-09) |

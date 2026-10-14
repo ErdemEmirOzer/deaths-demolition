@@ -300,7 +300,7 @@ namespace DD.Prototype.Tests.EditMode
             ProfileViewModel vm = ProfileViewModel.From(new ProfileData(), new SahteLookup());
             Assert.AreEqual("—", vm.Headline[0].Value, "hiç koşu yok → en yüksek round bilinmiyor");
             Assert.AreEqual("0", vm.Headline[2].Value, "kill sayısı gerçek sıfır");
-            Assert.AreEqual("No achievements are defined in this build yet.", vm.AchievementSummary);
+            Assert.AreEqual("No achievements are available yet.", vm.AchievementSummary);   // WP-112 (f3123ab9): no "in this build" on screen
         }
 
         [Test]

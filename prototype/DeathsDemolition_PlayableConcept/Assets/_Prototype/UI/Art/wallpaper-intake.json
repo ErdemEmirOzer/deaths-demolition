@@ -229,6 +229,23 @@
       "note": "the way to the Results, outside the rotation"
     },
     {
+      "file": "tree_parchment.jpg",
+      "bytes": 683489,
+      "sha256": "cac7a15848da79f83261f973f65a67e04896d47b40b1946d66e9138993513286",
+      "master": {
+        "path": "K/asset-production/AP-042/exports/v002/tree/bg/bg_tree_parchment_2560x1440.png",
+        "sha256": "",
+        "bytes": 0
+      },
+      "encoder": "adopted (pre-intake)",
+      "psnr": 0.0,
+      "ssim": 0.0,
+      "maxLuminance": null,
+      "ceilingFit": null,
+      "date": "2026-10-14",
+      "note": "AP-042 v002 tree background, landed in d4ce7add (WP-104 B4 UI) outside the intake: JPEG 4:2:0 q90-class tables, PSNR 41.48 dB against the v002 master (sha256 105f4b6f...); adopted byte-for-byte so the FINAL art does not change (R4 FINAL a1 E5)"
+    },
+    {
       "file": "upgrade_wallpaper.jpg",
       "bytes": 446231,
       "sha256": "c807db0551c4052cdd6a5bd93466e2cc39b41aace48e99b276184bac6ed315bc",

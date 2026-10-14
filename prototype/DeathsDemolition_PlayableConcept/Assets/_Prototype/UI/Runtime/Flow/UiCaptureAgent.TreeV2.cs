@@ -153,12 +153,12 @@ namespace DD.Prototype.UI
                     yield return new WaitForSecondsRealtime(0.4f);
                     int before = tree.Snapshot.Gold;
                     TreeClipPress(tree.BuyButton, mouse);
-                    Debug.Log("[TreeUxClip] purchase node=" + first + " gold=" + before + "->" + tree.Snapshot.Gold);
+                    Debug.Log("[TreeUxClip] purchase node=" + first + " gold=" + before + "→" + tree.Snapshot.Gold);
                 }
                 yield return new WaitForSecondsRealtime(0.75f);
                 int rerollBefore = tree.Snapshot.Gold;
                 TreeClipPress(tree.RerollButton, mouse);
-                Debug.Log("[TreeUxClip] reroll gold=" + rerollBefore + "->" + tree.Snapshot.Gold);
+                Debug.Log("[TreeUxClip] reroll gold=" + rerollBefore + "→" + tree.Snapshot.Gold);
                 yield return new WaitForSecondsRealtime(0.75f);
                 tree.HandleKey(TreeV2Key.Synergies);
                 yield return new WaitForSecondsRealtime(0.7f);
