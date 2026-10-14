@@ -690,7 +690,7 @@ class P2BaselineTests(Base):
         self.assertTrue(any("P2 BLOCKED" in line for line in chain.lines), chain.lines)
 
     def test_an_r1_build_that_does_not_prove_itself_is_never_planned_even_in_a_dry_run(self):
-        # KADRO test-engineer SHOULD-4/-5 and mutant M1: every condition of the proof, checked before any window
+        # test review SHOULD-4/-5 and mutant M1: every condition of the proof, checked before any window
         cases = {"built at": dict(commit="e" * 40), "not the one the unit record holds": dict(recorded="0" * 64),
                  "status 'failed'": dict(status="failed"), "no unit record": dict(tamper="record"),
                  "a file of the .app changed": dict(tamper="content"), "hash-bound changed": dict(tamper="report"),
@@ -715,7 +715,7 @@ class P2BaselineTests(Base):
         self.assertFalse((self.evidence / "r2" / "r2-P2.json").exists())
 
     def test_this_finals_own_evidence_or_commit_is_refused_as_r1(self):
-        # KADRO test-engineer SHOULD-1: P2 would compare FINAL with itself, and the report would refuse the root hours later
+        # test review SHOULD-1: P2 would compare FINAL with itself, and the report would refuse the root hours later
         r1 = r1_evidence(self.tmp.name)
         for args in (["--r1-evidence", str(r1), "--r1-commit", FINAL], ["--r1-evidence", str(self.evidence), "--r1-commit", R1]):
             with self.subTest(args=args):
@@ -723,7 +723,7 @@ class P2BaselineTests(Base):
                                                "--dry-run", *args]))
 
     def test_a_resumed_a4_keeps_the_baseline_it_was_recorded_with(self):
-        # KADRO test-engineer SHOULD-2: never two R1 baselines in one report, never a baseline root nobody declares
+        # test review SHOULD-2: never two R1 baselines in one report, never a baseline root nobody declares
         r1 = r1_evidence(self.tmp.name)
         self.assertNotEqual(64, make_chain(self.evidence, ["a6", "a4"], round_name="R2", r1_evidence=r1, r1_commit=R1).run())
         other = r1_evidence(Path(self.tmp.name) / "other", commit="e" * 40)
@@ -1233,7 +1233,7 @@ class R2StageTests(Base):
         return chain
 
     def test_a_quiet_session_waits_for_a_quiet_host_and_is_sampled_while_it_runs(self):
-        # KADRO game-test-engineer SHOULD-6 / S-08 06.10: r2q's quiet is measured and recorded, not assumed
+        # test review SHOULD-6 / S-08 06.10: r2q's quiet is measured and recorded, not assumed
         host, tools = FakeHost(), FakeTools()
         self.quiet_run(host, tools=tools)
         self.assertEqual(["wait", "start", "stop"], host.events)
@@ -1581,7 +1581,7 @@ class ManifestTests(Base):
         self.assertTrue(report["pass"], report["failures"])
 
     def test_a_b9_folder_the_b9_record_does_not_hold_stays_a_stray_root(self):
-        # KADRO test-engineer MUST-2 (b): declared from stages/b9.json, never from a folder listing
+        # test review MUST-2 (b): declared from stages/b9.json, never from a folder listing
         self.full_run(b9_poses=B9PoseTests.POSES)
         shutil.copytree(self.evidence / "b9" / "plaza-n", self.evidence / "b9" / "spawn")
         self.assertNotEqual(0, make_chain(self.evidence, ["a8"], tools=FakeTools(), resume=True).run())

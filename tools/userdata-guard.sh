@@ -80,7 +80,7 @@
 #   DD_GUARD_PLAYER_RE is gone (fixed pattern); tests shim pgrep/ps on PATH.
 set -u
 source "${0:A:h}/dd-env.sh"
-# Codex-audit M-02(e) (C-00 30.09): argv is exact — `snapshot|restore <dir>` or `… <dir> --scope <s>`; anything else
+# Audit M-02(e) (C-00 30.09): argv is exact — `snapshot|restore <dir>` or `… <dir> --scope <s>`; anything else
 # (--scope=player, a stray or extra argument) is a usage error before anything is touched, never a silent scope=all.
 { [ $# -eq 2 ] || { [ $# -eq 4 ] && [ "$3" = "--scope" ]; }; } || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
 CMD="${1:-}"; DIR="${2:-}"; SCOPE=all
@@ -378,7 +378,7 @@ print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "wi
     [ $LRC -eq 75 ] && (( SECONDS >= LNEXT )) && { dd_log "userdata-guard: waiting in the window queue — $LMSG"; LNEXT=$((SECONDS + 60)); }
     sleep 5 & WAITPID=$!; bg_wait; check_sig
   done
-  # S7 Codex-audit M-07: the lock wait follows the scope (editor: D1 only)
+  # S7 Audit M-07: the lock wait follows the scope (editor: D1 only)
   if [ "$SCOPE" = editor ]; then wait_unlocked "$D1" || { check_sig; snap_fail 75; }
   else wait_unlocked "$D1" "$D2" || { check_sig; snap_fail 75; }; fi
   check_sig

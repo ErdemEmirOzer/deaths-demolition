@@ -87,13 +87,13 @@ dd_wait_slot() {
 DD_SLOT="$DD_TOOLS_DIR/slot.sh"; DD_SLOT_TAG="${DD_SLOT_TAG:-$(basename "$DD_REPO")-$$}"
 # dd_slot_acquire [kind]  — kind: unity (default, ≤2) · blender (≤1) · smoke (≤1: a player smoke writes the real profile,
 # two at once corrupt the user-data guard — slot.sh v4). Direct call: the lock is bound to THIS shell's pid.
-# Codex-audit M-07 (C-00 30.09): both return slot.sh's own exit code (they used to return 0 whatever slot.sh said).
+# Audit M-07 (C-00 30.09): both return slot.sh's own exit code (they used to return 0 whatever slot.sh said).
 dd_slot_acquire() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}" rc; dd_log "slot: acquiring $kind slot as $DD_SLOT_TAG ($(dd_unity_count) Unity batch running)"; local out="${TMPDIR:-/tmp}/dd-slot-$$.txt"; "$DD_SLOT" acquire "$kind" "$DD_SLOT_TAG" > "$out"; rc=$?; dd_log "slot: $(cat "$out")"; [ "$rc" -eq 0 ] || dd_log "slot: acquire $kind failed (slot.sh exit $rc)"; rm -f "$out"; return $rc; }
 dd_slot_release() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}" rc; "$DD_SLOT" release "$kind" "$DD_SLOT_TAG" >/dev/null 2>&1; rc=$?; if [ "$rc" -eq 0 ]; then dd_log "slot: released $kind $DD_SLOT_TAG"; else dd_log "slot: release $kind $DD_SLOT_TAG failed (slot.sh exit $rc)"; fi; return $rc; }
 dd_sha() { [ -f "$1" ] && shasum -a 256 "$1" | cut -d' ' -f1 || echo MISSING; }
 # dd_project_open <projectDir> — 0 a Unity editor has <projectDir> open · 1 none has · 2 the process list is unavailable.
 # Shared by main-ci.sh and compile-check.sh (single source). Unity's projectPath is resolved too, so a launch through an
-# alias stays busy. Codex-audit M-06 (C-00 30.09): the flag is matched case-insensitively (Unity Hub launches with
+# alias stays busy. Audit M-06 (C-00 30.09): the flag is matched case-insensitively (Unity Hub launches with
 # `-projectpath`); a foreign path is resolved with strict=False, and one that cannot be resolved or does not exist (e.g. a
 # Unity whose worktree was removed) is skipped with a stderr line instead of failing the whole check (it locked CI at 75).
 dd_project_open() {
@@ -144,10 +144,10 @@ PY_PROCESS
 # only that pid and its children are stopped, the log is kept as <log>.stallN and the run is retried ONCE; a second
 # stall returns 124. <limitMin> > 0 is the old total limit per attempt (also 124). DD_UNITY_OUTCOME = ok | killed |
 # stalled | stalled-retried-ok. DD_STALL_SEC / DD_STALL_TICK override the threshold / check interval (self-tests).
-# Codex-audit Y1 / G4 Q10 (C-00 30.09): DD_UNITY_PID = the running Unity pid ("" otherwise) for a caller's signal cleanup;
+# Audit Y1 / G4 Q10 (C-00 30.09): DD_UNITY_PID = the running Unity pid ("" otherwise) for a caller's signal cleanup;
 # the poll sleeps as `sleep & wait` so a trapped INT/TERM/HUP runs at once instead of after the tick.
 dd_kill_tree() { pkill -P "$1" 2>/dev/null; kill "$1" 2>/dev/null; sleep 5; kill -9 "$1" 2>/dev/null; }
-# Codex-audit Y1 / G4 Q10 (C-00 30.09): dd_stop_child <pid> <graceSec> — signal-safe stop of a script's OWN child: snapshots
+# Audit Y1 / G4 Q10 (C-00 30.09): dd_stop_child <pid> <graceSec> — signal-safe stop of a script's OWN child: snapshots
 # <pid> + descendants (read-only pgrep -P walk), sends TERM to <pid> ONLY (no pkill/killall), waits ≤ grace until none is
 # alive (zombie = gone). 0 all gone · 1 still alive, DD_CHILD_ALIVE = that pid (an orphaned Unity can still write user data).
 DD_UNITY_PID=""; DD_CHILD_ALIVE=""
@@ -232,7 +232,7 @@ dd_unity_watched() {
   done
 }
 
-# Codex-audit M-05 (C-00 30.09): CI checkout owner lease — single source for main-ci.sh and compile-check.sh.
+# Audit M-05 (C-00 30.09): CI checkout owner lease — single source for main-ci.sh and compile-check.sh.
 # Compile and CI serialize only the same PHYSICAL checkout: the key is sha256 of the canonical checkout path, the lease is
 # the directory <parent>/.dd-ci-<key>.lease (mkdir = atomic claim) holding ONE file owner-<token> with pid=/start=/token=
 # (written as .tmp-<token> and renamed, so a reader sees a whole owner file or none). A lease is never reclaimed or
@@ -370,7 +370,7 @@ dd_ci_lease_status() {
   case "$DD_CI_LEASE_VERDICT" in FREE) return 0 ;; HELD-LIVE) return 75 ;; *) return 3 ;; esac
 }
 
-# Codex-audit M-10 (C-00 30.09): self-updating env scrub before main-ci's tests, rc.sh and a release / release-probe build.
+# Audit M-10 (C-00 30.09): self-updating env scrub before main-ci's tests, rc.sh and a release / release-probe build.
 # No fixed list: the names are every GetEnvironmentVariable("NAME") literal in the C# of the tree under test, so a new env
 # read in C# widens the scrub by itself (e.g. DD_BUILD_EXTRA_SCENES, which can add scenes to a release build). Diagnostic
 # runs that need such a variable use tools/test.sh directly (not scrubbed).

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-11 (C-00 30.09) · tools/ci_isolated.py: the main-ci core PlayMode -testFilter excludes every test listed
+"""Audit M-11 (C-00 30.09) · tools/ci_isolated.py: the main-ci core PlayMode -testFilter excludes every test listed
 in tools/ci-isolated.txt, each `alone` entry gets a filter matching only that test, `a3` entries get no step, and a
 malformed file is refused. Unity's -testFilter is a .NET regex with search semantics against the full test name, and NUnit
 runs a test when the filter matches it OR an ancestor (namespace / fixture) — runs_under() models both; Python's `re` and

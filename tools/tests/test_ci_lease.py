@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-05 (C-00 30.09) · the CI checkout owner lease, one source in tools/dd-env.sh (dd_ci_lease_acquire /
+"""Audit M-05 (C-00 30.09) · the CI checkout owner lease, one source in tools/dd-env.sh (dd_ci_lease_acquire /
 dd_ci_lease_release / dd_ci_lease_status), used by tools/main-ci.sh and tools/compile-check.sh:
 busy (live owner) → 75 · malformed owner file / symlinked lease / stale lease → 3, never reclaimed · two checkouts hold their
 own leases at once, the same canonical checkout (also through an alias) cannot · INT/TERM release it · compile-check.sh

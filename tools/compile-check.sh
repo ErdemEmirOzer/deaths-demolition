@@ -12,9 +12,9 @@
 # Asset Pipeline Refresh); an abort such as "Multiple Unity instances cannot open the same project" (exit 134) is busy (75),
 # any other non-zero exit without CS errors is "did not run" (3). It refuses up front while any Unity has the checkout's
 # project open. Compile and main-ci share an owner lease per canonical checkout.
-# Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup; a running Unity
+# Signals (Audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup; a running Unity
 # (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120); if it is still alive the slot and lease stay held: tell C-00.
-# Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* in dd-env.sh. A live owner = busy 75; a stale (dead / reused pid),
+# Lease (Audit M-05, C-00 30.09): dd_ci_lease_* in dd-env.sh. A live owner = busy 75; a stale (dead / reused pid),
 # malformed or symlinked lease is never reclaimed = 3. --lease-status is the read-only diagnosis (lease path, owner pid,
 # recorded vs current start, alive / same process, `verdict:` FREE · HELD-LIVE · STALE-DEAD-OWNER · STALE-PID-REUSED ·
 # MALFORMED · SYMLINK): deletes nothing, takes no slot, runs no git; exit 0 FREE · 75 HELD-LIVE · 3 stale/malformed/symlink.
@@ -85,9 +85,9 @@ if [ -n "$PLAYER_LOG" ]; then   # read-only: re-read a player compile log (no Un
   [ "$V" -eq 0 ] && echo "RESULT: log player $PLAYER compiles — $PLAYER_LOG"
   exit $V
 fi
-# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
+# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Audit M-05 (C-00 30.09):
 # one source — dd_ci_lease_acquire / dd_ci_lease_release / dd_ci_lease_status (dd-env.sh).
-# Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
+# Audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
 ci_disk_ready() { dd_disk_gate "$CI_DIR"; }   # C-00 30.09: the shared gate (disk ≥ 15 GiB + the swap / free-memory rule), dd-env.sh

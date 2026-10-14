@@ -31,7 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 PLAYER_EXE = "MacOS/Deaths Demolition - Playable Concept"
-# one window's wall time beyond its measured seconds: preflight ~55 s, launch, warm-up, quit (KADRO game-test-engineer
+# one window's wall time beyond its measured seconds: preflight ~55 s, launch, warm-up, quit (test review
 # 06.10: ~190-200 s per 60 s window in practice; the old 90 s let a batch overrun its 25 min)
 WINDOW_OVERHEAD_S = 140
 BASELINE_FAIL_STOP = 3   # NOTE-4: consecutive R1 windows failed on the build before the R1 side stops
@@ -75,7 +75,7 @@ class QuietWindow:
     def __init__(self, note, flag, load_max, max_minutes, pause_seconds, wait_max_seconds=1800.0):
         self.note, self.flag, self.load_max = note, flag, load_max
         self.max_seconds, self.pause = max_minutes * 60.0, pause_seconds
-        # KADRO game-test-engineer SHOULD-4 (R1 FINAL'' sat a whole hour on load1 6.9-15.3 with every slot held): a host that
+        # test review SHOULD-4 (R1 FINAL'' sat a whole hour on load1 6.9-15.3 with every slot held): a host that
         # does not go quiet within wait_max gets every slot back, the queues move, and the window is tried again after pause
         self.wait_max = wait_max_seconds
         self.slot = str(REPO / "tools" / "slot.sh")
@@ -247,7 +247,7 @@ def plan(targets, tiers, modes, windows):
 
 
 def window_kind(root, name, mode, index):
-    """complete / discarded / failed — wp078_perf_report.classify of the window just run (KADRO test-engineer NOTE-4)."""
+    """complete / discarded / failed — wp078_perf_report.classify of the window just run (test review NOTE-4)."""
     import wp078_perf_report as report
     return report.classify(report.load(root / f"perf-{name}-{mode}-{index}" / "attempt.json") or {})
 
@@ -362,13 +362,13 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     WP-091 (C-00 05.10): with a baseline (R1 probe build, its own root and commit) the two builds ALTERNATE window by
     window inside the same quiet window, so the machine state weighs on both alike — ABBA within a cell and the starting
     side swapped from one cell to the next (R2 R1 R1 R2 R2 R1 | R1 R2 R2 R1 …: a drift that favours the second slot of a
-    pair cancels; KADRO game-test-engineer SHOULD-1), and a pair is budgeted at its start so a quiet-batch boundary never
+    pair cancels; test review SHOULD-1), and a pair is budgeted at its start so a quiet-batch boundary never
     falls between its two windows (SHOULD-2; only a host that stays busy past --quiet-wait-max still splits one)."""
     sides = [("", args, root, binary)]
     if baseline is not None:
         sides.append(baseline)
     first = True
-    # KADRO test-engineer NOTE-4: an R1 build that fails on its own (not the host) would run max_discards + 1 windows in
+    # test review NOTE-4: an R1 build that fails on its own (not the host) would run max_discards + 1 windows in
     # every cell, ~60 empty windows over the matrix; after baseline_fail_stop consecutive ones it stops for the rest of the
     # matrix. A host discard neither counts nor resets; a counted window resets. FINAL's side is never stopped here.
     r1_failed, fail_stop = 0, getattr(args, "baseline_fail_stop", BASELINE_FAIL_STOP)

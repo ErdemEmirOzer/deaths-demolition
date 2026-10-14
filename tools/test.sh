@@ -43,7 +43,7 @@ dd_log "test.sh mode=$MODE filter='${FILTER:-all}'${CATEGORY:+ category='$CATEGO
 # Application.targetFrameRate == 60; tests that read recorders must set targetFrameRate = -1 in SetUp.
 [ "$MODE" = "playmode" ] && dd_log "note: ProfilerRecorder-based tests need Application.targetFrameRate = -1 in SetUp (LastValue stays 0 at 60 in the Editor runner)"
 if [ "$NOWAIT" -eq 1 ] && [ "$(dd_unity_count)" -ge "$DD_MAX_UNITY" ]; then dd_log "busy"; exit 75; fi
-# Codex-audit Y1 / G4 Q10 (C-00 30.09): INT/TERM/HUP (main-ci forwards TERM to this pid) exit 130/143/129 through EXIT,
+# Audit Y1 / G4 Q10 (C-00 30.09): INT/TERM/HUP (main-ci forwards TERM to this pid) exit 130/143/129 through EXIT,
 # which first stops our own Unity (TERM to DD_UNITY_PID only, ≤ DD_CI_CHILD_GRACE s); a Unity still alive keeps the slot.
 T_CLEANING=0
 t_cleanup() {

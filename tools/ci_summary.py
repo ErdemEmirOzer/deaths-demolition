@@ -3,11 +3,11 @@
 every red mapped to its owner (tools/ci-owners.tsv), and new reds vs the previous CI run of another SHA.
 usage: ci_summary.py <out-dir> <sha> <ci-root> <owners.tsv> [--userdata-warning TEXT] [--driver-head SHA] [--tools-tree HASH]
                      [--env-scrubbed "NAME NAME…"]
-Codex-audit M-12 (C-00 30.09): --driver-head / --tools-tree = the main-ci driver worktree's HEAD and `HEAD:tools` tree hash
+Audit M-12 (C-00 30.09): --driver-head / --tools-tree = the main-ci driver worktree's HEAD and `HEAD:tools` tree hash
 (summary.json driverHead / toolsTree, a line in summary.md); optional — the old call still works (both null).
-Codex-audit M-10 (C-00 30.09): --env-scrubbed = the env variables main-ci cleared before the tests (dd_scrub_code_env);
+Audit M-10 (C-00 30.09): --env-scrubbed = the env variables main-ci cleared before the tests (dd_scrub_code_env);
 summary.json envScrubbed = that list ([] = none were set), null when the option is absent (old call).
-Codex-audit M-11 (C-00 30.09): when the core PlayMode step ran (<out>/playmode exists), every `alone` entry of ci-isolated.txt
+Audit M-11 (C-00 30.09): when the core PlayMode step ran (<out>/playmode exists), every `alone` entry of ci-isolated.txt
 (next to owners.tsv) is an expected suite <out>/playmode-alone-<n>-<name>/playmode.xml: its reds, new reds and a missing XML /
 watchdog count exactly like the core's (a missing ci-isolated.txt = no alone suites, the old behaviour)."""
 import glob, json, os, re, sys, datetime

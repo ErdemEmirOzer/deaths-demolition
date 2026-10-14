@@ -364,7 +364,7 @@ class Wp064GateV2Tests(unittest.TestCase):
 
     def test_finding3_controller_processes_are_not_exempt(self):
         run = load_wp064_run()
-        for args in ("/Users/x/.codex/bin/codex exec", "/Applications/ChatGPT.app/Contents/MacOS/ChatGPT"):
+        for args in ("/Users/x/.tools/bin/controller exec", "/Applications/Controller.app/Contents/MacOS/Controller"):
             row = {"pid": 999999, "ppid": 1, "cpu": 90.0, "args": args}
             with self.subTest(args=args):
                 self.assertFalse(run.controller_or_presentation(row))

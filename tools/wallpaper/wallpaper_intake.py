@@ -17,7 +17,7 @@ sRGB profile the master carries), measured against its master before it is writt
                            screens at push-in 1.0 / 1.05, the brightest pixel under the ring (cream ≥ 3:1, i.e. luminance
                            ≤ 0.25), under the label stack (TextSecondary ≥ 4.5:1, ≤ 0.061) and under the tip strip
                            (TextPrimary ≥ 7:1 on the 0.72 strip). The words sit inside x 0.35-0.65, y 0.30-0.72 (from the
-                           top) - the band to paint dark, never a box. A pre-check for painters and Codex; the Unity test
+                           top) - the band to paint dark, never a box. A pre-check for painters; the Unity test
                            stays the gate.
 
 and recorded in UI/Art/wallpaper-intake.json (file, bytes, sha256, master sha256, encoder, PSNR, SSIM, max luminance),

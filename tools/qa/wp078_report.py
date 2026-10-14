@@ -241,7 +241,7 @@ POSE_START = re.compile(r"-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?")
 SECONDARY_PERF_ROOTS = {"r1-baseline": re.compile(re.escape(R1_BASELINE_ROOT) + "|" + re.escape(Z3_R1_ROOT)),
                         "b9-pose": re.compile(re.escape(B9_ROOT) + "/" + POSE_NAME),
                         "z3-pose": re.compile(re.escape(Z3_ROOT))}
-# a pose or crowd variant makes a probe window another measurement: never an A4 gate window (KADRO test-engineer MUST-2)
+# a pose or crowd variant makes a probe window another measurement: never an A4 gate window (test review MUST-2)
 VARIANT_FLAGS = ("-ddPilotStart", "-ddArmor")
 
 
@@ -1282,7 +1282,7 @@ class Inspector:
             review = self.obj(entry["review"])[1] if isinstance(entry.get("review"), dict) else None
             row = R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases,
                                    modes=None if self.modes == tuple(R2.SCOPE_MODES) else self.modes)
-            # KADRO game-test-engineer SHOULD-6 / S-08 06.10: a quiet gate measured on a busy host is KİRLİ — a note, never
+            # test review SHOULD-6 / S-08 06.10: a quiet gate measured on a busy host is KİRLİ — a note, never
             # its status (the owner's own quality gates decide the value); a quiet gate with no host record says so too
             host = self.obj(entry["host"])[1] if isinstance(entry.get("host"), dict) else None
             if isinstance(host, dict):

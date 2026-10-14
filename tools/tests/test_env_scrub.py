@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-10 (C-00 30.09) · dd_scrub_code_env (tools/dd-env.sh) and the release path of tools/build.sh.
+"""Audit M-10 (C-00 30.09) · dd_scrub_code_env (tools/dd-env.sh) and the release path of tools/build.sh.
 
 The scrub list is not fixed: it is every GetEnvironmentVariable("NAME") literal in the C# of the tree under test; only HOME
 is kept. Fully fake: a git repo in a tempdir whose .cs reads DD_X / HOME / DD_UNSET_Y, a fake Unity that writes the build

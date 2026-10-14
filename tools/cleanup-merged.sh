@@ -26,7 +26,7 @@
 #   crash. Keep-guard (tools/cleanup_guard.py) before every removal, fail closed: `.dd-keep` in the folder or an ancestor below $HOME,
 #   in use (a process names it; Player/Unity/slot-owner cwd + relative args), recent (sections 2/3: newest mtime inside
 #   < 24 h), protected path segment, or any check that cannot be evaluated → keep. Section 5 reports the non-standard
-#   folders (worktree-*, perf-*, release-*, rc-*, wp-*/builds, ~/.codex/worktrees/*) and never deletes them.
+#   folders (worktree-*, perf-*, release-*, rc-*, wp-*/builds) and never deletes them.
 #   Sizes: apparentMB = apparent size (clones share blocks) — `du` counts every `cp -c` clone in full; realGainMB =
 #   estimated real gain = sum of APFS private bytes (tools/apfs_real_gain.py, lower bound; "n/a (clone-shared)" when the
 #   volume cannot report it).
@@ -158,15 +158,14 @@ for a in "$ROOT"/wp-*/evidence/**/*.app(N); do row "$(mb "$a")" "-" "manual" "${
 
 # WP-079G: non-standard folders are reported with their size and never deleted here. A registered worktree inside one
 # is judged by 1) (its own rules); the folder row says so.
-echo; echo "== 5) other folders (report only, never deleted here): worktree-*, perf-*, release-*, rc-*, wp-*/builds, ~/.codex/worktrees/*"
+echo; echo "== 5) other folders (report only, never deleted here): worktree-*, perf-*, release-*, rc-*, wp-*/builds"
 hdr folder
-CODEX="$HOME/.codex/worktrees"
 for d in "$ROOT"/worktree-* "$ROOT"/perf-* "$ROOT"/release-* "$ROOT"/rc-* \
-         "$ROOT"/wp-*/worktree-* "$ROOT"/wp-*/perf-* "$ROOT"/wp-*/release-* "$ROOT"/wp-*/rc-* "$ROOT"/wp-*/builds "$CODEX"/*; do
+         "$ROOT"/wp-*/worktree-* "$ROOT"/wp-*/perf-* "$ROOT"/wp-*/release-* "$ROOT"/wp-*/rc-* "$ROOT"/wp-*/builds; do
   [ -d "$d" ] || continue
   size=$(mb "$d"); real=$(rg "$d"); OTHER=$((OTHER + size))
   n=$(print -r -- "$REG" | awk -v p="$d/" 'index($0, p) == 1' | wc -l | tr -d ' ')
-  note=""; [ "$n" -gt 0 ] && note="$n registered worktree(s) inside → see 1)" || { [[ "${d:t}" == worktree-* || "$d" == "$CODEX"/* ]] && note="no registered worktree inside"; }
+  note=""; [ "$n" -gt 0 ] && note="$n registered worktree(s) inside → see 1)" || { [[ "${d:t}" == worktree-* ]] && note="no registered worktree inside"; }
   short="${d#$ROOT/}"; short="${short/#$HOME/~}"
   row "$size" "$real" "report" "$short" "$(guard "$d")${note:+ · $note}"
 done

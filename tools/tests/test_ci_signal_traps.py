@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Codex-audit Y1 / G4 Q10 (C-00 30.09) · tools/main-ci.sh + tools/compile-check.sh (+ tools/test.sh) on INT/TERM/HUP:
+"""Audit Y1 / G4 Q10 (C-00 30.09) · tools/main-ci.sh + tools/compile-check.sh (+ tools/test.sh) on INT/TERM/HUP:
 exit 130/143/129 through the one EXIT cleanup (guard restore once, player slot + lease released); a child that survives
 TERM for DD_CI_CHILD_GRACE s leaves the user-data window open (no restore, slot + lease kept, "tell C-00").
 Fully fake: copied tools in a tempdir, fake git repo + detached CI worktree, fake slot.sh / userdata-guard.sh / test.sh /
 Unity, HOME inside the tempdir. No Unity, no Player, no real slot dir, no real user data.
-Codex-audit M-12 (C-00 30.09): the scripts run from a DRIVER that is a detached git worktree of the fixture repo whose `main`
+Audit M-12 (C-00 30.09): the scripts run from a DRIVER that is a detached git worktree of the fixture repo whose `main`
 carries these tools (the same general code path as the real driver — no test-only bypass, H11); CiDriverGuardTests covers
 the driver check (M-12), dd_project_open (M-06), the editor-scope guard lock wait, main-ci's 75 retry into a new guard
 directory and dd_slot_* exit codes (M-07).
-Codex-audit M-11 (C-00 30.09): CiIsolatedStepTests — the fake test.sh records every call's --filter / --out; the core call
+Audit M-11 (C-00 30.09): CiIsolatedStepTests — the fake test.sh records every call's --filter / --out; the core call
 excludes the ci-isolated.txt tests, each `alone` test runs in its own second call, `a3` never runs, the summary counts it.
 usage: python3 tools/tests/test_ci_signal_traps.py"""
 import json, os, re, shutil, signal, subprocess, sys, tempfile, time, unittest
@@ -179,13 +179,13 @@ class CiFixture(unittest.TestCase):
 
     def make_repo(self, real_test_sh=False):
         """Fake main repo whose `main` carries the tools under test (copied scripts + fake slot.sh / userdata-guard.sh and
-        the CI checkout's test.sh), a detached CI worktree and a detached DRIVER worktree at main (Codex-audit M-12): the
+        the CI checkout's test.sh), a detached CI worktree and a detached DRIVER worktree at main (Audit M-12): the
         scripts run from <driver>/tools. real_test_sh: the checkout carries the REAL test.sh/dd-env.sh."""
         self.repo.mkdir()
         self.git("init", "-q", "-b", "main")
         (self.repo / "prototype/DeathsDemolition_PlayableConcept").mkdir(parents=True)
         (self.repo / "prototype/DeathsDemolition_PlayableConcept/.keep").write_text("")
-        # Codex-audit M-10: the C# of the commit under test decides what main-ci scrubs (dd_scrub_code_env)
+        # Audit M-10: the C# of the commit under test decides what main-ci scrubs (dd_scrub_code_env)
         (self.repo / "prototype/DeathsDemolition_PlayableConcept/Assets").mkdir()
         (self.repo / "prototype/DeathsDemolition_PlayableConcept/Assets/Probe.cs").write_text(
             'class P { string a = System.Environment.GetEnvironmentVariable("DD_X");\n'
@@ -382,7 +382,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertIn("GREEN · edit 1/1 · play 1/1", out)
         self.assertTrue((self.log / "child-playmode.pid").exists())
         summary = json.loads((self.out / self.sha / "summary.json").read_text())
-        # Codex-audit M-12: the driver's HEAD and tools tree are recorded (driver = detached worktree at main = self.sha)
+        # Audit M-12: the driver's HEAD and tools tree are recorded (driver = detached worktree at main = self.sha)
         self.assertEqual(summary["driverHead"], self.sha)
         self.assertEqual(summary["toolsTree"], self.git("rev-parse", "main:tools"))
         self.assertIn(summary["toolsTree"], (self.out / self.sha / "summary.md").read_text())
@@ -434,7 +434,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertEqual(rc, 0, out + err)
         self.assertIn("acoustic map: DD_AcousticSpaces.asset baked from acoustic-spaces-v6.json", out + err)
 
-    # --- Codex-audit M-10: env scrub right before the tests -------------------------------------------------------------
+    # --- Audit M-10: env scrub right before the tests -------------------------------------------------------------
     def assert_scrubbed(self, extra, cleared):
         rc, out, err = self.finish(self.main_ci("pass", playmode=True, DD_KEEP_ME="k", **extra))
         self.assertEqual(rc, 0, out + err)
@@ -513,7 +513,7 @@ class CiSignalTrapTests(CiFixture):
 
 
 class CiDriverGuardTests(CiFixture):
-    """Codex-audit M-12 / M-06 / M-07 (C-00 30.09)."""
+    """Audit M-12 / M-06 / M-07 (C-00 30.09)."""
     # --- M-12: driver = the git worktree holding main-ci.sh: clean, detached, tools tree == main's ----------------------
     def assert_driver_refused(self, prepare, why):
         rc, out, err = self.finish(self.main_ci("pass", prepare=prepare))
@@ -803,7 +803,7 @@ KEPT = [ARMOR + "ZirhDurumGecisi_HasarYoluyla_Present_Damaged_Broken_OlayAnkrajd
 
 
 class CiIsolatedStepTests(CiFixture):
-    """Codex-audit M-11 (C-00 30.09): the real ci-suites.txt + the pinned FIXTURE_ISOLATED through main-ci with a recording
+    """Audit M-11 (C-00 30.09): the real ci-suites.txt + the pinned FIXTURE_ISOLATED through main-ci with a recording
     test.sh."""
     def calls(self):
         return [l.split("\t") for l in self.lines("test-calls.txt")]

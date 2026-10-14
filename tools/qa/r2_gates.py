@@ -10,7 +10,7 @@ Measurement artifact (schema dd-r2-measure-v1):
   {"schema": "dd-r2-measure-v1", "gate": "L1", "commit": "<40-hex FINAL>", "source": "<test full name>",
    "values": {"avg": 0.031, "p95": 0.074}, "samples": 412}
 Review artifact (schema dd-r2-review-v1):
-  {"schema": "dd-r2-review-v1", "gate": "H5", "commit": "<40-hex>", "reviewer": "AD Fable", "verdict": "KABUL",
+  {"schema": "dd-r2-review-v1", "gate": "H5", "commit": "<40-hex>", "reviewer": "AD", "verdict": "KABUL",
    "must": [{"id": "MUST-1", "closed": true}]}
 
 Statuses: a gate with no artifact is BLOCKED (named); a value outside its check, a RED review, an open MUST or a

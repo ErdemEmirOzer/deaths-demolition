@@ -1,4 +1,4 @@
-# Codex-audit M-11 (C-00 30.09) · PlayMode tests that must NOT run inside the main-ci core step (tools/ci-suites.txt).
+# Audit M-11 (C-00 30.09) · PlayMode tests that must NOT run inside the main-ci core step (tools/ci-suites.txt).
 # Columns (TAB-separated): <regex>  <where>  <why — and where it runs instead>. # = comment.
 #   <regex>: matched like Unity -testFilter (.NET regex, search semantics) against the full test name, e.g.
 #            DD.Art.Tests.PlayMode.ArmorTests.Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu;

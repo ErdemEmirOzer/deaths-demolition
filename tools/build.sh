@@ -21,7 +21,7 @@
 # Exit codes (contract for callers):
 #   0 ok · 3 release env scrub failed (git grep) · 10 build failed · 20 smoke failed · 30 user-data guard failed · 64 usage
 #   · 75 machine busy (--no-wait)
-# Env (Codex-audit M-10, C-00 30.09): release / release-probe first unset every variable the C# of $DD_REPO reads, except
+# Env (Audit M-10, C-00 30.09): release / release-probe first unset every variable the C# of $DD_REPO reads, except
 # HOME (dd_scrub_code_env, dd-env.sh) — e.g. DD_BUILD_EXTRA_SCENES must not add scenes to a shipped build; the cleared names
 # go into the timeline and report.json "envScrubbed". git grep failure → 3, nothing built. dev builds are unchanged.
 # Machine rule: a Unity slot is taken through tools/slot.sh (max 2 Unity batch on this machine) and released after the build.

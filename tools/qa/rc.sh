@@ -28,7 +28,7 @@
 # INT/TERM/HUP: the running guarded stage is stopped (its whole process tree, Player included), the open snapshot is
 # restored FIRST, then the RC fails (128+signal, or the restore's code). A stage without an RC guard is let finish (its
 # own guard must run), then the RC fails.
-# Env (Codex-audit M-10, C-00 30.09): before any stage every variable the C# of $REPO reads is unset except HOME
+# Env (Audit M-10, C-00 30.09): before any stage every variable the C# of $REPO reads is unset except HOME
 # (dd_scrub_code_env in dd-env.sh); cleared names → timeline, environment.txt, rc-report.json envScrubbed; git grep fails → 3.
 set -u
 
@@ -259,7 +259,7 @@ cleanup() { rm -f "$PROJECT_LOCK/owner.txt" 2>/dev/null || true; rmdir "$PROJECT
 trap 'finalize >/dev/null 2>&1 || true; cleanup' EXIT
 arm_signals
 
-# Codex-audit M-10 (C-00 30.09): before any stage, unset every env variable the C# of $REPO reads (dd_scrub_code_env,
+# Audit M-10 (C-00 30.09): before any stage, unset every env variable the C# of $REPO reads (dd_scrub_code_env,
 # dd-env.sh; allow-list HOME) — the RC runs what a user gets, never a caller's DD_* diagnostic switch. The cleared names go
 # into the timeline, environment.txt and rc-report.json envScrubbed. git grep failure → 3 (preflight), nothing run.
 DD_TIMELINE="$TIMELINE" dd_scrub_code_env "$REPO" || { FAILED=3; FAILED_STAGE="preflight"; exit "$FAILED"; }

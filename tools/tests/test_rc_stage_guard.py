@@ -135,7 +135,7 @@ class FakeRepo:
                             f'sys.exit(fake.main("{Path(rel).stem}", sys.argv[1:]))\n')
         for rel, text in fake_over:
             self.write(rel, text)
-        # Codex-audit M-10: rc.sh scrubs what the C# of $REPO reads (git grep) — the fake repo is a git repo with one .cs
+        # Audit M-10: rc.sh scrubs what the C# of $REPO reads (git grep) — the fake repo is a git repo with one .cs
         cs = self.root / "prototype/DeathsDemolition_PlayableConcept/Assets/Probe.cs"
         cs.parent.mkdir(parents=True, exist_ok=True)
         cs.write_text('class P { string a = System.Environment.GetEnvironmentVariable("DD_X");\n'

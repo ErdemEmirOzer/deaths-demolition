@@ -10,7 +10,7 @@
 #          · acoustic map baked from its source when the source touches it (gate 4c, C-00 10.10; also on the merged index;
 #          --acoustic-exempt "<reason>" skips it, loudly)
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers · commit-message format
-#          (Codex-audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
+#          (Audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
 #          with Test/Tests/Guarded, any case, or mentions EditMode/PlayMode); --subject-exempt "<reason>" skips it
 #          — and a WIP commit fails it ("WIP" in the subject label before the first ':', or a body line starting
 #          "Not for main" / "Test: WIP"; C-00 06.10)
@@ -20,7 +20,7 @@
 #          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between; 00/01 DEC/REQ tables: HEAD
 #          rows then THEIRS rows, then re-numbered check) → any other
 #          conflict → rollback and stop · non-planning paths must carry the source commit's change (blob identity, or
-#          identical +/- hunks when git 3-way-merged the file) → else rollback and stop · git commit -C <source> (author, message, Co-Authored-By
+#          identical +/- hunks when git 3-way-merged the file) → else rollback and stop · git commit -C <source> (author, message, trailers
 #          kept) · annotated tag · tools/post-integrate.sh <tag> (backup + cleanup dry-run + disk + LFS).
 #   Never: reset, rebase, push, add -A, branch/tag deletion. main HEAD changes only at the commit step.
 #   --compile (WP-043C, with --apply): after the apply, tools/compile-check.sh compiles the new main HEAD in the
@@ -46,7 +46,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 [ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--subject-exempt reason] [--verbose]" >&2; exit 64; }
-# Codex-audit K-02 (C-00 30.09): the exemption is explicit and carries a reason — an empty one is a usage error.
+# Audit K-02 (C-00 30.09): the exemption is explicit and carries a reason — an empty one is a usage error.
 [ "$EXEMPT_SET" -eq 0 ] || [[ "$EXEMPT" == *[![:space:]]* ]] || { echo "--subject-exempt needs a non-empty reason" >&2; exit 64; }
 [ "$AC_EXEMPT_SET" -eq 0 ] || [[ "$AC_EXEMPT" == *[![:space:]]* ]] || { echo "--acoustic-exempt needs a non-empty reason" >&2; exit 64; }
 # S-09 / C-00 05.10: without --repo (or DD_REPO) the repository is its MAIN worktree, not the checkout this script runs
@@ -63,7 +63,7 @@ G=(git -C "$DD_REPO")
 fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
 # to HEAD (restore) or is dropped again if HEAD never had it. main HEAD is untouched at this point.
-# Codex-audit M-08 (C-00 30.09): returns 0 ONLY when the tree is verified clean; 7 when the rollback cannot be
+# Audit M-08 (C-00 30.09): returns 0 ONLY when the tree is verified clean; 7 when the rollback cannot be
 # verified (any `git status` failure) or dirty paths remain — callers `abort_pick || exit 7; exit 4`, so a failed
 # rollback is never reported as a clean "apply conflict (main unchanged)".
 abort_pick() {
@@ -235,7 +235,7 @@ fi
 LP=$("${G[@]}" lfs ls-files 2>/dev/null | wc -l | tr -d ' '); LO=$(find "$("${G[@]}" rev-parse --path-format=absolute --git-common-dir)/lfs/objects" -type f 2>/dev/null | wc -l | tr -d ' ')
 [ "$LO" -ge "$LP" ] && say "lfs pointers=$LP objects=$LO" || fail "LFS objects ($LO) < pointers ($LP)"
 
-# --- gate 8: commit-message format (Codex-audit K-02, C-00 30.09). Subject in the house format ending in the
+# --- gate 8: commit-message format (Audit K-02, C-00 30.09). Subject in the house format ending in the
 #     C-00 date stamp; body names how the change was tested. --subject-exempt skips it, loudly (RESULT line).
 SUBJ_RE='^(WP|AP)-[0-9]{3}[^:]*: .+ \(C-00 [0-9]{2}\.[0-9]{2}\)$'
 # G4 D8 next slice (C-00 06.10; git-safety SHOULD-6, review NIT-1/2): WIP = "WIP" (any case) in the subject's label before

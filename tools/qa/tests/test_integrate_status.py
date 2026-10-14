@@ -93,7 +93,7 @@ class IntegrateStatusTests(unittest.TestCase):
     def rollback_failure(self, position, output):
         responses = [['dirty', 0]]*(position-1)+[[output, 128]]
         result, calls = self.execute({'main': responses}, rollback=True)
-        self.assertEqual(7, result.returncode, result.stdout+result.stderr)   # Codex-audit M-08: unverified rollback = 7
+        self.assertEqual(7, result.returncode, result.stdout+result.stderr)   # Audit M-08: unverified rollback = 7
         self.assertIn('ROLLBACK UNVERIFIED', result.stdout)
         self.assertNotIn('aborted: 0 dirty paths', result.stdout)
         mutations = [a for a in calls if a[0] in MUTATIONS]

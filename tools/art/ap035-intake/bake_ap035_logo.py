@@ -2,7 +2,7 @@
 """AP-035 intake bake (WP-098A, C-00 08.10; AP-035 R3 S-11 O2 08.10: 2048 Logo class, floor time code, 4-multiple fx,
 --install) - the loading / menu logo rebuilt natively for Unity.
 
-Inputs (read-only, AP-035 exports + one HF working sheet the motion spec names):
+Inputs (read-only, AP-035 exports + one working sheet the motion spec names):
   v002 StrokeMasks: the 36 stroke masks (owner = which mask is non-zero), stroke_owner_ids.png (cross-check),
                     stroke_progress_u16.png (path progress), stroke-timeline.json (per-stroke frames + cubic-bezier)
   v003 LoadingLogo/motion-spec.json (wordmark window [3, 47], front softness), sync-points.json
@@ -10,7 +10,7 @@ Inputs (read-only, AP-035 exports + one HF working sheet the motion spec names):
   v003 wordmark_stacked_full_8192.png (the colour art; 3 px right of the v001 master at 4096 - measured, shifted here)
   v001 emblem/dark_safe/emblem_dark_safe_4096.png (the seal: bone towers + vermilion broken ring)
   v001 LogoLayers seal_glow_fx.png, seal_ink_leak_fx.png, seal_body_black.png, seal_red_broken_ring.png (placement)
-  03-higgsfield/v003/loading_ring_ash_atlas.png (the closed ink ring, box [0, 0, 720, 752])
+  03-*/v003/loading_ring_ash_atlas.png (the package's numbered working folder 03-*; exactly one must hold it; the closed ink ring, box [0, 0, 720, 752])
 
 Outputs (out/): the eight runtime PNGs + bake-report.json; --previews adds previews/ (review sheets, not shipped, not in git).
 --install copies the runtime PNGs into the Unity project (Logo class: Resources/UI/Logo, wordmark + time map + halo;
@@ -26,6 +26,7 @@ texel's true interval - round() held texels just before a frame boundary back by
 Texels are the alpha-weighted mean of the FACTOR x FACTOR source pixels (4096 -> 2048); texels within DILATE texels of ink
 take their inked neighbours' mean so a bilinear tap inside the colour art never reads 255; everything else is 255.
 """
+import glob
 import hashlib
 import json
 import os
@@ -77,8 +78,21 @@ FILES = {
     "seal_ink_leak": EX + "/v001/Logo/LogoLayers/seal_ink_leak_fx.png",
     "seal_body": EX + "/v001/Logo/LogoLayers/seal_body_black.png",
     "seal_ring": EX + "/v001/Logo/LogoLayers/seal_red_broken_ring.png",
-    "ash_atlas": AP + "/03-higgsfield/v003/loading_ring_ash_atlas.png",
+    "ash_atlas": AP + "/03-*/v003/loading_ring_ash_atlas.png",   # a pattern: resolved to the one match below
 }
+
+
+def _resolve_pattern(pattern):
+    """The one existing file a glob pattern names; any other count stops the bake with the rule and where to look."""
+    found = sorted(glob.glob(pattern))
+    if len(found) != 1:
+        sys.exit("bake_ap035_logo: input pattern %s must match exactly one file, found %d %s - check the AP-035 working folder 03-*/v003"
+                 % (pattern, len(found), found))
+    return found[0]
+
+
+REPORT_PATHS = {"ash_atlas": FILES["ash_atlas"]}   # the report names the pattern, so a re-run writes the same bytes anywhere
+FILES["ash_atlas"] = _resolve_pattern(FILES["ash_atlas"])
 
 NAMES = {
     "wordmark": "ap035_logo_wordmark_2048x768.png",
@@ -243,7 +257,7 @@ def main():
         os.makedirs(PREV, exist_ok=True)
     report = {"inputs": {}, "parameters": {}, "outputs": {}, "checks": {}, "placement": {}}
     for key, path in FILES.items():
-        report["inputs"][key] = {"path": path, "sha256": sha256(path)}
+        report["inputs"][key] = {"path": REPORT_PATHS.get(key, path), "sha256": sha256(path)}
 
     timeline = json.load(open(FILES["timeline"]))
     spec = json.load(open(FILES["motion_spec"]))

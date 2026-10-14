@@ -162,7 +162,7 @@ LOAD_FIELDS = ("activeMin", "activeMax", "liveBodiesMin", "liveBodiesMax", "crow
 
 
 def window_integrity(directory, mode, targets, commit=None, binary_sha256=None):
-    """WP-091 P2, "the source is in the recording" (C-00 05.10; KADRO game-test-engineer MUST-1, 06.10): the load and
+    """WP-091 P2, "the source is in the recording" (C-00 05.10; test review MUST-1, 06.10): the load and
     scope wp078_report's A4 gate proves on FINAL's windows, for every window a comparison uses, on both sides — the side's
     commit and build, the Run scene at the target resolution, exactly activeEnemies forced and held for the whole window,
     the warm-up and window lengths, the TP/FP sweep, a full CSV. The probe exits 0 even when its own window failed, so a
@@ -230,7 +230,7 @@ def compare(r2_result, r1_result, invalid=None):
     """WP-091 P2 (report, never a gate): per tier × mode, the mean of the sound counted windows' frame means, R2 − R1 in ms
     and %. A cell is measured only with the tier's minWindows sound windows on BOTH sides (else "unmeasured", never
     flagged as fine). invalid = {"r2": {dir: problems}, "r1": {dir: problems}} (window_integrity) — those windows never
-    count. Each cell also carries the noise and the pairing (KADRO game-test-engineer SHOULD-3): the window means, their
+    count. Each cell also carries the noise and the pairing (test review SHOULD-3): the window means, their
     SD, the SE of the difference, the n-th R2 window paired with the n-th R1 window (their differences, the median, and the
     largest start-time gap of a pair)."""
     invalid = invalid or {}
@@ -334,7 +334,7 @@ def main():
                 artifact = {"schema": "dd-r2-measure-v1", "gate": "P2", "commit": args.commit,
                             "source": "tools/qa/wp078_perf_report.py --baseline",
                             "values": {k: comparison[k] for k in ("flaggedCells", "worstDeltaMs", "worstDeltaPct")},
-                            # the sound windows used, both sides (r2_gates: samples <= 0 is BLOCKED — KADRO test-engineer MUST-1)
+                            # the sound windows used, both sides (r2_gates: samples <= 0 is BLOCKED — test review MUST-1)
                             "samples": sum(c["r2Windows"] + c["r1Windows"] for c in comparison["cells"]),
                             "binarySha256": args.sha256, "baselineCommit": args.baseline_commit,
                             "baselineBinarySha256": args.baseline_sha256, "cells": comparison["cells"]}

@@ -274,7 +274,7 @@ def main():
     parser.add_argument("--failed-stage", default="")
     parser.add_argument("--perf-runs", type=int, default=3)
     parser.add_argument("--window", type=int, default=60)
-    # Codex-audit M-10 (C-00 30.09): the env variables rc.sh cleared (dd_scrub_code_env); absent (old call) → null
+    # Audit M-10 (C-00 30.09): the env variables rc.sh cleared (dd_scrub_code_env); absent (old call) → null
     parser.add_argument("--env-scrubbed", default=None)
     args = parser.parse_args()
     env_scrubbed = args.env_scrubbed.split() if args.env_scrubbed is not None else None

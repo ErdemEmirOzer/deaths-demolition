@@ -3,7 +3,7 @@
 Never touches the real repository or the KADRO root: the scripts are copied into the tempdir and run with DD_REPO=<fixture>,
 --root <tempdir root>, HOME / DD_SLOT_BASE inside the tempdir. --apply runs only against these fixtures.
 Covers: a registered worktree whose folder is gone (was "bad math expression") → PRUNE row, size 0, no crash; non-standard
-folders (worktree-*, perf-*, release-*, rc-*, wp-*/builds, ~/.codex/worktrees) in both reports; the apparent-size / real-gain
+folders (worktree-*, perf-*, release-*, rc-*, wp-*/builds) in both reports; the apparent-size / real-gain
 column naming (text + JSON); the keep-guard (.dd-keep, recent < 24 h, in use by argv / Unity-like cwd+relative arg /
 slot-owner cwd, unknown = fail closed); size helpers robust to a broken du; merged worktrees still REMOVE.
 usage: python3 tools/tests/test_cleanup_disk_report.py"""
@@ -144,13 +144,13 @@ class TemizlikRaporTestleri(unittest.TestCase):
     def test_Rapor_StandartDisiKlasorler_IkiRapordaGorunurCleanupSilmez(self):
         dirs = [filled(self.root / "worktree-x"), filled(self.root / "wp-200" / "perf-x"),
                 filled(self.root / "wp-200" / "release-x"), filled(self.root / "wp-200" / "builds"),
-                filled(self.root / "rc-x"), filled(self.home / ".codex" / "worktrees" / "cx")]
+                filled(self.root / "rc-x")]
         for d in dirs:
             make_old(d)
         rc, out, err = self.cleanup("--apply")
         self.assertEqual(rc, 0, out + err)
         section = out.split("== 5)", 1)[1]
-        for label in ("worktree-x", "wp-200/perf-x", "wp-200/release-x", "wp-200/builds", "rc-x", "~/.codex/worktrees/cx"):
+        for label in ("worktree-x", "wp-200/perf-x", "wp-200/release-x", "wp-200/builds", "rc-x"):
             line = self.row(section, label)
             self.assertEqual(line.split()[0], "1", line)
             self.assertIn("report", line)
@@ -158,12 +158,11 @@ class TemizlikRaporTestleri(unittest.TestCase):
             self.assertTrue(d.exists(), f"report-only folder deleted: {d}")
         rc, dout, derr = self.run_tool("disk-report.sh", "--root", str(self.root), "--json", str(self.t / "d.json"))
         self.assertEqual(rc, 0, dout + derr)
-        for label in ("worktree-x", "wp-200/perf-x", "wp-200/release-x", "wp-200/builds", "rc-x", "~/.codex/worktrees/cx"):
+        for label in ("worktree-x", "wp-200/perf-x", "wp-200/release-x", "wp-200/builds", "rc-x"):
             self.assertIn(label, dout)
         data = json.loads((self.t / "d.json").read_text())
-        self.assertEqual(data["otherFoldersMB"], 6)
-        self.assertEqual(data["codexWorktreesMB"], 1)
-        self.assertEqual(len(data["otherFolders"]), 6)
+        self.assertEqual(data["otherFoldersMB"], 5)
+        self.assertEqual(len(data["otherFolders"]), 5)
 
     def test_Rapor_StandartDisiWorktreeIcindeKayitliWorktree_Bolum1eYonlendirir(self):
         path = self.root / "wp-201" / "worktree-r2" / "deaths-demolition"

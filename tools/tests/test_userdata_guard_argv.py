@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-02(e) (C-00 30.09) · tools/userdata-guard.sh argv is exact: `snapshot|restore <dir>` or `… <dir> --scope <s>`.
+"""Audit M-02(e) (C-00 30.09) · tools/userdata-guard.sh argv is exact: `snapshot|restore <dir>` or `… <dir> --scope <s>`.
 Every other shape exits 64 before anything is touched (the <dir> is not even created). Only malformed argv is run here —
 a well-formed call would take the real snapshot. usage: python3 tools/tests/test_userdata_guard_argv.py"""
 import subprocess, tempfile, unittest

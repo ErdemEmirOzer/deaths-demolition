@@ -7,7 +7,7 @@
 # core suites (tools/ci-suites.txt, ≈ 25 min), then writes <out-root>/<sha>/summary.json + summary.md
 # with every red mapped to its owner session (tools/ci-owners.tsv) and the reds that are NEW since
 # the previous CI run of another commit.
-# Isolated tests (Codex-audit M-11, C-00 30.09): tools/ci-isolated.txt lists single tests the core must not run (capture,
+# Isolated tests (Audit M-11, C-00 30.09): tools/ci-isolated.txt lists single tests the core must not run (capture,
 # DEC-077 reading, allocation); the core -testFilter excludes all of them (tools/ci_isolated.py, negative lookahead). Each
 # `alone` entry then runs in its OWN test.sh call (filter = that test only, out <sha>/playmode-alone-<n>-<name>,
 # --alone-timeout min, default 10) after the core step; ci_summary.py counts it like the core. `a3` entries are not run here.
@@ -17,14 +17,14 @@
 # shares with the game (profile, settings, telemetry) is hashed before/after — anything a test changed
 # is restored from the copy taken before and reported as a user-data warning.
 # Processes (R1 §4.13): this script kills nothing; tools/test.sh's watchdog only ends the Unity pid it started.
-# Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup. A running
+# Signals (Audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup. A running
 # test.sh (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120) to end with its Unity; if any of them is still
 # alive the user-data window is LEFT OPEN — no restore, no lease release — and the line says: tell C-00.
-# Driver (Codex-audit M-12, C-00 30.09): the git worktree holding THIS main-ci.sh (guard, summary, owners, suites come from
+# Driver (Audit M-12, C-00 30.09): the git worktree holding THIS main-ci.sh (guard, summary, owners, suites come from
 # it) must be clean, on a detached HEAD, and carry main's tools tree; its HEAD + tools tree hash go into summary.json/md.
-# Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* (dd-env.sh), shared with compile-check.sh; a live owner → 75 at once
+# Lease (Audit M-05, C-00 30.09): dd_ci_lease_* (dd-env.sh), shared with compile-check.sh; a live owner → 75 at once
 # (no waiting); a stale / malformed / symlinked lease is never reclaimed → 3 (diagnose: compile-check.sh --lease-status).
-# Env (Codex-audit M-10, C-00 30.09): right before the tests every variable the CI checkout's C# reads is unset except HOME
+# Env (Audit M-10, C-00 30.09): right before the tests every variable the CI checkout's C# reads is unset except HOME
 # (dd_scrub_code_env); the cleared names go into summary.json envScrubbed / summary.md; git grep failure → 3.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
 #   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, the SHA's acoustic map not baked from
@@ -56,7 +56,7 @@ while [ $# -gt 0 ]; do case "$1" in
 # G4 D4 (C-00 01.10): the guard is the canonical driver copy ($DD_GUARD_CANON, dd-env.sh), never this worktree's; a set
 # DD_GUARD_ROOT or a missing canonical guard is 64 before anything is taken.
 dd_guard_canon_check || exit 64
-# Codex-audit M-12 (C-00 30.09): driver check before anything is taken (no lease, no slot, no guard).
+# Audit M-12 (C-00 30.09): driver check before anything is taken (no lease, no slot, no guard).
 CI_DRIVER=""; CI_DRIVER_HEAD=""; CI_TOOLS_TREE=""
 ci_driver_check() {
   local why="" dirty main_tools
@@ -80,20 +80,20 @@ ci_driver_check() {
     fi; return 3; }
 }
 ci_driver_check || exit 3
-# Codex-audit M-11 (C-00 30.09): core filter + `alone` steps from the driver's ci-suites.txt / ci-isolated.txt, built before
+# Audit M-11 (C-00 30.09): core filter + `alone` steps from the driver's ci-suites.txt / ci-isolated.txt, built before
 # anything is taken — a malformed file is 64 with nothing held.
 CORE_FILTER=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" core-filter "$DD_TOOLS_DIR/ci-isolated.txt" "$DD_TOOLS_DIR/ci-suites.txt") &&
   ALONE_STEPS=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" alone "$DD_TOOLS_DIR/ci-isolated.txt") ||
   { echo "main-ci: ci-isolated.txt / ci-suites.txt refused (exit 64)" >&2; exit 64; }
 
-# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
+# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Audit M-05 (C-00 30.09):
 # one source — dd_ci_lease_acquire / dd_ci_lease_release / dd_ci_lease_status (dd-env.sh).
-# Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
+# Audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
 CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_RAW=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
 CI_GSNAP=""; GDIR=""   # G4 D8 queue (06.10): the guard snapshot in flight (it can wait ≤ DD_GUARD_QUEUE_WAIT in the window queue)
-# CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
+# CI_GUARD_DIR = the directory whose snapshot succeeded (Audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
   "$DD_GUARD_CANON" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0; CI_GUARD_RAW=$CI_GUARD_EXIT
@@ -135,7 +135,7 @@ ci_cleanup() {
     kill -TERM "$CI_GSNAP" 2>/dev/null; wait "$CI_GSNAP"; local gs=$?; CI_GSNAP=""
     { [ "$gs" -eq 0 ] || [ -f "$GDIR/before.txt" ]; } && { CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1; }
   fi
-  # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
+  # Audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
     dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, lease $DD_CI_LEASE kept" >&2
     [ "$CI_GUARD_READY" -eq 1 ] || exit "$original"   # no open window: nothing to mark
@@ -221,7 +221,7 @@ inventory() { [ -d "$PD" ] && find "$PD" -type f ! -name '*.lock' ! -name '.DS_S
 inventory > "$OUT/userdata-before.txt"
 # WP-066J: the shared guard also covers the player bundle folder and both PlayerPrefs plists (exact
 # restore to this snapshot: run-added keys removed — `defaults import` alone merges).
-# Codex-audit M-07 (C-00 30.09): editor scope never refuses with 30 (that is the player-scope "a Player is running"), so the
+# Audit M-07 (C-00 30.09): editor scope never refuses with 30 (that is the player-scope "a Player is running"), so the
 # old wait-on-30 loop was dead. 75 (a live foreign holder of the Editor-area lock after DD_GUARD_WAIT, or live data kept
 # changing) is retried ≤ CI_GUARD_TRIES times — the guard's own wait is the back-off — each time into a NEW directory
 # (userdata-guard-<utc>, <same>.try2, …): a directory that already holds a snapshot is refused with 64. The directory
@@ -252,7 +252,7 @@ CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1
 dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test); `& wait` so a signal is handled at once
-# Codex-audit M-10 (C-00 30.09): first unset every env variable the C# of the commit under test reads (dd_scrub_code_env,
+# Audit M-10 (C-00 30.09): first unset every env variable the C# of the commit under test reads (dd_scrub_code_env,
 # dd-env.sh; allow-list HOME) — a caller's DD_* diagnostic variable must not change a CI result. git grep fails → 3.
 dd_scrub_code_env "$CI_DIR" || exit 3
 # C-00 05.10: the core EditMode + PlayMode runs exclude [Category("Diagnostics")] — a class regex counts as an explicit

@@ -699,7 +699,7 @@ class SecondaryPerfRootTests(Fixture):
         self.declare(dict(role='b9-pose',path='b9/gone',start=self.START))
         self.assert_step('A4','BLOCKED','missing secondary perf root')
     def test_a_pose_window_in_the_gate_root_fails(self):
-        # KADRO test-engineer MUST-2: a B9 root moved into the gate root must not pass A4 — the gate reads its hash-bound argv
+        # test review MUST-2: a B9 root moved into the gate root must not pass A4 — the gate reads its hash-bound argv
         for flag,value in (('-ddPilotStart',self.START),('-ddArmor','all')):
             with self.subTest(flag=flag):
                 self.setUp()
@@ -862,7 +862,7 @@ class R2RoundTests(Fixture):
         self.assertEqual('FAIL', r['checklist']['R2']['status'])
 
     def test_a_quiet_gate_on_a_busy_host_keeps_its_status_and_says_kirli(self):
-        # KADRO game-test-engineer SHOULD-6 / S-08 06.10: KİRLİ is a note; the owner's quality gates decide the value
+        # test review SHOULD-6 / S-08 06.10: KİRLİ is a note; the owner's quality gates decide the value
         self.m['round'] = 'R2'
         values = {'openRt60MinS': 0.6, 'openRt60MaxS': 1.0, 'corridorRt60MinS': 0.9, 'corridorRt60MaxS': 1.6,
                   'hallRt60MinS': 1.3, 'hallRt60MaxS': 2.2, 'roomRt60MinS': 0.4, 'roomRt60MaxS': 0.6,   # WP-097 K3 Room

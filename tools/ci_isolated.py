@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-11 (C-00 30.09) · main-ci PlayMode filters from tools/ci-suites.txt + tools/ci-isolated.txt.
+"""Audit M-11 (C-00 30.09) · main-ci PlayMode filters from tools/ci-suites.txt + tools/ci-isolated.txt.
 
 ci-isolated.txt: one test per line, TAB-separated `<regex>\t<where>\t<why>`; # = comment. <regex> is matched like Unity's
 -testFilter (a .NET regex, search semantics, against the test's full name, e.g.

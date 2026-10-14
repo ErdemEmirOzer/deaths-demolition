@@ -87,7 +87,7 @@ CI_CATEGORY = "!^Diagnostics$;!^FPTP$"
 OWNER_SWITCHES = ("DD_HOLD_IK", "DD_EDC_WEAPONS")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
-# KADRO game-test-engineer SHOULD-6 + C-00 06.10 (8626d147, r2_s3's criterion): a quiet r2q session starts with no foreign
+# test review SHOULD-6 + C-00 06.10 (8626d147, r2_s3's criterion): a quiet r2q session starts with no foreign
 # heavy process (HOST_HEAVY), waits for that at most HOST_WAIT_MAX, and the host is sampled every HOST_INTERVAL s while it
 # runs. The load average is reported, never a criterion: iCloud I/O keeps load1 at 26-27 here with nothing heavy running.
 HOST_WAIT_MAX, HOST_INTERVAL = 1800.0, 5.0
@@ -315,7 +315,7 @@ def bot_done(run_dir, kind):
 
 
 class HostWatch:
-    """KADRO game-test-engineer SHOULD-6, C-00 06.10 (8626d147): what "quiet" means for an r2q session, measured, never
+    """test review SHOULD-6, C-00 06.10 (8626d147): what "quiet" means for an r2q session, measured, never
     held. r2q cannot take every Unity slot (its own Unity needs one); its PlayMode guard snapshot already holds the player
     slot, so a guarded foreign Player waits for it. Quiet = no foreign Unity, Player, Blender or ffmpeg (not this chain's
     own descendants), the criterion r2_s3 uses; before the session it is waited for at most HOST_WAIT_MAX, during it the
@@ -760,7 +760,7 @@ class Chain:
     def r1_probe(self):
         """WP-091 P2 (C-00 05.10): in an R2 round, the R1 FINAL's own release-probe build (<--r1-evidence>/build-probe),
         proven by r1_build_proof once, before any window — a dry run proves it too, since the R1 evidence exists before the
-        chain (KADRO test-engineer SHOULD-5) — runs alternately with FINAL's in A4. None (A4 runs FINAL alone; P2 BLOCKED in
+        chain (test review SHOULD-5) — runs alternately with FINAL's in A4. None (A4 runs FINAL alone; P2 BLOCKED in
         the report, the reasons in the log) in an R1 round, without --r1-evidence, or when the build does not prove itself."""
         if self.round_name != "R2":
             return None
@@ -776,7 +776,7 @@ class Chain:
         return self._r1_proof or None
 
     def check_baseline(self, stage):
-        """KADRO test-engineer SHOULD-2 + gt 06.10 N-11 / KP-18: an R2 run keeps the R1 baseline its records were made with —
+        """test review SHOULD-2 + gt 06.10 N-11 / KP-18: an R2 run keeps the R1 baseline its records were made with —
         P2 (the a4 record) and P5 (the r2 record, when it wrote r2-P5.json) never rest on two baselines in one report, never
         a skipped A4 that silently leaves P2 out, never a baseline root the manifest would not declare. Checked at the start
         of a4 and of r2, before that stage's sessions, with or without --resume. The a4 record's baseline is the one the run
@@ -1093,12 +1093,12 @@ class Chain:
         proof = self.r1_probe()
         baseline_root, p2 = self.evidence / R1_ROOT, self.evidence / "r2" / "r2-P2.json"
         # FINAL's windows already counted before the R1 ones start (a resumed run): the pairs are not interleaved from the
-        # start; recorded, and pairGapMaxS in r2-P2.json shows by how much (KADRO test-engineer SHOULD-2)
+        # start; recorded, and pairGapMaxS in r2-P2.json shows by how much (test review SHOULD-2)
         fresh = not (root.is_dir() and any(wp078_perf_report.CELL.fullmatch(d.name) for d in root.iterdir()))
         if proof:
             argv += ["--baseline-bin", self.r1_evidence / "build-probe", "--baseline-out", baseline_root,
                      "--baseline-commit", self.r1_commit]
-            # both sides' commit and build, so every window P2 uses proves it ran there (KADRO game-test-engineer MUST-1)
+            # both sides' commit and build, so every window P2 uses proves it ran there (test review MUST-1)
             self.retire(p2)   # an older r2-P2.json of this FINAL must not stand in for this evaluation (gt 06.10 N-1)
             report_argv += ["--baseline", baseline_root, "--r2-measure", p2, "--commit", self.final,
                             "--sha256", file_sha256(binary), "--baseline-commit", self.r1_commit, "--baseline-sha256", proof["sha256"]]
@@ -1580,7 +1580,7 @@ def assemble_manifest(evidence, final, assets_tree, round_name=None, modes=MODES
             secondary.append({"role": "r1-baseline", "path": R1_ROOT, "commit": record.get("baselineCommit"),
                               "binarySha256": record.get("baselineBinarySha256")})
         # B9 roots come from the B9 record's poses (the name and the start it ran), never from a folder listing: a full
-        # matrix in a folder nobody recorded stays a stray root (KADRO test-engineer MUST-2)
+        # matrix in a folder nobody recorded stays a stray root (test review MUST-2)
         _, z3 = _record(evidence, final, "z3")
         for entry in (z3 or {}).get("z3Roots", []):   # the Z3 pairs, declared from the z3 record (S-05 r2_z3.py)
             if isinstance(entry, dict) and isinstance(entry.get("path"), str) and (evidence / entry["path"]).is_dir():
@@ -1689,7 +1689,7 @@ def main(argv=None, **seams):
         print("--r1-evidence and --r1-commit go together; --r1-commit is a 40-hex SHA", file=sys.stderr)
         return 64
     if args.r1_commit and (args.r1_commit == args.final or Path(args.r1_evidence).resolve() == evidence.resolve()):
-        # P2 would compare FINAL with itself and the report would refuse the root hours later (KADRO test-engineer SHOULD-1)
+        # P2 would compare FINAL with itself and the report would refuse the root hours later (test review SHOULD-1)
         print("--r1-evidence/--r1-commit must be the R1 FINAL's, not this FINAL's own", file=sys.stderr)
         return 64
     if not (math.isfinite(args.perf_load_max) and args.perf_load_max > 0):

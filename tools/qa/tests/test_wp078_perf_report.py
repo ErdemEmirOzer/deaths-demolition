@@ -202,7 +202,7 @@ def sound(root, index, mean, commit, sha, epoch, force=40, binary=None, sweep=Tr
 
 
 class P2IntegrityTests(unittest.TestCase):
-    """WP-091 P2 (KADRO game-test-engineer MUST-1, 06.10): every window the comparison uses proves its load, scope and build
+    """WP-091 P2 (test review MUST-1, 06.10): every window the comparison uses proves its load, scope and build
     on both sides; a broken window or a cell short of its windows writes no r2-P2.json (P2 BLOCKED by name)."""
 
     def run_p2(self, r2_means, r1_means, r1_force=None, r2_binary=None, r1_kw=None):

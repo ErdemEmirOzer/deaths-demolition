@@ -57,7 +57,7 @@ class AlternateTests(unittest.TestCase):
         return code, notes
 
     def test_windows_alternate_abba_per_cell_and_swap_the_start_side_per_cell(self):
-        # KADRO game-test-engineer SHOULD-1: R2 R1 R1 R2 R2 R1 in the first cell, R1 R2 … in the next
+        # test review SHOULD-1: R2 R1 R1 R2 R2 R1 in the first cell, R1 R2 … in the next
         code, notes = self.matrix([("yuksek", "tp", 3), ("dusuk", "topdown", 2)])
         self.assertEqual(0, code)
         self.assertEqual([("r2", "a" * 40, "yuksek-tp", 1), ("r1", "b" * 40, "yuksek-tp", 1),
@@ -144,7 +144,7 @@ class AlternateTests(unittest.TestCase):
         return code, notes
 
     def test_an_r1_build_that_keeps_failing_stops_its_side_and_final_goes_on(self):
-        # KADRO test-engineer NOTE-4: max_discards 6 would run 7 empty R1 windows per cell; three in a row stop the side
+        # test review NOTE-4: max_discards 6 would run 7 empty R1 windows per cell; three in a row stop the side
         code, notes = self.kinds_matrix([("yuksek", "tp", 3), ("dusuk", "topdown", 2)], ["failed"] * 20, max_discards=6)
         self.assertEqual(0, code)
         self.assertEqual(3, sum(1 for c in self.calls if c[0] == "r1"))
@@ -207,7 +207,7 @@ class FailStopWiringTests(unittest.TestCase):
 
 
 class QuietWindowTests(unittest.TestCase):
-    """KADRO game-test-engineer SHOULD-2/-4: the batch budget and the bounded quiet wait (no slot.sh, no host)."""
+    """test review SHOULD-2/-4: the batch budget and the bounded quiet wait (no slot.sh, no host)."""
 
     def window(self, quiet_after, wait_max=30.0):
         notes, checks = [], []

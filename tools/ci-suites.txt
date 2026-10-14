@@ -1,6 +1,6 @@
 # WP-079 · PlayMode core suites for tools/main-ci.sh (one fixture class name per line, # = comment, also trailing).
 # Budget ≈ 25 min on the M1 Pro; keep capture/diagnostic/perf fixtures out (they belong to their owners' runs).
-# Codex-audit M-11 (C-00 30.09): single tests that break that rule inside a listed fixture go to tools/ci-isolated.txt
+# Audit M-11 (C-00 30.09): single tests that break that rule inside a listed fixture go to tools/ci-isolated.txt
 # (excluded from the core filter; `alone` = own main-ci step, `a3` = S-10's A3 run) — an allocation test always runs alone.
 # Durations (trailing comments): CI 41ea723a (30.09, playmode.xml per fixture): core 1260.3 s XML / 1294 s wall for 229 tests.
 # M-11 takes 24.7 s out of the core (ArmorTests crowd capture 15.8 s + DEC-077 8.8 s → A3; the alloc test 0.008 s moves to

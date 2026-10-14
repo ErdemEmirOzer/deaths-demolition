@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex-audit M-08 / K-02 (C-00 30.09) · tools/integrate.sh on throwaway fixture repos (tempdir, real git, optional
+"""Audit M-08 / K-02 (C-00 30.09) · tools/integrate.sh on throwaway fixture repos (tempdir, real git, optional
 fake git wrapper first on PATH). Never touches the real repository: the script is copied into the tempdir, run with
 --repo <fixture> --no-post, HOME/DD_* point into the tempdir. usage: python3 tools/tests/test_integrate_gates.py"""
 import os, shutil, subprocess, sys, tempfile, unittest

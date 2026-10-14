@@ -65,7 +65,7 @@ BLOCKED; a multi-mode gate is judged on its modes in scope. Without `--modes` ev
 (an `env` value may use the one placeholder `{KPROJ}`, the KADRO project root the chain fills in from
 `tools/dd_paths.py` — never a machine path in the contract) tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
 stage `r2q` (after A4, B9 and Z3) for `quiet: true`. Gates sharing one filter and env share one session.
-**What `quiet: true` holds in r2q** (KADRO game-test-engineer SHOULD-6; C-00 06.10 decision in 8626d147, the criterion
+**What `quiet: true` holds in r2q** (test-engineer SHOULD-6; C-00 06.10 decision in 8626d147, the criterion
 r2_s3 uses): r2q cannot take every Unity slot, because its own Unity needs one. Its PlayMode guard snapshot already holds the
 player slot, so a guarded foreign Player waits for it.
 - Quiet = no foreign Unity, Player, Blender or ffmpeg. The chain's own descendants are not foreign.
@@ -223,7 +223,7 @@ on either side, writes no `r2-P2.json`: P2 is BLOCKED by name and the reasons ar
 windows only; the R1 root is declared to the report as a secondary perf root whose every window carries the R1 commit
 and build. Without `--r1-evidence`, or when the R1 build does not prove itself, A4 runs FINAL alone and P2 is BLOCKED by
 name. An R1 build that fails on its own (wp078_perf_report.classify "failed", not a host discard) in three consecutive
-windows stops the R1 side for the rest of the matrix (`wp078_perf.py --baseline-fail-stop`, KADRO test-engineer NOTE-4).
+windows stops the R1 side for the rest of the matrix (`wp078_perf.py --baseline-fail-stop`, test-engineer NOTE-4).
 That saves ~60 empty windows; FINAL's windows go on and P2 is BLOCKED.
 
 ## S1 / S2 coverage (weapon kit, S-08 · C-00 07.10)
@@ -450,7 +450,7 @@ Selection against the R1 baseline in two ways, and the gate needs both:
 H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:
 
 ```json
-{"schema": "dd-r2-review-v1", "gate": "H5", "commit": "<40-hex>", "reviewer": "AD Fable",
+{"schema": "dd-r2-review-v1", "gate": "H5", "commit": "<40-hex>", "reviewer": "AD",
  "verdict": "KABUL_DÜZELTMELERLE", "must": [{"id": "MUST-1", "closed": true}]}
 ```
 

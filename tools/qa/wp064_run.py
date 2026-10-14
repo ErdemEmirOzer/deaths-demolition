@@ -83,7 +83,7 @@ def forbidden(row, allowed_pid=None, rows_by_pid=None):
 def controller_or_presentation(row):
     """The compositor presents the measured Player's own frames, so its spikes are part of the measurement.
 
-    v2 (S-10 finding 3): no controller/agent exemption any more — a Codex/ChatGPT/Claude process (or anything
+    v2 (S-10 finding 3): no controller exemption any more — an assistant or terminal-tool process (or anything
     else outside this run's own PID tree) at >= 50 % CPU is a competing workload like any other. The runner and
     the Player's descendants stay exempt through `allowed_pid` / `process_is_descendant`.
     """
