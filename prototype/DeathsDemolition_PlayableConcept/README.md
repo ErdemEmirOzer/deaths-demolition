@@ -1,377 +1,164 @@
-# Deaths Demolition — Production Starting Codebase
+# Deaths Demolition: Unity project
 
-**Status update — 2026-09-10:** This project was originally created as an experimental
-visualisation prototype. The user has now approved it as the starting codebase that will
-be developed incrementally into the final game. This does not automatically approve its
-placeholder numbers, names or content; those remain tracked in
-[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md) until audited or replaced by approved values.
+This folder is the Unity project of **Deaths Demolition**, a top-down wave-survival zombie shooter. It is the game itself, developed incrementally from the original playable concept. The folder name and the Unity product name (`Deaths Demolition - Playable Concept`) are kept on purpose, so the player's save-data path never moves. A release build shows **"Deaths Demolition"** everywhere a player looks: the Dock, the menu bar, the About box and the window title.
 
-## Production Baseline (WP-000, 2026-09-10)
-
-* **Verified on a clean copy** (Assets + Packages + ProjectSettings, no `Library/`) with
-  Unity 2022.3.22f1 (887be4894c44) / URP 14.0.10 / macOS, Metal, Apple M1 Pro:
-  import + compile PASS (0 `error CS`, 0 `warning CS`), EditMode **175/175**, PlayMode
-  **21/21** on a real graphics device, macOS Player build PASS (verification only — not a
-  platform decision), MainMenu and Run captured with no shader fallback and no exceptions.
-  Physical keyboard/mouse, gamepad and OS-level Retina capture: **not measured** in WP-000.
-* Evidence, commands, exit codes and hashes live in the WP-000 report set outside the
-  repository (`S-01-ASAMA-2-KANIT-PAKETI.md`, final WP-000 report) — not in the historical
-  `Build/` folder or the 2026-08-20 Player logs, which are superseded.
-* Invariants for every later package: Unity 2022.3.22f1 and URP 14.0.10 are fixed
-  (DEC-058/059); no bulk rewrite (DEC-060); no Unity-generated files in version control;
-  only Boot is a valid entry scene; `planning/` is never written by agents.
-* Fixed in WP-000 under test protection: firing while the simulation is frozen
-  (`PlayerWeaponBinding.CanFire`, `PauseFireTests`); PlayMode tests writing the real player
-  profile (`TestProfileIsolation` set-up fixture, `ProfileIsolationTests`); second-run reset
-  coverage (`SecondRunTests`).
-* Known gaps carried forward (not fixed in WP-000): ~~paid reroll (DEC-050)~~, orb lifetime vs
-  DEC-045, hand-authored half of DEC-021, ~~per-round purchase limit (DEC-048), locked-branch
-  offers (DEC-049)~~, persistent `DD.Prototype.DirectToRun` flag and F1 panel in Player
-  builds, aborted runs not reaching the profile, leftover `Assets/InitTestScene…unity`.
-  **WP-008 (2026-09-13) closed DEC-048, DEC-049 and DEC-050** (one purchase per round-end
-  screen, locked/maxed branches never offered, one paid reroll before the purchase) and
-  implemented the DEC-043 reward formula (base + version + spawn-armour bonus, frozen at
-  spawn); orb lifetime had already been closed by WP-004. **WP-009 (2026-09-14)** hardened
-  the profile without a new product decision: durable exactly-once profile commits, a
-  crash-safe save chain proven by fault injection, save schema v2 with a lossless v1
-  migration, earned-list entitlements, an immutable Results receipt; "aborted runs not
-  reaching the profile" is unchanged and now regression-locked (B5 stays an open decision).
-  **WP-009H (2026-09-14)** is the technical closure of a WP-009 defect found after
-  integration: the anti-replay ring of eight ids protected only the last eight runs, so a
-  ninth run let the first run's summary apply again. It is replaced by a profile lineage +
-  monotonic completion ordinal issued by `CompletionAuthority` (save schema v3, lossless
-  v1/v2 migration, legacy GUIDs refused), and the profile write lock became a fail-closed
-  OS lease.
-* Historical documents at the repository root (`PROTOTIP-INCELEME-RAPORU-2026-08-20.md`,
-  `PROTOTIP-ONARIM-PROMPTU-2026-08-20.md`) are frozen evidence; do not run their commands.
+For the feature overview, architecture and tooling, start at the [repository README](../../README.md).
 
 | | |
-|---|---|
+| --- | --- |
 | Unity | `2022.3.22f1` (`ProjectSettings/ProjectVersion.txt`) |
-| Render pipeline | URP `14.0.10` (`Packages/manifest.json`) |
-| Input | Input System `1.7.0`, actions in `Assets/_Prototype/Input/Resources/DD_Controls.inputactions` |
-| Navigation | `com.unity.ai.navigation 1.1.5` NavMesh + a custom crowd layer |
-| Network | none — the prototype runs fully offline |
-| C# files | 233 under `Assets/` (WP-000 count, 2026-09-10; regenerate with `find Assets -name '*.cs' | wc -l`) |
+| Render pipeline | URP `14.0.10` (`Packages/manifest.json`); URP assets per quality tier in `Assets/Settings/` |
+| Input | Input System `1.7.0`; actions in `Assets/_Prototype/Input/Resources/DD_Controls.inputactions` |
+| Navigation | AI Navigation `1.1.5` (NavMesh) plus a custom crowd layer |
+| Network | None. The game runs fully offline. |
 
 ---
 
-## 1 · How to run it
+## 1. How to run it
 
-1. The project is already registered in Unity Hub as
-   `~/Documents/Deaths Demolition/prototype/DeathsDemolition_PlayableConcept`.
-   If it is not, use **Add → Add project from disk** and point at that folder.
-2. Open it with **Unity 2022.3.22f1**. Any other editor version will trigger an
-   upgrade prompt — decline it.
-3. **The first open takes several minutes.** `Library/` has to be built, shaders have
-   to be imported and the URP pipeline assets have to compile. This is normal and
-   happens only once per machine. Do not interrupt it.
-4. Open `Assets/_Prototype/Scenes/Boot.unity`.
-5. Press **Play**.
+1. Clone the repository **with Git LFS**. Without LFS objects, models, textures and audio are pointer files.
+2. Open this folder with **Unity 2022.3.22f1**, or add it in Unity Hub with *Add → Add project from disk*. Decline any upgrade prompt for another editor version.
+3. **The first open takes several minutes.** `Library/` has to be built, shaders imported and the URP assets compiled. This happens once per machine; do not interrupt it.
+4. Open `Assets/_Prototype/Scenes/Boot.unity` and press **Play**.
 
-`Boot` is the only correct entry scene. It loads
-`Assets/_Prototype/Core/Resources/PrototypeConfig.asset`, applies the runtime settings
-that asset dictates, brings up the persistent services (pools, config, debug panel) and
-hands off to the first real scene (`Core/Boot/PrototypeBootstrapper.cs`). Starting from
-any other scene skips that hand-off and the scene will be missing its services.
+`Boot` is the only valid entry scene. It loads `Assets/_Prototype/Core/Resources/PrototypeConfig.asset`, applies the runtime settings that asset dictates, brings up the persistent services (pools, config, the development debug panel) and hands off to the first real scene (`Core/Boot/PrototypeBootstrapper.cs`). Starting from any other scene skips that hand-off, and the scene will be missing its services.
 
-**Build scene order** (`ProjectSettings/EditorBuildSettings.asset`):
+**Build scene order** (`ProjectSettings/EditorBuildSettings.asset`, enabled scenes):
 
 ```
 0  Assets/_Prototype/Scenes/Boot.unity
 1  Assets/_Prototype/Scenes/MainMenu.unity
-2  Assets/_Prototype/Scenes/Selection.unity
+2  Assets/_Prototype/Scenes/Selection.unity        Prepare Run
 3  Assets/_Prototype/Scenes/Run.unity
 4  Assets/_Prototype/Scenes/Results.unity
+5  Assets/_Art/Scenes/World_AP005.unity           older world, kept for A/B
+6  Assets/_Art/Scenes/World_V6_Greybox.unity      the game's world, loaded additively by Run
+7  Assets/_Art/Scenes/World_FPTPOnly.unity        content only the legacy cameras can see
 ```
 
-The meta flow is `Boot → MainMenu → Selection → Run → Results → MainMenu`.
+The flow is `Boot → MainMenu → Selection (Prepare Run) → Run → Results`. Results returns to the main menu or, with **PLAY AGAIN**, to Prepare Run with the last selection.
 
-Shortcut for iteration: the F1 panel has a **Misc → `PROTOTYPE_DIRECT_TO_RUN (next
-boot)`** toggle that sends the next boot straight into `Run`
-(`Core/Boot/PrototypeBootstrapper.cs:65`).
+**Player builds** are made with the repository's tools, not from the Build Settings window: `tools/build.sh dev|release|release-probe` (see [`tools/README.md`](../../tools/README.md)).
 
 ---
 
-## 2 · Controls
+## 2. Controls
 
-Bindings are declared once, in `DD_Controls.inputactions`, and read through an
-abstraction (`Core/Input/IInputSource.cs`, `Input/PrototypeInputSource.cs`). Movement
-and aim are fully independent: you can run one way and fire the other. There is no dash
-or dodge. Taking damage never interrupts movement, aim or fire.
+Bindings are declared once, in `DD_Controls.inputactions`, and read through an abstraction (`Core/Input/IInputSource.cs`, `Input/PrototypeInputSource.cs`). Every gameplay binding can be rebound for keyboard and gamepad in **CONTROLS** (`Input/InputRemapService.cs`), and on-screen prompts follow the last used device. Movement and aim are independent: you can run one way and fire the other.
 
-### Keyboard and mouse — verified at prototype delivery (user statement, no artefact); WP-000 covers this path by simulated input only
+| Action | Keyboard and mouse | Gamepad |
+| --- | --- | --- |
+| Move | `W` `A` `S` `D` (arrow keys also bound) | Left stick |
+| Aim | Mouse cursor position in the world | Right stick |
+| Fire (hold for automatic) | Left mouse button | Right trigger |
+| Focus (narrows the cone, slows the step) | Right mouse button | Left trigger |
+| Reload | `R` | West face button (X / Square) |
+| Interact (wall buy) | `E` | South face button (A / Cross) |
+| Pause | `Esc` | Start / Menu |
+| Debug panel (**development builds only**) | `F1` | Select / View |
 
-| Action | Binding |
-|---|---|
-| Move (camera-relative) | `W` `A` `S` `D`, arrow keys also bound |
-| Aim direction | mouse cursor position in the world |
-| Fire (hold for automatic) | hold **Left Mouse Button** |
-| Reload | `R` |
-| Pause (freezes the whole simulation) | `Esc` |
-| Prototype debug panel | `F1` |
-
-### Gamepad — **NOT VERIFIED, no hardware on this machine**
-
-The bindings below exist in `DD_Controls.inputactions` and the device-switch path in
-`Input/PrototypeInputSource.cs:379` handles the right stick as an aim source. **None of
-it has been exercised against a real controller.** Do not read this table as "working";
-read it as "written and unsanctioned".
-
-| Action | Binding | Status |
-|---|---|---|
-| Move | Left Stick | not verified |
-| Aim + limited camera look-ahead | Right Stick | not verified |
-| Fire | Right Trigger | not verified |
-| Reload | West face button (`X` / `Square`) | not verified |
-| Pause | `Start` / Menu button | not verified |
-
-UI navigation is bound separately (`UI` action map): `WASD`/arrows/left stick/d-pad to
-navigate, `Enter`/`Space`/South button to submit, `Esc`/East button to cancel.
+- **Specials** fire with Fire while one is held. The separate *Special* action (`Q` / left shoulder) is bound but not used yet.
+- **UI navigation** has its own action map: `WASD`, arrows, left stick or d-pad to move; `Enter`, `Space` or the south button to confirm; `Esc` or the east button to go back. The mouse can point and click.
+- **The game pauses itself** when its window loses focus.
 
 ---
 
-## 3 · The F1 debug panel
+## 3. Development builds and the Editor
 
-**The panel is not a convenience. For several things in this prototype it is the only
-way to see them at all.** Three of the request's own numbers make specific states
-unreachable through natural play:
+### 3.1 The F1 debug panel
 
-* **The performance target never occurs naturally.** Target active enemies is
-  `min(7 + 2R, 32)` and the cap is `32`
-  (`Core/Config/RoundConfigSection.cs:34`), while the stated prototype target is
-  "around 40 concurrent enemies". A 40-enemy load can only be produced from
-  **Spawn → `Force Spawn to 40 (perf measurement)`**
-  (`Spawn/EnemySpawnDirector.cs:813`).
-* **Ultra may never be seen.** `Executioner` debuts at round 8
-  (`Core/Config/EnemyConfigSection.cs:309`, `IntroductionRound = 8`) and the rounds 1-7
-  pool is 271 enemies. **Spawn → `Skip to Round 8 (Executioner debut)`**
-  (`Spawn/EnemySpawnDirector.cs:846`) exists for exactly this reason.
-* **The packet economy has no other witness.** **Economy → `Wallet` / `Packets` /
-  `Reward ledger`** readouts show the run id, the per-source totals (pickup vs round-end
-  sweep), applied transactions, packets on the floor, and every refusal counter that
-  should read zero (`Economy/GoldService.cs`, WP-004). The three collection-mode buttons
-  are gone: the approved contract is one visible, magnet-collected packet per kill.
+`F1` (or the gamepad's Select button) toggles the **PROTOTYPE DEBUG** panel in development builds and the Editor. A release build never draws it (`Core/Debug/PrototypeDebugPanel.cs`), and `PrototypeConfig.System.DebugPanelEnabled` can switch it off in development builds too. The panel costs nothing while closed.
 
-`F1` toggles it. It never appears during normal play. Nine tabs
-(`Core/Debug/DebugPanelRegistry.cs:9-18`):
+The panel lists every `[PrototypeOnly]` value it can reach, editable live, with the pending decision each value occupies. Other systems add their own controls through `DebugPanelRegistry` (`Core/Debug/DebugPanelRegistry.cs`):
 
 | Tab | What lives there |
-|---|---|
-| **Config** | Every field of `PrototypeConfig`, live-editable mid-run, each row showing the pending planning decision it occupies. |
-| **Rounds** | Run/round/clock/XP readouts, start-restart run, end run, skip to next round, force-complete round, skip to round N, force the upgrade screen open or closed, live upgrade offer, gold grants. |
-| **Enemies** | Clear/kill all, spawn one of each tier, fill to safety ceiling, break all armour, `Verify Damage Model` (runs the regional-damage assertions and logs violations), crowd / tier-schedule / FX-budget / armour readouts. |
-| **Weapons** | Equip any classic weapon, trigger or end the Special Weapon, infinite ammo, live fire rate and damage, camera-shake intensity, `+1` on each upgrade branch, clear build, effect-pool and feel-budget readouts. |
-| **Economy** | Wallet, packet and reward-ledger readouts, gold grants, sweep (credit) / destroy (no credit) all packets, live magnet radius. |
-| **Spawn** | Force spawn to 40, release forced target, clear enemies, spawning on/off, round-3 / round-5 / round-8 debut jumps, skip to round N, live spawn-point weight table. |
-| **Perf** | `Pools`, `Crowd`, `NavMesh` readouts, crowd layer on/off, reset crowd peak. **The `Crowd` row is the only measuring instrument for the crowd solver's frame cost.** (`Navigation/NavigationSystemBehaviour.cs:93`) |
+| --- | --- |
+| **Config** | Every field of `PrototypeConfig`, live-editable mid-run |
+| **Rounds** | Run, round and clock readouts; start or restart a run; skip or complete rounds; force the round-end screen open or closed; gold and XP grants |
+| **Enemies** | Clear or kill all; spawn one of each tier; fill to the safety ceiling; break all armour; `Verify Damage Model`; crowd, tier-schedule and FX-budget readouts |
+| **Weapons** | Equip weapons, Special controls, live fire rate and damage, camera-shake intensity, game-feel A/B, effect-pool and feel-budget readouts |
+| **Economy** | Wallet, packet and reward-ledger readouts; gold grants; sweep or destroy packets; live magnet radius |
+| **Spawn** | **Force Spawn to 40 (perf measurement)**, release the forced target, round jumps to tier debuts, skip to round N, spawning on/off |
+| **Perf** | Pools, crowd and NavMesh readouts, crowd layer on/off, tree-system counters |
 | **Candidates** | The candidate decision list. Flagging a value here changes nothing and writes nothing to `planning/`. |
-| **Misc** | Player heal/damage/kill, player and camera readouts, input and aim-device readouts, occluder readout, UI contrast audit, reset local profile (**destructive** — resets the real player profile; never use in tests, tests use an isolated profile path), `PROTOTYPE_DIRECT_TO_RUN`. |
+| **Misc** | Player heal, damage and kill; player, camera, input and aim-device readouts; occluder readout; UI contrast audit; **Reset local profile** (destructive: it resets the real player profile; tests use an isolated profile path); `PROTOTYPE_DIRECT_TO_RUN (next boot)` |
+
+### 3.2 Direct to run
+
+`PrototypeBootFlags` (`Core/Boot/PrototypeBootFlags.cs`) can send the boot straight into `Run`, skipping the main menu and Prepare Run. In ascending priority:
+
+1. the stored switch (the F1 *Misc* toggle and `PrototypeConfig.System.DirectToRun`), **development builds and the Editor only**;
+2. the process-local command-line flag `-ddDirectToRun`, used by the smoke run;
+3. the scripting define `PROTOTYPE_DIRECT_TO_RUN`;
+4. a session override set by the panel or another system.
+
+A release player never skips the main menu on a stored switch.
+
+### 3.3 Command-line flags
+
+Players read `-dd…` flags for automation. The most used:
+
+| Flag | Effect |
+| --- | --- |
+| `-ddDirectToRun` | Boot straight into a run |
+| `-ddDifficulty normal\|hard\|demolition` | Fix the run's difficulty; the menu's choice is then ignored |
+| `-ddProfilePath <file>` | Use a sandbox profile instead of the real one (development builds) |
+| `-ddTelemetry 0`, `-ddTelemetryDir <dir>` | Turn run telemetry off or redirect it |
+| `-ddQaBot <dir>` (+ `-ddQaBotWeapon`, `-ddStartRound`) | Let the seeded QA bot play the menu → run flow and write a report (development builds) |
+| `-ddTreePreset <name>` | Apply a run-tree preset such as `perf_worst` |
+| `-ddPilotPerfProbe` (+ `-ddPilotWeapon`, `-ddPilotAutoFire`) | Forced 40-body perf windows (development and release-probe builds) |
+| `-ddWorldSource V6\|AP005\|Procedural` | Choose the world (V6 is the default) |
+| `-ddCameraMode topdown\|tp\|fp` | Start camera (third- and first-person are legacy) |
+| `-ddRagdoll 0` | Ragdoll proxies off, for A/B |
+
+Shipping evidence is always taken on the flagless path the player uses. The capture scripts (`tools/td-capture.sh`, `tools/mk-capture.sh`) drive the development-only capture agents.
 
 ---
 
-## 4 · Main systems and files
+## 4. Release builds
 
-Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume assets live in `Assets/Settings/` (plus `Assets/UniversalRenderPipelineGlobalSettings.asset`). Production ART content (environment families, textures, materials, the pilot scenes and the art pipeline that imports them) lives under `Assets/_Art/` since WP-011 (ADR-011-2); gameplay content is still planned for `Assets/_Game/` (asset contract, WP-000).
+`tools/build.sh release` produces the build a player gets:
 
-`Assets/_Art/` (WP-011 — M3 content pipeline pilot): `Environment/Families/<family>/` holds the AP-001 FBX exports (three LODs + collider parts, stored in Git LFS) and the generated `SM_<family>.prefab` (LODGroup, primitive colliders, layer); `Environment/GoldenSlice/` the AP-001 layout (`AP001_GoldenSliceLayout.json` provenance + `.asset`); `Textures/Source/` the byte-identical AP-001 PNGs and `Textures/Derived/` the URP metallic-smoothness masks the repack tool derives from them; `Materials/` the ten URP/Lit materials; `Scenes/Pilot/` the pilot scene `AP001_GoldenSlice` (sixth build scene; the slice, ground, markers, NavMesh and run systems are built at load by `PilotSceneBootstrap`, mirroring `WorldBootstrap`) and the editor-only `AP001_KitShelf`; `Editor/` the Import Contract v1 (`ArtImportContract` + `ArtAssetPostprocessor`, applied to every asset under `_Art`) and the pipeline (`Tools > Deaths Demolition > Art Pipeline > Run All`: repack → materials → prefabs → layout → scenes → build settings); `Tests/` the asset gate (EditMode) and pilot scene tests (PlayMode). `Assets/_Prototype/Diagnostics/PilotPerfProbe.cs` is the development-only 40-enemy measurement probe (`-ddPilotPerfProbe`).
-
-WP-012 (M3 art library import, ADR-012-1/2) adds the production libraries under `Environment/Families/<AP>/<family>/` (AP-002: 12 architecture families; AP-003: 6 vegetation/rock families × 42 variations; AP-003B: 11 pond/bridge/corridor/bamboo/prop families × 53 variations; FBX with embedded textures stripped outside Unity, wind data kept as a vertex-colour layer), one generated manifest per library (`<AP>_Library.json`: model names, material slot order, proxy shells, bounds — the only thing that survives `materialImportMode None`), one prefab per variation (`SM_<family>_V<nn>`: LODGroup with thresholds authored for the shipped lodBias, one primitive collider per proxy shell, roof parts on their own fading LODGroup, broken states as inactive children) and a prefab index (`<AP>_Library.asset`) for placement. `Lighting/DD_Overcast_v1.asset` and `Resources/DD_Sky_Overcast_v1.mat` are the shared overcast base every scene (Run, pilot, showcase) uses; `Scenes/AP_LibraryShowcase.unity` (editor-only) shelves every prefab for review. `Tools > Deaths Demolition > Art Pipeline > Run Libraries (WP-012)` rebuilds all of it; `PilotProfilerAnalysisCli` reads a `-ddPilotProfilerLog` capture back in batchmode.
-
-WP-014 (M3 world assembly, ADR-014-1/2) turns AP-005's `placement.json` into the authored world: `Environment/World/` (the byte-identical placement source, its Unity-space `AP005_Placement.asset`, the stand-in ground mesh), `Scenes/World_AP005.unity` (2354 prefab instances with `RegionTag`, layer by occluder flag, static flags, baked NavMesh) and `Ap005WorldBootstrap` (atmosphere, markers, run systems). `Resources/DD_WorldSource.asset` decides whether `Run` builds the procedural blockout or loads this scene additively (`-ddWorldSource` / `DD_WORLD_SOURCE` override); see `Assets/_Art/Scenes/README.md`.
-
-WP-015 (M3 asset budget & build policy, ADR-015-1/2) puts the art under a texture policy — `ArtImportContract.TextureClass`: ground/paving 2048, structure and foliage 1024, props/breakables 512 (reserved), sky 256; mipmap streaming on with a 160 MB budget — and a build-list policy: enabled Build Settings entries are the release scenes, disabled ones (the AP-001 pilot, the library showcase) ship only in the development build. Result: shipped textures 337 → 113 MB, resident art textures 315 → 71–84 MB, release Player 655 → 297 MB. It also records the user's 2026-09-15 decisions (DEC-076..080, REQ-104/105 measurable criteria), finalises the style guide (`Assets/_Art/StyleGuide/style-guide-v1.md`), adds Unity-side placement overrides (`Environment/World/AP005_placement-overrides.json`) and the official readability thresholds (`ReadabilityThresholds`). See `Assets/_Art/README.md`.
-
-WP-016 (M3 character integration, ADR-016-1/2) replaces the M1 capsule bodies with the AP-006 player and the AP-007 zombie: `Assets/_Art/Characters/` (Import Contract v1.1 — Humanoid avatars with one explicit 52-bone mapping, rig-test clips, LODGroups, `M_player` with albedo-swap skins, the shared zombie atlas with cloth-masked version tints, `ZombieModuleLibrary` = 3 fits × 19 modules × 4 LOD re-pointed by bone name at spawn from a deterministic, ratio-ruled look selector). The prototype binds them through `Assets/_Prototype/Characters/` (`CharacterAssetSet` in Resources, `PlayerSkinnedVisual`, `ZombieSkinnedVisual`, `ProceduralPoseBridge`): the M1 procedural animators keep driving lean / attacks / flinch / death onto the bones after a minimal idle-walk Animator, hitboxes and armour anchors move onto the bones, the weapon sits on `socket_weapon_r`. `-ddCharacters Procedural` keeps the primitive bodies for A/B. See `Assets/_Art/Characters/README.md`.
-
-WP-017 (M3 world v2 & armour, ADR-017-1/2) brings the AP-005B delta into the world (`AP005_placement-delta-v002.json` applied on the untouched v001 source at import: 2354 − 169 + 202 = 2387 instances — palace roof and walls, gates, pavilions, colonnades, six Tripo prop families under `Assets/_Art/Environment/Families/AP-005B/`; full XYZ euler for the tilted gable panels; `material_override` mapped to library roles — plaster copies × 0.82, roof with a generated tile-course detail normal, stone kerbs; heavy roof meshes stay out of static batching) and binds the AP-008 armour to the WP-006 `ArmorSet` states: `Assets/_Art/Characters/Zombie/Armor/` (18 FBX on Contract v1.1, one atlas, `ZombieArmorLibrary`), `ArmorVisualBinder` (Absent / Present / Damaged / Broken = mesh swaps on six armour renderers per LOD, break event on the anchor for S-07), variants per spawn seed, and the garment draw re-run under the equipped pieces' AP-008 exclusions plus faded cloth beneath a plate. Texture budgets split (world ≤ 120 / character ≤ 80 / total ≤ 200 MB); `-ddArmor all` on the perf probe fits every piece on the crowd.
-
-WP-021 (M3 audio, ADR-021-1/2) replaces the placeholder soundscape's plumbing without removing it: a Unity AudioMixer (`Assets/_Prototype/Audio/Resources/DD_AudioMixer.mixer`, Master → Music / Ambience / SFX-World / SFX-Player / UI, snapshots Run / RoundBreak / Pause / Menu) under the WP-002 voice pools, the AP-011 produced set (`Assets/_Art/Audio/AP011/`, 88 clips over 52 sound ids, Seed Audio 1.0 → BS.1770-normalised masters) overlaid on the procedural recipes through `DD_AudioCatalog`, the event map `AudioEventMap` (every combat/run/player/UI event plus the DEC-067 zombie vocal set — windup, swing, pain, death — routed by `AudioEventRouter` without touching `Enemies/`), five region beds cross-faded from the AP-005 polygons (`DD_AudioRegionMap`, 2.5 s) over a common after-rain layer, and a four-layer score (`MusicDirector`: base / percussion / tension / accent on a progress-and-pressure intensity, pulled back between rounds).
-
-WP-018 (M3 animation integration, ADR-018-1/2) puts the AP-009 set on the characters: `Assets/_Art/Characters/Animations/` (30 animation-only FBX + manifest; loop / events / additive reference pose written at import from the manifest — importer event time is normalised), generated `DD_Player` / `DD_Zombie` controllers (player: 2-D directional locomotion + aim layer + additive recoil + upper-body hit + deaths + pickup; zombie: idle/gait blend by fit and version, attacks at the tier telegraph rate, upper-body hits, regional additive flinches, heavy stagger on armour break, four deaths, rise), `CharacterAnimationEvents` as the single event contract (the DEC-029 hit window is now the clip's `hit_window_start/end`, the timers are a safety net), `ProceduralPoseBridge` removed, `CharacterAnimatorLod` stepping far bodies at 15 Hz under `CullUpdateTransforms`; the 40-body animation path allocates nothing per frame.
-
-WP-023 (M3 achievements & unlocks, ADR-023-1/2) makes DEC-007/038 real: `Assets/_Prototype/Achievements/` holds a data-driven rule engine — `Resources/Achievements/achievement-catalog.json` (27 definitions: round, kill, per-version kill, armour, special-weapon pickup, flawless round, runs, level over the profile's life, plus single-run feats — 40 kills, 150 / 400 gold, 5 upgrade cards; every entry a counter + threshold, none a modifier; gold never enters the profile file) and `unlock-catalog.json` (cosmetic titles / badges and HUD indicator variants keyed on an achievement, a level or a round; weapon / branch entries stay empty until the weapon list). `AchievementRunTracker` observes the run for special pickups and flawless rounds and binds the counters to the run's completion token; the profile transaction (`ProfileService.ApplyRun`) folds statistics, feats, XP, achievements, ladder unlocks and catalog content into ONE write (schema v4: `SpecialWeaponPickups`, `FlawlessRounds`, `UnlockedContent`; v3 files migrate losslessly with lineage and ordinal untouched). Run Results reads `ProfileService.ResultsSource.Current` (`RunResultsData`, the DEC-036 model). Older builds must not open the v4 profile (read-only "newer version").
-
-WP-035 (achievement bindings, ADR-035-1) adds the data layer the profile and results screens bind to: `ProfileService.AchievementProgressSource` (per-achievement current / threshold / progress, "new" flags, `MarkAchievementsSeen`), `ProfileService.CosmeticsSource` (catalog titles and badges with the profile's selection — `SelectTitle` / `SelectBadge`, persisted as v4 keys `SelectedTitle` / `SelectedBadge`; skins listed as always open with the session's choice, never persisted per DEC-039), `RunResultsData` gold split (cards vs rerolls), and roster-derived weapon entries in `UnlockCatalog` (level read from the WP-034 roster, never copied). Contract: `planning/work-packages/WP-035-COSMETICS-CONTRACT.md`.
-
-WP-022 (M3 UI art & HUD v2, ADR-022-1) replaces the procedural-only UI look with the AP-012 set: a white-glyph icon atlas (upgrade branches, classic and special weapons, HUD, menu), cream ink 9-slice frames and medallions, the DEC-076 menu plate and AP-006 skin portraits, all resolved through one `UiTheme` asset and the `UiArt` facade (`Assets/_Prototype/UI/Art/`; every lookup falls back to `UiSprites` when the art is absent). The HUD follows the AP-012 composite (gold top-left, round chip top-centre, health bottom-left, radial Special timer bottom-centre, weapon bottom-right, an aim-point reticle in the middle, the play area kept clear by `RunHudScreen.HudSafeZone`), the selection cards show the real character, results and achievements wear medallions, and the main menu gains a Settings pane (`UiSettings`: UI scale 0.9-1.2, master volume, quality — PlayerPrefs, never the profile). Every screen is completable with keyboard or gamepad through explicit navigation chains, focus reclaim and Cancel. HUD idle allocation stays at 0 B/frame (moving elements live on nested canvases and are parked off-screen rather than toggled).
-
-WP-022B (UI/HUD v2.1, ADR-022-2) moves the UI text to TextMesh Pro (essentials imported under `Assets/TextMesh Pro/`, LiberationSans SDF under OFL; `UiFonts` prefers a project face at `Resources/UI/Fonts/UiPrimary SDF` when one is placed), binds the WP-033 threat feed to three HUD warning chips (shape + word, outside the safe zone), the WP-023 results record to the Results screen (new best round, killer, achievement rarity medallions) and the WP-025 build label to the menu corner, moves UI settings out of PlayerPrefs into `persistentDataPath/ui-settings.json` (`UiSettings`, with a reduced-motion toggle), and publishes every UI interaction as a named `UiEvent` (`UiEvents.Raised`; rows in `planning/work-packages/EVENT-COVERAGE-MATRIX-UI.md`) for the audio and effect owners.
-
-WP-032 (animation polish, ADR-032-1) adds the built-in Humanoid IK layer on top: `CharacterLookAt` (zombie → threat head, player → the same aim the aim layer uses), `FootIkAdapter` (ground rays, pelvis follow, 12 near bodies per frame), `StrideCalibrator` (no-slip speeds measured on the Unity rig at build; the 2-D blend time scales use them), the additive `telegraph` layer with generated wind-up emphasis clips scaled by the version's telegraph, the crowd-wait hook (`ZombieAnimator.SetWaiting`), the `RiseOnSpawn` / `PickupLocksMovement` flags (both off until decided) — and two WP-018 fixes: the AP-009 clips faced the model's −Z (180° importer offset) and the attack socket now sits on the Visual node with the zombie Animator always animating.
-
-WP-032B (AP-009B v002 on the characters) regenerates both controllers from the 36-clip v002 manifest (`AP009.clips-manifest.v002`; foot events on the correct side — the v001 names were mirrored, so footstep decals/SFX flip with this set), puts the player's four run cycles on the outer ring of the 2-D locomotion blend (walk ring at its own no-slide radius, run rate capped ×1.6), moves the Special Weapon pickup onto the upper-body override layer with no movement lock (DEC-082), adds the Ultra `Attack_Overhead` state (DEC-029 window from the clip's own events; S-03's sweep placeholder retires by data) and the `Wait` state on the queue idle with a per-body cycle offset (`SetWaiting`), and keeps the rise handshake clip-driven for S-03's hybrid policy (DEC-081).
-
-WP-045 (run telemetry & simulator calibration, ADR-045-1): `Assets/_Prototype/Diagnostics/Telemetry/RunTelemetry` observes the existing run / damage / weapon events into preallocated struct buffers and writes one `dd-run-telemetry-v1` JSON per run to `persistentDataPath/telemetry/` (per-round gold, kills per tier and armour, damage taken, special pickups, card tiers, TTK samples; no profile or identity data; `-ddTelemetry 0` disables, `-ddTelemetryDir` redirects). `Diagnostics/Editor/SimulatorCalibration` compares a folder of runs with `EconomySimulator` (WP-041) and reports deviations plus implied model parameters; the bot runs come from `QaRunBot` inside PlayMode tests.
-
-WP-022C (UI/HUD v2.2) builds the Selection weapon column from the WP-034 roster (`IWeaponRosterSource` / `WeaponRoster.All`: A/B/C cards, a locked-look D card, `CORE` branch glyph row, shot-model caption, glyph placeholder contract `UiArt.RosterGlyph(HudIconId)`), adds the Player capture hook `UiCaptureAgent` (`-ddUiCapture mainmenu|settings|selection|pause|results -ddUiCaptureOut <png>`; opt-in, quits after one frame), caps the page grid on 21:9 (`UiTokens.ContentMaxWidth`, `UiMaxWidth`), standardises UI motion (`UiMotionCurve.EaseOut`, reduced motion everywhere) and publishes the measured WCAG 2.2 AA contrast table from `UiContrast` (EditMode test, 0 FAIL).
-WP-020 (M3 world v3, ADR-020-1/2) brings AP-005C into the world through a delta **chain** (`AP005_placement-delta-v002.json` then `-v003.json` on the untouched v001 source: 2387 → 2664 instances — the real north gate GATE-N with its 5.20 m clear opening, the palace gable wedges on sills and studs, the outer dressing band, the north trio re-seated; the Unity-side `AP005_placement-overrides.json` is now empty because production folded the four bamboo nudges and the i0048 material override into the source; `material_override_parts` re-skins only the `panel` part of three west-corridor modules). The NavMesh bake carries named areas (Bridge / Corridor / Gate, one `NavMeshModifierVolume` per bridge segment, corridor module and gate transition, written by the importer) so `RegionNavProfile` can price them; the six AP-005B props and the player take their ORM/AO v002 packs (prop materials now bind occlusion); AP-008 v002 armour (UV fix, AO v002, one Broken file per family) and AP-007 v002 (the second cloth atlas: two-material cloth modules, `M_zombie_cloth` ×4, texture budgets v3 100 / 220 MB) replace the v001 characters; the user's DEC-077 armour readability criterion is recorded in planning 00/01/04.
-
-WP-022C (UI/HUD v2.2) builds the Selection weapon column from the WP-034 roster (`IWeaponRosterSource` / `WeaponRoster.All`: A/B/C cards — unshipped entries such as D are not shown at all (user decision) — `CORE` branch glyph row, shot-model caption, glyph placeholder contract `UiArt.RosterGlyph(HudIconId)`), adds the Player capture hook `UiCaptureAgent` (`-ddUiCapture mainmenu|settings|selection|pause|results -ddUiCaptureOut <png>`; opt-in, quits after one frame), caps the page grid on 21:9 (`UiTokens.ContentMaxWidth`, `UiMaxWidth`), standardises UI motion (`UiMotionCurve.EaseOut`, reduced motion everywhere) and publishes the measured WCAG 2.2 AA contrast table from `UiContrast` (EditMode test, 0 FAIL).
-
-WP-022D (UI/HUD v2.3) binds the WP-035 contract: the Achievements pane reads `ProfileService.AchievementProgressSource` (progress bars, rarity medallions, NEW chips, five-per-page pager), the Profile pane gets a title/badge picker on `ProfileService.CosmeticsSource` (`SelectTitle`/`SelectBadge`, locked options non-interactable with their condition), Results unlock cards carry a glyph by unlock type, and `UiCaptureAgent` accepts `profile|achievements|statistics`.
-
-WP-022E (UI/HUD v2.4) adds the Settings "RUN TELEMETRY" toggle (`UiSettings.Telemetry` → `RunTelemetry.SetEnabled`; `-ddTelemetry 0` still wins) and the name plate (`CosmeticsViewModel.NamePlate`: selected title · badge on the Profile heading and the Results eyebrow).
-
-WP-032C (AP-009C v003 + AP-009D v004) takes the characters to the 85-clip set: the player's classic weapon is animated on the upper-body layer (`Aim_<weapon>` rest loops, per-weapon additive recoil, reload / switch / lower / raise one-shots with their events, rate-scaled to `WeaponConfig.ReloadTime`, bound to S-02's `WeaponEvents`), the Special Weapon hold poses and the v003 pickup, hurt A/B and the side death; the zombie gets directional × tier hit reads, armour-break-by-region clips, the Runner stumble, rise variants with `spawn_rise/spawn_land` (DEC-081 camera-off cuts) and the tier deaths; `CharacterAnimationEvents` grows to 28 names.
-
-WP-029 (M3 lighting & look pass, ADR-029-1/2) gives the game its target look and its first bake: the user picked Look B "Islak Arduvaz" from three Lightroom candidates (DEC-084); the same recipe (preset + global adjustments, tuned to the DEC-077 gold gate as B4) is applied to a neutral strip and shipped as `Assets/_Art/Lighting/LUT/DD_Look_v1.png`, the Global Volume's Color Lookup on top of the WP-013 grade (`LutBuilder` measures the strip against the Lightroom frame in CIE76 ΔE; in-engine frames sit 2–4.4 ΔE from the targets). `tools/bake-lighting.sh` → `ArtLightingBake.BakeWorld` prepares World_AP005 (a Mixed sun, a 1289-probe light probe group, six reflection probes, Contract v1.2 lightmap UVs with calculated chart margins, LOD0-only charts on structures / ground, 16 texels/m, ≤ 64 MB) and bakes Baked-Indirect lightmaps into `Scenes/World_AP005/`; the renderer gains SSAO and 60 m / 4-cascade shadows, and MSAA drops 4× → 2× (ADR-025-2). `LookReferenceTests` renders the eight reference frames (raw + graded) that the recipe and the art-director judge against.
-
-WP-022F (UI quality v3) adds device-aware input prompts (`UiInputScheme` polls Input System device timestamps; `UiInputGlyphs`/`UiPrompt` draw procedural A/B/X/Y/MENU or key caps; `UiInput.Prompt(button, action)`), the `UiCaptureAgent` HUD observer for real-gameplay frames next to the WP-026 bot (`-ddUiCapture hud -ddUiCaptureRounds 1,4,8,12`), a staggered Results entry (`UiStaggerIn`) and the `RunTelemetry` CLI-off / subscribed flag split.
-
-WP-022G (accessibility & options v1) adds two main-menu panes: ACCESSIBILITY (colour-blind safe palette via `UiTokens.Palette`, reading-text scale, flash reduction through `UiTokens.FlashScale` + `GameFeelSettings.FlashScale`, reduced motion) and CONTROLS (WP-024 rebinding rows on `IInputRemapService`, stick dead zone, aim-assist level, rumble on `InputPreferencesStore`). All UI values persist in `ui-settings.json`; the contrast table is asserted under both palettes.
-
-WP-022H (Special HUD v2) subscribes the HUD to the WP-056 `SpecialWeaponUsageEvents` bus — a usage line under the Special ring ("FIELD 4s · 2 HIT", "FIELD ENDED", "SHOTS n", rebuilt only on integer change) and an AP-014 hand-model glyph (`Sw.<id>` atlas under `UI/AP014`, `UiArt.SpecialIcon` prefers it) — and makes the shop footer follow `UpgradeOfferPolicy.MaxPurchasesPerRound` so a second pick needs no UI change.
-
-WP-022I adds `UiEnemyStatusMarkers` on the HUD marker canvas: a pooled NET / DAZED word chip over each zombie under a WP-055 Special reaction (`ZombieEnemy.Live`, `IsNetted` / `IsDazed`), parked off-screen when unused and allocation-free per frame.
-
-WP-022J: prompts re-inset their button label on every rebind (`UiPrompt.AttachLabel`), the HUD dims to 35 % alongside the WP-019 death overlay (`RunHudScreen.UpdateDeathDim`), and the ProfilerRecorder HUD tests pin `Application.targetFrameRate = -1` (WP-052 note); `planning/work-packages/M3-UI-SUITE-OWNERS.md` lists the UI suites with owners for the M3 closing regression.
-
-WP-022L (Ö-6a, DEC-087): every sentence on the round-end shop follows `UpgradeOfferPolicy.MaxPurchasesPerRound` — intro ("Buy up to two upgrades…"), gold-strip note, locked-card sentence, refusal line and the picks-used footer — so the S-04 policy value opens the second pick with no further UI change; with the policy at 1 the wording is unchanged.
-
-WP-022L (AP-012 v003, 3 credits): one more white-glyph sheet sliced to `UI/AP012/AP012_status_icons_1024x512` (16 tight-rect sprites, loaded by `UiTheme` after the AP-014 atlas) — HUD threat chips carry their own `Threat.Surrounded/Behind/Elite` glyphs (24 px, upright), NET/DAZED enemy chips show `Status.Netted/Dazed` (18 px) beside the word, the health heart swaps to `Hud.LowHealth` while low, and the sidebar gets `Menu.Controls` / `Menu.Accessibility`; `Status.Pulled`, `Threat.Ultra`, `Menu.Palette/TextScale/ReduceFlashes`, `Special.KaguraSuzu`, `Shop.Reroll/Picks` are in the atlas without a consumer yet. The HUD capture observer also writes `enemy-status.png` on the first netted/dazed enemy.
-
-WP-022K: the HUD allocation tests measure with the recorder-first arbiter method after the low-health threshold crossing (the one-frame ~197 KB downstream set-up on `HudLowHealthLeft` was the batch-only failure), `UiInput.CancelPressed` probes the legacy Cancel button once instead of throwing per frame, HUD numerics keep a fixed size (`UiFactory.Numeric(autoSize: false)`), and two diagnostic tests report per-component allocations for the HUD and the main menu.
-
-WP-068 (UI v3, council direction `planning/work-packages/WP-068-UI-V3-DIRECTION.md`): slice 0 fixes nine confirmed UI defects; slice 1 is token v3 (`UiTokens` colours incl. `StateWarning` #F7C766, `UiTokenFamilies`, CanvasScaler Expand, `UiTokenExporter` → `UiTokens.hlsl` / `ui-tokens.json` / style guide §2.2 UI table); slice 2 is the single allocation-free `UiMotion` core with `UiPresets` (Reduced Motion / flash policy by motion class, timelines with cues) that the old pulse/fade/stagger/bar/button motion now runs on; slice 3 adds the three font roles (`UiFonts.For`, Display / Text / Numeric, falling back to today's face until the OFL assets are placed).
-
-WP-038 (World v4, ADR-038-1, ADR-015-1/2 v4) puts AP-015P's real surfaces under the world: 71 ground/route/kerb/pavement plates and 3 koi-pond water meshes come in at identity from `Assets/_Art/Environment/{Ground,Water}/AP015/` through `ArtSurfaceImporter` (manifest dd-surfaces-v1; LODGroup 45 m never culled, `_COL` MeshCollider on Environment, kerbs stone + NavMesh-ignored, `SurfaceTag` Dirt/Stone/Water), the WP-014 stand-in ground and pond beds are gone (DEC-078 closed), the NavMesh is baked on the plates (2718 triangles; Bridge/Corridor/Gate volumes unchanged), one `DD/GroundBlend` material blends earth/gravel/stone from the plates' vertex mask in a single world-space tile (wetness in A) and one `DD/Water v2` material replaces the analytic v1 water (depth fade, two flow-advected normal layers from the flow map, shore foam, sparkle, caustic sheet; rain/koi rings are an emitter for S-07). Import Contract v1.3 compresses environment meshes (Medium; skinned Off), caps derived masks at 1024² and keeps the plates UV2-free; the release cap is 550 MB by user decision (DEC-086). Bake, PlayMode, release size and the art-director round are in `planning/04` §WP-038.
-
-| Folder | One-line summary |
-|---|---|
-| `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |
-| `Input/` | The single concrete `IInputSource` implementation over the Input System, plus the installer that decides which device currently owns aim. |
-| `Player/` | Motor, aim, health and regeneration, damage feedback, procedural animation, the primitive-built rig and its three skins, and the binding that applies upgrade tiers to player stats. |
-| `Camera/` | The fixed high-angle third-person rig with look-ahead and smoothing, the shake service, and the occlusion fader that dissolves anything between the camera and the player. |
-| `Weapons/` | The three classic weapons and the Special Weapon: firing loop, hitscan engine, target resolution, modifier state for the upgrade branches, the stagger governor, the visual rig, and the Special Weapon spawn/pickup/round bridge. |
-| `Feedback/` | The hit-feel chain — muzzle flash, tracer, impact, hit marker, damage number, burst, beacon and link effects — all pooled and metered by a shared budget, plus hit-stop and the camera-shake bridge. |
-| `Enemies/` | The single zombie family: factory, targeting, the tier authority bridge (the scheduler was removed in WP-010; `TierSelectionPolicy` under `Spawn/` is the single authority), attack state machine, hit-reaction state, procedurally built body and appearance layers, and the pseudo-animator. |
-| `Damage/` | The regional damage model: hitbox registry, the three-piece armour set, the damage contracts, and `RegionalDamageProof`, which asserts the approved armour and explosion rules against the live model. |
-| `Navigation/` | NavMesh path following plus the custom crowd layer — solver, spatial grid and tuning — that gives soft separation without a solid traffic lock, and the ring-region model of the map. |
-| `Spawn/` | The twelve hand-placed spawn points, the dynamic weight calculator that scores them, the pure `SpawnPointSelector` (weighted, deterministic with an injected RNG), the tier selector that owes each tier its guaranteed debut, the pure `RoundLedger` (round state machine, population counters, the REQ-012 completion rule: pool empty AND no living enemy, corpses excluded) with `RoundPlan` as the single place the round's pool/target/ceiling are resolved, the pause-safe `SpawnRefillClock`, and the director that owns the pool, the enemy lifecycle sink (`IEnemyLifecycleSink`, ticket per life) and keeps the target active count under the technical ceiling (WP-003). |
-| `World/` | The 90×90 m blockout: procedural mesh building, ground, structures, foliage, atmosphere, palette, landmarks, and the NavMesh bake — assembled at load by `WorldBootstrap`/`WorldBuilder`; the editor tool `RunSceneBuilder` is a one-time setup utility and is not run in normal work. |
-| `Rendering/` | The serialized shader library (`PrototypeShaderLibrary`, in `Resources/`), the eight variant-pin materials that keep URP keyword variants in the Player build, the `PrototypeShaders` accessor that replaced `Shader.Find`, and the build-time check that stops a build when the library is missing. |
-| `Rounds/` | The run director: round pools, round-end flow, the round-end upgrade SESSION (`RoundUpgradeShop` + the pure `UpgradeOfferPolicy`: exactly three distinct eligible cards, one purchase per round that locks the offer, one paid reroll before it that swaps one or two cards, session/revision-quoted commands, a safe no-charge error state — WP-008), XP and stats tracking (gold spent = purchases + rerolls), the run flow clock that freezes everything on pause, and the debug registrations. |
-| `Economy/` | The run wallet (transaction ledger with sources and ids, spend split by upgrades/rerolls), the reward-eligibility ledger, the value contract and the pure `GoldRewardCalculator` (WP-008: `base + version bonus + spawn-armour bonus`, frozen per enemy life in an `EnemyRewardSnapshot` at spawn), the packet lifecycle and its pooled body, its tuning, and the service that drops one packet per kill carrying exactly that snapshot, pulls it in with the magnet and sweeps the floor when a round completes. |
-| `UI/` | Every screen (main menu, selection, HUD, upgrade, pause, results) built on a shared kit — tokens, fonts, sprites, buttons, bars, motion, sound and a contrast auditor — plus the flow object that drives scene transitions. WP-005 adds `Navigation/` (the `UiNavigation` state model: one base context, a layer, an overlay; conflicting states are refused, transitions are idempotent) and `Presentation/` (`RunHudViewModel`, `ResultsViewModel`, `ProfileViewModel`/`StatisticsViewModel`/`AchievementsViewModel`, `UpgradeIcons`): every screen draws from a view model built from an authoritative snapshot, never from a live gameplay object. |
-| `Profile/` | The local, offline profile: persistent stats, level and unlocks (the EARNED lists are the access authority — WP-009), the pure progression arithmetic (`ProfileProgression`: two XP sources, saturating counters, bounded level loop), the transaction (`ProfileService.ApplyRun`: exactly-once by an issued completion capability - WP-009H: profile lineage + monotonic ordinal high-water mark from `CompletionAuthority`, O(1), no id ring - candidate → crash-safe save → publish → one `Changed`), the run-end commit authority (`ProfileRunCommitter`), the crash-safe file store (`ProfileStore`: fsync'd candidate, verified backup, single-rename replace, deterministic recovery, v1/v2→v3 `ProfileMigration`, fail-closed fcntl write lease) and the immutable per-run receipt that Results reads. |
-| `Audio/` | Fully synthesised placeholder audio — no external assets. Recipes for weapons, impacts, ambience and meta, a clip library, a voice pool with a budget, buses, a mix plan and the ambience director. |
-| `Tests/` | Edit-mode tests for the formulas (round, progression, special-weapon chance, regional damage, mesh winding), the combat contracts (WP-002) and the round ledger / spawn selection contracts (WP-003), and play-mode tests for the flow, scene integrity, the core combat slice (WP-002) and the round & dynamic spawning slice (WP-003), plus `OTOMATIK-KAPI.md` (what the automated gate verifies) and `MANUEL-TEST-KITI.md` (what only a human can verify). |
+- LZ4HC-compressed data, a version stamp, an app manifest (SHA-256 per file) and a footprint report against the 5 GB cap.
+- The display name **"Deaths Demolition"**, written into Info.plist after the build (`tools/app-display-name.sh`). The executable, bundle id and data paths keep the product name, so existing saves are untouched.
+- No F1 panel, no stored direct-to-run switch, no QA bot and no capture agents. The one exception is `PrototypeCaptureAgent`, which the smoke run uses and which does nothing without its flag.
+- The perf probe exists only in `release-probe` builds, which are never distributed.
 
 ---
 
-## 5 · PROTOTYPE-ONLY assumptions
+## 5. Where things live
 
-The full list is in **[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md)**. Summary:
+Runtime code lives under `Assets/_Prototype/`, the art pipeline and production content under `Assets/_Art/`, and the URP pipeline assets in `Assets/Settings/`. Every major system, with its folder, main types and status, is listed in [`docs/SYSTEMS-INDEX.md`](../../docs/SYSTEMS-INDEX.md). Contracts, event flows and performance rules are in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
-* Every tunable value carries a `[PrototypeOnly(...)]` attribute naming the still-open
-  planning decision it temporarily occupies. **492 such declarations exist in the
-  code** (WP-024 re-count 2026-09-16: +9 plain-form tags for the gamepad slice — `InputPreferences` ×4 (deadzone / rumble / aim-assist preferences behind the request's fixed ceilings), `PrototypeInputSource.StickSaturation`, `GamepadRumble` pulse table ×4 — no tunable value changed; plain `grep "\[PrototypeOnly("` now reads 499 (the M3 art packages WP-011…WP-017 added 2 untracked in this line), plus 4 fully-qualified = 503; WP-010 re-count 2026-09-14: −6 tags removed with the code that carried them, no tunable value changed — the dead second tier authority `EnemyTierScheduler` (`DebutWindowStart`/`DebutWindowEnd`), `EnemyFactory.FallbackRoundPoolSize` (only read by the removed `EnemyFactory.BeginRound`) and the F1 "Fill To Safety Ceiling" cut table `EnemySystemHost.DebugFillStandardCut/SpecialCut/EliteCut` (the fill now draws from the run's single tier authority — F1 debug behaviour change: in round 1 the fill is Standard only, versions join from their introduction rounds on); plain `grep "\[PrototypeOnly("` now reads 488, plus 4 fully-qualified = 492; WP-008 re-count 2026-09-13: +3 plain-form tags for the spawn-armour gold bonuses on `EconomyConfigSection` (`ArmorGoldBonusHelmet/Body/Leg` 1/2/1, invented placeholders behind the DEC-043/069 rule), `AllowReroll` replaced 1:1 by `RerollCost` 10 (invented placeholder behind DEC-050), `CardsPerRound` retired (the three-card count is the DEC-047 constant `UpgradeOfferPolicy.CardsPerOffer`) — plain `grep "\[PrototypeOnly("` now reads 494, plus 4 fully-qualified = 498; WP-007 re-count 2026-09-13: +5 plain-form tags on `SpecialWeaponDirector` constants that existed untagged — `MaxSpawnsPerRoundDefault`, `SecondSpawnProgressOffset`, `LatestSpawnProgress`, `NavSampleRadius`, `OffRouteWeightMultiplier` — no value changed, plain `grep "\[PrototypeOnly("` now reads 492; WP-006 re-count 2026-09-12: +4 on the regional-hit slice — `DamageTargetResolver.HeadThreshold`/`UpperBodyThreshold` height-ratio fallback and `HitscanEngine.OverlapBufferSize`/`ExplosionRimDamageFraction`, all four written fully qualified so the historical plain `grep "\[PrototypeOnly("` still reads 487; 487 at WP-004/WP-005; 485 at WP-003/WP-002; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
-  number off the screen without also reading where it came from.
-* **237 of the original 337 (2026-08-18 scan) had no source in the request at all**; the invented split is re-issued after WP-000 Phase 4 — they were invented so a
-  system could function. They are flagged `invented` and rendered in a different colour.
-* Six of the seven lines under *"Kararlaştırılması sonraya bırakılan alanlar"* in
-  `planning/00-PROJECT-PLAN.md` are currently occupied by prototype numbers.
-  `PROTOTYPE-ONLY.md` §1 maps which value occupies which line.
-* **Gold collection with `ProximityMagnet` is now an approved product decision**, and
-  WP-004 (2026-09-12) implements it as the only path: every enemy death drops one visible
-  packet that never expires, the magnet pulls it in, and the round-end sweep credits
-  whatever is left before the upgrade screen opens. The old comparison-mode switch is
-  retired; `EconomyConfigSection.GoldCollectionMode` / `OrbLifetime` are inert fields.
-* Weapon names, enemy names (`Runner`, `Guard`, `Executioner`), the upgrade branches and
-  the achievements are placeholder content, not an approved roster.
+| Folder | Summary |
+| --- | --- |
+| `_Prototype/Core/` | Boot, `PrototypeConfig` and its sections, pooling, the input abstraction, camera and quality contracts, weapon definitions, the F1 panel |
+| `_Prototype/Difficulty/` | Normal / Hard / Demolition, pursuit roles |
+| `_Prototype/Weapons/` | Firing, hitscan, projectiles, Specials, wall buys, gun attachments, the arsenal assets |
+| `_Prototype/Damage/` | Regional damage, armour, death impulse |
+| `_Prototype/Enemies/`, `Navigation/`, `Spawn/` | Zombie runtime, attacks, reactions, threat director, crowd, spawn planning |
+| `_Prototype/Rounds/` | Run director, round loop, round-end shop, run tree v2 (`RunTree/V2/`) |
+| `_Prototype/Economy/`, `Profile/`, `Achievements/` | Gold, the crash-safe profile (schema v6), Awakening, achievements and unlocks |
+| `_Prototype/Camera/`, `Player/`, `Characters/` | Top-down camera, player, hero and zombie animation, ragdoll |
+| `_Prototype/Feedback/`, `Audio/`, `UI/`, `World/`, `Rendering/`, `Props/` | Game feel and VFX, audio, the brush-ink UI, world and vegetation, quality application, breakables |
+| `_Prototype/Diagnostics/` | QA bots, capture agents, probes, telemetry, crash log |
+| `_Prototype/Tests/` | EditMode and PlayMode suites |
+| `_Art/` | Import contracts, world V6 builders, render features, art libraries, art tests |
 
 ---
 
-## 6 · Known limitations
+## 6. PROTOTYPE-ONLY values
 
-None of these are softened. All of them are real and observable.
-
-**1 · The unlock ladder is exhausted in a single run.**
-Reaching profile level 4 costs a cumulative 525 XP (`100 + 175 + 250`, from
-`LevelRequirement = 100 + 75 × (Level-1)`, `Core/Config/ProgressionConfigSection.cs:64`).
-A run that reaches round 8 earns roughly 545-600 XP (245 round XP for rounds 1-7 plus
-271 base kill XP plus tier bonuses). From the second run onward **"Newly Unlocked
-Content" on the Results screen is usually empty.** The numbers are frozen by user
-decision and were not rebalanced.
-
-**2 · The performance target does not occur in natural play.**
-`min(7 + 2R, 32)` caps at 32 (`Core/Config/RoundConfigSection.cs:34`); the absolute
-safety ceiling is 40 (`:38`); the stated target is "around 40". The 40-enemy load is
-reachable **only** by forcing it from F1 → Spawn.
-
-**3 · Ultra may not be seen through natural progression.**
-The rounds 1-7 pool totals 271 enemies (12+20+29+38+48+57+67 from
-`TotalEnemyPool`, `Core/Config/RoundConfigSection.cs:58`), and `Executioner` debuts at
-round 8. The panel's round-jump presets exist because of this.
-
-**4 · Gamepad could not be verified.** No controller hardware on this machine. The
-abstraction and the bindings are written; they were never exercised. Acceptance
-criterion 5 is split: keyboard+mouse verified, gamepad **not verified**. WP-000
-(2026-09-10): still **not measured** — physical keyboard+mouse was not re-measured either;
-WP-000 exercised the input path through simulated `IInputSource` sources only.
-
-**5 · The hand-authored half of DEC-021 is absent from the prototype.**
-DEC-021 requires hybrid round difficulty: a formula baseline plus hand-authored armour
-ratios and tier distributions on specific rounds. Only the formula half is implemented.
-The override table is a deliberately empty skeleton —
-`_roundDifficultyOverrides: []` in `Core/Resources/PrototypeConfig.asset:417`. This was
-a user decision, not an oversight.
-
-**6 · The frame budget was not measured.**
-The crowd solver's cost at 40 agents is an estimate, not a measurement. The measuring
-instrument is **F1 → Perf → `Crowd`**
-(`Navigation/NavigationSystemBehaviour.cs:93`). Until somebody reads that row under a
-forced 40-enemy load, treat the 60 FPS / 40 enemy target as **not measured**.
-
-**7 · The economy's well runs dry around rounds 10-13.**
-Reported by the economy task from a 20-round × 20-seed simulation: the entire upgrade
-tree fills there, after which gold is a meaningless counter. **This is a candidate
-finding. It has not been applied** and nothing was changed because of it.
-
-**8 · The round 1 upgrade screen opens dead in 13.4% of runs.**
-Round 1 gross income is 24 gold (12 standard enemies × 2 gold each;
-`TotalEnemyPool(1) = 12`, `RoundConfigSection.cs:58`, `GoldReward = 2` at
-`Core/Config/EnemyConfigSection.cs:233`). Three of the eight branches offerable at
-profile level 1 cost more than that — Piercing 30, Ricochet 30, Maximum Health 25
-(`Core/Config/EconomyConfigSection.cs:92-150`). When the draw returns three of those,
-nothing is affordable. The 13.4% frequency is the economy task's simulated figure and
-was not re-measured here. It is not a wall — unspent gold carries over — but the screen
-is dead. **Candidate finding, not applied.**
+Every tunable value that still waits for a product decision carries a `[PrototypeOnly(...)]` attribute that names the open decision it temporarily occupies. The tag shows in the Inspector and in the F1 panel, so nobody can read a number off the screen without also reading where it came from. The census is in [`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md).
 
 ---
 
-## 7 · Historical verification at original prototype delivery (superseded by WP-000, 2026-09-10)
+## 7. Known limitations
 
-> The MD5 values below describe `planning/` as of 2026-08-17 and are **no longer valid**;
-> `planning/` was updated by the user on 2026-09-10. Current baseline evidence: see the
-> "Production Baseline" section above.
+- **Legacy cameras.** Third- and first-person views can still be chosen from the Pause menu's CAMERA row, but they have been frozen since 6 Oct 2026 and are outside test and acceptance scope. Top-down is the developed and tested mode.
+- **Developer flags in release.** A few gameplay and visual A/B flags (`-ddDifficulty`, `-ddQualityTier`, `-ddVegetationOff` …) are still read by a release player when passed on the command line. Moving them behind development guards is planned.
+- **Executable name.** The executable and bundle id still contain "Playable Concept"; only Activity Monitor shows it. A rename is planned after R4.
+- **Achievements.** Seven achievements read counters of the retired v1 tree and are probably not earnable under tree v2 (unverified).
+- **Windows.** `tools/build.sh --target win64` builds a Windows x64 player, but no R3 or R4 Windows release was made.
 
-* At the original prototype delivery, **`planning/` was not modified.** All four files were last written on
-  **2026-08-17 03:29-03:30**, before this prototype folder existed
-  (`prototype/DeathsDemolition_PlayableConcept` was created 2026-08-17 04:26). MD5s at
-  time of writing:
-
-  ```
-  c6c76920e31102c6f45a50455eb8508b  planning/00-PROJECT-PLAN.md
-  838bcc2d349582732268415eac80f03a  planning/01-REQUIREMENTS.md
-  63f893401a29666c644db2ca1e7cb135  planning/02-FLOWS-ARCHITECTURE.md
-  0f94760ccf6ad44bf150110eb94d34ea  planning/03-ROADMAP.md
-  ```
-
-* At the original prototype delivery, **`game/` was not modified.** It still contains only `.gitkeep` (0 bytes, dated
-  2026-08-01), exactly as it was before this work started.
-
-* At the original prototype delivery, **no DEC or REQ was created, changed or removed.** This prototype has no write access
-  to `planning/`. The candidate decision list (F1 → Candidates,
-  `Core/Debug/CandidateDecisionLog.cs`) is a notepad; **nothing moves from it into
-  `planning/` without an explicit, separate instruction.**
-
-* At the original prototype delivery, **no commit was made.** The initial baseline commit
-  (DEC-062, WP-000 Phase 5) covers the verified planning documents together with the
-  prototype source, settings and `.meta` files; generated folders (`Library/`, `Temp/`,
-  `Logs/`, `UserSettings/`, `Build/`) stay excluded via the root and `prototype/` `.gitignore`.
-
-* **No paid asset, no external download, no internet or cloud service** is used. Every
-  package in `Packages/manifest.json` ships inside the 2022.3.22f1 installation. All
-  audio is synthesised at runtime; all meshes are procedural primitives.
+The earlier per-package change log of this file (WP-000 onward) is kept in git history: `git log -p -- prototype/DeathsDemolition_PlayableConcept/README.md`.

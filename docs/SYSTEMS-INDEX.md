@@ -1,69 +1,125 @@
 # Systems Index
 
-This index lists every major system in Deaths Demolition as it stands on `main` in the M4-R2 revision round (checked against `main` 3e68bc08, 05.10.2026; R2 rows added by C-00B B-01, synced by B-05). Folders are relative to `prototype/DeathsDemolition_PlayableConcept/Assets/`.
+This index lists every major system in Deaths Demolition as it stands on `main` in revision round R4 of milestone M4. It was checked against the R4 game commit `b3424d1f` (14 Oct 2026); later commits on `main` change documentation and repository hygiene only.
 
-- **Owning work packages** are the packages that introduced or last reshaped a system. Their specs are in `planning/work-packages/`.
-- **Session** is the topic session that owns the domain (see `planning/04-IMPLEMENTATION-PLAN.md`).
+- **Folders** are relative to `prototype/DeathsDemolition_PlayableConcept/Assets/` unless they start with `tools/`.
+- **Main types** are C# type names; where a file holds a partial class or helpers, the file name is given instead.
+- Work-package specifications for each system are in `planning/work-packages/`.
 
 **Status key**
 
 | Status | Meaning |
-|---|---|
-| **Shipped** | On `main` with tests, active on the default player path |
-| **Shipped (off)** | On `main` with tests but disabled by default until a follow-up lands |
-| **In progress** | Part of the package is on `main`; named slices are still open |
-| **Branch** | Designed and built on a session's branch, not yet on `main` (the row names the branch) |
+| --- | --- |
+| **Shipped** | On `main` with tests and active on the default player path of a release build |
+| **Legacy** | On `main` and reachable, but frozen and outside test and acceptance scope since 6 Oct 2026 |
+| **Retired** | Still compiled and kept for save or data compatibility, but no longer reachable by the player |
+| **Dev only** | Compiled only into development builds and the Editor (or, where stated, release-probe builds) |
+| **Tooling** | Editor or shell tooling; never part of a player build |
 
-| System | Folder | Main types | Owning WPs | Session | Status |
-|---|---|---|---|---|---|
-| Boot & scene flow | `_Prototype/Core/Boot/` | `PrototypeBootstrapper`, `PrototypeBootFlags`, `PrototypeScenes`, `PrototypeCaptureAgent` | WP-000, WP-001 | S-01 | Shipped |
-| Config & placeholders | `_Prototype/Core/Config/` | `PrototypeConfig` (+ Economy/Enemy/Feedback/Player/Progression/Round/Weapon sections), `PrototypeOnlyAttribute`, `FeelConfig` | WP-000 | S-01 | Shipped |
-| Pooling | `_Prototype/Core/Pooling/` | `PoolService`, `PrototypePool<T>`, `PooledBehaviour`, `PoolExhaustedPolicy` | WP-000 | S-01 | Shipped |
-| Input | `_Prototype/Core/Input/`, `_Prototype/Input/` | `IInputSource`, `InputSourceRegistry`, `InputPreferences`, `AimAssist`, `PrototypeInputSource`, `InputRemapService`, `GamepadRumble` | WP-024, WP-059, WP-070 | S-01 / S-02 | Shipped |
-| Weapon data (Arsenal v3) | `_Prototype/Core/Weapons/`, `_Prototype/Weapons/Arsenal/` | `WeaponDefinition`, `WeaponFpViewPose`, `ArsenalCatalog` (12 definitions), `Arsenal`, `WeaponIdMigration` | WP-069 (DEC-094/097/099) | S-02 | Shipped: 10 classics in 6 classes + 2 Specials |
-| Firing & hitscan | `_Prototype/Weapons/` | `WeaponController`, `ClassicWeaponRuntime`, `HitscanEngine`, `PlayerWeaponBinding`, `FpViewPoseDriver`, `StaggerGovernor`, `WeaponModifierState` | WP-002, WP-042, WP-069 | S-02 | Shipped |
-| Projectiles | `_Prototype/Weapons/Projectiles/`, `_Prototype/Weapons/RocketImpacts.cs` | `ProjectileSystem`, `ProjectileKind` (Bullet/Pellet/Rocket/Orb/Gel), `ProjectileDriver`, `ProjectileEvents` | WP-069 (ADR-069-1) | S-02 | Shipped |
-| Special weapons | `_Prototype/Weapons/` | `SpecialWeaponDirector`, `SpecialImpacts`, `SpecialLinks`, `SpecialGelEffects`, `SpecialWeaponPickup`, `SpecialDropValidator` | WP-069 B4 (DEC-094), WP-056 | S-02 | Shipped: Raijū (chain lightning) and Namekuji (slick gel); Kagura/Ofuda/Tide retired |
-| Damage & armour | `_Prototype/Damage/` | `DamageContracts` (`DamageHit`, `IDamageReceiver`, `BodyRegion`), `DeathImpulse`, `RegionalDamageBody`, `ArmorSet`, `HitboxRegistry`, `DamageEvents` | WP-002, WP-006, WP-076 | S-02 / S-03 | Shipped |
-| Player | `_Prototype/Player/` | `PlayerMotor`, `PlayerAim`, `PlayerHealth`, `PlayerRig`, `PlayerSpawner`, `PlayerUpgradeBinding` | WP-002, WP-059 | S-02 | Shipped |
-| Camera modes | `_Prototype/Core/Camera/`, `_Prototype/Camera/` | `CameraMode`, `CameraModeSettings`, `CameraModeProfile`, `CameraModeService`, `CameraModesFeel`, `PrototypeCameraRig`, `CameraOcclusionFader`, `CameraAimRay` | WP-070, WP-073 B4 | S-01 | Shipped: top-down (default), third-person, first-person; pause-menu selector |
-| Quality tiers | `_Prototype/Core/Quality/`, `_Prototype/Core/Editor/QualityTierSetup.cs` | `QualityTier`, `QualityTiers` (`DefaultTier = Sinematik`) | WP-075 (DEC-100) | S-05 | Shipped: Cinematic default (30 fps), High (60 fps), Performance |
-| Enemy runtime | `_Prototype/Enemies/` | `ZombieEnemy` (partials), `EnemyFactory`, `TierBehaviourProfile`, `EnemyVersionApplier`, `EnemyHitReactionState`, `ZombieRear` | WP-002, WP-028, WP-052, WP-076 | S-03 | Shipped |
-| Enemy attacks & reactions (AI v3) | `_Prototype/Enemies/` | `AttackSelector`, `AttackSlotBoard`, `GrabState`, `EnemyAttackState`, `ZombieShock`, `ZombieGel`, `GelPuddleRegistry`, `AiV3RoundLog` | WP-076 (DEC-096) | S-03 | Shipped (B1–B8) |
-| Zombie look v2 (AP-025) | `_Prototype/Characters/ZombieModuleLibrary.cs`, `_Prototype/Enemies/ZombieAppearance.cs`; S-03 branch `wp-084-s03-zombie-v2` | `SlotFace`, mask `Texture2DArray` (BC4), `DD_TierLit` `_ZOMBIE_MASKS`, RL bits in `ApplyVariation` | WP-084 slice 1, WP-088 | S-03 | In progress: on `main` the WP-088 per-garment atlas fix and the `_ZOMBIE_MASKS` shader path (`d0783d9b`, keyword off by default); the intake body (SlotFace, masks, RL bits) is on S-03's branch; gates Z2 / Z3b / Z4 measure it |
-| Threat director | `_Prototype/Enemies/` | `ThreatDirector`, `ThreatModel`, `ThreatSnapshot`, `ThreatMusicFeed`, `ThreatHudFeed` | WP-033, WP-050 | S-03 | Shipped |
-| Crowd & navigation | `_Prototype/Navigation/` | `CrowdService`, `CrowdSolver`, `CrowdSpatialGrid`, `NavPathService`, `NavPathFollower`, `RegionNavRouter`, `NavRegionMarker`, `CrowdFeelSettings` | WP-030, WP-054, WP-038R, WP-076 B6 | S-03 | Shipped |
-| Spawning | `_Prototype/Spawn/` | `EnemySpawnDirector`, `RoundPlan`, `RoundLedger`, `SpawnPointSelector`, `SpawnWeightCalculator`, `SpawnRelaxation`, `SpawnWorldProfile`, `SpawnRoomBalance`, `RearSpawnShare`, `TierSelectionPolicy` | WP-003, WP-050, WP-076 B6 | S-03 | Shipped: 22 V6 gates |
-| Run & round flow | `_Prototype/Rounds/` | `RunDirector`, `RunPhase`, `RunEvents`, `RunFlowClock`, `RunSystemsInstaller`, `RunStatsTracker` | WP-003 | S-03 | Shipped |
-| Progression tree v2 (in-run) | `_Prototype/Rounds/`, `_Prototype/Rounds/RunTree/` | `RoundUpgradeShop`, `RunTreeCatalog`, `RunTreeGraph`, `RunTreeState`, `RunTreeHooks`, `RunTreeEffectValues`, `RunTreeGroundFire` (`run-tree.json`) | WP-077 (DEC-095/098) | S-04 | Shipped: tree cards in the round-end shop, effects live |
-| Meta path | `_Prototype/Profile/MetaPath/` | `MetaPathCatalog`, `MetaPathRules`, `MetaPathSnapshot`, `ProfileService.Meta` (`meta-tree.json`, 38 nodes) | WP-077 (DEC-095/098) | S-04 | In progress: catalog, rules and weapon locks on `main`; full node coverage is open |
-| Gold economy | `_Prototype/Economy/` | `GoldService`, `GoldWallet`, `GoldRewardCalculator`, `GoldRewardLedger`, `GoldOrb` | WP-004, WP-008 | S-04 | Shipped |
-| Profile & save | `_Prototype/Profile/` | `ProfileService`, `ProfileStore`, `ProfileData` (schema v4), `ProfileMigration`, `CompletionAuthority`, `ProfileRunCommitter` | WP-005, WP-009, WP-009H | S-04 | Shipped |
-| Achievements & unlocks | `_Prototype/Achievements/` | `AchievementCatalog`, `AchievementEngine`, `AchievementRunTracker`, `UnlockCatalog` | WP-023, WP-035 | S-04 / S-09 | Shipped |
-| Characters & animation | `_Prototype/Characters/` | `CharacterAnimationEvents` (v3 + R2 reload beats, `BeatFamily`), `CharacterAnimatorContract`, `ZombieSkinnedVisual`, `PlayerSkinnedVisual`, `WeaponGripIk`, `TwistCorrector`, `CharacterAnimatorLod`, `FootIkAdapter` | WP-018, WP-032, WP-071 | S-06 | Shipped (AP-022 deaths, attacks, reactions) |
-| First-person arms | `_Prototype/Characters/FirstPersonArms.cs` | `FirstPersonArms` (29 FP clips, `FirstPersonView` layer) | WP-071 B4b | S-06 | Shipped (off): waits for the hand-orientation pass |
-| Weapon-first hold (TP) | `_Prototype/Characters/WeaponHoldIk.cs`, `_Prototype/Player/WeaponMountAlignment.cs` | `WeaponHoldIk` (order 890, per-weapon support-reach pull-back ≤ 0.35 m), `WeaponGripIk` (910) | WP-083 B2c/B2d (R2 N2-05) | S-06 | Shipped (off): `Enabled = false` on `main`; the ship-on decision and the per-weapon rows (C buttstock, `sg_2` HoldDelta, `rl_1` off) come with S-06 B2d/B2e (`wp-083-b1`) |
-| Reload magazine contract | `_Prototype/Weapons/`, `_Prototype/Characters/MagazineSocket.cs` | `WeaponMagazineOwnership` (`MagazineOwner`, `MagazineStep`, `Stepped`), `WeaponMagazineVisual` (`part_mag` ↔ `socket_mag_l`) | WP-082, WP-087 §12 | S-02 / S-06 | Shipped: 4 beats empty, 3 tactical, 3 empty tube (`rl_1` `rocket_in` / `rocket_seat`); gate H3 |
-| Locomotion v4 | `_Prototype/Characters/LocomotionV4.cs`, `_Art/Editor/ArtAnimatorBuilder.cs` | `LocomotionV4` (142 ids: 64 starts, 64 stops, 12 pivots, 2 turns; `V4Clip`), `LocomotionV4Events` | WP-083 B3b (R2 N2-06) | S-06 | In progress: contract, detector and sub-state builder on `main`; no AP-026 v002c clips imported yet, so the controller is unchanged |
-| Ragdoll & death families | `_Prototype/Characters/` | `RagdollProxyPool`, `ZombieDeathFamily` | WP-071, WP-076 | S-06 | Shipped |
-| Animation import contract | `_Art/Editor/` | `ArtAnimationEventContract` (v3), `ArtAnimationClipContract`, `ArtAnimatorBuilder` | WP-018, WP-071 | S-06 | Shipped |
-| VFX & game feel | `_Prototype/Feedback/`, `_Prototype/Feedback/Vfx/` | `HitFeedbackDirector`, `FeedbackBudget`, `HitStopService`, `MuzzleSystem`, `TracerRibbonRenderer`, `ImpactSystem`, `ArcSystem`, `GelSystem`, `GroundFireSystem`, `AtmosphereSystem`, `CameraFeelDriver`, `BloodSystem` | WP-019, WP-042, WP-073 | S-07 | Shipped (v3 B1–B6) |
-| Audio | `_Prototype/Audio/` | `PrototypeAudioDirector`, `AudioMixerBridge`, `AudioVoicePool`, `WeaponFireAudio`, `SpecialAudio`, `RocketBlastAudio`, `ProjectileFlightAudio`, `AfterRainAmbience`, `MusicDirector` | WP-021, WP-048, WP-060, WP-072 | S-08 | Shipped (v3) |
-| Acoustic spaces | `_Prototype/Audio/Runtime/` | `AcousticSpace` (Open/Corridor/Hall), `AcousticSpaceMap`, `AcousticSpaces.Resolver` (`DD_AcousticSpaces.asset`) | WP-072 B6 | S-08 | Shipped: V6 map, 17 spaces |
-| Weapon audio v4 (AP-027) | `_Prototype/Audio/Runtime/WeaponFireAudio.cs`, `_Prototype/Audio/Library/` | `WeaponLayer` (Mechanical, 3 space tails, 2 distance layers), `WeaponDistanceBand` (12 / 35 m), `WeaponAudioIdentity.EarlyOffsetSeconds`, `WeaponFireAudio.WetDb` | WP-085 B1–B5 | S-08 | Shipped: 10 weapons, full shot every round, v003f tails; v003g recut and the ar_1/sg_1 listening kit on S-08's branch |
-| Casing sound and casing launch | `_Prototype/Audio/Runtime/WeaponFoleyAudio.cs`, `_Prototype/Feedback/Vfx/CasingEvents.cs`, `CasingEffect.cs` | `CasingAudio` (queue 16, bounce, same-frame stagger), `WeaponFoleyV3`, `CasingEvents.Launched` (`CasingLaunchInfo`), `CasingEffect.PredictLanding` | WP-085 B2/B5, WP-087 | S-08 / S-02 | Shipped: fall 250–700 ms, AP-027 surfaces; the landing placed from `Launched` via `PredictLanding` (`a62d83db`), 0.3–3.5 cm from the visible touchdown, nominal throw as fallback |
-| UI kit & screens | `_Prototype/UI/Runtime/` | `UiFactory`, `UiTokens`, `UiMotion`, `UiNavigation`, `MainMenuScreen`, `SelectionScreen`, `RunHudScreen` (+ `.Ink`), `HudReticle`, `HudRearEdge`, `UpgradeScreen`, `UpgradeTree`, `PauseScreen`, `ResultsScreen` | WP-022, WP-068 | S-09 | Shipped (UI v3 ink HUD, tree shop, Results v3) |
-| Menu v4 & icon controls | `_Prototype/UI/Runtime/Screens/MainMenuScreen.cs`, `_Prototype/UI/Runtime/Kit/Components/` | `MainMenuScreen` (v4 rail), `UiIconButton`, `UiTooltip` | WP-081 B2 (R2 N2-01, G5 O1) | S-09 | In progress: phase A on `main` (U1 default path 0.422); Selection + panes v4 (U1b) and icon v2 open |
-| Menu cinematic | S-09 branch `wp-081-v4a-r2` | `MenuLook`, scrim, cushions (decision B + cushions) | WP-081 (N2-01 add-on) | S-09 | Branch: `bcde16dc` + `8ba256ec` + uncommitted work; 5 aspect ratios + 60 s MP4 pending |
-| Loading art rotation | `_Prototype/UI/Runtime/Flow/KeyArtRotation.cs`, `UiCurtain.cs` | `KeyArtRotation` (shuffle bag, five AP-028 arts) | WP-081 B1 (R2 N2-02) | S-09 | Shipped: code and gate U3 on `main`; the v002 upscaled arts' intake is pending |
-| World V6 | `_Prototype/World/`, `_Art/Editor/`, `_Art/Scenes/World_V6_Greybox.unity` | `WorldSource` (V6 default), `WorldBootstrap`, `WorldLayout`, `GreyboxV6Builder`, `WorldV5Dress`, `WorldV5Ground`, `WorldV5Moss` | WP-074, WP-038, AP-023 | S-05 | Shipped: default world, NavMesh 2,734 triangles |
-| Look & lighting | `_Prototype/World/`, `_Art/Runtime/`, `_Art/Editor/` | `WorldAtmosphere`, `WorldV5Lighting`, `WorldV5Sky`, `WorldV5Look`, `WorldV5SunFlare`, `ScreenAtmosphereFeature`, `LookV3Post`, `PlanarReflection` | WP-029, WP-075 (DEC-101/102) | S-05 | Shipped |
-| Art pipeline | `_Art/Editor/`, `_Art/Runtime/` | `ArtImportContract`, `ArtCharacterPrefabBuilder`, `ArtWeaponBuilder`, `ArtVfxBuilder`, `ArtLibraryManifest`, `ArtVisualRegression` | WP-011, WP-012, WP-015 | S-01 / S-05 | Shipped |
-| Breakable props | `_Prototype/Props/` | `BreakableProp`, `PropImpacts` | WP-038B | S-05 | Shipped |
-| QA bot & gates | `_Prototype/Diagnostics/Qa/`, `tools/qa/` | `QaRunBot`, `QaBotBrain`, `QaVirtualGamepad`, `QaReport`, `QaReadabilityGate`, `QaWindowModeGate` | WP-026, WP-061, WP-070 B7, WP-078 | S-10 | Shipped; M4-R1 acceptance in progress (WP-078) |
-| R2 acceptance gates | `tools/qa/`, `_Prototype/Tests/Shared/R2Olcum.cs` | `r2-gates.json` (`dd-r2-gates-v1`), `r2-measure-contract.md`, `r2_gates.py`, `r2_load_time.py`, `R2Olcum.Yaz` (`dd-r2-measure-v1`); `r2_gates_lint.py` (C-00B B-02, PR [ErdemEmirOzer/deaths-demolition#1](https://github.com/ErdemEmirOzer/deaths-demolition/pull/1)) | WP-091 | S-10 | In progress: 33 gates (H 7, L 7, Z 6, S 6, P 3, U 4; kinds gate 24 / report 4 / human 5); 15 writer calls on `main`, 12 gates without a writer yet |
-| Probes, telemetry, crash log | `_Prototype/Diagnostics/` | `PilotPerfProbe`, `LifecycleProbe`, `RunTelemetry`, `CrashLogReporter`, `ProfileSandboxFlag` | WP-025, WP-045 | S-01 / S-10 | Shipped |
-| Build, CI & integration tooling | `tools/` | `build.sh`, `smoke.sh`, `test.sh`, `main-ci.sh`, `compile-check.sh`, `integrate.sh`, `post-integrate.sh`, `backup-repo.sh`; Editor `DdBuild`, `BuildStamp` | WP-025, WP-031, WP-043, WP-051, WP-079 | S-01 | Shipped |
-| Machine & user-data safety | `tools/` | `userdata-guard.sh`, `player-run.sh`, `slot.sh`, `dd-env.sh` (stall watchdog) | WP-043B/D, WP-051D, WP-066 | S-01 | Shipped |
+## Foundation
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Boot and scene flow | `_Prototype/Core/Boot/`, `_Prototype/UI/Runtime/Flow/` | `PrototypeBootstrapper`, `PrototypeBootFlags`, `PrototypeScenes`, `PrototypeUiFlow`, `PrototypeUiInstaller` | Shipped. `Boot` is the only entry scene. The stored direct-to-run switch is read in development builds only. |
+| Config and placeholder census | `_Prototype/Core/Config/`, `_Prototype/Core/Resources/PrototypeConfig.asset` | `PrototypeConfig` (Economy, Enemy, Feedback, Player, Progression, Round, Weapon … sections), `PrototypeOnlyAttribute` | Shipped |
+| F1 debug panel | `_Prototype/Core/Debug/` | `PrototypeDebugPanel`, `DebugPanelRegistry`, `DebugPanelTabs` | Dev only. A release build never draws it. |
+| Pooling | `_Prototype/Core/Pooling/` | `PoolService`, `PrototypePool<T>`, `PooledBehaviour` | Shipped |
+| Input and rebinding | `_Prototype/Core/Input/`, `_Prototype/Input/` | `IInputSource`, `InputSourceRegistry`, `PrototypeInputSource`, `InputRemapService`, `InputPreferences`, `AimAssist`, `GamepadRumble` (+ `GamepadRumble.TopDown.cs`) | Shipped |
+| Quality tiers | `_Prototype/Core/Quality/`, `_Prototype/Rendering/`, `Settings/` | `QualityTiers` (`DefaultTier = Sinematik`), `QualityModeApplier`, `SmallShadowCasters`; `DD_URP_Performance`, `DD_URP_PipelineAsset`, `DD_URP_Cinematic` | Shipped. Cinematic is the default; High and Performance are selectable. |
+
+## Combat
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Weapon data (Arsenal v3) | `_Prototype/Core/Weapons/`, `_Prototype/Weapons/Arsenal/` | `WeaponDefinition`, `ArsenalCatalog` (12 definitions), `Arsenal`, `WeaponIdMigration` | Shipped: 10 classic weapons in 6 classes and 2 Specials |
+| Firing and hitscan | `_Prototype/Weapons/` | `WeaponController`, `ClassicWeaponRuntime`, `HitscanEngine`, `PlayerWeaponBinding`, `StaggerGovernor`, `WeaponMagazineOwnership`, `WeaponMagazineVisual` | Shipped |
+| Projectiles | `_Prototype/Weapons/Projectiles/`, `_Prototype/Weapons/RocketImpacts.cs` | `ProjectileSystem`, `ProjectileKind` (Bullet/Pellet/Rocket/Orb/Gel), `ProjectileDriver`, `ProjectileEvents` | Shipped: 256 live, fixed 120 Hz step |
+| Special weapons | `_Prototype/Weapons/` | `SpecialWeaponDirector`, `SpecialWeaponPickup`, `SpecialImpacts`, `SpecialGelEffects`, `SpecialWeaponUsageEvents` | Shipped: Raiju (chain lightning) and Namekuji (slick gel), found on the field; tree resonance (Storm Chain, Deep Freeze) |
+| Wall buys | `_Prototype/Weapons/WallBuy/`, `_Prototype/UI/Runtime/Hud/HudWallBuyPrompt.cs` | `WallBuyDirector`, `WallBuyStation`, `WallBuyRules`, `WallBuyCatalog` (`wallbuy-v6.json`), `WallBuyEvents` | Shipped (R4): 10 stations; refill at half price; launcher 2,500 gold, wall buy only |
+| Weapon attachments | `_Prototype/Weapons/Attachments/`, `_Prototype/Weapons/Arsenal/Attachments/`, `_Art/Editor/ArtAp040WeaponAttachBuilder.cs` | `WeaponAttachments`, `WeaponAttachPresenter`, `WeaponAttachRules`, `WeaponAttachLibrary` | Shipped (R4): 14 prefabs, shown in top-down |
+| Damage and armour | `_Prototype/Damage/` | `DamageHit`, `IDamageReceiver`, `BodyRegion`, `DeathImpulse`, `RegionalDamageBody`, `ArmorSet`, `HitboxRegistry`, `DamageEvents` | Shipped |
+| Player | `_Prototype/Player/` | `PlayerMotor`, `PlayerAim`, `PlayerHealth`, `PlayerRig`, `PlayerSpawner`, `PlayerUpgradeBinding` | Shipped |
+
+## Camera
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Top-down camera | `_Prototype/Camera/` | `TopDownFeelCamera`, `PrototypeCameraRig`, `CameraOcclusionFader` (roof fade), `TreeCanopyReveal` (crown screen-door), `CameraModeService` (mode state) | Shipped: the default and the only developed and tested mode |
+| Third- and first-person cameras | `_Prototype/Core/Camera/`, `_Prototype/Camera/`, `_Prototype/Characters/FirstPersonArms.cs`, `_Prototype/Characters/WeaponHoldIk.cs`, `_Art/Runtime/WorldFptpOnlyLoader.cs` | `CameraMode`, `CameraModesFeel`, `FpAdsLens`, `FirstPersonArms`, `WeaponHoldIk`, `WorldFptpOnlyLoader` | Legacy: selectable from the Pause CAMERA row; FP arms for 6 of 10 classic weapons; `World_FPTPOnly` loads only for these modes |
+
+## Enemies and AI
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Difficulty modes | `_Prototype/Difficulty/`, `_Prototype/UI/Runtime/Prepare/PrepareRunDifficulty.cs` | `DifficultyService`, `DifficultyProfile`, `DifficultyModeSettings`, `DifficultyMode` | Shipped (R4): Normal, Hard, Demolition |
+| Pursuit roles | `_Prototype/Difficulty/PursuitPlanner.cs` | `PursuitPlanner`, `ZombieAiRole` (Chase / Intercept / Cut) | Shipped (R4): Hard and Demolition; Normal always chases |
+| Enemy runtime | `_Prototype/Enemies/` | `ZombieEnemy` (partials), `EnemyFactory`, `TierBehaviourProfile`, `EnemyVersionApplier`, `ZombieTierLibrary`, `TierSilhouetteSlot` | Shipped: 4 tiers on one data-driven zombie |
+| Attacks and reactions | `_Prototype/Enemies/` | `AttackSelector`, `AttackSlotBoard`, `GrabState`, `EnemyAttackState`, `GelPuddleRegistry`; `ZombieShock.cs`, `ZombieGel.cs`, `ZombieTreeStatus.cs`, `TreeStatusMath.cs` | Shipped: 5 styles; per-mode slot bonus; tree statuses (ice, stun, pull, status damage) |
+| Zombie locomotion v4 | `_Prototype/Enemies/ZombieLocomotionV4.cs`, `_Prototype/Characters/` | `ZombieLocomotionMath`, `ZombieTransitionData`, `CadenceBand`, `StrideCalibrator` | Shipped (R3): gait pools, start/stop/turn clips, speed-locked cadence |
+| Zombie look and variety | `_Prototype/Characters/`, `_Prototype/Enemies/` | `ZombieModuleLibrary`, `ZombieArmorLibrary`, `ArmorVisualBinder`, `ZombieAppearance`, `ZombiePalette` | Shipped |
+| Threat director | `_Prototype/Enemies/` | `ThreatDirector`, `ThreatSnapshot`, `ThreatSettings` | Shipped: drives spawn weighting, music layers and HUD threat words |
+| Crowd and navigation | `_Prototype/Navigation/` | `CrowdService`, `CrowdSolver`, `CrowdSpatialGrid`, `NavPathService`, `NavPathFollower`, `RegionNavRouter`, `CrowdFeelSettings` | Shipped |
+| Spawning | `_Prototype/Spawn/`, `_Art/Environment/World/V6/spawn-gates-v6.json` | `EnemySpawnDirector`, `RoundPlan`, `RoundLedger`, `SpawnPointSelector`, `SpawnWeightCalculator`, `SpawnRelaxation`, `SpawnWorldProfile`, `SpawnRoomBalance`, `RearSpawnShare`, `TierSelectionPolicy` | Shipped: 22 V6 gates, active ceiling 40 |
+
+## Run, economy and progression
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Run and round flow | `_Prototype/Rounds/` | `RunDirector`, `RunPhase`, `RunEvents`, `RunFlowClock`, `RunSystemsInstaller`, `RunStatsTracker`, `RoundUpgradeShop` | Shipped |
+| Gold economy | `_Prototype/Economy/` | `GoldService`, `GoldWallet`, `GoldSource` (incl. `WallBuy`), `GoldRewardCalculator`, `GoldRewardLedger`, `GoldOrb` | Shipped |
+| Run tree v2 | `_Prototype/Rounds/RunTree/V2/`, `run-tree-v2.json` | `RunTreeV2`, `TreeCatalogV2`, `TreeResolver`, `TreeStats`, `TreeRuntime`, `TreeHooks`, `TreeEconomyV2`, `TreePresetsV2` | Shipped (R4, `RunTreeV2: 1`): 7 branches, 63 nodes + 7 alternatives, 10 synergies |
+| Tree systems and statuses | `_Prototype/Rounds/RunTree/V2/Systems/` | `TreeSystemsRunner`, `TreeStatusSystem`, `TreeGravityWells`, `TreeBlastQueue`, `TreeAreaPool`, `ITreeStatusReceiver` | Shipped (R4) |
+| Tree screen | `_Prototype/UI/Runtime/Screens/UpgradeTreeV2.cs`, `UiTreeEdges.cs`, `_Prototype/UI/Runtime/Presentation/TreeV2Presenter.cs`, `TreeArt.cs` | `UiTreeScreenV2`, `UiTreeEdges`, `TreeV2Rows`, `TreeV2Layout`, `TreeArt` | Shipped (R4) |
+| Tree VFX | `_Prototype/Feedback/Vfx/Tree/`, `TracerRibbonRenderer.Tree.cs` | `TreeVfxLadder`, `TreeAuraVfx`, `TreeSeekTrail`, `TreeGoldOrbCue`, `TreeSocketCard` | Shipped (R4); further polish is not shipped |
+| Awakening and Ash | `_Prototype/Rounds/RunTree/V2/TreeAwakening.cs`, `_Prototype/Profile/MetaPath/ProfileService.Awakening.cs`, `_Prototype/UI/Runtime/Screens/AwakeningPage.cs`, `meta-tree.json` | `TreeAwakening`, `UiAwakeningPage`, `UiTreeScreenRoute`, `UiAshRefundNotice` | Shipped (R4): 11 nodes, variety not power |
+| Run tree v1 | `_Prototype/Rounds/RunTree/`, `run-tree.json` | `RunTreeCatalog`, `RunTreeGraph`, `RunTreeState`, `RunTreeHooks` | Retired: still built, no longer sold; the shipped config runs v2 |
+| Meta path (old PATH page) | `_Prototype/Profile/MetaPath/` | `MetaPathCatalog`, `MetaPathRules`, `MetaPathSnapshot`, `ProfileService.Meta.cs` | Retired from the UI: 16 passives and 10 Special leanings stay in `meta-tree.json` for save compatibility |
+| Profile and save | `_Prototype/Profile/` | `ProfileService`, `ProfileStore`, `ProfileData` (schema v6), `ProfileMigration`, `CompletionAuthority`, `ProfileRunCommitter` | Shipped |
+| Achievements and unlocks | `_Prototype/Achievements/` | `AchievementCatalog`, `AchievementEngine`, `AchievementRunTracker`, `UnlockCatalog` | Shipped: 53 defined (6 mode-specific), 9 unlockables; 7 read retired v1-tree counters |
+
+## Characters and animation
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Hero character | `_Prototype/Characters/`, `_Art/Characters/Player/HeroV2/` | `PlayerSkinnedVisual`, `LocomotionV4` (8-way starts, stops, pivots), `FootIkAdapter`, `WeaponGripIk`, `MagazineContactIk`, `SecondaryChainDriver`, `CharacterAnimatorLod` | Shipped |
+| Animation contracts | `_Prototype/Characters/`, `_Art/Editor/` | `CharacterAnimationEvents`, `CharacterAnimatorContract`, `ArtAnimationEventContract`, `ArtAnimatorBuilder` | Shipped |
+| Ragdoll and death families | `_Prototype/Characters/` | `RagdollProxyPool`, `ZombieDeathFamily` | Shipped |
+
+## Presentation
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| Fire VFX and bullet look | `_Prototype/Feedback/Vfx/`, `_Art/VFX/Resources/Shaders/DD_VfxRibbon.shader` | `MuzzleSystem`, `TracerRibbonRenderer` (+ `TracerRibbonRenderer.Ap043.cs`, the short-exposure streak), `ImpactSystem`, `Ap041Vfx`, `CasingEffect`, `RocketVisualSystem` | Shipped; known test findings accepted for R4 (see the README) |
+| Game feel | `_Prototype/Feedback/` | `FeelEvents`, `FeelEventRouter`, `FeelProfileTD`, `FeelHitStopTD`, `HitStopService`, `FeelTimeScale`, `FeedbackBudget`, `HitFeedbackDirector` | Shipped |
+| Blood, decals and moment VFX | `_Prototype/Feedback/Vfx/` | `BloodSystem`, `FeelBrushVfxSystem`, `DamageVignetteLayer`, `ArcSystem`, `GelSystem`, `GroundFireSystem`, `ExplosionDirector` | Shipped |
+| Audio | `_Prototype/Audio/Runtime/` | `PrototypeAudioDirector`, `AudioMixerBridge`, `AudioVoicePool`, `AudioEventRouter`, `WeaponFireAudio`, `WeaponReflections`, `WeaponTailBed`, `MusicDirector`, `TreeAudio`, `AfterRainAmbience` | Shipped: weapon audio v5, R4 sounds with per-sound voice caps |
+| Acoustic spaces | `_Prototype/Audio/Runtime/`, `_Art/Environment/World/V6/acoustic-spaces-v6.json` | `AcousticSpaceMap`, `AcousticProbe`, `AcousticSpace` (Open / Corridor / Hall) | Shipped: baked map, checked by the integration gate |
+| UI kit | `_Prototype/UI/Runtime/Kit/` | `UiFactory`, `UiTokens`, `UiBrushTokens`, `UiBrushKit`, `UiBrushPane`, `UiMotion`, `UiNavigation`, `UiStrings`, `UiSettings`, `UiInputGlyphs` | Shipped: brush-ink design language, EN/TR |
+| HUD v4 | `_Prototype/UI/Runtime/Screens/`, `_Prototype/UI/Runtime/Hud/` | `RunHudScreen` (+ `.Ink`, `.Juice`), `HudReticle`, `HudPlayerArcs`, `HudRoundNumeral`, `HudGoldReadout`, `HudWallBuyPrompt` | Shipped: persistent HUD ≤ 1.5 % of the screen |
+| Menu, loading and logo | `_Prototype/UI/Runtime/Screens/`, `_Prototype/UI/Runtime/Flow/` | `MainMenuScreen`, `MenuCinematic`, `UiCurtain`, `UiLoadingTips`, `KeyArtRotation`, `UiLogoAnimator`, `UiLogoTimeline`, `UiLogoMenuIntro` | Shipped |
+| Prepare Run | `_Prototype/UI/Runtime/Screens/SelectionScreen.cs`, `_Prototype/UI/Runtime/Prepare/`, `_Prototype/UI/Editor/PrepareRunStageBuilder.cs` | `SelectionScreen`, `PrepareRunLayout`, `PrepareRunStage`, `PrepareDifficulty` | Shipped (R4): weapon turntable, five stat cards, difficulty, map |
+| Pause, results and meta screens | `_Prototype/UI/Runtime/Screens/`, `_Prototype/UI/Runtime/Presentation/` | `PauseScreen`, `ResultsScreen`; profile, statistics and achievements panes | Shipped: in-pause settings, auto-pause on focus loss, PLAY AGAIN |
+
+## World
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| World V6 | `_Prototype/World/`, `_Art/Editor/`, `_Art/Environment/World/V6/`, `_Art/Scenes/World_V6_Greybox.unity` | `WorldSource` (V6 default), `WorldBootstrap`, `WorldLayout`, `GreyboxV6Builder`, `TdVisibilityAudit`, `WorldWalkScan`, `WorldFptpSplit` | Shipped: 1,064 placements, 130 lanterns, 12 interiors |
+| Vegetation | `_Prototype/World/Vegetation/` | `VegetationSystem`, `VegetationDrawSet`, `VegetationZoner`, `VegetationPlacer`, `VegetationPushMap`; `VegetationWorldHookup` in `_Art/Runtime/` | Shipped: ≈ 59.8k instances on Cinematic |
+| Look and lighting | `_Prototype/World/`, `_Art/Runtime/` | `WorldAtmosphere`, `CloudShadowDriver`, `WorldWind`, `PlanarReflection`, `VolumetricLightFeature`, `ScreenAtmosphereFeature`, `SunDisc`, `LookV3Post` | Shipped |
+| Breakable props | `_Prototype/Props/` | `BreakableProp` | Shipped |
+| Art pipeline | `_Art/Editor/`, `_Art/Runtime/` | `ArtImportContract`, `ArtLibraryManifest`, `ArtVisualRegression`, `ArtAp040WorldKit`, `ArtAp040WeaponAttachBuilder` | Tooling |
+
+## Diagnostics and tooling
+
+| System | Folder | Main types | Status |
+| --- | --- | --- | --- |
+| QA bots | `_Prototype/Diagnostics/Qa/`, `tools/qa/` | `QaRunBot`, `QaTreeBot`, `QaBotBrain`, `QaVirtualGamepad` | Dev only: seeded menu-to-run play, tree-buying archetypes, scenarios |
+| Capture agents | `_Prototype/Diagnostics/Capture/`, `_Prototype/UI/Runtime/Flow/UiCaptureAgent*.cs`, `_Prototype/Core/Boot/PrototypeCaptureAgent.cs` | `TdCaptureAgent`, `MkCaptureAgent`, `UiCaptureAgent`, `PrototypeCaptureAgent` | Dev only, except `PrototypeCaptureAgent`, which release builds keep for the smoke run and which does nothing without its flag |
+| Perf probe | `_Prototype/Diagnostics/PilotPerfProbe.cs` | `PilotPerfProbe` | Dev only and release-probe builds: forced 40-body crowd, 10 s warm-up, 60 s windows |
+| Telemetry and crash log | `_Prototype/Diagnostics/Telemetry/`, `_Prototype/Diagnostics/` | `RunTelemetry`, `CrashLogReporter`, `ProfileSandboxFlag` | Shipped: local files only, nothing uploaded |
+| Build, CI and integration | `tools/`, `_Prototype/Core/Editor/`, `_Prototype/Core/Build/` | `integrate.sh`, `compile-check.sh`, `main-ci.sh`, `test.sh`, `build.sh`, `smoke.sh`, `release-publish.sh`, `app-display-name.sh`; `DdBuild`, `BuildInfo` | Tooling |
+| Capture tooling | `tools/` | `td-capture.sh`, `mk-capture.sh` | Tooling |
+| Machine and user-data safety | `tools/` | `userdata-guard.sh`, `ug-step.sh`, `guard-queue.py`, `player-run.sh`, `slot.sh`, `dd-env.sh` (stall watchdog, disk gate) | Tooling |
 
 For contracts, event flows and performance rules, see [ARCHITECTURE.md](ARCHITECTURE.md).
