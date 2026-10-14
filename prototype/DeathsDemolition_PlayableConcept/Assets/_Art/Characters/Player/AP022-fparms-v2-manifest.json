@@ -88,8 +88,8 @@
   }
  },
  "design": {
-  "direction": "06-renders/AP022-fparms-v2-direction-v001.md (Fable, ACCEPT_WITH_CHANGES)",
-  "concepts": "02-concept/fp-arms-v2/ (HF 2.0 kr, 03-higgsfield/AP022-HF-ledger.json)",
+  "direction": "06-renders/AP022-fparms-v2-direction-v001.md (art director, ACCEPT_WITH_CHANGES)",
+  "concepts": "02-concept/fp-arms-v2/ (external:AP022-fparms-v2-concepts, private-ledger:AP022-fparms-v2)",
   "roll": "haori sleeve rolled 3.5 cm above the elbow joint, 4.0 cm high, <= +0.95 cm over the skin, crimson double tasuki cord + flat knot on the lateral face; the arm ends in a closed cap inside the roll",
   "kote": "20.2 cm (3.5 cm below the elbow -> 1.8 cm above the wrist joint), 3 segments, 3 double-cord rows, wall 3.2 mm, <= 5.8 mm over the skin",
   "hands": "palm wrap to the MCP knuckles (1.8 mm offset, thumb loop), 10 bare fingers (8 sides, >= 3 loops per phalanx), nails in albedo"
@@ -188,7 +188,7 @@
  "source": "05-blender/source/fparms-v2-master.blend; scripts AP022-fparms-{build,tex,export,measure}-v001.py",
  "art_verdict": {
   "file": "06-renders/AP022-art-verdict-fparms-v2-v001.md",
-  "verdict": "ACCEPT_WITH_NOTES (Fable, single final AD): MUST 1-5 PASS",
+  "verdict": "ACCEPT_WITH_NOTES (single final AD): MUST 1-5 PASS",
   "applied_after_verdict": "SHOULD/follow-up 2: cap albedo = shadowed inner-kimono tone, radial pinch removed; palm grime stronger; thumb-loop tab softened (texture only, geometry and numbers unchanged)",
   "skin_smoothness": 0.41,
   "open": [

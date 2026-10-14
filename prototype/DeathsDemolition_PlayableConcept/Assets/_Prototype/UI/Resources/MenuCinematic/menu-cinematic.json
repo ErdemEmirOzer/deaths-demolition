@@ -4,7 +4,7 @@
   "version": "v002",
   "date": "2026-10-05",
   "intended_runtime": "World V6 gerçek zamanlı Unity kamera; video playback kullanılmaz",
-  "preview_type": "Higgsfield hedef kareleri üzerinde 2B kadraj ritmi; oyun içi render ve gerçek parallax değildir",
+  "preview_type": "Konsept hedef kareleri üzerinde 2B kadraj ritmi; oyun içi render ve gerçek parallax değildir",
   "duration_s": 60,
   "shots": [
     {

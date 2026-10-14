@@ -34,7 +34,7 @@
     "v_min": 0.549,
     "v_max": 1.0
    },
-   "status": "v001 (procedural; Higgsfield balance under the floor)"
+   "status": "v001 (procedural)"
   },
   {
    "family": "special_weapon",
@@ -68,7 +68,7 @@
     "v_min": 0.275,
     "v_max": 0.851
    },
-   "status": "v001 (procedural; Higgsfield balance under the floor)"
+   "status": "v001 (procedural)"
   },
   {
    "family": "special_weapon",
@@ -102,7 +102,7 @@
     "v_min": 0.549,
     "v_max": 0.898
    },
-   "status": "v001 (procedural; Higgsfield balance under the floor)"
+   "status": "v001 (procedural)"
   },
   {
    "family": "special_weapon",
@@ -136,7 +136,7 @@
     "v_min": 0.6,
     "v_max": 1.0
    },
-   "status": "v001 (procedural; Higgsfield balance under the floor)"
+   "status": "v001 (procedural)"
   }
  ]
 }

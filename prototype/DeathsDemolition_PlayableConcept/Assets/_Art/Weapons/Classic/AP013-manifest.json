@@ -81,8 +81,8 @@
      0.1
     ]
    },
-   "tripo": {
-    "job": "6d863086-ff86-48e1-8450-3c8c8b7f6de9",
+   "base_mesh": {
+    "source": "external:AP013-A",
     "tris": 19404,
     "scale": 1.1823,
     "thicken_xy": [
@@ -139,7 +139,7 @@
     }
    },
    "v002": {
-    "serpentine": "S5 deferred: the Tripo A already carries a serpentine + pan (see WEAPONS['A']['serpentine'] note)"
+    "serpentine": "S5 deferred: the source mesh A already carries a serpentine + pan (see WEAPONS['A']['serpentine'] note)"
    }
   },
   "B": {
@@ -217,8 +217,8 @@
      0.06
     ]
    },
-   "tripo": {
-    "job": "673d2af9-0d8f-4db1-b43a-ecc513e1ff4b",
+   "base_mesh": {
+    "source": "external:AP013-B",
     "tris": 19138,
     "scale": 0.8496,
     "thicken_xy": [
@@ -365,8 +365,8 @@
      0.05
     ]
    },
-   "tripo": {
-    "job": "6e6882fb-8dd0-4f2f-8370-757ca49433a0",
+   "base_mesh": {
+    "source": "external:AP013-C",
     "tris": 18708,
     "scale": 0.7717,
     "thicken_xy": [
@@ -451,7 +451,7 @@
   }
  },
  "textures": {
-  "atlas": "1024 x 1024 shared by A (top half 1024x512) / B (bottom-left 512) / C (bottom-right 512); Tripo H3.1 2K PBR maps resampled into the rects on the Tripo UV layout (decimation keeps it)",
+  "atlas": "1024 x 1024 shared by A (top half 1024x512) / B (bottom-left 512) / C (bottom-right 512); source 2K PBR maps resampled into the rects on the source UV layout (decimation keeps it)",
   "files": {
    "BaseColor": "textures/T_weapons_BaseColor.png (sRGB)",
    "Normal": "textures/T_weapons_Normal.png (tangent, glTF convention +Y)",
@@ -487,11 +487,11 @@
    "skin3": 0.57
   },
   "unity_class_note": "WP-034 \u00a72 asks 1K; style guide \u00a77.3 Prop class caps at 512 \u2014 ArtImportContract needs a 'weapon' role at 1024 (WP-035) or the atlas ships at 512",
-  "grading": "verdict v001 MUST 1/2/4/5: texels classified iron / wood / cord / red seizing per weapon rectangle and graded into the brief palette (wood h 20-30 s 0.22-0.32 v 0.22-0.42; iron h 217 s <= 0.14 v 0.18-0.47 metallic 0.90; cord h 28-36 s 0.18-0.28 v 0.30-0.45; red <= 3 % per weapon); MRA written from the classes (Tripo's MR map left 92 % of the iron dielectric)"
+  "grading": "verdict v001 MUST 1/2/4/5: texels classified iron / wood / cord / red seizing per weapon rectangle and graded into the brief palette (wood h 20-30 s 0.22-0.32 v 0.22-0.42; iron h 217 s <= 0.14 v 0.18-0.47 metallic 0.90; cord h 28-36 s 0.18-0.28 v 0.30-0.45; red <= 3 % per weapon); MRA written from the classes (the source MR map left 92 % of the iron dielectric)"
  },
  "attachments": {
   "status": "not in this pass",
-  "note": "attach_barrel / attach_top / attach_stock sockets are placed; the 3 core-branch attachment meshes (<= 400 tri, share the atlas) are a follow-up pass (credits 0: iron ring / plate / stock band from the blockout library)"
+  "note": "attach_barrel / attach_top / attach_stock sockets are placed; the 3 core-branch attachment meshes (<= 400 tri, share the atlas) are a follow-up pass (iron ring / plate / stock band from the blockout library)"
  },
  "checks": {
   "F1_length_ratio": "PASS",
@@ -508,13 +508,7 @@
   "M5_printed_light": "PASS"
  },
  "result": "PASS",
- "higgsfield": {
-  "credits": 30,
-  "cap": 45,
-  "balance_after": 124.74,
-  "floor": 100,
-  "ledger": "03-higgsfield/AP013-HF-ledger.json"
- },
+ "license_ref": "private-ledger:AP013",
  "verdict": {
   "file": "06-renders/AP013-art-verdict-v001.md",
   "result": "ACCEPT_WITH_FIXES",
@@ -535,12 +529,12 @@
   ]
  },
  "v002_changes": {
-  "package": "AP-013B (AD verdict SHOULD S1-S6, credits 0)",
+  "package": "AP-013B (AD verdict SHOULD S1-S6)",
   "S1_C_cluster": "barrel + tube cluster forward of the receiver thickened about its UNDERSIDE (height x1.32, width x1.12, ramp z 0.06-0.13): the hand / marker_foregrip contact is unchanged (AP-009 W1 PASS), L:T 7.5 -> 6.9 (concept 6.4; the AD's <= 6.5 would need the receiver / stock taller, not the cluster); the bore centre sits ~2.6 cm above the contract Muzzle socket (flash origin) \u2014 accepted at gameplay scale",
   "S2_dilation": "atlas islands dilated 16 px (>= 8) on BaseColor / Normal / MRA after the class grading; metallic snapped back to {0, 0.9}, normals re-normalised \u2014 no gutter bleed in the 64 px mip",
   "S3_B_stock": "stock dropped 8 deg below the barrel line (pivot axis_y / z -0.02, 6 cm ramp); attach_stock (0, 0.03, -0.22) -> (0, 0.01, -0.22) (AD tolerance +-2 cm) \u2014 S-02 WeaponSocket table row B",
   "S4_cord_normal": "2 px box blur of the normal map on the cord-class texels (77.7 k px), re-normalised",
-  "S5_A_serpentine": "DEFERRED \u2014 the Tripo A already carries a serpentine + pan; a clean S-arm at x 0.03-0.05 lands inside the receiver (lock plate x ~0.065) and a second arm outside would double the mechanism; needs the Tripo lever removed first (UI close-up only)",
+  "S5_A_serpentine": "DEFERRED \u2014 the source mesh A already carries a serpentine + pan; a clean S-arm at x 0.03-0.05 lands inside the receiver (lock plate x ~0.065) and a second arm outside would double the mechanism; needs the source lever removed first (UI close-up only)",
   "S6_C_port": "+X shell port = 3 x 5 cm dark rectangle (albedo x0.35, roughness >= 0.70, 1-texel lighter rim + tangent tilt) on the LOD0 faces at Ejection (0.035, 0.06, 0.02); tube magazine side faces below the barrel axis darkened x0.80 (7.1 k px)",
   "unchanged": "lengths, frame, socket names, LOD budgets (A 2940 / B 2940 / C 2940 at LOD0), atlas layout; AP-009 v005 weapon checks W1-W3 PASS against the v002 meshes (AP009C-check-v005-ap013v002.json)",
   "previous": "exports/v001-pre-ap013b/ (FBX, GLB, textures, manifest v001), 05-blender/source/weapons-master-v001.blend, validation/AP013-build-v001.json / AP013-measure-v001.json, 06-renders/v001/"

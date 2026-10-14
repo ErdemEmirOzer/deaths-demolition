@@ -2,7 +2,7 @@
  "bake": {
   "inputs": {
    "ash_atlas": {
-    "path": "K/asset-production/AP-035/03-higgsfield/v003/loading_ring_ash_atlas.png",
+    "path": "K/asset-production/AP-035/03-*/v003/loading_ring_ash_atlas.png",
     "sha256": "6e5a2be1e28788220323d705aca833790e5fad4d25bde23e6f3e6f70cff38075"
    },
    "emblem_4096": {
@@ -115,7 +115,7 @@
    ]
   },
   "script": "tools/art/ap035-intake/bake_ap035_logo.py",
-  "sha256": "5a4d9e5cf1500e29a9862f006e53e31003c948384f6504ed50ca46b407b6f888"
+  "sha256": "57679c8ca8dca3d1f95912932c61c38aadec720504ddcc01cbfd711612fae46f"
  },
  "files": [
   {

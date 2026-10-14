@@ -3,7 +3,7 @@
  "package": "AP-031",
  "version": "v001",
  "date": "2026-10-08",
- "producer": "P-05 (Claude Opus 5.5 + KADRO)",
+ "producer": "P-05",
  "axes": "FBX 7.4 binary, metre, Blender -Z forward / Y up (AP-023 recipe); bounds below are Blender space (Z up) after re-import",
  "families": [
   "VEG_Fern_A",
@@ -2950,8 +2950,7 @@
   "01-design/AP031-atlas-grass-v001.json"
  ],
  "licenses": "03-sources/LICENSES.csv",
- "higgsfield_ledger": "03-higgsfield/ledger.csv",
- "higgsfield_credits_spent": 4.0,
+ "license_ref": "private-ledger:AP031-v001",
  "roundtrip_issues": [],
  "vertex_colour_contract": "vc1"
 }

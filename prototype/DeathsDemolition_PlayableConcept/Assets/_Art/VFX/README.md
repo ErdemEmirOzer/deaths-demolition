@@ -134,7 +134,7 @@ knob ships at 0 so a hit is bumped once. `Enabled` switches the layer off for A/
 
 ## Blood layer — WP-019b (directive §10: gore HIGH, no dismemberment)
 
-Design brief: art-director (Fable), `wp-019/evidence/blood-design-brief-fable.md`. Code: `Feedback/Vfx/BloodSystem.cs`,
+Design brief: art director, `wp-019/evidence/` (blood design brief). Code: `Feedback/Vfx/BloodSystem.cs`,
 `BloodDropletEffect.cs`, `BloodDecalMerger.cs`, `BloodPalette.cs` (band + recolour + slots), `DecalEffect` (grow / dry / fade).
 
 - **Colour (DEC-077 band, ADR-019-2):** h 355–5°, s 0.70–0.85, v 0.25–0.45. The v002 flesh/zombie sheets are near-grey
@@ -215,16 +215,16 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 - Lantern point lights: ≤ 6 (range 1.6 m, 0.35, amber, no shadows) re-assigned every 0.5 s to the nearest lanterns
   within 26 m (S-05 budget: keep ≤ 2 m range, per-object limit 4 untouched); ±10 % alpha flicker on the flame cards.
 - Tide well implosion (`FieldEnded`): pond splash crown + a ring growing to the well radius (`PlayTideImplode`).
-- AP-014C (P-06, credit 0) staged as the `AP010C/` supplement (same v003 manifest schema, `SupplementManifests`). Its old
+- AP-014C (P-06) staged as the `AP010C/` supplement (same v003 manifest schema, `SupplementManifests`). Its old
   Special sheets (`sw_tide_well`, `sw_tide_implode`, `sw_ofuda_dart`) left with WP-073 B6's asset slice (25.09 — Raiju / Namekuji
   draw procedurally); `barrel_heat_distort_tile` (normal + A mask, linear, Repeat) drives HeatHaze
   `_TileMode 1`. Casings: `AP013C/` FBX + 256 set → `ArtCasingBuilder` → `Resources/DD_Casings` (`CasingLibrary`),
   `CasingEffect` pool of 12 flung from the rig's Ejection socket per shot (ballistic, one bounce, 1.6 s).
-- AD round (Fable, 7 frames) MUSTs: Ofuda net as thread loops on the torso (the card was the thread tile — replaced with AP-014C); Kagura dust 1.2 m;
+- AD round (7 frames) MUSTs: Ofuda net as thread loops on the torso (the card was the thread tile — replaced with AP-014C); Kagura dust 1.2 m;
   chain arc stretched ×2.4 and ×1.6 gain; claw card driven to (0.85, 0.82, 0.75) × 1.4 through the block tint; placeholder
   ring lines at alpha 0.25 under the sheet.
 
-## WP-047H — AP-010B v004 (the three AD WP-019 MUSTs, 0 credits)
+## WP-047H — AP-010B v004 (the three AD WP-019 MUSTs)
 
 - Manifest `AP010/AP010-vfx-manifest-v004.json` (109 rows; 6 files replaced in place — same GUIDs — and one new row); catalog 114.
 - `fb_armor_break` (new id, `VfxIds.ArmorBreak`): one dominant lacquer shard + two chips + sparks along +u, origin uv (0.3, 0.5), quad 0.60 m,
@@ -236,8 +236,9 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 
 ## WP-101 (R4) — AP-041 v001 premultiplied photographic set
 
-Codex AP-041 v001 (Higgsfield GPT Image 2.5 → PIL/numpy, sRGB(linear × coverage), Blend One OneMinusSrcAlpha). Only the
-WP-101 rows are imported (`wp-101 apply_ap041.py` → `AP041/v001/`, sha256 = Codex manifest; tracers stay procedural, the
+AP-041 v001 (external source, see private ledger AP-041; processed with PIL/numpy: sRGB(linear × coverage), Blend One
+OneMinusSrcAlpha). Only the WP-101 rows are imported (`wp-101 apply_ap041.py` → `AP041/v001/`, sha256 = the AP-041
+delivery manifest; tracers stay procedural, the
 B1–B13 upgrade sheets are WP-104's): 15 TD muzzle flashes (5 classes × 3 variants), the muzzle smoke, 5 impact sheets,
 12 bullet holes. `ArtAp041VfxIntake` (batch `-executeMethod DD.Art.Pipeline.EditorTools.ArtAp041VfxIntake.Run`) writes
 33 catalog rows (`VfxIds.Ap041*`, `Premultiplied`) and `AP041/v001/Materials/M_vfx_<id>.mat` (`_Premultiplied 1`);

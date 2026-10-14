@@ -93,7 +93,7 @@
     "socket": "socket_weapon_r",
     "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end (claw + orb) continues along +Y; model +Z = the MON side (faces the camera in the front render; the back-of-hand direction in the socket); the socket's +Z 'barrel' axis is the throw direction",
     "material": "M_SW_Atlas",
-    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "source": "external:AP014D-tide_jewel (decimated; textures in the SW atlas block)",
     "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
    },
    {
@@ -113,7 +113,7 @@
     "socket": "ground",
     "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
     "material": "M_SW_Atlas",
-    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "source": "external:AP014D-tide_jewel (decimated; textures in the SW atlas block)",
     "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
    }
   ],
@@ -150,7 +150,7 @@
      "v_min": 0.549,
      "v_max": 1.0
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -184,7 +184,7 @@
      "v_min": 0.275,
      "v_max": 0.851
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -218,7 +218,7 @@
      "v_min": 0.549,
      "v_max": 0.898
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -252,7 +252,7 @@
      "v_min": 0.6,
      "v_max": 1.0
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    }
   ],
   "beacon": "code defaults unchanged (SpecialWeaponPickup: Special (1.00,0.82,0.35) a 0.3; Ofuda (0.96,0.93,0.84)); AP-010 beacon ring/column textures reused",

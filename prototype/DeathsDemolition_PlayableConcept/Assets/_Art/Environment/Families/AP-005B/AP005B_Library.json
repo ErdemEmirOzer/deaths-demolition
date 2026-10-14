@@ -7,7 +7,7 @@
    "sha256": "7e89287fcf59a4ffdb531332a678015e162a9b0616a5be92987131cac4829122"
   }
  ],
- "derived": "source FBX used directly (embed_textures False, path_mode STRIP); textures AP005B_IMG_<family>_{albedo,normal,orm}_v001 \u2192 T_prop_<family>_{BaseColor,Normal,Packed} (Prop class 512, ADR-015-1); Tripo ORM: metallic forced 0, no AO (R = 1)",
+ "derived": "source FBX used directly (embed_textures False, path_mode STRIP); textures AP005B_IMG_<family>_{albedo,normal,orm}_v001 \u2192 T_prop_<family>_{BaseColor,Normal,Packed} (Prop class 512, ADR-015-1); source ORM: metallic forced 0, no AO (R = 1)",
  "families": [
   {
    "family": "tsukubai",

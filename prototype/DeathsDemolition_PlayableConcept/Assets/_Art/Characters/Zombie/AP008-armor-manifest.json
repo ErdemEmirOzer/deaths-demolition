@@ -1664,7 +1664,7 @@
       "pairs": [
         {
           "variant": "K2_kabuto",
-          "hf_key": "K2",
+          "concept_key": "K2",
           "silhouette_iou_bbox_normalised": {
             "front": 0.879,
             "left": 0.86,
@@ -1674,7 +1674,7 @@
         },
         {
           "variant": "D1_lamellar",
-          "hf_key": "D1",
+          "concept_key": "D1",
           "silhouette_iou_bbox_normalised": {
             "front": 0.584,
             "left": 0.706,
@@ -1684,7 +1684,7 @@
         },
         {
           "variant": "D2_plate",
-          "hf_key": "D2",
+          "concept_key": "D2",
           "silhouette_iou_bbox_normalised": {
             "front": 0.557,
             "left": 0.647,
@@ -1694,7 +1694,7 @@
         },
         {
           "variant": "L1_haidate_heavy",
-          "hf_key": "L1",
+          "concept_key": "L1",
           "silhouette_iou_bbox_normalised": {
             "front": 0.894,
             "left": 0.888,
@@ -1703,7 +1703,7 @@
           }
         }
       ],
-      "note": "bbox-normalised silhouette IoU between the Higgsfield turnaround crop and the render (same view); shape fidelity only, texture judged by the art director on the sheets"
+      "note": "bbox-normalised silhouette IoU between the concept turnaround crop and the render (same view); shape fidelity only, texture judged by the art director on the sheets"
     },
     "rigtest": {
       "max_pokes": 15,

@@ -63,7 +63,7 @@ MonoBehaviour:
   schema: dd-zombie-armor-v1
   package: AP-008
   version: AP008.armor-manifest-v002
-  sourceSha256: 9fd5930b5e5b8126d045ba9a07c16604cd270f7f7540a58fbe40b0502ffcd83f
+  sourceSha256: 9ac14361fa4e820f11f44019f23b2f02ce467d0b8bda6083c526f47e44e49327
   variants:
   - id: K1_jingasa
     family: Helmet

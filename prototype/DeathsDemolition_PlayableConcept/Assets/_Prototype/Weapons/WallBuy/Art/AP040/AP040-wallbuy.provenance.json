@@ -2,7 +2,7 @@
  "schema": "dd.wp107b.ap040-wallbuy.provenance.v1",
  "package": "AP-040",
  "version": "v001",
- "owner": "Codex",
+ "owner": "asset-production",
  "integration": "WP-107B (S-02)",
  "delivery": "asset-production/AP-040/exports/v001",
  "manifest": "AP040-manifest-v001.json",

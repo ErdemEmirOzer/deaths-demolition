@@ -15,7 +15,7 @@ MonoBehaviour:
   schema: dd-zombie-tier-v1
   package: AP-014
   version: AP014.manifest.v001
-  sourceSha256: 3471e074bc03536d07a24320b2e5ce8bc39469037d1bf959e00c9b0ed052e082
+  sourceSha256: 8859a940c68ea520016d2662f8138f9da8f939de1c91c1e7980ef3873edf24d3
   fits:
   - A
   - B

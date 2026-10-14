@@ -615,7 +615,7 @@
     "socket": "socket_weapon_r",
     "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end (claw + orb) continues along +Y; model +Z = the MON side (faces the camera in the front render; the back-of-hand direction in the socket); the socket's +Z 'barrel' axis is the throw direction",
     "material": "M_SW_Atlas",
-    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "source": "external:AP014D-tide_jewel (decimated; textures in the SW atlas block)",
     "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
    },
    {
@@ -635,7 +635,7 @@
     "socket": "ground",
     "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
     "material": "M_SW_Atlas",
-    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "source": "external:AP014D-tide_jewel (decimated; textures in the SW atlas block)",
     "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
    }
   ],
@@ -672,7 +672,7 @@
      "v_min": 0.549,
      "v_max": 1.0
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -706,7 +706,7 @@
      "v_min": 0.275,
      "v_max": 0.851
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -740,7 +740,7 @@
      "v_min": 0.549,
      "v_max": 0.898
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    },
    {
     "family": "special_weapon",
@@ -774,7 +774,7 @@
      "v_min": 0.6,
      "v_max": 1.0
     },
-    "status": "v001 (procedural; Higgsfield balance under the floor)"
+    "status": "v001 (procedural)"
    }
   ],
   "beacon": "code defaults unchanged (SpecialWeaponPickup: Special (1.00,0.82,0.35) a 0.3; Ofuda (0.96,0.93,0.84)); AP-010 beacon ring/column textures reused",
@@ -1771,19 +1771,19 @@
     {
      "part": "ultra-yoke",
      "concept": "AP014-in-ultra-yoke.png",
-     "method": "Tripo H3.1 -> retopo 1499 tris",
+     "method": "external:AP014-ultra-yoke -> retopo 1499 tris",
      "silhouette_iou_bbox_normalised_threeq": 0.645
     },
     {
      "part": "special-collar",
      "concept": "AP014-in-special-collar.png",
-     "method": "Tripo H3.1 -> retopo 1499 tris, flap mirrored to the left shoulder",
+     "method": "external:AP014-special-collar -> retopo 1499 tris, flap mirrored to the left shoulder",
      "silhouette_iou_bbox_normalised_threeq": 0.537
     },
     {
      "part": "elite-sode",
      "concept": "AP014-in-elite-sode.png",
-     "method": "procedural (SAM 3 lift failed, balance under the floor): curved plates, AP-008 lamellar texture",
+     "method": "procedural (external mesh lift failed): curved plates, AP-008 lamellar texture",
      "silhouette_iou_bbox_normalised_threeq": 0.207
     },
     {
@@ -1868,8 +1868,8 @@
  "ap014d": {
   "date": "2026-09-17",
   "weapon": "tide_jewel",
-  "concept": "02-concept/AP014D-HF-tide-jewel-sheet.png (gpt_image_2_5, 1 credit)",
-  "tripo": "03-higgsfield/tripo-output/tripo_tide_jewel_v001.glb (tripo_h3_1_multiview_to_3d, 4 views, pbr, face_limit 20000, 9 credits)",
+  "concept": "02-concept/AP014D-HF-tide-jewel-sheet.png (external:AP014D-tide_jewel-concept)",
+  "source": "external:AP014D-tide_jewel",
   "hand_bbox_m": [
    0.1092,
    0.34,
@@ -1975,7 +1975,7 @@
    311,
    122
   ],
-  "lod2_note": "tassel drops (y < -0.02) removed for LOD2; the Tripo mesh is 66 shells at every LOD (not watertight), so the loose-part count is the shell count, not floating debris",
+  "lod2_note": "tassel drops (y < -0.02) removed for LOD2; the source mesh is 66 shells at every LOD (not watertight), so the loose-part count is the shell count, not floating debris",
   "fbx": {
    "hand": {
     "bytes": 287772,

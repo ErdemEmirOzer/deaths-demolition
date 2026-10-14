@@ -6,7 +6,7 @@
   "chosenUtc": "2026-09-17T02:40:41Z",
   "decision": "user choice via C-00 (WP-029 §2, single decision; DEC-084 recorded by S-02 in WP-042)",
   "tune": "DEC-077/REQ-105 tune: saturation −8→0, highlights −10→−6, yellow +12 (gold orb s 0.672→0.79+, separation 0.324→≥0.41)",
-  "intent": "Yağmur sonrası sinematik okuma: S-eğrisi ile orta-koyu ayrımı artar, taş Higgsfield gameplay referansındaki ıslak arduvaz koyuluğuna yaklaşır; gölgeler soğuk, ışık alan yüzeyler hafif ılık. Doygunluk kısık; renk değil değer kontrastı sahneyi taşır.",
+  "intent": "Yağmur sonrası sinematik okuma: S-eğrisi ile orta-koyu ayrımı artar, taş gameplay referans karesindeki ıslak arduvaz koyuluğuna yaklaşır; gölgeler soğuk, ışık alan yüzeyler hafif ılık. Doygunluk kısık; renk değil değer kontrastı sahneyi taşır.",
   "lightroom": {
     "preset": "Creative - Cool Shadows & Warm Highlights",
     "adjustments": {
@@ -25,7 +25,7 @@
       "channelSaturation": 12
     },
     "order": "preset (image_apply_preset) then adjustments (image_apply_adjustments) — identical on the 8 reference frames and on the neutral strip",
-    "source": "Adobe Lightroom API (Adobe MCP), S-05 session, 2026-09-16/17",
+    "source": "Adobe Lightroom API, S-05 session, 2026-09-16/17",
     "neutralStrip": "DD_Neutral_32.png (1024×32, URP ApplyLut2D layout)"
   },
   "lut": {

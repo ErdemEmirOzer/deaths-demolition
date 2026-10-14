@@ -48,7 +48,7 @@ in the manifest are sliced with its rects; a manifest edit re-slices (source dep
 
 Menu v4 trades words for icons (R2 U1). Every new icon goes through G1 so it stays one draw path, one colour authority and one budget:
 
-- **Delivery** (AP-028 / Codex): one single-colour glyph per key, white on transparent, drawn on a 24 px grid
+- **Delivery** (AP-028): one single-colour glyph per key, white on transparent, drawn on a 24 px grid
   (2 px stroke at 24; no detail or gap under 1.5 px at 24 — it has to read at `UiIconSize.S`). SVG, or PNG ≥ 256²,
   in the AP-012 `exports/` layout; no colour, no shading, no baked outline or glow (the shader does those).
 - **Build**: `build_g1.py` turns it into a 64² signed-distance cell (spread 6 px, 0.5 = edge) on the 1024² G1 page,
