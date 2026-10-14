@@ -1155,6 +1155,7 @@ namespace DD.Prototype.Enemies
 
             Vector3 motion = velocity;
             motion.y = _verticalVelocity;
+            HoldAtNavEdge(ref motion);   // a1-fix: at a NavMesh edge met last frame, nothing pushes out across it (no clip / push tremble)
 #if UNITY_EDITOR
             bool observeMove = DiagnosticMoveBody == this && DiagnosticMoveObserved != null;
             DiagnosticMove observation = default;
@@ -1185,8 +1186,10 @@ namespace DD.Prototype.Enemies
             }
 #endif
 
-            // A strong push can walk the body off the mesh; put it back.
-            ClampToWalkable(correction + _treePullVelocity);   // WP-104 B3: a pulled body stays on the walkable surface
+            // a1-fix (R4 FINAL-2 a1x, C-00 14.10): no push, pull or walk leaves the body off the NavMesh. Every grounded frame the move
+            // is traced along the NavMesh from the last on-mesh point (replaces WP-003's throttled ClampToWalkable; WP-104 B3's pulled
+            // body is covered the same way).
+            KeepOnNavMesh(beforeMove, dt);
 #if UNITY_EDITOR
             if (observeMove)
             {
