@@ -12,6 +12,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
 using UnityEngine.UI;
 
 namespace DD.Prototype.Tests.PlayMode
@@ -149,6 +150,136 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return -1;
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_AcilistaDisaridanKaybolanOdak_IlkPollIleDoner()
+        {
+            yield return Open(new Vector2(1920f, 1080f));
+            EventSystem.current.SetSelectedGameObject(null);
+            _panel.HandleKeys();
+            Assert.GreaterOrEqual(NodeOf(Selected), 0, "the opening focus is repaired once");
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_FareBosAlanaTiklar_GirdisizPollSecimiGeriAlmaz()
+        {
+            yield return Open(new Vector2(1920f, 1080f));
+            _panel.HandleKeys(); // consume the opening handoff before deliberate deselection
+            EventSystem.current.SetSelectedGameObject(null);
+            _panel.HandleKeys();
+            yield return null;
+            Assert.IsNull(Selected, "ordinary mouse deselection must survive without navigation input");
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_AlDugmesindenAlim_GizlenenEylemOdakKaybettirmez()
+        {
+            yield return Open(new Vector2(1920f, 1080f));
+            _panel.HandleKeys();
+            int node = NodeOf(Selected);
+            UiInput.Focus(_panel.BuyButton);
+            Submit(_panel.BuyButton);
+            yield return null;
+            Assert.AreEqual(TreeNodeState.Purchased, _shop.Snapshot.Nodes[node].State);
+            Assert.AreSame(_panel.NodeButton(node).gameObject, Selected,
+                "the hidden BUY action must return focus to the inspected node");
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_RerollSonrasiDevreDisiEylem_OdagiDugumeBirakir()
+        {
+            yield return Open(new Vector2(1920f, 1080f), new UiTreeCaptureShop(15, 6));
+            _panel.HandleKeys();
+            Assert.IsTrue(_panel.RerollButton.IsInteractable());
+            UiInput.Focus(_panel.RerollButton);
+            Submit(_panel.RerollButton);
+            yield return null;
+            Assert.IsFalse(_panel.RerollButton.IsInteractable(), "5 gold cannot pay the next reroll");
+            Assert.GreaterOrEqual(NodeOf(Selected), 0, "a disabled reroll cannot retain pad focus");
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_UzunTrSinerjiOnkosulu_TumMetniGosterir()
+        {
+            UiSettings.Language = UiStrings.Turkish;
+            UiSettings.TextScale = 1.25f;
+            UiSettings.UiScale = 1.2f;
+            yield return Open(new Vector2(1600f, 900f));
+            const string reason = "GEREKLİ: SONSUZ PENCERE + TARAMALI DÖNÜŞÜM";
+            Assert.IsTrue(_panel.ShowTextForTests("Kesintisiz Hat", "SİNERJİLER", reason, string.Empty, string.Empty),
+                "the actual baseline prerequisite must fit at large text scale");
+            _panel.DetailState.ForceMeshUpdate();
+            Assert.IsFalse(_panel.DetailState.isTextTruncated);
+            Assert.GreaterOrEqual(_panel.DetailState.rectTransform.rect.height + 1f, _panel.DetailState.preferredHeight);
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_BuyukMetin_DetayVeFiyatlarKesilmez([Values("en", "tr")] string language)
+        {
+            UiSettings.Language = language;
+            UiSettings.TextScale = 1.25f;
+            UiSettings.UiScale = 1.2f;
+            yield return Open(new Vector2(1600f, 900.535f));
+            TMP_Text header = _panel.Root.Find("Block/SynergyHeader").GetComponent<TMP_Text>();
+            header.ForceMeshUpdate();
+            Assert.IsFalse(header.isTextTruncated, "full synergy header");
+            for (int i = 0; i < _shop.Snapshot.Nodes.Length; i++)
+            {
+                _panel.FocusNode(i);
+                yield return null;
+                foreach (TMP_Text t in _panel.DetailRect.GetComponentsInChildren<TMP_Text>())
+                {
+                    if (string.IsNullOrEmpty(t.text)) continue;
+                    t.ForceMeshUpdate();
+                    Assert.IsFalse(t.isTextTruncated, _shop.Snapshot.Nodes[i].NodeId + ": " + t.text);
+                }
+                if (_panel.PricePlateRect.gameObject.activeInHierarchy)
+                    Assert.IsTrue(Inside(World(_panel.PricePlateRect), World(_panel.DetailRect)), _shop.Snapshot.Nodes[i].NodeId + ": price plate " + World(_panel.PricePlateRect) + " inside card " + World(_panel.DetailRect));
+            }
+            foreach (TMP_Text t in _panel.ActionsRect.GetComponentsInChildren<TMP_Text>())
+            {
+                if (string.IsNullOrEmpty(t.text)) continue;
+                t.ForceMeshUpdate();
+                Assert.IsFalse(t.isTextTruncated, "full utility wording: " + t.text);
+            }
+            UiSettings.TextScale = UiSettings.UiScale = 1f;
+            ((RectTransform)_panel.Root.parent).sizeDelta = new Vector2(1920f, 1080f);
+            yield return null;
+            _panel.Refresh();
+            _panel.FocusNode(0);
+            yield return null;
+            Assert.AreEqual(16f, _panel.BuyButton.LabelText.rectTransform.offsetMin.x, "original label inset restored");
+            Assert.IsNull(_panel.BuyButton.navigation.selectOnRight, "compact horizontal link removed in the original vertical layout");
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_OneriKalmazsa_BosDurumuSoyler([Values("en", "tr")] string language)
+        {
+            UiSettings.Language = language;
+            var exhausted = new UiTreeCaptureShop(60000, 15);
+            foreach (TreeNodeView node in exhausted.Snapshot.Nodes) exhausted.Grant(node.NodeId);
+            yield return Open(new Vector2(1496f, 842f), exhausted);
+            foreach (TreeNodeView node in _shop.Snapshot.Nodes)
+                Assert.IsFalse(node.Recommended && node.State != TreeNodeState.Purchased);
+            Assert.AreEqual(language == "tr" ? "ÖNERİ YOK" : "NO RECOMMENDATIONS", _panel.StripCaption.text);
+            _panel.StripCaption.ForceMeshUpdate();
+            Assert.IsFalse(_panel.StripCaption.isTextTruncated);
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_OdakPoll_IsinmisYoldaGcAyirmaz()
+        {
+            yield return Open(new Vector2(1920f, 1080f));
+            for (int i = 0; i < 10; i++) _panel.HandleKeys();
+            byte[] bait = null;
+            Assert.That(() => bait = new byte[16384], UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(),
+                "positive control must prove the GC.Alloc recorder sees managed allocations");
+            System.GC.KeepAlive(bait);
+            Assert.That(() => { for (int i = 0; i < 1000; i++) _panel.HandleKeys(); },
+                UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "1000 warmed idle input polls must allocate no managed memory on this thread");
+            yield return null;
         }
 
         [UnityTest]
@@ -499,6 +630,40 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsFalse(name.isTextTruncated, id + ": the name '" + name.text + "' cut");
             }
 
+            page.Close();
+        }
+
+        [UnityTest]
+        public IEnumerator Ap044_Uyanis_BuyukMetindeAcButonuPanelIcinde([Values("en", "tr")] string language)
+        {
+            UiSettings.Language = language;
+            UiSettings.TextScale = 1.25f;
+            UiSettings.UiScale = 1.2f;
+            Canvas root = UiFactory.CreateCanvas("AwakeningOverflow.Canvas", UiTokens.SortingScreen);
+            _canvas = root.gameObject;
+            UiFactory.EnsureEventSystem();
+            RectTransform host = UiFactory.NewRect("Host", root.transform);
+            host.sizeDelta = new Vector2(1600f, 900.535f);
+            yield return null;
+            UiAwakeningPage page = UiAwakeningPage.Create(host);
+            page.Open(new MixedAwakening(), null);
+            for (int f = 0; f < 3; f++) yield return null;
+            for (int i = 0; i < page.Model.Entries.Count; i++)
+            {
+                page.OnCellSelected(i);
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                Rect viewport = World(page.Pane.Content);
+                foreach (TMP_Text t in page.DetailName.transform.parent.GetComponentsInChildren<TMP_Text>())
+                {
+                    if (string.IsNullOrEmpty(t.text)) continue;
+                    t.ForceMeshUpdate();
+                    Assert.IsFalse(t.isTextTruncated, page.Model.Entries[i].Id + ": " + t.text);
+                    Assert.IsTrue(Inside(World(t.rectTransform), viewport), page.Model.Entries[i].Id + ": words inside the original pane");
+                }
+                if (page.UnlockButton.gameObject.activeInHierarchy)
+                    Assert.IsTrue(Inside(World((RectTransform)page.UnlockButton.transform), viewport), page.Model.Entries[i].Id + ": Unlock inside the original pane");
+            }
             page.Close();
         }
 

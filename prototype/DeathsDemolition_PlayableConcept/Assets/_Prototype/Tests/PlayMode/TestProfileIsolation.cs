@@ -28,8 +28,12 @@ public sealed class TestProfileIsolation
     // fail-closed fcntl lease on its file: two Play Mode sessions on one machine would
     // otherwise fight over one file and the loser would run read-only ("Another copy…"),
     // failing every profile assertion for an environmental reason.
+    private static string ScratchRoot =>
+        System.Environment.GetEnvironmentVariable("DD_TEST_SANDBOX_ROOT") is string root && !string.IsNullOrEmpty(root)
+            ? root : Application.temporaryCachePath;
+
     public static string TestProfilePath =>
-        Path.Combine(Application.temporaryCachePath,
+        Path.Combine(ScratchRoot,
             "dd-test-profile-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json");
 
     /// <summary>Gerçek oyuncu profili; testler bu dosyaya asla yazmamalı.</summary>
@@ -63,6 +67,6 @@ public sealed class TestProfileIsolation
 
     /// <summary>WP-079: per-process scratch folder for run telemetry written by Play Mode tests.</summary>
     public static string TestTelemetryDirectory =>
-        Path.Combine(Application.temporaryCachePath,
+        Path.Combine(ScratchRoot,
             "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "telemetry");
 }

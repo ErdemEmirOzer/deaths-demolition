@@ -4857,7 +4857,7 @@
   },
   "tree.v2.aw_alt_sp.name": {
     "en": "Blink Fire",
-    "tr": "Ani Ateş"
+    "tr": "Şimşek Ateşi"
   },
   "tree.v2.aw_alt_sp.desc": {
     "en": "After a dodge or a kill, fire rate ×{rpm} for {seconds} s.",
@@ -5113,7 +5113,7 @@
   },
   "tree.v2.aw_alt_sv.name": {
     "en": "Phoenix",
-    "tr": "Anka Kuşu"
+    "tr": "Anka"
   },
   "tree.v2.aw_alt_sv.desc": {
     "en": "Once per run, instead of dying you burst into a {radius} m blast of fire and get back up with {hp}% health.",
@@ -5366,5 +5366,21 @@
   "awakening.refund.ok": {
     "en": "GOT IT",
     "tr": "TAMAM"
+  },
+  "tree.v2.screen.recommended_none": {
+    "en": "NO RECOMMENDATIONS",
+    "tr": "ÖNERİ YOK"
+  },
+  "tree.v2.legend.Unaffordable": {
+    "en": "NOT ENOUGH GOLD",
+    "tr": "ALTIN YETERSİZ"
+  },
+  "tree.v2.legend.Fogged": {
+    "en": "UNLOCKS IN A LATER ROUND",
+    "tr": "İLERİDEKİ TURLARDA AÇILIR"
+  },
+  "tree.v2.legend.Excluded": {
+    "en": "OTHER CHOICE ALREADY TAKEN",
+    "tr": "DİĞER SEÇENEK ALINDI"
   }
 }

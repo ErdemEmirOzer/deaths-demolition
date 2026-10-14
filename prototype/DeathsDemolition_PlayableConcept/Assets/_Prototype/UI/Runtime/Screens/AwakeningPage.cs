@@ -482,7 +482,17 @@ namespace DD.Prototype.UI
                 y += UiBrushTokens.ControlHeight + (int)UiSpace.S;
             }
 
-            Stack(_note, y, width, 3);
+            float end = Stack(_note, y, width, 3) - (int)UiSpace.S;
+            float room = _pane.Content.rect.height + _detail.anchoredPosition.y;
+            if (end > room)
+            {
+                // Keep the original composition. Only an overflowing detail borrows space from its existing hero icon.
+                float shrink = Mathf.Min(icon, end - room + 2f);
+                Set(_dIcon.rectTransform, 0f, 0f, icon - shrink, icon - shrink);
+                foreach (RectTransform r in new[] { _dName.rectTransform, _dAlt.rectTransform, _dDesc.rectTransform,
+                    _dState.rectTransform, _note.rectTransform, (RectTransform)_unlock.transform })
+                    r.anchoredPosition += Vector2.up * shrink;
+            }
             LinkNavigation();
         }
 

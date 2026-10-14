@@ -169,6 +169,9 @@ namespace DD.Prototype.UI
         private int _lastNode = -1;          // the last NODE: where Y returns from the synergy column (fix1)
         private UiTweenHandle _close;
         private bool _open;
+        private bool _openingFocusPending;
+        private bool _compactDetail, _compactPricePlate;
+        private float _compactTargetWidth, _compactControlHeight;
         private TreeSynergy _activeBefore;
 
         /// <summary>The player continued: the host closes the round-end flow (the provider's Continue has been called).</summary>
@@ -515,6 +518,7 @@ namespace DD.Prototype.UI
         {
             _commands = commands;
             _open = true;
+            _openingFocusPending = true;
             UiMotion.Kill(_close, false);
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();
@@ -594,6 +598,7 @@ namespace DD.Prototype.UI
             _ash.text = TreeV2Text.Ash(profile != null ? profile.AshBalance : 0);
             _targetLine.text = TreeV2Text.TargetLine(s);
             _synergyHeader.text = UiStrings.Get("tree.v2.screen.synergies", "SYNERGIES");
+            FitSynergyHeader();
             for (int r = 0; r < TreeV2Rows.Count; r++)
             {
                 _rowLabel[r].text = TreeV2Text.Branch(TreeV2Rows.BranchAt(r));
@@ -744,7 +749,7 @@ namespace DD.Prototype.UI
                 PlaceNode(_nodes[i], i);
             }
 
-            Set(_synergyHeader.rectTransform, l.SynergyX, l.TreeTop, l.SynergyWidth, TreeV2Layout.SynergyHeader * scale);
+            FitSynergyHeader();
             for (int k = 0; k < _synergies.Length; k++)
             {
                 Vector2 c = l.SynergyCentre(k);
@@ -756,6 +761,14 @@ namespace DD.Prototype.UI
             }
 
             PlaceDetailColumn();
+        }
+
+        private void FitSynergyHeader()
+        {
+            float oldHeight = TreeV2Layout.SynergyHeader * _layout.Scale;
+            float height = Mathf.Max(oldHeight, Mathf.Ceil(_synergyHeader.GetPreferredValues(_synergyHeader.text).y) + 2f);
+            float width = Mathf.Max(_layout.SynergyWidth, Mathf.Ceil(_synergyHeader.GetPreferredValues(_synergyHeader.text).x) + 2f);
+            Set(_synergyHeader.rectTransform, _layout.SynergyX + (_layout.SynergyWidth - width) * 0.5f, _layout.TreeTop + oldHeight - height, width, height);
         }
 
         /// <summary>
@@ -1120,33 +1133,55 @@ namespace DD.Prototype.UI
         /// </summary>
         private void LayoutDetail()
         {
-            float width = Mathf.Max(1f, _detail.rect.width - CardPad * 2f);
+            // Re-evaluate from the original layout on every selection; a long node must not change the next node.
+            _compactDetail = _compactPricePlate = false;
+            SetPlateLabelInset((int)UiSpace.L);
+            _target.LabelText.enableWordWrapping = false;
+            PlaceDetailColumn();
+            float pad = CardPad;
+            float width = Mathf.Max(1f, _detail.rect.width - pad * 2f);
             float height = _detail.rect.height;
-            float name = Measure(_dName, width, 2);
-            float kind = Measure(_dKind, width, 1);
-            float state = string.IsNullOrEmpty(_dState.text) ? 0f : Measure(_dState, width, 2);
-            float desc = string.IsNullOrEmpty(_dDesc.text) ? 0f : Measure(_dDesc, width, 99);
-            float extra = string.IsNullOrEmpty(_dExtra.text) ? 0f : Measure(_dExtra, width, 99);
+            float name = Measure(_dName, width, 2), kind = Measure(_dKind, width, 1);
+            float state = Measure(_dState, width, 99), desc = Measure(_dDesc, width, 99), extra = Measure(_dExtra, width, 99);
             float plate = _pricePlate.gameObject.activeSelf ? PricePlateHeight(width) : 0f;
-            float texts = name + kind + state + desc + extra;
-            int bands = (name > 0f ? 1 : 0) + (kind > 0f ? 1 : 0) + (state > 0f ? 1 : 0) + (desc > 0f ? 1 : 0) + (extra > 0f ? 1 : 0);
+            int bands = TextBands(name, kind, state, desc, extra);
+            if (CardPadTight + name + kind + state + desc + extra + bands * CardGapTight + plate + CardPad > height)
+            {
+                // Only an overflowing card uses its existing tight padding and the unused message reserve.
+                _compactDetail = true;
+                PlaceDetailColumn();
+                height = _detail.rect.height;
+                pad = CardPadTight;
+                width = Mathf.Max(1f, _detail.rect.width - pad * 2f);
+                name = Measure(_dName, width, 2); kind = Measure(_dKind, width, 1);
+                state = Measure(_dState, width, 99); desc = Measure(_dDesc, width, 99); extra = Measure(_dExtra, width, 99);
+                float inner = width + 16f - CardPadTight * 2f;
+                _compactTargetWidth = Mathf.Min(CompactButtonWidth(_target), inner - UiRunTreePanel.SubmitGlyphRoom() - CompactButtonWidth(_buy) - (int)UiSpace.S);
+                _target.LabelText.enableWordWrapping = true;
+                float targetHeight = Mathf.Ceil(_target.LabelText.GetPreferredValues(_target.LabelText.text, Mathf.Max(1f, _compactTargetWidth - CardPadTight * 2f), 0f).y) + 2f;
+                _compactControlHeight = Mathf.Max(UiBrushTokens.ControlHeight, targetHeight);
+                _compactPricePlate = _pricePlate.gameObject.activeSelf && _compactTargetWidth >= 52f &&
+                    targetHeight <= UiBrushTokens.ControlHeight * 2f + (int)UiSpace.S;
+                _target.LabelText.enableWordWrapping = _compactPricePlate;
+                SetPlateLabelInset(_compactPricePlate ? CardPadTight : (int)UiSpace.L);
+                plate = _pricePlate.gameObject.activeSelf ? PricePlateHeight(width) : 0f;
+                bands = TextBands(name, kind, state, desc, extra);
+            }
 
-            // fix1 (U2 at TextScale 1.25 × Mac UI 1.2): when the words and the price plate do not fit the card with its usual air,
-            // the air gives way (top pad 20 → 8, gaps 8 → 4) before anything else; no word is ever made smaller or cut.
+            float kindWidth = Mathf.Ceil(_dKind.GetPreferredValues(_dKind.text).x) + 2f;
+            float stateWidth = Mathf.Ceil(_dState.GetPreferredValues(_dState.text).x) + 2f;
+            bool inlineState = _compactDetail && kind > 0f && state > 0f && kindWidth + (int)UiSpace.S + stateWidth <= width;
+            float texts = name + (inlineState ? Mathf.Max(kind, state) : kind + state) + desc + extra;
+            if (inlineState) bands--;
             float top = CardPad, gap = (int)UiSpace.S;
             if (top + texts + bands * gap + plate > height)
             {
                 top = CardPadTight;
                 gap = CardGapTight;
             }
-
             float words = top + texts + bands * gap + plate + CardPad;
             float preview = Mathf.Clamp(height - words - (int)UiSpace.M, 0f, PreviewMax);
-            if (preview < PreviewMin)
-            {
-                preview = 0f;
-            }
-
+            if (preview < PreviewMin) preview = 0f;
             _previewIcon.enabled = preview > 0f;
             float y = top;
             if (preview > 0f)
@@ -1154,29 +1189,55 @@ namespace DD.Prototype.UI
                 Set(_previewIcon.rectTransform, (_detail.rect.width - preview) * 0.5f, y, preview, preview);
                 y += preview + (int)UiSpace.M;
             }
-
-            y = Stack(_dName, y, width, name, gap);
-            y = Stack(_dKind, y, width, kind, gap);
-            y = Stack(_dState, y, width, state, gap);
-            y = Stack(_dDesc, y, width, desc, gap);
-            y = Stack(_dExtra, y, width, extra, gap);
+            y = Stack(_dName, y, pad, width, name, gap);
+            if (inlineState)
+            {
+                _dKind.gameObject.SetActive(true); _dState.gameObject.SetActive(true);
+                Set(_dKind.rectTransform, pad, y, kindWidth, Mathf.Max(kind, state));
+                Set(_dState.rectTransform, pad + kindWidth + (int)UiSpace.S, y, width - kindWidth - (int)UiSpace.S, Mathf.Max(kind, state));
+                y += Mathf.Max(kind, state) + gap;
+            }
+            else
+            {
+                y = Stack(_dKind, y, pad, width, kind, gap);
+                y = Stack(_dState, y, pad, width, state, gap);
+            }
+            y = Stack(_dDesc, y, pad, width, desc, gap);
+            y = Stack(_dExtra, y, pad, width, extra, gap);
             if (plate > 0f)
             {
-                Set(_pricePlate, CardPad - 8f, Mathf.Max(y, height - CardPad - plate), width + 16f, plate);
+                Set(_pricePlate, pad - 8f, Mathf.Max(y, height - CardPad - plate), width + 16f, plate);
                 LayoutPricePlate(width + 16f, plate);
             }
+            LinkDetailNavigation();
         }
 
-        private float Stack(TMP_Text text, float y, float width, float height, float gap)
+        private static int TextBands(float a, float b, float c, float d, float e)
+        {
+            return (a > 0f ? 1 : 0) + (b > 0f ? 1 : 0) + (c > 0f ? 1 : 0) + (d > 0f ? 1 : 0) + (e > 0f ? 1 : 0);
+        }
+
+        private float Stack(TMP_Text text, float y, float pad, float width, float height, float gap)
         {
             text.gameObject.SetActive(height > 0f);
-            if (height <= 0f)
-            {
-                return y;
-            }
-
-            Set(text.rectTransform, CardPad, y, width, height);
+            if (height <= 0f) return y;
+            Set(text.rectTransform, pad, y, width, height);
             return y + height + gap;
+        }
+
+        private static float CompactButtonWidth(UiButton button)
+        {
+            return Mathf.Max(52f, Mathf.Ceil(button.LabelText.GetPreferredValues(button.LabelText.text).x) + CardPadTight * 2f + 2f);
+        }
+
+        private void SetPlateLabelInset(float inset)
+        {
+            foreach (UiButton button in new[] { _buy, _target })
+            {
+                RectTransform r = button.LabelText.rectTransform;
+                r.offsetMin = new Vector2(inset, r.offsetMin.y);
+                r.offsetMax = new Vector2(-inset, r.offsetMax.y);
+            }
         }
 
         /// <summary>A text's band: its words measured at <paramref name="width"/>, at most <paramref name="lines"/> lines (U2).</summary>
@@ -1200,7 +1261,9 @@ namespace DD.Prototype.UI
         private float PricePlateHeight(float width)
         {
             float control = UiBrushTokens.ControlHeight;
-            return (int)UiSpace.M * 2f + PriceBand() + (int)UiSpace.XS + control * 2f + (int)UiSpace.S;
+            return _compactPricePlate
+                ? CardPadTight * 2f + PriceBand() + (int)UiSpace.XS + _compactControlHeight
+                : (int)UiSpace.M * 2f + PriceBand() + (int)UiSpace.XS + control * 2f + (int)UiSpace.S;
         }
 
         /// <summary>The price line's height: the price (Numeric) or the discount (Caption, × TextScale), whichever is taller.</summary>
@@ -1213,9 +1276,9 @@ namespace DD.Prototype.UI
         {
             UiBrushKit.FitWidth(_buy);
             UiBrushKit.FitWidth(_target);
-            float pad = (int)UiSpace.M;
+            float pad = _compactPricePlate ? CardPadTight : (int)UiSpace.M;
             float inner = Mathf.Max(1f, width - pad * 2f);
-            float control = UiBrushTokens.ControlHeight;
+            float control = _compactPricePlate ? _compactControlHeight : UiBrushTokens.ControlHeight;
             float band = PriceBand();
             float priceWidth = string.IsNullOrEmpty(_dPrice.text) ? 0f : Mathf.Min(inner, Mathf.Ceil(_dPrice.GetPreferredValues(_dPrice.text).x) + 2f);
             Set(_dPrice.rectTransform, pad, pad, Mathf.Max(1f, priceWidth), band);
@@ -1225,6 +1288,13 @@ namespace DD.Prototype.UI
             var buy = (RectTransform)_buy.transform;
             var target = (RectTransform)_target.transform;
             float y = pad + band + (int)UiSpace.XS;
+            if (_compactPricePlate)
+            {
+                float bw = CompactButtonWidth(_buy), twCompact = _compactTargetWidth;
+                Set(buy, pad + UiRunTreePanel.SubmitGlyphRoom(), y, bw, control);
+                Set(target, pad + UiRunTreePanel.SubmitGlyphRoom() + bw + (int)UiSpace.S, y, twCompact, control);
+                return;
+            }
             float w = Mathf.Min(buy.sizeDelta.x, inner - UiRunTreePanel.SubmitGlyphRoom());
             Set(buy, pad + inner - w, y, w, control);
             y += control + (int)UiSpace.S;
@@ -1327,14 +1397,21 @@ namespace DD.Prototype.UI
         /// </summary>
         private float MessageBand(float inner)
         {
-            return Mathf.Max(CaptionBand(inner), UiFactory.LineHeight(UiType.Caption) * 2f);   // a refusal sentence: two lines
+            if (_compactDetail)
+            {
+                TMP_Text shown = string.IsNullOrEmpty(_note.text) ? _stripCaption : _note;
+                return string.IsNullOrEmpty(shown.text) ? CaptionBand(inner)
+                    : Mathf.Ceil(shown.GetPreferredValues(shown.text, inner, 0f).y) + 2f;
+            }
+            return Mathf.Max(CaptionBand(inner), UiFactory.LineHeight(UiType.Caption) * 2f);
         }
 
         private float ActionsHeight(float width)
         {
             float inner = width - (int)UiSpace.M * 2f;
-            float control = UiBrushTokens.ControlHeight;
-            return (int)UiSpace.M * 2f + MessageBand(inner) + control * 3f + ActionGap * 3f;
+            return (int)UiSpace.M * 2f + MessageBand(inner) + ActionHeight(_reroll, _rerollCost, inner, 0f)
+                + ActionHeight(_hearth, _hearthCost, inner, 0f)
+                + ActionHeight(_continue, null, inner, UiInputGlyphs.ReservedWidth(UiPromptAction.Continue) + (int)UiSpace.S) + ActionGap * 3f;
         }
 
         private void LayoutActions(float width, float height)
@@ -1348,9 +1425,9 @@ namespace DD.Prototype.UI
             ShowMessage();
             float y = pad + band + ActionGap;
             FitAction(_reroll, _rerollCost, inner, y, 0f);
-            y += control + ActionGap;
+            y += ActionHeight(_reroll, _rerollCost, inner, 0f) + ActionGap;
             FitAction(_hearth, _hearthCost, inner, y, 0f);
-            y += control + ActionGap;
+            y += ActionHeight(_hearth, _hearthCost, inner, 0f) + ActionGap;
             FitAction(_continue, null, inner, y, UiInputGlyphs.ReservedWidth(UiPromptAction.Continue) + (int)UiSpace.S);
         }
 
@@ -1363,16 +1440,35 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>A C11 at its measured width (U2), from the plate's left (after <paramref name="glyphRoom"/>), its price after it.</summary>
+        private float ActionWidth(UiButton button, TMP_Text cost, float inner, float glyphRoom)
+        {
+            float price = cost != null && !string.IsNullOrEmpty(cost.text) ? Mathf.Ceil(cost.GetPreferredValues(cost.text).x) + 2f + (int)UiSpace.S : 0f;
+            var rect = (RectTransform)button.transform;
+            Vector2 previous = rect.sizeDelta;
+            float measured = UiBrushKit.FitWidth(button);
+            rect.sizeDelta = previous;
+            return Mathf.Min(measured, Mathf.Max(1f, inner - glyphRoom - price));
+        }
+
+        private float ActionHeight(UiButton button, TMP_Text cost, float inner, float glyphRoom)
+        {
+            float width = ActionWidth(button, cost, inner, glyphRoom);
+            TMP_Text label = button.LabelText;
+            float words = Mathf.Max(1f, width - label.rectTransform.offsetMin.x + label.rectTransform.offsetMax.x);
+            label.enableWordWrapping = label.GetPreferredValues(label.text).x > words + 1f;
+            return Mathf.Max(UiBrushTokens.ControlHeight, Mathf.Ceil(label.GetPreferredValues(label.text, words, 0f).y) + 2f);
+        }
+
         private void FitAction(UiButton button, TMP_Text cost, float inner, float y, float glyphRoom)
         {
             float pad = (int)UiSpace.M;
-            float w = Mathf.Min(UiBrushKit.FitWidth(button), inner - glyphRoom);
-            var rect = (RectTransform)button.transform;
-            Set(rect, pad + glyphRoom, y, w, UiBrushTokens.ControlHeight);
+            float w = ActionWidth(button, cost, inner, glyphRoom);
+            float height = ActionHeight(button, cost, inner, glyphRoom);
+            Set((RectTransform)button.transform, pad + glyphRoom, y, w, height);
             if (cost != null)
             {
                 float x = pad + glyphRoom + w + (int)UiSpace.S;
-                Set(cost.rectTransform, x, y, Mathf.Max(0f, pad + inner - x), UiBrushTokens.ControlHeight);
+                Set(cost.rectTransform, x, y, Mathf.Max(0f, pad + inner - x), height);
             }
         }
 
@@ -1398,7 +1494,18 @@ namespace DD.Prototype.UI
         private void RefreshActions(TreeScreenSnapshot s)
         {
             int percent = StripPercent(s);
-            string strip = UiStrings.Get("tree.v2.screen.recommended", "RECOMMENDED");
+            bool hasRecommendations = false;
+            for (int i = 0; i < s.Nodes.Length; i++)
+            {
+                if (s.Nodes[i].Recommended && s.Nodes[i].State != TreeNodeState.Purchased)
+                {
+                    hasRecommendations = true;
+                    break;
+                }
+            }
+            string strip = hasRecommendations
+                ? UiStrings.Get("tree.v2.screen.recommended", "RECOMMENDED")
+                : UiStrings.Get("tree.v2.screen.recommended_none", "NO RECOMMENDATIONS");
             _stripCaption.text = percent > 0
                 ? strip + " · " + UiStrings.Format("tree.v2.screen.recommended_caption", "value", UiStrings.Number(percent), "{value}% off this round")
                 : strip;
@@ -1460,10 +1567,10 @@ namespace DD.Prototype.UI
             {
                 var sb = new StringBuilder(256);
                 sb.Append(UiStrings.Get("tree.v2.state.Available", "AVAILABLE")).Append('\n');
-                sb.Append(UiStrings.Format("tree.v2.state.Unaffordable", "value", "N", "{value} GOLD SHORT")).Append('\n');
+                sb.Append(UiStrings.Get("tree.v2.legend.Unaffordable", "NOT ENOUGH GOLD")).Append('\n');
                 sb.Append(UiStrings.Get("tree.v2.state.Purchased", "OWNED")).Append('\n');
-                sb.Append(UiStrings.Format("tree.v2.state.Fogged", "round", "N", "UNLOCKS AT ROUND {round}")).Append('\n');
-                sb.Append(UiStrings.Format("tree.v2.state.Excluded", "node", "…", "CLOSED BY {node}")).Append('\n');
+                sb.Append(UiStrings.Get("tree.v2.legend.Fogged", "UNLOCKS IN A LATER ROUND")).Append('\n');
+                sb.Append(UiStrings.Get("tree.v2.legend.Excluded", "OTHER CHOICE ALREADY TAKEN")).Append('\n');
                 sb.Append(UiStrings.Get("tree.v2.state.AwakeningLocked", "UNLOCKS IN AWAKENING")).Append('\n');
                 sb.Append(UiStrings.Get("tree.v2.screen.recommended", "RECOMMENDED")).Append('\n');
                 sb.Append(UiStrings.Get("tree.v2.screen.target_badge", "TARGET"));
@@ -1522,6 +1629,7 @@ namespace DD.Prototype.UI
                 return false;
             }
 
+            bool heldBefore = UiInput.HeldUnder(_root);
             TreeNodeState before = s.Nodes[index].State;
             TreeSynergy activeBefore = ActiveSynergies(s);
             bool bought = _commands.TryBuy(index);
@@ -1530,6 +1638,7 @@ namespace DD.Prototype.UI
                 UiSound.Play(UiSoundKind.Denied);
                 _note.text = before == TreeNodeState.Unaffordable ? UiStrings.Get("tree.refuse.gold", "Not enough gold for that yet. Nothing was taken.") : string.Empty;
                 Refresh();
+                RestoreCommandFocus(heldBefore);
                 return false;
             }
 
@@ -1537,9 +1646,16 @@ namespace DD.Prototype.UI
             // the screen raises no UiEvent for a purchase, so nothing is voiced twice.
             _note.text = string.Empty;
             Refresh();
+            RestoreCommandFocus(heldBefore);
             TreeSynergy completed = ActiveSynergies(Snapshot) & ~activeBefore;
             Stamp(index, completed);
             return true;
+        }
+
+        private void RestoreCommandFocus(bool heldBefore)
+        {
+            if (heldBefore && _open && !UiCurtain.IsCovering && UiInput.TopModal == null && (UiInput.FocusLost() || !UiInput.HeldUnder(_root)))
+                UiInput.Focus(FocusTarget());
         }
 
         /// <summary>One ceremony per screen (AD §5.3): a completed synergy stamps its badge, otherwise the node takes the hanko.</summary>
@@ -1599,6 +1715,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            bool heldBefore = UiInput.HeldUnder(_root);
             bool rerolled = _commands.TryReroll();
             if (rerolled)
             {
@@ -1611,6 +1728,7 @@ namespace DD.Prototype.UI
 
             _note.text = rerolled ? string.Empty : UiStrings.Get("shop.refuse.reroll_gold", "Not enough gold to reroll. Nothing was spent.");
             Refresh();
+            RestoreCommandFocus(heldBefore);
         }
 
         private void OnHearthPressed()
@@ -1620,6 +1738,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            bool heldBefore = UiInput.HeldUnder(_root);
             bool stoked = _commands.TryStokeHearth();
             if (stoked)
             {
@@ -1631,6 +1750,7 @@ namespace DD.Prototype.UI
             }
 
             Refresh();
+            RestoreCommandFocus(heldBefore);
         }
 
         /// <summary>CONTINUE (one key, decision 1): the provider's Continue, then the host closes the round-end flow.</summary>
@@ -1673,6 +1793,11 @@ namespace DD.Prototype.UI
                 HandleKey(TreeV2Key.Target);
             }
 
+            if (_openingFocusPending && !UiCurtain.IsCovering && UiInput.TopModal == null)
+            {
+                if (!UiInput.HeldUnder(_root)) UiInput.Focus(FocusTarget());
+                _openingFocusPending = false;
+            }
             UiInput.ReclaimFocus(FocusTarget(), _root);
         }
 
@@ -1919,9 +2044,18 @@ namespace DD.Prototype.UI
             return button != null && button.gameObject.activeInHierarchy && button.IsInteractable() ? button : null;
         }
 
+        private static void ResetHorizontalLink(UiButton button)
+        {
+            UnityEngine.UI.Navigation nav = button.navigation;
+            nav.selectOnRight = null;
+            button.navigation = nav;
+        }
+
         /// <summary>BUY → TARGET → REROLL → HEARTH → CONTINUE (live ones), SYMBOLS above them; Left goes back into the tree.</summary>
         private void LinkDetailNavigation()
         {
+            ResetHorizontalLink(_buy);
+            ResetHorizontalLink(_target);
             Selectable[] chain = ActionChain();
             UiInput.ChainVertical(false, chain);
             Selectable first = null;
@@ -1940,12 +2074,31 @@ namespace DD.Prototype.UI
                 UnityEngine.UI.Navigation nav = chain[i].navigation;
                 nav.mode = UnityEngine.UI.Navigation.Mode.Explicit;
                 nav.selectOnLeft = _lastTreeFocus;
+                nav.selectOnRight = null;
                 if (chain[i] == first)
                 {
                     nav.selectOnUp = _symbols;
                 }
 
                 chain[i].navigation = nav;
+            }
+
+            if (_compactPricePlate)
+            {
+                Selectable buy = Live(_buy), target = Live(_target);
+                Selectable below = Live(_reroll) ?? Live(_hearth) ?? _continue;
+                if (buy != null)
+                {
+                    UnityEngine.UI.Navigation nav = buy.navigation;
+                    nav.selectOnRight = target; nav.selectOnDown = below; nav.selectOnUp = _symbols;
+                    buy.navigation = nav;
+                }
+                if (target != null)
+                {
+                    UnityEngine.UI.Navigation nav = target.navigation;
+                    nav.selectOnLeft = buy != null ? buy : _lastTreeFocus; nav.selectOnDown = below; nav.selectOnUp = _symbols;
+                    target.navigation = nav;
+                }
             }
 
             UnityEngine.UI.Navigation symbols = _symbols.navigation;

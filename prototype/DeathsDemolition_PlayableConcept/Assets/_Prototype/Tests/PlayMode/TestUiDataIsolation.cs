@@ -32,7 +32,8 @@ namespace DD.Prototype.Tests
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            string root = UiDataPaths.ProcessLocalRoot;
+            string sandbox = System.Environment.GetEnvironmentVariable("DD_TEST_SANDBOX_ROOT");
+            string root = string.IsNullOrEmpty(sandbox) ? UiDataPaths.ProcessLocalRoot : Path.Combine(sandbox, "ui");
             foreach (string name in FileNames)
             {
                 string leftover = Path.Combine(root, name); // this process's own test files only
@@ -42,7 +43,8 @@ namespace DD.Prototype.Tests
                 }
             }
 
-            UiDataPaths.UseProcessLocalRoot();
+            if (string.IsNullOrEmpty(sandbox)) UiDataPaths.UseProcessLocalRoot();
+            else UiDataPaths.SetRootOverride(root);
             Assert.AreEqual(Path.Combine(root, UiSettings.FileName), UiSettings.FilePath, "UI files not redirected; tests could write the player's settings.");
             Debug.Log("[DD-TEST] ui.isolation root=" + root);
         }
