@@ -100,7 +100,9 @@ namespace DD.Prototype.Tests.PlayMode
                 WallBuyStation s = director.Stations[i];
                 WallBuyCatalog.StationRow row = catalog.Stations.First(r => r.id == s.Id);
                 Vector3 p = s.transform.position;
-                Assert.IsTrue(NavMesh.SamplePosition(p, out NavMeshHit hit, 0.6f, NavMesh.AllAreas), s.Id + " NavMesh'te değil (" + p + ")");
+                // a1-fix: the station carves its own footprint (+ agent radius) out of the NavMesh (WallBuyDirector.Carve), so its pivot
+                // is inside a hole by design. On the mesh = the NavMesh is within 0.6 m of the hole's far edge.
+                Assert.IsTrue(NavMesh.SamplePosition(p, out NavMeshHit hit, 0.6f + WallBuyDirector.CarveReach(s), NavMesh.AllAreas), s.Id + " NavMesh'te değil (" + p + ")");
                 Vector3 approach = p + s.transform.forward * (s.FrontDepth + 0.9f);
                 Assert.IsTrue(NavMesh.SamplePosition(approach, out NavMeshHit front, 1.2f, NavMesh.AllAreas), s.Id + " önünde durulacak yer yok");
                 Assert.IsTrue(NavMesh.CalculatePath(startHit.position, front.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete,

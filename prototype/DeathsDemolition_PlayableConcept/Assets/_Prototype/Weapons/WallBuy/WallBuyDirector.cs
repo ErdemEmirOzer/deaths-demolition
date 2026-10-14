@@ -200,10 +200,45 @@ namespace DD.Prototype.Weapons
                 WeaponDefinition def = Arsenal.Get(weapon);
                 station.Init(row.id, weapon, def != null ? def.weaponId : row.weapon, def != null && def.IsWallBuyOnly, art, _wood, _plank, _sign, _lacquer);
                 station.SettledMetres = Settle(station);
+                Carve(station);
                 _stations.Add(station);
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// a1-fix (R4 FINAL a1x 14.10, WorldBoundaryPlayTests.NavMeshYollari): the station's box collider stood on a baked NavMesh
+        /// that did not know it was there. A zombie path, and the capsule test's walk, ran into the board. WB_CourtyardWest at
+        /// (−13, 0) is on the west–east line: the 0.45 m capsule stopped at x −14.07, which is −13 − 0.59 (the board's half width)
+        /// − 0.45 − 0.03 skin.
+        /// A carving obstacle the size of the collider cuts the NavMesh under the station (plus the agent radius) once, after
+        /// <see cref="Settle"/>. The station never moves again, so paths go round it.
+        /// Added after Settle on purpose: Settle reads the NavMesh at each candidate's standing point. The carve's front edge is
+        /// half the depth + 0.5 m from the pivot (board 0.8 m, shrine 1.0 m). That stays short of the standing point
+        /// (FrontDepth + 0.9 m: 1.2 / 1.4 m).
+        /// </summary>
+        private static void Carve(WallBuyStation station)
+        {
+            BoxCollider box = station.GetComponent<BoxCollider>();
+            if (box == null) return;
+            var obstacle = station.gameObject.AddComponent<NavMeshObstacle>();
+            obstacle.shape = NavMeshObstacleShape.Box;
+            obstacle.center = box.center;
+            obstacle.size = box.size;
+            obstacle.carving = true;
+            obstacle.carveOnlyStationary = false;   // it never moves: carve on the first NavMesh update, not after the stationary wait
+        }
+
+        /// <summary>
+        /// Metres from a station's pivot to the far edge of its carved NavMesh hole: the collider's larger half extent in XZ plus
+        /// the agent radius. Tests use it to tell a station that stands on the NavMesh from one that stands off it.
+        /// </summary>
+        public static float CarveReach(WallBuyStation station)
+        {
+            BoxCollider box = station != null ? station.GetComponent<BoxCollider>() : null;
+            if (box == null) return 0f;
+            return Mathf.Max(box.size.x, box.size.z) * 0.5f + NavMesh.GetSettingsByID(0).agentRadius;
         }
 
         public const float SettleSearchMetres = 20f, SettleStepMetres = 0.75f, RoofCheckMetres = 30f, StandRadius = 0.4f;
