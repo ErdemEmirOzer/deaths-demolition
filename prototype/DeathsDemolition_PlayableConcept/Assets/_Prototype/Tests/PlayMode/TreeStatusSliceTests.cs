@@ -528,6 +528,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 using (var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
                 using (var durum = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "WP104.Tree.ZombieStatus"))
+                using (var navKeep = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "WP111.Crowd.NavKeep"))   // a1-fix: report only
                 {
                     // baseline: the same forty bodies walking in, no status
                     for (int k = 0; k < 30; k++) yield return null;
@@ -535,7 +536,8 @@ namespace DD.Prototype.Tests.PlayMode
                     for (int k = 0; k < 60; k++) { yield return null; gcTaban += gc.LastValue; }
 
                     Vector3 kuyu = NavPathFollower.ClampToNavMesh(merkez + new Vector3(8f, 0f, 0f), 6f);
-                    long ayirma = 0, gcDurum = 0, sureNs = 0, sureMaxNs = 0;
+                    ZombieEnemy.ResetNavKeepCounters();   // a1-fix: report only
+                    long ayirma = 0, gcDurum = 0, sureNs = 0, sureMaxNs = 0, navNs = 0, navMaxNs = 0;
                     int olcum = 0;
                     for (int k = 0; k < 90; k++)
                     {
@@ -555,6 +557,8 @@ namespace DD.Prototype.Tests.PlayMode
                         gcDurum += gc.LastValue;
                         sureNs += durum.LastValue;
                         sureMaxNs = Math.Max(sureMaxNs, durum.LastValue);
+                        navNs += navKeep.LastValue;
+                        navMaxNs = Math.Max(navMaxNs, navKeep.LastValue);
                         olcum++;
                     }
 
@@ -571,7 +575,10 @@ namespace DD.Prototype.Tests.PlayMode
                               + " statusMs mean=" + ortMs.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
                               + " peak=" + maxMs.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
                               + " (budget " + StatusBudgetMs.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + ")"
-                              + " frameGC base=" + (gcTaban / 60) + "B status=" + (olcum > 0 ? gcDurum / olcum : 0) + "B markerValid=" + durum.Valid);
+                              + " frameGC base=" + (gcTaban / 60) + "B status=" + (olcum > 0 ? gcDurum / olcum : 0) + "B markerValid=" + durum.Valid
+                              + " | navKeepMs mean=" + (olcum > 0 ? navNs / (double)olcum / 1e6 : 0).ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
+                              + " peak=" + (navMaxNs / 1e6).ToString("F4", System.Globalization.CultureInfo.InvariantCulture) + " valid=" + navKeep.Valid
+                              + " queries=" + ZombieEnemy.NavKeepQueries + " clamps=" + ZombieEnemy.NavKeepClamps);   // a1-fix: report only, no gate
                     Assert.IsTrue(durum.Valid, "WP104.Tree.ZombieStatus kaydedilmedi (ölçüm kaynağı yok)");
                     Assert.Greater(sureNs, 0L, "marker hiç örnek vermedi");
                     Assert.Greater(donuk, 15, "donmuş gövde yok — senaryo kurulmadı");

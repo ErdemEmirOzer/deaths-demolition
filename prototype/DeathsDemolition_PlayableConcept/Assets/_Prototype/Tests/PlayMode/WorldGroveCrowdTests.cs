@@ -17,6 +17,7 @@ using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
 using DD.Prototype.World;
 using NUnit.Framework;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -129,6 +130,8 @@ namespace DD.Prototype.Tests.PlayMode
         private const int MinFlankRolled = 3;
         private const float FlankWarmSeconds = 0.6f, ArriveMetres = 0.8f, CaptureSeconds = 12f;
         private const float KurulumZamanAsimi = 40f;
+        /// <summary>ZombieCrowdBinding's a1-fix NavMesh keep marker (report only).</summary>
+        private const string NavKeepMarker = "WP111.Crowd.NavKeep";
 
         // ---------------------------------------------------------------- state
 
@@ -144,6 +147,11 @@ namespace DD.Prototype.Tests.PlayMode
             public float AnchorSince, RingAt = -1f, ReachAt = -1f, OffRun, OffRunMax, OffMax;
             public bool StallReported, StallRing, FlankFar;
             public int FlankSamples, FlankActiveSamples, CutSamples;
+            // a1-fix (report only): frame-to-frame XZ motion while the NavMesh keep holds the body at an edge
+            public Vector3 FramePrev, FrameStep;
+            public bool FrameHas;
+            public int EdgeFrames, EdgeFlips;
+            public float EdgeFlipMax;
         }
 
         private RunDirector _run;
@@ -335,10 +343,18 @@ namespace DD.Prototype.Tests.PlayMode
             CrowdFeelSettings feel = CrowdFeelSettings.Active;
             float flankUzak = feel.FlankStraightRadius + feel.FlankBlendMetres;
             float t0 = Time.time, nextSample = t0, nextStall = t0, walkEnd = -1f, yurunen = 0f, simSeconds = 0f;
-            foreach (Govde g in govdeler) g.AnchorSince = t0;
+            foreach (Govde g in govdeler) { g.AnchorSince = t0; g.FramePrev = g.Z.transform.position; }
             bool walkDone = false, turnReached = false;
             int stalls = 0, ringStalls = 0, kare = 0, yazilan = 0;
             Vector3 oncekiOyuncu = _rig.transform.position;
+            // a1-fix (report only, no gate): the NavMesh keep's readouts and its marker's cost per frame. ProfilerRecorder reads 0 under
+            // the 60 fps cap in the Editor runner (tools/test.sh note), so the crowd phase runs uncapped; game time stays Step per frame.
+            ZombieEnemy.ResetNavKeepCounters();
+            int fpsWas = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            var navKeep = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, NavKeepMarker);
+            long navNsSum = 0, navNsMax = 0, navBodyFrames = 0;
+            int navFrames = 0;
             try
             {
                 while (Time.time - t0 < SimSeconds)
@@ -346,6 +362,39 @@ namespace DD.Prototype.Tests.PlayMode
                     yield return null;
                     float now = Time.time, t = now - t0;
                     Vector3 pp = _rig.transform.position;
+
+                    // a1-fix (report only): the keep's cost this frame, and the edge tremble (a step that reverses the last one, at an edge)
+                    int canli = 0;
+                    int frame = Time.frameCount;
+                    foreach (Govde g in govdeler)
+                    {
+                        if (g.Gone || g.Z == null || !g.Z.IsAlive || g.Z.LifeId != g.LifeId) continue;
+                        canli++;
+                        Vector3 fp = g.Z.transform.position;
+                        Vector3 step = fp - g.FramePrev; step.y = 0f;
+                        if (g.Z.NavEdgeFrame == frame)
+                        {
+                            g.EdgeFrames++;
+                            if (g.FrameHas && Vector3.Dot(step, g.FrameStep) < 0f)
+                            {
+                                g.EdgeFlips++;
+                                g.EdgeFlipMax = Mathf.Max(g.EdgeFlipMax, Mathf.Min(step.magnitude, g.FrameStep.magnitude));
+                            }
+                        }
+
+                        g.FramePrev = fp;
+                        g.FrameStep = step;
+                        g.FrameHas = true;
+                    }
+
+                    if (navKeep.Valid && t > Step * 2f)
+                    {
+                        long ns = navKeep.LastValue;
+                        navNsSum += ns;
+                        navNsMax = Math.Max(navNsMax, ns);
+                        navBodyFrames += canli;
+                        navFrames++;
+                    }
 
                     // the player: stand, walk the grove route, stand
                     if (!walkDone && t >= StandSeconds)
@@ -436,6 +485,10 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 _girdi.Yon = Vector2.zero;
                 if (_onOow != null) { ZombieEnemy.OutOfWorldRemoved -= _onOow; _onOow = null; }
+                bool navValid = navKeep.Valid;
+                navKeep.Dispose();
+                Application.targetFrameRate = fpsWas;
+                if (!navValid) navFrames = -1;
             }
 
             // ---- 4. counts
@@ -443,7 +496,8 @@ namespace DD.Prototype.Tests.PlayMode
             int dFb = ZombieEnemy.PursuitFallbacks - fb0;
             int ringN0 = 0, reachN0 = 0, gone = 0, offBodies = 0, rolled = 0, flankFarBodies = 0, flankSamples = 0, flankActive = 0;
             int kesici = 0, onleyici = 0, kesiciAktif = 0, kesiciBirakti = 0, icN = 0;
-            float ringMax = 0f;
+            float ringMax = 0f, edgeFlipMax = 0f;
+            int edgeFrames = 0, edgeFlips = 0;
             var ringsiz = new StringBuilder();
             var disarida = new StringBuilder();
             var satirlar = new StringBuilder();
@@ -462,12 +516,14 @@ namespace DD.Prototype.Tests.PlayMode
                 else if (g.RingAt < 0f) ringsiz.Append("#" + g.Index + V(g.Last) + " d=" + Flat(g.Last, _rig.transform.position).ToString("F1") + " ");
                 else { ringN0++; ringMax = Mathf.Max(ringMax, g.RingAt); }
                 if (g.ReachAt >= 0f) reachN0++;
+                edgeFrames += g.EdgeFrames; edgeFlips += g.EdgeFlips; edgeFlipMax = Mathf.Max(edgeFlipMax, g.EdgeFlipMax);
                 if (g.OffRunMax >= OffMeshFailSeconds) { offBodies++; disarida.Append("#" + g.Index + V(g.Last) + " " + g.OffRunMax.ToString("F2") + "s max=" + g.OffMax.ToString("F2") + "m "); }
                 NavPathFollower f = g.Z != null ? g.Z.PathFollower : null;
                 satirlar.AppendLine("    #" + g.Index + " " + (g.Icerde ? "in " : "out") + " " + g.Tier + " role=" + g.Role + " flank=" + g.Flank
                                     + " start=" + V(g.Start) + " ring=" + T(g.RingAt) + " reach=" + T(g.ReachAt)
                                     + " flankFar=" + g.FlankActiveSamples + "/" + g.FlankSamples + " cut=" + g.CutSamples
                                     + " offMax=" + g.OffMax.ToString("F2") + "m/" + g.OffRunMax.ToString("F2") + "s"
+                                    + " edge=" + g.EdgeFrames + "f flips=" + g.EdgeFlips + " flipMax=" + g.EdgeFlipMax.ToString("F3") + "m"
                                     + (g.StallReported ? " STALL" + (g.StallRing ? "(ring)" : "") : "") + (g.Gone ? " GONE" : "")
                                     + " last=" + V(g.Last) + " queue=" + (f != null && f.IsQueued ? "1" : "0") + " wait=" + (g.Z != null && g.Z.IsWaiting ? 1 : 0));
             }
@@ -481,6 +537,15 @@ namespace DD.Prototype.Tests.PlayMode
                              + " (far = d > " + flankUzak.ToString("F1") + " m)");
             rapor.AppendLine("  roles cut=" + kesici + " intercept=" + onleyici + " cutActiveBodies=" + kesiciAktif + " pursuitFallbacks=" + dFb
                              + " droppedToChase=" + kesiciBirakti);
+            float navMean = navFrames > 0 ? navNsSum / (float)navFrames * 1e-6f : -1f;
+            float navPerBody = navBodyFrames > 0 ? navNsSum / (float)navBodyFrames * 1e-3f : -1f;
+            rapor.AppendLine("  navkeep queries=" + ZombieEnemy.NavKeepQueries + " edgeHits=" + ZombieEnemy.NavKeepEdgeHits + " clamps=" + ZombieEnemy.NavKeepClamps
+                             + " maxCorrection=" + ZombieEnemy.NavKeepMaxCorrection.ToString("F3", CultureInfo.InvariantCulture) + "m"
+                             + " edgeFrames=" + edgeFrames + " edgeFlips=" + edgeFlips + " edgeFlipMax=" + edgeFlipMax.ToString("F3", CultureInfo.InvariantCulture) + "m"
+                             + " | marker " + NavKeepMarker + (navFrames < 0 ? " recorder invalid" : " frames=" + navFrames
+                             + " meanMs=" + navMean.ToString("F4", CultureInfo.InvariantCulture) + " maxMs=" + (navNsMax * 1e-6f).ToString("F4", CultureInfo.InvariantCulture)
+                             + " perBodyUs=" + navPerBody.ToString("F2", CultureInfo.InvariantCulture)
+                             + " est40Ms=" + (navPerBody >= 0f ? (navPerBody * 40f * 1e-3f).ToString("F4", CultureInfo.InvariantCulture) : "-")));
             rapor.AppendLine("  player walked=" + yurunen.ToString("F1") + "m turnReached=" + turnReached + " walkEnd=" + T(walkEnd) + " end=" + V(_rig.transform.position));
             rapor.Append(satirlar);
             if (kareDir != null && yazilan > 0)

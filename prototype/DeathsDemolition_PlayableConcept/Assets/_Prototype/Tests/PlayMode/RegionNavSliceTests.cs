@@ -215,9 +215,19 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(Vector3.Distance(before, mid), 0.15f, "rise sırasında yürümez");
             Assert.IsTrue(r.IsRising);
             yield return Bekle(() => !r.IsRising, 3f, "rise zamanlayıcısı bitmedi");
+            ZombieEnemy.ResetNavKeepCounters();   // a1-fix: report only (the NavMesh keep during the walk after the rise)
+            int kare0 = Time.frameCount;
+            Vector3 riseEnd = r.transform.position;
             t0 = Time.realtimeSinceStartup;
             while (Time.realtimeSinceStartup - t0 < 1.5f) yield return null;
             Vector3 after = r.transform.position; after.y = before.y;
+            Debug.Log("[DD-TEST] wp030.rise.walk before=" + before.ToString("F2") + " riseEnd=" + riseEnd.ToString("F2") + " after=" + r.transform.position.ToString("F2")
+                      + " walked=" + Vector3.Distance(before, after).ToString("F3") + " frames=" + (Time.frameCount - kare0)
+                      + " player=" + _rig.transform.position.ToString("F2") + " waiting=" + r.IsWaiting + " pose=" + r.Pose + " attack=" + r.AttackPhase
+                      + " path=" + (r.PathFollower != null && r.PathFollower.HasCompletePath) + " queued=" + (r.PathFollower != null && r.PathFollower.IsQueued)
+                      + " navEdgeLast=" + (r.NavEdgeFrame >= kare0 ? (Time.frameCount - r.NavEdgeFrame) + "f ago" : "none")
+                      + " navKeep queries=" + ZombieEnemy.NavKeepQueries + " edgeHits=" + ZombieEnemy.NavKeepEdgeHits + " clamps=" + ZombieEnemy.NavKeepClamps
+                      + " maxCorrection=" + ZombieEnemy.NavKeepMaxCorrection.ToString("F3") + " linkPasses=" + ZombieEnemy.NavKeepLinkPasses);
             Assert.Greater(Vector3.Distance(before, after), 0.5f, "rise bitince yürür");
             r.BeginRise(5f); r.CompleteRise(); Assert.IsFalse(r.IsRising, "CompleteRise anında bitirir");
             EnemyFactory.ClearAll();
