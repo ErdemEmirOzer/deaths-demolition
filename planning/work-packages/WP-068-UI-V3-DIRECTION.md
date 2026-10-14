@@ -1,7 +1,7 @@
 # WP-068 — UI v3 · Yön belgesi (konsey sentezi, tur 3)
 
 **Yazan:** product-designer · **Eş imza:** art-director — SIGNED_WITH_CHANGES, §14 (AD) · **Taban:** main `75ce517` · **Dal:** `wp-068-ui-v3` · **Tarih:** 2026-09-24
-**Girdiler:** BRIEF + R2-BRIEF (C1–C12) · Faz A denetimi (`WP-068-UI-V3-AUDIT.md`) · dokuz r1 önerisi + dokuz r2 eleştirisi · `council/baseline-small/` (Look B, 23.09) · `UiTokens.cs` / `UiFactory.cs` / `UiButton.cs` / `RunHudScreen.cs` / `ResultsScreen.cs` · stil kılavuzu v1 §2.2/§2.4.
+**Girdiler:** BRIEF + R2-BRIEF (C1–C12) · Faz A denetimi (WP-068 Faz A) · dokuz r1 önerisi + dokuz r2 eleştirisi · `council/baseline-small/` (Look B, 23.09) · `UiTokens.cs` / `UiFactory.cs` / `UiButton.cs` / `RunHudScreen.cs` / `ResultsScreen.cs` · stil kılavuzu v1 §2.2/§2.4.
 **Statü:** bağlayıcı uygulama spesifikasyonu. Tur 2 tur 1'in üstüne yazar; bu belge ikisinin de üstüne yazar. Burada karara bağlanmayan tek şey §13'teki kullanıcı kararlarıdır.
 
 Kısaltmalar: AD art-director · UX ui-ux-designer · ID interaction-designer · AS animation-specialist · DSE design-systems-engineer · GD game-designer · GR graphic-designer · SD sound-designer · US unity-specialist. RM = Reduced Motion. Tüm px değerleri 1920×1080 referans tuvalinde.
@@ -432,7 +432,7 @@ Aşağıdaki özgün tarif tarihçedir:
 
 ## 7 · Varlıklar (tekilleştirilmiş)
 
-Kredi birimi Higgsfield (1:1 şeffaf 2K sheet = 3 kr; Seed Audio render ≈ 3 kr). MB = release build'de.
+Kredi birimi dış kaynak kredisidir (1:1 şeffaf 2K sheet = 3 kr; ses render ≈ 3 kr). MB = release build'de.
 
 ### 7.1 Görsel (sahip GR üretim, AD inceleme; S-09 içe alma; mürekkep kiti S-07 ile paylaşımlı)
 
@@ -459,7 +459,7 @@ Kredi birimi Higgsfield (1:1 şeffaf 2K sheet = 3 kr; Seed Audio render ≈ 3 kr
 
 Görsel MUST: 9 + 3 + 3 + 4 = **19 kr**; rezervler (karo 3, paint-over 3) + SHOULD (medals 3, mühür sheet 3) → **tavan 32, sert 35**. Görsel MB MUST dal (a): 1,25 + 0,5 − 1,34 + 0 + 0,5 + 0,1 + 0,06 + 0,7 − 0,58 + 1,3 − 0,77 + 0,1 = **+1,82 MB**.
 
-### 7.2 Ses (S-08; Seed Audio; Vorbis q0.8 mono ≈ 7 KB/s)
+### 7.2 Ses (S-08; dış kaynak render; Vorbis q0.8 mono ≈ 7 KB/s)
 
 | # | kaynak | türetilen | render | kr | öncelik |
 |---|---|---|---|---|---|
@@ -653,7 +653,7 @@ U1'in Türkçe uzantısı: Shippori Mincho B1'in eksik Ğ ğ İ Ş ş glifleri O
   - Breve: saat yönü kuadratik, tamsayı, uyum hatası ğ 0,447 / Ğ 0,417 birim (≤ 0,5). ğ'nin yayı 160,20°: kare kesik dışbükey köşesi tamsayı ızgarasına 0,5'ten yakın düşsün diye (±0,5° pay).
   - Ş ş: kök S/s'nin en alt noktasında; sedilin tepesi harfin iç kenarından 14,6 / 14,7 birim aşağıda, yüzün kendi Ç/ç'si 14,4 / 14,1 bırakıyor (ölçüldü). Bindirme 29 / 20.
   - Kerning: el yazımı büyük harf tablosunda G/S/I'lı tek çift var (A–G); A–Ğ kopyalandı.
-  - Display atlası Ğ İ Ş ile yeniden üretildi (69 glif, eksik yok, 46 çift). TR başlıklar artık Display yüzüyle; Codex 19cb757a'nın Text SDF geçişi kalktı (M-64 kapandı).
+  - Display atlası Ğ İ Ş ile yeniden üretildi (69 glif, eksik yok, 46 çift). TR başlıklar artık Display yüzüyle; 19cb757a'nın Text SDF geçişi kalktı (M-64 kapandı).
   - Sırada: oyun içi TMP provası (`-ddUiCapture typespec`, 28/40/56 px × 1,25, TR/EN) ve AD imzası.
 
 ## 14 · AD eş imzası
@@ -763,7 +763,7 @@ Glint yok, altın yok, flaş yok: halka krem, mühür mürekkep, ıslak uç darb
 
 | kalem | kaynak | MB | kr |
 |---|---|---|---|
-| anahtar sanatlar (avlu: her yükleme; sur: Results) | Higgsfield gpt_image_2_5 high, 3 aday (R1-D / key art v2, 25.09), 2560×1440 JPEG q94 | 1,4 + 1,4 | 8,25 |
+| anahtar sanatlar (avlu: her yükleme; sur: Results) | dış kaynak, 3 aday (R1-D / key art v2, 25.09), 2560×1440 JPEG q94 | 1,4 + 1,4 | 8,25 |
 | uzak / orta plakalar | P1/P2 dilim 6 yakalaması (§7.1); yalnız anahtar sanat yüklenemezse yedek | 0 yeni | 0 |
 | ensō darbesi + zaman haritası | A8 mürekkep kiti (üçüncü darbe, aynı 1024² BC4 sheet) | 0 yeni | 0 (A8'in 3'ü içinde) |
 | mühür cihazı | V2 vektör (G1 SDF hücresi) | 0 | 0 |

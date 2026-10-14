@@ -1,8 +1,8 @@
 # WP-074 — Dünya v5: yön belgesi (Faz A)
 
-Sahip: S-05 · Koordinasyon: C-00 · Tarih: 2026-09-24 · Dal `wp-074-world-v5` · Konsey (Fable 5.1): art-director (sanat yönü, boşluk analizi), game-designer (seviye tasarımı) · Paydaşlar: S-03 WP-076 (spawn/NavMesh), S-01 WP-070 (kamera modları; `f23f38e7` §8/§9/§11), S-08 WP-072 (akustik alan), P-05 AP-023 (varlıklar).
+Sahip: S-05 · Koordinasyon: C-00 · Tarih: 2026-09-24 · Dal `wp-074-world-v5` · Tasarım ekibi: art-director (sanat yönü, boşluk analizi), game-designer (seviye tasarımı) · Paydaşlar: S-03 WP-076 (spawn/NavMesh), S-01 WP-070 (kamera modları; `f23f38e7` §8/§9/§11), S-08 WP-072 (akustik alan), P-05 AP-023 (varlıklar).
 Çerçeve kararları: DEC-092 (60 fps — Yüksek ort ≤ 16,6 ms, p99 ≤ 20 ms, 1080p; + Performans), DEC-093 (build ≤ 5 GB; 5 GB'ye kadar doku/mesh kalitesi boyut için kısılmaz). Kullanıcı maddeleri: N3, N4, N13 (M4-R1 §0).
-Kanıt: güncel dünya 19 kare `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/captures-current/world-v3/` (ov genel / gp tepeden / tp 2,2 m / fp 1,6 m; araç `WorldV3CaptureTests` + `DD_ART_CAPTURE_POSES`, commit `91b52cd`); hedef `wp-015/higgsfield/selected/DD_StyleRef_DEC076_{overview,gameplay}_2k.png`.
+Kanıt: güncel dünya 19 kare `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/captures-current/world-v3/` (ov genel / gp tepeden / tp 2,2 m / fp 1,6 m; araç `WorldV3CaptureTests` + `DD_ART_CAPTURE_POSES`, commit `91b52cd`); hedef `wp-015` DEC-076 stil referansı kareleri (genel bakış + oynanış, depo dışı).
 
 Bu belge = §0 S-05 kararları (konsey çelişkilerini bağlayıcı biçimde çözer) + §1–§5 S-05 eklemeleri + Ek A (AD konsey metni, birebir) + Ek B (seviye tasarımı konsey metni, birebir). Çelişkide §0 geçerlidir.
 
@@ -96,21 +96,21 @@ Bağlam: DEC-093 release tavanını 550 MB → **5 GB** yaptı; 5 GB'ye kadar do
 
 ## 6 · Devirler ve tarihler
 
-- **P-05 AP-023:** eksik varlık listesi = Ek A §4 (P0/P1/P2) ∪ Ek B §2.7 (≈ 16 yeni aile); ölçüler §0 kararlarına göre (salon 36×13 + 1,2 m kaide, kairō net 4,0–4,5 m, odalar Ek B R1–R7); doku tavanları ADR-015-1 v3; Higgsfield ≤ 70 kr (Ek A §4 dağılımı; gök v2 plakaları WP-075 §2.3 ile ortak). İlk teslim sırası: saray kiti → kairō → tsuiji/kapılar → ağaç atlasları → havuz kıyı + köprü.
+- **P-05 AP-023:** eksik varlık listesi = Ek A §4 (P0/P1/P2) ∪ Ek B §2.7 (≈ 16 yeni aile); ölçüler §0 kararlarına göre (salon 36×13 + 1,2 m kaide, kairō net 4,0–4,5 m, odalar Ek B R1–R7); doku tavanları ADR-015-1 v3; dış kaynak ≤ 70 kr (Ek A §4 dağılımı; gök v2 plakaları WP-075 §2.3 ile ortak). İlk teslim sırası: saray kiti → kairō → tsuiji/kapılar → ağaç atlasları → havuz kıyı + köprü.
 - **S-03 WP-076:** Ek B §3.4 kapı tablosu, §3.5 halkalar, §2 oda-çıkış grafı, §5 ihtiyaç listesi; B1 greybox + `spawn-gates-v6.json` + `regions-v6` (hedef 25.09–27.09).
 - **S-01 WP-070:** §2 eşleme; B3 occluder Roof/Wall listesi; greybox'ta TP çarpışma turu (K1, R1, R6, köprü); kalite modülü ↔ `CameraModeService.CurrentProfile` tek-yazar kuralı (WP-075 kademe sözleşmesi).
 - **S-08 WP-072:** §3 json yolu B1 teslimiyle.
 
 ## 7 · Kabul
 
-Ek A §6 (A1–A16; A15 DEC-092 ile: Performans ≤ 8,0 / Yüksek ≤ 16,6 ms, p99 ≤ 20) + Ek B §6 (B1–B17; B10 DEC-092 ile, B12 örnek tavanı §0 K6 ile ≤ 12 000) + §2 E-listesi kanıt kareleri (FP, `-ddCameraMode fp`) + hedef görselle yan yana (genel + oynanış kadrajı, üç kamera modu) → Fable AD turu.
+Ek A §6 (A1–A16; A15 DEC-092 ile: Performans ≤ 8,0 / Yüksek ≤ 16,6 ms, p99 ≤ 20) + Ek B §6 (B1–B17; B10 DEC-092 ile, B12 örnek tavanı §0 K6 ile ≤ 12 000) + §2 E-listesi kanıt kareleri (FP, `-ddCameraMode fp`) + hedef görselle yan yana (genel + oynanış kadrajı, üç kamera modu) → AD turu.
 
 
-## Ek A — Sanat yönü konsey metni (Fable 5.1 art-director, birebir; başlıklar iki düzey alta, mutlak yollar ~/)
+## Ek A — Sanat yönü metni (art-director, birebir; başlıklar iki düzey alta, mutlak yollar ~/)
 
 ### WP-074 Dünya v5 — Sanat Yönü Belgesi (AD, Faz A)
 
-Kaynak: hedef `wp-015/higgsfield/selected/DD_StyleRef_DEC076_overview_2k.png` + `…_gameplay_2k.png`; güncel kareler `wp-074/captures-current/world-v3/` (ov-south-high, ov-southeast, ov-west, gp-centre, gp-north-plaza, gp-west, gp-south, tp-north-palace, tp-west-bamboo, tp-south-bridge, tp-east-sakura, fp-plaza-palace, fp-south-pond, fp-horizon-north, fp-horizon-east); `placement-families.txt` (3168 örnek / 70 aile); `worldlayout-excerpt.txt`; M4-R1 brief §0/§7. Tüm ölçüler metre, tüm renkler sRGB hex, "okunur örnek" = herhangi bir eksende ≥ 0,5 m olan ve {creeping_groundcover, greenery_cluster, moss_patch, leaf_pile} dışındaki aile örneği.
+Kaynak: hedef `wp-015` DEC-076 stil referansı kareleri (genel bakış + oynanış, depo dışı); güncel kareler `wp-074/captures-current/world-v3/` (ov-south-high, ov-southeast, ov-west, gp-centre, gp-north-plaza, gp-west, gp-south, tp-north-palace, tp-west-bamboo, tp-south-bridge, tp-east-sakura, fp-plaza-palace, fp-south-pond, fp-horizon-north, fp-horizon-east); `placement-families.txt` (3168 örnek / 70 aile); `worldlayout-excerpt.txt`; M4-R1 brief §0/§7. Tüm ölçüler metre, tüm renkler sRGB hex, "okunur örnek" = herhangi bir eksende ≥ 0,5 m olan ve {creeping_groundcover, greenery_cluster, moss_patch, leaf_pile} dışındaki aile örneği.
 
 #### 0 · Altı ana bulgu (kareye bağlı)
 
@@ -151,14 +151,14 @@ Yoğunluk tabanı: güncel 3168 / 8100 m² = 39/100 m² toplam; okunur ≈ 1460 
 | Kapılar | 5 gate_transition (dikme+kiriş, çatısız) | 1 karamon (6 m açıklık, 6,5 m yükseklik, kara-hafu kavisli alınlık, 4 direk, kiremit) meydan güneyi; 2 yakuimon (3,6 m, kırma kiremit çatı) avlu girişleri; 2 sade çatılı duvar kapısı (2,4 m) kairō uçları; 1 ahşap torii (4 m, koyu vermilyon #A63A2E) doğu koru küçük tapınak (hokora) önü; toplam 6 | + 1 nagayamon (uzun kapı binası, KB servis) | mutlak | P-05; S-05 çatı soldurma listesi |
 | Girilebilir köşk/salon | 1 shed (cephe), saray girilmez | girilebilir: saray orta salonu 12×8; çay evi (chashitsu) 3,6×3,6 + 1,2 m engawa (GB avlu); kura depo 6×4 (sıva, tek kapı, içeride fıçı/çuval) KB; azumaya açık köşk 4×4 (doğu koru); tsuridono su üstü köşkü 5×4 (havuz kuzey kıyısı, direkler suda) → 5 iç mekân, ≥ 190 m² iç zemin; cephe-only: kanat arkaları, vista yapıları | + 1 shōrō çan kulesi (girilebilir taban 3×3) | mutlak | P-05 + S-05 + S-03 (spawn erişimi) |
 | Dekor — fenerler | 13 stone_lantern + 12 kırılabilir taş + 5 kâğıt, tek tip | tōrō 3 tip: kasuga 2,1 m ×14 (eksen + kapılar), yukimi 1,0 m ×8 (havuz kıyısı), oribe 1,4 m ×6 (çay bahçesi, patika); asılı bronz tsuri-dōrō 0,45 m ×24 (kairō saçak altı 4,8 m aralık); kâğıt chōchin 0,5 m ×12 (kapılar, çay evi, köşkler) → 64 fener; hepsi emissive (§5) | ×1,3 | +34 taş / +36 asılı | P-05 (varyant Blender); S-05 ışık bütçesi |
-| Dekor — taş/bank/temizlik | 2 tsukubai, 29 bank/duvar kapağı | tsukubai 4 + hishaku, 1 büyük chōzubachi (meydan orta, 0,9 m), basamak taşı (tobi-ishi) 120, jizō/taş buda 4, komainu çifti 1, ema tahtası 1, bağış kutusu 1, kayalar 1,5–3 m ×20 (erozyon, yosun kuzey yüzü) | +30 % | mutlak | P-05 (kaya: Blender displacement; heykel: Tripo) |
+| Dekor — taş/bank/temizlik | 2 tsukubai, 29 bank/duvar kapağı | tsukubai 4 + hishaku, 1 büyük chōzubachi (meydan orta, 0,9 m), basamak taşı (tobi-ishi) 120, jizō/taş buda 4, komainu çifti 1, ema tahtası 1, bağış kutusu 1, kayalar 1,5–3 m ×20 (erozyon, yosun kuzey yüzü) | +30 % | mutlak | P-05 (kaya: Blender displacement; heykel: dış kaynak model) |
 | Dekor — köprüler | 5 segment düz kalas | taiko köprü 12 m açıklık, 1,6 m kavis, korkuluk + giboshi topuzları; 2 taş plaka köprü 3 m; 1 yatsuhashi zikzak kalas 8 m (kamışlık üstü) | aynı | mutlak | P-05 |
 | Dekor — çitler | bambu çit 35 + kırık 10 | yotsume-gaki (açık kafes) 60 m, kenninji-gaki (kapalı panel) 40 m, sode-gaki kol çiti 1,8 m ×6, takegaki kapı 2 | +40 % | mutlak | P-05 (modüler 1,8 m) |
 | Dekor — araç/fıçı/tapınak | 4 araba, 4 fıçı, 8 saman, 9 ofuda, 8 furin | el arabası 6 (2 devrik), sake fıçısı (komodaru, hasır) 20 + kırık 6, pirinç çuvalı 20, sandık 10, nobori bayrak 3 m ×10 (siyah/çivit/beyaz + 2 vermilyon arma), bonshō çan + shōrō, tütsü ocağı, shimenawa ip 4, kılıç rafı 2, silah sandığı 12 (silah noktaları için) | aynı | mutlak | P-05 (kumaş: Blender cloth) |
-| Ağaçlar — sakura | 18 (mor-gri bloklar) | hero 9–10 m ×8 (kanopi #F3CBD5 ışık / #E4A6B8 gölge / #C98CA0 iç), orta 6 m ×10, kanopi kartlar 3 katman + gövde LOD | + vista 8 | mutlak | P-05 (kanopi atlas HF, gövde Blender) |
+| Ağaçlar — sakura | 18 (mor-gri bloklar) | hero 9–10 m ×8 (kanopi #F3CBD5 ışık / #E4A6B8 gölge / #C98CA0 iç), orta 6 m ×10, kanopi kartlar 3 katman + gövde LOD | + vista 8 | mutlak | P-05 (kanopi atlası dış kaynak, gövde Blender) |
 | Ağaçlar — çam (niwaki) | 0 | budanmış bulut çam 3,5 m ×10, 6 m ×6; büyük kara çam 9 m ×4 (meydan köşeleri, havuz kıyısı hedefte 2) | + vista 6 | mutlak | P-05 |
 | Ağaçlar — momiji | 0 | 5 m ×8 (yaz yeşili #7BA24B, %20 kızıl uç); GB çay bahçesi + havuz doğu | + 4 | mutlak | P-05 |
-| Ağaçlar — bambu | 143 gövde + 93 küme, yaprak seyrek, kanopi yok | batı koru 25×30 m çekirdek ≥ 1,2 gövde/m² (≈ 700 gövde, h 8–12 m, çap 0,08–0,12), kanopi kartları 7–12 m'de %85 kapatma, kenar 0,4 gövde/m²; ışık huzmesi geçirgen | aynı + kuzeybatı ikinci koru 12×15 | ×5 | P-05 (gövde GPU instancing, kanopi atlas HF) |
+| Ağaçlar — bambu | 143 gövde + 93 küme, yaprak seyrek, kanopi yok | batı koru 25×30 m çekirdek ≥ 1,2 gövde/m² (≈ 700 gövde, h 8–12 m, çap 0,08–0,12), kanopi kartları 7–12 m'de %85 kapatma, kenar 0,4 gövde/m²; ışık huzmesi geçirgen | aynı + kuzeybatı ikinci koru 12×15 | ×5 | P-05 (gövde GPU instancing, kanopi atlası dış kaynak) |
 | Ağaçlar — vista/arka plan | ağaç plakası (AP-019), alt kenar sert | 52–85 m: sugi 15–20 m ×24 (impostor), kafur/geniş yapraklı 10–14 m ×30 (impostor), söğüt 2 havuz güneyi; plaka ayakları vista kuşağının arkasına düşer | aynı | mutlak | P-05 impostor; S-05 |
 | Yosun | 93 düz yama | 400 yama (3 shader varyantı: kadife/yastık/ıslak) + her taş varlıkta üst yön yosun maskesi (triplanar, 0,25–0,45 karışım) + fener kaideleri, kaya kuzey yüzleri, ağaç kök boğazı; ağaç altı toprakta ≥ %30 örtü | aynı | ×4 | P-05 materyal + S-05 |
 | Çalı | 364 tek tür (koyu, düz) | satsuki kesme kubbe 0,6–1,2 m ×120 (3 boy), tamamono grup ×30, eğrelti ×200, hosta ×60, süs otu ×300, kamış/iris ×150 (havuz), kuru çalı (hedef ön plan) ×40 | aynı | ×2,5 (tür ×7) | P-05 |
@@ -200,37 +200,37 @@ Karelerde görülen hatalar → gereksinim:
 
 #### 4 · Eksik varlık listesi — AP-023 (P-05)
 
-Higgsfield 70 kr planı: gök v2 plakaları 12 · saray salonu konsept (cephe + köşe) 8 · karamon/yakuimon 4 · kairō 4 · çay evi/kura/azumaya/tsuridono 8 · tōrō + dekor levhası 6 · ağaç atlasları (sakura/çam/momiji) 9 · bambu kanopi atlası 3 · havuz kıyı/kamış 3 · nobori desen 2 · rezerv 11 = 70. Modüler yapılar Blender prosedürel (kiremit dizisi, sıva band, direk ritmi, çit); organik/heykel Tripo; ağaç gövde Blender + kanopi kart atlas HF.
+Dış kaynak 70 kr planı: gök v2 plakaları 12 · saray salonu konsept (cephe + köşe) 8 · karamon/yakuimon 4 · kairō 4 · çay evi/kura/azumaya/tsuridono 8 · tōrō + dekor levhası 6 · ağaç atlasları (sakura/çam/momiji) 9 · bambu kanopi atlası 3 · havuz kıyı/kamış 3 · nobori desen 2 · rezerv 11 = 70. Modüler yapılar Blender prosedürel (kiremit dizisi, sıva band, direk ritmi, çit); organik/heykel dış kaynak model; ağaç gövde Blender + kanopi kart atlası dış kaynak.
 
 | P | Varlık | Adet (±45 / büyük) | Boyut | LOD / impostor | Materyal | Hedef ref | Üretim |
 |---|---|---|---|---|---|---|---|
-| P0 | Saray salonu kiti: kaide blok, basamak (6+2), direk, engawa döşeme, kōran korkuluk, shoji panel ×3 durum, kōshi üst bant, irimoya çatı (sırt/köşe/saçak/onigawara), mokoshi çatı | 1 salon + 2 kanat (≈140 modül) | 27×15×11,5; kanat 15×5×6 | LOD0 ≤ 60k tris toplam, LOD1 20k, LOD2 6k; kanat arkası impostor | kiremit #474B4F ıslak, sıva #DED6C4, ahşap #4B3B2E, kaide granit | overview merkez üst | HF 8 kr + Blender |
+| P0 | Saray salonu kiti: kaide blok, basamak (6+2), direk, engawa döşeme, kōran korkuluk, shoji panel ×3 durum, kōshi üst bant, irimoya çatı (sırt/köşe/saçak/onigawara), mokoshi çatı | 1 salon + 2 kanat (≈140 modül) | 27×15×11,5; kanat 15×5×6 | LOD0 ≤ 60k tris toplam, LOD1 20k, LOD2 6k; kanat arkası impostor | kiremit #474B4F ıslak, sıva #DED6C4, ahşap #4B3B2E, kaide granit | overview merkez üst | dış kaynak 8 kr + Blender |
 | P0 | Saray iç kiti: tatami 0,9×1,8, fusuma, tokonoma, iç direk, tavan kirişi, asılı fener | 1 salon (12×8) | — | LOD0/1 | tatami #B8A97A, fusuma #E3DCCB altın çizgi | — | Blender |
-| P0 | Kairō modülü 2,4 m: döşeme 0,3 m, direk 0,27, korkuluk, kafesli sıva duvar, kiremit çatı, köşe, uç | 40 / 63 | 2,4×3,0×4,2 | LOD0 4k, LOD1 1,2k, LOD2 300 | ahşap silverleşme üst yüz, kiremit yosun oluk | overview sol | HF 4 + Blender |
+| P0 | Kairō modülü 2,4 m: döşeme 0,3 m, direk 0,27, korkuluk, kafesli sıva duvar, kiremit çatı, köşe, uç | 40 / 63 | 2,4×3,0×4,2 | LOD0 4k, LOD1 1,2k, LOD2 300 | ahşap silverleşme üst yüz, kiremit yosun oluk | overview sol | dış kaynak 4 + Blender |
 | P0 | Tsuijibei duvar kiti: düz 3 m, köşe, kapı boşluğu, kırık, kapak sırtı | 60 / 90 | 3×0,6×2,4 | LOD0 1,5k, LOD1 400 | sıva + 5 band, taş kaide, kiremit kapak | gameplay sol, overview sağ uç | Blender |
-| P0 | Karamon | 1 | 6×3×6,5 | LOD0 20k / 6k / 1,5k | kara-hafu bakır sırt, ahşap, kiremit | — (dönem ref.) | HF 4 (yakuimon ile) + Blender |
+| P0 | Karamon | 1 | 6×3×6,5 | LOD0 20k / 6k / 1,5k | kara-hafu bakır sırt, ahşap, kiremit | — (dönem ref.) | dış kaynak 4 (yakuimon ile) + Blender |
 | P0 | Yakuimon + sade duvar kapısı | 2 + 2 / 3 + 2 | 3,6×2×4,2 ; 2,4×1×3 | 8k/2k/600 | kiremit kırma | overview sağ orta yapı | Blender |
-| P0 | Tōrō kasuga / yukimi / oribe | 14/8/6 → 18/10/8 | 2,1 / 1,0 / 1,4 | 3k/800/200 | granit yosunlu, emissive ateş kutusu | overview fenerler, gameplay sağ | HF 6 (dekor levhası) + Blender varyant |
-| P0 | Sakura hero + orta | 8+10 / 12+14 | 9–10 m; 6 m | LOD0 25k, LOD1 8k, LOD2 2k, oktahedral impostor | kanopi 3 ton pembe, gövde koyu #3E3330 yosun | overview sağ | HF atlas 3 + Blender |
-| P0 | Çam niwaki 3,5 / 6 / kara çam 9 | 10/6/4 → 14/8/6 | — | 18k/6k/1,5k + impostor | iğne #3F5A3A, gövde kızıl-kahve | overview sol-orta, sağ alt | HF atlas 3 + Blender |
-| P0 | Bambu gövde ×3 çap + kanopi kartı + devrik | 700 gövde / 1000 | 8–12 m | gövde GPU instancing 300 tris; kanopi kart | culm #8FA84C→#6E8A3C, düğüm koyu | overview sol | HF atlas 3 + Blender |
+| P0 | Tōrō kasuga / yukimi / oribe | 14/8/6 → 18/10/8 | 2,1 / 1,0 / 1,4 | 3k/800/200 | granit yosunlu, emissive ateş kutusu | overview fenerler, gameplay sağ | dış kaynak 6 (dekor levhası) + Blender varyant |
+| P0 | Sakura hero + orta | 8+10 / 12+14 | 9–10 m; 6 m | LOD0 25k, LOD1 8k, LOD2 2k, oktahedral impostor | kanopi 3 ton pembe, gövde koyu #3E3330 yosun | overview sağ | dış kaynak atlas 3 + Blender |
+| P0 | Çam niwaki 3,5 / 6 / kara çam 9 | 10/6/4 → 14/8/6 | — | 18k/6k/1,5k + impostor | iğne #3F5A3A, gövde kızıl-kahve | overview sol-orta, sağ alt | dış kaynak atlas 3 + Blender |
+| P0 | Bambu gövde ×3 çap + kanopi kartı + devrik | 700 gövde / 1000 | 8–12 m | gövde GPU instancing 300 tris; kanopi kart | culm #8FA84C→#6E8A3C, düğüm koyu | overview sol | dış kaynak atlas 3 + Blender |
 | P0 | Havuz kıyı kiti: kaya 5 boy, çakıl plaj şerit, yosun şev, tobi-ishi, ıslak band | 1 havuz (≈220 parça) | kaya 0,4–1,5 | 2k/600/150 | erozyon kaya, ıslak koyulaşma | overview ön | Blender displacement |
 | P0 | Taiko köprü | 1 | 12×3, kavis 1,6 | 12k/4k/1k | ahşap ıslak, giboshi bronz | overview ön | Blender |
-| P0 | Gök v2 plakaları: parçalı bulut gök bandı + güneş boşluğu, 2 bulut katmanı | 1 set | 4096×1024 eşdeğeri | — | HDR-ish, ufuk #C3C8CB | overview gök + R1 N9 | HF 12 |
+| P0 | Gök v2 plakaları: parçalı bulut gök bandı + güneş boşluğu, 2 bulut katmanı | 1 set | 4096×1024 eşdeğeri | — | HDR-ish, ufuk #C3C8CB | overview gök + R1 N9 | dış kaynak 12 |
 | P0 | Granit bordür + yatak kiti (düz/köşe/kırık) | 80 / 120 | 1,0×0,3×0,4 | 300/100 | granit ıslak, yosun derz | gameplay sağ | Blender |
-| P1 | Çay evi (chashitsu) + engawa + nijiriguchi | 1 | 4,8×4,8×3,8 | 15k/5k/1,2k | saz çatı (kayabuki) veya kiremit, ahşap | — | HF 8 (4 köşk) + Blender |
+| P1 | Çay evi (chashitsu) + engawa + nijiriguchi | 1 | 4,8×4,8×3,8 | 15k/5k/1,2k | saz çatı (kayabuki) veya kiremit, ahşap | — | dış kaynak 8 (4 köşk) + Blender |
 | P1 | Kura depo | 1 / 2 | 6×4×5 | 10k/3k/800 | kalın sıva #E8E2D3, kara namako duvar, çift kapı | — | Blender |
 | P1 | Azumaya köşk | 1 / 2 | 4×4×3,6 | 6k/2k/500 | kiremit, bank | — | Blender |
 | P1 | Tsuridono su köşkü | 1 | 5×4×4 | 8k/2,5k/600 | direkler suda, ıslak | — | Blender |
 | P1 | Asılı fener tsuri-dōrō (bronz) + chōchin kâğıt | 24 + 12 / 36 + 16 | 0,45 / 0,5 | 1,2k/300 | bronz yeşil patina; kâğıt SSS emissive | — | Blender |
-| P1 | Momiji 5 m | 8 / 12 | — | 15k/5k/1,2k + impostor | yeşil-lime, kızıl uç | — | HF atlas 3 + Blender |
+| P1 | Momiji 5 m | 8 / 12 | — | 15k/5k/1,2k + impostor | yeşil-lime, kızıl uç | — | dış kaynak atlas 3 + Blender |
 | P1 | Çit kiti: yotsume, kenninji, sode-gaki, takegaki kapı | 33+22+6+2 modül | 1,8 m | 800/200 | bambu eskimiş #9A8C5C, siyah ip bağ | — | Blender |
-| P1 | Nobori bayrak + direk | 10 / 14 | 3×0,6 | 600 | kumaş sim rüzgâr, arma | — | HF desen 2 + Blender |
+| P1 | Nobori bayrak + direk | 10 / 14 | 3×0,6 | 600 | kumaş sim rüzgâr, arma | — | dış kaynak desen 2 + Blender |
 | P1 | Karesansui avlu dokusu + tırmık normal + 3 kaya grubu | 1 | 12×9 | doku 2048 | çakıl #B9B6AC | — | Blender |
 | P1 | Kamış/iris kümesi, nilüfer, su otu | 40/30/60 | 0,8–1,4 | kart | SSS yeşil | overview ön sol | Blender |
 | P1 | Satsuki kubbe 3 boy, tamamono, eğrelti, hosta, süs otu | 120/30/200/60/300 | 0,3–1,2 | kart/2k | — | overview yeşil kümeler | Blender |
 | P1 | Taş plaka köprü, yatsuhashi | 2 + 1 | 3 m; 8 m | 1k | granit / kalas | — | Blender |
-| P1 | Jizō/taş buda, komainu çifti, bonshō çan + shōrō, tütsü ocağı, ema | 4/1/1/1/1 | 0,8–1,2; shōrō 3×3×5 | 5k/1,5k | granit yosun, bronz | — | Tripo (heykel) + Blender |
+| P1 | Jizō/taş buda, komainu çifti, bonshō çan + shōrō, tütsü ocağı, ema | 4/1/1/1/1 | 0,8–1,2; shōrō 3×3×5 | 5k/1,5k | granit yosun, bronz | — | dış kaynak model (heykel) + Blender |
 | P1 | Sake fıçı komodaru + kırık, pirinç çuvalı, sandık, silah sandığı | 20+6/20/10/12 | 0,5–0,8 | 800/200 | hasır, ahşap | — | Blender |
 | P1 | Kaya 1,5–3 m (5 varyant) | 20 / 28 | — | 4k/1,2k/300 | erozyon, yosun üst maske | overview sağ alt | Blender |
 | P1 | Dekal seti (birikinti, yosun kenar, çatlak, akıntı, liken, yaprak kümesi) | 23 dekal | — | — | — | gameplay yaprak kümeleri | Blender/Substance |
@@ -277,10 +277,10 @@ Higgsfield 70 kr planı: gök v2 plakaları 12 · saray salonu konsept (cephe + 
 
 Açık kararlar (C-00'a): (1) büyütme ±52 + vista 85 (S-03 tempo onayı); (2) perf 60 fps ve build 2 GB (§6 brief); (3) torii vermilyon tek vurgu (renk canlılığı N19 ile uyumlu, palet dışı tek renk).
 
-Kaynak dosyalar: `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/COUNCIL-CONTEXT.md`, `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/placement-families.txt`, `~/Desktop/KADRO/context/projects/deaths-demolition/m4-r1/M4-R1-REVIZYON-TURU.md`, `~/Desktop/KADRO/context/projects/deaths-demolition/wp-015/higgsfield/selected/DD_StyleRef_DEC076_overview_2k.png`, `~/Desktop/KADRO/context/projects/deaths-demolition/wp-015/higgsfield/selected/DD_StyleRef_DEC076_gameplay_2k.png`, `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/captures-current/world-v3/`.
+Kaynak dosyalar: `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/COUNCIL-CONTEXT.md`, `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/placement-families.txt`, `~/Desktop/KADRO/context/projects/deaths-demolition/m4-r1/M4-R1-REVIZYON-TURU.md`, DEC-076 stil referansı kareleri (genel bakış + oynanış, depo dışı), `~/Desktop/KADRO/context/projects/deaths-demolition/wp-074/captures-current/world-v3/`.
 
 
-## Ek B — Seviye tasarımı konsey metni (Fable 5.1 game-designer, birebir; başlıklar iki düzey alta)
+## Ek B — Seviye tasarımı metni (game-designer, birebir; başlıklar iki düzey alta)
 
 ### WP-074 Dünya v5 — Seviye tasarımı yönü (game-designer, Faz A, 2026-09-24)
 

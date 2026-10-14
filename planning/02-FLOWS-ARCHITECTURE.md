@@ -10,8 +10,8 @@ Bu dosyadaki diyagramlar yalnızca onaylanmış kararların ilişkisini gösteri
 | Oyun motoru | Unity `2022.3.22f1` |
 | Render pipeline | URP `14.0.10` |
 | Modelleme, render ve asset üretimi | Blender |
-| Üretken içerik | Higgsfield; Adobe Firefly, Adobe Illustrator ve ihtiyaç duyulan diğer Adobe araçları |
-| Üretim orkestrasyonu | Claude üzerinden Higgsfield, Adobe ve Blender MCP bağlantıları |
+| İçerik kaynakları | Lisanslı kütüphaneler ve şirket içi üretim; Adobe Illustrator ve ihtiyaç duyulan diğer Adobe araçları |
+| Üretim yönetimi | Alan paketleri ve otomatik kapılar |
 | Ağ modeli | Güncel kapsamda ağ yok; tek oyunculu ve çevrimdışı |
 | Kalıcı veri | Yerel profil, açılan içerik, başarım ve istatistikler |
 | Oyun dili | İngilizce |
@@ -298,11 +298,10 @@ Gold yalnızca düşman ölümlerinden gelir; çevre objeleri ve round tamamlama
 
 ```mermaid
 flowchart LR
-    DEC["Onaylanmış kararlar"] --> MASTER["Ana Codex / Pusula koordinasyonu"]
-    MASTER --> CODEX["İlgili Codex konu oturumu"]
-    CODEX --> CLAUDE["İlgili Claude konu oturumu"]
-    CLAUDE --> PACKAGE["Tek ve test edilebilir çalışma paketi"]
-    PACKAGE --> TEAM["Gerekli Kadro uzmanları"]
+    DEC["Onaylanmış kararlar"] --> MASTER["C-00 koordinasyonu"]
+    MASTER --> OWNER["İlgili alan sahibi (S-XX)"]
+    OWNER --> PACKAGE["Tek ve test edilebilir çalışma paketi"]
+    PACKAGE --> TEAM["Gerekli uzmanlıklar"]
     TEAM --> REPORT["Standart rapor ve test kanıtı"]
     REPORT --> REVIEW{"Kabul kriterleri sağlandı mı?"}
     REVIEW -- "Hayır; kritik değil" --> PACKAGE
@@ -312,20 +311,20 @@ flowchart LR
     NEXT --> MASTER
 ```
 
-## FLOW-014 — Çoklu ajan Git koordinasyonu
+## FLOW-014 — Paralel çalışma Git koordinasyonu
 
 ```mermaid
 flowchart LR
     WP["Çalışma paketi kimliği"] --> OWNER["Branch/worktree ve commit sorumlusu"]
     OWNER --> FILES["Dosya sahipliği ve dirty-state kontrolü"]
-    FILES --> AGENTS["Paralel veya sıralı uzman çalışması"]
-    AGENTS --> INTEGRATE["Tek entegrasyon sorumlusu"]
+    FILES --> WORK["Paralel veya sıralı uzman çalışması"]
+    WORK --> INTEGRATE["Tek entegrasyon sorumlusu"]
     INTEGRATE --> TESTS["Derleme ve test kapısı"]
     TESTS --> COMMIT["Atomik ve geri döndürülebilir commit"]
     COMMIT --> QUEUE["Belgelenmiş entegrasyon sırası"]
 ```
 
-Paylaşılan branch üzerinde force push, rebase veya reset yapılmaz; credential ve MCP sırları repoya yazılmaz.
+Paylaşılan branch üzerinde force push, rebase veya reset yapılmaz; kimlik bilgileri ve sırlar repoya yazılmaz.
 
 ## FLOW-015 — Adaptif ses ve atmosfer
 
@@ -368,11 +367,10 @@ Bu sınırlar onaylanan sistem ilişkilerini gösterir; sınıf sayısı, veri f
 
 ```mermaid
 flowchart LR
-    PROMPT["Onaylı ürün kararları ve üretim promptu"] --> CLAUDE["Claude — MCP orkestrasyonu"]
-    CLAUDE --> HIGGSFIELD["Higgsfield"]
-    CLAUDE --> ADOBE["Adobe Firefly, Illustrator ve diğer gerekli Adobe araçları"]
-    CLAUDE --> BLENDER["Blender"]
-    HIGGSFIELD --> REVIEW["Üretim çıktısı ve rapor"]
+    BRIEF["Onaylı ürün kararları ve üretim paketi"] --> LIB["Lisanslı kütüphaneler"]
+    BRIEF --> ADOBE["Adobe Illustrator ve diğer gerekli Adobe araçları"]
+    BRIEF --> BLENDER["Blender"]
+    LIB --> REVIEW["Üretim çıktısı, lisans kaydı ve rapor"]
     ADOBE --> REVIEW
     BLENDER --> REVIEW
     REVIEW --> UNITY["Unity — nihai oyun projesi"]

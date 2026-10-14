@@ -1,6 +1,6 @@
 # WP-071 — Animasyon v3 (AAA) · Yön belgesi (Faz A)
 
-Sahip S-06 · 2026-09-24 · Konsey (Fable 5.1): `character-animator` (Bölüm II — kusur analizi, 5 saldırı, tepkiler, 4 ölüm onset'i, silah performansı, **klip listesi v3 = P-06 AP-022 üretim listesi**), `animation-specialist` (Bölüm III — locomotion sistemi, ölüm→ragdoll boru hattı, hit katmanları, silah katman mimarisi, rig, **olay sözleşmesi v3**, kalite kademeleri, riskler). Bölüm I = S-06 motor kararları; iki konsey metni arasındaki farklarda **Bölüm I bağlayıcıdır**. Kullanıcı kararları: DEC-092 60 fps (Yüksek ≤ 16,6 / p99 ≤ 20 ms), DEC-093 5 GB, DEC-094 özgün Special'lar. Girdiler: S-02 WP-069 (anim kimlikleri, mesaj 24.09), S-01 WP-070 `f23f38e7` (CameraMode, FP göz = Head, `AimPitch`), P-07 AP-021 blockout v001 (`part_*`, `grip_r/grip_l/sight_ads`).
+Sahip S-06 · 2026-09-24 · Tasarım ekibi: `character-animator` (Bölüm II — kusur analizi, 5 saldırı, tepkiler, 4 ölüm onset'i, silah performansı, **klip listesi v3 = P-06 AP-022 üretim listesi**), `animation-specialist` (Bölüm III — locomotion sistemi, ölüm→ragdoll boru hattı, hit katmanları, silah katman mimarisi, rig, **olay sözleşmesi v3**, kalite kademeleri, riskler). Bölüm I = S-06 motor kararları; iki konsey metni arasındaki farklarda **Bölüm I bağlayıcıdır**. Kullanıcı kararları: DEC-092 60 fps (Yüksek ≤ 16,6 / p99 ≤ 20 ms), DEC-093 5 GB, DEC-094 özgün Special'lar. Girdiler: S-02 WP-069 (anim kimlikleri, mesaj 24.09), S-01 WP-070 `f23f38e7` (CameraMode, FP göz = Head, `AimPitch`), P-07 AP-021 blockout v001 (`part_*`, `grip_r/grip_l/sight_ads`).
 
 ## Bölüm I — S-06 kararları (konsey farklarının çözümü)
 
@@ -16,7 +16,7 @@ Sahip S-06 · 2026-09-24 · Konsey (Fable 5.1): `character-animator` (Bölüm II
 | K8 | Silah katmanı | Tek üretilmiş taban controller + silah başına AnimatorOverrideController (S-02 ile anlaşıldı); FP ayrı viewmodel Animator (`FirstPersonView` katmanı, overlay kamera); sol el IK `grip_l`'e (order 910), ADS `sight_ads` hizası; parça klipleri (`AP022_prop_*`) karakter klibiyle aynı zaman çizgisinde senkron oynatılır, olaylar ses/VFX/sayım içindir. |
 | K9 | Tepkiler | Pencere içinde (DEC-029) yalnız additive tepki; LMG akümülatörü; shotgun/launcher knockback: itki verisi + governor + tier direnci + CharacterController hareketi **S-03**, poz/animasyon yanıtı S-06 (S-03 ile 24.09); stagger yalnız REQ-124 kapısıyla; oyuncu hurt nişanı ≤ 120 ms bloke eder (III A5). |
 | K10 | Bütçe | DEC-092 Yüksek kademede animasyon+IK+ragdoll payı **≤ 2,4 ms**; aşımda kısma sırası: ragdoll 6→4, foot IK 12→8, look-at 12→8, twist yalnız oyuncu. §4.8 ölçümü dilim sonlarında satır başına. |
-| K11 | Açık kararlar (II sonu) | C03 hit toleransı 0,60 (C-00 17.09 kararı, sürer); Higgsfield 10 kr ölüm/shotgun video referansı P-06'nın AP-022 tavanı içinde isteğe bağlı. |
+| K11 | Açık kararlar (II sonu) | C03 hit toleransı 0,60 (C-00 17.09 kararı, sürer); dış kaynak 10 kr ölüm/shotgun video referansı P-06'nın AP-022 tavanı içinde isteğe bağlı. |
 
 ### Faz B dilimleri (her biri ayrı commit)
 1. **B1** Olay sözleşmesi v3 + manifest doğrulayıcı (`ArtAnimationClipContract` v3: ad listesi, A8.4 zamanlama kuralları, TP/FP olay kare eşitliği) + ragdoll proxy havuzu + 4 ölüm ailesi seçimi (yön/kuvvet/silah sınıfı → aile) + tam-klip fallback — mevcut klipler üzerinde çalışır, AP-022 geldikçe klip değişir.
@@ -33,7 +33,7 @@ P-06 (AP-022 üretim listesi = Bölüm II "KLİP LİSTESİ v3", dilim sırası I
 # Bölüm II — character-animator konsey girdisi
 
 
-Tarih 2026-09-24 · Rol: karakter animatörü (Fable 5.1) · Tüketici: S-06 (motor sözleşmesi), P-06 (AP-022 Blender üretimi), S-03 (saldırı/ölüm kancaları), S-07 (darbe VFX zamanı), S-08 (temas sesleri)
+Tarih 2026-09-24 · Rol: karakter animatörü · Tüketici: S-06 (motor sözleşmesi), P-06 (AP-022 Blender üretimi), S-03 (saldırı/ölüm kancaları), S-07 (darbe VFX zamanı), S-08 (temas sesleri)
 Kaynak: M4-R1 §0 (N5 · N6 · N7 · N11 · N12 · N16), FACTS.md, clip-inventory.txt (86 klip, AP-009 v007), canlı kareler v006b-r3 (17), sheets-v006 (5), AP-009 kontak tabloları + AD kararı v001, AP-009 README (üretim notları).
 Kapsam: A1 kusur analizi · A4 saldırılar · A5 tepkiler · A3 ölüm (animasyon yarısı) · A6 silah performansı · KLİP LİSTESİ v3. Kamera/IK/ragdoll motor tarafı S-06'nındır; burada yalnız animasyonun motora ne verdiği yazılır.
 
@@ -495,7 +495,7 @@ Sayım: sınıf ortak (idle_aim, fire, switch_in, switch_out) 8 × 4 = 32; ADS i
 
 Bellek (DEC-093 5 GB): 237 klip × ort. 45 f × 63–73 kemik, Optimal sıkıştırma ≈ 10–12 MB; FP kol klipleri (82) sıkıştırmasız ≈ +6 MB (yakın plan kalite kaybı sıfır) → toplam ≤ 20 MB, kısıt değil. Perf (DEC-092): animasyon CPU bütçesi 16,6 ms içinde **≤ 2,4 ms** hedef (40 zombi Animator + FootIK 12 gövde + verlet 40 gövde + ragdoll ≤ 6 Yüksek); FP kol Animator'ı ayrı katman, ≤ 0,15 ms.
 
-Gerçekçilik değerlendirmesi (tek Blender animatör ajanı): 237 klip mevcut 86'nın ~2,8 katı; ancak (a) FP seti (82) TP zaman çizgisinin kamera uzayına taşınmasıdır, (b) sınıf ortak switch/ads/idle klipleri (50) şablon üstünden türev, (c) sg_2 reload = AR kopyası, lmg_2 = kısa AR/LMG melezi, (d) aynalar ve loop bölünmeleri sıfıra yakın maliyet. Özgün el emeği ≈ 120 klip. Üretim sırası önerisi (AP-022 dilimleri):
+Gerçekçilik değerlendirmesi (tek Blender animatörü): 237 klip mevcut 86'nın ~2,8 katı; ancak (a) FP seti (82) TP zaman çizgisinin kamera uzayına taşınmasıdır, (b) sınıf ortak switch/ads/idle klipleri (50) şablon üstünden türev, (c) sg_2 reload = AR kopyası, lmg_2 = kısa AR/LMG melezi, (d) aynalar ve loop bölünmeleri sıfıra yakın maliyet. Özgün el emeği ≈ 120 klip. Üretim sırası önerisi (AP-022 dilimleri):
 1. **Dilim 1 (P0 çekirdek, S-02 sayılarını beklemez):** rig eki R → zombi hareket 47–50 → saldırı 56–60, 62 → ölüm 76–79, 81 → tepki 63–67, 73–74 → oyuncu hareket 1–9 → oyuncu hurt 40–41, ölüm 44–45. (~55 klip)
 2. **Dilim 2 (AP-021 blockout üstünde, WeaponDefinition v3 sayıları geldikçe rate uyarlanır):** TP silah ar/smg (13–18) → sg_1/sg_2 (21–22, 15–16) → lmg_1/lmg_2 → sr_1 (24) → rl_1 → sw_gel/sw_arc (25–26). (~57 P0, sonra 19 P1)
 3. **Dilim 3:** FP kollar (29–37) TP onayı üzerinden. (~64 P0)
@@ -503,14 +503,14 @@ Gerçekçilik değerlendirmesi (tek Blender animatör ajanı): 237 klip mevcut 8
 
 Kabul (her klip, P-06 → S-06): AD karar kuralları (simetrik yatay kol yok, siluet C11), C03 kapsül (hit 0,60, saldırı 0,66), ayak kayması ≤ 2 cm (rate ≤ 1,05'te), loop ilk/son kare + hız sürekliliği, root_delta manifestte, olay adları tam liste, TP/FP olay kareleri eşit, ragdoll_handoff öncesi 2 kare hız taşıyor (kemik hız vektörü ≥ eşik, sıfır hız devri yok).
 
-Açık kararlar (C-00/S-06): (1) C03 hit toleransı 0,50 → 0,60; (2) Root keyli klipler için `OnAnimatorMove` → CharacterController yolu (DEC-032 ile uyum); (3) ragdoll kademe sayıları 10/6/0 onayı (DEC-092 bütçesinde ölçülecek); (4) rig_template_v002 (parmak/twist/jaw/fp_camera) sahibi ve sırası (AP-022 dilim 0); (5) `part_*` prop animasyonunun taşınma yolu: silah FBX'inde parça kemikleri + karakter klibiyle aynı zaman çizgisinde ayrı prop klibi (`AP022_prop_<weaponId>_<action>`) → S-06 `WeaponPartDriver` olayda değil, klip senkron oynatır (önerim: senkron; olay tabanlı sürüş kesintide parça yarım kalır); (6) Higgsfield 10 kr referans (A3 ölüm düşüşleri + shotgun throw için 2–3 video referansı; isteğe bağlı).
+Açık kararlar (C-00/S-06): (1) C03 hit toleransı 0,50 → 0,60; (2) Root keyli klipler için `OnAnimatorMove` → CharacterController yolu (DEC-032 ile uyum); (3) ragdoll kademe sayıları 10/6/0 onayı (DEC-092 bütçesinde ölçülecek); (4) rig_template_v002 (parmak/twist/jaw/fp_camera) sahibi ve sırası (AP-022 dilim 0); (5) `part_*` prop animasyonunun taşınma yolu: silah FBX'inde parça kemikleri + karakter klibiyle aynı zaman çizgisinde ayrı prop klibi (`AP022_prop_<weaponId>_<action>`) → S-06 `WeaponPartDriver` olayda değil, klip senkron oynatır (önerim: senkron; olay tabanlı sürüş kesintide parça yarım kalır); (6) dış kaynak 10 kr referans (A3 ölüm düşüşleri + shotgun throw için 2–3 video referansı; isteğe bağlı).
 
 ---
 
 # Bölüm III — animation-specialist konsey girdisi
 
 
-Yazar: animation-specialist (Fable 5.1) · Tarih: 2026-09-24 · Paket lideri: S-06 · Tüketiciler: S-06 (motor), P-06 (AP-022 klipler), S-03 (AI), S-07 (VFX/feel), S-08 (ses), S-02 (silah), S-01 (kamera).
+Yazar: animation-specialist · Tarih: 2026-09-24 · Paket lideri: S-06 · Tüketiciler: S-06 (motor), P-06 (AP-022 klipler), S-03 (AI), S-07 (VFX/feel), S-08 (ses), S-02 (silah), S-01 (kamera).
 Kapsam: A2 locomotion v3 · A3 ölüm→ragdoll sistemi · A5 hit reaction katmanlaması · A6/A7 silah katmanı mimarisi + rig gereksinimleri · A8 olay sözleşmesi v3 · kalite kademeleri · risk listesi. Karakter performansı (klip içeriği, pozlama, timing çizelgesi) character-animator'ın belgesindedir; burada yalnız sistem tarafı vardır.
 Bağlayıcı kararlar (C-00, 24.09): **DEC-092** perf hedefi 60 fps — Yüksek kademe ort ≤ 16,6 ms, p99 ≤ 20 ms (ragdoll tavanı, IK bütçesi, Animator LOD bu hedefe göre boyutlandırıldı; §T); **DEC-093** build boyutu tavanı 5 GB (220 silah klibi + ölüm/locomotion seti sığar, klip sıkıştırma "Optimal", ölçüm S-06 kapıda); **DEC-094** 2 Special özgün ad + kendi modelimiz (bu belgede `Special gel` / `Special yıldırım` olarak anılır; mekanik referans yalnız davranış için). Her ağır özellik kademeli, ms maliyeti tablo §T'de. 0 B/kare kuralı bütün yollarda geçerlidir.
 FP mimarisi (S-01 ile anlaşıldı): FP = ayrı **viewmodel** (kollar + silah) `FirstPersonView` katmanında, overlay kamera ile; dünya bedeni FP'de `ShadowsOnly`; S-01 Animator float `AimPitch` (derece, + yukarı, −60…+60) ve muhtemelen `AimYaw` sağlar; P-06 oyuncu başını ayrı SkinnedMeshRenderer'a böler (FP'de ShadowsOnly ile gizlenir).

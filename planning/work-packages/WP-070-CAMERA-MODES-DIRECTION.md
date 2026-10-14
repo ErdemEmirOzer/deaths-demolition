@@ -1,6 +1,6 @@
 # WP-070 — Kamera modları yön belgesi (Faz A tasarım)
 
-Paket: WP-070 (S-01) · Belge sahibi: tasarım konseyi (game-designer + interaction-designer, Fable 5.1) · Tarih: 2026-09-24 · Durum: TASLAK v1 — S-02/S-05/S-06/S-07/S-09/S-03 görüşleri S-01 tarafından birleştirilecek.
+Paket: WP-070 (S-01) · Belge sahibi: tasarım ekibi (game-designer + interaction-designer) · Tarih: 2026-09-24 · Durum: TASLAK v1 — S-02/S-05/S-06/S-07/S-09/S-03 görüşleri S-01 tarafından birleştirilecek.
 Kaynak: M4-R1 §0 N2 + N18 (kullanıcı, birebir) · Taban: güncel main (`PrototypeCameraRig`, `PlayerAim`, `CameraShakeService`, `CameraOcclusionFader`, `FeelRuntime`).
 Kural: "öneri" işaretli değerler sahip/kullanıcı onayı ister; işaretsiz değerler bağlayıcı tasarım kararıdır. Sayısal his değerlerinin nihai sahibi S-07 (FeelRuntime); bu belge başlangıç aralığını verir.
 

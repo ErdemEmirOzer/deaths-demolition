@@ -205,22 +205,22 @@ Bu dosyada yalnızca kullanıcı tarafından verilen veya açıkça onaylanan ka
 |---|---|---|
 | REQ-130 | Oyun Unity ile geliştirilecektir. | Çalışan oyun projesi Unity tabanlıdır. |
 | REQ-131 | Modelleme, render ve asset üretiminde Blender kullanılacaktır. | Bu üretim alanlarının kaynak çalışmaları Blender iş akışında yürütülebilir. |
-| REQ-132 | Higgsfield ve Adobe araçları içerik üretim teknolojileri arasında yer alacaktır. | Adobe Firefly, Adobe Illustrator ve ihtiyaç duyulan diğer Adobe araçları animasyon, ışık, ses, efekt, asset, grafik, evren ve ortam üretimlerinde kullanılabilir; Cascadeur kullanılmaz. |
-| REQ-133 | Claude üretim araçlarını MCP bağlantıları üzerinden yönetecektir. | Claude, verilen proje promptlarıyla Higgsfield, Adobe araçları ve Blender üzerinde üretim ve gerekli işlemleri yürütebilir. |
+| REQ-132 | Lisanslı içerik kütüphaneleri ve Adobe araçları içerik üretim teknolojileri arasında yer alacaktır. | Lisanslı kütüphaneler, Adobe Illustrator ve ihtiyaç duyulan diğer Adobe araçları animasyon, ışık, ses, efekt, asset, grafik, evren ve ortam üretimlerinde kullanılabilir; Cascadeur kullanılmaz. |
+| REQ-133 | Üretim araçlarındaki işler yazılı üretim paketleriyle yönetilecektir. | Blender ve Adobe araçları üzerindeki üretim ve gerekli işlemler onaylı proje paketleriyle yürütülür. |
 
-## Implementasyon ve çoklu ajan yönetimi
+## Implementasyon ve paket yönetimi
 
 | ID | Gereksinim | Kabul ölçütü |
 |---|---|---|
 | REQ-134 | Mevcut Unity prototipi nihai oyunun başlangıç kod tabanı olacaktır. | Çalışma `prototype/DeathsDemolition_PlayableConcept` üzerinde ilerler; toplu temizden yeniden yazım yapılmaz. |
 | REQ-135 | İlk sağlamlaştırma ve dikey kesit Unity `2022.3.22f1` ve URP `14.0.10` üzerinde yürütülecektir. | Sürüm veya render pipeline değişikliği ayrı kritik kullanıcı kararı olmadan yapılmaz. |
 | REQ-136 | Prototip üretim tabanına aşamalı dönüştürülecektir. | Çalışan modüller testle korunur; geçici adlar, değerler ve yapılar çalışma paketleri halinde ele alınır. |
-| REQ-137 | On uzmanlık alanı için Claude ve Codex'te ayrı konu oturumları bulunacaktır. | Her oturum kendi alanının tasarım ve prompt/rapor giriş-çıkış penceresi olarak kullanılır; ana Codex oturumu merkezi koordinasyonu yapar. |
-| REQ-138 | Her çalışma paketi ihtiyaç duyduğu Kadro uzmanlarını kullanacaktır. | Prompt gerekli uzmanları sayı sınırı olmadan göreve dahil eder; bağımsız işler paralel, dosya veya sistem çakışmaları entegrasyon sorumlusu altında yürütülür. |
+| REQ-137 | On uzmanlık alanının her biri için ayrı bir alan sahibi bulunacaktır. | Her alan sahibi kendi alanının tasarım ve paket/rapor giriş-çıkış noktasıdır; merkezi koordinasyonu C-00 yapar. |
+| REQ-138 | Her çalışma paketi ihtiyaç duyduğu uzmanlıkları kullanacaktır. | Paket gerekli uzmanlıkları sayı sınırı olmadan kapsar; bağımsız işler paralel, dosya veya sistem çakışmaları entegrasyon sorumlusu altında yürütülür. |
 | REQ-139 | Kullanıcı yalnızca kritik olaylarda durdurulacaktır. | Onaylı kapsam içindeki rutin teknik kararlar raporlanarak uygulanır; kapsam/karar değişikliği, maliyet, geri dönüşsüzlük, ciddi kalite tavizi veya gerçek engel kullanıcıya yükseltilir. |
-| REQ-140 | Ajanlar görev tamamlanana kadar çalışmayı sürdürecektir. | Ara rapor nihai teslim sayılmaz; hata düzeltme ve yeniden test kabul kriterleri sağlanana kadar devam eder veya kritik engel kanıtıyla durur. |
+| REQ-140 | Paketler görev tamamlanana kadar sürecektir. | Ara rapor nihai teslim sayılmaz; hata düzeltme ve yeniden test kabul kriterleri sağlanana kadar devam eder veya kritik engel kanıtıyla durur. |
 | REQ-141 | Her çalışma paketi standart rapor üretecektir. | Yapılan işler, değişen dosyalar/assetler, test sonuçları, bilinen sorunlar, entegrasyon etkileri ve karar gerektiren noktalar raporlanır. |
-| REQ-142 | Git çoklu oturum ve ajan kullanımına karşı korunacaktır. | Her paket benzersiz kimlik, branch/worktree sahibi ve commit sorumlusu taşır; dirty-state kontrolü, dosya sahipliği, test kapısı ve kontrollü entegrasyon uygulanır; force push, paylaşılan branch'te rebase/reset ve credential commit yasaktır. |
+| REQ-142 | Git paralel paket çalışmasına karşı korunacaktır. | Her paket benzersiz kimlik, branch/worktree sahibi ve commit sorumlusu taşır; dirty-state kontrolü, dosya sahipliği, test kapısı ve kontrollü entegrasyon uygulanır; force push, paylaşılan branch'te rebase/reset ve credential commit yasaktır. |
 
 ## Henüz sayısallaştırılmayan kabul ölçütleri
 

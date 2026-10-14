@@ -1,6 +1,6 @@
 # WP-075 — Atmosfer ve Görünüm v3: yön belgesi (Faz A)
 
-Sahip: S-05 · Koordinasyon: C-00 · Tarih: 2026-09-24 · Dal `wp-075-look-v3` · Konsey (Fable 5.1): art-director · Paydaşlar: P-05 AP-023 (gök v2 plakaları), S-07 WP-073 (parçacık × cookie, darbe post), S-01 WP-070 (mod profili, FP DoF odağı), S-09 WP-068 R1 (grain/vinyet UI dışı, HUD kontrast).
+Sahip: S-05 · Koordinasyon: C-00 · Tarih: 2026-09-24 · Dal `wp-075-look-v3` · Tasarım: art-director · Paydaşlar: P-05 AP-023 (gök v2 plakaları), S-07 WP-073 (parçacık × cookie, darbe post), S-01 WP-070 (mod profili, FP DoF odağı), S-09 WP-068 R1 (grain/vinyet UI dışı, HUD kontrast).
 Çerçeve: DEC-092 (60 fps), DEC-093 (5 GB; ADR-015-1 v3 — `WP-074-WORLD-V5-DIRECTION.md` §4), kullanıcı maddeleri N9, N13, N15 (Lightroom sınıfı), N19 (renk). Kalite kademeleri v2 sözleşmesi: `planning/work-packages/QUALITY-TIERS-V2.md` (bu dalda, ilk teslimin parçası).
 
 Bu belge = §0 S-05 kararları + §1 Faz B dilim planı + Ek A (AD konsey metni, birebir). Çelişkide §0 geçerlidir.
@@ -14,11 +14,11 @@ Bu belge = §0 S-05 kararları + §1 Faz B dilim planı + Ek A (AD konsey metni,
 | L3 | Gök doku sınıfı | Ek A'nın istediği Sky 1024 → 2048 ADR-015-1 v3 ile çözüldü (Sky 4096); bant 2048×1024 lat-long üst yarı, bulut levhaları 1024² (Vfx 2048 tavanı içinde). |
 | L4 | Huzme | Dünya-uzayı kartlar tüm modlarda (cookie ile yanar/söner) + ekran-uzayı radyal huzme yalnız TP/FP (yarım çözünürlük renderer feature). Okunabilirlik yasakları Ek A §3 bağlayıcı (meydan merkezinde kart yok, zemin +0,12 V, kare +0,08 V tavanı). |
 | L5 | Sis | "Çok hafif" = yerel sis toplam opaklığı ≤ %12, savaş bandında ≤ %3 (Ek A §5). Tepeden mesafe sisi 52 → 210 m değişmez (REQ-104); TP/FP 45 → 235 m + yükseklik sisi; cull/sis sonu pop yok (fade-out). |
-| L6 | LUT v2 | Ek A §6 B5 reçetesi Adobe MCP Lightroom sınıfı araçlarla (M4-R1 §4.6) 15 referans karede; şeride yalnız global işlemler (Texture/Clarity/Dehaze 0); ΔE kapısı ort ≤ 6, hero kare ≤ 4 (ADR-029-1 zinciri). |
+| L6 | LUT v2 | Ek A §6 B5 reçetesi Adobe Lightroom sınıfı araçlarla (M4-R1 §4.6) 15 referans karede; şeride yalnız global işlemler (Texture/Clarity/Dehaze 0); ΔE kapısı ort ≤ 6, hero kare ≤ 4 (ADR-029-1 zinciri). |
 | L7 | Post | Tonemap Neutral (REQ-105), bloom eşik 1,10, grain kademe başına, vinyet, CA oyun içinde yok, DoF/motion blur yalnız TP/FP Sinematik (Ek A §7). |
 | L8 | Yansıma | 10 baked prob (gök v2 ile yeniden bake), koi havuzlarına tek planar kamera (Yüksek 256 / Sinematik 512 + karakter). |
 | L9 | Kademeler | `QUALITY-TIERS-V2.md` bağlayıcı; Ek A §8 "hiçbir kademede kaybedilmez" listesi sözleşmeye taşındı. |
-| L10 | Higgsfield | Gök v2 (bant + 2 bulut levhası + siluet plakaları) ≤ 18 kr, AP-023'ün 70 kr tavanı içinde (P-05 üretir); hedef v3 derecelendirmesi Adobe (0 kr). |
+| L10 | Dış kaynak | Gök v2 (bant + 2 bulut levhası + siluet plakaları) ≤ 18 kr, AP-023'ün 70 kr tavanı içinde (P-05 üretir); hedef v3 derecelendirmesi Adobe (0 kr). |
 
 ## 1 · Faz B dilim planı (her dilim ayrı commit)
 
@@ -31,17 +31,17 @@ Bu belge = §0 S-05 kararları + §1 Faz B dilim planı + Ek A (AD konsey metni,
 | C5 Bölgesel sis | yer sisi levha shader'ı (gürültü + cookie) 7 levha; TP/FP yükseklik sisi feature; FP 3 m solma | K5, K10, K11 |
 | C6 LUT v2 | B5 reçetesi (Adobe) → `DD_Look_v2.png` + recipe.json; hedef v3 görselleri | K13 |
 | C7 Post + yansıma | bloom/grain/vinyet/DoF/motion blur kademe tabloları; 10 prob; havuz planar | K14 |
-| C8 Kanıt | yan yana Y1–Y6 (üç mod), metrics.json K1–K16, kademe × mod perf raporu (sözleşme §5) → Fable AD turu | K1–K16, DEC-092 |
+| C8 Kanıt | yan yana Y1–Y6 (üç mod), metrics.json K1–K16, kademe × mod perf raporu (sözleşme §5) → AD turu | K1–K16, DEC-092 |
 
 Perf bütçesi (öneri, sözleşme §5): atmosfer v3 ≤ +2,0 ms (Yüksek, tepeden); TP/FP ekran-uzayı huzme + yükseklik sisi ayrıca raporlanır.
 
 
-## Ek A — AD konsey metni (Fable 5.1, birebir; başlıklar bir düzey alta, mutlak yollar ~/)
+## Ek A — AD metni (birebir; başlıklar bir düzey alta, mutlak yollar ~/)
 
 ## WP-075 — Atmosfer & Görünüm v3: Sanat Yönü Belgesi
 
-**Sahip:** art-director (Fable 5.1) · **Uygulayıcı:** S-05 (unity-specialist) · **Varlık:** P-05 AP-023 (gök v2 plakaları) · **Tarih:** 2026-09-24
-**Kaynak:** `m4-r1/M4-R1-REVIZYON-TURU.md` §0 N9/N13/N19, §4.7, §7 · `wp-074/COUNCIL-CONTEXT.md` · hedef `wp-015/higgsfield/selected/DD_StyleRef_DEC076_{overview,gameplay}_2k.png` · Look B `wp-029/derived/lightroom/B/` · güncel kareler `wp-074/captures-current/world-v3/` · canlı değerler `WorldAtmosphere.cs`, `DD_Overcast_v1.asset`, `World_AP005.unity`, stil kılavuzu v1 §2/§5.
+**Sahip:** art-director · **Uygulayıcı:** S-05 (unity-specialist) · **Varlık:** P-05 AP-023 (gök v2 plakaları) · **Tarih:** 2026-09-24
+**Kaynak:** `m4-r1/M4-R1-REVIZYON-TURU.md` §0 N9/N13/N19, §4.7, §7 · `wp-074/COUNCIL-CONTEXT.md` · hedef `wp-015` DEC-076 stil referansı kareleri (genel bakış + oynanış, depo dışı) · Look B `wp-029/derived/lightroom/B/` · güncel kareler `wp-074/captures-current/world-v3/` · canlı değerler `WorldAtmosphere.cs`, `DD_Overcast_v1.asset`, `World_AP005.unity`, stil kılavuzu v1 §2/§5.
 **Tek kaynak kuralı:** bu belgedeki sayılar `WorldAtmosphere` sabitlerine ve `DD_Look_v2.recipe.json`'a yazılır; sahnede elle değer kalmaz. Bugünkü değerlerden sapmalar "v2 → v3" biçiminde verilir.
 
 ---
@@ -111,7 +111,7 @@ Rezerv aksanlar değişmez: altın orb #FFC74D, vermilion #C4362B, sakura aksan�
 
 #### 1.4 Malzeme başına canlı-ama-doğal doygunluk hedefleri (post sonrası, güneş yaması / bulut gölgesi)
 
-> **DEC-101 notu (S-05, sahibi; 2026-09-25, C-00 kararı):** World v5 (v6 düzeni) tonu HF hedef kareleri gibi soğuk ve bulutlu (DEC-101, `planning/00-PROJECT-PLAN.md`). Bu bölümün canlı doygunluk / değer aralıkları, §1.3 pozlama değerleri, §6.1 "Açılma" reçetesi (LUT v2) ve AD S1'in ≤ %8 spekular alanı v5 için **bağlayıcı değil**; World_AP005 (v3 anahtarı) için geçerli kalır. v5'in **ton kapısı HF sayısal karşılaştırmasıdır**: `wp-074/tools/hf-compare.py` ile HF center / north / west karesine kare ortalaması L / b / C (ve hue / sat / V), L std, ortalama ΔE76 ve 3×3 bölge ΔE76; hedef, HF'ye ΔE'nin tur tur düşmesi. Işık oranı: güneş/bulut-gölgesi ≤ 1,35, gölgede ıslak arduvaz V 0,30–0,38. Okunabilirlik kapıları (K9–K12, DEC-077) değişmez. Yeni AD yok; sayısal kabul.
+> **DEC-101 notu (S-05, sahibi; 2026-09-25, C-00 kararı):** World v5 (v6 düzeni) tonu hedef kareler gibi soğuk ve bulutlu (DEC-101, `planning/00-PROJECT-PLAN.md`). Bu bölümün canlı doygunluk / değer aralıkları, §1.3 pozlama değerleri, §6.1 "Açılma" reçetesi (LUT v2) ve AD S1'in ≤ %8 spekular alanı v5 için **bağlayıcı değil**; World_AP005 (v3 anahtarı) için geçerli kalır. v5'in **ton kapısı hedef kare sayısal karşılaştırmasıdır**: `wp-074/tools/hf-compare.py` ile hedef center / north / west karesine kare ortalaması L / b / C (ve hue / sat / V), L std, ortalama ΔE76 ve 3×3 bölge ΔE76; hedef, hedefe ΔE'nin tur tur düşmesi. Işık oranı: güneş/bulut-gölgesi ≤ 1,35, gölgede ıslak arduvaz V 0,30–0,38. Okunabilirlik kapıları (K9–K12, DEC-077) değişmez. Yeni AD yok; sayısal kabul.
 
 
 | Malzeme | Hue | S (güneş / gölge) | V (güneş / gölge) | Kim taşır | Kural |
@@ -156,7 +156,7 @@ Yarıçaplar 260/330/420 m, 8/6/4 tekrar, taban −1 m, `DD/SkyPlate` aynen.
 | `T_horizon_{near,mid,far}_Sheet` v2 | 2048×512 (aynı) | Vfx | §2.2 içerik; alfa; yeniden derecelendirilmiş |
 | `T_cloud_cookie` | 1024×1024 R8 tileable | Lighting | §4; bulut düzlemlerinin örtü maskesinden türetilir (aynı desen ailesi) |
 
-Higgsfield: gök bandı + 2 bulut levhası + siluet plakaları = AP-023 tavanı içinde (≤ 18 kr önerisi); bulut levhaları alfa çıkarımı Adobe (0 kr).
+Dış kaynak: gök bandı + 2 bulut levhası + siluet plakaları = AP-023 tavanı içinde (≤ 18 kr önerisi); bulut levhaları alfa çıkarımı Adobe (0 kr).
 
 #### 2.4 Kamera moduna göre okuma
 - **Tepeden:** gök hiç görünmez; gök üç yoldan var olur — bulut gölgesi (§4), huzme kartları (§3), havuz/arduvaz yansıması (§7). Bu üçü aynı yön/hız ailesindedir.
@@ -268,7 +268,7 @@ Zincir korunur: motor (ışık v3 + §7 post) → referans kareler → Adobe Lig
 | | Blending / Balance | 60 / **+10** | Highlights'a yatık |
 | Tone Curve (in→out, 0–255) | (0→4), (32→26), (64→58), (128→136), (192→204), (255→250) | | Lift'li toe, korunmuş tepe, hafif S |
 
-Adobe MCP eşlemesi (`image_apply_adjustments`, WP-029 alan adları): Temp → `tempA` +4; Exposure/Contrast/Highlights/Shadows/Vibrance/Saturation birebir; Whites/Blacks → `lights`/`darks` (+6/−8) + ton eğrisi; HSL sat → `channelTarget`/`channelSaturation` sırayla (green, magenta, blue, orange, red, aqua, purple, yellow — bu sıra json'a yazılır); API'de olmayan slider (HSL hue/lum, Color Grading) preset + eğri ile yaklaşılır ve `unsupported` işaretiyle kaydedilir; **ΔE kapısı yargılar** (≤ 6 ort, hero kare ≤ 4).
+Adobe eşlemesi (`image_apply_adjustments`, WP-029 alan adları): Temp → `tempA` +4; Exposure/Contrast/Highlights/Shadows/Vibrance/Saturation birebir; Whites/Blacks → `lights`/`darks` (+6/−8) + ton eğrisi; HSL sat → `channelTarget`/`channelSaturation` sırayla (green, magenta, blue, orange, red, aqua, purple, yellow — bu sıra json'a yazılır); API'de olmayan slider (HSL hue/lum, Color Grading) preset + eğri ile yaklaşılır ve `unsupported` işaretiyle kaydedilir; **ΔE kapısı yargılar** (≤ 6 ort, hero kare ≤ 4).
 
 #### 6.2 Derecelendirilecek referans kareler (`LookReferenceTests` genişletilir, 1920×1080, raw + post)
 1. WP-029 sekizlisi: center, north, east, south, west, presentation, crowd40, player-closeup — **center iki cookie fazında** (aydınlık / gölge).
@@ -349,7 +349,7 @@ DEC-076 overview ve gameplay kareleri aynı B5 reçetesiyle derecelendirilir, g�
 
 #### 9.2 Ölçülebilir ölçütler
 
-> DEC-101 (25.09): World v5 için K1–K3 ve K13 yerine HF sayısal karşılaştırması (§1.4 notu); K4–K12 ve K14–K16 geçerli.
+> DEC-101 (25.09): World v5 için K1–K3 ve K13 yerine hedef kare sayısal karşılaştırması (§1.4 notu); K4–K12 ve K14–K16 geçerli.
 
 | # | Ölçüt | Yöntem | Eşik |
 |---|---|---|---|

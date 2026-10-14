@@ -1,6 +1,6 @@
 # WP-069 Arsenal v3 — Yön belgesi (DIRECTION)
 
-Paket: `WP-069-ARSENAL-V3.md` (S-02, M4-R1 N1/N8/N12/N16). Tarih 2026-09-24. **Faz A çıktısı**: A1 kimlik sayfası (§1–§4), A2 iki Special (§1 §7 + §2 §8 + §3 §6 + §4 §7), A3 ADR-069-1 (§5), A4 WeaponDefinition v3 veri sözleşmesi (§6). Fable 5.1 konseyi: **game-designer (lider)** · art-director · sound-designer · animation-specialist; mühendislik bölümleri (A3/A4) S-02 (Opus 5.5). Görüş alınan oturumlar: S-06 (animasyon kimlikleri/olaylar/FP soketleri), S-08 (ses bloğu ve olaylar), S-04 (kilit sırası, coreBranches/keystone), S-01 (WP-070 nişan ışını, paralaks, geçiş kapısı), P-07 (soket/parça adları, blockout seti v001), S-07/S-09 (sorular gönderildi; yanıt geldikçe §7'ye işlenir).
+Paket: WP-069 (S-02, M4-R1 N1/N8/N12/N16). Tarih 2026-09-24. **Faz A çıktısı**: A1 kimlik sayfası (§1–§4), A2 iki Special (§1 §7 + §2 §8 + §3 §6 + §4 §7), A3 ADR-069-1 (§5), A4 WeaponDefinition v3 veri sözleşmesi (§6). Tasarım ekibi: **game-designer (lider)** · art-director · sound-designer · animation-specialist; mühendislik bölümleri (A3/A4) S-02. Görüş alınan oturumlar: S-06 (animasyon kimlikleri/olaylar/FP soketleri), S-08 (ses bloğu ve olaylar), S-04 (kilit sırası, coreBranches/keystone), S-01 (WP-070 nişan ışını, paralaks, geçiş kapısı), P-07 (soket/parça adları, blockout seti v001), S-07/S-09 (sorular gönderildi; yanıt geldikçe §7'ye işlenir).
 
 **Kullanıcı kararları (24.09, M4-R1 §6):** DEC-092 60 fps (Yüksek kademe ort ≤ 16,6 ms / p99 ≤ 20 ms) · DEC-093 build tavanı 5 GB · DEC-094 Special'lar özgün ad + kendi modelimiz, mekanik/his/sanat yönü DG-2 / Sliquifier'e çok yakın — **tek ad sütunu (özgün); orijinal ad yalnız "referans" notu** (alt bölümlerde kalan "orijinal referans" ibareleri yalnız referans notudur) · DEC-095 gelişim ağacı iki katman (silah kilitleri kalıcı meta ağaçta). **Tüm sayılar PROTOTYPE-ONLY konsey önerisidir** → C-00 onayıyla **DEC-096 (Arsenal denge v3)** olur.
 
@@ -700,7 +700,7 @@ Mevcut yüzeyler korunur (`AudioEvents`, `EnemyCombatEvents`, `SpecialWeaponUsag
 
 Eksik gördüğüm ve eklediğim olaylar: FireShot (döngü içi sayaç ve son mermi tık varyantı), ReloadCancelled, CasingEjected/Landed ayrımı, ProjectilePierce, PlayerNearExplosion, SwGelFlightStart/End, SwReadyTone, WeaponRattle. Var olan `HitMarker/KillMarker`, `ArmorBreak*`, `EnemyDeath` olduğu gibi kalır (ProjectileImpact bunları ikilemez; ImpactFlesh yalnız temas sesidir).
 
-### §8 · Seed Audio (Higgsfield) üretim önceliği — 35 kr
+### §8 · Ses render üretim önceliği — 35 kr
 
 1 render ≈ 2–2,8 kr → 12–15 render. Sıra "en çok fark yaratan":
 
@@ -1003,7 +1003,7 @@ Olay adı önerileri (S-06/S-08 eşlemesi): `slide_start` / `slide_end` (oyuncu 
 | 4 | sw_arc, sw_gel + zombi shock/slip + oyuncu slide | Special görsel/etkileşim; S-03/S-07 bağımlılığı |
 | 5 | ar_2, smg_2, sg_2, lmg_2 | sınıf seti hazır → yalnız fire + 2 reload |
 
-Higgsfield 10 kr (AP-022 tavanı) yalnız hareket referansı (LMG kayış, kırma tüfek, roket yükleme, kayma) için; klipler Blender'da elle. FP kol mesh'i için 2 twist kemiği/önkol önerisi (FACTS "candy-wrapper" riski; reload yakın planda görünür) — WP-071'e.
+Dış kaynak 10 kr (AP-022 tavanı) yalnız hareket referansı (LMG kayış, kırma tüfek, roket yükleme, kayma) için; klipler Blender'da elle. FP kol mesh'i için 2 twist kemiği/önkol önerisi (FACTS "candy-wrapper" riski; reload yakın planda görünür) — WP-071'e.
 
 ### §9 Açık sorular
 

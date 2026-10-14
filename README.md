@@ -266,7 +266,7 @@ Each weapon is a `WeaponDefinition` asset referenced by `ArsenalCatalog.asset` (
 - **Score.** A hybrid Japanese-cinematic score in four vertical layers (base, taiko percussion, tension, and an Elite/Ultra/Special accent) is mixed by one threat-driven parameter. `_Prototype/Audio/Runtime/MusicDirector.cs`.
 - **R4 sounds.** 33 new sounds cover wall buys, the Hard and Demolition select stingers, the tree screen and the tree's moments (shield, ricochet, Barrage rockets, zones, black hole). Each sound has a voice cap, so a Barrage stays readable. New bullet impacts and a sniper crack layer were also added. `_Prototype/Audio/Runtime/TreeAudio.cs`.
 - **Other.** An after-rain ambience bed follows the space you stand in. Impact, foley, casing and footstep sets, the Special sets and rocket blasts complete the mix. Master, music, effects and UI buses have their own sliders. `AfterRainAmbience.cs`, `ImpactAudio.cs`, `SpecialAudio.cs`, `RocketBlastAudio.cs`, `AudioMixerBridge.cs`.
-- **Assets.** 1,962 WAV files from Adobe Firefly sound effects, a licensed Sonniss library and in-house synthesis.
+- **Assets.** 1,962 WAV files from licensed sound libraries (including Sonniss) and in-house sound design.
 
 ### Interface and accessibility
 
@@ -533,16 +533,16 @@ Controls, the development-only F1 debug panel and the command-line flags are des
 
 Binary assets (FBX/GLB/Blend models, textures, audio, fonts, lighting data) are tracked with **Git LFS** (see `.gitattributes`). A clone without LFS contains pointer files only. The images in `docs/images/` are plain-Git JPGs, so this page renders from any clone. Raw asset-production material (sources, renders, intermediate exports) is kept outside the repository, and only game-ready files are referenced by the project. Code, tests, tools and planning documents are complete without the binaries.
 
-Asset sources are Higgsfield (images and 3D), Adobe Firefly sound effects, the Sonniss library, Mixamo and Blender. Imported packages carry provenance records and license lists. The key art and the logo were created with AI-assisted tools and finished in-house.
+Assets come from licensed libraries (including Sonniss and Mixamo) and in-house work in Blender. Imported packages carry provenance records and license lists.
 
 ---
 
 ## How the game is built
 
-I direct an AI multi-agent pipeline that builds the game, and I own the design and every product decision.
+I own the design and every product decision, and I run the project with the discipline of a studio pipeline: domain work packages, automated gates, test suites, a user-data guard and a scripted build line.
 
-- **Domain owners.** Separate agent sessions own foundation, combat, AI, economy, world, animation, VFX, audio, UI and QA. Asset sessions produce environment, character, weapon and UI art packages. Each work package lands with a written specification and acceptance criteria (`planning/work-packages/`).
-- **Gates on every change.** The integration gate, the compile gate (per build mode), CI on `main` with owner mapping, and an app manifest, footprint gate and smoke run for each release build.
+- **Domain packages.** Work is split by domain: foundation, combat, enemy AI, economy, world, animation, VFX, audio, UI and QA, plus environment, character, weapon and UI art packages. Each package lands with a written specification and acceptance criteria (`planning/work-packages/`).
+- **Gates on every change.** Every change passes the integration gate, the compile gate for its build mode and CI on `main`, which maps every red test to its owner. Each release build gets an app manifest, a footprint gate and a smoke run.
 - **Playtest-driven rounds.** M4 runs in revision rounds: I play a release build, list what is missing, and the list becomes the next round of work packages. Each round closes with a scripted acceptance run with machine-readable verdicts: test chains, captures, quiet-window performance cells, a sound pass and a release check.
 - **Player data is sacred.** The shared machine runs every automated Player or PlayMode job inside the user-data guard and the machine-slot lock. History is never rewritten: no force pushes, no rebases of shared history, no amending a reported commit.
 - **Traceability.** Owner decisions (DEC-NNN), requirements (REQ-NNN) and per-package technical decisions (ADR-…) are numbered in `planning/` (mostly in Turkish), and code comments cite these ids.

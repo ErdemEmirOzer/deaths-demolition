@@ -5,7 +5,7 @@ Kapsam: tüm M4-R1 paketleri (M4-R1 §4.7). Çerçeve: **DEC-100** (varsayılan 
 ## 1 · Kademeler ve kare hedefleri (referans Mac, 1920×1080, 40 aktif düşman, PilotPerfProbe Run)
 | Kademe | Amaç | Hedef |
 |---|---|---|
-| **Sinematik** (varsayılan, DEC-100) | hedef görünüm (Higgsfield hedef karelerine yaklaşma), kalite en üst düzey; 30 fps bütçesi içinde görsel kısma yok | **ort ≤ 33,3 ms, p99 ≤ 40 ms** — kapılı, üç kamera modunda; planlama toplamı **≤ 32,0 ms** (1,3 ms marj) |
+| **Sinematik** (varsayılan, DEC-100) | hedef görünüm (DEC-076 hedef karelerine yaklaşma), kalite en üst düzey; 30 fps bütçesi içinde görsel kısma yok | **ort ≤ 33,3 ms, p99 ≤ 40 ms** — kapılı, üç kamera modunda; planlama toplamı **≤ 32,0 ms** (1,3 ms marj) |
 | **Yüksek** (seçilebilir) | 60 fps oynanış | **ort ≤ 16,6 ms, p99 ≤ 20 ms** (DEC-092) — üç kamera modunda; planlama toplamı **≤ 16,0 ms** (0,6 ms marj, C-00 24.09) |
 | **Performans** | yüksek yenileme / zayıf GPU | ort ≤ 8,0 ms, p99 ≤ 10 ms (DEC-088 eşiği; WP-070 D-21 ile uyumlu) |
 

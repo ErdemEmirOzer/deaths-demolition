@@ -81,13 +81,13 @@ Her dilim ayrı commit + kanıt + AD turu + gt.
 | # | Konu | Öneri |
 |---|---|---|
 | 🔴-1 | HUD glifleri bu işte değişsin mi? | **B5d'ye ertelensin.** Gerekçeler: <br>• `Hud.Health` O1'e geçerken `Hud.LowHealth` AP-012'de kalırsa HUD'da aile bölünür (RunHudScreen.cs:1431). <br>• O1 sette düşük can glifi yok. <br>• S-07 açık değil; HUD işiyle çakışmamalı. <br>Lider notu B5a'da düz SDF olarak almayı önermişti; design-systems ertelemeyi önerdi. S-09 ertelemeyi seçiyor. |
-| 🔴-2 | Düşük can glifi | AP-012 çatlak kalp korunur (prior AD MUST-6, MainMenuScreen.cs:1772-1779). O1 "health_low" deltası gerekiyorsa Codex'e iş. |
+| 🔴-2 | Düşük can glifi | AP-012 çatlak kalp korunur (prior AD MUST-6, MainMenuScreen.cs:1772-1779). O1 "health_low" deltası gerekiyorsa ikon üretim paketinin işi. |
 | 🔴-3 | `Shop.Locked`, `Notice.Warning/Error` | B5a'da AP-012'de kalır; AD bakışından sonra delta kararı. |
 | 🔴-4 | Hareket token'ları | 640 ms → 600 ms'ye kırpılır (son 40 ms'de Δ görünmez: Δsheen ≤ 0,005). 3,6 s bekleme izi DEC olarak yazılır. `IconIdleDelay` 2,4 s `[PrototypeOnly]` olarak eklenir ya da C-00 bir sayı verir. in_out easing için yeni token gerekir. |
 | 🔴-5 | Gösterge sahibi | Kit (§1.4). AD imzası gerekir. |
 | 🔴-6 | Flaş azaltma katsayısı | **Konsey uzlaştı: 0,4** (kitin tek politika noktası; lider eş imzada katıldı). C-00 bilgisine. |
 | 🔴-7 | README ↔ referans kod tutarsızlıkları (unity-material §6.3) | D1 sheen açısı: kod (~21,5°). <br>D2 spread birimi: `render()` etkisi. <br>D3 glow: doğrusal karşılık ≈ 0,015–0,02; yarıçap AD'de. <br>D4 rim: 0. <br>D5 konusuz (viewBox'ta S ölçeği 1,00×). <br>D6 sheen tavanı: yeni token gerekir (GLINT_MAX 0,25'i aşıyor) ya da 0,25'e kırpılır. <br>D7 lob rengi #293B46: AD. |
-| 🔴-8 | design-systems K3 / K4 / K5 | K3: O1 locked → `State.Locked`. <br>K4: `Shop.Purchased` değişmez. <br>K5: alias çakışmalarında "görünüm başına bir üye ya da ikisi de kelimeli" kuralı + AD istisna listesi. Gerekirse Codex'ten ayrı geometri. |
+| 🔴-8 | design-systems K3 / K4 / K5 | K3: O1 locked → `State.Locked`. <br>K4: `Shop.Purchased` değişmez. <br>K5: alias çakışmalarında "görünüm başına bir üye ya da ikisi de kelimeli" kuralı + AD istisna listesi. Gerekirse ikon üretim paketinden ayrı geometri. |
 
 ## 3a. SHOULD'lar (Ş4)
 
@@ -103,7 +103,7 @@ Kapananlar: IK-S4 (UiNotice'e bugün glif veren çağıran yok), IK-S5 (Medal.Lo
 ## 4. İcat edilmeyecekler
 
 - İkinci runtime sayfası.
-- S-09'un kendi çizdiği O1 geometrisi. Eksik glif (düşük can, Display, Gamepad) C-00 üzerinden Codex'e gider.
+- S-09'un kendi çizdiği O1 geometrisi. Eksik glif (düşük can, Display, Gamepad) C-00 üzerinden ikon üretim paketine gider.
 - Mevcut G1 anahtarlarının yeniden adlandırılması.
 - Yeni odak göstergesi.
 - Yalnız renkle verilen durum.

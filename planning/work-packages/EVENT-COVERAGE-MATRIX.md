@@ -228,7 +228,7 @@ Yayın: `UiEvents.Raise(UiEvent, detail)`; S-08 `AudioEventRouter.OnUiEvent` yal
 
 ## AP-011 v4 kuyruğu → **v006 ile kapandı** (kullanıcı kararı 2026-09-17: taban 200→100, S-08'e ≤ 26 kr; 17 render = 40,8 kr gerçek (izin 26 → 14,8 aşım, bildirildi) + 11 kredisiz türetme; prosedürel canlı SFX **0**)
 
-WP-021 kapanışı (v003, 90,2 kredi harcandı) ve WP-021B (Higgsfield tabanı: bakiye < 200 → 0 render). **P** ile sevk edilen satırlar ve üretilmişe çevirme tahmini (1,1 kr/render, 1–2 aday) — **kredi kararı kullanıcıda**:
+WP-021 kapanışı (v003, 90,2 kredi harcandı) ve WP-021B (kredi tabanı: 0 render). **P** ile sevk edilen satırlar ve üretilmişe çevirme tahmini (1,1 kr/render, 1–2 aday) — **kredi kararı kullanıcıda**:
 
 | Satır | Bugün | v4 üretimi | Tahmin |
 |---|---|---|---|
@@ -242,5 +242,5 @@ WP-021 kapanışı (v003, 90,2 kredi harcandı) ve WP-021B (Higgsfield tabanı: 
 | Special beacon loop (yerde) + Tide kuyusu döngüsü | proc (paylaşımlı KS-12) | 2 render | 2,2 kr |
 | Scatter one-shot'lar (bambu/ahşap/metal/taş) | proc | 4 render | 4,4 kr |
 | Koşu kumaş/teçhizat katmanı (GearRustle) | yok (koşu = yürüme klibi) | 1 render | 1,1 kr |
-| ZombieRise toprak take'i (ayrı), MusicBase 2. aday (NSFW reddi sonrası yeniden prompt), 2 dk müzik düzenlemesi | v003 devri | 3 render + stitching | 3,3 kr |
+| ZombieRise toprak take'i (ayrı), MusicBase 2. aday (red sonrası yeniden render), 2 dk müzik düzenlemesi | v003 devri | 3 render + stitching | 3,3 kr |
 | **Toplam** | | ≈ 24 render | **≈ 26 kr** (karar kullanıcıda) |

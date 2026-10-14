@@ -1,7 +1,7 @@
 # WP-077 · Gelişim ağacı v2 — Yön belgesi (Faz A)
 
 Sahip S-04 · 2026-09-24 · DEC-095 (iki katman: koşu içi altın ağacı + kalıcı meta ağaç).
-Konsey (Fable 5.1): game-designer (lider, `wp-077/council/GD-PROPOSAL.md`), product-designer (`wp-077/council/PD-PROPOSAL.md`). Girdiler: `wp-077/council/FACTS.md` (mevcut ekonomi, simülasyon), `wp-077/council/S09-CONSTRAINTS.md` (S-09 bağlayıcı ızgara), WP-069 A1/A4 (`WP-069-ARSENAL-V3-DIRECTION.md` §1 §6 ve §6 veri sözleşmesi, 104a911).
+Tasarım ekibi: game-designer (lider, `wp-077/council/GD-PROPOSAL.md`), product-designer (`wp-077/council/PD-PROPOSAL.md`). Girdiler: `wp-077/council/FACTS.md` (mevcut ekonomi, simülasyon), `wp-077/council/S09-CONSTRAINTS.md` (S-09 bağlayıcı ızgara), WP-069 A1/A4 (`WP-069-ARSENAL-V3-DIRECTION.md` §1 §6 ve §6 veri sözleşmesi, 104a911).
 Bütün sayılar **PrototypeOnly** konsey önerisidir; C-00 onayıyla DEC-097+ olur (§9). Bu belge iki önerinin uzlaştırılmış hâlidir: ayrıştıkları yerde seçilen yol ve gerekçesi yazılır, seçilmeyen alternatif §9'da kalır.
 
 ---

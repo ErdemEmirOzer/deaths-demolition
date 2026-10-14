@@ -1,14 +1,14 @@
 # WP-073 · VFX & Game Feel v3 — Yön belgesi (Faz A)
 
-Sahip S-07 · 2026-09-24 · Fable 5.1 konseyi: art-director (A1–A3), animation-specialist (A4); derleme ve Faz B planı S-07 (Opus 5.5).
-Kaynaklar: `WP-073-VFX-FEEL-V3.md` (paket), M4-R1 §0/§4, DEC-092 (60 fps; Yüksek ort ≤ 16,6 ms / p99 ≤ 20 ms), DEC-093 (release ≤ 5 GB), DEC-094 (iki özgün Special: Raiju zincir yıldırım, Namekuji kaygan jel), WP-069 DIRECTION (7cb81ff; §2 art-director bağlayıcı taban, §5 ADR-069-1 olay yüzeyi), WP-070 (kamera modları; B1/B2 main'de), WP-071 A (olay sözleşmesi v3), mevcut durum envanteri `wp-019r2/evidence/wp073/current-state-inventory.md`.
+Sahip S-07 · 2026-09-24 · Tasarım ekibi: art-director (A1–A3), animation-specialist (A4); derleme ve Faz B planı S-07.
+Kaynaklar: WP-073 paketi, M4-R1 §0/§4, DEC-092 (60 fps; Yüksek ort ≤ 16,6 ms / p99 ≤ 20 ms), DEC-093 (release ≤ 5 GB), DEC-094 (iki özgün Special: Raiju zincir yıldırım, Namekuji kaygan jel), WP-069 DIRECTION (7cb81ff; §2 art-director bağlayıcı taban, §5 ADR-069-1 olay yüzeyi), WP-070 (kamera modları; B1/B2 main'de), WP-071 A (olay sözleşmesi v3), mevcut durum envanteri `wp-019r2/evidence/wp073/current-state-inventory.md`.
 Sayı çelişkisinde görsel/his tarafında bu belge WP-069 §2'yi günceller ("Δ" işaretli); oyun sayıları (hız, hasar, RPM, recoil deseni) S-02'nindir.
 
 ## Arayüzler (tüketilen / yayımlanan)
 - **Tüketilen:** S-02 `ProjectileSystem` (ADR-069-1: `LiveCount`/`Get(i)`, `ProjectileEvents.Spawned/Impact/Expired`, `WeaponEvents.FireStarted/FireStopped`, `SpecialUsageEvents`), S-01 `ICameraReactionSink` (`AddRecoil/AddKick/SetBob/FovPunch`, mod olayları, FP görüntü modeli katmanı, `ViewmodelToWorld`, dünya namlu noktası), S-06 anim olayları (`eject`, `bolt_back`, adım fazı), S-05 `_DD_ShaftMask` + WP-075 kademe sözleşmesi, S-09 yönlü hasar UI.
 - **Yayımlanan:** FeelRuntime `CameraModesFeel` (değerler S-07; uygulayıcı S-01), `VfxTier` (Sinematik/Yüksek/Performans; `UiSettings.Quality` ile), kademe başına ms raporu.
 
-## Faz B dilimleri (her biri ayrı commit + C-00 teslimi; değişen süit; üç kamera modunda kare + Fable AD)
+## Faz B dilimleri (her biri ayrı commit + C-00 teslimi; değişen süit; üç kamera modunda kare + AD)
 - **B1 · Omurga + ateş:** `VfxTier`, `DD/VFX Ribbon` + `TracerRibbonRenderer` (S-02 B1 gelene dek mevcut hitscan izine bağlı adaptör), `MuzzleSystem` sınıf profilleri + süreklilik modeli + FP katman devri, `CasingSystem` (havuz 48, LMG link).
 - **B2 · Darbe:** yüzey × kalibre matrisi, `DecalPool` (4 atlas), gore v3, sekme; ıslak dünya kuralı.
 - **B3 · Launcher:** roket mesh/egzoz/duman izi, `ExplosionDirector` 8 katman, ışık, mesafe sönümlü sarsıntı (S-02 B3 ile).
@@ -21,7 +21,7 @@ Perf: DEC-092 içinde; VFX toplamı Yüksek ≤ 3,0 ms (§5), 0 B/kare (WP-059D 
 
 Kaynaklar: M4-R1 §0 (N1/N8/N10/N16/N18), §4.7–4.8, DEC-092 (60 fps: Yüksek ort ≤ 16,6 ms / p99 ≤ 20 ms, 1080p, referans Mac) · WP-069 DIRECTION §1 (sayılar), **§2 art-director (K1–K5, palet 3.1, namlu §4, kovan §5, darbe §6, launcher §7, Special §8, kademe §9 — bağlayıcı taban)**, §5 ADR-069-1 (olay yüzeyi) · WP-070 (FP görüntü modeli katmanı) · `current-state-inventory.md` · hedef görseller `DD_StyleRef_DEC076_{overview,gameplay}_2k.png` (Islak Arduvaz: koyu gri-mavi taş #3E434A, sis #D0D7DE, sakura #F2C4D0, yosun-yeşil #6E7F55; R1: parçalı bulut + huzme + hafif bölgesel sis + daha canlı renk).
 Öncelik: sayı çelişkisinde **bu belge** WP-069 §2'yi günceller (aynı rol, daha yeni); farklar "Δ" ile işaretli. Oyun sayıları (hız, hasar, RPM) S-02'nindir, burada yalnız okunur.
-Sert kısıtlar: VFX Graph / Shader Graph yok; her şey kod sürümlü havuzlu mesh/quad/LineRenderer/ParticleSystem + `DD/VFX Flipbook` ailesi + yeni HLSL; **0 B/kare**; her efekt kademeli (§5); bu pakete Higgsfield kredisi yok (doku = prosedürel / Blender / AP-010 · AP-013C yeniden kullanım; §6 istek listesi); dünya VFX'i dünya kamerasında, FP'de namlu flaşı + izin ilk 1,2 m'si + FP kovanı görüntü modeli katmanında (S-01 ile anlaşıldı); gore yüksek ama okunur.
+Sert kısıtlar: VFX Graph / Shader Graph yok; her şey kod sürümlü havuzlu mesh/quad/LineRenderer/ParticleSystem + `DD/VFX Flipbook` ailesi + yeni HLSL; **0 B/kare**; her efekt kademeli (§5); bu pakete dış kaynak kredisi yok (doku = prosedürel / Blender / AP-010 · AP-013C yeniden kullanım; §6 istek listesi); dünya VFX'i dünya kamerasında, FP'de namlu flaşı + izin ilk 1,2 m'si + FP kovanı görüntü modeli katmanında (S-01 ile anlaşıldı); gore yüksek ama okunur.
 
 ## 0 · Teknik omurga (Faz B'nin kuracağı sistemler — hepsi havuzlu, önceden boyutlu)
 | Sistem | Ne çizer | Nasıl | Ölçek (Yüksek) |
@@ -186,7 +186,7 @@ Ayırma: tüm sistemler önceden boyutlu havuz, MPB dizileri statik, NonAlloc so
 | 5 | Jel splat 3 varyant + kuruma çatlak maskesi | Blender procedural (Voronoi + noise), kredi 0 | 1024² RGBA (splat) + 512² (çatlak) | §2.2 birikinti |
 | 6 | Atmosfer tane atlası (toz noktası, polen, sakura ×3 yaş varyant, bambu yaprak ×2, buğu) | AP-010 pollen/petal yeniden kullanım + Blender 2 yeni yaprak | 512² 4×2 | §3 |
 | 7 | Buhar/duman puf 4×4 (mevcut smoke pufu yeniden kullanım; yeni istek yok) | AP-010 | — | §1.1, §1.5 |
-Sanat oturumu (Higgsfield) gerektiren sayfa: **yok**.
+Dış kaynak sanat üretimi gerektiren sayfa: **yok**.
 
 ## 7 · Açık kararlar (C-00 / kullanıcı)
 1. ~~🔴~~ İz katsayısı Δ 0,020 s (WP-069 0,035 yerine) — S-02'ye bilgi; oyun etkisi yok. **karar: DEC-104** (kullanıcı 30.09; sr_1 0,025 s, tavan 8/10 m)
