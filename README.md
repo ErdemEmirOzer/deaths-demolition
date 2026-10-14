@@ -52,21 +52,31 @@ This README is the developer entry point. It covers what the game does today, wh
 
 ## Screenshots
 
-<!-- SCREENSHOTS -->
-*Gameplay and interface screenshots from the R4 build will be added here.*
-<!--
-| | |
-| --- | --- |
-| ![Top-down gameplay, screenshot 1 of 6](docs/images/gameplay-1.jpg) | ![Top-down gameplay, screenshot 2 of 6](docs/images/gameplay-2.jpg) |
-| ![Top-down gameplay, screenshot 3 of 6](docs/images/gameplay-3.jpg) | ![Top-down gameplay, screenshot 4 of 6](docs/images/gameplay-4.jpg) |
-| ![Top-down gameplay, screenshot 5 of 6](docs/images/gameplay-5.jpg) | ![Top-down gameplay, screenshot 6 of 6](docs/images/gameplay-6.jpg) |
+<p align="center">
+  <img src="docs/images/gameplay-crowd40.jpg" width="100%" alt="Forty zombies crowding the wet-stone plaza, top-down camera" />
+</p>
 
 | | |
 | --- | --- |
-| ![Interface, screenshot 1 of 4](docs/images/ui-1.jpg) | ![Interface, screenshot 2 of 4](docs/images/ui-2.jpg) |
-| ![Interface, screenshot 3 of 4](docs/images/ui-3.jpg) | ![Interface, screenshot 4 of 4](docs/images/ui-4.jpg) |
--->
-<!-- /SCREENSHOTS -->
+| ![Hard mode, round VIII: HUD v4 with gold above health and the brush numeral](docs/images/gameplay-crowd-hud.jpg) | ![Automatic fire with short-exposure bullet streaks](docs/images/gameplay-auto-fire.jpg) |
+| Hard mode, round VIII: HUD v4 (gold above health, brush numeral) | Automatic fire: bullets drawn as short-exposure streaks |
+| ![Rockets in flight and a blast scorch on the plaza](docs/images/gameplay-rocket.jpg) | ![The Barrage synergy late in a run](docs/images/gameplay-barrage.jpg) |
+| Rockets in flight and a blast scorch, round XV | The Barrage synergy: full-auto rockets |
+| ![Raiju, the chain-lightning Special](docs/images/gameplay-raiju.jpg) | ![Demolition mode, round IV](docs/images/gameplay-demolition.jpg) |
+| Raiju, the chain-lightning Special | Demolition mode, round IV |
+| ![Garden court with instanced flowers and grass](docs/images/world-garden.jpg) | ![Sakura court with living ground](docs/images/world-sakura.jpg) |
+| Garden court: instanced flowers and grass | Sakura court: wind and interaction push map |
+
+| | |
+| --- | --- |
+| ![Main menu: brush wordmark and seal over a live view of the world](docs/images/ui-menu.jpg) | ![Loading screen: the seal in the ensō progress ring](docs/images/ui-loading.jpg) |
+| Main menu | Loading screen |
+| ![Prepare Run: difficulty, map, 3D weapon turntable and stat cards](docs/images/ui-prepare-run.jpg) | ![Run tree v2 screen](docs/images/ui-run-tree.jpg) |
+| Prepare Run | Run tree |
+| ![Awakening page](docs/images/ui-awakening.jpg) | ![Settings in the brush-ink kit](docs/images/ui-settings.jpg) |
+| Awakening | Settings |
+
+<sub>Captured from build b3424d1f with the game camera; some gameplay shots use a capture camera at 0.8 of the default distance and were played by the scripted test bot.</sub>
 
 ---
 
