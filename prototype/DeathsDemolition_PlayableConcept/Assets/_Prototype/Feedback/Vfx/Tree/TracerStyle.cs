@@ -95,6 +95,11 @@ namespace DD.Prototype.Feedback.Vfx
         private static bool s_styled;
         private static int s_shotTier, s_haloTier;
         private static TreeElement s_element;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        private static int s_ap043SecondaryLook;
+        /// <summary>Opt-in fusion form only: K1's dominant hue remains the single trail colour.</summary>
+        public static int Ap043SecondaryLook { get { Refresh(); return s_ap043SecondaryLook; } }
+#endif
 
         static TracerStyle()
         {
@@ -327,6 +332,15 @@ namespace DD.Prototype.Feedback.Vfx
             s_trailScale = TreeVfxLadder.TrailScale(s_shotTier);         // owner Shot only
             s_haloHdr = s_haloTier >= TreeVfxLadder.TierMax ? TreeVfxLadder.HaloHdrV : 1f;   // S1
             s_look = LookOf(s_element);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            s_ap043SecondaryLook = NeutralLook;
+            if (s.Fusion)
+            {
+                // Exactly one additional form; no secondary colour, extra draw or enlarged footprint.
+                TreeElement secondary = TreeVfxLadder.FirstElement(s.Elements & ~s_element);
+                s_ap043SecondaryLook = LookOf(secondary);
+            }
+#endif
             s_styled = s_look != NeutralLook || s_haloPx > 0f || s_trailScale > 1f || s_haloHdr > 1f;
         }
 

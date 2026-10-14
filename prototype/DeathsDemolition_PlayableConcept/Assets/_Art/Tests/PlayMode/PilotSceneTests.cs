@@ -29,8 +29,27 @@ using UnityEngine.TestTools;
 [SetUpFixture]
 public sealed class ArtTestProfileIsolation
 {
+    // AP-043 test-only output routing. Other sessions keep the original temporary-cache default.
+    private static string ScratchRoot
+    {
+        get
+        {
+            string requested = System.Environment.GetEnvironmentVariable("DD_AP043_TEST_SANDBOX");
+            if (string.IsNullOrEmpty(requested)) return Application.temporaryCachePath;
+            string root = Path.GetFullPath(requested).TrimEnd(Path.DirectorySeparatorChar);
+            const string allowed = "/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-043/validation/";
+            if (!Path.IsPathRooted(requested) || !root.StartsWith(allowed, System.StringComparison.Ordinal))
+                throw new System.IO.IOException("AP043 test output outside validation refused");
+            for (string cursor = root; !string.IsNullOrEmpty(cursor); cursor = Path.GetDirectoryName(cursor))
+                if ((Directory.Exists(cursor) || File.Exists(cursor)) && (File.GetAttributes(cursor) & FileAttributes.ReparsePoint) != 0)
+                    throw new System.IO.IOException("AP043 test output symlink refused");
+            Directory.CreateDirectory(root);
+            return root;
+        }
+    }
+
     public static string TestProfilePath =>
-        Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-art-test-profile.json");
+        Path.Combine(ScratchRoot, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-art-test-profile.json");
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
@@ -44,6 +63,11 @@ public sealed class ArtTestProfileIsolation
             "Geçici test profili oluşturulamadı: " + TestProfilePath);
 
         Debug.Log("[DD-TEST] art.profile.isolation path=" + TestProfilePath);
+        if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("DD_AP043_TEST_SANDBOX")))
+        {
+            DD.Prototype.UI.UiDataPaths.SetRootOverride(Path.Combine(ScratchRoot, "ui"));
+            DD.Prototype.Diagnostics.Telemetry.RunTelemetry.ParseArgs(new[] { "-ddTelemetryDir", Path.Combine(ScratchRoot, "telemetry") });
+        }
     }
 }
 

@@ -52,6 +52,11 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>AD-B4 §1: a styled tracer streak is never longer than this (the sniper's own WP-101 ceiling).</summary>
         public const float TrailMaxMetres = 10f;
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>AP-043 proposal: I–V increases grain/filament density within a fixed physical footprint, never width/length.</summary>
+        public static float Ap043DetailDensity(int tier) => .15f + .85f * (ClampTier(tier) - 1) * .25f;
+#endif
+
         /// <summary>AD-B4 S1: the halo's HDR × this at V (owner max(Shot, Element)) — a bloom boost, so Reduce Flashes takes it out
         /// before it dims the rest (<see cref="TracerStyle.HaloHdr"/>).</summary>
         public const float HaloHdrV = 1.5f;

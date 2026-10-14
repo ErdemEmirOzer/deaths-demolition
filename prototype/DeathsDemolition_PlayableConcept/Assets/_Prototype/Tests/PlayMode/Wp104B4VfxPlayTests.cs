@@ -59,6 +59,7 @@ namespace DD.Prototype.Tests.PlayMode
         private TracerRibbonRenderer _tracer, _previousTracer;
         private bool _previousTracerEnabled, _previousInterimTrails, _hasTracerFixture;
         private CameraMode _previousMode;
+        private Ap043BulletLook _previousBulletLook;
         private float _previousFlash, _previousTimeScale, _previousCaptureDelta;
         // B4-3: the DDOL TreeSystemsDriver a Horizon test parked (and whether it was there before it: one the test's own ticks made is
         // destroyed at the tear-down), TreeSystemsRunner.BeforeTick while it is off, whether the tree systems need a reset
@@ -71,6 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             _root = new GameObject("WP104 B4 test root");
             _previousMode = CameraModeService.Current;
+            _previousBulletLook = Ap043BulletLooks.Current;
             _previousFlash = GameFeelSettings.FlashScale;
             _previousTimeScale = Time.timeScale;
             _previousCaptureDelta = Time.captureDeltaTime;
@@ -127,17 +129,22 @@ namespace DD.Prototype.Tests.PlayMode
             GameFeelSettings.FlashScale = _previousFlash;
             Time.timeScale = _previousTimeScale;
             SetModeState(_previousMode);
+            Ap043BulletLooks.SetForTests(_previousBulletLook);
             yield return null;
         }
 
         // ------------------------------------------------------------------ tracer style per round (no catalog needed)
 
-        [Test]
-        public void TdIz_KosuStili_AtisVAtes_CekirdekHaleRenkTavan_NotrdeWp101Birebir()
+        [TestCase(Ap043BulletLook.Baseline)]
+        [TestCase(Ap043BulletLook.O2)]
+        public void TdIz_KosuStili_AtisVAtes_CekirdekHaleRenkTavan_NotrdeWp101Birebir(Ap043BulletLook look)
         {
+            // CX-AP043 3.5.9: baseline regression control plus selected normal-flight coverage.
+            Ap043BulletLooks.SetForTests(look);
+            bool selected = look == Ap043BulletLook.O2;
             TracerRibbonRenderer tracer = AttachTdTracer();
             VfxWeaponProfile ar = VfxWeaponProfiles.For(ClassicWeaponId.AssaultRifle);
-            float core = TracerRibbonRenderer.TdCoreWidth(ar.Class);
+            float core = selected ? 2.3f / 70f : TracerRibbonRenderer.TdCoreWidth(ar.Class);
 
             TreeStats s = TreeStats.Neutral;
             s.SetBranchTier(TreeBranch.Shot, 5);
@@ -151,19 +158,19 @@ namespace DD.Prototype.Tests.PlayMode
             tracer.TickTd(.01f);
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
             Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(core).Within(1e-5f), "AD-B4 §1: çekirdek kademe kanalı değil (Atış V'te de WP-101 eni)");
-            Assert.That(TracerBuffer(tracer, "_extra")[0].z, Is.EqualTo(-TracerStyle.CoreQuadCapPx).Within(1e-4f), "parlak çekirdek ≤ 8 px (quad ≤ 11.1 px, 1080p)");
-            Assert.That(TracerBuffer(tracer, "_extra")[0].w, Is.EqualTo(-core).Within(1e-6f), "tavanın tabanı: WP-101 eni (m), hiç incelmez");
+            Assert.That(TracerBuffer(tracer, "_extra")[0].z, Is.EqualTo(selected ? -2.8f : -TracerStyle.CoreQuadCapPx).Within(1e-4f), "parlak çekirdek ≤ 8 px (quad ≤ 11.1 px, 1080p)");
+            Assert.That(TracerBuffer(tracer, "_extra")[0].w, Is.EqualTo(selected ? 0f : -core).Within(1e-6f), "tavanın tabanı: WP-101 eni (m), hiç incelmez");
             Vector4 hc = TracerBuffer(tracer, "_headColor")[0];
-            Color fireHead = TracerStyle.CoreHead(TracerStyle.FireLook, Color.black);
+            Color fireHead = TracerStyle.CoreHead(TracerStyle.FireLook, Color.black) * (selected ? 1.55f / TracerStyle.CoreHdr : 1f);
             Assert.That(hc.x, Is.EqualTo(fireHead.r).Within(1e-4f));
             Assert.That(hc.z, Is.EqualTo(fireHead.b).Within(1e-4f), "ateş çekirdeği #FFE2B0 (K1: bir mermi bir renk)");
             Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(core * TracerRibbonRenderer.TdHaloScale).Within(1e-5f), "hale metre eni: WP-101 halesi");
-            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(new Vector4(0f, -TreeVfxLadder.HaloStepPx(5), 0f, 0f)), "AD-B4 §1: hale tavansız, V = WP-101 + 20 px (_Extra.y)");
-            Assert.That(TracerBuffer(tracer, "_tailColor")[0].w, Is.EqualTo(TracerStyle.ElementHaloCover), "M5: element halesi zemini örter");
-            Assert.That(RecordField<float>(tracer, id, "TrailScale"), Is.EqualTo(TreeVfxLadder.TrailScale(5)).Within(1e-5f), "iz boyu: Atış V ×1,45");
+            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(core * (selected ? 1.6f : TracerRibbonRenderer.TdHaloScale)).Within(1e-5f), "hale metre eni: WP-101 halesi");
+            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(selected ? new Vector4(1.8f * 1.6f, Ap043TracerDesign.PackDetail(TracerStyle.FireLook, 5, 0, id), -2.8f * 1.6f, 0f) : new Vector4(0f, -TreeVfxLadder.HaloStepPx(5), 0f, 0f)), "AD-B4 §1: hale tavansız, V = WP-101 + 20 px (_Extra.y)");
+            Assert.That(TracerBuffer(tracer, "_tailColor")[0].w, Is.EqualTo(selected ? 0f : TracerStyle.ElementHaloCover), "M5: element halesi zemini örter");
+            Assert.That(RecordField<float>(tracer, id, "TrailScale"), Is.EqualTo(selected ? 1f : TreeVfxLadder.TrailScale(5)).Within(1e-5f), "iz boyu: Atış V ×1,45");
             Assert.That(TracerBuffer(tracer, "_span")[0].z, Is.EqualTo(0f), "element halesi kehribar kenar almaz (K1: karışım yok)");
-            Color fireHalo = TracerStyle.Halo(TracerStyle.FireLook, Color.black) * (TracerRibbonRenderer.TdHaloHdr * TracerStyle.HaloHdr(TreeVfxLadder.HaloHdrV, 1f));   // S1: V ×1.5
+            Color fireHalo = TracerStyle.Halo(TracerStyle.FireLook, Color.black) * (selected ? .8f : TracerRibbonRenderer.TdHaloHdr * TracerStyle.HaloHdr(TreeVfxLadder.HaloHdrV, 1f));   // S1: V ×1.5
             Assert.That(TracerBuffer(tracer, "_headColor")[0].y, Is.EqualTo(fireHalo.g).Within(1e-4f), "hale #FF5A1F");
 
             // neutral: WP-101's buffers to the value (the Wp093 / Wp101 expectations)
@@ -175,13 +182,13 @@ namespace DD.Prototype.Tests.PlayMode
             tracer.TickTd(.01f);
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
             Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(core).Within(1e-6f), "nötr: WP-101 genişliği");
-            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(new Vector4(TracerRibbonRenderer.TdCoreMinPx, 0f, 0f, 0f)), "nötr: WP-101 _extra birebir");
+            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(selected ? new Vector4(1.8f, Ap043TracerDesign.PackDetail(TracerStyle.NeutralLook, 1, 0, id2), -2.8f, 0f) : new Vector4(TracerRibbonRenderer.TdCoreMinPx, 0f, 0f, 0f)), "nötr: WP-101 _extra birebir");
             Vector4 neutral = TracerBuffer(tracer, "_headColor")[0];
-            Assert.That(neutral.x, Is.EqualTo(TracerRibbonRenderer.TdCoreHead.r).Within(1e-5f));
-            Assert.That(neutral.y, Is.EqualTo(TracerRibbonRenderer.TdCoreHead.g).Within(1e-5f));
+            Assert.That(neutral.x, Is.EqualTo(selected ? 1.55f : TracerRibbonRenderer.TdCoreHead.r).Within(1e-5f));
+            Assert.That(neutral.y, Is.EqualTo(selected ? Mathf.GammaToLinearSpace(.98f) * 1.55f : TracerRibbonRenderer.TdCoreHead.g).Within(1e-5f));
             Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_span")[0].z, Is.EqualTo(-TracerRibbonRenderer.TdHaloEdgeShare), "nötr hale kehribar kenarını korur");
-            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(Vector4.zero), "nötr hale: tavan yok, adım yok");
+            Assert.That(TracerBuffer(tracer, "_span")[0].z, Is.EqualTo(selected ? 0f : -TracerRibbonRenderer.TdHaloEdgeShare), "nötr hale kehribar kenarını korur");
+            Assert.That(TracerBuffer(tracer, "_extra")[0], Is.EqualTo(selected ? new Vector4(1.8f * 1.6f, Ap043TracerDesign.PackDetail(TracerStyle.NeutralLook, 1, 0, id2), -2.8f * 1.6f, 0f) : Vector4.zero), "nötr hale: tavan yok, adım yok");
             Assert.That(TracerBuffer(tracer, "_tailColor")[0].w, Is.Zero, "nötr WP-101 halesi zemini örtmez");
             Assert.That(InvokeInk(tracer), Is.Zero, "işaretli mermi yok: mürekkep çizimi yok");
         }
@@ -214,7 +221,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(tracer.RecordTdProjectile(TdSpawn(100, ClassicWeaponId.AssaultRifle, O, 0, 1.25f)), Is.True);
             tracer.StopTdProjectile(100, O + Vector3.right * 3f);
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle) * 1.25f).Within(1e-5f));
+            bool selected = Ap043BulletLooks.Current == Ap043BulletLook.O2;
+            float sizedCore = selected ? 2.3f / 70f : TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle) * 1.25f;
+            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(sizedCore).Within(1e-5f),
+                "selected O2 keeps a fixed visual width under SizeScale; legacy visual growth remains tested");
             Assert.That(TracerBuffer(tracer, "_extra")[0].z, Is.LessThan(0f), "boyut büyüyünce tavan açılır");
             tracer.Clear();
 
@@ -235,7 +245,9 @@ namespace DD.Prototype.Tests.PlayMode
                 pid++;
             }
 
-            Assert.That(mains, Is.EqualTo(new[] { mains[0], !mains[0], mains[0], !mains[0] }), "SMG ritmi yalnız ana mermide (VolleyIndex 0)");
+            Assert.That(mains, Is.EqualTo(selected ? new[] { true, true, true, true }
+                : new[] { mains[0], !mains[0], mains[0], !mains[0] }),
+                "selected O2 exposes every main round; legacy SMG rhythm and extra-round exclusion remain tested");
             tracer.Clear();
 
             // the 48 records: 8 pulls × (1 main + 4 extras) = 40, then a 9th pull's extras find the extras' 32 taken → they merge
@@ -255,13 +267,18 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(tracer.LiveTdTracers, Is.EqualTo(41), "kayıt tavanı 48 aşılmaz");
             Assert.That(tracer.LiveTdVolleyRecords, Is.EqualTo(TracerStyle.VolleyRecordsMax));
             Assert.That(RecordField<int>(tracer, main9, "Merged"), Is.EqualTo(4));
-            Assert.That(RecordField<float>(tracer, main9, "Core"), Is.EqualTo(TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle) * TreeHooks.MergedSizeMax).Within(1e-5f),
-                "birleşen ana mermi S-02 kuralıyla kalınlaşır (√(1 + n) ≤ 1.25)");
+            float mergedCore = selected ? 2.3f / 70f : TracerRibbonRenderer.TdCoreWidth(VfxWeaponClass.AssaultRifle) * TreeHooks.MergedSizeMax;
+            Assert.That(RecordField<float>(tracer, main9, "Core"), Is.EqualTo(mergedCore).Within(1e-5f),
+                "gameplay merge/counts remain unchanged; selected O2 visual core never grows, legacy merge growth remains tested");
         }
 
-        [Test]
-        public void TdIz_IsaretliKaosMermisi_MorKenar_SumiCekirdek()
+        [TestCase(Ap043BulletLook.Baseline)]
+        [TestCase(Ap043BulletLook.O2)]
+        public void TdIz_IsaretliKaosMermisi_MorKenar_SumiCekirdek(Ap043BulletLook look)
         {
+            // CX-AP043 3.5.9: baseline regression control plus selected normal-flight coverage.
+            Ap043BulletLooks.SetForTests(look);
+            bool selected = look == Ap043BulletLook.O2;
             TracerRibbonRenderer tracer = AttachTdTracer();
             TreeRuntime.SetTestStats(TreeStats.Neutral);
             ProjectileSystem.Clear();
@@ -285,25 +302,25 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(RecordField<bool>(tracer, gen, "Tracer"), Is.True, "işaretli mermi tam iz");
 
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(1));
-            Color edge = TreeVfxLadder.Linear(TreeVfxLadder.ChaosEdge) * TracerStyle.MarkedEdgeHdr;
+            Color edge = TreeVfxLadder.Linear(TreeVfxLadder.ChaosEdge) * TracerStyle.MarkedEdgeHdr * (selected ? 1.55f / TracerStyle.CoreHdr : 1f);
             Vector4 core = TracerBuffer(tracer, "_headColor")[0];
             Assert.That(core.z, Is.EqualTo(edge.b).Within(1e-4f), "eklenen çekirdek mor (#9B5CFF)");
             Assert.That(TracerBuffer(tracer, "_extra")[0].z, Is.LessThan(0f), "işaretli mermi tavanlı");
             Assert.That(DrawTd(tracer, 2), Is.EqualTo(1));
-            Assert.That(TracerBuffer(tracer, "_headColor")[0].z, Is.EqualTo(TreeVfxLadder.Linear(TreeVfxLadder.ChaosEdge).b * TracerRibbonRenderer.TdHaloHdr).Within(1e-4f), "mor kenar halesi");
+            Assert.That(TracerBuffer(tracer, "_headColor")[0].z, Is.EqualTo(TreeVfxLadder.Linear(TreeVfxLadder.ChaosEdge).b * (selected ? .8f : TracerRibbonRenderer.TdHaloHdr)).Within(1e-4f), "mor kenar halesi");
             Assert.That(TracerBuffer(tracer, "_span")[0].z, Is.EqualTo(0f), "kehribar kenar yok");
-            Assert.That(TracerBuffer(tracer, "_extra")[0].y, Is.EqualTo(-TreeVfxLadder.HaloStepPx(TreeVfxLadder.TierMax)), "M4: kademeden bağımsız V halesi (WP-101 + 20 px)");
-            Assert.That(TracerBuffer(tracer, "_tailColor")[0].w, Is.EqualTo(TracerStyle.ElementHaloCover), "işaretli hale zemini örter (açık taşta okunur)");
+            Assert.That(TracerBuffer(tracer, "_extra")[0].y, Is.EqualTo(selected ? Ap043TracerDesign.PackDetail(TracerStyle.MarkedLook, 1, 0, gen) : -TreeVfxLadder.HaloStepPx(TreeVfxLadder.TierMax)), "M4: kademeden bağımsız V halesi (WP-101 + 20 px)");
+            Assert.That(TracerBuffer(tracer, "_tailColor")[0].w, Is.EqualTo(selected ? 0f : TracerStyle.ElementHaloCover), "işaretli hale zemini örter (açık taşta okunur)");
             Assert.That(InvokeInk(tracer), Is.EqualTo(1), "sumi çekirdek (Transparent+11)");
             Assert.That(tracer.DrawnInk, Is.EqualTo(1));
             Vector4 ink = TracerBuffer(tracer, "_headColor")[0];
             Assert.That(Mathf.Max(ink.x, Mathf.Max(ink.y, ink.z)), Is.LessThan(.01f), "#12100F");
             Assert.That(ink.w, Is.EqualTo(TracerStyle.InkAlpha).Within(1e-5f));
             float coreWidth = RecordField<float>(tracer, gen, "Core");
-            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(coreWidth * TracerStyle.InkWidthShare).Within(1e-5f), "mor kenar iki yanda kalır");
-            Assert.That(TracerBuffer(tracer, "_extra")[0].x, Is.EqualTo(TracerStyle.InkMinPx));
+            Assert.That(TracerBuffer(tracer, "_head")[0].w, Is.EqualTo(coreWidth * (selected ? .68f : TracerStyle.InkWidthShare)).Within(1e-5f), "mor kenar iki yanda kalır");
+            Assert.That(TracerBuffer(tracer, "_extra")[0].x, Is.EqualTo(selected ? 1.8f * .68f : TracerStyle.InkMinPx));
             Assert.That(TracerBuffer(tracer, "_extra")[0].z, Is.LessThan(0f), "mürekkep çekirdek tavanlı");
-            Assert.That(TracerBuffer(tracer, "_extra")[0].w, Is.EqualTo(-RecordField<float>(tracer, gen, "Base") * TracerStyle.InkWidthShare).Within(1e-6f));
+            Assert.That(TracerBuffer(tracer, "_extra")[0].w, Is.EqualTo(selected ? 0f : -RecordField<float>(tracer, gen, "Base") * TracerStyle.InkWidthShare).Within(1e-6f));
             ProjectileSystem.Clear();
         }
 
@@ -354,9 +371,13 @@ namespace DD.Prototype.Tests.PlayMode
         /// TreeSeekTrail.SeekLength, the Shot ladder's ceiling); the halo and a body streak (an extra volley: what a real seeker is) ride
         /// the same path; on impact the tail runs in along it; a straight round's instance stays byte-identical beside it; 0 B.
         /// </summary>
-        [Test]
-        public void TdIz_B9_KivrilanArayici_YolBoyuncaSegmentler_DuzMermiBirebir_0B()
+        [TestCase(Ap043BulletLook.Baseline)]
+        [TestCase(Ap043BulletLook.O2)]
+        public void TdIz_B9_KivrilanArayici_YolBoyuncaSegmentler_DuzMermiBirebir_0B(Ap043BulletLook look)
         {
+            // CX-AP043 3.5.9: baseline regression control plus selected normal-flight coverage.
+            Ap043BulletLooks.SetForTests(look);
+            bool selected = look == Ap043BulletLook.O2;
             TracerRibbonRenderer tracer = AttachTdTracer();
             TreeRuntime.SetTestStats(TreeStats.Neutral);
 
@@ -371,8 +392,11 @@ namespace DD.Prototype.Tests.PlayMode
             for (int b = 0; b < buffers.Length; b++) yalniz[b] = TracerBuffer(tracer, buffers[b])[0];
 
             // the bending round (record 1): spawned at O, turned 30° at P1 3 m on, stopped 1 m past it — a 4 m kept path
-            Vector3 p1 = O + Vector3.right * 3f, turned = Quaternion.Euler(0f, -30f, 0f) * Vector3.right, head = p1 + turned;
-            const float yol = 4f;
+            Vector3 p1 = O + Vector3.right * 3f, turned = Quaternion.Euler(0f, -30f, 0f) * Vector3.right;
+            // Each O2 bend segment is .14 m, above the preserved TreeSeekTrail .12 m minimum, within the .28 m exposure.
+            float afterTurn = selected ? .14f : 1f;
+            Vector3 head = p1 + turned * afterTurn;
+            float yol = selected ? .28f : 4f;
             Assert.That(tracer.RecordTdProjectile(TdSpawn(arayan, ClassicWeaponId.AssaultRifle, O)), Is.True);
             tracer.StopTdProjectile(arayan, head);
             var path = new[] { O, p1 };
@@ -387,14 +411,14 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.That(((Vector3)h[1] - head).magnitude, Is.LessThan(1e-4f), "baş mermide");
             Assert.That(((Vector3)t[1] - p1).magnitude, Is.LessThan(1e-4f), "ilk segment kıvrımda biter");
             Assert.That(((Vector3)h[2] - p1).magnitude, Is.LessThan(1e-4f), "segmentler ardışık");
-            Assert.That(((Vector3)t[2] - O).magnitude, Is.LessThan(1e-4f), "karar (a): iz = tutulan yol (≤ 10 m), namluya kadar");
-            Assert.That(s[1].x, Is.EqualTo(yol - 1f).Within(1e-4f));
+            Assert.That(((Vector3)t[2] - (selected ? p1 + Vector3.left * .14f : O)).magnitude, Is.LessThan(1e-4f), "karar (a): iz = tutulan yol (≤ 10 m), namluya kadar");
+            Assert.That(s[1].x, Is.EqualTo(yol - afterTurn).Within(1e-4f));
             Assert.That(s[1].y, Is.EqualTo(yol).Within(1e-4f), "baş: izin tüm boyu");
             Assert.That(s[2].x, Is.EqualTo(0f).Within(1e-4f), "kuyruk ucu t = 0");
             Assert.That(s[2].y, Is.EqualTo(s[1].x).Within(1e-6f), "t kesintisiz");
             Assert.That(s[1].w, Is.EqualTo(-yol).Within(1e-4f), "DD/VFX Ribbon: _Span.w < 0 = bütün iz boyunca t");
             Assert.That(s[2].w, Is.EqualTo(-yol).Within(1e-4f));
-            Assert.That(t[1].w, Is.EqualTo(TracerRibbonRenderer.TdTracerBead / yol).Within(1e-5f), "baş boncuğu bütün izin payı");
+            Assert.That(t[1].w, Is.EqualTo(selected ? 0f : TracerRibbonRenderer.TdTracerBead / yol).Within(1e-5f), "baş boncuğu bütün izin payı");
             Assert.That(t[2].w, Is.EqualTo(t[1].w));
             Assert.That(h[1].w, Is.EqualTo(h[2].w), "aynı en");
             Assert.That(TracerBuffer(tracer, "_headColor")[1], Is.EqualTo(TracerBuffer(tracer, "_headColor")[2]), "aynı renk");
@@ -403,39 +427,42 @@ namespace DD.Prototype.Tests.PlayMode
 
             // the halo rides the same path, its amber rim (z) kept
             Assert.That(DrawTd(tracer, 2), Is.EqualTo(3));
-            Assert.That(TracerBuffer(tracer, "_span")[1].z, Is.EqualTo(-TracerRibbonRenderer.TdHaloEdgeShare), "nötr hale kenarı");
+            Assert.That(TracerBuffer(tracer, "_span")[1].z, Is.EqualTo(selected ? 0f : -TracerRibbonRenderer.TdHaloEdgeShare), "nötr hale kenarı");
             Assert.That(TracerBuffer(tracer, "_span")[2].w, Is.EqualTo(-yol).Within(1e-4f));
 
             // on impact the tail runs in along the path: half the tail-out, half the streak (2 m: still past the turn)
-            tracer.TickTd(TracerRibbonRenderer.TdTailOutSeconds * .5f);
-            Assert.That(DrawTd(tracer, 0), Is.EqualTo(3));
+            tracer.TickTd((selected ? .04f : TracerRibbonRenderer.TdTailOutSeconds) * .5f);
+            Assert.That(DrawTd(tracer, 0), Is.EqualTo(selected ? 2 : 3), "O2 half-tail retains one .14 m segment; baseline still retains two");
             Assert.That(TracerBuffer(tracer, "_span")[1].w, Is.EqualTo(-yol * .5f).Within(1e-4f), "kuyruk yol boyunca içeri akar");
-            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[2] - (p1 + Vector3.left)).magnitude, Is.LessThan(1e-4f), "kıvrımdan 1 m geri");
+            if (selected)
+                Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - p1).magnitude, Is.LessThan(1e-4f), "O2 half-tail ends at the turn; the next sub-.12 m piece is dropped");
+            else
+                Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[2] - (p1 + Vector3.left)).magnitude, Is.LessThan(1e-4f), "kıvrımdan 1 m geri");
 
             // a body streak (an extra volley: what a real seeker is) 0.3 m past the turn: its whole 3.3 m path, bent
             tracer.Clear();
             int govde = 9300;
-            Vector3 head2 = p1 + turned * .3f;
+            Vector3 head2 = p1 + turned * (selected ? .14f : .3f);
             Assert.That(tracer.RecordTdProjectile(TdSpawn(govde, ClassicWeaponId.AssaultRifle, O, 1, 1f)), Is.True);
             tracer.StopTdProjectile(govde, head2);
             Assert.That(tracer.SetTdPathForTests(govde, path, path.Length), Is.True);
             Assert.That(DrawTd(tracer, 0), Is.Zero, "ek voley gövde izidir (çekirdek yok)");
             Assert.That(DrawTd(tracer, 2), Is.EqualTo(2), "gövde izi kıvrımı geçer");
-            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - O).magnitude, Is.LessThan(1e-4f), "gövde izi de bütün yol");
-            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(-3.3f).Within(1e-4f));
+            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - (selected ? p1 + Vector3.left * .14f : O)).magnitude, Is.LessThan(1e-4f), "gövde izi de bütün yol");
+            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(selected ? -.28f : -3.3f).Within(1e-4f));
             Assert.That(TracerBuffer(tracer, "_tail")[0].w, Is.Zero, "gövde izinde boncuk yok");
 
             // a kept path longer than 10 m: its newest 10 m (TreeVfxLadder.TrailMaxMetres, the Shot ladder's ceiling)
             tracer.Clear();
             int uzun = 9310;
-            Vector3 p20 = O + Vector3.right * 20f, head3 = p20 + turned;
+            Vector3 p20 = O + Vector3.right * 20f, head3 = p20 + turned * (selected ? .14f : 1f);
             var farPath = new[] { O, p20 };
             Assert.That(tracer.RecordTdProjectile(TdSpawn(uzun, ClassicWeaponId.AssaultRifle, O)), Is.True);
             tracer.StopTdProjectile(uzun, head3);
             Assert.That(tracer.SetTdPathForTests(uzun, farPath, farPath.Length), Is.True);
             Assert.That(DrawTd(tracer, 0), Is.EqualTo(2));
-            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(-TreeVfxLadder.TrailMaxMetres).Within(1e-4f), "en çok 10 m");
-            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - (O + Vector3.right * 11f)).magnitude, Is.LessThan(1e-3f), "1 m dönüş + 9 m geri");
+            Assert.That(TracerBuffer(tracer, "_span")[0].w, Is.EqualTo(selected ? -.28f : -TreeVfxLadder.TrailMaxMetres).Within(1e-4f), "en çok 10 m");
+            Assert.That(((Vector3)TracerBuffer(tracer, "_tail")[1] - (selected ? p20 + Vector3.left * .14f : O + Vector3.right * 11f)).magnitude, Is.LessThan(1e-3f), "1 m dönüş + 9 m geri");
 
             // 0 B: the path read-in and the lay-out allocate nothing
             var draw = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), tracer, typeof(TracerRibbonRenderer).GetMethod("DrawTd", Private));
@@ -466,6 +493,7 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest]
         public IEnumerator A5_AktifCekirdek_TdKamerada_En8px_SniperIncelmez()
         {
+            Ap043BulletLooks.SetForTests(Ap043BulletLook.Baseline); // Keep every original A5 bound.
             LogAssert.ignoreFailingMessages = true;
             const int W = 1920, H = 1080;
             var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { name = "Wp104A5" };
@@ -519,6 +547,65 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        [UnityTest]
+        public IEnumerator Ap043SelectedO2_AktifCekirdek_KucukVeKademeSabit()
+        {
+            Ap043BulletLooks.SetForTests(Ap043BulletLook.O2);
+            LogAssert.ignoreFailingMessages = true;
+            const int W = 1920, H = 1080;
+            var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { name = "Wp104A5" };
+            var read = new Texture2D(W, H, TextureFormat.RGB24, false);
+            var camGo = new GameObject("WP104-A5-camera");
+            camGo.transform.SetParent(_root.transform, false);
+            Camera cam = camGo.AddComponent<Camera>();
+            try
+            {
+                cam.transform.SetPositionAndRotation(O + new Vector3(0f, 20f, 0f), Quaternion.Euler(90f, 0f, 0f));
+                cam.allowHDR = true;
+                cam.fieldOfView = 31.7f;   // 1080 / (2 · 20 · tan 15.85°) ≈ 95 px/m
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                cam.targetTexture = rt;
+                cam.enabled = false;
+                yield return null;
+
+                TracerRibbonRenderer tracer = AttachTdTracer();
+                float pxPerM = (Px(cam, O + new Vector3(1f, 1f, 0f), W, H) - Px(cam, O + Vector3.up, W, H)).magnitude;
+                Assert.That(pxPerM, Is.InRange(85f, 105f), "oyunun TD ölçeği");
+
+                TreeStats v = TreeStats.Neutral;
+                v.SetBranchTier(TreeBranch.Shot, 5);
+                v.SetBranchTier(TreeBranch.Element, 5);
+                v.Elements = TreeElement.Fire;
+                v.DominantElement = TreeElement.Fire;
+                int[] styled = Measure(cam, rt, read, tracer, v, 9001, W, H);
+                yield return null;   // a new frame: the queued draws are gone
+                int[] neutral = Measure(cam, rt, read, tracer, TreeStats.Neutral, 9101, W, H);
+                Debug.Log("[DD-TEST] ap043.o2.a5 pxPerM=" + pxPerM.ToString("0.#") + " ar V/I=" + styled[0] + "/" + neutral[0] + " sr V/I=" + styled[1] + "/" + neutral[1]);
+                string dir = Environment.GetEnvironmentVariable("DD_TD_A5_DIR");
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "ap043-o2-a5.json"), "{\"pxPerMetre\": " + pxPerM.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)
+                        + ", \"arV\": " + styled[0] + ", \"arI\": " + neutral[0] + ", \"srV\": " + styled[1] + ", \"srI\": " + neutral[1] + "}\n");
+                }
+
+                Assert.That(styled[0], Is.GreaterThan(0).And.LessThanOrEqualTo(3), "O2 saturated AR core stays visible within the selected 3 px ceiling");
+                Assert.That(neutral[0], Is.GreaterThan(0).And.LessThanOrEqualTo(3), "O2 neutral saturated AR core has the same absolute envelope");
+                Assert.That(styled[0], Is.GreaterThanOrEqualTo(neutral[0]), "kademe çekirdeği daraltmaz");
+                Assert.That(styled[1], Is.GreaterThan(0).And.LessThanOrEqualTo(3), "O2 sniper saturated pixel ceiling");
+                Assert.That(neutral[1], Is.GreaterThan(0).And.LessThanOrEqualTo(3), "O2 neutral sniper saturated pixel ceiling");
+                Assert.That(Mathf.Abs(styled[1] - neutral[1]), Is.LessThanOrEqualTo(1), "sniper: WP-101 eni korunur (ne büyür ne incelir)");
+            }
+            finally
+            {
+                cam.targetTexture = null;
+                rt.Release();
+                Object.Destroy(rt);
+                Object.Destroy(read);
+            }
+        }
+
         /// <summary>An AR (z −2) and a sniper (z +2) tracer in <paramref name="stats"/>'s look, layer 0 only, one render: the bright
         /// width (brightest channel ≥ 254: white-hot, saturated) across each streak 0.1 m behind its head.</summary>
         private static int[] Measure(Camera cam, RenderTexture rt, Texture2D read, TracerRibbonRenderer tracer, TreeStats stats, int id, int w, int h)
@@ -538,7 +625,10 @@ namespace DD.Prototype.Tests.PlayMode
             read.Apply();
             RenderTexture.active = prev;
             Color32[] px = read.GetPixels32();
-            return new[] { Bright(cam, px, arHead + Vector3.left * .1f, w, h), Bright(cam, px, srHead + Vector3.left * .1f, w, h) };
+            bool selected = Ap043BulletLooks.Current == Ap043BulletLook.O2;
+            // The selected O2 kernel is at t=.82 inside the short span. Saturation threshold and all A5 bounds are unchanged.
+            return new[] { Bright(cam, px, arHead + Vector3.left * (selected ? .18f * .28f : .1f), w, h),
+                Bright(cam, px, srHead + Vector3.left * (selected ? .18f * .48f : .1f), w, h) };
         }
 
         private static int Bright(Camera cam, Color32[] px, Vector3 at, int w, int h)

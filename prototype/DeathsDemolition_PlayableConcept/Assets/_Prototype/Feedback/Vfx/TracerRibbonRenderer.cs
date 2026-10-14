@@ -115,6 +115,11 @@ namespace DD.Prototype.Feedback.Vfx
             public float HaloPx, TrailScale, HaloHdr;   // WP-104 B4-1 (AD-B4 §1): the tier's halo step (px at 1080p), trail factor, V's halo HDR
             public int SeekPoints;   // WP-104 B4-2 (B9): points of a seeking round's kept path (TracerRibbonRenderer.Tree.cs), 0 = a straight streak
             public Vector3 Origin, Head, Direction;
+            public Ap043BulletLook Ap043Option;
+            public VfxWeaponClass Ap043Class;
+            public Ap043TracerEnvelope Ap043Envelope;
+            public int Ap043Tier, Ap043SecondaryLook;
+            public bool Ap043Eligible;
         }
         // a shotgun pellet's bar dies out by PelletFadeDistance as in third person (Wp073FireVfxTests: gone by 6 m on a 40 m shot)
         private static bool TdCoreLive(in TdRound r) => !(r.Pellet && !r.Tracer && (r.Head - r.Origin).sqrMagnitude >= PelletFadeDistance * PelletFadeDistance)
@@ -127,10 +132,12 @@ namespace DD.Prototype.Feedback.Vfx
             r.Halo = tracer ? r.Core * TdHaloScale : 0f;
             r.CoreMinPx = !tracer ? TdBodyMinPx : r.Sniper || profile.Class == VfxWeaponClass.Lmg ? TdHeavyCoreMinPx : TdCoreMinPx;
             StyleTd(ref r, tracer);   // WP-104 B4: the run's tier ladder, element and size (neutral, size 1: as above)
+            if (Ap043BulletLooks.Active && r.Ap043Eligible) ApplyAp043Td(ref r, profile, tracer);
         }
         /// <summary>The streak behind the head (m): a tracer's one-exposure blur, a body's short one, a pellet's bar.</summary>
         private static float TdTrail(in TdRound r)
         {
+            if (r.Ap043Option != Ap043BulletLook.Baseline) return r.Ap043Envelope.Trail(r.Speed);
             if (r.Pellet && !r.Tracer) return PelletBarLength;
             // WP-104 B4-1 (AD-B4 §1): a tracer's one-exposure trail × its Shot tier (1.0 … 1.45, ≤ 10 m); WP-101's own at 1
             return r.Tracer ? TracerStyle.ScaledTrail(r.Sniper ? Mathf.Clamp(r.Speed * TdSniperExposureSeconds, TdTailMin, TdSniperTailMax) : Mathf.Clamp(r.Speed * TdExposureSeconds, TdTailMin, TdTailMax), r.TrailScale)
@@ -157,6 +164,7 @@ namespace DD.Prototype.Feedback.Vfx
                 _tdRounds[i] = new TdRound { Alive = true, Id = info.ProjectileId,
                     Origin = info.Position, Head = info.Position, Direction = info.Direction.normalized,
                     Speed = info.Speed, Target = float.PositiveInfinity, Pellet = pellet, Size = info.SizeScale, Extra = info.VolleyIndex > 0 };   // WP-104 B4: S-02 size / volley
+                _tdRounds[i].Ap043Eligible = Ap043TracerDesign.IsNormalFlight(info.Kind, info.ProjectileId, info.WeaponId, profile.Class);
                 TdLook(ref _tdRounds[i], profile, TdTracerOf(profile, in info, pellet, i));   // WP-104 B4: the rhythm over main rounds (no extras = the id itself)
                 TdMarkedAtBirth(i, in info);   // WP-104 B4 (AD K3): a marked round is violet from its first frame, even if it hits at once
                 LiveTdTracers++;
@@ -181,6 +189,20 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Presentation clock; projectile positions are read, never simulated or changed.</summary>
         public void TickTd(float delta)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
+            DD.Prototype.Diagnostics.Ap043FlightMetrics.BeginHotScope(0);
+            try
+            {
+                TickTdCore(delta);
+            }
+            finally { DD.Prototype.Diagnostics.Ap043FlightMetrics.EndHotScope(0); }
+#else
+            TickTdCore(delta);
+#endif
+        }
+
+        private void TickTdCore(float delta)
+        {
             delta = Mathf.Max(0f, delta);
             for (int pIndex = 0; pIndex < ProjectileSystem.LiveCount; pIndex++)
             {
@@ -193,7 +215,12 @@ namespace DD.Prototype.Feedback.Vfx
                     r.Head = p.Position + lift; r.Origin = p.Origin + lift;
                     r.Direction = p.Direction;
                     // DEC-112 Third Eye: the burst's marked round is always a full tracer
-                    if (!r.Tracer && !r.Pellet && IsThirdEyeRound(p.TreeFlags)) TdLook(ref r, VfxWeaponProfiles.For(p.WeaponId), true);
+                    if (!r.Tracer && !r.Pellet && IsThirdEyeRound(p.TreeFlags))
+                    {
+                        VfxWeaponProfile profile = VfxWeaponProfiles.For(p.WeaponId);
+                        TdLook(ref r, profile, true);
+                        MarkAp043Td(ref r, profile); // retain the explicit Third Eye cue on the sparse/nonemissive options
+                    }
                     TdMarked(ref r, in p);   // WP-104 B4 (AD K3): the chaos core's marked round (RunTreeHooks.TreeRoundMarkedChaos)
                     TdSeekPath(i, ref r, in p, lift);   // WP-104 B4-2 (B9): a seeking round keeps S-02's path for its bending streak
                     break;
@@ -225,11 +252,32 @@ namespace DD.Prototype.Feedback.Vfx
         // layer 0: tracer cores + body streaks + pellet bars (additive, the streak material) · 1: sniper vapour · 2: tracer heat halo
         private int DrawTd(int layer)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
+            DD.Prototype.Diagnostics.Ap043FlightMetrics.BeginHotScope(1);
+            try
+            {
+                return DrawTdCore(layer);
+            }
+            finally { DD.Prototype.Diagnostics.Ap043FlightMetrics.EndHotScope(1); }
+#else
+            return DrawTdCore(layer);
+#endif
+        }
+
+        private int DrawTdCore(int layer)
+        {
+            int ap043Drawn = 0;
+            if (Ap043BulletLooks.Active)
+            {
+                ap043Drawn = DrawAp043Td(layer);
+                if (!_ap043HasLegacyTdRounds) return ap043Drawn;
+            }
             int n = 0;
             float flash = Mathf.Clamp01(GameFeelSettings.FlashScale);
             for (int i = 0; i < TdCapacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i];
+                if (Ap043BulletLooks.Active && r.Ap043Option != Ap043BulletLook.Baseline) continue;
                 // AD r1 (WP-101): 0 = the tracer cores (added) · 1 = the sniper vapour · 2 = premultiplied: the tracer halos (not on
                 // Performance) and every body streak / pellet bar (additive white vanished on the light stone)
                 bool plainPellet = r.Pellet && !r.Tracer;
@@ -280,14 +328,14 @@ namespace DD.Prototype.Feedback.Vfx
                 n++;
                 n = BendTd(n, i, layer == 1, layer == 0 && r.Tracer ? TdTracerBead : 0f);   // WP-104 B4-2 (B9): a seeking round's streak laid along its path (none: as written)
             }
-            if (n == 0) return 0;
+            if (n == 0) return ap043Drawn;
             if (layer == 2) SyncTdEdgeTint(flash);   // WP-104 B4-1 (AD-B4 M3): the neutral halo's amber rim dims with its HDR
             _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
             _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
             _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
             Material material = layer == 2 && _tdGlowMaterial != null ? _tdGlowMaterial : layer == 0 && _tdCoreMaterial != null ? _tdCoreMaterial : _material;
             Graphics.DrawMeshInstanced(_quad, 0, material, _matrices, n, _block, ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
-            return n;
+            return n + ap043Drawn;
         }
         public const string ShaderName = "DD/VFX Ribbon";
         public const float PelletBarLength = 0.5f;
@@ -429,6 +477,7 @@ namespace DD.Prototype.Feedback.Vfx
                 _tdCoreMaterial = new Material(_material) { name = "DD_VfxRibbon TD streak (runtime)", hideFlags = HideFlags.DontSave };
                 SetTail(_tdCoreMaterial, TdCoreFalloff, TdCoreRampShare);
                 BuildTdInk();   // WP-104 B4 (AD K3): the marked round's sumi core, Transparent+11
+                ConfigureAp043Td(); // only private TD material clones opt into the experimental shader variant
             }
 
             _block = new MaterialPropertyBlock();
@@ -464,6 +513,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (_tdCoreMaterial != null) Destroy(_tdCoreMaterial);
             if (_tdInkMaterial != null) Destroy(_tdInkMaterial);   // WP-104 B4
             if (_quad != null) Destroy(_quad);
+            DestroyAp043Td();
         }
 
         // ------------------------------------------------------------------ rhythm

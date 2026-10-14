@@ -106,6 +106,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (r.Look == TracerStyle.MarkedLook || !TracerStyle.IsMarkedRound(p.TreeFlags)) return;
             TdLook(ref r, VfxWeaponProfiles.For(p.WeaponId), true);
             TracerStyle.MarkTd(ref r.Look, ref r.CapPx, ref r.HaloPx, ref r.HaloHdr);
+            MarkAp043Td(ref r, VfxWeaponProfiles.For(p.WeaponId));
         }
 
         /// <summary>DD/VFX Ribbon <c>_Extra.y</c> of this record's instance: −(a tracer halo's tier step, px at 1080p; AD-B4 §1), 0 =
@@ -206,6 +207,7 @@ namespace DD.Prototype.Feedback.Vfx
         {
             if (info.VolleyIndex > 0) return false;   // S-02: an extra volley round is a body streak
             if (!pellet || info.PelletIndex == 0) _tdLastMain = slot;
+            if (Ap043BulletLooks.Active && Ap043TracerDesign.IsNormalFlight(info.Kind, info.ProjectileId, info.WeaponId, profile.Class)) return Ap043TracerDesign.IsTracer(Ap043BulletLooks.Current, profile.Class, info.ProjectileId - _tdVolleyExtras, pellet);
             return IsTdTracer(profile, info.ProjectileId - _tdVolleyExtras, pellet, info.PelletIndex);
         }
 
@@ -233,13 +235,34 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         private int DrawTdInk()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
+            DD.Prototype.Diagnostics.Ap043FlightMetrics.BeginHotScope(2);
+            try
+            {
+                return DrawTdInkCore();
+            }
+            finally { DD.Prototype.Diagnostics.Ap043FlightMetrics.EndHotScope(2); }
+#else
+            return DrawTdInkCore();
+#endif
+        }
+
+        private int DrawTdInkCore()
+        {
+            int ap043Drawn = 0;
+            if (Ap043BulletLooks.Active)
+            {
+                ap043Drawn = DrawAp043Ink();
+                if (!_ap043HasLegacyTdRounds) return ap043Drawn;
+            }
             using var marker = TreeVfxMarkers.Ink.Auto();
-            DrawnInk = 0;
-            if (_tdInkMaterial == null) return 0;
+            DrawnInk = ap043Drawn;
+            if (_tdInkMaterial == null) return ap043Drawn;
             int n = 0;
             for (int i = 0; i < TdCapacity && n < Capacity; i++)
             {
                 ref TdRound r = ref _tdRounds[i];
+                if (Ap043BulletLooks.Active && r.Ap043Option != Ap043BulletLook.Baseline) continue;
                 if (!r.Alive || r.Look != TracerStyle.MarkedLook || !r.Tracer || !TdCoreLive(r)) continue;
                 float trail = Mathf.Min((r.Head - r.Origin).magnitude, TdTrail(r));
                 if (r.Stopped) trail *= 1f - Mathf.Clamp01((r.Age - r.StopAge) / TdTailOutSeconds);
@@ -256,13 +279,13 @@ namespace DD.Prototype.Feedback.Vfx
                 n = BendTd(n, i, false, 0f);   // B4-2 (B9): the ink rides the bent streak too
             }
 
-            if (n == 0) return 0;
+            if (n == 0) return ap043Drawn;
             _block.SetVectorArray(HeadId, _head); _block.SetVectorArray(TailId, _tail);
             _block.SetVectorArray(HeadColorId, _headColor); _block.SetVectorArray(TailColorId, _tailColor);
             _block.SetVectorArray(SpanId, _span); _block.SetVectorArray(ExtraId, _extra);
             Graphics.DrawMeshInstanced(_quad, 0, _tdInkMaterial, _matrices, n, _block, ShadowCastingMode.Off, false, 0, null, LightProbeUsage.Off);
-            DrawnInk = n;
-            return n;
+            DrawnInk = n + ap043Drawn;
+            return n + ap043Drawn;
         }
 
         // ------------------------------------------------------------------ B4-2 B9 the bending seeker trail
@@ -304,7 +327,13 @@ namespace DD.Prototype.Feedback.Vfx
                 Vector3[] path = _tdPaths[slot];
                 float arc = TreeSeekTrail.ArcLength(path, r.SeekPoints, r.Head);
                 float length = vapour ? arc : TreeSeekTrail.SeekLength(arc);   // decision (a): the kept path, ≤ 10 m (the Shot ladder's ceiling)
-                if (!vapour && r.Stopped) length *= 1f - Mathf.Clamp01((r.Age - r.StopAge) / TdTailOutSeconds);   // the tail runs in along the path
+                if (!vapour && r.Ap043Option != Ap043BulletLook.Baseline) length = Mathf.Min(arc, TdTrail(r));
+                if (!vapour && r.Stopped)
+                {
+                    float tailOut = TdTailOutSeconds;
+                    tailOut = Ap043TailOut(in r);
+                    length *= 1f - Mathf.Clamp01((r.Age - r.StopAge) / tailOut); // the tail runs in along the path
+                }
                 if (length < .01f) return n;
                 int room = Capacity - n - (TdCapacity - 1 - slot);
                 int count = TreeSeekTrail.Lay(path, r.SeekPoints, r.Head, length, 1 + Mathf.Max(0, room), _tdSegs);

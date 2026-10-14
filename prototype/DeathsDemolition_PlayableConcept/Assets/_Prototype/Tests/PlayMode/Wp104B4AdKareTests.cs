@@ -177,6 +177,9 @@ namespace DD.Prototype.Tests.PlayMode
             public Color32[] Dark, DarkLook, Black, Core, Lit, Look, HaloBlack, Halo;
             public float[] Hdr;
             public int Ink, DarkLeak, CoreLeak, HaloLeak, BlackMax, HaloInstances;
+            public Dictionary<Vector3, float> CoreSpans, HaloSpans;
+            public Dictionary<Vector3, int> CoreLooks, HaloLooks;
+            public int CoreFrame, HaloFrame, CoreInstances;
             public float Veil;
         }
 
@@ -227,6 +230,8 @@ namespace DD.Prototype.Tests.PlayMode
             public TreeElement Element;
             public bool Marked;
             public float Flash;
+            public float SourceCoreM, SourceHaloM, SourceCapPx, SourceHaloStepPx, SourceTrailScale, SourceHaloHdr, NominalTrailM, PixelsPerMetre;
+            public int SourceLook, DetailTier;
             public int BrightCore, BrightCoreMax, CoreQuad, Halo, HaloMax, Visible, VisibleMax, VisiblePost, InkDark05, InkDark15, GlowPx;
             public float LengthM, PeakLum, PeakLumHdr, PeakLumPost, SatMean, HueMean, ColouredShare, LumStep, WarmShare;
             public Color32 GlowMedianPost;
@@ -1032,7 +1037,10 @@ namespace DD.Prototype.Tests.PlayMode
             s.Dark = Grab(false, true);
             s.DarkLook = _lookPost ? Grab(true, true) : s.Dark;
             s.Black = Grab(false, false);
-            DrawTd(tracer, 0);
+            s.CoreFrame = Time.frameCount;
+            int coreInstances = DrawTd(tracer, 0);
+            s.CoreInstances = coreInstances;
+            if (SelectedO2) { s.CoreSpans = SnapshotDrawSpans(tracer, coreInstances); s.CoreLooks = SnapshotDrawLooks(tracer, coreInstances); }
             s.Core = Grab(false, false);
             DrawTd(tracer, 1);
             DrawTd(tracer, 2);
@@ -1042,7 +1050,9 @@ namespace DD.Prototype.Tests.PlayMode
             s.Hdr = GrabHdrLum();
             yield return null;   // a new frame: the queued draws are gone (haloLeakPx proves it)
             s.HaloBlack = Grab(false, false);
+            s.HaloFrame = Time.frameCount;
             s.HaloInstances = DrawTd(tracer, 2);
+            if (SelectedO2) { s.HaloSpans = SnapshotDrawSpans(tracer, s.HaloInstances); s.HaloLooks = SnapshotDrawLooks(tracer, s.HaloInstances); }
             s.Halo = Grab(false, false);
             s.DarkLeak = DarkLeak(s.Dark);
             s.CoreLeak = BlackLeak(s.Black, out int coreMax);
@@ -1082,11 +1092,18 @@ namespace DD.Prototype.Tests.PlayMode
             string json = Obj(P("n", n), P("file", file), P("label", label), P("kind", "tracer"), P("ground", FloorName()),
                 P("flashScale", GameFeelSettings.FlashScale), P("inkDrawn", ink), P("changedPx", all.Changed), P("darkLeakPx", leak), P("coreLeakPx", s.CoreLeak),
                 P("haloLeakPx", s.HaloLeak), P("blackMaxLevel", s.BlackMax), P("groundVeilLevels", s.Veil), P("hdr", s.Hdr != null),
-                P("nonEmpty", all.Changed > 1000), PR("lanes", Arr(lanesJson)));
+                P("nonEmpty", SelectedO2 ? SelectedFrameNonEmpty(n) : all.Changed > 1000), PR("lanes", Arr(lanesJson)));
             AddFrame(n, file, label, s.Look, s.Lit, W, H, new RectInt(0, 0, W, H), json, marks);
             Debug.Log("[DD-TEST] wp104b4.ad " + file + " changed=" + all.Changed + " lanes=" + lanes.Count + " ink=" + ink + " darkLeak=" + leak
                       + " coreLeak=" + s.CoreLeak + " haloLeak=" + s.HaloLeak + " veil=" + F(s.Veil));
-            Assert.Greater(all.Changed, 1000, file + ": iz çizilmedi (boş kare)");
+            if (SelectedO2)
+            {
+                ValidateSelectedFrame(n, file);
+                Assert.AreEqual(0, s.DarkLeak, file + ": dark leakage");
+                Assert.AreEqual(0, s.CoreLeak, file + ": core leakage");
+                Assert.AreEqual(0, s.HaloLeak, file + ": halo leakage");
+            }
+            else Assert.Greater(all.Changed, 1000, file + ": iz çizilmedi (boş kare)");
         }
 
         private string LaneJson(TracerRibbonRenderer tracer, int n, Lane lane, Shots s)
@@ -1118,15 +1135,22 @@ namespace DD.Prototype.Tests.PlayMode
         {
             float ppm = PxPerMetre(rec.Head.y);
             int across = Mathf.CeilToInt(ppm * .6f);   // ±0.6 m: lanes are 2 m apart, the widest halo (SR V ≈ 84 px) is ±0.42 m
-            float[] behind = { .1f, .25f, .5f, 1f, 2f };
+            float sampleSpan = rec.Trail, haloSampleSpan = rec.Trail;
+            if (SelectedO2)
+            {
+                Assert.IsTrue(s.CoreSpans.TryGetValue(rec.Head, out sampleSpan), "core-frame draw geometry absent");
+                Assert.IsTrue(s.HaloSpans.TryGetValue(rec.Head, out haloSampleSpan), "halo-frame draw geometry absent");
+            }
+            float[] behind = SelectedO2 ? new[] { .18f * sampleSpan, .35f * sampleSpan, .5f * sampleSpan, .7f * sampleSpan, .9f * sampleSpan } : new[] { .1f, .25f, .5f, 1f, 2f };
             int bright = 0, brightMax = 0, quad = 0, haloPx = 0, haloMax = 0, ink05 = 0, ink15 = 0;
             var visible = new List<int>();
             var visiblePost = new List<int>();
             for (int i = 0; i < behind.Length; i++)
             {
-                if (behind[i] > rec.Trail - .1f) continue;
+                if (SelectedO2 ? behind[i] >= sampleSpan : behind[i] > rec.Trail - .1f) continue;
                 Vector2 c = Px(rec.Head + Vector3.left * behind[i]);
-                int b = ColumnOver(s.Core, s.Black, c, across, 254, true), h = ColumnOver(s.Halo, s.HaloBlack, c, across, Moved, false);
+                Vector2 haloColumn = SelectedO2 ? Px(rec.Head + Vector3.left * (haloSampleSpan * new[] { .18f, .35f, .5f, .7f, .9f }[i])) : c;
+                int b = ColumnOver(s.Core, s.Black, c, across, 254, true), h = ColumnOver(s.Halo, s.HaloBlack, haloColumn, across, Moved, false);
                 if (i == 0)
                 {
                     bright = b;
@@ -1149,6 +1173,16 @@ namespace DD.Prototype.Tests.PlayMode
                 visiblePost.Add(ColumnDiff(s.Look, s.DarkLook, c, across, Moved));
             }
 
+            if (SelectedO2 && lane.Marked)
+            {
+                // Ink belongs to the lit/core Unity frame, not the later halo frame. Keep the original dark thresholds.
+                foreach (float fraction in new[] { .05f, .1f, .18f, .35f, .5f, .7f, .9f })
+                {
+                    Vector2 inkColumn = Px(rec.Head + Vector3.left * (sampleSpan * fraction));
+                    ink05 = Mathf.Max(ink05, ColumnDarker(s.Lit, s.Dark, inkColumn, across, .05f));
+                    ink15 = Mathf.Max(ink15, ColumnDarker(s.Lit, s.Dark, inkColumn, across, .15f));
+                }
+            }
             visible.Sort();
             visiblePost.Sort();
             float reach = Mathf.Min(rec.Flight > 0f ? rec.Flight : rec.Trail, BandReachMax);
@@ -1172,11 +1206,25 @@ namespace DD.Prototype.Tests.PlayMode
 
             object coreM = RecordValue(tracer, rec.Id, "Core"), haloM = RecordValue(tracer, rec.Id, "Halo"), cap = RecordValue(tracer, rec.Id, "CapPx");
             object look = RecordValue(tracer, rec.Id, "Look");
+            RoundM metric = s_rounds[s_rounds.Count - 1];
+            metric.SourceCoreM = FloatValue(tracer, rec.Id, "Core");
+            metric.SourceHaloM = FloatValue(tracer, rec.Id, "Halo");
+            metric.SourceCapPx = FloatValue(tracer, rec.Id, "CapPx");
+            metric.SourceHaloStepPx = FloatValue(tracer, rec.Id, "HaloPx");
+            metric.SourceTrailScale = FloatValue(tracer, rec.Id, "TrailScale");
+            metric.SourceHaloHdr = FloatValue(tracer, rec.Id, "HaloHdr");
+            metric.SourceLook = look is int recordLook ? recordLook : -1;
+            metric.DetailTier = RecordValue(tracer, rec.Id, "Ap043Tier") is int tier ? tier : -1;
+            metric.NominalTrailM = NominalTrail(lane.Weapon, lane.Speed);
+            metric.PixelsPerMetre = ppm;
             // the ladder's per-record fields when the record has them (WP-104 B4-1: the halo step, the trail factor, the halo HDR)
             object haloStep = RecordValue(tracer, rec.Id, "HaloPx"), trailK = RecordValue(tracer, rec.Id, "TrailScale"), haloHdr = RecordValue(tracer, rec.Id, "HaloHdr");
             var pairs = new List<string>
             {
                 P("ground", ground), P("id", rec.Id), P("headXM", rec.Head.x - O.x), P("headZM", rec.Head.z - O.z), P("trailM", rec.Trail), P("flightM", rec.Flight),
+                P("coreUnityFrame", s.CoreFrame), P("haloUnityFrame", s.HaloFrame), P("coreDrawCount", s.CoreInstances), P("haloDrawCount", s.HaloInstances),
+                P("coreFrameLook", SelectedO2 ? s.CoreLooks[rec.Head] : -1), P("haloFrameLook", SelectedO2 ? s.HaloLooks[rec.Head] : -1),
+                P("sampleSpanM", sampleSpan), P("haloSampleSpanM", haloSampleSpan), P("selectedO2", SelectedO2), P("recordDetailTier", metric.DetailTier), P("recordDetailDensity", metric.DetailTier > 0 ? TreeVfxLadder.Ap043DetailDensity(metric.DetailTier) : float.NaN),
                 P("pxPerMetre", ppm), P("recordLook", look is int l ? l : -1), P("recordCoreM", coreM is float cm ? cm : float.NaN),
                 P("recordHaloM", haloM is float hm ? hm : float.NaN), P("recordCapPx", cap is float cp ? cp : float.NaN),
                 P("recordHaloPx", haloStep is float hs ? hs : float.NaN), P("recordTrailScale", trailK is float tk ? tk : float.NaN),
@@ -1416,6 +1464,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>WP-101's tier-I one-exposure tracer streak (TdTrail): v × 1/60 s in 1.5–5.5 m, the sniper v × 1/40 s ≤ 10 m.</summary>
         private static float NominalTrail(ClassicWeaponId id, float speed)
         {
+            if (SelectedO2) return SelectedEnvelope(id).Trail(speed);
             bool sniper = VfxWeaponProfiles.For(id).Class == VfxWeaponClass.Sniper;
             return sniper
                 ? Mathf.Clamp(speed * TracerRibbonRenderer.TdSniperExposureSeconds, TracerRibbonRenderer.TdTailMin, TracerRibbonRenderer.TdSniperTailMax)
@@ -1620,7 +1669,9 @@ namespace DD.Prototype.Tests.PlayMode
             WeaponCaliber caliber)
         {
             float a = turnDegrees * Mathf.Deg2Rad;
-            Vector3 p1 = start + Vector3.right * 3f, p2 = p1 + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3f;
+            Vector3 p1 = start + Vector3.right * 3f, p2 = p1 + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (SelectedO2 ? .14f : 3f);
+            // O2 designed control: .28 m exposure, two .14 m segments above the unchanged .12 m path minimum.
+            if (SelectedO2) speed = 100f;
             var lane = new SeekLane { Key = key, Label = label, Designed = true, Generation = _nextId++, Path = new[] { start, p1, p2 }, PathCount = 3, Body = p2 };
             lane.Flight.AddRange(lane.Path);
             var info = new ProjectileSpawnInfo(lane.Generation, int.MaxValue, ClassicWeaponId.AssaultRifle, ProjectileKind.Bullet, caliber, start, Vector3.right, speed, 0, 1, 1f);
@@ -1711,11 +1762,22 @@ namespace DD.Prototype.Tests.PlayMode
                 P("designedMissing", s_seekMissing), P("real", s_seekNote),
                 P("realLock", "GERCEK: the rig has no zombie - SeekTrail set and the path started as ProjectileSystem.LockSeek does (reflection), turned before every fixed "
                               + "step as Steer turns a round; ProjectileSystem kept the path itself; the game clock held during the capture"),
-                P("realMissing", s_realMissing), P("nonEmpty", all.Changed > 200), PR("lanes", Arr(lanesJson)));
+                P("realMissing", s_realMissing), P("nonEmpty", SelectedO2 ? all.Changed > 0 : all.Changed > 200), PR("lanes", Arr(lanesJson)));
             AddFrame(n, file, label, s.Look, s.Lit, W, H, new RectInt(0, 0, W, H), json, marks);
             Debug.Log("[DD-TEST] wp104b4.ad " + file + " changed=" + all.Changed + " darkLeak=" + s.DarkLeak + " coreLeak=" + s.CoreLeak + " haloLeak=" + s.HaloLeak
                       + " veil=" + F(s.Veil) + " seekPaths=" + seekPaths + " bentSpans=" + bentSpans + " " + SeekLog(n));
-            Assert.Greater(all.Changed, 200, file + ": iz çizilmedi (boş kare)");
+            if (SelectedO2)
+            {
+                foreach (SeekM metric in s_seeks)
+                {
+                    if (metric.Frame != n) continue;
+                    Assert.Greater(metric.TrailPx, 0, file + ": each selected seeker lane must draw");
+                    Assert.That(metric.Layer2025, Is.InRange(0, 6), file + ": bounded selected physical body/halo");
+                    Assert.That(metric.DrawnLengthM, Is.GreaterThan(0f).And.LessThanOrEqualTo(.97f), file + ": selected AR exposure ceiling plus 2 px raster allowance");
+                }
+                Assert.AreEqual(0, s.DarkLeak); Assert.AreEqual(0, s.CoreLeak); Assert.AreEqual(0, s.HaloLeak);
+            }
+            else Assert.Greater(all.Changed, 200, file + ": iz çizilmedi (boş kare)");
         }
 
         /// <summary>A public int property by name (F's B9 readouts), −1 when there is none.</summary>
@@ -1760,7 +1822,7 @@ namespace DD.Prototype.Tests.PlayMode
             var vis = new int[2];
             var layer2 = new int[2];
             int bright = 0, quad = 0;
-            float[] behind = { .25f, .5f };
+            float[] behind = SelectedO2 ? new[] { .18f * .28f, .35f * .28f } : new[] { .25f, .5f };
             for (int b = 0; b < behind.Length; b++)
             {
                 Vector3 at = Behind(lane.Flight, behind[b], out Vector3 dir);
@@ -3266,8 +3328,157 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static float Ratio(float a, float b) => b > 0f ? a / b : float.NaN;
 
+
+
+        private static Dictionary<Vector3, float> SnapshotDrawSpans(TracerRibbonRenderer tracer, int count)
+        {
+            var into = new Dictionary<Vector3, float>();
+            var heads = (Vector4[])typeof(TracerRibbonRenderer).GetField("_head", Private).GetValue(tracer);
+            var tails = (Vector4[])typeof(TracerRibbonRenderer).GetField("_tail", Private).GetValue(tracer);
+            for (int i = 0; i < count; i++)
+                into[(Vector3)heads[i]] = ((Vector3)heads[i] - (Vector3)tails[i]).magnitude;
+            return into;
+        }
+
+
+        private static Dictionary<Vector3, int> SnapshotDrawLooks(TracerRibbonRenderer tracer, int count)
+        {
+            var into = new Dictionary<Vector3, int>();
+            var heads = (Vector4[])typeof(TracerRibbonRenderer).GetField("_head", Private).GetValue(tracer);
+            var extra = (Vector4[])typeof(TracerRibbonRenderer).GetField("_extra", Private).GetValue(tracer);
+            for (int i = 0; i < count; i++) into[(Vector3)heads[i]] = Mathf.FloorToInt(extra[i].y) % 8;
+            return into;
+        }
+
+        private static bool SelectedO2 => Ap043BulletLooks.Current == Ap043BulletLook.O2;
+        private static Ap043TracerEnvelope SelectedEnvelope(ClassicWeaponId weapon) =>
+            Ap043TracerDesign.Envelope(Ap043BulletLook.O2, VfxWeaponProfiles.For(weapon).Class, false, true);
+        private static float FloatValue(TracerRibbonRenderer tracer, int id, string field) =>
+            RecordValue(tracer, id, field) is float value ? value : float.NaN;
+
+        private static bool SelectedFrameNonEmpty(int frame)
+        {
+            int count = 0;
+            foreach (RoundM r in s_rounds) if (r.Frame == frame) { count++; if ((r.Marked ? r.CoreQuad <= 0 : r.BrightCore <= 0) || r.LengthM <= 0f) return false; }
+            return count > 0;
+        }
+
+        private static void ValidateSelectedFrame(int frame, string label)
+        {
+            int count = 0;
+            foreach (RoundM r in s_rounds)
+            {
+                if (r.Frame != frame) continue;
+                count++;
+                Ap043TracerEnvelope e = SelectedEnvelope(r.Weapon);
+                if (r.Marked)
+                {
+                    Assert.That(r.BrightCoreMax, Is.InRange(0, 3), label + " " + r.Key + ": colored K3 saturation ceiling, unchanged 254 threshold");
+                    Assert.That(r.CoreQuad, Is.GreaterThan(0).And.LessThanOrEqualTo(4), label + " " + r.Key + ": active violet core, separate quad threshold");
+                }
+                else Assert.That(r.BrightCore, Is.GreaterThan(0).And.LessThanOrEqualTo(3), label + " " + r.Key + ": saturated 254 core");
+                Assert.That(r.HaloMax, Is.InRange(0, 6), label + " " + r.Key + ": halo ceiling incl. raster rounding");
+                Assert.That(r.LengthM, Is.GreaterThan(0f).And.LessThanOrEqualTo(r.NominalTrailM + 2f / r.PixelsPerMetre), label + ": shutter-bounded visible length");
+                Assert.That(r.SourceCoreM, Is.EqualTo(e.CoreMetres).Within(1e-5f));
+                Assert.That(r.SourceCapPx, Is.EqualTo(e.CoreCapPx).Within(1e-5f));
+                Assert.That(r.SourceHaloM, Is.EqualTo(e.CoreMetres * e.HaloRatio).Within(1e-5f));
+                Assert.That(r.SourceHaloStepPx, Is.Zero);
+                Assert.That(r.SourceTrailScale, Is.EqualTo(1f));
+            }
+            Assert.Greater(count, 0, label + ": no selected normal records");
+        }
+
+        private static void SelectedRoundChecks(Crit c, RoundM r, string label)
+        {
+            Ap043TracerEnvelope e = SelectedEnvelope(r.Weapon);
+            if (r.Marked)
+            {
+                c.Add(label + " violet saturation ceiling (254)", r.BrightCoreMax, "0..3 px", r.BrightCoreMax >= 0 && r.BrightCoreMax <= 3);
+                c.Add(label + " active violet quad (separate >=8 threshold)", r.CoreQuad, ">0 and <=4 px", r.CoreQuad > 0 && r.CoreQuad <= 4);
+            }
+            else c.Add(label + " saturated core (254)", r.BrightCore, ">0 and <=3 px", r.BrightCore > 0 && r.BrightCore <= 3);
+            c.Add(label + " halo maximum", r.HaloMax, "0..6 px incl. raster rounding", r.HaloMax >= 0 && r.HaloMax <= 6);
+            c.Add(label + " source core", r.SourceCoreM, F(e.CoreMetres) + " m", Mathf.Abs(r.SourceCoreM - e.CoreMetres) <= 1e-5f);
+            c.Add(label + " source cap", r.SourceCapPx, F(e.CoreCapPx) + " px", Mathf.Abs(r.SourceCapPx - e.CoreCapPx) <= 1e-5f);
+            c.Add(label + " source halo ratio", Ratio(r.SourceHaloM, r.SourceCoreM), F(e.HaloRatio), Mathf.Abs(Ratio(r.SourceHaloM, r.SourceCoreM) - e.HaloRatio) <= 1e-4f);
+            c.Add(label + " source halo step", r.SourceHaloStepPx, "0 px", r.SourceHaloStepPx == 0f);
+            c.Add(label + " source trail scale", r.SourceTrailScale, "1", r.SourceTrailScale == 1f);
+            c.Add(label + " visible exposure", r.LengthM, ">0 and <= " + F(r.NominalTrailM + 2f / r.PixelsPerMetre) + " m", r.LengthM > 0f && r.LengthM <= r.NominalTrailM + 2f / r.PixelsPerMetre);
+        }
+
+        private static Crit SelectedM1()
+        {
+            var c = new Crit("M1", GroupMust, "O2 fixed pixel/shutter envelope; tier conveyed by detail", "CX-AP043 3.5.9 selected normal-flight contract; original growing baseline ladder retained separately");
+            for (int g = 0; g < 2; g++)
+            {
+                for (int tier = 1; tier <= 5; tier++)
+                {
+                    RoundM r = FindRound(g + 1, "ATIS " + Roman(tier), Grounds[g]);
+                    if (r == null) { c.Missing.Add("O2 ATIS " + tier + " " + Grounds[g]); continue; }
+                    SelectedRoundChecks(c, r, GroundTag(g) + " " + Roman(tier));
+                    c.Add("actual record detail tier " + GroundTag(g) + " " + Roman(tier), r.DetailTier, tier.ToString(), r.DetailTier == tier);
+                }
+                foreach (string cls in new[] { "LMG", "SR" })
+                {
+                    RoundM one = FindRound(30 + g, cls + " I", Grounds[g]), five = FindRound(30 + g, cls + " V", Grounds[g]);
+                    if (one == null || five == null) { c.Missing.Add("O2 " + cls + " I/V " + Grounds[g]); continue; }
+                    SelectedRoundChecks(c, one, cls + " I " + GroundTag(g)); SelectedRoundChecks(c, five, cls + " V " + GroundTag(g));
+                    c.Add(cls + " I/V saturated width stability", five.BrightCore - one.BrightCore, "+/-1 px", Mathf.Abs(five.BrightCore - one.BrightCore) <= 1);
+                }
+            }
+            c.Notes.Add("Core-quad pixels use the separate >=8 threshold and can be 3..4; they are not the saturated >=254 core. A11 artistic blind ordering is evaluated from real Player evidence, not inferred from growing dimensions.");
+            return c;
+        }
+
+        private static Crit SelectedM4()
+        {
+            var c = new Crit("M4", GroupMust, "O2 marked K3: bounded violet/ink information cue", "CX-AP043 selected O2; preserve old baseline visible>=48 / halo difference>=15 / ink>=4 below");
+            foreach (string ground in Grounds)
+            {
+                RoundM r = FindRound(5, KeyMarked, ground);
+                if (r == null) { c.Missing.Add("O2 marked " + ground); continue; }
+                SelectedRoundChecks(c, r, "K3 " + ground);
+                c.Add("actual marked identity " + ground, r.SourceLook, TracerStyle.MarkedLook.ToString(), r.SourceLook == TracerStyle.MarkedLook);
+                c.Add("bounded visible ink insert " + ground, r.InkDark05, ">0 and <=3 px", r.InkDark05 > 0 && r.InkDark05 <= 3);
+            }
+            return c;
+        }
+
+        private static Crit SelectedS1()
+        {
+            var c = new Crit("S1", GroupShould, "O2 tier IV/V detail density within unchanged envelope", "CX-AP043; source HDR and caps stay fixed, no old +6 px area-growth requirement");
+            RoundM iv = FindRound(2, "ATIS IV", KeySlate), v = FindRound(2, "ATIS V", KeySlate);
+            if (iv == null || v == null) c.Missing.Add("O2 IV/V wet slate");
+            else
+            {
+                c.Add("actual IV/V tier codes", v.DetailTier - iv.DetailTier, "1", iv.DetailTier == 4 && v.DetailTier == 5);
+                c.Add("encoded detail density V-IV", TreeVfxLadder.Ap043DetailDensity(v.DetailTier) - TreeVfxLadder.Ap043DetailDensity(iv.DetailTier), ">0", TreeVfxLadder.Ap043DetailDensity(v.DetailTier) > TreeVfxLadder.Ap043DetailDensity(iv.DetailTier));
+                c.Add("source halo HDR V-IV", v.SourceHaloHdr - iv.SourceHaloHdr, "0", v.SourceHaloHdr == 1f && iv.SourceHaloHdr == 1f);
+                c.Add("saturated core width V-IV", v.BrightCore - iv.BrightCore, "+/-1 px", Mathf.Abs(v.BrightCore - iv.BrightCore) <= 1);
+            }
+            return c;
+        }
+
+        private static Crit SelectedB9()
+        {
+            var c = new Crit("B9", GroupB42, "O2 short seeker presentation and preserved path dispatch", "CX-AP043; two .14 m designed segments exceed the unchanged .12 m path minimum, exposure .28 m; original long-curve baseline contract retained");
+            for (int g = 0; g < 2; g++)
+            {
+                SeekM k = FindSeek(35 + g, "KIVRILAN"), d = FindSeek(35 + g, "DUZ");
+                if (k == null || d == null) { c.Missing.Add("O2 seeker " + Grounds[g]); continue; }
+                c.Add("kept path points " + GroundTag(g), k.RecordSeekPoints, ">=3", k.RecordSeekPoints >= 3);
+                c.Add("designed path bends " + GroundTag(g), k.PathBendM, ">0", k.PathBendM > 0f);
+                c.Add("bounded physical visible length " + GroundTag(g), k.DrawnLengthM, ">0 and <=.30 m", k.DrawnLengthM > 0f && k.DrawnLengthM <= .30f);
+                c.Add("physical width vs straight control " + GroundTag(g), k.Layer2025 - d.Layer2025, "+/-2 px", Mathf.Abs(k.Layer2025 - d.Layer2025) <= 2);
+                c.Add("halo/body cap " + GroundTag(g), k.Layer2025, "0..6 px", k.Layer2025 >= 0 && k.Layer2025 <= 6);
+            }
+            c.Notes.Add("The extra-volley metal body can be local rather than a continuous bright bend. This RT metric does not claim a >=.5 m visible curve; native B9 buffer/continuity/0 B controls cover path layout.");
+            return c;
+        }
+
         private static Crit M1()
         {
+            if (SelectedO2) return SelectedM1(); // Original baseline criteria remain below unchanged.
             var c = new Crit("M1", GroupMust, "Merdiven: AR I-V hale +5 px / çekirdek sabit / iz boyu; LMG V, SR V; A11",
                 "AD-B4 §1, §3 M1 · kare 01 (açık taş) / 02 (ıslak arduvaz) AR I-V; 30 / 31 LMG ve SR I + V; 32 A11 kör sıralama");
             for (int g = 0; g < 2; g++)
@@ -3458,6 +3669,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit M4()
         {
+            if (SelectedO2) return SelectedM4(); // Original baseline criteria remain below unchanged.
             var c = new Crit("M4", GroupMust, "K3 işaretli mermi", "AD-B4 §3 M4 · kare 05 (işaretli + normal, iki zemin)");
             RoundM n = FindRound(5, KeyNormal, KeyStone), m = FindRound(5, KeyMarked, KeyStone), mw = FindRound(5, KeyMarked, KeySlate);
             if (n == null || m == null)
@@ -3764,6 +3976,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Crit S1()
         {
+            if (SelectedO2) return SelectedS1(); // Original baseline criteria remain below unchanged.
             var c = new Crit("S1", GroupShould, "V'te hale HDR ×1.5", "AD-B4 §4 S1 · kare 02 (ıslak arduvaz), post karede");
             RoundM iv = FindRound(2, "ATIS IV", KeySlate), v = FindRound(2, "ATIS V", KeySlate);
             if (iv == null || v == null) c.Missing.Add("kare 02 ATIS IV / V");
@@ -3844,6 +4057,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         private static Crit B9()
         {
+            if (SelectedO2) return SelectedB9(); // Original baseline criteria remain below unchanged.
             var c = new Crit("B9", GroupB42, "Kıvrılan seeker izi (sh_cap ek atışı): kıvrım görünür, en / hale B4-1 merdiveniyle tutarlı",
                 "B4-2 B9 (F, C-00 / S-07 12.10) · kare 35 (açık taş), 36 (ıslak arduvaz): KIVRILAN = tasarlanmış yol 3 m + 30° + 3 m (F SetTdPathForTests), DUZ = aynı kayıt türü, "
                 + "düz 6 m; ikisi Atış V AR ek atışı (VolleyIndex 1, TD'de gövde izi); iz boyu = min(tutulan yol, 10 m) (karar a); GERCEK = gerçek AR mermisi, "
