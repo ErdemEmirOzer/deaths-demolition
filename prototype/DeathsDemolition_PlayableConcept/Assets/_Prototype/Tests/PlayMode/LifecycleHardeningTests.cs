@@ -193,7 +193,9 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 // WP-069 B2 (4e448f41): WeaponController refills the reserve per round (OnEnable/OnDisable, scene-local).
                 // WP-094 (08.10): RunHudScreen's round banner moved to FeelEvents.RoundStarted (2 → 1).
-                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 },
+                // WP-104 B2 (ba3293f0), scene-local, paired OnEnable/OnDisable: RunStarted ← PlayerHealth.OnTreeRunStarted (the tree
+                // shield resets per run) + WeaponController.OnRunStarted (kx_crit rng seeded per run) (1 → 3; R4 FINAL a1 P2).
+                { "RunEvents.RunStarted", 3 }, { "RunEvents.RoundStarted", 1 },
                 { "RunEvents.RoundCompleted", 3 },   // WP-078: the camera rig (scene-local, OnDisable removes) logs its inside-collider counter; WP-071: the ragdoll round log (armed at spawn, leaves on scene change)
                 { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
@@ -210,12 +212,15 @@ namespace DD.Prototype.Tests.PlayMode
                 // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
                 // DEC-113 RunDirector, scene-local, paired unsubscribe: EnemyDamaged → the Round Report's Elite first-hit clock (+1).
-                { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 1 },
+                // WP-104 B2 (ba3293f0), scene-local, paired OnEnable/OnDisable: EnemyDied ← PlayerHealth.OnTreeKill (sv_leech) (2 → 3).
+                { "DamageEvents.EnemyDied", 3 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 1 },
                 { "DamageEvents.PlayerAttacked", 0 }, { "HitFeedbackDirector.EnemyHitDressed", 0 },
                 // WP-007/WP-032C: RunHudScreen owns five Special events; PlayerSkinnedVisual owns the
                 // equipped/reload/special animation beats for one player life; the director owns the four
                 // bridge subscriptions. Every one is scene-local and must disappear again in MainMenu.
-                { "WeaponEvents.WeaponEquipped", 1 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 1 },
+                // WP-104 B4 (92aa407d; WeaponController.Awake adds it since ba3293f0), scene-local, paired OnEnable/OnDisable:
+                // WeaponEquipped ← WeaponAttachPresenter (the attachment set follows the equipped weapon) (1 → 2).
+                { "WeaponEvents.WeaponEquipped", 2 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 1 },
                 { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 1 },
                 // WP-068 8a: RunHudScreen's ladder kick on an empty trigger (E11) - WP-094 (08.10) hears it from FeelEvents.DryFire (1 → 0).
                 { "WeaponEvents.DryFire", 0 },
