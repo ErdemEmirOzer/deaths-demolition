@@ -64,10 +64,6 @@ crashlytics-build.properties
 **/[Aa]ssets/InitTestScene*.unity.meta
 
 # --- Araç yerel ayarları ve sırlar (asla depoya girmez)
-.claude/settings.local.json
-**/.claude/settings.local.json
-# Kadro ajan havuzu symlink'i (mutlak makine yolu; kullanıcı kararı 2026-09-10)
-/.claude/agents
 .env
 .env.*
 *.pem
@@ -78,9 +74,3 @@ crashlytics-build.properties
 *.keystore
 *.ulf
 UnityLicense*
-.mcp.local.json
-
-# Coordination notes and agent configs live in the private workspace, not in the repository (14.10)
-/AGENTS.md
-/.codex/
-/docs/c00/
