@@ -79,3 +79,8 @@ crashlytics-build.properties
 *.ulf
 UnityLicense*
 .mcp.local.json
+
+# Coordination notes and agent configs live in the private workspace, not in the repository (14.10)
+/AGENTS.md
+/.codex/
+/docs/c00/
