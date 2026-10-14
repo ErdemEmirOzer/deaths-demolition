@@ -434,7 +434,10 @@ namespace DD.Prototype.UI
                 }
                 else if (!still && !UiCurtain.IsCovering)
                 {
-                    _clock += Time.unscaledDeltaTime;
+                    // R4 a1-fix (C-00 14.10): the frame a cut drew into the held target is not blend time - the held image was
+                    // not on screen yet while that frame was made. Its delta skipped, the blend opens at full weight however long
+                    // the capture frame ran (the freeze's twin below; a1x X3 there: a 0.39 s capture frame opened at 0.75).
+                    _clock += _capturing ? 0f : Time.unscaledDeltaTime;
                 }
             }
 
@@ -449,6 +452,13 @@ namespace DD.Prototype.UI
             {
                 _camera.targetTexture = null;   // the cut frame went into the held target; from here the camera draws the screen
                 _capturing = false;
+                if (_freezeFadeAt >= 0f)
+                {
+                    // R4 a1-fix (C-00 14.10): the freeze's fade counts from the first frame its held image is on screen - this
+                    // one - not from the frame that drew it: a long capture frame (the held target's first use, a busy machine)
+                    // no longer eats the fade's head and drops the held frame from 1 to 1 - Smooth(frame / Blend) at once.
+                    _freezeFadeAt = Time.unscaledTime;
+                }
             }
 
             int slice = SliceAt(time, out float local);
