@@ -164,6 +164,7 @@ namespace DD.Art.Tests.PlayMode
             var looks = new HashSet<string>(StringComparer.Ordinal);
             int skinned = 0, slots = 0, tris = 0, rising = 0, waiting = 0;
             var hatalar = new List<string>();
+            var p3Bodies = new List<ZombieEnemy>();
             foreach (ZombieEnemy z in ZombieEnemy.Live)
             {
                 if (z == null || !z.IsAlive) continue;
@@ -194,6 +195,9 @@ namespace DD.Art.Tests.PlayMode
                     bool rise = st.IsName(CharacterAnimatorContract.RiseState) || st.IsName(CharacterAnimatorContract.RiseState + "_1") || st.IsName(CharacterAnimatorContract.RiseState + "_2");
                     if (rise) rising++;
                     else if (st.IsName(CharacterAnimatorContract.WaitState)) waiting++;
+                    // WP-096 AP-033 p3 (185bbe6b): a body setting off from rest plays its authored start (or a stop / turn) — a scripted
+                    // crossfade out of Locomotion that the motor itself ends back in Locomotion. Not exempt: held below until it lands there.
+                    else if (InP3Move(v, st)) p3Bodies.Add(z);
                     else if (!st.IsName(CharacterAnimationSet.LocomotionState)) hatalar.Add(z.name + ": Animator Locomotion'da değil (" + st.shortNameHash + ")");
                 }
                 if (v.HelmetAnchor == null || v.HelmetAnchor.parent.name != "Head") hatalar.Add(z.name + ": ankraj_helmet Head altında değil");
@@ -202,7 +206,21 @@ namespace DD.Art.Tests.PlayMode
                 if (z.ArmorAnchors.Helmet != v.HelmetAnchor) hatalar.Add(z.name + ": ArmorAnchors.Helmet ankraja bağlı değil");
             }
 
-            Debug.Log("[DD-TEST] wp016.crowd spawned=" + skinned + " rising=" + rising + " waiting=" + waiting + " fillSeconds=" + (Time.realtimeSinceStartup - t0).ToString("F2", CultureInfo.InvariantCulture) + " distinctLooks=" + looks.Count + " materials=" + materials.Count + " avgSlots=" + ((float)slots / Mathf.Max(1, skinned)).ToString("F2") + " avgLod0Tris=" + (tris / Mathf.Max(1, skinned)));
+            // The bodies caught inside their p3 move must reach the Locomotion state (or the authored Wait queue) within the move's
+            // bounded length — a body that never returns is the start-state bug this assertion exists for.
+            float p3Start = Time.time;
+            int p3Count = p3Bodies.Count, p3Frames = 0;
+            while (p3Bodies.Count > 0 && Time.time - p3Start < P3SettleMaxSeconds && p3Frames++ < P3SettleMaxFrames)
+            {
+                yield return null;
+                p3Bodies.RemoveAll(LandedFromP3);
+            }
+
+            foreach (ZombieEnemy z in p3Bodies)
+                hatalar.Add(z.name + ": p3 geçişinden " + P3SettleMaxSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s içinde Locomotion'a dönmedi ("
+                    + z.Skinned.Animator.GetCurrentAnimatorStateInfo(0).shortNameHash + ", " + z.Skinned.TransitionClip + ")");
+
+            Debug.Log("[DD-TEST] wp016.crowd spawned=" + skinned + " rising=" + rising + " waiting=" + waiting + " p3=" + p3Count + " p3Settle=" + (Time.time - p3Start).ToString("F2", CultureInfo.InvariantCulture) + " fillSeconds=" + (Time.realtimeSinceStartup - t0).ToString("F2", CultureInfo.InvariantCulture) + " distinctLooks=" + looks.Count + " materials=" + materials.Count + " avgSlots=" + ((float)slots / Mathf.Max(1, skinned)).ToString("F2") + " avgLod0Tris=" + (tris / Mathf.Max(1, skinned)));
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
             Assert.GreaterOrEqual(skinned, 40);
             Assert.LessOrEqual(materials.Count, 8, "kalabalık ≤ 8 paylaşılan materyal (atlas + kumaş atlası (WP-020) × Standard + 3 versiyon), örnek materyal yok");
@@ -544,6 +562,33 @@ namespace DD.Art.Tests.PlayMode
             }
 
             return true;
+        }
+
+        /// <summary>The longest AP-033 p3 move (turn90_L, 38 frames) at the motor's slowest rate 0.6 is 2.1 s, plus its attach-out
+        /// crossfade into Locomotion; 4 s bounds it (Dec077SettleMaxFrames' bound).</summary>
+        private const float P3SettleMaxSeconds = 4f;
+        private const int P3SettleMaxFrames = 1200;   // a stalled game clock cannot hold the test to its 300 s timeout
+
+        /// <summary>The base layer sits in an AP-033 p3 state (start / stop / turn / stumble, plain or _R) and the motor owns it: the move is
+        /// running (TransitionActive) or its scripted crossfade is already heading into Locomotion (attach-out / cancel). A p3 state with
+        /// neither is not a move — it stays an error.</summary>
+        private static bool InP3Move(ZombieSkinnedVisual v, AnimatorStateInfo st)
+        {
+            bool p3State = false;
+            foreach (string clip in ZombieTransitionData.Clips)
+                if (st.IsName(clip) || st.IsName(clip + "_R")) { p3State = true; break; }
+            if (!p3State) return false;
+            Animator an = v.Animator;
+            return v.TransitionActive || (an.IsInTransition(0) && an.GetNextAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState));
+        }
+
+        /// <summary>A body caught in its p3 move has landed: its base layer is in Locomotion (or the authored Wait queue), or it left
+        /// the crowd (died / despawned — not a locomotion question).</summary>
+        private static bool LandedFromP3(ZombieEnemy z)
+        {
+            if (z == null || !z.IsAlive || z.Skinned == null || z.Skinned.Animator == null) return true;
+            AnimatorStateInfo st = z.Skinned.Animator.GetCurrentAnimatorStateInfo(0);
+            return st.IsName(CharacterAnimationSet.LocomotionState) || st.IsName(CharacterAnimatorContract.WaitState);
         }
 
         /// <summary>The crowd holds its pose (no walk, no animation) while the player keeps animating between samples.</summary>
