@@ -28,14 +28,15 @@ namespace DD.Prototype.Tests.PlayMode
     /// WP-103 (R4 #4, S-05 d77c6263): the west bamboo grove (x −54…−37.5, z −30…30) is open between its clumps — the greybox
     /// <c>Bamboo_</c> blocks no longer collide or bake, the clumps carve the NavMesh, the gaps walk. S-03's crowd / flank / spawn check
     /// on that NavMesh (C-00 12.10), Normal and Demolition.
-    /// <para>Fixture: the player (invulnerable) stands on a point BETWEEN the clumps of the west half — derived from the live NavMesh
+    /// <para>Fixture: the player (invulnerable) stands on a point BETWEEN the clumps of the east half (WP-103B: the west half's
+    /// between-clump floor is off the NavMesh, see <see cref="PreferredStart"/>) — derived from the live NavMesh
     /// near <see cref="PreferredStart"/>: inside the band, ≥ <see cref="LaneClearMetres"/> from every lane axis, ≥ <see cref="EdgeClearMetres"/>
     /// from the nearest NavMesh edge (a carved clump, a fence), on the mesh within <see cref="StartSnapMetres"/>; asserted as a
     /// precondition, so a geometry change cannot quietly move the case onto a lane. The spawn director first runs the round for
     /// <see cref="LiveSpawnSeconds"/> with the player there (its spawns are reported), then stops; the crowd is this fixture's own:
     /// up to 20 bodies (1 in 4 Special) on two deterministic rings — inside the grove at 8–13 m and outside it at 16–28 m — each
     /// on the mesh with a complete path to the player, spawn seed fixed. The player stands <see cref="StandSeconds"/>, walks to a
-    /// second between-clump point (<see cref="PreferredTurn"/>, 12 m north, off every lane) along its NavMesh path for at most
+    /// second between-clump point (<see cref="PreferredTurn"/>, 9.5 m north, off every lane) along its NavMesh path for at most
     /// <see cref="WalkSeconds"/>, then stands again, up to <see cref="SimSeconds"/>.</para>
     /// <para>ASSERTED (thresholds of V6CrossingShareTests / V6AiRoundTests): every body enters the player's
     /// <see cref="RingMetres"/> ring within the window (a body waiting its turn behind the packed crowd counts up to
@@ -74,10 +75,22 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>GreyboxV6Builder.Gates inside the band (W_BambooSouth / W_BambooNorth; their 3.5 m clearing is not "between clumps").</summary>
         private static readonly Vector2[] GroveGates = { new Vector2(-52f, -18f), new Vector2(-52f, 18f) };
 
-        /// <summary>West half, between the main lane's fence (x −46.9) and the world edge; 6 m south of the unlaned z 0 gap.</summary>
-        private static readonly Vector3 PreferredStart = new Vector3(-51f, 0f, -6f);
-        /// <summary>The walk's end: the same depth, 12 m north (the walk crosses z 0 through the clumps, no lane on that side).</summary>
-        private static readonly Vector3 PreferredTurn = new Vector3(-51f, 0f, 6f);
+        /// <summary>
+        /// East half, between the main lane's fence (x −43.1) and the kairō edge (x −37.5), between the clumps at (−40.3, 5.9) and
+        /// (−41.3, 14.5): 6 m off every lane axis, ≈ 2 m to the nearest NavMesh edge.
+        /// WP-103B (a4fcc0d4, S-05 12.10) made the grove's NavMesh the hero's floor: the clump pockets the walk scan cannot reach
+        /// took Not Walkable volumes. The first fixture point in the west half, (−51, −6) / (−51, 6), lies in those pockets.
+        /// Its earlier picks (−50.5, −7.5) / (−50.5, 5.5) cleared the 1 m edge test by 0.001 / 0.011 m and have no 1 m clearance
+        /// left within ±5 m (FINAL a1x 14.10: "(−51, 0, −6) çevresinde … NavMesh noktası yok"). The west half keeps such floor only
+        /// at its rims: x −48 by the z 0 fence gap (exactly 3 m off two lane axes) and x −52.5 by the world edge. A walk between
+        /// them runs along the main lane.
+        /// </summary>
+        private static readonly Vector3 PreferredStart = new Vector3(-39f, 0f, 9.5f);
+        /// <summary>
+        /// The walk's end: 9.5 m north in the same strip, ≥ 3.8 m off every lane, ≈ 2.5 m to the NavMesh edge. The walk passes the
+        /// clump at (−41.3, 14.5) between clumps and the kairō edge and never runs on a lane (route ≈ 1.1 × the straight line).
+        /// </summary>
+        private static readonly Vector3 PreferredTurn = new Vector3(-39.5f, 0f, 19f);
         private const float LaneClearMetres = 3f, GateClearMetres = 3.5f, EdgeClearMetres = 1f, StartSnapMetres = 0.25f;
         private const float SearchMetres = 5f, SearchStep = 0.5f, ClumpCountMetres = 4f, RouteDetourMax = 2f;
         private const string GroveGroupName = "BambooGrove";   // WorldV5Dress.GroveGroupName
